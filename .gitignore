@@ -1,0 +1,17 @@
+# Old drafts
+attic/
+
+# Large data (484 PDFs + zip)
+corpus ISTEX/
+
+# PDFs in bibliography (keep .bib only)
+bibliography/*.pdf
+
+# Binary document formats (MD versions tracked instead)
+*.odt
+*.docx
+
+# OS and editor artifacts
+.DS_Store
+*~
+*.swp
