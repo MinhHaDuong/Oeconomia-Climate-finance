@@ -12,19 +12,22 @@ Publishing a few articles to lay the groundwork for a book project described in 
 
 ## Current State
 
-2026-01-14 Submitted to OEconomia special issue "History of Climate Economics". See `release\2026-01-14...`
+2026-01-14 Submitted to OEconomia special issue "History of Climate Economics". See `release/2026-01-14...`
 2026-02-16 Not selected. However, editor Francesco Sergi encouraged resubmission as regular "Varia" contribution, citing quality and journal fit. See `20260216 decision.txt`.
+2026-02-18 Manuscript plan established. See `PLAN.md`.
 
 ## Repository Structure
 
 ```
-├── notes.md                          # Main working notes, detailed outline
+├── PLAN.md                           # Manuscript action plan
+├── extended abstract.md              # Submitted extended abstract
+├── notes.md                          # Working notes, detailed outline
 ├── release/                          # Releases outside CIRED. Append-only.
-├── attic/                            # Old stuff to delete when paper is accepted│
-├── AI tech reports/                  # AI-assisted research
-├── corpus ISTEX/                     # A link to the dataset on /data/
-├── bibliography/                     # main.bib and recent articles
-└── docs/                             # Œconomia journal information and other contributed notes
+├── attic/                            # Old stuff to delete when paper is accepted
+├── AI tech reports/                  # AI-assisted research (SciSpace CSVs + analyses)
+├── corpus ISTEX/                     # 484-article dataset (not tracked in git)
+├── bibliography/                     # main.bib (PDFs not tracked in git)
+└── docs/                             # Œconomia journal info, book project notes
 ```
 
 ## Research Corpus
@@ -62,10 +65,11 @@ Topic-specific analyses with CSV datasets:
 
 ## Next Steps
 
-1. Decide whether to accept editor's "Varia" invitation
-2. If yes: develop extended abstract into full manuscript (~8,000-10,000 words)
-3. Ensure strong "history of economic ideas" framing
-4. Submit via platform as "revision" to abstract
+1. Confirm with editor: accept Varia invitation, clarify language/length/timeline
+2. Produce two bibliometric figures from ISTEX corpus metadata
+3. Audit bibliography against SciSpace must-cite list
+4. Draft manuscript section by section (~9,000 words). See `PLAN.md`
+5. Submit via platform as "revision" to abstract
 
 ## Contact
 

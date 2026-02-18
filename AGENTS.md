@@ -1,7 +1,8 @@
 # AI Agent Guidelines for Climate Finance History Project
 
 See `README.md` for project overview, current status, research corpus, and theoretical framework.
-See `notes.md` for the detailed outline and argumentative structure.
+See `PLAN.md` for the manuscript action plan (structure, word budgets, figures).
+See `notes.md` for working notes and the original detailed outline.
 
 ## Writing Guidelines
 
