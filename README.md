@@ -65,11 +65,7 @@ Topic-specific analyses with CSV datasets:
 
 ## Next Steps
 
-1. Confirm with editor: accept Varia invitation, clarify language/length/timeline
-2. Produce two bibliometric figures from ISTEX corpus metadata
-3. Audit bibliography against SciSpace must-cite list
-4. Draft manuscript section by section (~9,000 words). See `PLAN.md`
-5. Submit via platform as "revision" to abstract
+See `PLAN.md`.
 
 ## Contact
 
