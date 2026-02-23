@@ -83,10 +83,24 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 
 ## Technical Notes
 
+### Git versioning
+- **Commit frequently** — do not let work accumulate without versioning
+- **Use feature branches** for new work (e.g., `corpus-pipeline`, `bibliometric-analysis`)
+- Merge to `main` when a milestone is stable
+- Always commit before starting a new phase of work
+- Propose a commit when a logical unit of work is complete
+
+### File management
 - Working drafts: Markdown (`.md`); final submission: ODT or DOCX
 - Convert with Pandoc: `pandoc input.md -o output.odt`
 - Bibliography: `bibliography/main.bib`, author-date style
 - Version control: old versions in `attic/`, submissions in `release/`
+
+### Dependency management
+- **Always use `uv sync`** to install dependencies. Never use `pip` or `uv pip`.
+- All dependencies are declared in `pyproject.toml` at project root.
+- torch is pinned to CPU-only builds via `[tool.uv.sources]` (no NVIDIA/CUDA).
+- To add a dependency: edit `pyproject.toml`, then run `uv sync`.
 
 ## Self-Check Questions
 

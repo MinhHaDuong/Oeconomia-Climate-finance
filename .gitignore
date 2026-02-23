@@ -11,6 +11,19 @@ bibliography/*.pdf
 *.odt
 *.docx
 
+# Generated catalogs and checkpoints (reproducible from scripts)
+data/catalogs/
+data/exports/
+
+# Embedding cache (large binary, reproducible)
+data/catalogs/embeddings.npy
+
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+uv.lock
+
 # OS and editor artifacts
 .DS_Store
 *~

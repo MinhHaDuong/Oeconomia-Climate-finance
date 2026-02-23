@@ -1,0 +1,28 @@
+[project]
+name = "climate-finance-het"
+version = "0.1.0"
+description = "Literature corpus and bibliometric analysis for Œconomia climate finance article"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "requests",
+    "pyyaml",
+    "networkx",
+    "python-louvain",
+    "torch",
+    "sentence-transformers",
+    "umap-learn",
+    "hdbscan",
+    "matplotlib",
+    "seaborn",
+    "scikit-learn",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
