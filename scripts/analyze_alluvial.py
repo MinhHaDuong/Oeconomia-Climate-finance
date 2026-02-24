@@ -540,15 +540,15 @@ plt.close()
 # Step 7: Render alluvial figure
 # ============================================================
 
-fig, ax = plt.subplots(figsize=(14, 7))
+fig, ax = plt.subplots(figsize=(7, 3.5))
 
 n_periods = len(period_labels)
 n_clusters = K_DEFAULT
 palette = plt.cm.Set2(np.linspace(0, 1, n_clusters))
 
-# X positions for period columns
-x_positions = np.linspace(0, 1, n_periods)
-col_width = 0.06  # Half-width of each column bar
+# X positions for period columns (leave room for legend on right)
+x_positions = np.linspace(0, 0.62, n_periods)
+col_width = 0.04  # Half-width of each column bar
 
 # Compute cumulative positions for each period's stack
 period_stacks = {}
@@ -586,7 +586,7 @@ for pi, period in enumerate(period_labels):
             if s["height"] > 0.04:
                 ax.text(x, s["bottom"] + s["height"] / 2,
                         f'{s["count"]}', ha="center", va="center",
-                        fontsize=7, color="black", fontweight="bold")
+                        fontsize=5, color="black", fontweight="bold")
 
 # Draw flows between adjacent periods
 for pi in range(n_periods - 1):
@@ -642,23 +642,28 @@ for pi in range(n_periods - 1):
 # Period labels
 for pi, period in enumerate(period_labels):
     x = x_positions[pi]
-    ax.text(x, -0.03, period, ha="center", va="top", fontsize=9, fontweight="bold")
+    ax.text(x, -0.03, period, ha="center", va="top", fontsize=6, fontweight="bold")
 
-# Legend
-handles = [mpatches.Patch(facecolor=palette[c], label=cluster_labels.get(c, f"Cluster {c}"))
-           for c in range(n_clusters)]
-ax.legend(handles=handles, loc="upper right", fontsize=7, framealpha=0.9,
-          title="Intellectual communities", title_fontsize=8)
+# Legend: text labels right next to the last data column
+last_stacks = period_stacks[period_labels[-1]]
+for c in range(n_clusters):
+    if c not in last_stacks:
+        continue
+    s = last_stacks[c]
+    if s["height"] <= 0:
+        continue
+    label_text = cluster_labels.get(c, f"Cluster {c}").replace(" / ", "\n")
+    ax.text(x_positions[-1] + col_width + 0.008, s["bottom"] + s["height"] / 2,
+            label_text, ha="left", va="center", fontsize=5.5,
+            linespacing=1.3, color=palette[c] * 0.6)  # darker than fill
 
-ax.set_xlim(-0.1, 1.1)
-ax.set_ylim(-0.08, 1.0)
-subtitle = ("periods from structural break detection"
-            if not supplementary else
-            f"2009 break data-derived; {', '.join(str(y) for y in supplementary)} COP-imposed")
+ax.set_xlim(-0.06, 0.85)
+ax.set_ylim(-0.06, 1.0)
+total = int(alluvial_data.values.sum())
 ax.set_title(
-    f"Intellectual community flows across periods\n"
-    f"(KMeans clusters on abstract embeddings, {subtitle})",
-    fontsize=12, pad=15,
+    f"Thematic recomposition of climate finance scholarship, 1990–2025\n"
+    f"(N = {total:,} publications; band width = number of publications per thematic cluster)",
+    fontsize=7, pad=8,
 )
 ax.axis("off")
 
