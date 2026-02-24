@@ -15,7 +15,6 @@ import argparse
 import os
 import warnings
 
-import community as community_louvain
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.patheffects as pe
@@ -110,39 +109,63 @@ for _, row in cit.iterrows():
             "abstract": "",
         }
 
-# Load communities (Louvain, 200 papers)
-print("Loading communities...")
-comm_df = pd.read_csv(os.path.join(CATALOGS_DIR, "communities.csv"))
-comm_df["doi_norm"] = comm_df["doi"].apply(normalize_doi)
+# Load KMeans semantic clusters (same as Fig 2 alluvial)
+print("Loading semantic clusters (KMeans, same ontology as Fig 2)...")
+sem_df = pd.read_csv(os.path.join(CATALOGS_DIR, "semantic_clusters.csv"))
+sem_df["doi_norm"] = sem_df["doi"].apply(normalize_doi)
+doi_to_cluster = dict(zip(sem_df["doi_norm"], sem_df["semantic_cluster"]))
+n_communities = len(sem_df["semantic_cluster"].unique())
+print(f"KMeans clusters: {n_communities}, papers: {len(sem_df)}")
 
-# Build community lookup
-doi_to_community = dict(zip(comm_df["doi_norm"], comm_df["community"]))
-n_communities = len(comm_df["community"].unique())
-print(f"Louvain communities: {n_communities}, papers: {len(comm_df)}")
+# Load embeddings for centroid computation + label generation
+print("Loading embeddings...")
+emb_works = works[works["abstract"].notna() & (works["abstract"].str.len() > 50)].copy()
+emb_works = emb_works[(emb_works["year"] >= 1990) & (emb_works["year"] <= 2025)].reset_index(drop=True)
+embeddings = np.load(EMBEDDINGS_PATH)
 
-# Community names (from co-citation analysis characterization)
-# Will be refined based on actual content
-COMMUNITY_NAMES = {
-    0: "Health & climate",
-    1: "Financial economics",
-    2: "Adaptation & resilience",
-    3: "Policy & governance",
-    4: "Carbon markets & MRV",
-    5: "Development finance",
-}
+emb_doi_to_idx = {}
+for i, row in emb_works.iterrows():
+    d = normalize_doi(row["doi"])
+    if d and d not in ("", "nan", "none"):
+        emb_doi_to_idx[d] = i
+
+# Compute cluster centroids from all clustered papers
+cluster_embeddings = {c: [] for c in range(n_communities)}
+for d, c in doi_to_cluster.items():
+    if d in emb_doi_to_idx:
+        cluster_embeddings[c].append(embeddings[emb_doi_to_idx[d]])
+
+cluster_centroids = {}
+for c, embs in cluster_embeddings.items():
+    if embs:
+        cluster_centroids[c] = np.mean(embs, axis=0)
+
+# Load cluster labels from alluvial (shared across Fig 2 and Fig 3)
+import json
+labels_path = os.path.join(CATALOGS_DIR, "cluster_labels.json")
+if os.path.exists(labels_path):
+    with open(labels_path) as f:
+        COMMUNITY_NAMES = {int(k): v for k, v in json.load(f).items()}
+    print(f"Loaded cluster labels from {labels_path}")
+else:
+    print(f"WARNING: {labels_path} not found. Run analyze_alluvial.py first.")
+    print("Falling back to generic labels.")
+    COMMUNITY_NAMES = {c: f"Cluster {c}" for c in range(n_communities)}
+
+print("\nCluster labels (same ontology as Fig 2):")
+for c, label in COMMUNITY_NAMES.items():
+    print(f"  {c}: {label}")
 
 
 # ============================================================
 # Step 2: Select backbone papers
 # ============================================================
 
-print("\nSelecting backbone (cited_by_count >= 20 + community papers)...")
+print("\nSelecting backbone (cited_by_count >= 20)...")
 
-# All papers with cited_by_count >= 20 and abstracts, plus all 200 community papers
 has_abs = works["abstract"].notna() & (works["abstract"].str.len() > 50)
 high_cited = works[has_abs & (works["cited_by_count"] >= 20)]
 backbone_dois = set(high_cited["doi_norm"])
-backbone_dois.update(comm_df["doi_norm"])
 
 # Filter to papers with valid year
 backbone_dois = {d for d in backbone_dois
@@ -153,80 +176,50 @@ print(f"Backbone papers (with valid year): {len(backbone_dois)}")
 
 
 # ============================================================
-# Step 3: Assign lineages (Louvain communities)
+# Step 3: Assign lineages (KMeans clusters, same as Fig 2)
 # ============================================================
 
-# Assign lineages: use existing Louvain communities for the 200,
-# nearest centroid in embedding space for the rest.
-
-lineage = {}  # doi -> community_id
+lineage = {}  # doi -> cluster_id
 peripheral = set()  # dois marked as peripheral
 
+# Most backbone papers have direct KMeans assignments
+direct = 0
 for d in backbone_dois:
-    if d in doi_to_community:
-        lineage[d] = doi_to_community[d]
+    if d in doi_to_cluster:
+        lineage[d] = doi_to_cluster[d]
+        direct += 1
 
-# Load embeddings for centroid assignment of extra papers
-if True:
-    print("Loading embeddings for lineage assignment...")
-    emb_works = works[works["abstract"].notna() & (works["abstract"].str.len() > 50)].copy()
-    emb_works = emb_works[(emb_works["year"] >= 1990) & (emb_works["year"] <= 2025)].reset_index(drop=True)
-    embeddings = np.load(EMBEDDINGS_PATH)
+# For papers without KMeans assignment, use nearest centroid
+assigned = 0
+periph_count = 0
+for d in backbone_dois:
+    if d in lineage:
+        continue
+    if d not in emb_doi_to_idx:
+        # No embedding — assign to largest cluster, mark peripheral
+        lineage[d] = max(cluster_centroids.keys(),
+                         key=lambda c: len(cluster_embeddings.get(c, [])))
+        peripheral.add(d)
+        periph_count += 1
+        continue
 
-    if len(embeddings) != len(emb_works):
-        print(f"WARNING: embedding size mismatch ({len(embeddings)} vs {len(emb_works)})")
-    else:
-        # Build DOI -> embedding index
-        emb_doi_to_idx = {}
-        for i, row in emb_works.iterrows():
-            d = normalize_doi(row["doi"])
-            if d and d not in ("", "nan", "none"):
-                emb_doi_to_idx[d] = i
+    emb = embeddings[emb_doi_to_idx[d]]
+    best_c, best_sim = None, -1
+    for c, centroid in cluster_centroids.items():
+        sim = 1 - cosine_dist(emb, centroid)
+        if sim > best_sim:
+            best_sim = sim
+            best_c = c
 
-        # Compute community centroids from the 200 papers
-        community_embeddings = {c: [] for c in range(n_communities)}
-        for d, c in doi_to_community.items():
-            if d in emb_doi_to_idx:
-                community_embeddings[c].append(embeddings[emb_doi_to_idx[d]])
+    if best_sim < 0.4:
+        peripheral.add(d)
+        periph_count += 1
+    lineage[d] = best_c
+    assigned += 1
 
-        community_centroids = {}
-        for c, embs in community_embeddings.items():
-            if embs:
-                community_centroids[c] = np.mean(embs, axis=0)
-
-        # Assign unassigned backbone papers
-        assigned = 0
-        periph_count = 0
-        for d in backbone_dois:
-            if d in lineage:
-                continue
-            if d not in emb_doi_to_idx:
-                # No embedding available, mark as peripheral
-                # Assign to largest community
-                lineage[d] = max(community_centroids.keys(),
-                                 key=lambda c: len(community_embeddings.get(c, [])))
-                peripheral.add(d)
-                periph_count += 1
-                continue
-
-            emb = embeddings[emb_doi_to_idx[d]]
-            # Find nearest centroid
-            best_c = None
-            best_sim = -1
-            for c, centroid in community_centroids.items():
-                sim = 1 - cosine_dist(emb, centroid)
-                if sim > best_sim:
-                    best_sim = sim
-                    best_c = c
-
-            if best_sim < 0.4:
-                peripheral.add(d)
-                periph_count += 1
-            lineage[d] = best_c
-            assigned += 1
-
-        print(f"Assigned {assigned} extra papers to lineages")
-        print(f"Peripheral papers (cosine < 0.4): {periph_count}")
+print(f"Direct KMeans assignments: {direct}")
+print(f"Assigned via nearest centroid: {assigned}")
+print(f"Peripheral papers (cosine < 0.4): {periph_count}")
 
 # Filter backbone to papers with lineage assignment
 backbone_dois = {d for d in backbone_dois if d in lineage}
@@ -516,6 +509,7 @@ print(f"Saved lineage table → tables/tab3_lineages.csv ({len(lineage_df)} pape
 
 if args.robustness:
     print("\n=== Robustness: Louvain resolution sensitivity ===")
+    import community as community_louvain
     import networkx as nx
     from sklearn.metrics import adjusted_rand_score
 

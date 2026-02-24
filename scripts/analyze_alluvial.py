@@ -476,6 +476,12 @@ print("\nCluster labels:")
 for c, label in cluster_labels.items():
     print(f"  {c}: {label}")
 
+# Save cluster labels for reuse by analyze_genealogy.py
+import json
+with open(os.path.join(CATALOGS_DIR, "cluster_labels.json"), "w") as f:
+    json.dump({str(k): v for k, v in cluster_labels.items()}, f)
+print("Saved cluster labels → data/catalogs/cluster_labels.json")
+
 
 # ============================================================
 # Step 6: Render breakpoints figure
