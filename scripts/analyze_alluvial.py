@@ -705,4 +705,94 @@ if args.robustness:
     print(f"Saved k-sensitivity figure → figures/fig2_k_sensitivity.pdf")
     plt.close()
 
+# ============================================================
+# Step 8: Lexical validation of the 2009 break (TF-IDF)
+# ============================================================
+
+print("\n=== Lexical validation: TF-IDF before vs after 2009 ===")
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Period A: all abstracts before 2009 (the field's prehistory)
+# Period B: 2010-2012 (just after the break, before Paris dominates)
+mask_A = df["year"] < 2009
+mask_B = (df["year"] >= 2010) & (df["year"] <= 2012)
+
+texts_A = df.loc[mask_A, "abstract"].dropna().tolist()
+texts_B = df.loc[mask_B, "abstract"].dropna().tolist()
+n_A = len(texts_A)
+n_B = len(texts_B)
+print(f"Period A (before 2009): {n_A} abstracts")
+print(f"Period B (2010-2012):   {n_B} abstracts")
+
+if n_A >= 5 and n_B >= 5:
+    vectorizer = TfidfVectorizer(
+        stop_words="english",
+        ngram_range=(1, 2),
+        min_df=3,
+        max_df=0.9,
+    )
+    X = vectorizer.fit_transform(texts_A + texts_B)
+    feature_names = np.array(vectorizer.get_feature_names_out())
+
+    mean_A = np.asarray(X[:n_A].mean(axis=0)).flatten()
+    mean_B = np.asarray(X[n_A:].mean(axis=0)).flatten()
+    diff = mean_B - mean_A
+
+    # Top 25 terms enriched in each period
+    idx_top_B = np.argsort(diff)[-25:][::-1]
+    idx_top_A = np.argsort(diff)[:25]
+
+    print(f"\nTop 25 terms enriched AFTER 2009 (period B):")
+    for i in idx_top_B:
+        print(f"  +{diff[i]:.4f}  {feature_names[i]}")
+
+    print(f"\nTop 25 terms enriched BEFORE 2009 (period A):")
+    for i in idx_top_A:
+        print(f"  {diff[i]:.4f}  {feature_names[i]}")
+
+    # Save full table
+    tfidf_df = pd.DataFrame({
+        "term": feature_names,
+        "mean_tfidf_before": mean_A,
+        "mean_tfidf_after": mean_B,
+        "diff": diff,
+    }).sort_values("diff", ascending=False)
+    tfidf_df.to_csv(os.path.join(TABLES_DIR, "tab2_lexical_tfidf.csv"), index=False)
+    print(f"\nSaved TF-IDF table → tables/tab2_lexical_tfidf.csv ({len(tfidf_df)} terms)")
+
+    # --- Horizontal bar chart ---
+    n_show = 25
+    top_after = tfidf_df.head(n_show).copy()
+    top_before = tfidf_df.tail(n_show).copy()
+    plot_df = pd.concat([top_before.iloc[::-1], top_after])
+
+    fig, ax = plt.subplots(figsize=(10, 12))
+    colors = ["#457B9D" if d < 0 else "#E63946" for d in plot_df["diff"]]
+    y_pos = range(len(plot_df))
+    ax.barh(y_pos, plot_df["diff"], color=colors, alpha=0.85)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(plot_df["term"], fontsize=8)
+    ax.axvline(0, color="black", linewidth=0.8)
+    ax.set_xlabel("ΔTF-IDF (after − before)", fontsize=11)
+    ax.set_title(
+        f"Lexical reorientation around the 2009 structural break\n"
+        f"(before 2009: n={n_A} abstracts, 2010–2012: n={n_B} abstracts)",
+        fontsize=12, pad=15,
+    )
+
+    # Add period labels
+    ax.text(ax.get_xlim()[0] * 0.8, len(plot_df) - 2,
+            "← Before 2009", fontsize=10, color="#457B9D", fontweight="bold")
+    ax.text(ax.get_xlim()[1] * 0.3, 2,
+            "After 2009 →", fontsize=10, color="#E63946", fontweight="bold")
+
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIGURES_DIR, "fig2_lexical_tfidf.pdf"), dpi=300, bbox_inches="tight")
+    fig.savefig(os.path.join(FIGURES_DIR, "fig2_lexical_tfidf.png"), dpi=150, bbox_inches="tight")
+    print(f"Saved lexical TF-IDF figure → figures/fig2_lexical_tfidf.pdf")
+    plt.close()
+else:
+    print("WARNING: Too few abstracts for TF-IDF comparison.")
+
 print("\nDone.")
