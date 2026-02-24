@@ -675,6 +675,198 @@ plt.close()
 
 
 # ============================================================
+# Step 7b: Interactive HTML version with paper tooltips
+# ============================================================
+
+import html as html_mod
+
+# Collect top-3 most-cited papers per (period, cluster)
+top_papers = {}
+for period in period_labels:
+    for c in range(n_clusters):
+        cell = df[(df["period"] == period) & (df["cluster"] == c)]
+        cell_sorted = cell.sort_values("cited_by_count", ascending=False).head(3)
+        papers = []
+        for _, row in cell_sorted.iterrows():
+            author = str(row.get("first_author", "?"))
+            if len(author) > 25:
+                author = author[:23] + "…"
+            yr = int(row["year"]) if pd.notna(row["year"]) else "?"
+            title = str(row.get("title", ""))
+            if len(title) > 80:
+                title = title[:78] + "…"
+            cites = int(row["cited_by_count"]) if pd.notna(row["cited_by_count"]) else 0
+            papers.append(f"{author} ({yr}), {title} [{cites} cit.]")
+        top_papers[(period, c)] = papers
+
+# SVG dimensions
+svg_w, svg_h = 1350, 675
+pad_l, pad_r, pad_t, pad_b = 75, 420, 82, 52
+chart_w = svg_w - pad_l - pad_r
+chart_h = svg_h - pad_t - pad_b
+
+# Map normalized coords to SVG
+def to_sx(xnorm):
+    return pad_l + (xnorm / 0.62) * chart_w
+
+def to_sy(ynorm):
+    return pad_t + chart_h - (ynorm / 1.0) * chart_h
+
+def rgba(c_idx, alpha=0.9):
+    r, g, b, _ = palette[c_idx]
+    return f"rgba({int(r*255)},{int(g*255)},{int(b*255)},{alpha})"
+
+def rgb_dark(c_idx, factor=0.6):
+    r, g, b, _ = palette[c_idx]
+    return f"rgb({int(r*255*factor)},{int(g*255*factor)},{int(b*255*factor)})"
+
+svg_parts = []
+svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{svg_w}" height="{svg_h}" '
+                  f'font-family="sans-serif">')
+
+# Title
+total = int(alluvial_data.values.sum())
+svg_parts.append(f'<text x="{svg_w//2}" y="28" text-anchor="middle" font-size="16" font-weight="bold">'
+                 f'Thematic recomposition of climate finance scholarship, 1990–2025</text>')
+svg_parts.append(f'<text x="{svg_w//2}" y="50" text-anchor="middle" font-size="13" fill="#666">'
+                 f'(N = {total:,} publications; hover over a cell to see top-cited papers)</text>')
+
+# Flow ribbons (draw first, behind bars)
+for pi in range(n_periods - 1):
+    pa, pb = period_labels[pi], period_labels[pi + 1]
+    xa = x_positions[pi]
+    xb = x_positions[pi + 1]
+    sa_all, sb_all = period_stacks[pa], period_stacks[pb]
+    cw = col_width
+    for c in range(n_clusters):
+        if c not in sa_all or c not in sb_all:
+            continue
+        sa, sb = sa_all[c], sb_all[c]
+        if sa["height"] <= 0 or sb["height"] <= 0:
+            continue
+        x1 = to_sx(xa + cw)
+        x2 = to_sx(xb - cw)
+        y1t, y1b = to_sy(sa["bottom"] + sa["height"]), to_sy(sa["bottom"])
+        y2t, y2b = to_sy(sb["bottom"] + sb["height"]), to_sy(sb["bottom"])
+        cx1 = x1 + (x2 - x1) * 0.4
+        cx2 = x1 + (x2 - x1) * 0.6
+        d = (f"M{x1},{y1t} C{cx1},{y1t} {cx2},{y2t} {x2},{y2t} "
+             f"L{x2},{y2b} C{cx2},{y2b} {cx1},{y1b} {x1},{y1b} Z")
+        svg_parts.append(f'<path d="{d}" fill="{rgba(c, 0.3)}" stroke="none"/>')
+
+# Column bars (clickable)
+for pi, period in enumerate(period_labels):
+    x = x_positions[pi]
+    stacks = period_stacks[period]
+    for c in range(n_clusters):
+        if c not in stacks:
+            continue
+        s = stacks[c]
+        if s["height"] <= 0:
+            continue
+        rx = to_sx(x - col_width)
+        ry = to_sy(s["bottom"] + s["height"])
+        rw = to_sx(x + col_width) - rx
+        rh = to_sy(s["bottom"]) - ry
+        cell_id = f"cell_{pi}_{c}"
+        paper_lines = "<br>".join(html_mod.escape(p) for p in top_papers.get((period, c), ["(no papers)"]))
+        cluster_name = html_mod.escape(cluster_labels.get(c, f"Cluster {c}"))
+        # Build tooltip HTML, then escape quotes for embedding in attribute
+        tooltip_inner = (f'<b>{period} — {cluster_name}</b><br>'
+                         f'<b>{s["count"]} publications</b><br><br>'
+                         f'{paper_lines}')
+        tooltip_attr = tooltip_inner.replace('"', '&quot;')
+        svg_parts.append(
+            f'<rect x="{rx:.1f}" y="{ry:.1f}" width="{rw:.1f}" height="{rh:.1f}" '
+            f'fill="{rgba(c)}" stroke="white" stroke-width="0.5" '
+            f'class="cell" data-tooltip="{tooltip_attr}" '
+            f'style="cursor:pointer"/>'
+        )
+        # Count label
+        if s["height"] > 0.04:
+            tx = to_sx(x)
+            ty = to_sy(s["bottom"] + s["height"] / 2)
+            svg_parts.append(
+                f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" '
+                f'dominant-baseline="central" font-size="12" font-weight="bold" '
+                f'fill="black" pointer-events="none">{s["count"]}</text>'
+            )
+
+# Period labels
+for pi, period in enumerate(period_labels):
+    tx = to_sx(x_positions[pi])
+    svg_parts.append(f'<text x="{tx:.1f}" y="{svg_h - 18}" text-anchor="middle" '
+                     f'font-size="14" font-weight="bold">{period}</text>')
+
+# Legend labels next to last column
+for c in range(n_clusters):
+    if c not in last_stacks:
+        continue
+    s = last_stacks[c]
+    if s["height"] <= 0:
+        continue
+    label_lines = cluster_labels.get(c, f"Cluster {c}").split(" / ")
+    base_y = to_sy(s["bottom"] + s["height"] / 2)
+    lx = to_sx(x_positions[-1] + col_width) + 12
+    # Vertically center the multi-line label
+    line_h = 17
+    start_y = base_y - (len(label_lines) - 1) * line_h / 2
+    for li, line in enumerate(label_lines):
+        svg_parts.append(
+            f'<text x="{lx:.1f}" y="{start_y + li * line_h:.1f}" '
+            f'font-size="12" fill="{rgb_dark(c)}" dominant-baseline="central">'
+            f'{html_mod.escape(line)}</text>'
+        )
+
+svg_parts.append('</svg>')
+
+# Build full HTML with tooltip logic
+html_content = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Fig 2 – Alluvial (interactive)</title>
+<style>
+body {{ margin: 20px; font-family: sans-serif; background: #fafafa; }}
+#container {{ position: relative; display: inline-block; }}
+#tooltip {{
+  display: none; position: absolute; pointer-events: none;
+  background: white; border: 1px solid #ccc; border-radius: 6px;
+  padding: 14px 18px; font-size: 13px; line-height: 1.5;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.15); max-width: 520px; z-index: 10;
+}}
+.cell:hover {{ filter: brightness(0.9); }}
+</style>
+</head><body>
+<div id="container">
+{''.join(svg_parts)}
+<div id="tooltip"></div>
+</div>
+<script>
+const tooltip = document.getElementById('tooltip');
+document.querySelectorAll('.cell').forEach(el => {{
+  el.addEventListener('mouseenter', e => {{
+    tooltip.innerHTML = el.dataset.tooltip;
+    tooltip.style.display = 'block';
+  }});
+  el.addEventListener('mousemove', e => {{
+    const box = document.getElementById('container').getBoundingClientRect();
+    let left = e.clientX - box.left + 15;
+    let top = e.clientY - box.top + 10;
+    if (left + 300 > box.width) left = e.clientX - box.left - 320;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+  }});
+  el.addEventListener('mouseleave', () => {{ tooltip.style.display = 'none'; }});
+}});
+</script>
+</body></html>"""
+
+html_path = os.path.join(FIGURES_DIR, "fig2_alluvial.html")
+with open(html_path, "w") as f:
+    f.write(html_content)
+print(f"Saved interactive version → figures/fig2_alluvial.html")
+
+
+# ============================================================
 # Robustness: k-sensitivity analysis
 # ============================================================
 
