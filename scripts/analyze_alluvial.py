@@ -510,7 +510,13 @@ for yr, label in COP_EVENTS.items():
                 label, ha="center", va="top", fontsize=7, color="grey",
                 rotation=0)
 
-ax.axhline(1.5, color="black", linestyle=":", alpha=0.3, label="z = 1.5 threshold")
+# Significance bands
+ax.axhspan(-1.5, 1.5, alpha=0.08, color="grey", zorder=0)  # non-significant zone
+ax.axhline(1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
+ax.axhline(2.0, color="black", linestyle="--", alpha=0.4, linewidth=0.8)
+ax.axhline(-1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
+ax.text(2024.3, 1.5, "z=1.5", fontsize=7, va="center", color="black", alpha=0.5)
+ax.text(2024.3, 2.0, "z=2.0", fontsize=7, va="center", color="black", alpha=0.5)
 ax.set_xlabel("Year", fontsize=11)
 ax.set_ylabel("Z-scored JS divergence", fontsize=11)
 ax.set_title("Structural break detection: embedding-based cluster redistribution over time",
@@ -731,6 +737,7 @@ if n_A >= 5 and n_B >= 5:
         ngram_range=(1, 2),
         min_df=3,
         max_df=0.9,
+        sublinear_tf=True,
     )
     X = vectorizer.fit_transform(texts_A + texts_B)
     feature_names = np.array(vectorizer.get_feature_names_out())
@@ -739,9 +746,54 @@ if n_A >= 5 and n_B >= 5:
     mean_B = np.asarray(X[n_A:].mean(axis=0)).flatten()
     diff = mean_B - mean_A
 
-    # Top 25 terms enriched in each period
-    idx_top_B = np.argsort(diff)[-25:][::-1]
-    idx_top_A = np.argsort(diff)[:25]
+    # --- Denoising: require minimum document frequency within enriched period ---
+    # For each term, count how many docs in period A / B contain it
+    X_A = X[:n_A]
+    X_B = X[n_A:]
+    doc_freq_A = np.asarray((X_A > 0).sum(axis=0)).flatten()
+    doc_freq_B = np.asarray((X_B > 0).sum(axis=0)).flatten()
+
+    MIN_PERIOD_DF = 3  # term must appear in ≥3 docs within its enriched period
+
+    # Extra stop words: generic English words not in sklearn's stop list that
+    # surface as noise in the small pre-2009 corpus (41 abstracts)
+    EXTRA_STOPS = {"mid", "vol", "hope", "gives", "new", "use", "used", "using"}
+
+    def is_clean_term(term):
+        """Filter out noise: numbers, very short tokens, extra stop words."""
+        tokens = term.split()
+        # Reject single-char or two-char unigrams
+        if len(tokens) == 1 and len(tokens[0]) < 3:
+            return False
+        # Reject purely numeric terms
+        if all(t.isdigit() for t in tokens):
+            return False
+        # Reject extra stop words (as unigrams or bigram components)
+        if len(tokens) == 1 and tokens[0] in EXTRA_STOPS:
+            return False
+        return True
+
+    # Build mask: term passes if (a) clean token AND (b) sufficient df in enriched period
+    valid_mask = np.zeros(len(feature_names), dtype=bool)
+    for i, term in enumerate(feature_names):
+        if not is_clean_term(term):
+            continue
+        if diff[i] < 0 and doc_freq_A[i] >= MIN_PERIOD_DF:
+            valid_mask[i] = True
+        elif diff[i] > 0 and doc_freq_B[i] >= MIN_PERIOD_DF:
+            valid_mask[i] = True
+        elif diff[i] == 0:
+            valid_mask[i] = True
+
+    n_filtered = (~valid_mask).sum()
+    print(f"Denoising: filtered {n_filtered}/{len(feature_names)} terms "
+          f"(min {MIN_PERIOD_DF} docs in enriched period, {len(EXTRA_STOPS)} extra stop words)")
+
+    # Apply mask to get clean top terms
+    valid_indices = np.where(valid_mask)[0]
+    diff_clean = diff[valid_mask]
+    idx_top_B = valid_indices[np.argsort(diff_clean)[-25:][::-1]]
+    idx_top_A = valid_indices[np.argsort(diff_clean)[:25]]
 
     print(f"\nTop 25 terms enriched AFTER 2009 (period B):")
     for i in idx_top_B:
@@ -751,47 +803,170 @@ if n_A >= 5 and n_B >= 5:
     for i in idx_top_A:
         print(f"  {diff[i]:.4f}  {feature_names[i]}")
 
-    # Save full table
+    # Save full table (with doc freq and clean flag for transparency)
     tfidf_df = pd.DataFrame({
         "term": feature_names,
         "mean_tfidf_before": mean_A,
         "mean_tfidf_after": mean_B,
         "diff": diff,
+        "doc_freq_before": doc_freq_A.astype(int),
+        "doc_freq_after": doc_freq_B.astype(int),
+        "clean": valid_mask,
     }).sort_values("diff", ascending=False)
     tfidf_df.to_csv(os.path.join(TABLES_DIR, "tab2_lexical_tfidf.csv"), index=False)
-    print(f"\nSaved TF-IDF table → tables/tab2_lexical_tfidf.csv ({len(tfidf_df)} terms)")
+    print(f"\nSaved TF-IDF table → tables/tab2_lexical_tfidf.csv "
+          f"({valid_mask.sum()} clean / {len(tfidf_df)} total terms)")
 
-    # --- Horizontal bar chart ---
-    n_show = 25
-    top_after = tfidf_df.head(n_show).copy()
-    top_before = tfidf_df.tail(n_show).copy()
-    plot_df = pd.concat([top_before.iloc[::-1], top_after])
+    # --- Reusable TF-IDF bar chart function ---
+    def plot_tfidf_bars(df_works, break_year, window_after=3, n_show=20,
+                        suffix="", extra_stops=EXTRA_STOPS, xlim=None):
+        """Compare vocabulary before vs after a break year.
 
-    fig, ax = plt.subplots(figsize=(10, 12))
-    colors = ["#457B9D" if d < 0 else "#E63946" for d in plot_df["diff"]]
-    y_pos = range(len(plot_df))
-    ax.barh(y_pos, plot_df["diff"], color=colors, alpha=0.85)
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(plot_df["term"], fontsize=8)
-    ax.axvline(0, color="black", linewidth=0.8)
-    ax.set_xlabel("ΔTF-IDF (after − before)", fontsize=11)
-    ax.set_title(
-        f"Lexical reorientation around the 2009 structural break\n"
-        f"(before 2009: n={n_A} abstracts, 2010–2012: n={n_B} abstracts)",
-        fontsize=12, pad=15,
-    )
+        Period A: all abstracts before break_year.
+        Period B: abstracts in [break_year+1, break_year+window_after].
+        """
+        mA = df_works["year"] < break_year
+        mB = (df_works["year"] >= break_year + 1) & (df_works["year"] <= break_year + window_after)
+        tA = df_works.loc[mA, "abstract"].dropna().tolist()
+        tB = df_works.loc[mB, "abstract"].dropna().tolist()
+        nA, nB = len(tA), len(tB)
+        if nA < 5 or nB < 5:
+            print(f"  Skipping {break_year}: too few abstracts (A={nA}, B={nB})")
+            return None
 
-    # Add period labels
-    ax.text(ax.get_xlim()[0] * 0.8, len(plot_df) - 2,
-            "← Before 2009", fontsize=10, color="#457B9D", fontweight="bold")
-    ax.text(ax.get_xlim()[1] * 0.3, 2,
-            "After 2009 →", fontsize=10, color="#E63946", fontweight="bold")
+        vec = TfidfVectorizer(
+            stop_words="english", ngram_range=(1, 2),
+            min_df=3, max_df=0.9, sublinear_tf=True,
+        )
+        X = vec.fit_transform(tA + tB)
+        names = np.array(vec.get_feature_names_out())
+        mA_vec = np.asarray(X[:nA].mean(axis=0)).flatten()
+        mB_vec = np.asarray(X[nA:].mean(axis=0)).flatten()
+        d = mB_vec - mA_vec
 
-    plt.tight_layout()
-    fig.savefig(os.path.join(FIGURES_DIR, "fig2_lexical_tfidf.pdf"), dpi=300, bbox_inches="tight")
-    fig.savefig(os.path.join(FIGURES_DIR, "fig2_lexical_tfidf.png"), dpi=150, bbox_inches="tight")
-    print(f"Saved lexical TF-IDF figure → figures/fig2_lexical_tfidf.pdf")
-    plt.close()
+        # Permutation test: significance threshold for |ΔTF-IDF|
+        N_PERM = 1000
+        rng = np.random.RandomState(42)
+        max_abs_diffs = np.zeros(N_PERM)
+        n_total = nA + nB
+        for p in range(N_PERM):
+            perm = rng.permutation(n_total)
+            perm_A = np.asarray(X[perm[:nA]].mean(axis=0)).flatten()
+            perm_B = np.asarray(X[perm[nA:]].mean(axis=0)).flatten()
+            max_abs_diffs[p] = np.max(np.abs(perm_B - perm_A))
+        sig_95 = np.percentile(max_abs_diffs, 95)
+        sig_99 = np.percentile(max_abs_diffs, 99)
+        print(f"  Permutation test ({N_PERM} perm): |ΔTFIDF| threshold "
+              f"p<0.05={sig_95:.4f}, p<0.01={sig_99:.4f}")
+
+        # Denoising
+        dfA = np.asarray((X[:nA] > 0).sum(axis=0)).flatten()
+        dfB = np.asarray((X[nA:] > 0).sum(axis=0)).flatten()
+        ok = np.zeros(len(names), dtype=bool)
+        for i, t in enumerate(names):
+            toks = t.split()
+            if len(toks) == 1 and len(toks[0]) < 3:
+                continue
+            if all(tok.isdigit() for tok in toks):
+                continue
+            if len(toks) == 1 and toks[0] in extra_stops:
+                continue
+            if d[i] < 0 and dfA[i] >= MIN_PERIOD_DF:
+                ok[i] = True
+            elif d[i] > 0 and dfB[i] >= MIN_PERIOD_DF:
+                ok[i] = True
+        clean_idx = np.where(ok)[0]
+        d_clean = d[ok]
+        idx_after = clean_idx[np.argsort(d_clean)[-n_show:][::-1]]
+        idx_before = clean_idx[np.argsort(d_clean)[:n_show]]
+
+        # Build plot data
+        terms = list(names[idx_before][::-1]) + list(names[idx_after])
+        diffs = list(d[idx_before][::-1]) + list(d[idx_after])
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        colors = ["#457B9D" if v < 0 else "#E63946" for v in diffs]
+        y = range(len(terms))
+        ax.barh(y, diffs, color=colors, alpha=0.85)
+        ax.set_yticks(y)
+        ax.set_yticklabels(terms, fontsize=8)
+        ax.axvline(0, color="black", linewidth=0.8)
+
+        # Significance bands from permutation test
+        ax.axvspan(-sig_95, sig_95, alpha=0.08, color="grey", zorder=0)
+        ax.axvline(-sig_95, color="black", linestyle=":", alpha=0.3, linewidth=0.8)
+        ax.axvline(sig_95, color="black", linestyle=":", alpha=0.3, linewidth=0.8)
+        ax.axvline(-sig_99, color="black", linestyle="--", alpha=0.3, linewidth=0.8)
+        ax.axvline(sig_99, color="black", linestyle="--", alpha=0.3, linewidth=0.8)
+        # Label thresholds at top
+        ax.text(sig_95, len(terms) + 0.3, "p<.05", fontsize=7, ha="center",
+                color="black", alpha=0.5)
+        ax.text(sig_99, len(terms) + 0.3, "p<.01", fontsize=7, ha="center",
+                color="black", alpha=0.5)
+        ax.text(-sig_95, len(terms) + 0.3, "p<.05", fontsize=7, ha="center",
+                color="black", alpha=0.5)
+        ax.text(-sig_99, len(terms) + 0.3, "p<.01", fontsize=7, ha="center",
+                color="black", alpha=0.5)
+
+        ax.set_xlabel("ΔTF-IDF (after − before)", fontsize=11)
+        if xlim is not None:
+            ax.set_xlim(xlim)
+
+        # Horizontal separator between the two groups
+        ax.axhline(n_show - 0.5, color="grey", linewidth=0.5, linestyle="--", alpha=0.5)
+
+        # Period labels in the margin (outside bars, using ax.annotate)
+        ax.annotate(f"← Before {break_year}  (n={nA})", xy=(0, 0),
+                    xytext=(0.02, 0.02), textcoords="axes fraction",
+                    fontsize=10, color="#457B9D", fontweight="bold")
+        ax.annotate(f"After {break_year} →  (n={nB})", xy=(0, 1),
+                    xytext=(0.75, 0.97), textcoords="axes fraction",
+                    fontsize=10, color="#E63946", fontweight="bold")
+
+        after_label = f"{break_year+1}–{break_year+window_after}"
+        ax.set_title(
+            f"Lexical comparison around {break_year}\n"
+            f"(before {break_year}: {nA} abstracts, {after_label}: {nB} abstracts)",
+            fontsize=12, pad=15,
+        )
+
+        plt.tight_layout()
+        fname = f"fig2_lexical_tfidf{suffix}"
+        fig.savefig(os.path.join(FIGURES_DIR, f"{fname}.pdf"), dpi=300, bbox_inches="tight")
+        fig.savefig(os.path.join(FIGURES_DIR, f"{fname}.png"), dpi=150, bbox_inches="tight")
+        print(f"  Saved {fname}.pdf  (A={nA}, B={nB})")
+        plt.close()
+        return {"break_year": break_year, "n_before": nA, "n_after": nB,
+                "top_before": list(names[idx_before]),
+                "top_after": list(names[idx_after])}
+
+    # --- Pre-compute global x-axis range across all break years ---
+    break_years = [2009, 2015, 2021]
+    global_max = 0
+    for yr in break_years:
+        mA = df["year"] < yr
+        mB = (df["year"] >= yr + 1) & (df["year"] <= yr + 3)
+        tA = df.loc[mA, "abstract"].dropna().tolist()
+        tB = df.loc[mB, "abstract"].dropna().tolist()
+        if len(tA) < 5 or len(tB) < 5:
+            continue
+        vec = TfidfVectorizer(
+            stop_words="english", ngram_range=(1, 2),
+            min_df=3, max_df=0.9, sublinear_tf=True,
+        )
+        X = vec.fit_transform(tA + tB)
+        mA_v = np.asarray(X[:len(tA)].mean(axis=0)).flatten()
+        mB_v = np.asarray(X[len(tA):].mean(axis=0)).flatten()
+        global_max = max(global_max, np.max(np.abs(mB_v - mA_v)))
+    shared_xlim = (-global_max * 1.15, global_max * 1.15)
+    print(f"  Shared x-axis range: [{shared_xlim[0]:.4f}, {shared_xlim[1]:.4f}]")
+
+    # --- Run for all break years with shared scale ---
+    for yr in break_years:
+        suffix = "" if yr == 2009 else f"_{yr}"
+        print(f"\n  Break year {yr}:")
+        plot_tfidf_bars(df, yr, window_after=3, suffix=suffix, xlim=shared_xlim)
+
 else:
     print("WARNING: Too few abstracts for TF-IDF comparison.")
 
