@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Enrich unified catalog with citation data from Crossref.
 
-For each DOI in unified_works.csv, queries Crossref for:
+For each DOI in refined_works.csv, queries Crossref for:
   - Outgoing references (cited works)
   - is-referenced-by-count (incoming citations)
 
@@ -69,7 +69,7 @@ def main():
     args = parser.parse_args()
 
     # Load unified catalog
-    unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
+    unified_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     if not os.path.exists(unified_path):
         print(f"Unified catalog not found at {unified_path}")
         print("Run catalog_merge.py first.")

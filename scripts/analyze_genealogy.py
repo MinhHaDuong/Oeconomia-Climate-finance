@@ -62,7 +62,7 @@ args = parser.parse_args()
 # ============================================================
 
 print("Loading data...")
-works = pd.read_csv(os.path.join(CATALOGS_DIR, "unified_works.csv"))
+works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 works["cited_by_count"] = pd.to_numeric(works["cited_by_count"], errors="coerce").fillna(0)

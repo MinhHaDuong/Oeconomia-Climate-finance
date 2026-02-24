@@ -43,7 +43,7 @@ cit = cit[~cit["ref_doi"].isin(["nan", "none"])]
 print(f"Citation pairs with DOIs: {len(cit)}")
 
 # Load unified works for metadata lookups
-works = pd.read_csv(os.path.join(CATALOGS_DIR, "unified_works.csv"))
+works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 doi_to_meta = {}
 for _, row in works.iterrows():

@@ -44,6 +44,16 @@ SAFE_TITLE = [
     "sustainable", "adaptation", "mitigation", "renewable", "finance",
     "fund", "investment", "development", "aid", "cdm", "kyoto", "gef",
     "paris agreement", "unfccc", "cop", "redd",
+    # French
+    "climat", "financ", "carbone", "durable",
+    # German
+    "klima", "finanz",
+    # Spanish/Portuguese
+    "climátic", "financ",
+    # Chinese
+    "气候", "金融", "碳", "绿色",
+    # Japanese
+    "グリーン", "ファイナンス", "気候",
 ]
 
 # --- Concept groups for abstract relevance ---
@@ -93,77 +103,91 @@ def title_has_safe_words(title):
 # Phase A: Flag papers
 # ============================================================
 
-def flag_papers(df, citations_df, embeddings, emb_df):
-    """Apply all flagging rules. Returns df with 'flags' column (list of str)."""
+def flag_papers(df, citations_df, embeddings, emb_df, skip_citation_flag=False):
+    """Apply all flagging rules (vectorized). Returns df with 'flags' column."""
     n = len(df)
     flags = [[] for _ in range(n)]
 
-    # Flag 1: Missing metadata
-    for i, row in df.iterrows():
-        missing = []
-        if pd.isna(row["title"]) or str(row["title"]).strip() in ("", "nan"):
-            missing.append("title")
-        if pd.isna(row["first_author"]) or str(row["first_author"]).strip() in ("", "nan"):
-            missing.append("author")
-        if pd.isna(row["year"]) or str(row["year"]).strip() in ("", "nan"):
-            missing.append("year")
-        if missing:
-            flags[i].append(f"missing_metadata:{','.join(missing)}")
-
-    n_flag1 = sum(1 for f in flags if any("missing_metadata" in x for x in f))
-    print(f"  Flag 1 (missing metadata): {n_flag1}")
-
-    # Flag 2: No abstract + title without safe words
-    for i, row in df.iterrows():
-        abstract = str(row.get("abstract", ""))
-        has_abstract = pd.notna(row.get("abstract")) and len(abstract.strip()) > 50
-        if not has_abstract:
-            title = str(row.get("title", ""))
-            if not title_has_safe_words(title):
-                flags[i].append("no_abstract_irrelevant")
-
-    n_flag2 = sum(1 for f in flags if "no_abstract_irrelevant" in f)
-    print(f"  Flag 2 (no abstract + irrelevant title): {n_flag2}")
-
-    # Flag 3: Title blacklist
-    for i, row in df.iterrows():
-        title = str(row.get("title", ""))
-        if title_matches_blacklist(title):
-            flags[i].append("title_blacklist")
-
-    n_flag3 = sum(1 for f in flags if "title_blacklist" in f)
-    print(f"  Flag 3 (title blacklist): {n_flag3}")
-
-    # Flag 4: Citation isolation + age (year <= 2019, no internal citations)
-    print("  Computing citation isolation...")
+    # Precompute normalized DOIs early (used by flags 4 & 5)
     df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
-    cited_dois = set()
-    citing_dois = set()
-    if citations_df is not None and len(citations_df) > 0:
-        cited_dois = set(citations_df["ref_doi"].dropna())
-        citing_dois = set(citations_df["source_doi"].dropna())
 
-    corpus_dois = set(df["doi_norm"])
-    for i, row in df.iterrows():
-        yr = pd.to_numeric(row.get("year"), errors="coerce")
-        if pd.isna(yr) or yr > 2019:
-            continue
-        doi = row["doi_norm"]
-        if not doi:
-            continue
-        is_cited = doi in cited_dois
-        is_citing = doi in citing_dois
-        if not is_cited and not is_citing:
+    # Flag 1: Missing metadata (vectorized)
+    # Papers missing title are always flagged. Papers missing only author/year
+    # are only flagged if the title also lacks safe words (to preserve grey
+    # literature and policy documents that are genuinely relevant).
+    title_s = df["title"].fillna("").astype(str).str.strip()
+    author_s = df["first_author"].fillna("").astype(str).str.strip()
+    year_s = df["year"].fillna("").astype(str).str.strip()
+    miss_title = (title_s == "") | (title_s == "nan")
+    miss_author = (author_s == "") | (author_s == "nan")
+    miss_year = (year_s == "") | (year_s == "nan")
+
+    title_lower = title_s.str.lower()
+    safe_pattern = "|".join(re.escape(s) for s in SAFE_TITLE)
+    title_has_safe = title_lower.str.contains(safe_pattern, na=False)
+
+    # Missing title → always flag; missing author/year → only if title lacks safe words
+    flag1_mask = miss_title | ((miss_author | miss_year) & ~title_has_safe)
+
+    for i in flag1_mask[flag1_mask].index:
+        parts = []
+        if miss_title[i]: parts.append("title")
+        if miss_author[i]: parts.append("author")
+        if miss_year[i]: parts.append("year")
+        flags[i].append(f"missing_metadata:{','.join(parts)}")
+
+    print(f"  Flag 1 (missing metadata): {flag1_mask.sum()} "
+          f"(title: {miss_title.sum()}, author-only: {(miss_author & ~miss_title).sum()}, "
+          f"year-only: {(miss_year & ~miss_title & ~miss_author).sum()}, "
+          f"saved by safe title: {((miss_author | miss_year) & ~miss_title & title_has_safe).sum()})")
+
+    # Flag 2: No abstract + title without safe words (vectorized)
+    abstract_s = df["abstract"].fillna("").astype(str).str.strip()
+    has_abstract = abstract_s.str.len() > 50
+    flag2_mask = ~has_abstract & ~title_has_safe
+
+    for i in flag2_mask[flag2_mask].index:
+        flags[i].append("no_abstract_irrelevant")
+
+    print(f"  Flag 2 (no abstract + irrelevant title): {flag2_mask.sum()}")
+
+    # Flag 3: Title blacklist (vectorized)
+    noise_pattern = "|".join(re.escape(n) for n in NOISE_TITLE)
+    title_has_noise = title_lower.str.contains(noise_pattern, na=False)
+    flag3_mask = title_has_noise & ~title_has_safe
+
+    for i in flag3_mask[flag3_mask].index:
+        flags[i].append("title_blacklist")
+
+    print(f"  Flag 3 (title blacklist): {flag3_mask.sum()}")
+
+    # Flag 4: Citation isolation + age (vectorized)
+    if skip_citation_flag:
+        print("  Flag 4: skipped (--skip-citation-flag)")
+    else:
+        print("  Computing citation isolation...")
+        cited_dois = set()
+        citing_dois = set()
+        if citations_df is not None and len(citations_df) > 0:
+            cited_dois = set(citations_df["ref_doi"].dropna())
+            citing_dois = set(citations_df["source_doi"].dropna())
+
+        year_num = pd.to_numeric(df["year"], errors="coerce")
+        is_old = year_num.notna() & (year_num <= 2019)
+        has_doi = df["doi_norm"] != ""
+        is_cited = df["doi_norm"].isin(cited_dois)
+        is_citing = df["doi_norm"].isin(citing_dois)
+        flag4_mask = is_old & has_doi & ~is_cited & ~is_citing
+
+        for i in flag4_mask[flag4_mask].index:
             flags[i].append("citation_isolated_old")
 
-    n_flag4 = sum(1 for f in flags if "citation_isolated_old" in f)
-    print(f"  Flag 4 (citation isolated + old): {n_flag4}")
+        print(f"  Flag 4 (citation isolated + old): {flag4_mask.sum()}")
 
     # Flag 5: Semantic outlier (>2σ from centroid)
     if embeddings is not None and emb_df is not None:
         print("  Computing semantic outliers...")
         centroid = embeddings.mean(axis=0)
-        # Cosine distance from centroid
         norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
         norms[norms == 0] = 1
         normed = embeddings / norms
@@ -175,21 +199,20 @@ def flag_papers(df, citations_df, embeddings, emb_df):
         std_dist = cos_dist.std()
         threshold = mean_dist + 2 * std_dist
 
-        # Map embedding rows to df rows via DOI
-        emb_doi_to_dist = {}
-        for j, row in emb_df.iterrows():
-            doi = normalize_doi(row["doi"]) if pd.notna(row["doi"]) else ""
-            if doi and j < len(cos_dist):
-                emb_doi_to_dist[doi] = cos_dist[j]
+        # Build DOI → distance mapping (vectorized)
+        emb_dois = emb_df["doi"].apply(
+            lambda x: normalize_doi(x) if pd.notna(x) else "")
+        emb_doi_to_dist = dict(zip(emb_dois, cos_dist))
+        emb_doi_to_dist.pop("", None)
 
-        for i, row in df.iterrows():
-            doi = row["doi_norm"]
-            if doi in emb_doi_to_dist:
-                if emb_doi_to_dist[doi] > threshold:
-                    flags[i].append(f"semantic_outlier:{emb_doi_to_dist[doi]:.3f}")
+        # Map to main df
+        outlier_dists = df["doi_norm"].map(emb_doi_to_dist)
+        flag5_mask = outlier_dists.notna() & (outlier_dists > threshold)
 
-        n_flag5 = sum(1 for f in flags if any("semantic_outlier" in x for x in f))
-        print(f"  Flag 5 (semantic outlier >2σ): {n_flag5} "
+        for i in flag5_mask[flag5_mask].index:
+            flags[i].append(f"semantic_outlier:{outlier_dists[i]:.3f}")
+
+        print(f"  Flag 5 (semantic outlier >2σ): {flag5_mask.sum()} "
               f"(threshold: {threshold:.3f}, mean: {mean_dist:.3f}, std: {std_dist:.3f})")
     else:
         print("  Flag 5: skipped (no embeddings)")
@@ -203,37 +226,36 @@ def flag_papers(df, citations_df, embeddings, emb_df):
 # ============================================================
 
 def protect_papers(df, citations_df):
-    """Mark papers as protected. Returns df with 'protected' and 'protect_reason' columns."""
-    protect = [False] * len(df)
+    """Mark papers as protected (vectorized)."""
+    cites = pd.to_numeric(df["cited_by_count"], errors="coerce")
+    sc = pd.to_numeric(df["source_count"], errors="coerce")
+
+    high_cites = cites.notna() & (cites >= 50)
+    multi_src = sc.notna() & (sc >= 2)
+
+    ref_dois = set()
+    if citations_df is not None:
+        ref_dois = set(citations_df["ref_doi"].dropna())
+    cited_in_corpus = df["doi_norm"].isin(ref_dois) & (df["doi_norm"] != "")
+
+    protected = high_cites | multi_src | cited_in_corpus
+
+    # Build reason strings
     reasons = [""] * len(df)
-
-    for i, row in df.iterrows():
+    for i in protected[protected].index:
         r = []
-        # High citations
-        cites = pd.to_numeric(row.get("cited_by_count"), errors="coerce")
-        if pd.notna(cites) and cites >= 50:
-            r.append(f"cited_by={int(cites)}")
+        if high_cites[i]:
+            r.append(f"cited_by={int(cites[i])}")
+        if multi_src[i]:
+            r.append(f"multi_source={int(sc[i])}")
+        if cited_in_corpus[i]:
+            r.append("cited_in_corpus")
+        reasons[i] = "; ".join(r)
 
-        # Multi-source
-        sc = pd.to_numeric(row.get("source_count"), errors="coerce")
-        if pd.notna(sc) and sc >= 2:
-            r.append(f"multi_source={int(sc)}")
-
-        # Cited by other corpus papers
-        doi = row.get("doi_norm", "")
-        if doi and citations_df is not None:
-            if doi in set(citations_df["ref_doi"].dropna()):
-                r.append("cited_in_corpus")
-
-        if r:
-            protect[i] = True
-            reasons[i] = "; ".join(r)
-
-    df["protected"] = protect
+    df["protected"] = protected
     df["protect_reason"] = reasons
 
-    n_protected = sum(protect)
-    print(f"\n  Protected papers: {n_protected}")
+    print(f"\n  Protected papers: {protected.sum()}")
     return df
 
 
@@ -314,7 +336,7 @@ def llm_audit(df, n_sample=50):
         prompt = prompt_template.format(title=title, abstract=abstract)
 
         body = json.dumps({
-            "model": "google/gemini-flash-1.5-8b",
+            "model": "google/gemma-2-27b-it",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 100,
             "temperature": 0,
@@ -476,6 +498,8 @@ def main():
                         help="Apply filter (default: dry run, flag + verify only)")
     parser.add_argument("--skip-llm", action="store_true",
                         help="Skip LLM audit step")
+    parser.add_argument("--skip-citation-flag", action="store_true",
+                        help="Skip citation isolation flag (use when citations are stale)")
     args = parser.parse_args()
 
     print("Loading data...")
@@ -515,7 +539,8 @@ def main():
 
     # Phase A: Flag
     print("\n=== Phase A: Flagging papers ===")
-    df = flag_papers(df, citations_df, embeddings, emb_df)
+    df = flag_papers(df, citations_df, embeddings, emb_df,
+                     skip_citation_flag=args.skip_citation_flag)
 
     # Phase B: Protect
     print("\n=== Phase B: Protecting key papers ===")

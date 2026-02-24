@@ -22,7 +22,7 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 # --- Load data ---
-df = pd.read_csv(os.path.join(CATALOGS_DIR, "unified_works.csv"))
+df = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 df["year"] = pd.to_numeric(df["year"], errors="coerce")
 df = df.dropna(subset=["year"])
 df["year"] = df["year"].astype(int)

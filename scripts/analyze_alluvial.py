@@ -66,7 +66,7 @@ args = parser.parse_args()
 # ============================================================
 
 print("Loading unified works...")
-works = pd.read_csv(os.path.join(CATALOGS_DIR, "unified_works.csv"))
+works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
 # Filter: must have abstract, year in range (matches embedding generation)
