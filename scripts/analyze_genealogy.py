@@ -443,16 +443,17 @@ for d in top_papers:
         zorder=4,
     )
 
-# Legend for lineage bands
-handles = []
+# Legend: right-side labels aligned to lineage bands (same style as alluvial)
 for c in sorted_comms:
-    name = COMMUNITY_NAMES.get(c, f"Community {c}")
+    band = comm_to_band[c]
+    band_center = (band + 0.5) * band_height
+    name = COMMUNITY_NAMES.get(c, f"Cluster {c}")
+    label_text = name.replace(" / ", "\n")
     n = sum(1 for d in backbone_dois if lineage.get(d) == c)
-    handles.append(mpatches.Patch(
-        facecolor=palette[c], label=f"{name} (n={n})"
-    ))
-ax.legend(handles=handles, loc="upper left", fontsize=7, framealpha=0.9,
-          title="Intellectual lineages", title_fontsize=8)
+    label_text += f"\n(n={n})"
+    ax.text(1.02, band_center, label_text, ha="left", va="center",
+            fontsize=5.5, linespacing=1.3, color=palette[c] * 0.6,
+            transform=ax.transData)
 
 # Year axis
 year_ticks = list(range(int(year_min) - int(year_min) % 5, int(year_max) + 5, 5))
@@ -461,7 +462,7 @@ for yr in year_ticks:
     if 0 <= x <= 1:
         ax.text(x, -0.02, str(yr), ha="center", va="top", fontsize=7, color="grey")
 
-ax.set_xlim(-0.02, 1.05)
+ax.set_xlim(-0.02, 1.28)
 ax.set_ylim(-0.05, 1.05)
 
 n_backbone = len(backbone_dois)
