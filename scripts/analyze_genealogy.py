@@ -4,11 +4,10 @@ Visualizes the citation DAG constrained by community structure, with papers
 positioned by year (x-axis) and lineage band (y-axis).
 
 Produces:
-- figures/fig3_genealogy.pdf: Default 200-node genealogy
+- figures/fig3_genealogy.pdf: Citation genealogy (~500+ papers)
 - tables/tab3_lineages.csv: Lineage assignments for backbone papers
 
 Options:
-  --nodes 50/200/500  Number of backbone papers (default 200)
   --robustness        Louvain resolution sensitivity (R3)
 """
 
@@ -54,8 +53,6 @@ PERIOD_COLORS = ["#f0f0f0", "#e8e8e8", "#f0f0f0", "#e8e8e8"]
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Citation genealogy figure")
-parser.add_argument("--nodes", type=int, default=200, choices=[50, 200, 500],
-                    help="Number of backbone papers")
 parser.add_argument("--robustness", action="store_true",
                     help="Run Louvain resolution sensitivity (R3)")
 args = parser.parse_args()
@@ -139,24 +136,13 @@ COMMUNITY_NAMES = {
 # Step 2: Select backbone papers
 # ============================================================
 
-print(f"\nSelecting backbone ({args.nodes} nodes)...")
+print("\nSelecting backbone (cited_by_count >= 20 + community papers)...")
 
-if args.nodes == 200:
-    # Use the 200 papers from communities.csv directly
-    backbone_dois = set(comm_df["doi_norm"])
-
-elif args.nodes == 50:
-    # Top 50 by citation count among the 200 community papers
-    comm_sorted = comm_df.sort_values("citations", ascending=False)
-    backbone_dois = set(comm_sorted.head(50)["doi_norm"])
-
-elif args.nodes == 500:
-    # All papers with cited_by_count >= 20 and abstracts
-    has_abs = works["abstract"].notna() & (works["abstract"].str.len() > 50)
-    high_cited = works[has_abs & (works["cited_by_count"] >= 20)]
-    backbone_dois = set(high_cited["doi_norm"])
-    # Ensure all 200 community papers are included
-    backbone_dois.update(comm_df["doi_norm"])
+# All papers with cited_by_count >= 20 and abstracts, plus all 200 community papers
+has_abs = works["abstract"].notna() & (works["abstract"].str.len() > 50)
+high_cited = works[has_abs & (works["cited_by_count"] >= 20)]
+backbone_dois = set(high_cited["doi_norm"])
+backbone_dois.update(comm_df["doi_norm"])
 
 # Filter to papers with valid year
 backbone_dois = {d for d in backbone_dois
@@ -170,8 +156,8 @@ print(f"Backbone papers (with valid year): {len(backbone_dois)}")
 # Step 3: Assign lineages (Louvain communities)
 # ============================================================
 
-# For 200/50: use existing community assignments
-# For 500: assign extras to nearest Louvain community centroid in embedding space
+# Assign lineages: use existing Louvain communities for the 200,
+# nearest centroid in embedding space for the rest.
 
 lineage = {}  # doi -> community_id
 peripheral = set()  # dois marked as peripheral
@@ -180,9 +166,9 @@ for d in backbone_dois:
     if d in doi_to_community:
         lineage[d] = doi_to_community[d]
 
-if args.nodes == 500:
-    # Load embeddings for centroid assignment
-    print("Loading embeddings for 500-node lineage assignment...")
+# Load embeddings for centroid assignment of extra papers
+if True:
+    print("Loading embeddings for lineage assignment...")
     emb_works = works[works["abstract"].notna() & (works["abstract"].str.len() > 50)].copy()
     emb_works = emb_works[(emb_works["year"] >= 1990) & (emb_works["year"] <= 2025)].reset_index(drop=True)
     embeddings = np.load(EMBEDDINGS_PATH)
@@ -338,9 +324,7 @@ matplotlib.rcParams['font.size'] = 8
 
 palette = plt.cm.Set2(np.linspace(0, 1, max(n_communities, 3)))
 
-figw = 16 if args.nodes >= 200 else 14
-figh = 10 if args.nodes >= 200 else 8
-fig, ax = plt.subplots(figsize=(figw, figh))
+fig, ax = plt.subplots(figsize=(16, 10))
 
 # Period bands
 for i in range(len(PERIOD_BOUNDS) - 1):
@@ -425,7 +409,7 @@ for d in backbone_dois:
                edgecolors="white", linewidths=0.3, zorder=3)
 
 # Labels for top papers
-n_labels = 40 if args.nodes >= 200 else 20
+n_labels = 40
 top_papers = sorted(backbone_dois,
                     key=lambda d: doi_meta.get(d, {}).get("cited_by_count", 0),
                     reverse=True)[:n_labels]
@@ -487,19 +471,19 @@ for yr in year_ticks:
 ax.set_xlim(-0.02, 1.05)
 ax.set_ylim(-0.05, 1.05)
 
-node_suffix = f"_{args.nodes}" if args.nodes != 200 else ""
+n_backbone = len(backbone_dois)
 ax.set_title(
-    f"Citation genealogy of climate finance intellectual communities ({args.nodes} papers)\n"
+    f"Citation genealogy of climate finance intellectual communities ({n_backbone} papers)\n"
     "Node size ∝ √citations, cross-lineage arcs in red",
     fontsize=12, pad=20,
 )
 ax.axis("off")
 
 plt.tight_layout()
-fig_path = os.path.join(FIGURES_DIR, f"fig3_genealogy{node_suffix}")
+fig_path = os.path.join(FIGURES_DIR, "fig3_genealogy")
 fig.savefig(f"{fig_path}.pdf", dpi=300, bbox_inches="tight")
 fig.savefig(f"{fig_path}.png", dpi=150, bbox_inches="tight")
-print(f"\nSaved Figure 3 → figures/fig3_genealogy{node_suffix}.pdf")
+print(f"\nSaved Figure 3 → figures/fig3_genealogy.pdf")
 plt.close()
 
 
