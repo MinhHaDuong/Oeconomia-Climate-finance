@@ -16,6 +16,9 @@ dependencies = [
     "matplotlib",
     "seaborn",
     "scikit-learn",
+    "beautifulsoup4",
+    "pdfplumber",
+    "ddgs",
 ]
 
 [[tool.uv.index]]
