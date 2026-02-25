@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, WORKS_COLUMNS, normalize_doi,
                    normalize_title, save_csv)
 
-SOURCE_PRIORITY = ["openalex", "openalex_historical", "scopus", "istex", "jstor", "bibcnrs", "scispsace", "grey"]
+SOURCE_PRIORITY = ["openalex", "openalex_historical", "scopus", "istex", "jstor", "bibcnrs", "scispsace", "grey", "teaching"]
 
 
 def pick_best(group, col):
@@ -62,7 +62,8 @@ def main():
     # Find all source catalogs
     pattern = os.path.join(CATALOGS_DIR, "*_works.csv")
     files = sorted(glob.glob(pattern))
-    files = [f for f in files if "unified" not in os.path.basename(f)]
+    files = [f for f in files if "unified" not in os.path.basename(f)
+             and "refined" not in os.path.basename(f)]
 
     if not files:
         print("No catalog files found in data/catalogs/")

@@ -225,6 +225,21 @@ def flag_papers(df, citations_df, embeddings, emb_df, skip_citation_flag=False):
 # Phase B: Protect key papers
 # ============================================================
 
+def load_teaching_canon():
+    """Load teaching canon DOIs (papers used in 2+ syllabi)."""
+    canon_path = os.path.join(CATALOGS_DIR, "teaching_canon.csv")
+    if not os.path.exists(canon_path):
+        return set()
+    canon_df = pd.read_csv(canon_path, dtype=str, keep_default_na=False)
+    canon_df = canon_df[pd.to_numeric(canon_df["teaching_count"], errors="coerce") >= 2]
+    dois = set()
+    for d in canon_df["doi"]:
+        nd = normalize_doi(d)
+        if nd:
+            dois.add(nd)
+    return dois
+
+
 def protect_papers(df, citations_df):
     """Mark papers as protected (vectorized)."""
     cites = pd.to_numeric(df["cited_by_count"], errors="coerce")
@@ -238,7 +253,13 @@ def protect_papers(df, citations_df):
         ref_dois = set(citations_df["ref_doi"].dropna())
     cited_in_corpus = df["doi_norm"].isin(ref_dois) & (df["doi_norm"] != "")
 
-    protected = high_cites | multi_src | cited_in_corpus
+    # Teaching canon protection: papers in 2+ syllabi
+    teaching_dois = load_teaching_canon()
+    in_teaching_canon = df["doi_norm"].isin(teaching_dois) & (df["doi_norm"] != "")
+    if in_teaching_canon.any():
+        print(f"  Teaching canon papers: {in_teaching_canon.sum()}")
+
+    protected = high_cites | multi_src | cited_in_corpus | in_teaching_canon
 
     # Build reason strings
     reasons = [""] * len(df)
@@ -250,6 +271,8 @@ def protect_papers(df, citations_df):
             r.append(f"multi_source={int(sc[i])}")
         if cited_in_corpus[i]:
             r.append("cited_in_corpus")
+        if in_teaching_canon[i]:
+            r.append("teaching_canon")
         reasons[i] = "; ".join(r)
 
     df["protected"] = protected
