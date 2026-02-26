@@ -1,7 +1,8 @@
 # AI Agent Guidelines for Climate Finance History Project
 
-See `README.md` for project overview, current status, research corpus, and theoretical framework.
-See `PLAN.md` for the manuscript action plan (structure, word budgets, figures).
+See `CLAUDE.md` for data paths, current state, and next implementation tasks.
+See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
+See `method.md` for the detailed computational analysis plan.
 See `notes.md` for working notes and the original detailed outline.
 
 ## Writing Guidelines
@@ -20,10 +21,16 @@ See `notes.md` for working notes and the original detailed outline.
 - Track evolution of key terms across time
 
 ### Data Analysis
-The ISTEX corpus can be used for:
-- Bibliometric analysis (frequency of terms, co-citation networks)
+The full corpus (~22,000 works from OpenAlex + ISTEX + Scopus + grey lit) supports:
+- Bibliometric analysis (publication volume, co-citation networks, community detection)
+- Embedding-based analysis (structural breaks, semantic clustering, bimodality)
+- Lexical analysis (TF-IDF validation, term emergence)
 - Discourse analysis (how "climate finance" is defined across time)
-- Author network analysis (who are the key scholars/practitioners?)
+
+The three-act periodization is **data-driven** (endogenous break detection), not imposed from COP milestones:
+- I. Before climate finance (1990–2006)
+- II. Crystallization (2007–2014) — breaks at 2007 and 2013
+- III. The established field (2015–2025) — no further breaks
 
 ### Citation Practices
 - This is a history paper: cite primary sources with dates
