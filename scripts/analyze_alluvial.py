@@ -47,7 +47,7 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
 
-# COP events (from analyze_temporal.py)
+# COP events for annotation
 COP_EVENTS = {
     1992: "Rio",
     1997: "Kyoto",

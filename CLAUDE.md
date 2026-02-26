@@ -28,7 +28,6 @@ Key data files (all in `$DATA/catalogs/`):
 | `semantic_clusters.csv` | KMeans k=6 cluster assignments | `analyze_alluvial.py` |
 | `communities.csv` | Louvain co-citation communities (~200 papers) | `analyze_cocitation.py` |
 | `citations.csv` | Citation pairs (source_doi → ref_doi) — stale, 12K corpus | `enrich_citations.py` |
-| `openalex_economics_baselines.json` | Economics baseline counts from OpenAlex API | `analyze_temporal.py` |
 | `openalex_econ_yearly.csv` | Economics yearly counts + CF numerator | `count_openalex_econ_cf.py` |
 | `openalex_finance_yearly.csv` | Finance yearly counts + CF numerator | `count_openalex_econ_cf.py --scope finance` |
 | `openalex_econ_fin_overlap.csv` | Econ/Finance CF overlap (ID-level sets) | `count_openalex_econ_fin_overlap.py` |
@@ -95,7 +94,6 @@ uv run python scripts/count_repec_econ_cf.py                     # RePEc yearly 
 # Figures
 uv run python scripts/plot_fig1_emergence.py     # Fig 1 (reads openalex_econ_yearly.csv)
 uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + overlap CSVs)
-uv run python scripts/analyze_temporal.py        # Fig 1 legacy (reads refined_works.csv + API)
 uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c

@@ -1,133 +1,104 @@
 #!/usr/bin/env python3
 """Build harmonized yearly panel for economics and climate-finance counts.
 
-Runs:
-1) OpenAlex yearly counting
-2) RePEc yearly counting (from local ReDIF files)
-3) Merge both into one panel
+Orchestrates:
+1) count_openalex_econ_cf.py --scope economics
+2) count_openalex_econ_cf.py --scope finance
+3) count_openalex_econ_fin_overlap.py
+4) count_repec_econ_cf.py (if RePEc mirror exists)
+
+Then merges OpenAlex + RePEc into one panel CSV.
 
 Outputs:
 - $DATA/catalogs/openalex_econ_yearly.csv
+- $DATA/catalogs/openalex_finance_yearly.csv
+- $DATA/catalogs/openalex_econ_fin_overlap.csv
 - $DATA/catalogs/repec_econ_yearly.csv
 - $DATA/catalogs/econ_cf_yearly_panel.csv
 
 Usage:
-    uv run python scripts/build_econ_cf_panel.py --repec-root ~/data/repec/RePEc
+    uv run python scripts/build_econ_cf_panel.py
 """
 
 import argparse
 import os
+import subprocess
+import sys
 
 import pandas as pd
 
-import sys
 sys.path.insert(0, os.path.dirname(__file__))
-from count_openalex_econ_cf import fetch_climate_finance_by_year, fetch_economics_by_year
-from count_repec_econ_cf import count_repec_yearly
 from utils import CATALOGS_DIR, save_csv
 
-YEAR_MIN = 1990
-YEAR_MAX = 2025
+SCRIPTS_DIR = os.path.dirname(__file__)
 DEFAULT_REPEC_ROOT = os.path.expanduser(
     os.environ.get("REPEC_ROOT", "~/data/datasets/external/RePEc")
 )
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Build OpenAlex+RePEc economics/climate-finance panel")
+    parser = argparse.ArgumentParser(
+        description="Build OpenAlex+RePEc economics/climate-finance panel")
     parser.add_argument("--delay", type=float, default=0.4,
                         help="OpenAlex API delay in seconds")
-    parser.add_argument("--types", type=str, default="",
-                        help="Optional comma-separated OpenAlex types")
-    parser.add_argument(
-        "--repec-root",
-        type=str,
-        default=DEFAULT_REPEC_ROOT,
-        help="Path to local RePEc ReDIF root (passed to count_repec_econ_cf.py)",
-    )
-    parser.add_argument(
-        "--repec-templates",
-        type=str,
-        default="ReDIF-Article,ReDIF-Paper,ReDIF-Book,ReDIF-Chapter",
-        help="Comma-separated ReDIF templates to include",
-    )
-    parser.add_argument(
-        "--panel-out",
-        type=str,
-        default=os.path.join(CATALOGS_DIR, "econ_cf_yearly_panel.csv"),
-        help="Output merged panel CSV",
-    )
+    parser.add_argument("--repec-root", type=str, default=DEFAULT_REPEC_ROOT,
+                        help="Path to local RePEc ReDIF root")
+    parser.add_argument("--skip-repec", action="store_true",
+                        help="Skip RePEc counting (e.g. if mirror unavailable)")
+    parser.add_argument("--panel-out", type=str,
+                        default=os.path.join(CATALOGS_DIR, "econ_cf_yearly_panel.csv"),
+                        help="Output merged panel CSV")
     return parser.parse_args()
 
 
-def build_type_filter(types_arg):
-    if not types_arg.strip():
-        return ""
-    parts = [t.strip() for t in types_arg.split(",") if t.strip()]
-    if not parts:
-        return ""
-    return ",type:" + "|".join(parts)
-
-
-def run_openalex(delay, types_arg):
-    type_filter = build_type_filter(types_arg)
-    denom = fetch_economics_by_year(delay=delay, type_filter=type_filter)
-    numer = fetch_climate_finance_by_year(delay=delay, type_filter=type_filter)
-
-    rows = []
-    for year in range(YEAR_MIN, YEAR_MAX + 1):
-        n_econ = int(denom.get(year, 0))
-        n_title = int(numer.get(year, {}).get("n_climate_finance_title", 0))
-        n_abstract = int(numer.get(year, {}).get("n_climate_finance_abstract", 0))
-        n_union = int(numer.get(year, {}).get("n_climate_finance_union", 0))
-        share = (n_union / n_econ) if n_econ else 0.0
-
-        rows.append({
-            "source": "openalex",
-            "year": year,
-            "n_economics": n_econ,
-            "n_climate_finance_title": n_title,
-            "n_climate_finance_abstract": n_abstract,
-            "n_climate_finance": n_union,
-            "share_climate_finance": share,
-            "types_filter": types_arg.strip(),
-        })
-
-    out = pd.DataFrame(rows)
-    save_csv(out, os.path.join(CATALOGS_DIR, "openalex_econ_yearly.csv"))
-    return out
-
-
-def run_repec(repec_root, templates):
-    resolved_root = repec_root.strip()
-    out = count_repec_yearly(repec_root=resolved_root, include_templates=templates)
-    save_csv(out, os.path.join(CATALOGS_DIR, "repec_econ_yearly.csv"))
-    return out
-
-
-def merge_panel(openalex_df, repec_df):
-    panel = pd.concat([openalex_df, repec_df], ignore_index=True)
-    panel = panel.sort_values(["source", "year"]).reset_index(drop=True)
-    return panel
+def run_script(script_name, extra_args=None):
+    cmd = [sys.executable, os.path.join(SCRIPTS_DIR, script_name)]
+    if extra_args:
+        cmd.extend(extra_args)
+    print(f"  Running: {' '.join(cmd)}")
+    subprocess.check_call(cmd)
 
 
 def main():
     args = parse_args()
+    delay = str(args.delay)
 
-    print("[1/3] Building OpenAlex yearly counts")
-    openalex_df = run_openalex(delay=args.delay, types_arg=args.types)
+    print("[1/4] OpenAlex economics yearly counts")
+    run_script("count_openalex_econ_cf.py", ["--scope", "economics", "--delay", delay])
 
-    print("[2/3] Building RePEc yearly counts")
-    repec_df = run_repec(repec_root=args.repec_root, templates=args.repec_templates)
+    print("[2/4] OpenAlex finance yearly counts")
+    run_script("count_openalex_econ_cf.py", ["--scope", "finance", "--delay", delay])
 
-    print("[3/3] Merging panel")
-    panel = merge_panel(openalex_df, repec_df)
-    save_csv(panel, args.panel_out)
+    print("[3/4] Econ/Finance overlap (ID-level sets)")
+    run_script("count_openalex_econ_fin_overlap.py", ["--delay", delay])
+
+    if args.skip_repec:
+        print("[4/4] Skipping RePEc (--skip-repec)")
+    elif not os.path.isdir(args.repec_root):
+        print(f"[4/4] Skipping RePEc (mirror not found at {args.repec_root})")
+    else:
+        print("[4/4] RePEc yearly counts")
+        run_script("count_repec_econ_cf.py", ["--repec-root", args.repec_root])
+
+    # Merge into panel
+    p_econ = os.path.join(CATALOGS_DIR, "openalex_econ_yearly.csv")
+    p_repec = os.path.join(CATALOGS_DIR, "repec_econ_yearly.csv")
+
+    frames = []
+    if os.path.exists(p_econ):
+        frames.append(pd.read_csv(p_econ))
+    if os.path.exists(p_repec):
+        frames.append(pd.read_csv(p_repec))
+
+    if frames:
+        panel = pd.concat(frames, ignore_index=True).sort_values(
+            ["source", "year"]).reset_index(drop=True)
+        save_csv(panel, args.panel_out)
+        print(f"Panel: {len(panel)} rows, sources: {sorted(panel['source'].unique())}")
+    else:
+        print("No data to merge.")
 
     print("Done.")
-    print(f"  Panel rows: {len(panel)}")
-    print(f"  Sources: {', '.join(sorted(panel['source'].unique()))}")
-    print(f"  Years: {panel['year'].min()}–{panel['year'].max()}")
 
 
 if __name__ == "__main__":
