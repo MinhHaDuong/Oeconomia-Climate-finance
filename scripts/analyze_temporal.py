@@ -2,14 +2,17 @@
 
 Produces:
 - figures/fig1_emergence.pdf: Publication timeline with COP event annotations
+  and baseline comparisons (all science, climate change literature)
 - tables/tab1_terms.csv: First appearance and growth of key concepts in abstracts
 """
 
+import json
 import os
 import re
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -48,12 +51,59 @@ events = {
     2024: "Baku\nNCQG $300bn",
 }
 
+# Load baselines (OpenAlex: all science + climate change literature)
+baselines_path = os.path.join(CATALOGS_DIR, "openalex_baselines.json")
+has_baselines = os.path.exists(baselines_path)
+if has_baselines:
+    with open(baselines_path) as f:
+        baselines = json.load(f)
+    all_science = {int(k): v for k, v in baselines["all_science"].items()}
+    climate_change = {int(k): v for k, v in baselines["climate_change"].items()}
+
 # Style
 sns.set_style("whitegrid")
 fig, ax = plt.subplots(figsize=(12, 5))
 
-# Bar chart
-bars = ax.bar(counts.index, counts.values, color="#4C72B0", alpha=0.85, width=0.8)
+# Bar chart (climate finance corpus)
+bars = ax.bar(counts.index, counts.values, color="#4C72B0", alpha=0.85, width=0.8,
+              label="Climate finance corpus", zorder=3)
+
+# Baseline lines on secondary y-axis (indexed: 2000 = 100)
+if has_baselines:
+    ax2 = ax.twinx()
+    years = list(range(1990, 2026))
+
+    # Index all three series to base year 2000 = 100
+    base_year = 2000
+    sci_raw = np.array([all_science.get(yr, 0) for yr in years], dtype=float)
+    cc_raw = np.array([climate_change.get(yr, 0) for yr in years], dtype=float)
+    cf_raw = np.array([counts.get(yr, 0) for yr in years], dtype=float)
+
+    sci_base = sci_raw[years.index(base_year)] or 1
+    cc_base = cc_raw[years.index(base_year)] or 1
+    cf_base = cf_raw[years.index(base_year)] or 1
+
+    sci_idx = sci_raw / sci_base * 100
+    cc_idx = cc_raw / cc_base * 100
+    cf_idx = cf_raw / cf_base * 100
+
+    ax2.plot(years, sci_idx, color="#E07B39", linewidth=2, linestyle="--",
+             alpha=0.8, label="All science (indexed)", zorder=2)
+    ax2.plot(years, cc_idx, color="#55A868", linewidth=2, linestyle="-.",
+             alpha=0.8, label="Climate change lit. (indexed)", zorder=2)
+    ax2.plot(years, cf_idx, color="#4C72B0", linewidth=1.5, linestyle="-",
+             alpha=0.6, label="Climate finance (indexed)", zorder=2)
+
+    ax2.set_ylabel("Index (2000 = 100)", fontsize=10, color="grey")
+    ax2.tick_params(axis="y", labelcolor="grey", labelsize=9)
+    ax2.spines["right"].set_color("grey")
+    ax2.spines["right"].set_alpha(0.5)
+
+    # Combined legend
+    lines1, labels1 = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax.legend(lines1 + lines2, labels1 + labels2, loc="upper left",
+              fontsize=8.5, framealpha=0.9)
 
 # Annotate events
 for yr, label in events.items():
@@ -71,7 +121,7 @@ for yr, label in events.items():
     )
 
 ax.set_xlabel("Year", fontsize=11)
-ax.set_ylabel("Number of publications", fontsize=11)
+ax.set_ylabel("Climate finance publications", fontsize=11)
 ax.set_title(
     'The emergence of "climate finance" in academic literature (1990–2025)',
     fontsize=13,

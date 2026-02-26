@@ -28,3 +28,10 @@ uv.lock
 .DS_Store
 *~
 *.swp
+
+# Claude Code config
+.claude/
+
+# Raw/intermediate data (large, not reproducible from scripts alone)
+data/raw
+data/syllabi/
