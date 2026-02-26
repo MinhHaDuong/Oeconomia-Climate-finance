@@ -4,7 +4,7 @@ Visualizes the citation DAG constrained by community structure, with papers
 positioned by year (x-axis) and lineage band (y-axis).
 
 Produces:
-- figures/fig3_genealogy.pdf: Citation genealogy (~500+ papers)
+- figures/fig4_genealogy.pdf: Citation genealogy (~500+ papers)
 - tables/tab3_lineages.csv: Lineage assignments for backbone papers
 
 Options:
@@ -21,9 +21,8 @@ import matplotlib.patheffects as pe
 import numpy as np
 import pandas as pd
 from matplotlib.path import Path
-from scipy.spatial.distance import cosine as cosine_dist
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -32,8 +31,6 @@ FIGURES_DIR = os.path.join(BASE_DIR, "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
-
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
 
 # COP events
 COP_EVENTS = {
@@ -45,15 +42,17 @@ COP_EVENTS = {
     2024: "Baku",
 }
 
-# Periods (from alluvial analysis: 2009 data-derived, 2015/2021 COP-imposed)
-PERIOD_BOUNDS = [1990, 2009, 2015, 2021, 2026]
-PERIOD_LABELS = ["1990–2008", "2009–2014", "2015–2020", "2021–2025"]
+# Periods (three-act structure from breakpoint detection)
+PERIOD_BOUNDS = [1990, 2007, 2015, 2026]
+PERIOD_LABELS = ["1990–2006", "2007–2014", "2015–2025"]
 PERIOD_COLORS = ["#f0f0f0", "#e8e8e8", "#f0f0f0", "#e8e8e8"]
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Citation genealogy figure")
 parser.add_argument("--robustness", action="store_true",
                     help="Run Louvain resolution sensitivity (R3)")
+parser.add_argument("--no-pdf", action="store_true",
+                    help="Skip PDF generation (PNG only)")
 args = parser.parse_args()
 
 
@@ -109,62 +108,23 @@ for _, row in cit.iterrows():
             "abstract": "",
         }
 
-# Load KMeans semantic clusters (same as Fig 2 alluvial)
-print("Loading semantic clusters (KMeans, same ontology as Fig 2)...")
+# Load KMeans semantic clusters (needed for CDM cluster identification)
+print("Loading semantic clusters...")
 sem_df = pd.read_csv(os.path.join(CATALOGS_DIR, "semantic_clusters.csv"))
 sem_df["doi_norm"] = sem_df["doi"].apply(normalize_doi)
 doi_to_cluster = dict(zip(sem_df["doi_norm"], sem_df["semantic_cluster"]))
-n_communities = len(sem_df["semantic_cluster"].unique())
-print(f"KMeans clusters: {n_communities}, papers: {len(sem_df)}")
-
-# Load embeddings for centroid computation + label generation
-print("Loading embeddings...")
-emb_works = works[works["abstract"].notna() & (works["abstract"].str.len() > 50)].copy()
-emb_works = emb_works[(emb_works["year"] >= 1990) & (emb_works["year"] <= 2025)].reset_index(drop=True)
-embeddings = np.load(EMBEDDINGS_PATH)
-
-emb_doi_to_idx = {}
-for i, row in emb_works.iterrows():
-    d = normalize_doi(row["doi"])
-    if d and d not in ("", "nan", "none"):
-        emb_doi_to_idx[d] = i
-
-# Compute cluster centroids from all clustered papers
-cluster_embeddings = {c: [] for c in range(n_communities)}
-for d, c in doi_to_cluster.items():
-    if d in emb_doi_to_idx:
-        cluster_embeddings[c].append(embeddings[emb_doi_to_idx[d]])
-
-cluster_centroids = {}
-for c, embs in cluster_embeddings.items():
-    if embs:
-        cluster_centroids[c] = np.mean(embs, axis=0)
-
-# Load cluster labels from alluvial (shared across Fig 2 and Fig 3)
-import json
-labels_path = os.path.join(CATALOGS_DIR, "cluster_labels.json")
-if os.path.exists(labels_path):
-    with open(labels_path) as f:
-        COMMUNITY_NAMES = {int(k): v for k, v in json.load(f).items()}
-    print(f"Loaded cluster labels from {labels_path}")
-else:
-    print(f"WARNING: {labels_path} not found. Run analyze_alluvial.py first.")
-    print("Falling back to generic labels.")
-    COMMUNITY_NAMES = {c: f"Cluster {c}" for c in range(n_communities)}
-
-print("\nCluster labels (same ontology as Fig 2):")
-for c, label in COMMUNITY_NAMES.items():
-    print(f"  {c}: {label}")
+print(f"Semantic clusters loaded: {len(sem_df)} papers")
 
 
 # ============================================================
 # Step 2: Select backbone papers
 # ============================================================
 
-print("\nSelecting backbone (cited_by_count >= 20)...")
+CITE_THRESHOLD = 50
+print(f"\nSelecting backbone (cited_by_count >= {CITE_THRESHOLD})...")
 
 has_abs = works["abstract"].notna() & (works["abstract"].str.len() > 50)
-high_cited = works[has_abs & (works["cited_by_count"] >= 20)]
+high_cited = works[has_abs & (works["cited_by_count"] >= CITE_THRESHOLD)]
 backbone_dois = set(high_cited["doi_norm"])
 
 # Filter to papers with valid year
@@ -176,54 +136,58 @@ print(f"Backbone papers (with valid year): {len(backbone_dois)}")
 
 
 # ============================================================
-# Step 3: Assign lineages (KMeans clusters, same as Fig 2)
+# Step 3: Assign lineages (3 bands: CDM, Accountability, Efficiency)
 # ============================================================
 
-lineage = {}  # doi -> cluster_id
-peripheral = set()  # dois marked as peripheral
+# Load bimodality pole scores if available
+pole_path = os.path.join(TABLES_DIR, "tab5_pole_papers.csv")
+use_bimodal = os.path.exists(pole_path)
 
-# Most backbone papers have direct KMeans assignments
-direct = 0
+# CDM cluster ID (cluster 2 from KMeans labels — "cdm / projects / mechanism cdm")
+CDM_CLUSTER = 2
+
+# 3-band scheme
+BAND_NAMES = {0: "CDM / Kyoto heritage", 1: "Accountability pole", 2: "Efficiency pole"}
+BAND_COLORS_RGB = {0: "#F4A261", 1: "#457B9D", 2: "#E63946"}
+
+if use_bimodal:
+    print("Loading bimodality axis scores from tab5_pole_papers.csv...")
+    pole_df = pd.read_csv(pole_path)
+    pole_df["doi_norm"] = pole_df["doi"].apply(normalize_doi)
+    doi_to_score = dict(zip(pole_df["doi_norm"], pole_df["axis_score"]))
+    print(f"  Pole scores for {len(doi_to_score)} papers")
+else:
+    print("WARNING: tab5_pole_papers.csv not found. Run analyze_bimodality.py first.")
+    print("Falling back to 6-cluster KMeans lineages.")
+    doi_to_score = {}
+
+n_communities = 3
+lineage = {}
+peripheral = set()
+
 for d in backbone_dois:
-    if d in doi_to_cluster:
-        lineage[d] = doi_to_cluster[d]
-        direct += 1
+    cluster = doi_to_cluster.get(d)
+    score = doi_to_score.get(d, 0)
 
-# For papers without KMeans assignment, use nearest centroid
-assigned = 0
-periph_count = 0
-for d in backbone_dois:
-    if d in lineage:
-        continue
-    if d not in emb_doi_to_idx:
-        # No embedding — assign to largest cluster, mark peripheral
-        lineage[d] = max(cluster_centroids.keys(),
-                         key=lambda c: len(cluster_embeddings.get(c, [])))
-        peripheral.add(d)
-        periph_count += 1
-        continue
+    if use_bimodal:
+        if cluster == CDM_CLUSTER:
+            lineage[d] = 0  # CDM heritage
+        elif score < 0:
+            lineage[d] = 1  # Accountability
+        else:
+            lineage[d] = 2  # Efficiency
+    else:
+        # Fallback: use KMeans cluster directly
+        lineage[d] = doi_to_cluster.get(d, 0)
 
-    emb = embeddings[emb_doi_to_idx[d]]
-    best_c, best_sim = None, -1
-    for c, centroid in cluster_centroids.items():
-        sim = 1 - cosine_dist(emb, centroid)
-        if sim > best_sim:
-            best_sim = sim
-            best_c = c
+# Update community names for rendering
+COMMUNITY_NAMES = BAND_NAMES
 
-    if best_sim < 0.4:
-        peripheral.add(d)
-        periph_count += 1
-    lineage[d] = best_c
-    assigned += 1
-
-print(f"Direct KMeans assignments: {direct}")
-print(f"Assigned via nearest centroid: {assigned}")
-print(f"Peripheral papers (cosine < 0.4): {periph_count}")
-
-# Filter backbone to papers with lineage assignment
 backbone_dois = {d for d in backbone_dois if d in lineage}
-print(f"Final backbone with lineage: {len(backbone_dois)}")
+band_counts = {b: sum(1 for d in backbone_dois if lineage[d] == b) for b in range(n_communities)}
+print(f"Final backbone: {len(backbone_dois)} papers")
+for b, name in BAND_NAMES.items():
+    print(f"  Band {b} ({name}): {band_counts.get(b, 0)} papers")
 
 
 # ============================================================
@@ -315,7 +279,9 @@ for d in backbone_dois:
 import matplotlib
 matplotlib.rcParams['font.size'] = 8
 
-palette = plt.cm.Set2(np.linspace(0, 1, max(n_communities, 3)))
+# Build palette from band colors
+from matplotlib.colors import to_rgba
+palette = {c: to_rgba(BAND_COLORS_RGB[c]) for c in range(n_communities)}
 
 fig, ax = plt.subplots(figsize=(16, 10))
 
@@ -347,7 +313,7 @@ for src, tgt in edges:
 
         if src_comm == tgt_comm:
             # Within-lineage: solid, colored
-            color = palette[src_comm]
+            color = BAND_COLORS_RGB.get(src_comm, "grey")
             alpha = 0.15
             style = "-"
         else:
@@ -398,7 +364,7 @@ for d in backbone_dois:
     size = 10 + 60 * np.sqrt(max(cit_count, 0) / 200)
     alpha = 0.3 if d in peripheral else 0.8
 
-    ax.scatter(x, y, s=size, c=[palette[c]], alpha=alpha,
+    ax.scatter(x, y, s=size, color=[palette[c]], alpha=alpha,
                edgecolors="white", linewidths=0.3, zorder=3)
 
 # Labels for top papers
@@ -451,8 +417,10 @@ for c in sorted_comms:
     label_text = name.replace(" / ", "\n")
     n = sum(1 for d in backbone_dois if lineage.get(d) == c)
     label_text += f"\n(n={n})"
+    r, g, b, _ = palette[c]
+    dark_color = (r * 0.6, g * 0.6, b * 0.6)
     ax.text(1.02, band_center, label_text, ha="left", va="center",
-            fontsize=5.5, linespacing=1.3, color=palette[c] * 0.6,
+            fontsize=5.5, linespacing=1.3, color=dark_color,
             transform=ax.transData)
 
 # Year axis
@@ -467,17 +435,15 @@ ax.set_ylim(-0.05, 1.05)
 
 n_backbone = len(backbone_dois)
 ax.set_title(
-    f"Citation genealogy of climate finance intellectual communities ({n_backbone} papers)\n"
-    "Node size ∝ √citations, cross-lineage arcs in red",
+    f"Citation genealogy of climate finance scholarship ({n_backbone} most-cited papers)\n"
+    "Node size ∝ √citations · Cross-lineage arcs in red",
     fontsize=12, pad=20,
 )
 ax.axis("off")
 
 plt.tight_layout()
-fig_path = os.path.join(FIGURES_DIR, "fig3_genealogy")
-fig.savefig(f"{fig_path}.pdf", dpi=300, bbox_inches="tight")
-fig.savefig(f"{fig_path}.png", dpi=150, bbox_inches="tight")
-print(f"\nSaved Figure 3 → figures/fig3_genealogy.pdf")
+fig_path = os.path.join(FIGURES_DIR, "fig4_genealogy")
+save_figure(fig, fig_path, no_pdf=args.no_pdf)
 plt.close()
 
 
@@ -505,10 +471,7 @@ def to_sx(xnorm):
 def to_sy(ynorm):
     return pad_t + chart_h - ynorm * chart_h
 
-palette_hex = []
-for c in range(n_communities):
-    r, g, b, _ = palette[c]
-    palette_hex.append(f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}")
+palette_hex = {c: BAND_COLORS_RGB[c] for c in range(n_communities)}
 
 def rgba_svg(c_idx, alpha=0.8):
     r, g, b, _ = palette[c_idx]
@@ -524,9 +487,9 @@ svg_parts.append(f'<rect width="{svg_w}" height="{svg_h}" fill="white"/>')
 # Title
 n_backbone = len(backbone_dois)
 svg_parts.append(f'<text x="{svg_w//2}" y="25" text-anchor="middle" font-size="15" font-weight="bold">'
-                 f'Citation genealogy of climate finance intellectual communities ({n_backbone} papers)</text>')
+                 f'Citation genealogy of climate finance scholarship ({n_backbone} most-cited papers)</text>')
 svg_parts.append(f'<text x="{svg_w//2}" y="45" text-anchor="middle" font-size="11" fill="#666">'
-                 f'Node size \u221d \u221acitations; hover for full reference</text>')
+                 f'Node size \u221d \u221acitations · Hover for full reference · Click to open DOI</text>')
 
 # Period bands
 for i in range(len(PERIOD_BOUNDS) - 1):
@@ -656,8 +619,8 @@ for c in sorted_comms:
     label_lines.append(f"(n={n})")
     line_h = 15
     start_y = band_center_y - (len(label_lines) - 1) * line_h / 2
-    r, g, b, _ = palette[c]
-    dark = f"rgb({int(r*255*0.6)},{int(g*255*0.6)},{int(b*255*0.6)})"
+    pr, pg, pb, _ = palette[c]
+    dark = f"rgb({int(pr*255*0.6)},{int(pg*255*0.6)},{int(pb*255*0.6)})"
     for li, line in enumerate(label_lines):
         weight = "normal" if li < len(label_lines) - 1 else "normal"
         fill = dark if li < len(label_lines) - 1 else "#888"
@@ -672,7 +635,7 @@ svg_parts.append('</svg>')
 # Build HTML
 html_content = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<title>Fig 3 – Genealogy (interactive)</title>
+<title>Fig 4 – Citation genealogy (interactive)</title>
 <style>
 body {{ margin: 20px; font-family: sans-serif; background: #fafafa; }}
 #container {{ position: relative; display: inline-block; }}
@@ -714,10 +677,10 @@ document.querySelectorAll('.node').forEach(el => {{
 </script>
 </body></html>"""
 
-html_path = os.path.join(FIGURES_DIR, "fig3_genealogy.html")
+html_path = os.path.join(FIGURES_DIR, "fig4_genealogy.html")
 with open(html_path, "w") as f:
     f.write(html_content)
-print(f"Saved interactive version → figures/fig3_genealogy.html")
+print(f"Saved interactive version → figures/fig4_genealogy.html")
 
 
 # ============================================================

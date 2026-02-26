@@ -8,7 +8,7 @@ Method:
 
 Produces:
 - figures/fig2_breakpoints.pdf: JS divergence time series with COP overlay
-- figures/fig2_alluvial.pdf: Community flows across data-derived periods
+- figures/fig3_alluvial.pdf: Community flows across data-derived periods
 - tables/tab2_breakpoints.csv: Yearly divergence metrics for w=2,3,4
 - tables/tab2_breakpoint_robustness.csv: Top breakpoints, stability flags
 - tables/tab2_alluvial.csv: Period-community paper counts
@@ -32,7 +32,10 @@ from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
+import matplotlib.ticker as ticker
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -58,6 +61,7 @@ COP_EVENTS = {
 # --- Args ---
 parser = argparse.ArgumentParser(description="Alluvial analysis with breakpoint detection")
 parser.add_argument("--robustness", action="store_true", help="Run k-sensitivity analysis")
+parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
 args = parser.parse_args()
 
 
@@ -419,65 +423,60 @@ print(alluvial_data)
 
 
 # ============================================================
-# Step 5: Label communities from top keywords
+# Step 5: Label communities from abstract TF-IDF
 # ============================================================
 
-# TF-IDF-like distinctive keyword extraction
-# For each cluster, find keywords that are over-represented vs. corpus average
-# Require both high distinctiveness AND meaningful frequency
-import re as _re
+# Use abstract text (not noisy OpenAlex keywords) to label clusters.
+# For each cluster, find terms most distinctive vs. corpus average.
 
-generic = {"climate change", "climate finance", "climate", "finance", "economics",
-           "business", "political science", "geography", "environmental science",
-           "general economics, econometrics and finance", "general energy",
-           "environmental economics", "development economics", "sustainable development",
-           "developing countries", "renewable energy", "energy policy", ""}
+import json
 
+LABEL_STOPWORDS = {
+    "climate", "climate change", "finance", "financial", "paper", "study",
+    "analysis", "results", "approach", "article", "research", "literature",
+    "review", "data", "work", "based", "findings", "using", "new", "use",
+    "used", "countries", "country", "policy", "policies", "global", "world",
+    "international", "national", "economic", "economics", "development",
+}
 
-def clean_keyword(kw):
-    """Strip OpenAlex disambiguation parentheticals like '(medicine)', '(building)'."""
-    return _re.sub(r"\s*\([^)]*\)\s*$", "", kw).strip()
+abstracts_for_tfidf = df["abstract"].fillna("").tolist()
+label_vectorizer = TfidfVectorizer(
+    ngram_range=(1, 2), max_features=8000, sublinear_tf=True,
+    stop_words="english", min_df=5, max_df=0.8,
+)
+X_label = label_vectorizer.fit_transform(abstracts_for_tfidf)
+label_features = np.array(label_vectorizer.get_feature_names_out())
 
-
-# Corpus-wide keyword frequencies
-all_kw_corpus = []
-for kw_str in df["keywords"].dropna():
-    all_kw_corpus.extend([clean_keyword(k.strip().lower()) for k in str(kw_str).split(";")])
-corpus_counts = Counter(k for k in all_kw_corpus if k not in generic)
-corpus_total = sum(corpus_counts.values())
+# Corpus-wide mean TF-IDF
+corpus_mean = np.asarray(X_label.mean(axis=0)).flatten()
 
 cluster_labels = {}
 for c in range(K_DEFAULT):
-    members = df[df["cluster"] == c]
-    cluster_kw = []
-    for kw_str in members["keywords"].dropna():
-        cluster_kw.extend([clean_keyword(k.strip().lower()) for k in str(kw_str).split(";")])
-    cluster_counts = Counter(k for k in cluster_kw if k not in generic)
-    cluster_total = sum(cluster_counts.values())
-    if cluster_total == 0:
+    c_mask = df["cluster"].values == c
+    if c_mask.sum() == 0:
         cluster_labels[c] = f"Cluster {c}"
         continue
+    c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
+    distinctiveness = c_mean - corpus_mean
 
-    # Score = TF-IDF × sqrt(count) to balance distinctiveness with frequency
-    # Minimum 20 occurrences in cluster to avoid rare junk
+    # Filter out domain stopwords
     scored = []
-    for kw, count in cluster_counts.items():
-        if count < 20 or len(kw) < 3:
+    for i in np.argsort(distinctiveness)[::-1]:
+        term = label_features[i]
+        tokens = term.split()
+        if any(t in LABEL_STOPWORDS for t in tokens):
             continue
-        tf = count / cluster_total
-        df_corpus = corpus_counts.get(kw, 1) / corpus_total
-        score = (tf / df_corpus) * np.sqrt(count)
-        scored.append((kw, score, count))
-    scored.sort(key=lambda x: -x[1])
-    top3 = [kw for kw, _, _ in scored[:3]]
-    cluster_labels[c] = " / ".join(top3) if top3 else f"Cluster {c}"
+        if len(tokens) == 1 and len(tokens[0]) < 3:
+            continue
+        scored.append(term)
+        if len(scored) == 3:
+            break
+    cluster_labels[c] = " / ".join(scored) if scored else f"Cluster {c}"
 
 print("\nCluster labels:")
 for c, label in cluster_labels.items():
     print(f"  {c}: {label}")
 
-# Save cluster labels for reuse by analyze_genealogy.py
-import json
 with open(os.path.join(CATALOGS_DIR, "cluster_labels.json"), "w") as f:
     json.dump({str(k): v for k, v in cluster_labels.items()}, f)
 print("Saved cluster labels → data/catalogs/cluster_labels.json")
@@ -524,15 +523,15 @@ ax.axhline(-1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
 ax.text(2024.3, 1.5, "z=1.5", fontsize=7, va="center", color="black", alpha=0.5)
 ax.text(2024.3, 2.0, "z=2.0", fontsize=7, va="center", color="black", alpha=0.5)
 ax.set_xlabel("Year", fontsize=11)
-ax.set_ylabel("Z-scored JS divergence", fontsize=11)
-ax.set_title("Structural break detection: embedding-based cluster redistribution over time",
+ax.set_ylabel("Structural divergence (z-score)", fontsize=11)
+ax.set_title("Detecting structural shifts in climate finance scholarship",
              fontsize=12, pad=15)
+ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig2_breakpoints.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig2_breakpoints.png"), dpi=150, bbox_inches="tight")
-print(f"\nSaved Figure 2a → figures/fig2_breakpoints.pdf")
+save_figure(fig, os.path.join(FIGURES_DIR, "fig2_breakpoints"), no_pdf=args.no_pdf)
+print(f"  (Figure 2)")
 plt.close()
 
 
@@ -668,9 +667,8 @@ ax.set_title(
 ax.axis("off")
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig2_alluvial.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig2_alluvial.png"), dpi=150, bbox_inches="tight")
-print(f"Saved Figure 2b → figures/fig2_alluvial.pdf")
+save_figure(fig, os.path.join(FIGURES_DIR, "fig3_alluvial"), no_pdf=args.no_pdf)
+print(f"  (Figure 3)")
 plt.close()
 
 
@@ -823,7 +821,7 @@ svg_parts.append('</svg>')
 # Build full HTML with tooltip logic
 html_content = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<title>Fig 2 – Alluvial (interactive)</title>
+<title>Fig 3 – Alluvial (interactive)</title>
 <style>
 body {{ margin: 20px; font-family: sans-serif; background: #fafafa; }}
 #container {{ position: relative; display: inline-block; }}
@@ -860,10 +858,10 @@ document.querySelectorAll('.cell').forEach(el => {{
 </script>
 </body></html>"""
 
-html_path = os.path.join(FIGURES_DIR, "fig2_alluvial.html")
+html_path = os.path.join(FIGURES_DIR, "fig3_alluvial.html")
 with open(html_path, "w") as f:
     f.write(html_content)
-print(f"Saved interactive version → figures/fig2_alluvial.html")
+print(f"Saved interactive version → figures/fig3_alluvial.html")
 
 
 # ============================================================
@@ -909,30 +907,26 @@ if args.robustness:
                  fontsize=12, pad=15)
     ax.legend(fontsize=9, framealpha=0.9)
     plt.tight_layout()
-    fig.savefig(os.path.join(FIGURES_DIR, "fig2_k_sensitivity.pdf"), dpi=300, bbox_inches="tight")
-    fig.savefig(os.path.join(FIGURES_DIR, "fig2_k_sensitivity.png"), dpi=150, bbox_inches="tight")
-    print(f"Saved k-sensitivity figure → figures/fig2_k_sensitivity.pdf")
+    save_figure(fig, os.path.join(FIGURES_DIR, "figA_k_sensitivity"), no_pdf=args.no_pdf)
     plt.close()
 
 # ============================================================
 # Step 8: Lexical validation of the 2009 break (TF-IDF)
 # ============================================================
 
-print("\n=== Lexical validation: TF-IDF before vs after 2009 ===")
+print("\n=== Lexical validation: TF-IDF at detected breakpoints ===")
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-# Period A: all abstracts before 2009 (the field's prehistory)
-# Period B: 2010-2012 (just after the break, before Paris dominates)
-mask_A = df["year"] < 2009
-mask_B = (df["year"] >= 2010) & (df["year"] <= 2012)
+# Use the first detected break for the main comparison
+main_break = detected_breaks[0] if detected_breaks else 2009
+mask_A = df["year"] < main_break
+mask_B = (df["year"] >= main_break + 1) & (df["year"] <= main_break + 3)
 
 texts_A = df.loc[mask_A, "abstract"].dropna().tolist()
 texts_B = df.loc[mask_B, "abstract"].dropna().tolist()
 n_A = len(texts_A)
 n_B = len(texts_B)
-print(f"Period A (before 2009): {n_A} abstracts")
-print(f"Period B (2010-2012):   {n_B} abstracts")
+print(f"Period A (before {main_break}): {n_A} abstracts")
+print(f"Period B ({main_break+1}-{main_break+3}):   {n_B} abstracts")
 
 if n_A >= 5 and n_B >= 5:
     vectorizer = TfidfVectorizer(
@@ -998,11 +992,11 @@ if n_A >= 5 and n_B >= 5:
     idx_top_B = valid_indices[np.argsort(diff_clean)[-25:][::-1]]
     idx_top_A = valid_indices[np.argsort(diff_clean)[:25]]
 
-    print(f"\nTop 25 terms enriched AFTER 2009 (period B):")
+    print(f"\nTop 25 terms enriched AFTER {main_break} (period B):")
     for i in idx_top_B:
         print(f"  +{diff[i]:.4f}  {feature_names[i]}")
 
-    print(f"\nTop 25 terms enriched BEFORE 2009 (period A):")
+    print(f"\nTop 25 terms enriched BEFORE {main_break} (period A):")
     for i in idx_top_A:
         print(f"  {diff[i]:.4f}  {feature_names[i]}")
 
@@ -1134,17 +1128,18 @@ if n_A >= 5 and n_B >= 5:
         )
 
         plt.tight_layout()
-        fname = f"fig2_lexical_tfidf{suffix}"
-        fig.savefig(os.path.join(FIGURES_DIR, f"{fname}.pdf"), dpi=300, bbox_inches="tight")
-        fig.savefig(os.path.join(FIGURES_DIR, f"{fname}.png"), dpi=150, bbox_inches="tight")
-        print(f"  Saved {fname}.pdf  (A={nA}, B={nB})")
+        fname = f"figA_lexical_tfidf{suffix}"
+        save_figure(fig, os.path.join(FIGURES_DIR, fname), no_pdf=args.no_pdf)
+        print(f"    (A={nA}, B={nB})")
         plt.close()
         return {"break_year": break_year, "n_before": nA, "n_after": nB,
                 "top_before": list(names[idx_before]),
                 "top_after": list(names[idx_after])}
 
     # --- Pre-compute global x-axis range across all break years ---
-    break_years = [2009, 2015, 2021]
+    # Use detected breaks + COP controls
+    break_years = sorted(detected_breaks) + [yr for yr in [2015, 2021]
+                                              if yr not in detected_breaks]
     global_max = 0
     for yr in break_years:
         mA = df["year"] < yr
@@ -1165,8 +1160,8 @@ if n_A >= 5 and n_B >= 5:
     print(f"  Shared x-axis range: [{shared_xlim[0]:.4f}, {shared_xlim[1]:.4f}]")
 
     # --- Run for all break years with shared scale ---
-    for yr in break_years:
-        suffix = "" if yr == 2009 else f"_{yr}"
+    for idx, yr in enumerate(break_years):
+        suffix = f"_{yr}"
         print(f"\n  Break year {yr}:")
         plot_tfidf_bars(df, yr, window_after=3, suffix=suffix, xlim=shared_xlim)
 

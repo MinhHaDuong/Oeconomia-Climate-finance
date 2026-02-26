@@ -133,3 +133,12 @@ def delete_checkpoint(path):
     """Remove checkpoint file after successful completion."""
     if os.path.exists(path):
         os.remove(path)
+
+
+def save_figure(fig, path_stem, no_pdf=False):
+    """Save figure as PNG and optionally PDF."""
+    fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight")
+    if not no_pdf:
+        fig.savefig(f"{path_stem}.pdf", dpi=300, bbox_inches="tight")
+    print(f"Saved → {os.path.basename(path_stem)}.png" +
+          ("" if no_pdf else " + .pdf"))

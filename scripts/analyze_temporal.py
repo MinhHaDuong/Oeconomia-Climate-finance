@@ -1,11 +1,12 @@
 """Temporal analysis of the climate finance corpus.
 
 Produces:
-- figures/fig1_emergence.pdf: Publication timeline with COP event annotations
-  and baseline comparisons (all science, climate change literature)
+- figures/fig1_emergence.pdf: Three economics series on common timeline
+  (economics in OpenAlex, climate-in-economics, climate finance corpus)
 - tables/tab1_terms.csv: First appearance and growth of key concepts in abstracts
 """
 
+import argparse
 import json
 import os
 import re
@@ -16,7 +17,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from utils import BASE_DIR, CATALOGS_DIR
+from utils import BASE_DIR, CATALOGS_DIR, MAILTO, polite_get, save_figure
+
+parser = argparse.ArgumentParser(description="Temporal analysis (Fig 1)")
+parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+args = parser.parse_args()
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "figures")
@@ -24,16 +29,14 @@ TABLES_DIR = os.path.join(BASE_DIR, "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
-# --- Load data ---
+BASELINES_PATH = os.path.join(CATALOGS_DIR, "openalex_economics_baselines.json")
+
+# --- Load corpus data ---
 df = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 df["year"] = pd.to_numeric(df["year"], errors="coerce")
 df = df.dropna(subset=["year"])
 df["year"] = df["year"].astype(int)
 print(f"Loaded {len(df)} works with valid year (range {df['year'].min()}–{df['year'].max()})")
-
-# ============================================================
-# Figure 1: Publication emergence timeline (1990–2025)
-# ============================================================
 
 # Filter to relevant period
 mask = (df["year"] >= 1990) & (df["year"] <= 2025)
@@ -51,59 +54,114 @@ events = {
     2024: "Baku\nNCQG $300bn",
 }
 
-# Load baselines (OpenAlex: all science + climate change literature)
-baselines_path = os.path.join(CATALOGS_DIR, "openalex_baselines.json")
-has_baselines = os.path.exists(baselines_path)
-if has_baselines:
-    with open(baselines_path) as f:
-        baselines = json.load(f)
-    all_science = {int(k): v for k, v in baselines["all_science"].items()}
-    climate_change = {int(k): v for k, v in baselines["climate_change"].items()}
+# Three-act period bands
+PERIOD_BOUNDS = [1990, 2007, 2015, 2026]
+PERIOD_LABELS = ["I. Before\nclimate finance", "II. Crystallization", "III. Established field"]
+PERIOD_COLORS = ["#f0f0f0", "#e8e0f0", "#f0e8e0"]
 
-# Style
+
+# ============================================================
+# Fetch OpenAlex economics baselines (cached)
+# ============================================================
+
+def fetch_openalex_economics_baselines():
+    """Fetch two series from OpenAlex:
+    1. Economics publications by year (concept Economics, level 0)
+    2. Climate-in-economics: Economics + "climate" in title
+    """
+    if os.path.exists(BASELINES_PATH):
+        with open(BASELINES_PATH) as f:
+            cached = json.load(f)
+        print(f"Loaded cached economics baselines from {BASELINES_PATH}")
+        return cached
+
+    print("Fetching economics baselines from OpenAlex API...")
+
+    # Economics concept ID in OpenAlex
+    # C162324750 = Economics (level 0)
+    economics_concept = "C162324750"
+
+    # Series 1: All economics publications by year
+    economics_by_year = {}
+    url = "https://api.openalex.org/works"
+    params = {
+        "filter": f"concept.id:{economics_concept},publication_year:1990-2025",
+        "group_by": "publication_year",
+        "mailto": MAILTO,
+    }
+    resp = polite_get(url, params=params, delay=1.0)
+    data = resp.json()
+    for item in data.get("group_by", []):
+        yr = int(item["key"])
+        economics_by_year[yr] = item["count"]
+    print(f"  Economics publications: {len(economics_by_year)} years")
+
+    # Series 2: Climate-in-economics (economics + "climate" in title)
+    climate_econ_by_year = {}
+    params2 = {
+        "filter": f"concept.id:{economics_concept},title.search:climate,publication_year:1990-2025",
+        "group_by": "publication_year",
+        "mailto": MAILTO,
+    }
+    resp2 = polite_get(url, params=params2, delay=1.0)
+    data2 = resp2.json()
+    for item in data2.get("group_by", []):
+        yr = int(item["key"])
+        climate_econ_by_year[yr] = item["count"]
+    print(f"  Climate-in-economics: {len(climate_econ_by_year)} years")
+
+    result = {
+        "economics": {str(k): v for k, v in economics_by_year.items()},
+        "climate_economics": {str(k): v for k, v in climate_econ_by_year.items()},
+    }
+
+    os.makedirs(os.path.dirname(BASELINES_PATH), exist_ok=True)
+    with open(BASELINES_PATH, "w") as f:
+        json.dump(result, f, indent=2)
+    print(f"  Cached → {BASELINES_PATH}")
+    return result
+
+
+baselines = fetch_openalex_economics_baselines()
+economics = {int(k): v for k, v in baselines["economics"].items()}
+climate_econ = {int(k): v for k, v in baselines["climate_economics"].items()}
+
+
+# ============================================================
+# Figure 1: Three economics series on common timeline
+# ============================================================
+
 sns.set_style("whitegrid")
-fig, ax = plt.subplots(figsize=(12, 5))
+fig, ax = plt.subplots(figsize=(12, 5.5))
 
-# Bar chart (climate finance corpus)
-bars = ax.bar(counts.index, counts.values, color="#4C72B0", alpha=0.85, width=0.8,
+years = list(range(1990, 2026))
+
+# Build series
+econ_raw = np.array([economics.get(yr, 0) for yr in years], dtype=float)
+clim_econ_raw = np.array([climate_econ.get(yr, 0) for yr in years], dtype=float)
+cf_raw = np.array([counts.get(yr, 0) for yr in years], dtype=float)
+
+# Period background bands
+for i in range(len(PERIOD_BOUNDS) - 1):
+    ax.axvspan(PERIOD_BOUNDS[i] - 0.5, PERIOD_BOUNDS[i + 1] - 0.5,
+               alpha=0.3, color=PERIOD_COLORS[i], zorder=0)
+    mid = (PERIOD_BOUNDS[i] + PERIOD_BOUNDS[i + 1]) / 2
+    ax.text(mid, ax.get_ylim()[1] if i > 0 else 0, PERIOD_LABELS[i],
+            ha="center", va="top", fontsize=7.5, color="grey", alpha=0.7,
+            transform=ax.get_xaxis_transform())
+
+# Secondary y-axis for the two OpenAlex series (much larger numbers)
+ax2 = ax.twinx()
+
+# Plot economics series on ax2 (right y-axis)
+ax2.plot(years, econ_raw, color="#E07B39", linewidth=2, linestyle="--",
+         alpha=0.8, label="Economics (OpenAlex)", zorder=2)
+ax2.plot(years, clim_econ_raw, color="#55A868", linewidth=2, linestyle="-.",
+         alpha=0.8, label='"Climate" in economics (OpenAlex)', zorder=2)
+
+# Plot climate finance corpus on ax (left y-axis) as bars
+bars = ax.bar(years, cf_raw, color="#4C72B0", alpha=0.85, width=0.8,
               label="Climate finance corpus", zorder=3)
-
-# Baseline lines on secondary y-axis (indexed: 2000 = 100)
-if has_baselines:
-    ax2 = ax.twinx()
-    years = list(range(1990, 2026))
-
-    # Index all three series to base year 2000 = 100
-    base_year = 2000
-    sci_raw = np.array([all_science.get(yr, 0) for yr in years], dtype=float)
-    cc_raw = np.array([climate_change.get(yr, 0) for yr in years], dtype=float)
-    cf_raw = np.array([counts.get(yr, 0) for yr in years], dtype=float)
-
-    sci_base = sci_raw[years.index(base_year)] or 1
-    cc_base = cc_raw[years.index(base_year)] or 1
-    cf_base = cf_raw[years.index(base_year)] or 1
-
-    sci_idx = sci_raw / sci_base * 100
-    cc_idx = cc_raw / cc_base * 100
-    cf_idx = cf_raw / cf_base * 100
-
-    ax2.plot(years, sci_idx, color="#E07B39", linewidth=2, linestyle="--",
-             alpha=0.8, label="All science (indexed)", zorder=2)
-    ax2.plot(years, cc_idx, color="#55A868", linewidth=2, linestyle="-.",
-             alpha=0.8, label="Climate change lit. (indexed)", zorder=2)
-    ax2.plot(years, cf_idx, color="#4C72B0", linewidth=1.5, linestyle="-",
-             alpha=0.6, label="Climate finance (indexed)", zorder=2)
-
-    ax2.set_ylabel("Index (2000 = 100)", fontsize=10, color="grey")
-    ax2.tick_params(axis="y", labelcolor="grey", labelsize=9)
-    ax2.spines["right"].set_color("grey")
-    ax2.spines["right"].set_alpha(0.5)
-
-    # Combined legend
-    lines1, labels1 = ax.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax.legend(lines1 + lines2, labels1 + labels2, loc="upper left",
-              fontsize=8.5, framealpha=0.9)
 
 # Annotate events
 for yr, label in events.items():
@@ -122,8 +180,13 @@ for yr, label in events.items():
 
 ax.set_xlabel("Year", fontsize=11)
 ax.set_ylabel("Climate finance publications", fontsize=11)
+ax2.set_ylabel("OpenAlex publications", fontsize=10, color="grey")
+ax2.tick_params(axis="y", labelcolor="grey", labelsize=9)
+ax2.spines["right"].set_color("grey")
+ax2.spines["right"].set_alpha(0.5)
+
 ax.set_title(
-    'The emergence of "climate finance" in academic literature (1990–2025)',
+    "The emergence of climate finance in economics (1990–2025)",
     fontsize=13,
     pad=15,
 )
@@ -131,7 +194,20 @@ ax.set_xlim(1989, 2026)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
 ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
 
-# Add total count annotation
+# Period labels at top
+for i in range(len(PERIOD_BOUNDS) - 1):
+    mid = (PERIOD_BOUNDS[i] + PERIOD_BOUNDS[i + 1]) / 2
+    ax.text(mid, 1.02, PERIOD_LABELS[i],
+            ha="center", va="bottom", fontsize=7.5, color="grey", alpha=0.8,
+            transform=ax.get_xaxis_transform())
+
+# Combined legend
+lines1, labels1 = ax.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax.legend(lines1 + lines2, labels1 + labels2, loc="upper left",
+          fontsize=8.5, framealpha=0.9)
+
+# Total count annotation
 total = counts.sum()
 ax.text(
     0.98, 0.95,
@@ -143,9 +219,7 @@ ax.text(
 )
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig1_emergence.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig1_emergence.png"), dpi=150, bbox_inches="tight")
-print(f"Saved Figure 1 → figures/fig1_emergence.pdf")
+save_figure(fig, os.path.join(FIGURES_DIR, "fig1_emergence"), no_pdf=args.no_pdf)
 plt.close()
 
 
