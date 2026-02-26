@@ -11,12 +11,13 @@ bibliography/*.pdf
 *.odt
 *.docx
 
-# Generated catalogs and checkpoints (reproducible from scripts)
-data/catalogs/
+# Generated data lives outside repo: ~/data/projets/Oeconomia-Climate-finance/
+# Only config/docs tracked in data/ ; ignore everything else
+data/catalogs/*
+!data/catalogs/het_core.csv
 data/exports/
-
-# Embedding cache (large binary, reproducible)
-data/catalogs/embeddings.npy
+data/raw
+data/syllabi/
 
 # Python / uv
 .venv/
@@ -32,6 +33,3 @@ uv.lock
 # Claude Code config
 .claude/
 
-# Raw/intermediate data (large, not reproducible from scripts alone)
-data/raw
-data/syllabi/

@@ -2,6 +2,18 @@
 
 Built 2026-02-23. Multi-source catalog of academic and grey literature on climate finance, supporting the Oeconomia HET manuscript.
 
+## Data location
+
+Generated data (catalogs, exports, syllabi, embeddings) is stored **outside** the
+repository at:
+
+    ~/data/projets/Oeconomia-Climate-finance/
+
+This path is configured in `scripts/utils.py` (`DATA_DIR`) and can be overridden
+with the `CLIMATE_FINANCE_DATA` environment variable. Only configuration files
+(`grey_sources.yaml`, `teaching_sources.yaml`, `het_core.csv`) and documentation
+are tracked in this directory.
+
 ## Data inventory
 
 | File | Rows | Description |

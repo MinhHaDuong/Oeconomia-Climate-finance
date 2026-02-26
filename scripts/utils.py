@@ -11,7 +11,10 @@ import requests
 # --- Paths ---
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_DIR = os.environ.get(
+    "CLIMATE_FINANCE_DATA",
+    os.path.expanduser("~/data/projets/Oeconomia-Climate-finance"),
+)
 CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
 EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
