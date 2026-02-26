@@ -608,6 +608,7 @@ def stage_extract():
 def crossref_lookup(title, authors=""):
     """Look up a reference on CrossRef by title. Returns DOI or empty string."""
     query = title
+    authors = str(authors) if authors and authors == authors else ""  # handle NaN
     if authors:
         first_author = authors.split(",")[0].split(";")[0].strip()
         if first_author:
