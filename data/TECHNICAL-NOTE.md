@@ -287,7 +287,46 @@ uv run python analyze_cocitation.py
 uv run python analyze_embeddings.py
 ```
 
-## 10. File inventory
+## 10. External baselines: RePEc local mirror
+
+The script `scripts/count_repec_econ_cf.py` counts yearly economics works and climate-finance works from a local mirror of the [RePEc](https://repec.org/) (Research Papers in Economics) metadata archives. This provides an independent baseline for Figure 1, complementing the OpenAlex economics counts.
+
+### 10.1 Mirroring the data
+
+The recommended tool `remi.pl` (from `ftp://repec.oru.se/RePEc/cpd/soft/remi`) was unavailable as of 2026-02-26 (FTP server returns empty files). We used rsync from the official RePEc mirror instead:
+
+```bash
+mkdir -p ~/data/datasets/external/RePEc
+rsync -va --delete rsync://rsync.repec.org/RePEc-ReDIF/ ~/data/datasets/external/RePEc/
+```
+
+- **Source:** `rsync://rsync.repec.org/RePEc-ReDIF/` — the consolidated ReDIF-format archive
+- **Date:** 2026-02-26
+- **Content:** ~2,334 archive directories containing ReDIF metadata files (`.rdf`, `.redif`, `.txt`, optionally gzip-compressed)
+- **Size:** Several GB (full mirror)
+- **Update:** Re-run the same rsync command to update; `--delete` removes archives withdrawn upstream
+
+Alternative mirror sources documented at [rsync.repec.org](http://rsync.repec.org/):
+- ReDIF format: `rsync://rsync.repec.org/RePEc-ReDIF/`
+- AMF format: `rsync://rsync.repec.org/RePEc-AMF/`
+- FTP fallback: `ftp://ftp.repec.org/opt/ReDIF/RePEc/`
+
+### 10.2 Running the count script
+
+```bash
+# Uses default path ~/data/datasets/external/RePEc
+uv run python scripts/count_repec_econ_cf.py
+
+# Or specify path explicitly
+uv run python scripts/count_repec_econ_cf.py --repec-root /path/to/RePEc
+```
+
+The script parses ReDIF records (Article, Paper, Book, Chapter templates), deduplicates by DOI/title+year/handle, and counts occurrences of "climate finance" (regex on title+abstract) per year (1990–2025).
+
+- **Output:** `$DATA/catalogs/repec_econ_yearly.csv`
+- **Environment variable:** Set `REPEC_ROOT` to override the default mirror path
+
+## 11. File inventory
 
 ### Corpus data
 

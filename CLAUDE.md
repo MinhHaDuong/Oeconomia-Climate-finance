@@ -29,6 +29,10 @@ Key data files (all in `$DATA/catalogs/`):
 | `communities.csv` | Louvain co-citation communities (~200 papers) | `analyze_cocitation.py` |
 | `citations.csv` | Citation pairs (source_doi → ref_doi) — stale, 12K corpus | `enrich_citations.py` |
 | `openalex_economics_baselines.json` | Economics baseline counts from OpenAlex API | `analyze_temporal.py` |
+| `openalex_econ_yearly.csv` | Economics yearly counts + CF numerator | `count_openalex_econ_cf.py` |
+| `openalex_finance_yearly.csv` | Finance yearly counts + CF numerator | `count_openalex_econ_cf.py --scope finance` |
+| `openalex_econ_fin_overlap.csv` | Econ/Finance CF overlap (ID-level sets) | `count_openalex_econ_fin_overlap.py` |
+| `repec_econ_yearly.csv` | RePEc economics yearly counts + CF | `count_repec_econ_cf.py` |
 | `cluster_labels.json` | KMeans cluster labels (abstract TF-IDF) | `analyze_alluvial.py` |
 
 **If data is missing**, regenerate in order:
@@ -56,13 +60,14 @@ uv run python scripts/analyze_cocitation.py    # co-citation communities
 ### Figures (in `figures/`)
 | File | Content | Placement |
 |---|---|---|
-| `fig1_emergence.png` | 3 economics series (OpenAlex econ, climate-in-econ, corpus) | Paper |
+| `fig1_emergence.png` | Economics total + CF bars + share (OpenAlex) | Paper |
 | `fig2_breakpoints.png` | Structural break detection (JS + cosine divergence) | Paper |
 | `fig3_alluvial.{png,html}` | Alluvial community flows (4 periods, 6 clusters) | Paper |
 | `fig4_genealogy.{png,html}` | Citation genealogy (3 bands tied to bimodality axis) | Paper |
 | `fig5a_bimodality.png` | Efficiency↔accountability KDE (embedding-based) | Paper |
 | `fig5b_bimodality_lexical.png` | TF-IDF bimodality (robustness) | Appendix |
 | `fig5c_bimodality_keywords.png` | Keyword co-occurrence scatter | Appendix |
+| `figA_1a_robustness.png` | Econ vs Finance vs RePEc (stacked overlap bars) | Appendix |
 | `figA_lexical_tfidf_{2007,2013,2015,2021}.png` | Lexical validation at breakpoints | Appendix |
 | `figA_k_sensitivity.png` | k-sensitivity (k=4–7) | Appendix |
 
@@ -81,11 +86,20 @@ uv sync    # install everything from pyproject.toml
 
 Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
 ```bash
-uv run python scripts/analyze_temporal.py    # Fig 1
-uv run python scripts/analyze_alluvial.py    # Fig 2 + Fig 3
+# Data collection (slow — API calls)
+uv run python scripts/count_openalex_econ_cf.py                  # OpenAlex econ yearly
+uv run python scripts/count_openalex_econ_cf.py --scope finance  # OpenAlex finance yearly
+uv run python scripts/count_openalex_econ_fin_overlap.py         # Econ/Finance overlap (ID sets)
+uv run python scripts/count_repec_econ_cf.py                     # RePEc yearly (needs local mirror)
+
+# Figures
+uv run python scripts/plot_fig1_emergence.py     # Fig 1 (reads openalex_econ_yearly.csv)
+uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + overlap CSVs)
+uv run python scripts/analyze_temporal.py        # Fig 1 legacy (reads refined_works.csv + API)
+uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
-uv run python scripts/analyze_bimodality.py  # Fig 5a/5b/5c
-uv run python scripts/analyze_genealogy.py   # Fig 4 (depends on bimodality output)
+uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
+uv run python scripts/analyze_genealogy.py       # Fig 4 (depends on bimodality output)
 ```
 
 ## Three-act periodization (data-driven)
