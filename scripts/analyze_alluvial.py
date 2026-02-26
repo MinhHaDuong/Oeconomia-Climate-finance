@@ -62,7 +62,25 @@ COP_EVENTS = {
 parser = argparse.ArgumentParser(description="Alluvial analysis with breakpoint detection")
 parser.add_argument("--robustness", action="store_true", help="Run k-sensitivity analysis")
 parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--core-only", action="store_true",
+                    help="Restrict to core papers (cited_by_count >= 50)")
 args = parser.parse_args()
+
+# Output naming depends on mode
+if args.core_only:
+    FIG_BP = "fig2b_breakpoints_core"
+    FIG_AL = "fig3b_alluvial_core"
+    TAB_BP = "tab2b_breakpoints_core.csv"
+    TAB_BP_ROBUST = "tab2b_breakpoint_robustness_core.csv"
+    TAB_AL = "tab2b_alluvial_core.csv"
+    LABEL_FILE = "cluster_labels_core.json"
+else:
+    FIG_BP = "fig2_breakpoints"
+    FIG_AL = "fig3_alluvial"
+    TAB_BP = "tab2_breakpoints.csv"
+    TAB_BP_ROBUST = "tab2_breakpoint_robustness.csv"
+    TAB_AL = "tab2_alluvial.csv"
+    LABEL_FILE = "cluster_labels.json"
 
 
 # ============================================================
@@ -88,13 +106,24 @@ if len(embeddings) != len(df):
     )
 print(f"Embedding shape: {embeddings.shape}")
 
+# Core filtering: keep only highly-cited papers
+CITE_THRESHOLD = 50
+df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
+if args.core_only:
+    core_mask = df["cited_by_count"] >= CITE_THRESHOLD
+    core_indices = df.index[core_mask].values
+    df = df.loc[core_mask].reset_index(drop=True)
+    embeddings = embeddings[core_indices]
+    print(f"Core-only mode: {len(df)} papers (cited_by_count >= {CITE_THRESHOLD})")
+    assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
+
 
 # ============================================================
 # Step 1: Global KMeans clustering (k=6, fit once)
 # ============================================================
 
 K_DEFAULT = 6
-N_MIN = 30  # Minimum papers per window
+N_MIN = 20 if args.core_only else 30  # Lower threshold for smaller core corpus
 
 print(f"\nFitting global KMeans (k={K_DEFAULT}) on full corpus...")
 kmeans = KMeans(n_clusters=K_DEFAULT, random_state=42, n_init=20)
@@ -225,8 +254,8 @@ for metric in ["js", "cos"]:
         else:
             bp_df[f"z_{col}"] = np.nan
 
-bp_df.to_csv(os.path.join(TABLES_DIR, "tab2_breakpoints.csv"), index=False)
-print(f"\nSaved divergence table → tables/tab2_breakpoints.csv")
+bp_df.to_csv(os.path.join(TABLES_DIR, TAB_BP), index=False)
+print(f"\nSaved divergence table → tables/{TAB_BP}")
 
 
 # ============================================================
@@ -330,35 +359,23 @@ for y, info in all_robust_years.items():
 robust_list.sort(key=lambda x: -x["combined_z"])
 
 robust_df = pd.DataFrame(robust_list)
-robust_df.to_csv(os.path.join(TABLES_DIR, "tab2_breakpoint_robustness.csv"), index=False)
-print(f"\nSaved robustness table → tables/tab2_breakpoint_robustness.csv")
+robust_df.to_csv(os.path.join(TABLES_DIR, TAB_BP_ROBUST), index=False)
+print(f"\nSaved robustness table → tables/{TAB_BP_ROBUST}")
 
 print("\n=== Robust breakpoints ===")
 for bp in robust_list[:5]:
     print(f"  {bp['year']}: JS z={bp['js_mean_z']}, cos z={bp['cos_mean_z']}, "
           f"support={bp['support']}")
 
-# Select breakpoints for periodization
-# If fewer than 3 robust breakpoints, supplement with COP milestones (2015, 2021)
-# and clearly label which are data-derived vs COP-imposed
+# Detected breakpoints (for Fig 2 visualization)
 detected_breaks = sorted([bp["year"] for bp in robust_list[:3]])
 print(f"\nDetected robust breakpoints: {detected_breaks}")
 
-# Fallback: if fewer than 3, supplement with COP milestones
-COP_SUPPLEMENTS = [2015, 2021]
-supplementary = []
-if len(detected_breaks) < 3:
-    for cop_year in COP_SUPPLEMENTS:
-        if cop_year not in detected_breaks and len(detected_breaks) + len(supplementary) < 3:
-            # Check it's not within ±1 year of a detected break
-            if all(abs(cop_year - d) > 1 for d in detected_breaks):
-                supplementary.append(cop_year)
-    if supplementary:
-        print(f"  Supplementing with COP milestones: {supplementary} (sub-threshold in data)")
-
-all_breaks = sorted(detected_breaks + supplementary)
-print(f"Period boundaries: {all_breaks} "
-      f"({'data-derived' if not supplementary else 'hybrid: ' + str(len(detected_breaks)) + ' data-derived + ' + str(len(supplementary)) + ' COP-imposed'})")
+# Periodization: use the manuscript's three-act structure
+# (detected breaks inform this, but the alluvial uses 3 periods for clarity)
+all_breaks = [2007, 2015]
+supplementary = []  # kept for backward compat with breakpoint visualization
+print(f"Period boundaries: {all_breaks} (manuscript three-act structure)")
 
 # Volume confound check
 print("\n=== Volume confound check ===")
@@ -416,10 +433,20 @@ df["period"] = df["year"].apply(assign_period)
 alluvial_data = pd.crosstab(df["period"], df["cluster"])
 # Reorder by period
 alluvial_data = alluvial_data.reindex(period_labels)
-alluvial_data.to_csv(os.path.join(TABLES_DIR, "tab2_alluvial.csv"))
-print(f"\nSaved alluvial table → tables/tab2_alluvial.csv")
+alluvial_data.to_csv(os.path.join(TABLES_DIR, TAB_AL))
+print(f"\nSaved alluvial table → tables/{TAB_AL}")
 print("\nPeriod × Cluster distribution:")
 print(alluvial_data)
+
+# Core share per cell (for annotation in full-corpus mode)
+if not args.core_only:
+    core_mask_full = df["cited_by_count"] >= CITE_THRESHOLD
+    core_crosstab = pd.crosstab(df.loc[core_mask_full, "period"],
+                                df.loc[core_mask_full, "cluster"])
+    core_crosstab = core_crosstab.reindex(period_labels, fill_value=0)
+    for c in alluvial_data.columns:
+        if c not in core_crosstab.columns:
+            core_crosstab[c] = 0
 
 
 # ============================================================
@@ -432,17 +459,28 @@ print(alluvial_data)
 import json
 
 LABEL_STOPWORDS = {
-    "climate", "climate change", "finance", "financial", "paper", "study",
-    "analysis", "results", "approach", "article", "research", "literature",
-    "review", "data", "work", "based", "findings", "using", "new", "use",
-    "used", "countries", "country", "policy", "policies", "global", "world",
+    # Corpus-wide generic terms
+    "climate", "climate change", "change", "finance", "financial", "carbon",
+    "emission", "emissions", "mitigation", "adaptation",
+    # Academic boilerplate
+    "paper", "study", "analysis", "results", "approach", "article", "research",
+    "literature", "review", "data", "work", "based", "findings", "using",
+    "new", "use", "used", "model", "evidence", "impact", "effects", "effect",
+    "role", "case", "sector", "risk", "market", "markets", "investment",
+    # Geographic / institutional generics
+    "countries", "country", "policy", "policies", "global", "world",
     "international", "national", "economic", "economics", "development",
+    # Tech buzzwords (uninformative as cluster labels)
+    "blockchain", "esg", "theory",
+    # Metadata artifacts
+    "pdf", "http", "https", "www", "vol", "pp",
 }
 
 abstracts_for_tfidf = df["abstract"].fillna("").tolist()
+min_df_val = 3 if args.core_only else 5  # lower for smaller corpus
 label_vectorizer = TfidfVectorizer(
     ngram_range=(1, 2), max_features=8000, sublinear_tf=True,
-    stop_words="english", min_df=5, max_df=0.8,
+    stop_words="english", min_df=min_df_val, max_df=0.8,
 )
 X_label = label_vectorizer.fit_transform(abstracts_for_tfidf)
 label_features = np.array(label_vectorizer.get_feature_names_out())
@@ -459,8 +497,8 @@ for c in range(K_DEFAULT):
     c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
     distinctiveness = c_mean - corpus_mean
 
-    # Filter out domain stopwords
-    scored = []
+    # Rank all candidate terms, prefer bigrams over overlapping unigrams
+    candidates = []
     for i in np.argsort(distinctiveness)[::-1]:
         term = label_features[i]
         tokens = term.split()
@@ -468,7 +506,25 @@ for c in range(K_DEFAULT):
             continue
         if len(tokens) == 1 and len(tokens[0]) < 3:
             continue
+        candidates.append((term, float(distinctiveness[i])))
+        if len(candidates) >= 15:
+            break
+
+    # Select top 3, avoiding redundancy between unigrams and bigrams
+    scored = []
+    used_tokens = set()
+    for term, _ in candidates:
+        tokens = set(term.split())
+        # Skip if all tokens already covered by previously selected terms
+        if tokens.issubset(used_tokens):
+            continue
+        # Skip near-duplicate unigrams (e.g., "forest" when "forests" selected)
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
         scored.append(term)
+        used_tokens.update(tokens)
         if len(scored) == 3:
             break
     cluster_labels[c] = " / ".join(scored) if scored else f"Cluster {c}"
@@ -477,9 +533,9 @@ print("\nCluster labels:")
 for c, label in cluster_labels.items():
     print(f"  {c}: {label}")
 
-with open(os.path.join(CATALOGS_DIR, "cluster_labels.json"), "w") as f:
+with open(os.path.join(CATALOGS_DIR, LABEL_FILE), "w") as f:
     json.dump({str(k): v for k, v in cluster_labels.items()}, f)
-print("Saved cluster labels → data/catalogs/cluster_labels.json")
+print(f"Saved cluster labels → data/catalogs/{LABEL_FILE}")
 
 
 # ============================================================
@@ -524,13 +580,14 @@ ax.text(2024.3, 1.5, "z=1.5", fontsize=7, va="center", color="black", alpha=0.5)
 ax.text(2024.3, 2.0, "z=2.0", fontsize=7, va="center", color="black", alpha=0.5)
 ax.set_xlabel("Year", fontsize=11)
 ax.set_ylabel("Structural divergence (z-score)", fontsize=11)
-ax.set_title("Detecting structural shifts in climate finance scholarship",
+corpus_note = f" (core: cited ≥ {CITE_THRESHOLD}, N={len(df):,})" if args.core_only else ""
+ax.set_title(f"Detecting structural shifts in scholarship around climate finance{corpus_note}",
              fontsize=12, pad=15)
 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
 
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, "fig2_breakpoints"), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG_BP), no_pdf=args.no_pdf)
 print(f"  (Figure 2)")
 plt.close()
 
@@ -583,9 +640,15 @@ for pi, period in enumerate(period_labels):
             ax.add_patch(rect)
             # Label if tall enough
             if s["height"] > 0.04:
+                label = f'{s["count"]}'
+                if not args.core_only:
+                    n_core = int(core_crosstab.loc[period, c]) if period in core_crosstab.index else 0
+                    pct = n_core / s["count"] * 100 if s["count"] > 0 else 0
+                    label += f'\n({pct:.0f}% core)'
                 ax.text(x, s["bottom"] + s["height"] / 2,
-                        f'{s["count"]}', ha="center", va="center",
-                        fontsize=5, color="black", fontweight="bold")
+                        label, ha="center", va="center",
+                        fontsize=4.5, color="black", fontweight="bold",
+                        linespacing=1.2)
 
 # Draw flows between adjacent periods
 for pi in range(n_periods - 1):
@@ -643,8 +706,9 @@ for pi, period in enumerate(period_labels):
     x = x_positions[pi]
     ax.text(x, -0.03, period, ha="center", va="top", fontsize=6, fontweight="bold")
 
-# Legend: text labels right next to the last data column
+# Legend: labels with leader lines, evenly spaced to avoid overlap
 last_stacks = period_stacks[period_labels[-1]]
+label_items = []
 for c in range(n_clusters):
     if c not in last_stacks:
         continue
@@ -652,22 +716,49 @@ for c in range(n_clusters):
     if s["height"] <= 0:
         continue
     label_text = cluster_labels.get(c, f"Cluster {c}").replace(" / ", "\n")
-    ax.text(x_positions[-1] + col_width + 0.008, s["bottom"] + s["height"] / 2,
-            label_text, ha="left", va="center", fontsize=5.5,
-            linespacing=1.3, color=palette[c] * 0.6)  # darker than fill
+    n_lines = label_text.count("\n") + 1
+    label_items.append({
+        "c": c, "y_band": s["bottom"] + s["height"] / 2,
+        "text": label_text, "height": n_lines * 0.026,
+    })
 
-ax.set_xlim(-0.06, 0.85)
+# Evenly space labels across the full chart height
+label_items.sort(key=lambda it: it["y_band"])
+n_labels = len(label_items)
+total_label_height = sum(it["height"] for it in label_items)
+spacing = (0.95 - total_label_height) / max(n_labels - 1, 1)
+y_cursor = 0.02
+for it in label_items:
+    it["y_label"] = y_cursor + it["height"] / 2
+    y_cursor += it["height"] + spacing
+
+x_bar_edge = x_positions[-1] + col_width
+x_label = x_bar_edge + 0.06
+for it in label_items:
+    # Leader line from band midpoint to label
+    ax.annotate(
+        "", xy=(x_bar_edge + 0.003, it["y_band"]),
+        xytext=(x_label - 0.005, it["y_label"]),
+        arrowprops=dict(arrowstyle="-", color=palette[it["c"]] * 0.6,
+                        lw=0.7, connectionstyle="arc3,rad=0.0"),
+    )
+    ax.text(x_label, it["y_label"],
+            it["text"], ha="left", va="center", fontsize=5.5,
+            linespacing=1.3, color=palette[it["c"]] * 0.6)
+
+ax.set_xlim(-0.06, 0.95)
 ax.set_ylim(-0.06, 1.0)
 total = int(alluvial_data.values.sum())
+core_label = f"core papers cited ≥ {CITE_THRESHOLD}, " if args.core_only else ""
 ax.set_title(
-    f"Thematic recomposition of climate finance scholarship, 1990–2025\n"
-    f"(N = {total:,} publications; band width = number of publications per thematic cluster)",
+    f"Thematic recomposition of scholarship around climate finance, 1990–2025\n"
+    f"({core_label}N = {total:,} publications; band width = number of publications per thematic cluster)",
     fontsize=7, pad=8,
 )
 ax.axis("off")
 
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, "fig3_alluvial"), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG_AL), no_pdf=args.no_pdf)
 print(f"  (Figure 3)")
 plt.close()
 
@@ -725,7 +816,7 @@ svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{svg_w}" heigh
 # Title
 total = int(alluvial_data.values.sum())
 svg_parts.append(f'<text x="{svg_w//2}" y="28" text-anchor="middle" font-size="16" font-weight="bold">'
-                 f'Thematic recomposition of climate finance scholarship, 1990–2025</text>')
+                 f'Thematic recomposition of scholarship around climate finance, 1990–2025</text>')
 svg_parts.append(f'<text x="{svg_w//2}" y="50" text-anchor="middle" font-size="13" fill="#666">'
                  f'(N = {total:,} publications; hover over a cell to see top-cited papers)</text>')
 
@@ -858,17 +949,17 @@ document.querySelectorAll('.cell').forEach(el => {{
 </script>
 </body></html>"""
 
-html_path = os.path.join(FIGURES_DIR, "fig3_alluvial.html")
+html_path = os.path.join(FIGURES_DIR, f"{FIG_AL}.html")
 with open(html_path, "w") as f:
     f.write(html_content)
-print(f"Saved interactive version → figures/fig3_alluvial.html")
+print(f"Saved interactive version → figures/{FIG_AL}.html")
 
 
 # ============================================================
 # Robustness: k-sensitivity analysis
 # ============================================================
 
-if args.robustness:
+if args.robustness and not args.core_only:
     print("\n=== Robustness: k-sensitivity (k=4,5,6,7) ===")
     k_values = [4, 5, 6, 7]
     k_results = {}
@@ -913,6 +1004,10 @@ if args.robustness:
 # ============================================================
 # Step 8: Lexical validation of the 2009 break (TF-IDF)
 # ============================================================
+
+if args.core_only:
+    print("\nDone (core-only mode — skipping lexical validation).")
+    import sys; sys.exit(0)
 
 print("\n=== Lexical validation: TF-IDF at detected breakpoints ===")
 

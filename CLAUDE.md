@@ -66,6 +66,8 @@ uv run python scripts/analyze_cocitation.py    # co-citation communities
 | `fig5a_bimodality.png` | Efficiency↔accountability KDE (embedding-based) | Paper |
 | `fig5b_bimodality_lexical.png` | TF-IDF bimodality (robustness) | Appendix |
 | `fig5c_bimodality_keywords.png` | Keyword co-occurrence scatter | Appendix |
+| `fig2b_breakpoints_core.png` | Breakpoint detection on core (cited ≥ 50, N=1,176) | Appendix |
+| `fig3b_alluvial_core.{png,html}` | Alluvial on core papers (1,176 most-cited) | Appendix |
 | `figA_1a_robustness.png` | Econ vs Finance vs RePEc (stacked overlap bars) | Appendix |
 | `figA_lexical_tfidf_{2007,2013,2015,2021}.png` | Lexical validation at breakpoints | Appendix |
 | `figA_k_sensitivity.png` | k-sensitivity (k=4–7) | Appendix |
@@ -94,7 +96,8 @@ uv run python scripts/count_repec_econ_cf.py                     # RePEc yearly 
 # Figures
 uv run python scripts/plot_fig1_emergence.py     # Fig 1 (reads openalex_econ_yearly.csv)
 uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + overlap CSVs)
-uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3
+uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3 (full corpus)
+uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core: cited ≥ 50)
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_genealogy.py       # Fig 4 (depends on bimodality output)
