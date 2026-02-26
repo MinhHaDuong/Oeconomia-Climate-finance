@@ -11,7 +11,25 @@ bibliography/*.pdf
 *.odt
 *.docx
 
+# Generated data lives outside repo: ~/data/projets/Oeconomia-Climate-finance/
+# Only config/docs tracked in data/ ; ignore everything else
+data/catalogs/*
+!data/catalogs/het_core.csv
+data/exports/
+data/raw
+data/syllabi/
+
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+uv.lock
+
 # OS and editor artifacts
 .DS_Store
 *~
 *.swp
+
+# Claude Code config
+.claude/
+

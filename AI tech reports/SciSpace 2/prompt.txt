@@ -1,0 +1,19 @@
+2026-02-23 Literature review with SciSpace (Deep Research mode)
+
+Ha-Duong Minh
+
+Query:
+
+Assemble the corpus to analyze the history of economic thought on climate finance. I just need the corpus, I will do the analysis myself. Make sure to include key grey literature as well as academic papers. Provide the table with citation, DOI, and the links to cited by / cites .
+
+Precision:
+
+The paper's primary focus is history of economic thought, specifically how economists constructed climate finance as a measurable, contested economic object through accounting conventions, institutional roles, and normative frameworks — not through models alone.
+The most relevant dimensions are:
+
+Key thinkers and theories — yes, but not by school (Keynesian/Neoclassical). The relevant axis is welfare/efficiency economists (Pigouvian framing, leverage, blended finance) vs. political-economy-oriented economists (equity, accountability, distributive conflict). Specific figures: Nordhaus, Stern, Weitzman on the modelling side; Corfee-Morlot, Michaelowa, Weikmans/Roberts, Inge Kaul on the measurement/governance side.
+Policy and implementation — yes, but specifically the construction of accounting categories (Rio markers, loan valuation, private finance attribution) and the controversies they generated in UNFCCC/OECD contexts.
+Interdisciplinary connections — partially: the intersection with development finance and international relations (burden-sharing, North-South trust) is central.
+
+Not regional perspectives in a comparative sense.
+The paper's distinctive angle — economists as agents of boundary work in global governance, not just policy advisors — is underrepresented in standard HET searches. I'd suggest adding terms like: boundary work, quantification, commensuration, statistical infrastructure, OECD development finance, Rio markers, science and technology studies of economics.

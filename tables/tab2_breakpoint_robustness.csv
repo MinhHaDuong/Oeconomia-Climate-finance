@@ -1,0 +1,3 @@
+year,js_mean_z,cos_mean_z,combined_z,js_windows,cos_windows,support
+2007,0.0,2.5929999351501465,2.5929999351501465,0,3,cosine only
+2013,1.59,0.0,1.59,3,0,JS only
