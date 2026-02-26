@@ -1,12 +1,20 @@
 # Climate Finance corpus analysis plan
 
-Ha Duong Minh, 2026-02-26 (v2 — revised after breakpoint results)
+Ha Duong Minh, 2026-02-27 (v3 — full/core two-level design, 3-period alluvial)
+
+## Summary of changes from v2
+
+1. **Two-level analytical design**: full corpus (~18,798 papers) maps the broad landscape; core subset (1,176 papers, cited_by_count ≥ 50) isolates the influential works. Figs 2b/3b replicate breakpoint and alluvial analyses on the core.
+2. **3-period alluvial** now matches the manuscript's three-act structure (was 4 periods).
+3. **Core share annotations** in full-corpus alluvial boxes show what fraction of each thematic cluster consists of highly-cited papers.
+4. **Improved cluster labeling**: TF-IDF distinctiveness with bigram/unigram deduplication and expanded domain stopwords.
+5. **Corpus terminology**: "scholarship around climate finance" (not "climate finance scholarship") — the corpus is broader than the narrow policy field.
 
 ## Summary of changes from v1
 
 1. **Three-act periodization** replaces four-section structure. Data shows breaks at 2007 and 2013, nothing at 2021 → merge old sections III and IV.
 2. **Figures renumbered**: breakpoints and alluvial are now separate figures (Fig 2, Fig 3). Genealogy becomes Fig 4.
-3. **Figure 1 redesigned**: three series on common timeline — economics publications in OpenAlex, "climate" in title in OpenAlex, and climate finance corpus — to show the field emerging *within* economics, not *from* climate science.
+3. **Figure 1 redesigned**: economics denominator + climate-finance numerator + share curve (OpenAlex Economics concept).
 4. **New analysis (Fig 5)**: two-communities hypothesis test — bimodality along a well-defined semantic axis (efficiency vs. accountability), both embedding-based and lexical.
 
 ---
@@ -29,23 +37,15 @@ The punchier thesis: climate finance crystallized as an economic object around 2
 
 ## Figure plan (5 figures)
 
-### Figure 1: The emergence of climate finance in economics (NEW)
+### Figure 1: The emergence of climate finance in economics
 
-**Script**: `scripts/analyze_temporal.py` (rewrite)
+**Script**: `scripts/plot_fig1_emergence.py` (reads `openalex_econ_yearly.csv`)
 
-**What it shows**: Three time series on a common timeline (1990–2025):
+**What it shows**: Economics denominator (orange line, log scale) + climate finance numerator (blue bars) + share curve (red dashed, right axis %). Years ≥ 2022 shown as incomplete (hatched bars, dotted lines).
 
-1. **Economics publications in OpenAlex** (by year) — the denominator. Shows the overall growth of the discipline. Query: OpenAlex works with `concept.id` = Economics (level 0), group by year.
-2. **Publications with "climate" in title in OpenAlex** (by year) — the broader climate literature within economics. Query: OpenAlex works with concept Economics AND title contains "climate", group by year.
-3. **Climate finance publications in our corpus** (by year) — the specific field. From `refined_works.csv` as currently done.
+**Data**: `count_openalex_econ_cf.py` queries OpenAlex API for Economics concept (C162324750) papers by year, then counts those with "climate finance" in title or abstract (cursor-based ID union for exact numerator).
 
-**Why this matters**: The current Fig 1 shows only the corpus bar chart with indexed baselines. The new version makes the argument visually: climate finance doesn't emerge from climate science generally — it emerges as a specific *economic* object after Copenhagen. Series 1 grows linearly. Series 2 grows faster. Series 3 explodes after 2009. The ratio series3/series1 is the economization story.
-
-**Data source**: OpenAlex API queries (two new queries, cached as JSON). The existing `openalex_baselines.json` already has "all science" and "climate change literature" — we replace those with the two economics-specific series. No new dependencies.
-
-**Layout**: Left y-axis = absolute publication counts (log scale or linear). All three series as lines (not bars) to allow comparison. COP events annotated as before. Period bands from the three-act structure in background.
-
-**Output**: `figures/fig1_emergence.{pdf,png}`, `data/catalogs/openalex_economics_baselines.json`
+**Output**: `figures/fig1_emergence.{pdf,png}`
 
 ---
 
@@ -61,17 +61,23 @@ The punchier thesis: climate finance crystallized as an economic object around 2
 
 ---
 
-### Figure 3: Thematic recomposition (EXISTING — renumbered, was Fig 2b)
+### Figure 3: Thematic recomposition
 
-**Script**: `scripts/analyze_alluvial.py` (no change to alluvial code)
+**Script**: `scripts/analyze_alluvial.py`
 
-**What it shows**: Alluvial diagram with data-derived periods. Currently four periods: 1990–2006, 2007–2012, 2013–2014, 2015–2025. This may need adjustment: the 2013–2014 band is very thin (2 years) and could be collapsed.
+**What it shows**: Alluvial diagram with 3 periods matching the manuscript (1990–2006, 2007–2014, 2015–2025). KMeans k=6 clusters labeled via abstract TF-IDF distinctiveness. Each box shows paper count and share of core papers (cited ≥ 50). Leader lines connect legend labels to bands.
 
-**Decision needed**: Keep 4 periods in alluvial (showing the brief transition), or collapse to 3 matching the article sections? The 4-period version is more faithful to the data (both breaks are real); the 3-period version is cleaner narratively. Recommendation: keep 4 in the figure but narrate as 3 acts in the text. The thin 2013–2014 band *is* the consolidation moment.
+**Output**: `figures/fig3_alluvial.{pdf,png,html}`, `tables/tab2_alluvial.csv`
 
-**Output**: `figures/fig3_alluvial.{pdf,png}`, `tables/tab2_alluvial.csv`
+### Figures 2b + 3b: Core subset analysis
 
-Note: rename from fig2_alluvial to fig3_alluvial.
+**Script**: `scripts/analyze_alluvial.py --core-only`
+
+**What it shows**: Same breakpoint detection and alluvial analysis restricted to the 1,176 most-cited papers (cited_by_count ≥ 50). KMeans is re-fitted on core embeddings (not inherited from full corpus). This tests whether structural shifts are driven by the influential intellectual core or by the bulk of lower-cited work.
+
+**Key finding**: The core shows no structural break in 2007–2015 — the only detected break is at 2023 (edge effect). The structural shifts visible in the full corpus are driven by the influx of new scholarship, not by changes in the core community's thematic composition.
+
+**Output**: `figures/fig2b_breakpoints_core.{pdf,png}`, `figures/fig3b_alluvial_core.{pdf,png,html}`, `tables/tab2b_*.csv`
 
 ---
 
@@ -175,30 +181,36 @@ Carried over from v1, renumbered:
 
 | Action | File | Purpose |
 |---|---|---|
-| **Rewrite** | `scripts/analyze_temporal.py` | New Fig 1: three economics series |
-| **Modify** | `scripts/analyze_alluvial.py` | Rename output to fig2/fig3, update period labels |
-| **Modify** | `scripts/analyze_genealogy.py` | Rename output to fig4, update period bands |
-| **Create** | `scripts/analyze_bimodality.py` | New Fig 5: two-communities test |
-| Keep | `scripts/analyze_cocitation.py` | Still needed (generates communities.csv) |
-| Keep | `scripts/analyze_embeddings.py` | Still needed (generates embeddings.npy) |
+| Done | `scripts/plot_fig1_emergence.py` | Fig 1: economics denominator + CF numerator |
+| Done | `scripts/analyze_alluvial.py` | Figs 2/3 (full) + 2b/3b (--core-only) |
+| Done | `scripts/analyze_genealogy.py` | Fig 4: citation genealogy |
+| Done | `scripts/analyze_bimodality.py` | Fig 5: two-communities bimodality test |
+| Done | `scripts/plot_fig1_robustness.py` | Fig A.1a: Econ vs Finance vs RePEc |
+| Keep | `scripts/analyze_cocitation.py` | Generates communities.csv |
+| Keep | `scripts/analyze_embeddings.py` | Generates embeddings.npy |
 
 ## Output files (updated)
 
 ```
-figures/fig1_emergence.{pdf,png}           — Three economics series timeline
-figures/fig2_breakpoints.{pdf,png}         — Structural break detection
-figures/fig3_alluvial.{pdf,png}            — Community flows across periods
-figures/fig4_genealogy.{pdf,png,html}      — Citation genealogy
-figures/fig5_bimodality.{pdf,png}          — Efficiency↔accountability bimodality
-figures/fig5_bimodality_lexical.{pdf,png}  — TF-IDF bimodality (appendix)
-figures/fig5_bimodality_keywords.{pdf,png} — Keyword scatter (appendix)
-figures/fig_lexical_tfidf*.{pdf,png}       — Lexical validation (appendix, renamed)
-figures/fig_k_sensitivity.{pdf,png}        — k-sensitivity (appendix, renamed)
+figures/fig1_emergence.{pdf,png}              — Economics + CF bars + share
+figures/fig2_breakpoints.{pdf,png}            — Structural break detection (full corpus)
+figures/fig2b_breakpoints_core.{pdf,png}      — Structural break detection (core: cited ≥ 50)
+figures/fig3_alluvial.{pdf,png,html}          — Alluvial (full corpus, 3 periods, % core)
+figures/fig3b_alluvial_core.{pdf,png,html}    — Alluvial (core only, 3 periods)
+figures/fig4_genealogy.{pdf,png,html}         — Citation genealogy
+figures/fig5a_bimodality.{pdf,png}            — Efficiency↔accountability bimodality
+figures/fig5b_bimodality_lexical.{pdf,png}    — TF-IDF bimodality (appendix)
+figures/fig5c_bimodality_keywords.{pdf,png}   — Keyword scatter (appendix)
+figures/figA_1a_robustness.{pdf,png}          — Econ vs Finance vs RePEc
+figures/figA_lexical_tfidf_*.{pdf,png}        — Lexical validation at breakpoints
+figures/figA_k_sensitivity.{pdf,png}          — k-sensitivity (k=4–7)
 
-tables/tab1_terms.csv                      — Key concept emergence
-tables/tab2_breakpoints.csv                — Yearly divergence metrics
-tables/tab2_breakpoint_robustness.csv      — Robust breakpoints
-tables/tab2_alluvial.csv                   — Period-community counts
+tables/tab2_breakpoints.csv                — Yearly divergence metrics (full)
+tables/tab2_breakpoint_robustness.csv      — Robust breakpoints (full)
+tables/tab2_alluvial.csv                   — Period-community counts (full)
+tables/tab2b_breakpoints_core.csv          — Yearly divergence metrics (core)
+tables/tab2b_breakpoint_robustness_core.csv — Robust breakpoints (core)
+tables/tab2b_alluvial_core.csv             — Period-community counts (core)
 tables/tab2_k_sensitivity.csv              — k-sensitivity JS divergence
 tables/tab2_lexical_tfidf.csv              — Lexical validation
 tables/tab3_lineages.csv                   — Genealogy lineage assignments
@@ -214,11 +226,16 @@ tables/tab5_pole_papers.csv                — Per-paper axis scores
 # uv run python scripts/analyze_embeddings.py   → embeddings.npy
 # uv run python scripts/analyze_cocitation.py    → communities.csv
 
-# Figure 1 (requires OpenAlex API queries — one-time, cached):
-uv run python scripts/analyze_temporal.py
+# Figure 1 (requires OpenAlex API — cached in openalex_econ_yearly.csv):
+uv run python scripts/plot_fig1_emergence.py
 
-# Figures 2 + 3 (breakpoints + alluvial):
+# Figures 2 + 3 (breakpoints + alluvial, full corpus):
 uv run python scripts/analyze_alluvial.py
+
+# Figures 2b + 3b (breakpoints + alluvial, core only):
+uv run python scripts/analyze_alluvial.py --core-only
+
+# k-sensitivity appendix:
 uv run python scripts/analyze_alluvial.py --robustness
 
 # Figure 4 (genealogy):
@@ -236,7 +253,7 @@ uv run python scripts/analyze_bimodality.py
 | Bimodality test shows unimodal distribution | Report as finding: the field is a continuum, not two camps. Revise the "two communities" framing to "spectrum with poles." |
 | Efficiency/accountability axis is not the primary axis of variation | Check: compute explained variance of the axis projection. If low, try PCA-derived axes and see if they correlate. |
 | Dip test package not available | Rely on GMM BIC + visual KDE. Two methods still sufficient. |
-| 2013–2014 period too thin for meaningful alluvial band | Keep in figure (honest), discuss in text as transition moment. |
+| Core subset shows different breaks than full corpus | Report as finding: structural shifts driven by influx of new work, not core community changes. |
 
 ---
 
