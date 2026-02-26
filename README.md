@@ -15,13 +15,21 @@ Publishing a few articles to lay the groundwork for a book project described in 
 2026-01-14 Submitted to OEconomia special issue "History of Climate Economics". See `release/2026-01-14...`
 2026-02-16 Not selected. However, editor Francesco Sergi encouraged resubmission as regular "Varia" contribution, citing quality and journal fit. See `20260216 decision.txt`.
 2026-02-18 Manuscript plan established. See `PLAN.md`.
+2026-02-26 Bibliometric analysis complete. Three-act periodization from breakpoint detection. See `CLAUDE.md` for full handoff.
 
 ## Repository Structure
 
 ```
-├── PLAN.md                           # Manuscript action plan
+├── CLAUDE.md                         # AI agent handoff: data paths, current state, next tasks
+├── PLAN.md                           # Manuscript structure (v2, three-act)
+├── method.md                         # Computational analysis plan (v2, 5 figures)
+├── AGENTS.md                         # Writing guidelines and quality standards
 ├── extended abstract.md              # Submitted extended abstract
 ├── notes.md                          # Working notes, detailed outline
+├── scripts/                          # Python analysis pipeline
+├── figures/                          # Generated figures (tracked)
+├── tables/                           # Generated tables (tracked)
+├── data/catalogs/                    # Small curated data (het_core.csv only; rest in ~/data/...)
 ├── release/                          # Releases outside CIRED. Append-only.
 ├── attic/                            # Old stuff to delete when paper is accepted
 ├── AI tech reports/                  # AI-assisted research (SciSpace CSVs + analyses)
@@ -31,6 +39,9 @@ Publishing a few articles to lay the groundwork for a book project described in 
 ```
 
 ## Research Corpus
+
+### Bibliometric corpus (~22,000 works)
+Built from multiple sources (OpenAlex, ISTEX, Scopus, JSTOR, BibCNRS, grey literature), merged and deduplicated. Generated data lives at `~/data/projets/Oeconomia-Climate-finance/catalogs/` (see `CLAUDE.md` for details).
 
 ### Primary Literature
 - **ISTEX corpus:** 484 articles with "Climate finance" OR "Finance climat" OR "Finance climatique" (full-text PDFs)
@@ -65,7 +76,9 @@ Topic-specific analyses with CSV datasets:
 
 ## Next Steps
 
-See `PLAN.md`.
+See `CLAUDE.md` for detailed handoff (data paths, what's done, what's TODO).
+See `PLAN.md` for manuscript structure.
+See `method.md` for computational analysis plan.
 
 ## Contact
 
