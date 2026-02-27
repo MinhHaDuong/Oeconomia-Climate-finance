@@ -219,4 +219,97 @@ Le passage de 100 à 300 milliards dépend d’outils économiques préexistants
 
 La rhétorique sur les montants cache la bataille réelle sur la définition de ce qui “compte”.
 
+## Memo (2026-02-27) — RePEc/OpenAlex checks and core venues
+
+### 1) Rare-event sanity check (RePEc climate-finance hit rate)
+
+- If hit rate is ~0.04% (Figure 1 order of magnitude), then on a sample of 10,000 records we expect ~4 strict hits.
+- Therefore, getting 0 strict hits on smaller random samples (e.g., ~1,372 eligible records) is statistically plausible.
+- Conclusion: small random samples are too noisy for strict phrase validation; this does **not** by itself invalidate the pipeline.
+
+### 2) Clarification on data sources
+
+- RePEc is **not** a journal publisher; it is a distributed metadata/indexing system including many content types (articles, WP, reports, books, chapters).
+- OpenAlex includes journal entities explicitly via Sources (type journal), linked to works.
+
+### 3) Core works: where they are published (from `data/catalogs/het_core.csv`)
+
+Journal-like venues in core include (by frequency/citation prominence):
+
+- Sustainability
+- Nature Climate Change
+- Climate Policy
+- Climatic Change
+- Review of Financial Studies
+- Journal of Financial Economics
+- Journal of Banking & Finance
+- Energy Economics
+
+### 4) Core works in report/WP series (important for narrative)
+
+Working-paper series (frequent):
+
+- IMF Working Paper
+- OECD environment working papers
+- OECD Economics Department working papers
+- OECD development co-operation working papers
+- World Bank policy research working paper
+
+Report/institutional series (frequent):
+
+- World Bank eBook/report variants
+- OECD/IEA climate change expert group papers
+- IMF Staff Climate Notes
+- IMF Staff Country Reports
+
+Method note: venue labels are heterogeneous (same institution appears under multiple strings), so final manuscript tables should use canonicalized venue mapping.
+
+### 5) Maintenance rule (author request)
+
+- **Always update `notes.md`** when we change classification logic or interpretation affecting manuscript tables/figures.
+- This note serves as the running audit trail for manual overrides and category decisions.
+
+### 6) Venue-cleaning decisions applied on 2026-02-27
+
+- `Climate finance and the USD 100 billion goal` is treated as **report_series** (not journal).
+- `MF Policy Paper` is normalized to **IMF Policy Paper** and treated as **report_series**.
+- `DepositOnce` is treated as **repository_or_index** (not journal).
+- `Research Online`-type labels are treated as **repository_or_index**.
+
+Implication for interpretation: institutional and repository channels remain central in the core, reinforcing the argument that economists and policy institutions (OECD, World Bank, IMF) helped structure the debate through report/working-paper infrastructures, not only journal publication.
+
+### 7) Manuscript arguments discovered from venue tables (for drafting)
+
+**Argument A — The field is institutionalized through publication infrastructure, not only journals.**
+
+- Evidence: in core-venue outputs, OECD/World Bank/IMF appear strongly in `report_series` and `working_paper_series` channels.
+- Interpretation: category-making power is exercised in quasi-academic policy formats (working papers, expert papers, institutional reports), not only peer-reviewed journal articles.
+- Draft claim: climate-finance economics matured through a hybrid communication regime where policy institutions produced canonical definitions before (and alongside) journal consolidation.
+
+**Argument B — Economists' authority is embedded in organizations, not only individuals.**
+
+- Evidence: high institutional presence in core counts (`tab_core_institutions.csv`) and strong weight of World Bank/OECD/IMF labeled venues.
+- Interpretation: economists operate as institutional experts whose outputs become reference points in negotiations and measurement controversies.
+- Draft claim: debates on what counts as climate finance are structured by institutional economics teams that maintain reporting templates, valuation conventions, and comparability standards.
+
+**Argument C — Measurement controversies are linked to venue ecology.**
+
+- Evidence: many influential items are in report/WP series where methods are operationalized (grant equivalent, mobilization/accounting conventions, counting boundaries).
+- Interpretation: controversies persist because the same institutions both propose metrics and publish authoritative tracking outputs.
+- Draft claim: disputes over the $100bn trajectory are not external critiques of a neutral metric; they are struggles over institutionalized quantification regimes.
+
+**Argument D — The core corpus is hybrid and requires explicit venue cleaning for valid historical inference.**
+
+- Evidence: repository/index labels (e.g., SSRN/RePEc/DepositOnce/Research Online) and mislabeled items can appear as pseudo-journals without cleaning.
+- Interpretation: historical conclusions about disciplinary consolidation depend on transparent venue normalization.
+- Draft claim: methodological reflexivity on venue classification is part of the substantive argument about how economic objects are constructed.
+
+### 8) Draft paragraph skeleton for main text
+
+1. Start with empirical fact: core works are distributed across journals **and** institutional report/WP series.
+2. Name actors: OECD, World Bank, IMF as recurring publication infrastructures.
+3. Explain mechanism: these venues stabilize definitions and accounting practices that make climate finance governable.
+4. Connect to thesis: climate finance became an economic object through institutionalized quantification, not merely through journal-theory accumulation.
+5. Bridge to controversy section: the same infrastructures generate contestation over inclusion rules and valuation choices.
+
 Ce que signifie la domination des économistes dans la future architecture financière (GCF 2.0, Loss & Damage Fund, MDB reforms).
