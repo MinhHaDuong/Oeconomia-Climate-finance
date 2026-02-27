@@ -1,0 +1,12 @@
+institution_group,venue_type,n_core_works,cited_by_sum
+IMF,report_series,15,417
+IMF,working_paper_series,13,423
+OECD,report_series,27,966
+OECD,working_paper_series,25,1686
+Other/None,journal,560,36206
+Other/None,missing,151,718
+Other/None,repository_or_index,105,8
+Other/None,report_series,45,611
+Other/None,working_paper_series,3,58
+World Bank,report_series,55,6595
+World Bank,working_paper_series,1,3034

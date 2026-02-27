@@ -63,6 +63,7 @@ Merges the "defining moment" with the first consolidation. Two detected breaks b
 - Two communities crystallize: efficiency pole (OECD/MDB leverage) vs. accountability pole (Oxfam/CARE justice)
 - Theory: performativity, boundary work
 - Data support: both structural breaks (2007 cosine, 2013 JS) fall in this period; massive lexical reorientation at 2009
+- Venue support (new): core publication channels are already hybrid (journals + OECD/WB/IMF report/WP series), showing institutional economists shaping categories through publication infrastructures, not only journal debate
 
 ### Section III: The Established Field (2015–2025) — ~2,500 words
 Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
@@ -81,6 +82,7 @@ Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
 - Key point: all these disputes happen *within* stable intellectual categories
 - Theory: economization (Fourcade, Çalışkan), boundary work, infrastructures of quantification
 - Data support: no structural break; 2015 and 2021 are thematic inflections, not ruptures
+- Venue support (new): continued OECD/World Bank/IMF presence in core report/WP channels confirms that quantification controversies are produced and arbitrated within institutional economics infrastructures
 
 ### Section IV: How Climate Finance Became an Economic Object — ~1,500 words
 - Theoretical synthesis: commensuration → performativity → economization → boundary work

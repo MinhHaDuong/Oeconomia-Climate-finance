@@ -101,6 +101,8 @@ uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core:
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_genealogy.py       # Fig 4 (depends on bimodality output)
+uv run python scripts/summarize_core_venues.py   # Core venue tables + institution summaries (OECD/WB/IMF)
+uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table
 ```
 
 ## Three-act periodization (data-driven)

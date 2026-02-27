@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""Summarize publication venues for core works.
+
+Reads:
+- $DATA/catalogs/het_core.csv
+
+Writes:
+- tables/tab_core_venues_journals.csv
+- tables/tab_core_venues_series.csv
+- tables/tab_core_venues_all.csv
+
+Usage:
+    uv run python scripts/summarize_core_venues.py
+"""
+
+import argparse
+import os
+import re
+import sys
+
+import pandas as pd
+
+sys.path.insert(0, os.path.dirname(__file__))
+from utils import BASE_DIR, CATALOGS_DIR, save_csv
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Summarize core venue distributions")
+    parser.add_argument(
+        "--core",
+        type=str,
+        default=os.path.join(CATALOGS_DIR, "het_core.csv"),
+        help="Input core works CSV",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=30,
+        help="Top N venues per output table",
+    )
+    parser.add_argument(
+        "--out-all",
+        type=str,
+        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_all.csv"),
+        help="Output path for all venues summary",
+    )
+    parser.add_argument(
+        "--out-journals",
+        type=str,
+        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_journals.csv"),
+        help="Output path for journal-only summary",
+    )
+    parser.add_argument(
+        "--out-series",
+        type=str,
+        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_series.csv"),
+        help="Output path for report/WP series summary",
+    )
+    parser.add_argument(
+        "--out-institutions",
+        type=str,
+        default=os.path.join(BASE_DIR, "tables", "tab_core_institutions.csv"),
+        help="Output path for institution summary (OECD/WB/IMF/other)",
+    )
+    parser.add_argument(
+        "--out-institution-types",
+        type=str,
+        default=os.path.join(BASE_DIR, "tables", "tab_core_institution_by_type.csv"),
+        help="Output path for institution x venue_type summary",
+    )
+    return parser.parse_args()
+
+
+def canonical_venue(name):
+    v = str(name or "").strip()
+    low = v.lower()
+    if not low:
+        return "[missing]"
+    if low == "mf policy paper":
+        return "IMF Policy Paper"
+    if "world bank" in low and ("ebook" in low or "publication" in low or "washington, dc" in low):
+        return "World Bank eBooks"
+    if "world bank" in low and "policy research working paper" in low:
+        return "World Bank Policy Research Working Paper"
+    if "world bank" in low:
+        return "World Bank"
+    if "oecd/iea climate change expert group papers" in low:
+        return "OECD/IEA Climate Change Expert Group Papers"
+    if "oecd" in low and "working paper" in low:
+        return "OECD Working Papers"
+    if "oecd" in low and "paper" in low:
+        return "OECD Papers"
+    if low.startswith("oecd"):
+        return "OECD"
+    if "imf working paper" in low:
+        return "IMF Working Paper"
+    if "imf staff climate notes" in low:
+        return "IMF Staff Climate Notes"
+    if "imf staff country reports" in low:
+        return "IMF Staff Country Reports"
+    if "imf" in low and ("discussion note" in low or "staff" in low):
+        return "IMF Staff Notes"
+    if "imf" in low:
+        return "IMF"
+    if "ssrn" in low:
+        return "SSRN Electronic Journal"
+    if "repec" in low:
+        return "RePEc"
+    if "depositonce" in low:
+        return "DepositOnce"
+    if "zenodo" in low:
+        return "Zenodo"
+    if "figshare" in low:
+        return "Figshare"
+    if "preprints" in low:
+        return "Preprints"
+    return v
+
+
+def venue_type(name):
+    low = str(name or "").lower()
+    if not low or low == "[missing]":
+        return "missing"
+
+    if low == "climate finance and the usd 100 billion goal":
+        return "report_series"
+
+    wp_pattern = re.compile(r"working paper|working papers|discussion paper|policy research working paper|\bwp\b")
+    report_pattern = re.compile(
+        r"ebook|ebooks|report|reports|publications|world bank|oecd|imf|unfccc|climate policy initiative|\bcpi\b"
+    )
+    non_journal_pattern = re.compile(
+        r"ssrn|repec|zenodo|figshare|preprints|open science framework|depositonce|research online"
+    )
+
+    if wp_pattern.search(low):
+        return "working_paper_series"
+    if report_pattern.search(low):
+        return "report_series"
+    if non_journal_pattern.search(low):
+        return "repository_or_index"
+    return "journal"
+
+
+def institution_group(name):
+    low = str(name or "").lower()
+    if "oecd" in low:
+        return "OECD"
+    if "world bank" in low:
+        return "World Bank"
+    if "imf" in low:
+        return "IMF"
+    return "Other/None"
+
+
+def summarize(df, group_cols, top_n):
+    out = (
+        df.groupby(group_cols, as_index=False)
+        .agg(n_core_works=("venue_raw", "size"), cited_by_sum=("cited_by_count", "sum"))
+        .sort_values(["n_core_works", "cited_by_sum"], ascending=[False, False])
+        .head(top_n)
+        .reset_index(drop=True)
+    )
+    return out
+
+
+def main():
+    args = parse_args()
+    if not os.path.exists(args.core):
+        raise FileNotFoundError(f"Core file not found: {args.core}")
+
+    df = pd.read_csv(args.core)
+    if "journal" not in df.columns:
+        raise ValueError("Expected column 'journal' in core file")
+
+    df = df.copy()
+    df["venue_raw"] = df["journal"].fillna("").astype(str).str.strip()
+    df["venue_raw"] = df["venue_raw"].mask(df["venue_raw"].eq(""), "[missing]")
+    df["venue_canonical"] = df["venue_raw"].map(canonical_venue)
+    df["venue_type"] = df["venue_canonical"].map(venue_type)
+    df["cited_by_count"] = pd.to_numeric(df.get("cited_by_count", 0), errors="coerce").fillna(0).astype(int)
+
+    all_tbl = summarize(df, ["venue_type", "venue_canonical"], args.top)
+    journals_tbl = summarize(df[df["venue_type"] == "journal"], ["venue_canonical"], args.top)
+    series_tbl = summarize(
+        df[df["venue_type"].isin(["working_paper_series", "report_series"])],
+        ["venue_type", "venue_canonical"],
+        args.top,
+    )
+    df["institution_group"] = df["venue_canonical"].map(institution_group)
+    inst_tbl = (
+        df.groupby("institution_group", as_index=False)
+        .agg(n_core_works=("venue_raw", "size"), cited_by_sum=("cited_by_count", "sum"))
+        .sort_values(["n_core_works", "cited_by_sum"], ascending=[False, False])
+        .reset_index(drop=True)
+    )
+    inst_type_tbl = (
+        df.groupby(["institution_group", "venue_type"], as_index=False)
+        .agg(n_core_works=("venue_raw", "size"), cited_by_sum=("cited_by_count", "sum"))
+        .sort_values(["institution_group", "n_core_works"], ascending=[True, False])
+        .reset_index(drop=True)
+    )
+
+    save_csv(all_tbl, args.out_all)
+    save_csv(journals_tbl, args.out_journals)
+    save_csv(series_tbl, args.out_series)
+    save_csv(inst_tbl, args.out_institutions)
+    save_csv(inst_type_tbl, args.out_institution_types)
+
+    coverage = (
+        df.groupby("venue_type", as_index=False)
+        .agg(n_core_works=("venue_raw", "size"))
+        .sort_values("n_core_works", ascending=False)
+    )
+
+    print("Done.")
+    print(f"  Input rows: {len(df):,}")
+    print("  Venue type coverage:")
+    for _, row in coverage.iterrows():
+        print(f"    - {row['venue_type']}: {int(row['n_core_works'])}")
+    print("  Institution coverage:")
+    for _, row in inst_tbl.iterrows():
+        print(f"    - {row['institution_group']}: {int(row['n_core_works'])}")
+
+
+if __name__ == "__main__":
+    main()
