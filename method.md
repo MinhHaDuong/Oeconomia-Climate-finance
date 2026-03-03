@@ -141,6 +141,7 @@ As a third, simple check: for each paper with abstracts, count how many efficien
 - `figures/fig5_bimodality_lexical.{pdf,png}` — TF-IDF version (robustness appendix)
 - `figures/fig5_bimodality_keywords.{pdf,png}` — keyword scatter (robustness appendix)
 - `tables/tab5_bimodality.csv` — dip test p-values, GMM BIC, pole paper counts
+- `tables/tab5_axis_detection.csv` — unsupervised TF-IDF component alignment to axis
 - `tables/tab5_pole_papers.csv` — per-paper score and pole assignment
 
 **Dependencies**: numpy, scipy (for KDE), scikit-learn (GMM, TF-IDF), diptest (pip install diptest — small package for Hartigan's dip test; if unavailable, skip dip test and rely on GMM BIC + visual).
@@ -216,6 +217,7 @@ tables/tab2_lexical_tfidf.csv              — Lexical validation
 tables/tab3_lineages.csv                   — Genealogy lineage assignments
 tables/tab3_louvain_sensitivity.csv        — Louvain γ sensitivity
 tables/tab5_bimodality.csv                 — Dip test, GMM BIC results
+tables/tab5_axis_detection.csv             — Unsupervised TF-IDF PC alignment to main divide
 tables/tab5_pole_papers.csv                — Per-paper axis scores
 ```
 
