@@ -1,0 +1,4 @@
+component,variance_explained,bic_1comp,bic_2comp,delta_bic,top_positive_terms,top_negative_terms
+2,0.054218113,-9897.313596260095,-10829.424876003328,932.1112797432324,"green, financial, study, sustainability, green finance","carbon, emissions, climate, climate change, greenhouse"
+3,0.040749338,-15265.60459281161,-15655.515344648424,389.9107518368146,"land, forest, biomass, energy, production","agreement, paris, finance, paris agreement, international"
+4,0.038014095,-16571.738968741443,-17022.20882061011,450.4698518686673,"cdm, mechanism cdm, clean development, development mechanism, cdm projects","finance, green, financial, carbon, green finance"
