@@ -7,10 +7,17 @@ An article for Œconomia journal arguing that climate finance became an economic
 ## Key files
 
 - `PLAN.md` — Manuscript structure (three-act periodization, five figures)
-- `method.md` — Detailed computational analysis plan (scripts, methods, outputs)
+- `technical-report.md` — Full data pipeline documentation (10 sections)
 - `AGENTS.md` — Writing guidelines and quality standards
-- `notes.md` — Working notes and original outline
+- `notes.md` — Working notes, draft arguments, empirical observations
 - `extended abstract.md` — Submitted abstract
+
+## Directory conventions
+
+- `docs/` — External documents only (journal guidelines, seminar notes, book project)
+- `scripts/` — All Python scripts
+- `figures/`, `tables/` — Generated outputs
+- Project-root `.md` files are working documents for this paper
 
 ## Data location
 
