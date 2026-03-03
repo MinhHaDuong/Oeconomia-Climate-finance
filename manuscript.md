@@ -1,0 +1,24 @@
+# Counting Climate Finance: How an Economic Object Was Made (1990–2025)
+# History of climate finance as an economic object: accounting categories, controversies, and economists as policy experts
+
+## Introduction
+
+This paper offers a history-of-economic-thought analysis of the emergence of climate finance as a distinct economic object from the early 1990s to the mid-2020s. It examines how economists actively shaped the categories, metrics, and boundaries through which climate-related financial flows were defined, stabilised, and contested, contributing to the history of climate economics by shifting attention from models to accounting conventions.
+
+Rather than treating climate finance as a technical extension of environmental or development economics, we situate it within a longer trajectory of climate economics. Early work on externalities and collective environmental constraints (Ayres and Kneese) preceded, and only partially informed, later modelling efforts centred on growth, damages, and risk (Nordhaus, Manne, Stern, Weitzman). The burden-sharing dimension embedded in these models (Negishi weights) remained disconnected from parallel debates on aid and international responsibility. Climate finance emerged not as a direct outgrowth of integrated assessment modelling, but through entanglement with international negotiations, development finance practices, and attempts to translate climate commitments into financially actionable terms.
+
+At this juncture, economists in international organisations played a decisive role. At the OECD, figures such as Jan Corfee-Morlot built statistical infrastructures---notably the Rio markers---that rendered climate finance measurable within development finance frameworks, defining what could legitimately count and how responsibility could be claimed. These accounting categories became focal points of a deeper divide. On one side, economists working within a market-failure framework emphasised efficiency, leverage, and capital mobilisation, framing public climate finance as a catalytic instrument to crowd in private investment (Stern). On the other, political-economy-oriented economists challenged both measurement conventions and normative assumptions: Michaelowa on incentive-driven over-reporting, Weikmans and Roberts on accounting disputes as distributive conflicts, Kaul on the distinct financing requirements of global public goods. We trace this divide through four recurrent controversies: the valuation of concessional loans, the credibility of Rio markers, the attribution of mobilised private finance, and the boundary between development assistance and climate-specific obligations.
+
+We ground this historical argument in a computational analysis of approximately 22,000 works on climate finance (1990--2025), drawn from seven bibliographic sources including OpenAlex, ISTEX, and curated grey literature (OECD, World Bank, UNFCCC reports). The rapid growth of this scholarship within economics (Figure 1) itself signals the constitution of a new object. Using sentence-transformer embeddings, we apply sliding-window divergence tests to detect structural breaks endogenously---driven by the data rather than imposed from COP milestones. Two robust breaks, at 2007 and 2013, bracket a crystallization phase; no break appears around the Paris Agreement (2015) or Glasgow (2021). Censored-gap analysis narrows the dominant discontinuity to 2009, the year of the Copenhagen $100 billion commitment. KMeans clustering identifies six thematic communities whose flows across periods are tracked in an alluvial diagram (Figure 2). Restricting the analysis to the 1,176 most-cited papers shows no structural break at all: the field's categories were set early and never disrupted. A Gaussian mixture model confirms that the efficiency--accountability divide is a persistent structural feature of the literature.
+
+These findings organise the paper into three historical acts. Section I traces the intellectual prehistory before climate finance existed as an autonomous object (1990--2006). Section II analyses the crystallization triggered by the Copenhagen commitment and the construction of OECD statistical infrastructure (2007--2014). Section III shows that all subsequent disputes---the $100 billion accounting battles, the $300 billion NCQG at Baku---have been fought within the stable categories established during crystallization (2015--2025). Section IV synthesises the theoretical implications, drawing on the sociology of quantification (Desrosières, Porter), performativity (Callon, MacKenzie), and economization (Fourcade) to argue that climate finance was made governable precisely because economists turned it into an economic object.
+
+## I. Before Climate Finance (1990–2006)
+
+## II. Crystallization (2007–2014)
+
+## III. The Established Field (2015–2025)
+
+## IV. How Climate Finance Became an Economic Object
+
+## Conclusion
