@@ -131,11 +131,8 @@ Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
 
 | File | Purpose | Status |
 |------|---------|--------|
+| `CLAUDE.md` | Minimal AI handoff (data path, conventions, status) | Current |
+| `AGENTS.md` | Writing guidelines, workflow rules, script commands | Current |
 | `technical-report.md` | Full pipeline documentation (10 sections) | Current |
-| `method.md` | Computational design doc (v3, archival) | Archival — superseded by tech report |
 | `notes.md` | Working notes, draft arguments, empirical observations | Active |
 | `extended abstract.md` | Submitted abstract (2026-01-15) | Archival |
-| `corpus-paragraph.md` | Draft corpus description for manuscript | Stale (12K count, needs update to 22K) |
-| `AGENTS.md` | AI agent guidelines | Current |
-| `CLAUDE.md` | Project context for AI agents | Current |
-| `data/TECHNICAL-NOTE.md` | Legacy corpus-construction docs | Superseded by technical-report.md §1-2 |

@@ -1,8 +1,8 @@
 # AI Agent Guidelines for Climate Finance History Project
 
-See `CLAUDE.md` for data paths, current state, and next implementation tasks.
+See `CLAUDE.md` for data paths and current status.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
-See `method.md` for the detailed computational analysis plan.
+See `technical-report.md` for the full data pipeline documentation.
 See `notes.md` for working notes and the original detailed outline.
 
 ## Writing Guidelines
@@ -117,6 +117,33 @@ When working on multiple tickets:
 - All dependencies are declared in `pyproject.toml` at project root.
 - torch is pinned to CPU-only builds via `[tool.uv.sources]` (no NVIDIA/CUDA).
 - To add a dependency: edit `pyproject.toml`, then run `uv sync`.
+
+### Running scripts
+
+Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
+```bash
+# Data collection (slow — API calls)
+uv run python scripts/count_openalex_econ_cf.py                  # OpenAlex econ yearly
+uv run python scripts/count_openalex_econ_cf.py --scope finance  # OpenAlex finance yearly
+uv run python scripts/count_openalex_econ_fin_overlap.py         # Econ/Finance overlap (ID sets)
+uv run python scripts/count_repec_econ_cf.py                     # RePEc yearly (needs local mirror)
+
+# Figures
+uv run python scripts/plot_fig1_emergence.py     # Fig 1 (reads openalex_econ_yearly.csv)
+uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + overlap CSVs)
+uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3 (full corpus)
+uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core: cited ≥ 50)
+uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
+uv run python scripts/analyze_alluvial.py --censor-gap 1  # Censored breaks (k=1)
+uv run python scripts/analyze_alluvial.py --censor-gap 2  # Censored breaks (k=2)
+uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
+uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
+uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)
+uv run python scripts/plot_fig45_pca_scatter.py  # Fig 4 PCA scatter (appendix, full corpus)
+uv run python scripts/analyze_genealogy.py       # Fig 4 genealogy (depends on bimodality output)
+uv run python scripts/summarize_core_venues.py   # Core venue tables + institution summaries
+uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table
+```
 
 ## Self-Check Questions
 

@@ -15,17 +15,18 @@ Publishing a few articles to lay the groundwork for a book project described in 
 2026-01-14 Submitted to OEconomia special issue "History of Climate Economics". See `release/2026-01-14...`
 2026-02-16 Not selected. However, editor Francesco Sergi encouraged resubmission as regular "Varia" contribution, citing quality and journal fit. See `20260216 decision.txt`.
 2026-02-18 Manuscript plan established. See `PLAN.md`.
-2026-02-26 Bibliometric analysis complete. Three-act periodization from breakpoint detection. See `CLAUDE.md` for full handoff.
+2026-02-26 Bibliometric analysis complete. Three-act periodization from breakpoint detection.
+2026-03-03 All figures finalized (core subset, censored breaks, PCA scatter). Ready for manuscript drafting.
 
 ## Repository Structure
 
 ```
-├── CLAUDE.md                         # AI agent handoff: data paths, current state, next tasks
-├── PLAN.md                           # Manuscript structure (v2, three-act)
-├── method.md                         # Computational analysis plan (v2, 5 figures)
-├── AGENTS.md                         # Writing guidelines and quality standards
+├── CLAUDE.md                         # AI handoff: data paths, conventions, status
+├── PLAN.md                           # Manuscript structure (v3, three-act, five figures)
+├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
+├── technical-report.md               # Full pipeline documentation (10 sections)
 ├── extended abstract.md              # Submitted extended abstract
-├── notes.md                          # Working notes, detailed outline
+├── notes.md                          # Working notes, draft arguments
 ├── scripts/                          # Python analysis pipeline
 ├── figures/                          # Generated figures (tracked)
 ├── tables/                           # Generated tables (tracked)
@@ -76,9 +77,8 @@ Topic-specific analyses with CSV datasets:
 
 ## Next Steps
 
-See `CLAUDE.md` for detailed handoff (data paths, what's done, what's TODO).
-See `PLAN.md` for manuscript structure.
-See `method.md` for computational analysis plan.
+See `CLAUDE.md` for AI handoff (data paths, conventions, status).
+See `PLAN.md` for manuscript structure and drafting plan.
 
 ## Contact
 
