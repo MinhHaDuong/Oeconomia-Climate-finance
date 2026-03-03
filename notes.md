@@ -312,4 +312,38 @@ Implication for interpretation: institutional and repository channels remain cen
 4. Connect to thesis: climate finance became an economic object through institutionalized quantification, not merely through journal-theory accumulation.
 5. Bridge to controversy section: the same infrastructures generate contestation over inclusion rules and valuation choices.
 
+### 9) New empirical result (2026-02-27): unsupervised detection of the main divide
+
+- Added an unsupervised axis-detection step in `scripts/analyze_bimodality.py` using TF-IDF TruncatedSVD (PC1..PC5).
+- Criterion: select the component with highest absolute correlation with the embedding efficiency↔accountability score.
+- Result: **PC3** is the best-aligned unsupervised component (`r = -0.583`, `ΔBIC = 37` for 2-component vs 1-component GMM).
+- Interpretation: the main economic divide is not only seed-imposed; a latent lexical component independently recovers a closely related polarity, with detectable bimodality.
+- Repro output: `tables/tab5_axis_detection.csv` (component variance shares, correlation, ΔBIC, top positive/negative terms).
+
+### 10) Interpretation of all discovered axes (for manuscript use)
+
+Using `tables/tab5_axis_detection.csv` and `tables/tab5_bimodality.csv`:
+
+1. **Seeded embedding axis (efficiency ↔ accountability)**
+  - Defined by centroid contrast from pole vocabularies.
+  - Strong global bimodality (`ΔBIC=1264`), strongest in 2015–2025.
+  - HET reading: opposition between market-calculative expertise (mobilization/leverage) and public-accounting expertise (additionality/equity/commensuration).
+
+2. **Seeded lexical axis (TF-IDF analog of the same divide)**
+  - Very strong bimodality (`ΔBIC=8961`) and high agreement with embedding axis (`r≈0.683`).
+  - HET reading: confirms the divide is visible in language-level categories, not only in embedding geometry.
+
+3. **Unsupervised lexical PCs (PC1–PC5)**
+  - **PC1**: broad climate/development discourse vs multilingual/noise tail (low alignment to main divide).
+  - **PC2**: Kyoto/CDM mechanism vocabulary vs contemporary climate-finance/governance vocabulary (chronological-regime axis).
+  - **PC3 (main aligned unsupervised axis)**: treaty-era climate/development framing vs green-finance/model/data framing (`|r|≈0.583`, `ΔBIC≈37`).
+  - **PC4**: financialization/development vocabulary vs land-use/forestry/REDD framing (`r≈0.371`).
+  - **PC5**: carbon-market/trading framing vs renewable-energy project framing (topic-instrument axis).
+
+4. **Unsupervised embedding PCs (emb_PC1–emb_PC10)**
+  - Best aligned with seeded divide: `emb_PC2` (`r≈0.671`, `ΔBIC≈932`) and `emb_PC4` (`r≈-0.598`, `ΔBIC≈450`).
+  - HET reading: the principal latent structure in semantic space recovers the same economic cleavage with sign indeterminacy.
+
+Bottom line for writing: the main divide is robust across supervised and unsupervised, lexical and embedding representations; auxiliary axes capture period (Kyoto/CDM → green finance), sectoral domain (finance vs land-use), and policy-instrument differences.
+
 Ce que signifie la domination des économistes dans la future architecture financière (GCF 2.0, Loss & Damage Fund, MDB reforms).
