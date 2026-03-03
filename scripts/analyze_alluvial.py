@@ -64,6 +64,8 @@ parser.add_argument("--robustness", action="store_true", help="Run k-sensitivity
 parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
+parser.add_argument("--censor-gap", type=int, default=0,
+                    help="Number of transition years to censor before each test point (default: 0)")
 args = parser.parse_args()
 
 # Output naming depends on mode
@@ -81,6 +83,12 @@ else:
     TAB_BP_ROBUST = "tab2_breakpoint_robustness.csv"
     TAB_AL = "tab2_alluvial.csv"
     LABEL_FILE = "cluster_labels.json"
+
+if args.censor_gap > 0:
+    suffix = f"_censor{args.censor_gap}"
+    FIG_BP += suffix
+    TAB_BP = TAB_BP.replace(".csv", f"{suffix}.csv")
+    TAB_BP_ROBUST = TAB_BP_ROBUST.replace(".csv", f"{suffix}.csv")
 
 
 # ============================================================
@@ -186,8 +194,17 @@ def compute_js_divergence(p, q):
     return float(0.5 * np.nansum(kl_pm) + 0.5 * np.nansum(kl_qm))
 
 
-def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, end_year=2023):
-    """Compute JS divergence and cosine distance for each year and window size."""
+def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, end_year=2023,
+                              censor_gap=0):
+    """Compute JS divergence and cosine distance for each year and window size.
+
+    Parameters
+    ----------
+    censor_gap : int
+        Number of transition years to censor before each test point.
+        With censor_gap=0, before window is [y-w, y] (unchanged default).
+        With censor_gap=k, before window becomes [y-w-k, y-k].
+    """
     # Fit KMeans
     km = KMeans(n_clusters=k, random_state=42, n_init=20)
     labels = km.fit_predict(embeddings)
@@ -197,9 +214,9 @@ def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, 
         js_series = {}
         cos_series = {}
         for y in range(start_year, end_year + 1):
-            # Before window: [y-w, y]
-            mask_before = (df["year"] >= y - w) & (df["year"] <= y)
-            # After window: [y+1, y+1+w]
+            # Before window: [y-w-censor_gap, y-censor_gap]
+            mask_before = (df["year"] >= y - w - censor_gap) & (df["year"] <= y - censor_gap)
+            # After window: [y+1, y+1+w] (unchanged)
             mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
 
             idx_before = df.index[mask_before]
@@ -229,10 +246,11 @@ def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, 
 WINDOW_SIZES = [2, 3, 4]
 
 print("\n=== Structural break detection ===")
-print(f"Window sizes: {WINDOW_SIZES}, start year: 2005, n_min: {N_MIN}")
+print(f"Window sizes: {WINDOW_SIZES}, start year: 2005, n_min: {N_MIN}, censor_gap: {args.censor_gap}")
 
 div_results = compute_divergence_series(
-    df, embeddings, K_DEFAULT, WINDOW_SIZES, start_year=2005, end_year=2023
+    df, embeddings, K_DEFAULT, WINDOW_SIZES, start_year=2005, end_year=2023,
+    censor_gap=args.censor_gap
 )
 
 # Build breakpoints table
@@ -967,7 +985,8 @@ if args.robustness and not args.core_only:
     for k in k_values:
         print(f"  Running k={k}...")
         res = compute_divergence_series(
-            df, embeddings, k, [3], start_year=2005, end_year=2023
+            df, embeddings, k, [3], start_year=2005, end_year=2023,
+            censor_gap=args.censor_gap
         )
         k_results[k] = res[3]["js"]
 
