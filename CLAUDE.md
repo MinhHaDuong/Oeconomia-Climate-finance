@@ -63,13 +63,18 @@ uv run python scripts/analyze_cocitation.py    # co-citation communities
 | `fig2_breakpoints.png` | Structural break detection (JS + cosine divergence) | Paper |
 | `fig3_alluvial.{png,html}` | Alluvial community flows (4 periods, 6 clusters) | Paper |
 | `fig4_genealogy.{png,html}` | Citation genealogy (3 bands tied to bimodality axis) | Paper |
+| `fig4_seed_axis_core.png` | Efficiency↔accountability scatter, core (supervised) | Paper |
 | `fig5a_bimodality.png` | Efficiency↔accountability KDE (embedding-based) | Paper |
+| `fig4_pca_scatter.png` | PCA bimodal axes scatter, full corpus (unsupervised) | Appendix |
+| `fig5a_bimodality_core.png` | Bimodality KDE, core papers | Appendix |
 | `fig5b_bimodality_lexical.png` | TF-IDF bimodality (robustness) | Appendix |
 | `fig5c_bimodality_keywords.png` | Keyword co-occurrence scatter | Appendix |
 | `fig2b_breakpoints_core.png` | Breakpoint detection on core (cited ≥ 50, N=1,176) | Appendix |
+| `fig2_breakpoints_censor{1,2}.png` | Censored breakpoints, full corpus (k=1,2) | Appendix |
+| `fig2b_breakpoints_core_censor{1,2}.png` | Censored breakpoints, core (k=1,2) | Appendix |
 | `fig3b_alluvial_core.{png,html}` | Alluvial on core papers (1,176 most-cited) | Appendix |
 | `figA_1a_robustness.png` | Econ vs Finance vs RePEc (stacked overlap bars) | Appendix |
-| `figA_lexical_tfidf_{2007,2013,2015,2021}.png` | Lexical validation at breakpoints | Appendix |
+| `figA_lexical_tfidf_{2007,2008,2009,2013,2015,2021}.png` | Lexical validation at breakpoints | Appendix |
 | `figA_k_sensitivity.png` | k-sensitivity (k=4–7) | Appendix |
 
 ### TODO
@@ -107,10 +112,12 @@ uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + 
 uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3 (full corpus)
 uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core: cited ≥ 50)
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
+uv run python scripts/analyze_alluvial.py --censor-gap 1  # Censored breaks (k=1)
+uv run python scripts/analyze_alluvial.py --censor-gap 2  # Censored breaks (k=2)
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
-uv run python scripts/plot_fig45_pca_scatter.py  # Fig 4 PCA scatter (full corpus)
-uv run python scripts/plot_fig45_pca_scatter.py --core-only  # Fig 4 PCA scatter (core)
+uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)
+uv run python scripts/plot_fig45_pca_scatter.py  # Fig 4 PCA scatter (appendix, full corpus)
 uv run python scripts/analyze_genealogy.py       # Fig 4 genealogy (depends on bimodality output)
 uv run python scripts/summarize_core_venues.py   # Core venue tables + institution summaries (OECD/WB/IMF)
 uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table

@@ -286,17 +286,83 @@ An independent lexical validation using the same logic but on TF-IDF representat
 
 For each paper, the count of efficiency-pole and accountability-pole keywords in the abstract is computed. A 2D scatter plot (x = efficiency count, y = accountability count) with marginal histograms shows the distribution. If the field is bimodal, most papers cluster near one axis, producing an L-shaped pattern.
 
+### Core subset analysis (`--core-only`)
+
+When run with `--core-only`, the script restricts to papers with cited_by_count >= 50 (~1,176 papers), re-identifies pole papers within the core, and re-computes centroids and projections on core embeddings only. Output files receive a `_core` suffix (e.g., `fig5a_bimodality_core.png`, `tab5b_bimodality_core.csv`).
+
+Core results:
+- **Pole papers:** 49 efficiency, 14 accountability (much sparser than full corpus)
+- **Embedding ΔBIC = 112** (moderate bimodality, down from 1,264 on full corpus)
+- **TF-IDF ΔBIC = 1,058** (strong bimodality persists in lexical space)
+- The divide is real in the core but less pronounced in embedding space, consistent with the core being a more thematically coherent population.
+
+### PCA axis detection (Step 7b)
+
+For each embedding PCA component (PC1–PC5), the script computes cosine similarity with the supervised seed axis and tests for bimodality (ΔBIC). It also correlates each PC's scores with TF-IDF features to produce interpretive term labels (top 10 positive and negative terms per PC). Results are saved to `tab5_axis_detection.csv`.
+
+Key findings on full corpus:
+- **emb_PC2** (5.4% variance, cosine = 0.557 with seed axis, ΔBIC = 932) most closely aligns with efficiency↔accountability
+- **emb_PC4** (3.8%, cosine = −0.598, ΔBIC = 450) captures a CDM/mechanisms ↔ green finance axis
+- The efficiency/accountability divide is real but is **not the dominant axis** — it appears at PC2, not PC1
+
+On core:
+- **emb_PC4** (cosine = 0.696 with seed axis) aligns most strongly, but max ΔBIC = 46 (no PC passes the 200 threshold for unsupervised bimodality)
+
 ### Outputs
 
 - `fig5a_bimodality.png` -- KDE of embedding scores by period (main figure)
 - `fig5b_bimodality_lexical.png` -- TF-IDF version (appendix)
 - `fig5c_bimodality_keywords.png` -- keyword scatter (appendix)
-- `tab5_bimodality.csv` -- summary statistics (DBIC, pole counts, correlation)
+- `fig5a_bimodality_core.png` -- core KDE (appendix)
+- `tab5_bimodality.csv` -- summary statistics (ΔBIC, pole counts, correlation)
 - `tab5_pole_papers.csv` -- per-paper axis scores and pole assignments
+- `tab5_axis_detection.csv` -- PCA component alignment with seed axis + term labels
+- `tab5b_bimodality_core.csv`, `tab5b_axis_detection_core.csv`, `tab5b_pole_papers_core.csv` -- core equivalents
 
 ---
 
-## 7. Citation Genealogy
+## 7. PCA Scatter Plots
+
+**Script:** `scripts/plot_fig45_pca_scatter.py`
+
+This script visualizes how the field's thematic structure evolves over time by plotting individual papers in year × axis-score space.
+
+### Supervised mode (`--supervised`)
+
+Projects all papers onto the efficiency↔accountability seed axis (identical to Section 6's Method A axis). Produces a single-panel scatter plot:
+- **X-axis:** publication year (with ±0.3 uniform jitter to reduce overplotting)
+- **Y-axis:** seed axis score (positive = efficiency, negative = accountability)
+- **Color:** three-period scheme (blue 1990–2006, orange 2007–2014, green 2015–2025)
+- **Point size:** proportional to sqrt(cited_by_count / 50)
+- **Black line:** yearly median score (smoother)
+- **Vertical dashes:** COP events (Rio, Kyoto, Copenhagen, Paris, Glasgow, Baku)
+- **Period bands:** light background shading for each period
+
+Recommended with `--core-only` for the paper figure (`fig4_seed_axis_core.png`), showing 1,176 influential papers. The seed axis is bimodal in core (ΔBIC = 112), and the yearly median reveals a drift from the accountability side toward efficiency over time.
+
+### Unsupervised mode (default)
+
+Runs PCA (10 components) on embeddings, tests each PC for bimodality (1- vs 2-component GMM), and plots one panel per PC with ΔBIC > 200. Each PC's poles are labelled using the top 3 TF-IDF terms correlated with positive and negative scores.
+
+On full corpus (18,798 papers), 3 PCs qualify:
+| PC | Variance | ΔBIC | (+) pole | (−) pole |
+|----|----------|------|----------|----------|
+| PC2 | 5.4% | 932 | green, financial, sustainability | carbon, emissions, climate change |
+| PC3 | 4.1% | 390 | land, forest, biomass | agreement, paris, finance |
+| PC4 | 3.8% | 450 | cdm, clean development | finance, green, financial |
+
+On core (1,176 papers), no PC passes ΔBIC > 200 (max = 46). Unsupervised bimodality requires the full corpus's breadth to emerge.
+
+### Outputs
+
+- `fig4_seed_axis_core.png` -- supervised axis, core papers (paper figure)
+- `fig4_pca_scatter.png` -- unsupervised 3-panel, full corpus (appendix)
+- `tab4_seed_axis_core.csv` -- seed axis metadata (variance, ΔBIC, pole terms)
+- `tab4_pca_components.csv` -- unsupervised PC metadata
+
+---
+
+## 8. Citation Genealogy
 
 **Script:** `scripts/analyze_genealogy.py`
 
@@ -335,7 +401,7 @@ Internal citation edges are extracted from `citations.csv`: an edge (A -> B) exi
 
 ---
 
-## 8. Core vs. Full Corpus Analysis
+## 9. Core vs. Full Corpus Analysis
 
 The pipeline implements a two-level analytical design:
 
@@ -352,6 +418,8 @@ The influential intellectual core. These are the papers that have shaped the fie
 - **Breakpoints:** The full corpus shows structural breaks at 2007 and 2013. The core subset shows no break in the 2007--2015 range; its only detected break is at 2023 (likely an edge effect). This indicates that structural shifts in the full corpus are driven by the influx of new scholarship, not by changes in the core community's thematic composition.
 - **Alluvial:** The core alluvial shows a more stable thematic structure across periods, while the full-corpus alluvial captures the growth of new thematic clusters (e.g., green bonds, ESG).
 - **Clustering:** KMeans is re-fitted on core embeddings independently (not inherited from the full corpus), with min_df=3 and N_MIN=20 to accommodate the smaller sample.
+- **Bimodality:** The efficiency↔accountability divide is present in both samples but manifests differently. Full corpus: ΔBIC = 1,264 (strong). Core: ΔBIC = 112 (embedding), 1,058 (TF-IDF). The lexical signal is stronger in core because influential papers use more distinctive vocabulary; the embedding signal is weaker because the core is more thematically coherent.
+- **Unsupervised PCA bimodality:** Three PCs show bimodality (ΔBIC > 200) in the full corpus; none do in the core (max ΔBIC = 46). The unsupervised discovery of bimodal axes requires the full corpus's breadth. The supervised seed axis remains bimodal in core, confirming that the divide is real but not dominant enough to emerge unsupervised from only 1,176 papers.
 
 ### Rationale
 
@@ -359,7 +427,7 @@ The two-level design disentangles two dynamics: (1) the diversification of the b
 
 ---
 
-## 9. Reproducibility
+## 10. Reproducibility
 
 ### Environment setup
 
@@ -397,10 +465,17 @@ uv run python scripts/plot_fig1_emergence.py         # Fig 1: emergence
 uv run python scripts/analyze_alluvial.py            # Figs 2 + 3: breakpoints + alluvial
 uv run python scripts/analyze_alluvial.py --core-only   # Figs 2b + 3b: core analysis
 uv run python scripts/analyze_bimodality.py          # Fig 5: bimodality (must run before genealogy)
+uv run python scripts/analyze_bimodality.py --core-only  # Fig 5 core variant
 uv run python scripts/analyze_genealogy.py           # Fig 4: citation genealogy
+uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4: seed axis scatter (paper)
+uv run python scripts/plot_fig45_pca_scatter.py      # Fig 4: unsupervised PCA scatter (appendix)
 
 # Stage 6: Robustness appendices
 uv run python scripts/analyze_alluvial.py --robustness   # k-sensitivity (k=4,5,6,7)
+uv run python scripts/analyze_alluvial.py --core-only --censor-gap 1  # censored breaks
+uv run python scripts/analyze_alluvial.py --core-only --censor-gap 2
+uv run python scripts/analyze_alluvial.py --censor-gap 1
+uv run python scripts/analyze_alluvial.py --censor-gap 2
 uv run python scripts/analyze_genealogy.py --robustness  # Louvain resolution sensitivity
 ```
 
@@ -412,8 +487,9 @@ uv run python scripts/analyze_genealogy.py --robustness  # Louvain resolution se
 | `corpus_refine.py` | `unified_works.csv`, `citations.csv`*, `embeddings.npy`* | `refined_works.csv`, `corpus_audit.csv` |
 | `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npy`, `semantic_clusters.csv` |
 | `analyze_alluvial.py` | `refined_works.csv`, `embeddings.npy` | `fig2_breakpoints`, `fig3_alluvial`, `tab2_*.csv`, `cluster_labels.json` |
-| `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npy` | `fig5a/5b/5c`, `tab5_bimodality.csv`, `tab5_pole_papers.csv` |
+| `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npy` | `fig5a/5b/5c`, `tab5_bimodality.csv`, `tab5_pole_papers.csv`, `tab5_axis_detection.csv` |
 | `analyze_genealogy.py` | `refined_works.csv`, `citations.csv`, `semantic_clusters.csv`, `tab5_pole_papers.csv` | `fig4_genealogy`, `tab3_lineages.csv` |
+| `plot_fig45_pca_scatter.py` | `refined_works.csv`, `embeddings.npy` | `fig4_seed_axis_core`, `fig4_pca_scatter`, `tab4_*.csv` |
 
 \* Optional; skipped with `--skip-citation-flag` or when file is absent.
 
