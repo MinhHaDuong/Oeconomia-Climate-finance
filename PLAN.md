@@ -1,40 +1,53 @@
-# Manuscript Plan (v2 — three-act structure)
+# Manuscript Plan (v3 — updated 2026-03-03)
 
 **Target:** ~9,000 words for Œconomia "Varia" submission
-**Source:** Extended abstract (submitted 2026-01-15) + notes.md outline + breakpoint analysis results
+**Source:** Extended abstract (submitted 2026-01-15) + computational results (technical-report.md)
 **Pre-requisite:** Confirm with editor (language, length, timeline)
 
-## Structural rationale (new in v2)
+## Structural rationale
 
-The breakpoint analysis detected two robust structural breaks (2007, 2013) and *no* break around 2015 or 2021. Lexical TF-IDF validation confirms only 2009 produces a wholesale vocabulary reorientation; 2015 and 2021 are thematic inflections within an already-constituted field. This merges old Sections III and IV into one.
+The breakpoint analysis detected two robust structural breaks (2007, 2013) and *no* break around 2015 or 2021. Censored-gap analysis (k=2) narrows this to a single dominant break at **2009** (Copenhagen). Lexical TF-IDF validation confirms 2009 produces a wholesale vocabulary reorientation; 2015 and 2021 are thematic inflections within an already-constituted field. The core subset (1,176 most-cited papers) shows **no structural break at all** — the categories were set early and never disrupted.
 
 Thesis: climate finance crystallized as an economic object by ~2009. Everything since — including the fierce $100bn accounting disputes and the $300bn NCQG — has been fought *within* the categories established at that moment.
 
-## Phase 1 — Foundations
+## Phase 1 — Foundations (COMPLETE)
 
-### 1.1 Bibliometric figures (5 figures, see method.md v2)
+### 1.1 Paper figures
 
-**Figure 1: The emergence of climate finance in economics (1990–2025)** — NEW
-Three time series on common timeline:
-1. Economics publications in OpenAlex (the denominator)
-2. Publications with "climate" in title in OpenAlex (broader climate-in-economics literature)
-3. Climate finance publications in our corpus
+| # | Figure | File | Content |
+|---|--------|------|---------|
+| 1 | Emergence | `fig1_emergence.png` | Economics total + CF bars + share % (OpenAlex) |
+| 2 | Breakpoints | `fig2_breakpoints.png` | JS + cosine divergence, breaks at 2007 & 2013 |
+| 3 | Alluvial | `fig3_alluvial.{png,html}` | Thematic flows across 3 periods, 6 clusters |
+| 4 | Seed axis | `fig4_seed_axis_core.png` | Efficiency↔accountability scatter, 1,176 core papers over time |
+| 5 | Bimodality | `fig5a_bimodality.png` | KDE of eff/acc axis scores by period (ΔBIC=1,264) |
 
-Shows climate finance emerging as a specific *economic* object after Copenhagen, not from climate science generally.
+### Appendix figures
 
-**Figure 2: Structural break detection** — breakpoints figure (formerly Fig 2a)
-Z-scored JS divergence, detected breaks at 2007 and 2013. No break at 2015 or 2021.
+| File | Content |
+|------|---------|
+| `fig4_pca_scatter.png` | Unsupervised PCA bimodal axes, full corpus (3 panels) |
+| `fig5a_bimodality_core.png` | Bimodality KDE on core (ΔBIC=112) |
+| `fig5b_bimodality_lexical.png` | TF-IDF bimodality (ΔBIC=8,961) |
+| `fig5c_bimodality_keywords.png` | Keyword co-occurrence scatter |
+| `fig2b_breakpoints_core.png` | Breakpoints on core (no break except 2023 edge effect) |
+| `fig2_breakpoints_censor{1,2}.png` | Censored breaks k=1 (2008,2013,2015), k=2 (2009 only) |
+| `fig3b_alluvial_core.{png,html}` | Alluvial on core papers |
+| `figA_1a_robustness.png` | Econ vs Finance vs RePEc overlap |
+| `figA_lexical_tfidf_*.png` | Lexical validation at breakpoints |
+| `figA_k_sensitivity.png` | k-sensitivity (k=4–7) |
 
-**Figure 3: Thematic recomposition** — alluvial diagram (formerly Fig 2b)
-Community flows across data-derived periods (1990–2006, 2007–2012, 2013–2014, 2015–2025).
+### Key empirical findings for the manuscript
 
-**Figure 4: Citation genealogy** — genealogy DAG (formerly Fig 3)
-Time-ordered citation structure of intellectual communities.
+1. **Breaks at 2007 (cosine) and 2013 (JS)** — no break at Paris (2015) or Glasgow (2021)
+2. **Censored k=2 singles out 2009** — Copenhagen as the dominant structural discontinuity
+3. **Core shows no break** — the influential papers' thematic structure was established before 2007 and never disrupted; breaks are driven by the influx of new, lower-cited scholarship
+4. **Bimodality is real** — efficiency↔accountability divide confirmed by embedding (ΔBIC=1,264), TF-IDF (ΔBIC=8,961), and keyword co-occurrence; present in core (ΔBIC=112 emb, 1,058 TF-IDF) but weaker
+5. **Not the dominant axis** — the eff/acc divide is PC2, not PC1; the field's primary variance is something else (climate science vs. finance)
+6. **Seed axis drift** — yearly median shifts from accountability side toward efficiency over time (visible in fig4_seed_axis_core)
+7. **Venue structure** — core papers published in hybrid channels (journals + OECD/WB/IMF working papers), confirming institutional economists shaped categories through publication infrastructure
 
-**Figure 5: Testing the two-communities hypothesis** — NEW
-Bimodality along efficiency↔accountability axis, both semantic and lexical.
-
-### 1.2 Bibliography audit
+### 1.2 Bibliography audit — NOT STARTED
 
 - Cross-check `bibliography/main.bib` against `AI tech reports/SciSpace/Quick_Reference_Must_Cite_and_Overlooked_Works.md`
 - Ensure primary sources present: Corfee-Morlot (Rio markers), Michaelowa (over-reporting), Weikmans & Roberts (accounting disputes), Stern (HLPF 2010), Kaul (global public goods)
@@ -62,8 +75,9 @@ Merges the "defining moment" with the first consolidation. Two detected breaks b
 - The 2013 consolidation: field categories stabilize, metrics become routine
 - Two communities crystallize: efficiency pole (OECD/MDB leverage) vs. accountability pole (Oxfam/CARE justice)
 - Theory: performativity, boundary work
-- Data support: both structural breaks (2007 cosine, 2013 JS) fall in this period; massive lexical reorientation at 2009
-- Venue support (new): core publication channels are already hybrid (journals + OECD/WB/IMF report/WP series), showing institutional economists shaping categories through publication infrastructures, not only journal debate
+- Data support: both structural breaks (2007 cosine, 2013 JS) fall in this period; censored k=2 confirms 2009 (Copenhagen) as single dominant break; massive lexical reorientation at 2009
+- Seed axis scatter (Fig 4): the yearly median shows the field's centre of gravity drifting toward efficiency throughout this period
+- Venue support: core publication channels are already hybrid (journals + OECD/WB/IMF report/WP series), showing institutional economists shaping categories through publication infrastructures
 
 ### Section III: The Established Field (2015–2025) — ~2,500 words
 Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
@@ -81,8 +95,9 @@ Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
 - Shift to $300bn NCQG at Baku
 - Key point: all these disputes happen *within* stable intellectual categories
 - Theory: economization (Fourcade, Çalışkan), boundary work, infrastructures of quantification
-- Data support: no structural break; 2015 and 2021 are thematic inflections, not ruptures
-- Venue support (new): continued OECD/World Bank/IMF presence in core report/WP channels confirms that quantification controversies are produced and arbitrated within institutional economics infrastructures
+- Data support: no structural break; core subset confirms categorical stability (no break 2005–2020); bimodality persists but within fixed poles
+- Seed axis scatter (Fig 4): efficiency side grows denser but accountability pole remains occupied — the tension is constitutive, not resolved
+- Venue support: continued OECD/World Bank/IMF presence in core report/WP channels
 
 ### Section IV: How Climate Finance Became an Economic Object — ~1,500 words
 - Theoretical synthesis: commensuration → performativity → economization → boundary work
@@ -96,6 +111,7 @@ Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
 - Frame contribution for Œconomia readership (HET + STS + policy)
 - State thesis clearly
 - Announce three-act periodization and method (endogenous break detection)
+- Flag: all analysis automated and reproducible (technical-report.md)
 
 ### Conclusion — ~500 words
 - Without stabilized categories, no governable financing
@@ -110,3 +126,16 @@ Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
 - Word count check (~8,000-10,000 target)
 - Convert: `pandoc manuscript.md --citeproc --bibliography=bibliography/main.bib -o manuscript.odt`
 - Upload as "revision" on Œconomia platform
+
+## Documentation files
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `technical-report.md` | Full pipeline documentation (10 sections) | Current |
+| `method.md` | Computational design doc (v3, archival) | Archival — superseded by tech report |
+| `notes.md` | Working notes, draft arguments, empirical observations | Active |
+| `extended abstract.md` | Submitted abstract (2026-01-15) | Archival |
+| `corpus-paragraph.md` | Draft corpus description for manuscript | Stale (12K count, needs update to 22K) |
+| `AGENTS.md` | AI agent guidelines | Current |
+| `CLAUDE.md` | Project context for AI agents | Current |
+| `data/TECHNICAL-NOTE.md` | Legacy corpus-construction docs | Superseded by technical-report.md §1-2 |

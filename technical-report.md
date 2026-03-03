@@ -508,11 +508,24 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 | Bimodality analysis | ~1 min |
 | Citation genealogy | ~1 min |
 
+### RePEc local mirror
+
+The script `count_repec_econ_cf.py` reads from a local mirror of the RePEc ReDIF archives, providing an independent economics baseline for Figure 1.
+
+```bash
+# Mirror setup (several GB, ~30 min)
+mkdir -p ~/data/datasets/external/RePEc
+rsync -va --delete rsync://rsync.repec.org/RePEc-ReDIF/ ~/data/datasets/external/RePEc/
+```
+
+The mirror was last synced 2026-02-26 (~2,334 archive directories). Re-run the same rsync command to update. Override the default path with `REPEC_ROOT` environment variable or `--repec-root` flag.
+
 ### Non-reproducible steps
 
 - ISTEX corpus download (requires institutional access)
 - bibCNRS export (requires CNRS Janus credentials, manual browser export)
 - Citation enrichment timing may vary due to Crossref index updates
 - LLM audit (requires `OPENROUTER_API_KEY`; can be skipped with `--skip-llm`)
+- RePEc mirror requires rsync access to `rsync.repec.org`
 
 All scripts support a `--no-pdf` flag to skip PDF generation and produce PNG only.

@@ -1,5 +1,7 @@
 # Technical Note: Literature Corpus Construction
 
+> **SUPERSEDED** by `technical-report.md` (project root, 2026-03-03). This file covers the original 12K corpus construction only. The full pipeline documentation (22K corpus, embeddings, breakpoints, bimodality, PCA) is in the technical report. RePEc mirror setup has been folded into technical-report.md §10.
+
 **Date:** 2026-02-23
 **Project:** How Climate Finance Became an Economic Object (Œconomia submission)
 **Purpose:** Full reproducibility documentation for the multi-source literature corpus
