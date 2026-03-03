@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import gaussian_kde
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
@@ -33,6 +33,8 @@ from utils import BASE_DIR, CATALOGS_DIR, save_figure
 
 parser = argparse.ArgumentParser(description="Bimodality analysis (Fig 5)")
 parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--core-only", action="store_true",
+                    help="Restrict to core papers (cited_by_count >= 50)")
 args = parser.parse_args()
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -81,6 +83,33 @@ df = works[has_abstract & in_range].copy().reset_index(drop=True)
 embeddings = np.load(EMBEDDINGS_PATH)
 assert len(embeddings) == len(df), f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
 print(f"Loaded {len(df)} papers with embeddings ({embeddings.shape[1]}D)")
+
+# Core filtering: keep only highly-cited papers
+CITE_THRESHOLD = 50
+df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
+if args.core_only:
+    core_mask = df["cited_by_count"] >= CITE_THRESHOLD
+    core_indices = df.index[core_mask].values
+    df = df.loc[core_mask].reset_index(drop=True)
+    embeddings = embeddings[core_indices]
+    print(f"Core-only mode: {len(df)} papers (cited_by_count >= {CITE_THRESHOLD})")
+    assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
+
+# Output naming: use "_core" suffix for figures and "b" prefix for tables in core mode
+if args.core_only:
+    FIG5A = "fig5a_bimodality_core"
+    FIG5B = "fig5b_bimodality_lexical_core"
+    FIG5C = "fig5c_bimodality_keywords_core"
+    TAB5_BIM = "tab5b_bimodality_core.csv"
+    TAB5_AXIS = "tab5b_axis_detection_core.csv"
+    TAB5_POLE = "tab5b_pole_papers_core.csv"
+else:
+    FIG5A = "fig5a_bimodality"
+    FIG5B = "fig5b_bimodality_lexical"
+    FIG5C = "fig5c_bimodality_keywords"
+    TAB5_BIM = "tab5_bimodality.csv"
+    TAB5_AXIS = "tab5_axis_detection.csv"
+    TAB5_POLE = "tab5_pole_papers.csv"
 
 df["abstract_lower"] = df["abstract"].str.lower()
 df["year"] = df["year"].astype(int)
@@ -247,8 +276,8 @@ fig.suptitle(
     fontsize=13, y=1.02,
 )
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, "fig5a_bimodality"), no_pdf=args.no_pdf)
-print(f"  (Figure 5a)")
+save_figure(fig, os.path.join(FIGURES_DIR, FIG5A), no_pdf=args.no_pdf)
+print(f"  ({FIG5A})")
 plt.close()
 
 
@@ -315,8 +344,8 @@ fig.suptitle(
     fontsize=13, y=1.02,
 )
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, "fig5b_bimodality_lexical"), no_pdf=args.no_pdf)
-print(f"  (Figure 5b)")
+save_figure(fig, os.path.join(FIGURES_DIR, FIG5B), no_pdf=args.no_pdf)
+print(f"  ({FIG5B})")
 plt.close()
 
 # Agreement check
@@ -476,9 +505,74 @@ ax_histy.hist(df["acc_count"], bins=range(0, df["acc_count"].max() + 2),
 ax_histx.tick_params(labelbottom=False)
 ax_histy.tick_params(labelleft=False)
 
-save_figure(fig, os.path.join(FIGURES_DIR, "fig5c_bimodality_keywords"), no_pdf=args.no_pdf)
-print(f"  (Figure 5c)")
+save_figure(fig, os.path.join(FIGURES_DIR, FIG5C), no_pdf=args.no_pdf)
+print(f"  ({FIG5C})")
 plt.close()
+
+
+# ============================================================
+# Step 7b: Embedding PCA — axis detection
+# ============================================================
+
+print("\n=== Embedding PCA: axis detection ===")
+
+n_emb_components = 5
+pca = PCA(n_components=n_emb_components, random_state=42)
+pca_scores = pca.fit_transform(embeddings)
+
+# Cosine similarity of each PC direction with the seed eff/acc axis
+axis_rows = []
+feature_names = np.array(tfidf.get_feature_names_out())
+
+# Densify TF-IDF once for correlation computation
+X_dense = X_tfidf.toarray() if hasattr(X_tfidf, 'toarray') else X_tfidf
+X_col_means = X_dense.mean(axis=0)
+X_centered = X_dense - X_col_means
+X_col_norms = np.sqrt((X_centered ** 2).sum(axis=0) + 1e-10)
+
+for comp_idx in range(n_emb_components):
+    pc_direction = pca.components_[comp_idx]
+    cos_sim = np.dot(pc_direction, axis) / (
+        np.linalg.norm(pc_direction) * np.linalg.norm(axis) + 1e-10
+    )
+    var_explained = pca.explained_variance_ratio_[comp_idx]
+
+    # Compute top terms for this embedding PC via TF-IDF correlation
+    comp_scores_vec = pca_scores[:, comp_idx]
+    scores_centered = comp_scores_vec - comp_scores_vec.mean()
+    scores_norm = np.sqrt((scores_centered ** 2).sum())
+    denom = scores_norm * X_col_norms
+    corrs = (X_centered.T @ scores_centered) / (denom + 1e-10)
+
+    top_pos_idx = np.argsort(corrs)[-10:][::-1]
+    top_neg_idx = np.argsort(corrs)[:10]
+    pos_terms = "; ".join(feature_names[j] for j in top_pos_idx)
+    neg_terms = "; ".join(feature_names[j] for j in top_neg_idx)
+
+    print(f"  PC{comp_idx+1}: var={var_explained:.3f}, cos(seed axis)={cos_sim:.3f}")
+    print(f"    + {pos_terms}")
+    print(f"    - {neg_terms}")
+
+    axis_rows.append({
+        "component": f"emb_PC{comp_idx+1}",
+        "variance_explained": var_explained,
+        "cosine_with_seed_axis": cos_sim,
+        "top_positive_terms": pos_terms,
+        "top_negative_terms": neg_terms,
+    })
+
+# Also add the seed axis itself as a reference row
+axis_rows.append({
+    "component": "seed_eff_acc",
+    "variance_explained": explained_frac,
+    "cosine_with_seed_axis": 1.0,
+    "top_positive_terms": "; ".join(sorted(EFFICIENCY_TERMS)[:10]),
+    "top_negative_terms": "; ".join(sorted(ACCOUNTABILITY_TERMS)[:10]),
+})
+
+axis_detection = pd.DataFrame(axis_rows)
+axis_detection.to_csv(os.path.join(TABLES_DIR, TAB5_AXIS), index=False)
+print(f"Saved → tables/{TAB5_AXIS}")
 
 
 # ============================================================
@@ -534,8 +628,8 @@ for ps in period_stats:
     })
 
 tab5 = pd.DataFrame(summary_rows)
-tab5.to_csv(os.path.join(TABLES_DIR, "tab5_bimodality.csv"), index=False)
-print(f"\nSaved → tables/tab5_bimodality.csv")
+tab5.to_csv(os.path.join(TABLES_DIR, TAB5_BIM), index=False)
+print(f"\nSaved → tables/{TAB5_BIM}")
 
 # Combine TF-IDF SVD and embedding PCA rows
 all_axis_rows = component_rows + emb_component_rows
@@ -550,7 +644,7 @@ pole_papers["pole_assignment"] = np.where(
     df["axis_score"] > 0, "efficiency",
     np.where(df["axis_score"] < 0, "accountability", "neutral")
 )
-pole_papers.to_csv(os.path.join(TABLES_DIR, "tab5_pole_papers.csv"), index=False)
-print(f"Saved → tables/tab5_pole_papers.csv ({len(pole_papers)} papers)")
+pole_papers.to_csv(os.path.join(TABLES_DIR, TAB5_POLE), index=False)
+print(f"Saved → tables/{TAB5_POLE} ({len(pole_papers)} papers)")
 
 print("\nDone.")
