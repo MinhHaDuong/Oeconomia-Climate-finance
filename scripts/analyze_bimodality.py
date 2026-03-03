@@ -13,6 +13,7 @@ Produces:
 - figures/fig5_bimodality_keywords.pdf: Keyword scatter (appendix)
 - tables/tab5_bimodality.csv: Dip test p-values, GMM BIC, pole paper counts
 - tables/tab5_pole_papers.csv: Per-paper score and pole assignment
+- tables/tab5_axis_detection.csv: Unsupervised TF-IDF components and alignment to pole axis
 """
 
 import argparse
@@ -24,6 +25,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import gaussian_kde
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
@@ -323,6 +325,122 @@ print(f"Correlation between embedding and TF-IDF axis scores: r={corr:.3f}")
 
 
 # ============================================================
+# Step 6b: Unsupervised main-axis detection (TF-IDF SVD)
+# ============================================================
+
+print("\n=== Unsupervised axis detection (TF-IDF SVD) ===")
+
+n_components = min(5, max(2, X_tfidf.shape[1] - 1))
+svd = TruncatedSVD(n_components=n_components, random_state=42)
+svd_scores = svd.fit_transform(X_tfidf)
+explained = svd.explained_variance_ratio_
+
+component_rows = []
+feature_names = np.array(tfidf.get_feature_names_out())
+
+best_idx = None
+best_abs_corr = -1
+best_corr = None
+best_dbic = None
+
+for comp_idx in range(n_components):
+    comp_scores = svd_scores[:, comp_idx]
+    comp_scores = comp_scores - np.median(comp_scores)
+
+    comp_corr = np.corrcoef(comp_scores, df["axis_score"].values)[0, 1]
+    comp_abs_corr = abs(comp_corr)
+
+    cg1 = GaussianMixture(n_components=1, random_state=42).fit(comp_scores.reshape(-1, 1))
+    cg2 = GaussianMixture(n_components=2, random_state=42).fit(comp_scores.reshape(-1, 1))
+    comp_dbic = cg1.bic(comp_scores.reshape(-1, 1)) - cg2.bic(comp_scores.reshape(-1, 1))
+
+    weights = svd.components_[comp_idx]
+    top_pos_idx = np.argsort(weights)[-10:][::-1]
+    top_neg_idx = np.argsort(weights)[:10]
+    top_pos_terms = "; ".join(feature_names[top_pos_idx])
+    top_neg_terms = "; ".join(feature_names[top_neg_idx])
+
+    component_rows.append({
+        "component": f"PC{comp_idx + 1}",
+        "explained_variance_ratio": explained[comp_idx],
+        "corr_with_embedding_axis": comp_corr,
+        "abs_corr_with_embedding_axis": comp_abs_corr,
+        "delta_bic": comp_dbic,
+        "top_positive_terms": top_pos_terms,
+        "top_negative_terms": top_neg_terms,
+    })
+
+    if comp_abs_corr > best_abs_corr:
+        best_abs_corr = comp_abs_corr
+        best_corr = comp_corr
+        best_idx = comp_idx
+        best_dbic = comp_dbic
+
+main_axis_label = f"PC{best_idx + 1}"
+print(
+    f"Main unsupervised component aligned with efficiency↔accountability axis: "
+    f"{main_axis_label} (r={best_corr:.3f}, ΔBIC={best_dbic:.0f})"
+)
+
+
+# ============================================================
+# Step 6c: Unsupervised main-axis detection (Embedding PCA)
+# ============================================================
+
+from sklearn.decomposition import PCA
+
+print("\n=== Unsupervised axis detection (Embedding PCA) ===")
+
+n_emb_components = 10
+pca = PCA(n_components=n_emb_components, random_state=42)
+pca_scores = pca.fit_transform(embeddings)
+pca_explained = pca.explained_variance_ratio_
+
+emb_component_rows = []
+emb_best_idx = None
+emb_best_abs_corr = -1
+emb_best_corr = None
+emb_best_dbic = None
+
+for comp_idx in range(n_emb_components):
+    comp_scores = pca_scores[:, comp_idx]
+    comp_scores_centered = comp_scores - np.median(comp_scores)
+
+    comp_corr = np.corrcoef(comp_scores_centered, df["axis_score"].values)[0, 1]
+    comp_abs_corr = abs(comp_corr)
+
+    cg1 = GaussianMixture(n_components=1, random_state=42).fit(comp_scores_centered.reshape(-1, 1))
+    cg2 = GaussianMixture(n_components=2, random_state=42).fit(comp_scores_centered.reshape(-1, 1))
+    comp_dbic = cg1.bic(comp_scores_centered.reshape(-1, 1)) - cg2.bic(comp_scores_centered.reshape(-1, 1))
+
+    emb_component_rows.append({
+        "component": f"emb_PC{comp_idx + 1}",
+        "explained_variance_ratio": pca_explained[comp_idx],
+        "corr_with_embedding_axis": comp_corr,
+        "abs_corr_with_embedding_axis": comp_abs_corr,
+        "delta_bic": comp_dbic,
+    })
+
+    print(f"  emb_PC{comp_idx + 1}: var={pca_explained[comp_idx]:.3f}, "
+          f"r={comp_corr:+.3f}, ΔBIC={comp_dbic:.0f}")
+
+    if comp_abs_corr > emb_best_abs_corr:
+        emb_best_abs_corr = comp_abs_corr
+        emb_best_corr = comp_corr
+        emb_best_idx = comp_idx
+        emb_best_dbic = comp_dbic
+
+emb_main_label = f"emb_PC{emb_best_idx + 1}"
+print(
+    f"\nBest embedding PCA component aligned with seed axis: "
+    f"{emb_main_label} (r={emb_best_corr:+.3f}, explains {pca_explained[emb_best_idx]:.1%} "
+    f"of embedding variance, ΔBIC={emb_best_dbic:.0f})"
+)
+print(f"Seed axis explains {explained_frac:.1%} of embedding variance (for comparison)")
+print(f"Top 10 embedding PCs explain {pca_explained.sum():.1%} total")
+
+
+# ============================================================
 # Step 7: Keyword co-occurrence scatter (Method C)
 # ============================================================
 
@@ -392,6 +510,18 @@ summary_rows = [{
     "dip_pvalue": None,
     "explained_variance": None,
     "embedding_lexical_corr": corr,
+}, {
+    "method": f"unsupervised_{main_axis_label}",
+    "n_papers": len(df),
+    "n_efficiency_pole": n_eff,
+    "n_accountability_pole": n_acc,
+    "n_both_poles": n_both,
+    "bic_1comp": None,
+    "bic_2comp": None,
+    "delta_bic": best_dbic,
+    "dip_pvalue": None,
+    "explained_variance": explained[best_idx],
+    "embedding_lexical_corr": best_corr,
 }]
 
 # Add per-period stats
@@ -406,6 +536,12 @@ for ps in period_stats:
 tab5 = pd.DataFrame(summary_rows)
 tab5.to_csv(os.path.join(TABLES_DIR, "tab5_bimodality.csv"), index=False)
 print(f"\nSaved → tables/tab5_bimodality.csv")
+
+# Combine TF-IDF SVD and embedding PCA rows
+all_axis_rows = component_rows + emb_component_rows
+axis_tab = pd.DataFrame(all_axis_rows).sort_values("component")
+axis_tab.to_csv(os.path.join(TABLES_DIR, "tab5_axis_detection.csv"), index=False)
+print("Saved → tables/tab5_axis_detection.csv")
 
 # Per-paper scores
 pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",
