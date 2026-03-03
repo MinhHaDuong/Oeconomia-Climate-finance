@@ -83,6 +83,14 @@ Managed with `uv`. Key packages: numpy, pandas, scikit-learn, scipy, matplotlib,
 uv sync    # install everything from pyproject.toml
 ```
 
+## Git workflow
+
+- **Worktrees, not branches**: use `git worktree` for feature work — never stash or switch branches on the main worktree
+- **One branch per ticket**: named `t{N}-short-description` (e.g., `t3-censored-breaks`)
+- **PRs for review**: push each branch, create a PR with summary and test plan
+- Parallel tickets run in separate worktrees simultaneously
+- See `AGENTS.md` for full autonomous workflow details
+
 ## Running scripts
 
 Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
@@ -100,7 +108,10 @@ uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3 (full corpus)
 uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core: cited ≥ 50)
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
-uv run python scripts/analyze_genealogy.py       # Fig 4 (depends on bimodality output)
+uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
+uv run python scripts/plot_fig45_pca_scatter.py  # Fig 4 PCA scatter (full corpus)
+uv run python scripts/plot_fig45_pca_scatter.py --core-only  # Fig 4 PCA scatter (core)
+uv run python scripts/analyze_genealogy.py       # Fig 4 genealogy (depends on bimodality output)
 uv run python scripts/summarize_core_venues.py   # Core venue tables + institution summaries (OECD/WB/IMF)
 uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table
 ```

@@ -92,10 +92,19 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 
 ### Git versioning
 - **Commit frequently** — do not let work accumulate without versioning
-- **Use feature branches** for new work (e.g., `corpus-pipeline`, `bibliometric-analysis`)
+- **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`. This preserves uncommitted work on `main` and enables parallel ticket work.
+- **One branch per ticket**, named `t{N}-short-description` (e.g., `t3-censored-breaks`)
+- **Create PRs** for each ticket so the author can review changes before merging
 - Merge to `main` when a milestone is stable
 - Always commit before starting a new phase of work
 - Propose a commit when a logical unit of work is complete
+
+### Autonomous workflow
+When working on multiple tickets:
+1. Launch each ticket in its own worktree (Agent tool with `isolation: "worktree"`)
+2. Independent tickets run in parallel
+3. Push each branch and create a PR with summary + test plan
+4. Clean up worktree branches after pushing named branches
 
 ### File management
 - Working drafts: Markdown (`.md`); final submission: ODT or DOCX
