@@ -15,6 +15,32 @@ These findings organise the paper into three historical acts. Section I traces t
 
 ## I. Before Climate Finance (1990–2006)
 
+Climate finance did not exist as an autonomous economic object before the late 2000s. The term appears sporadically in the literature of the 1990s and early 2000s, but it referred to no stable category. What existed instead were three distinct intellectual traditions, each of which would later contribute elements to the concept without any of them producing it on their own.
+
+### Environmental economics and the externality framework
+
+The first tradition is environmental economics, rooted in the treatment of pollution as an externality. @ayres_kneese1969 established the framework of "materials balance" in which environmental degradation was understood as a by-product of production and consumption---a cost borne by third parties rather than by the agents responsible. This Pigouvian tradition generated a rich literature on optimal taxation, tradable permits, and cost-benefit analysis of environmental regulation, but it did not produce a concept of climate *finance*. Its central question was the *price* of emissions (what should a carbon tax be?), not the *flow* of money between countries to address climate change.
+
+When climate economics emerged as a distinct subfield in the late 1980s and 1990s, it inherited this orientation. The integrated assessment models developed by @nordhaus1992 and @manne_richels1992 framed climate change as an intertemporal optimisation problem: how much should the present generation invest in mitigation to reduce future damages? These models calculated optimal abatement paths and shadow prices of carbon, but they operated at a level of abstraction that left the institutional mechanisms of financing unspecified. Money flowed between "regions" in the models, but these flows were artefacts of welfare optimisation, not representations of actual financial instruments or aid commitments.
+
+The Stern Review [@stern2007] marked a turning point in public visibility but not in conceptual architecture. Stern's argument that the benefits of early action outweighed the costs depended on a low discount rate---a choice contested by @weitzman2007 and others---but the *kind* of action Stern envisaged was still framed in terms of carbon pricing and public investment, not in terms of a distinct "climate finance" category requiring its own accounting infrastructure. The famous "1% of GDP" figure was an aggregate cost estimate, not a financial flow from North to South.
+
+### Development economics and the categories of aid
+
+The second tradition is development economics, which contributed the institutional categories through which climate finance would eventually be counted. The OECD's Development Assistance Committee had been tracking Official Development Assistance (ODA) since the 1960s, building an elaborate statistical system for classifying financial flows by type (grants, loans, equity), channel (bilateral, multilateral), sector, and purpose. This system embodied specific conceptual commitments: the distinction between "concessional" and "non-concessional" flows, the requirement that ODA have a "grant element" of at least 25%, the counting of face value rather than subsidy content.
+
+These categories were designed for development aid, not for climate policy. But when the need arose to count climate finance after Copenhagen, they provided the readymade infrastructure. The Rio markers, introduced in 1998 to tag aid projects targeting the objectives of the Rio Earth Summit conventions (climate, biodiversity, desertification), were the crucial link. They allowed development finance statisticians to retrofit climate labels onto existing aid data without building a new reporting system from scratch. This was efficient but consequential: it meant that the way climate finance was counted would reflect the assumptions, compromises, and blind spots of the ODA system [@michaelowa2007].
+
+### Burden-sharing and the disconnection from finance
+
+The third tradition is the economics of burden-sharing in international environmental agreements. Models incorporating Negishi welfare weights [@negishi1960] had been used since the 1970s to analyse how the costs of collective action should be distributed among countries with different income levels. The climate negotiations of the 1990s---the Framework Convention (1992), the Kyoto Protocol (1997)---were deeply shaped by this logic: differentiated responsibilities, equity principles, historical emissions. Yet the burden-sharing literature remained disconnected from the practical questions of financial flows. It addressed the question "who should pay?" at a theoretical level but did not engage with the operational question "how do we count what has been paid?"
+
+The Kyoto Protocol's Clean Development Mechanism (CDM) came closest to bridging this gap. By allowing developed countries to meet emission targets through projects in developing countries, the CDM created actual financial flows tied to climate objectives. A substantial literature emerged around CDM project design, additionality criteria, and carbon credit markets [@michaelowa2019]. But the CDM operated through market mechanisms, not through budgetary transfers, and its financial flows were counted in terms of Certified Emission Reductions rather than dollars of "climate finance." The CDM produced a vocabulary of carbon accounting, not of financial accounting.
+
+### Why climate finance did not yet exist
+
+The three traditions described above---environmental economics, development economics, and burden-sharing analysis---each addressed aspects of what would later be called climate finance. Environmental economists modelled the costs of climate action; development economists built the statistical infrastructure for tracking aid flows; burden-sharing analysts debated who should bear the costs. But none of them constituted climate finance as a *distinct economic object*---a category with its own metrics, its own institutions, and its own controversies. The concept required a political event (Copenhagen), a quantitative target ($100 billion), and a group of economists positioned at the intersection of these traditions to assemble the components into a new, governable whole. That assembly is the subject of the next section.
+
 ## II. Crystallization (2007–2014)
 
 ### The Copenhagen moment
