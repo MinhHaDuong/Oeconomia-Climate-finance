@@ -1,4 +1,4 @@
-# Manuscript Plan (v3 — updated 2026-03-03)
+# Manuscript Plan (v4 — updated 2026-03-04)
 
 **Target:** ~9,000 words for Œconomia "Varia" submission
 **Source:** Extended abstract (submitted 2026-01-15) + computational results (technical-report.md)
@@ -46,6 +46,12 @@ Thesis: climate finance crystallized as an economic object by ~2009. Everything 
 5. **Not the dominant axis** — the eff/acc divide is PC2, not PC1; the field's primary variance is something else (climate science vs. finance)
 6. **Seed axis drift** — yearly median shifts from accountability side toward efficiency over time (visible in fig4_seed_axis_core)
 7. **Venue structure** — core papers published in hybrid channels (journals + OECD/WB/IMF working papers), confirming institutional economists shaped categories through publication infrastructure
+
+### 1.3 Manuscript compilation — DONE (PR #15)
+
+- YAML front matter added (`title`, `subtitle`, `bibliography`, `csl`) — #9 T5
+- Pandoc figure declarations added for Fig 1 and Fig 2 — #9 T5
+- Note: `fig3_alluvial.png` is 1,035 px wide — below the ≥ 1,500 px journal requirement; regeneration needed
 
 ### 1.2 Bibliography audit — NOT STARTED
 
@@ -107,11 +113,11 @@ Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
 - The two-communities structure as constitutive tension (not bug, feature)
 - What this case reveals about how economists create governable objects
 
-### Introduction (written last) — ~700 words
-- Frame contribution for Œconomia readership (HET + STS + policy)
-- State thesis clearly
-- Announce three-act periodization and method (endogenous break detection)
-- Flag: all analysis automated and reproducible (technical-report.md)
+### Introduction — PARTIALLY DRAFTED (PR #15)
+- [x] Historiographical positioning expanded — pricing-instrument vs. accounting-instrument lineage, Roberts & Weikmans, Skovgaard — #7 A2
+- [x] Corpus-as-exploratory-evidence caveat appended after GMM sentence — #6 A1
+- [x] Figure declarations present (Fig 1 + Fig 2 via Pandoc syntax) — #9 T5
+- [ ] Final pass (written last, after all body sections)
 
 ### Conclusion — ~500 words
 - Without stabilized categories, no governable financing
