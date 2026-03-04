@@ -15,10 +15,10 @@ All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
 - All scripts support `--no-pdf`.
+- `make` builds manuscript. `make figures` regenerates all figures (byte-reproducible).
 
-## Status (2026-03-03)
+## Status (2026-03-04)
 
-- Corpus: 22,113 refined works, 18,798 with embeddings
-- Core subset: 1,176 (cited_by ≥ 50)
-- All figures complete (see PLAN.md §1.1)
-- **Next: write the manuscript** (PLAN.md Phase 2)
+- Manuscript: ~9,400 words, 47 bib entries, 2 figures + 1 table
+- Corpus: 22,113 refined works, 18,798 with embeddings, 1,176 core
+- **Next: revision and submission**
