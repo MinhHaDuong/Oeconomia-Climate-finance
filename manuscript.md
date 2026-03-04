@@ -121,4 +121,36 @@ The yearly median of scores along the efficiency--accountability axis reveals a 
 
 ## IV. How Climate Finance Became an Economic Object
 
+The history traced in the preceding sections is not merely a chronicle of policy decisions and institutional manoeuvres. It is the story of how a political problem---how to finance climate action in developing countries---was transformed into an economic object through a specific sequence of operations. Four theoretical lenses, drawn from the sociology of quantification and science and technology studies, illuminate this transformation.
+
+### Commensuration
+
+The first operation is commensuration: making comparable what was previously incommensurable [@desrosieres1998; @porter1995]. Before the late 2000s, climate-related financial flows were counted in different currencies by different institutions using different categories. A GEF grant, a World Bank loan, a CDM carbon credit, and a bilateral aid project tagged with a Rio marker were all "climate finance" in some sense, but they were not commensurable---they could not be added up into a single number. The construction of the $100 billion target *required* commensuration: it demanded that these heterogeneous flows be expressed in a common metric. The DAC's face-value accounting, which counts a $1 billion loan the same as a $1 billion grant, is the paradigmatic case of commensuration through simplification. The grant-equivalent alternative, which measures only the subsidy content, represents a different commensuration---one that makes visible what face-value accounting conceals, but at the cost of greater technical complexity and political contestation.
+
+The point, following Desrosières, is that commensuration is never a merely technical operation. The choice of metric encodes assumptions about what matters: face value says "the money exists"; grant-equivalent says "the subsidy exists." Each makes certain realities visible and others invisible. The economists who designed these metrics were not describing a pre-existing object but *constituting* it through their measurement choices.
+
+### Performativity
+
+The second operation is performativity: the process by which economic theories, models, and devices contribute to constructing the realities they describe [@callon1998; @mackenzie2006]. The Copenhagen $100 billion commitment is a textbook case. The number was not derived from any economic analysis; it was a diplomatic artefact. Yet once announced, it *created* the object it named. Climate finance, previously a loose category, became a specific, politically binding quantity. Institutions were established to measure it (the SCF, the OECD's climate finance tracking), methodologies were developed to count it (mobilised private finance, leverage ratios), and careers were built around it (the professionalization of climate finance expertise at the World Bank, CPI, and bilateral agencies).
+
+The performativity of the $100 billion target is not a metaphor. The number actively shaped the behaviour of donors, who redirected existing aid flows to maximise their climate finance totals; of multilateral development banks, which redesigned their reporting systems to track climate co-benefits; and of developing countries, which framed their national climate plans around the expectation of external finance. The target performed the reality it purported to measure---not perfectly, not without contestation, but consequentially.
+
+### Economization
+
+The third operation is economization: the process by which things, behaviours, and processes are established as being "economic" [@caliskan_callon2009; @caliskan_callon2010]. Climate change was initially framed as an environmental, scientific, and diplomatic problem. Its transformation into an economic object---something that could be priced, financed, leveraged, and optimised---was not inevitable. It required specific intellectual work: the construction of damage functions (Nordhaus), the estimation of mitigation costs (Stern), the design of market mechanisms (CDM), and the development of financial instruments (green bonds, de-risking facilities).
+
+What is distinctive about climate finance as a case of economization is the role of *institutional economists*---not academic theorists but practitioners embedded in the OECD, the World Bank, and the IMF. These economists did not merely apply existing economic theory to a new domain; they *built* the categories through which the domain could be apprehended as economic. The DAC categories, the Rio markers, the leverage ratios, the grant-equivalent formulas---these are not applications of welfare economics but *infrastructures of economization*, institutional devices that make climate finance calculable and therefore governable.
+
+### Boundary work
+
+The fourth operation is boundary work: the process by which actors establish, maintain, or contest the boundaries of legitimate knowledge domains [@gieryn1983]. The history of climate finance is permeated by boundary struggles. Between the OECD and the UNFCCC, the contest was over institutional authority: who has the right to define and count climate finance? Between the efficiency and accountability poles, the struggle was over disciplinary boundaries: is climate finance a problem of financial engineering or of distributive justice? Between economists and climate scientists, diplomats, or civil society advocates, the question was over epistemic authority: whose knowledge counts?
+
+The economists who shaped the climate finance architecture succeeded not because their methods were objectively superior but because they occupied a strategic position at the intersection of technical expertise and political relevance. They provided what @kaul2003 called the "financing logic" for global public goods---a framework that translated political commitments into financially actionable terms. In doing so, they performed a distinctive form of boundary work: they made climate finance *theirs*, an object constituted by economic categories and amenable to economic governance.
+
+### The two-communities structure as constitutive tension
+
+The bimodal structure of the field---efficiency versus accountability---is not a contingent feature but a constitutive one. It arises from the fact that climate finance was assembled from two traditions (market-based environmental economics and equity-oriented development economics) that share enough vocabulary to communicate but disagree about fundamental values. The efficiency pole treats public climate finance as a catalyst for private investment; the accountability pole treats it as a North-South obligation. They argue about the same metrics (leverage ratios, additionality, grant-equivalent) but from incompatible normative premises.
+
+This tension is productive rather than pathological. It ensures that climate finance remains contested, visible, and politically salient. If either pole prevailed---if climate finance became purely a financial engineering problem or purely a justice claim---it would lose the characteristic that makes it a distinctive economic object: its capacity to sustain both technocratic management and political accountability simultaneously. The bimodality detected in our corpus is the trace of this constitutive tension in the structure of scholarship itself.
+
 ## Conclusion
