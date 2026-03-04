@@ -254,7 +254,7 @@ This analysis tests whether the corpus is structured around two opposed intellec
 
 ### Pole vocabularies
 
-**Efficiency terms** (14 terms): leverage, de-risking, mobilisation, mobilization, blended finance, private finance, green bond, crowding-in, bankable, risk-adjusted, financial instrument, de-risk, leveraging, green bonds, private sector.
+**Efficiency terms** (15 terms): leverage, de-risking, mobilisation, mobilization, blended finance, private finance, green bond, crowding-in, bankable, risk-adjusted, financial instrument, de-risk, leveraging, green bonds, private sector.
 
 **Accountability terms** (13 terms): additionality, over-reporting, climate justice, loss and damage, grant-equivalent, double counting, accountability, equity, concessional, oda, grant equivalent, overreporting, climate debt.
 
