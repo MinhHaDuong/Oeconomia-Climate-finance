@@ -1,15 +1,24 @@
 ---
 title: "Counting Climate Finance. How Economists Made a Governable Object (1990–2025)"
+subtitle: "*Compter la finance climat. Comment les économistes ont fabriqué un objet gouvernable (1990–2025)*"
 author: "Minh Ha-Duong"
+date: "March 4th, 2026"
 bibliography: bibliography/main.bib
 csl: bibliography/oeconomia.csl
+header-includes: |
+  \usepackage{fancyhdr}
+  \fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyhead[C]{\small\itshape For submission to Œconomia}
+    \fancyfoot[C]{\thepage}
+    \renewcommand{\headrulewidth}{0pt}
+  }
+  \usepackage{etoolbox}
+  \AtBeginDocument{%
+    \let\oldmaketitle\maketitle
+    \renewcommand{\maketitle}{\oldmaketitle\thispagestyle{plain}\footnotetext{Corresponding author: minh.ha-duong@cnrs.fr}}%
+  }
 ---
-
-# Counting Climate Finance. How Economists Made a Governable Object (1990–2025)
-
-*Compter la finance climat. Comment les économistes ont fabriqué un objet gouvernable (1990–2025)*
-
-**Minh Ha-Duong**
 
 This paper offers a history-of-economic-thought analysis of the emergence of climate finance as a distinct economic object from the early 1990s to the mid-2020s. It examines how economists actively shaped the categories, metrics, and boundaries through which climate-related financial flows were defined, stabilised, and contested, contributing to the history of climate economics by shifting attention from models to accounting conventions.
 
@@ -101,7 +110,7 @@ The point is not that any individual economist determined the architecture, but 
 
 Our analysis of the 1,176 most-cited works in the corpus reveals a distinctive publication ecology. Alongside conventional academic journals (*Climate Policy*, *Nature Climate Change*, *Climatic Change*), the core includes a substantial share of institutional publications (Table 1). This hybrid infrastructure is not incidental. It reflects a field in which category-making power was exercised not through peer-reviewed articles alone but through the "grey" channels of policy reports, expert group papers, and institutional working paper series.
 
-**Table 1.** Top publication venues in the core subset (works cited ≥ 50 times), by number of papers.
+**Table 1.** Top publication venues in the core subset (works cited 50 times or more), by number of papers.
 
 | Venue | Papers | Type |
 |:------|-------:|:-----|
