@@ -1,8 +1,9 @@
-# Manuscript Plan (v3 — updated 2026-03-03)
+# Manuscript Plan (v4 — updated 2026-03-04)
 
 **Target:** ~9,000 words for Œconomia "Varia" submission
 **Source:** Extended abstract (submitted 2026-01-15) + computational results (technical-report.md)
 **Pre-requisite:** Confirm with editor (language, length, timeline)
+**Current word count:** ~9,600 rendered (8,500 markdown)
 
 ## Structural rationale
 
@@ -12,7 +13,7 @@ Thesis: climate finance crystallized as an economic object by ~2009. Everything 
 
 ## Phase 1 — Foundations (COMPLETE)
 
-### 1.1 Paper figures
+### 1.1 Paper figures (COMPLETE)
 
 | # | Figure | File | Content |
 |---|--------|------|---------|
@@ -22,7 +23,7 @@ Thesis: climate finance crystallized as an economic object by ~2009. Everything 
 | 4 | Seed axis | `fig4_seed_axis_core.png` | Efficiency↔accountability scatter, 1,176 core papers over time |
 | 5 | Bimodality | `fig5a_bimodality.png` | KDE of eff/acc axis scores by period (ΔBIC=1,264) |
 
-### Appendix figures
+### Appendix figures (COMPLETE)
 
 | File | Content |
 |------|---------|
@@ -47,92 +48,103 @@ Thesis: climate finance crystallized as an economic object by ~2009. Everything 
 6. **Seed axis drift** — yearly median shifts from accountability side toward efficiency over time (visible in fig4_seed_axis_core)
 7. **Venue structure** — core papers published in hybrid channels (journals + OECD/WB/IMF working papers), confirming institutional economists shaped categories through publication infrastructure
 
-### 1.2 Bibliography audit — NOT STARTED
+### 1.2 Bibliography audit (COMPLETE)
 
-- Cross-check `bibliography/main.bib` against `AI tech reports/SciSpace/Quick_Reference_Must_Cite_and_Overlooked_Works.md`
-- Ensure primary sources present: Corfee-Morlot (Rio markers), Michaelowa (over-reporting), Weikmans & Roberts (accounting disputes), Stern (HLPF 2010), Kaul (global public goods)
-- Add key OECD/UNFCCC reports as grey literature entries
+- `scripts/verify_bibliography.py`: 26/47 SciSpace references matched in `main.bib`
+- Primary sources confirmed: Corfee-Morlot, Michaelowa, Roberts & Weikmans, Stern, Kaul
+- 47 entries in `main.bib`, all cited in manuscript
 
-## Phase 2 — Drafting (three-act structure)
+## Phase 2 — Drafting (COMPLETE)
 
-### Section I: Before Climate Finance (1990–2006) — ~1,500 words
-- Intellectual pre-history: Ayres & Kneese, externalities framework
-- Development economics categories: DAC, concessionality, grant-equivalent
-- Climate economics: Nordhaus, Manne, Stern, Weitzman — models, not money
-- Negishi weights and burden-sharing disconnected from aid debates
-- Why climate finance doesn't yet exist as an autonomous object
-- Theory: Desrosières (commensuration), Porter (trust in numbers)
-- Data support: formative phase, sparse literature, pre-Copenhagen vocabulary (CDM, Kyoto, development aid)
+All sections drafted, numbered per Œconomia style (Arabic, not Roman).
 
-### Section II: Crystallization (2007–2014) — ~2,500 words
-Merges the "defining moment" with the first consolidation. Two detected breaks bracket this period.
+### Introduction — ~900 words
+- Opening hook: the puzzle of debating hundreds of billions that no institution holds
+- HET + STS framing for Œconomia readership
+- Thesis statement, three-act periodization, method overview
+- Corpus description (22,000 works, 7 sources, endogenous break detection)
+- Road map (Sections 1–4)
 
-- Copenhagen $100bn as performative promise (Callon, MacKenzie)
-- Jan Corfee-Morlot and OECD Rio markers: building statistical infrastructure
-- Battle OECD vs. UNFCCC for operational definition
-- Emergence of key concepts: public climate finance, mobilized private finance, leverage ratios
-- Stern and the UN HLPF 2010: economists as architects
-- The 2013 consolidation: field categories stabilize, metrics become routine
-- Two communities crystallize: efficiency pole (OECD/MDB leverage) vs. accountability pole (Oxfam/CARE justice)
-- Theory: performativity, boundary work
-- Data support: both structural breaks (2007 cosine, 2013 JS) fall in this period; censored k=2 confirms 2009 (Copenhagen) as single dominant break; massive lexical reorientation at 2009
-- Seed axis scatter (Fig 4): the yearly median shows the field's centre of gravity drifting toward efficiency throughout this period
-- Venue support: core publication channels are already hybrid (journals + OECD/WB/IMF report/WP series), showing institutional economists shaping categories through publication infrastructures
+### Section 1: Before Climate Finance (1990–2006) — ~1,500 words
+- 1.1 Environmental economics and the externality framework
+- 1.2 Development economics and statistical infrastructure
+- 1.3 Burden-sharing and the disconnection from finance
+- 1.4 Why climate finance did not yet exist
 
-### Section III: The Established Field (2015–2025) — ~2,500 words
-Merges old Sections III (Metrisation) and IV (NCQG). No further breaks detected.
+### Section 2: Crystallization (2007–2014) — ~2,500 words
+- 2.1 The Copenhagen moment
+- 2.2 Building statistical infrastructure: Rio markers and OECD accounting
+- 2.3 Two communities, one object
+- 2.4 The efficiency–accountability divide as structural feature
 
-- Paris Agreement transparency frameworks
-- UNFCCC Standing Committee on Finance as counter-knowledge producer
-- Grant-equivalent vs. face value (Oxfam vs. OECD)
-- Michaelowa on incentive-driven over-reporting of Rio markers
-- Weikmans & Roberts: accounting disputes as distributive conflicts
-- Additionality, double counting, non-concessional loans
-- Climate finance as professionalized field with routines, careers, metrics
-- Glasgow: "the $100bn will be met" — claim resting on statistical infrastructure
-- OECD validates; Global South contests
-- DAC categories become official language of climate despite development origins
-- Shift to $300bn NCQG at Baku
-- Key point: all these disputes happen *within* stable intellectual categories
-- Theory: economization (Fourcade, Çalışkan), boundary work, infrastructures of quantification
-- Data support: no structural break; core subset confirms categorical stability (no break 2005–2020); bimodality persists but within fixed poles
-- Seed axis scatter (Fig 4): efficiency side grows denser but accountability pole remains occupied — the tension is constitutive, not resolved
-- Venue support: continued OECD/World Bank/IMF presence in core report/WP channels
+### Section 3: The Established Field (2015–2025) — ~2,500 words
+- 3.1 The Paris framework and the transparency turn
+- 3.2 The four controversies
+- 3.3 From $100 billion to $300 billion
 
-### Section IV: How Climate Finance Became an Economic Object — ~1,500 words
-- Theoretical synthesis: commensuration → performativity → economization → boundary work
-- Climate finance governable because made into economic object
-- Economists as designers of policy-relevant knowledge (not just analysts)
-- Kaul: global public goods require distinct financing logic
-- The two-communities structure as constitutive tension (not bug, feature)
-- What this case reveals about how economists create governable objects
-
-### Introduction (written last) — ~700 words
-- Frame contribution for Œconomia readership (HET + STS + policy)
-- State thesis clearly
-- Announce three-act periodization and method (endogenous break detection)
-- Flag: all analysis automated and reproducible (technical-report.md)
+### Section 4: How Climate Finance Became an Economic Object — ~1,500 words
+- Theoretical synthesis: commensuration → performativity → economization
+- The two-communities structure as constitutive tension
 
 ### Conclusion — ~500 words
-- Without stabilized categories, no governable financing
-- The $100bn→$300bn transition depends on pre-existing economic tools
+- Three findings: constructed (not discovered), never disrupted, structurally divided
 - The real battle is over definitions, not amounts
-- Implications for future climate finance architecture
 
-## Phase 3 — Revision
+## Phase 3 — Revision (IN PROGRESS)
 
-- Run AGENTS.md self-check (5 questions)
-- Style pass: Œconomia author-date conventions (see `docs/Informations aux auteurs.md`)
-- Word count check (~8,000-10,000 target)
-- Convert: `pandoc manuscript.md --citeproc --bibliography=bibliography/main.bib -o manuscript.odt`
-- Upload as "revision" on Œconomia platform
+### Done
+- [x] Œconomia house style applied (see `docs/oeconomia-style.md`)
+  - Dot-separated title, French subtitle, small-caps author
+  - No Introduction heading, Arabic numbered sections (1. / 1.1), unnumbered Conclusion
+  - Submission header, date, corresponding author footnote (LaTeX via `header-includes`)
+- [x] AI-tell sweep (blacklisted words, em-dash density, contrast farming)
+- [x] Bibliography verification (47 entries, all cited)
+- [x] Code audit (all 7 scripts pass, byte-reproducible pipeline)
+- [x] PDF + ODT build clean (no warnings)
+
+### Remaining
+- [ ] Content polish pass (currently editing: opening hook, figure cross-references)
+- [ ] French abstract (Résumé)
+- [ ] Keywords (FR + EN)
+- [ ] Final word count trim if needed (currently ~9,600 rendered, target ~9,000)
+- [ ] Proofread bibliography formatting (DOI on separate line per Œconomia style)
+- [ ] Final `make clean && make all` + visual check
+- [ ] Move current draft to `release/` for submission
+- [ ] Consider restructuring: consolidate quantitative material into a dedicated section
+  - Move intro paragraph "We ground this historical argument..." + Figures 1–2
+  - Move §2.5 (publication infrastructure) and §2.6 (efficiency–accountability divide)
+  - Rationale: separates the historical narrative (§1–3) from the computational evidence
+  - Trade-off: cleaner structure vs. losing the current integration of data within narrative
+
+## Phase 4 — Submission packaging (NOT STARTED)
+
+- [ ] Tag repo `v1.0-submission` + push tag
+- [ ] Archive on Zenodo (via GitHub integration) → get DOI
+- [ ] Upload `technical-report.md` to HAL as working paper → get HAL ID
+  - Must include breakpoint analysis evidence (figures, method description) — the manuscript
+    cites structural breaks repeatedly but never shows the divergence plots or method details.
+    The HAL working paper is the minimum credible home for this evidence;
+    alternatively, a companion methods paper (see below) would be the stronger venue.
+- [ ] Add "Data and code availability" paragraph to manuscript (before Bibliography)
+- [ ] Draft cover letter pointing reviewers to HAL + Zenodo
+- [ ] Companion methods paper (Scientometrics/QSS): parked for post-acceptance
+  - Stronger case now: the Œconomia manuscript leans heavily on breakpoint results
+    it cannot fully present. A peer-reviewed companion would let us cite it properly.
+
+## Build
+
+```bash
+make all          # builds manuscript.pdf + manuscript.odt
+make clean        # removes PDF + ODT
+```
 
 ## Documentation files
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `CLAUDE.md` | Minimal AI handoff (data path, conventions, status) | Current |
+| `CLAUDE.md` | AI handoff (data path, conventions, status) | Current |
 | `AGENTS.md` | Writing guidelines, workflow rules, script commands | Current |
+| `docs/oeconomia-style.md` | Œconomia house style (eyeballed from 15-4 samples) | Current |
 | `technical-report.md` | Full pipeline documentation (10 sections) | Current |
 | `notes.md` | Working notes, draft arguments, empirical observations | Active |
 | `extended abstract.md` | Submitted abstract (2026-01-15) | Archival |
