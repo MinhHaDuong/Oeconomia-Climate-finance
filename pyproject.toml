@@ -19,6 +19,9 @@ dependencies = [
     "beautifulsoup4",
     "pdfplumber",
     "ddgs",
+    "plotly",
+    "bibtexparser",
+    "rapidfuzz",
 ]
 
 [[tool.uv.index]]

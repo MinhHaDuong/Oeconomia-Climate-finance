@@ -10,6 +10,7 @@ bibliography/*.pdf
 # Binary document formats (MD versions tracked instead)
 *.odt
 *.docx
+*.pdf
 
 # Generated data lives outside repo: ~/data/projets/Oeconomia-Climate-finance/
 # Only config/docs tracked in data/ ; ignore everything else
