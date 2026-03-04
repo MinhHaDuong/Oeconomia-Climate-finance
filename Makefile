@@ -20,6 +20,12 @@ REFINED     := $(DATA_DIR)/refined_works.csv
 ECON_YEARLY := $(DATA_DIR)/openalex_econ_yearly.csv
 OVERLAP     := $(DATA_DIR)/openalex_econ_fin_overlap.csv
 
+# ── Reproducibility ───────────────────────────────────────
+# PYTHONHASHSEED=0  → deterministic dict/set iteration order
+# SOURCE_DATE_EPOCH=0 → reproducible timestamps in PDF/PNG metadata
+export PYTHONHASHSEED := 0
+export SOURCE_DATE_EPOCH := 0
+
 # ── Pandoc ────────────────────────────────────────────────
 PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
 
@@ -29,9 +35,8 @@ PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
 all: manuscript.pdf manuscript.odt
 
 # ── Manuscript (Stage 2) ─────────────────────────────────
-# SOURCE_DATE_EPOCH=0 makes PDF timestamps reproducible.
 manuscript.pdf: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
-	SOURCE_DATE_EPOCH=0 pandoc $< $(PANDOC_OPTS) --pdf-engine=xelatex -o $@
+	pandoc $< $(PANDOC_OPTS) --pdf-engine=xelatex -o $@
 
 manuscript.odt: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
 	pandoc $< $(PANDOC_OPTS) -o $@

@@ -136,8 +136,14 @@ def delete_checkpoint(path):
 
 
 def save_figure(fig, path_stem, no_pdf=False):
-    """Save figure as PNG and optionally PDF."""
-    fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight")
+    """Save figure as PNG and optionally PDF.
+
+    Produces byte-identical output across runs by stripping volatile
+    metadata (Software version, creation timestamps).
+    """
+    _meta = {"Software": None, "Creation Time": None}
+    fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight",
+                metadata=_meta, pil_kwargs={"optimize": False})
     if not no_pdf:
         fig.savefig(f"{path_stem}.pdf", dpi=300, bbox_inches="tight")
     print(f"Saved → {os.path.basename(path_stem)}.png" +
