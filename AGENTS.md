@@ -145,6 +145,59 @@ uv run python scripts/summarize_core_venues.py   # Core venue tables + instituti
 uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table
 ```
 
+## Language Polish — AI Tells to Eliminate
+
+This manuscript was co-written with an LLM. Apply these rules on every edit pass.
+
+### Blacklisted words (target: 0 occurrences)
+
+delve, nuanced, multifaceted, pivotal, crucial, robust (unless statistical sense),
+intricate, comprehensive, meticulous, vibrant, arguably, showcasing, underscores,
+foster, tapestry, landscape (unless proper noun, e.g. CPI *Global Landscape*)
+
+### Blacklisted phrases (target: 0 occurrences)
+
+"it is important to note," "in the realm of," "stands as a testament to,"
+"plays a vital role," "the landscape of," "navigating the complexities,"
+"the interplay between," "sheds light on," "a growing body of literature,"
+"offers a lens through which," "it is worth noting," "cannot be overstated"
+
+### Contrast farming (target: ≤3 justified instances)
+
+Pattern: "not X, but Y" used for rhetorical emphasis.
+Each instance must be genuinely contrastive (a real either/or), not decorative.
+Rephrase decorative contrasts with "rather than," "instead of," or restructure.
+
+### Em-dash density (target: ≤2 per paragraph)
+
+Convert excess em-dash parentheticals to:
+- Actual parentheses: `(X, Y, Z)` for lists
+- Commas or semicolons for clause-level asides
+- Periods for genuinely separate thoughts
+
+### Other patterns to avoid
+
+- **Compulsive tricolons**: not every list needs exactly three items
+- **Uniform sentence length**: vary between short and long
+- **Excessive hedging**: cut "perhaps," "it might be argued that," "to some extent"
+- **Over-explanation**: trust the reader; cut "In other words," "That is to say,"
+- **Sentence-initial "Moreover/Furthermore/Additionally"**: use sparingly (≤2 per section)
+
+### Verification command
+
+```bash
+# Blacklisted words (expect 0)
+grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' manuscript.md
+
+# Em-dash heavy paragraphs (expect 0 lines with 3+)
+grep -cP '---.*---.*---' manuscript.md
+
+# Contrast farming (expect ≤3)
+grep -cP 'not .{3,60}, but ' manuscript.md
+```
+
+Reference: Liang et al. 2024, "Mapping the Increasing Use of LLMs in Scientific Papers" (arXiv:2406.07016)
+
 ## Self-Check Questions
 
 Before producing any substantial text:
