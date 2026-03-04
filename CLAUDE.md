@@ -11,11 +11,6 @@ See:
 All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 (override: `CLIMATE_FINANCE_DATA` env var; see `scripts/utils.py`)
 
-## Conventions
-
-- `uv sync` to install (never pip). `uv run python scripts/...` to execute.
-- All scripts support `--no-pdf`.
-
 ## Status (2026-03-04)
 
 - Corpus: 22,113 refined works, 18,798 with embeddings
