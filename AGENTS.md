@@ -73,7 +73,7 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 ### For Final Review
 - Check that "history of economic thought" framing is prominent
 - Verify all citations are in bibliography
-- Ensure Œconomia style guidelines are followed (see `docs/Informations aux auteurs.md`)
+- Ensure Œconomia style guidelines are followed (see `docs/oeconomia-style.md`)
 - Confirm word count fits journal norms
 
 ## Communication with Author

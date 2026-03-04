@@ -16,6 +16,7 @@ All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
 - All scripts support `--no-pdf`.
 - `make` builds manuscript. `make figures` regenerates all figures (byte-reproducible).
+- House style: `docs/oeconomia-style.md` (eyeballed from 15-4 samples)
 
 ## Status (2026-03-04)
 
