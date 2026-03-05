@@ -2,8 +2,21 @@
 
 See `CLAUDE.md` for data paths and current status.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
-See `technical-report.md` for the full data pipeline documentation.
+See `technical-report.qmd` for the full data pipeline documentation.
 See `notes.md` for working notes and the original detailed outline.
+
+## Project Structure
+
+This is a Quarto multi-document project (`_quarto.yml`). Four outputs share
+reusable fragments in `_includes/` via `{{< include >}}` directives:
+
+- `manuscript.qmd` — main Œconomia article (self-contained, no includes)
+- `technical-report.qmd` — pipeline documentation (composed entirely of includes)
+- `data-paper.qmd` — corpus data paper (reuses corpus-construction + reproducibility)
+- `companion-paper.qmd` — methods companion (reuses all analysis sections)
+
+Build with `make manuscript` (PDF + DOCX) or `make papers` (3 companion PDFs).
+`make all` builds everything. See `Makefile` for targets.
 
 ## Writing Guidelines
 
@@ -107,8 +120,9 @@ When working on multiple tickets:
 4. Clean up worktree branches after pushing named branches
 
 ### File management
-- Working drafts: Markdown (`.md`); final submission: ODT or DOCX
-- Convert with Pandoc: `pandoc input.md -o output.odt`
+- Working drafts: Quarto Markdown (`.qmd`); final submission: PDF or DOCX
+- Build with `make` (calls `quarto render` under the hood)
+- Shared fragments live in `_includes/` — edit there, all documents update
 - Bibliography: `bibliography/main.bib`, author-date style
 - Version control: old versions in `attic/`, submissions in `release/`
 

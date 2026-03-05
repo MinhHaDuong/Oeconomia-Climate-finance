@@ -17,26 +17,40 @@ Publishing a few articles to lay the groundwork for a book project described in 
 2026-02-18 Manuscript plan established. See `PLAN.md`.
 2026-02-26 Bibliometric analysis complete. Three-act periodization from breakpoint detection.
 2026-03-03 All figures finalized (core subset, censored breaks, PCA scatter). Ready for manuscript drafting.
+2026-03-05 Refactored into Quarto multi-document project (4 outputs, shared includes).
+
+## Documents
+
+| Document | File | Target journal | Status |
+|----------|------|----------------|--------|
+| Manuscript | `manuscript.qmd` | Œconomia (Varia) | Draft, revising |
+| Technical report | `technical-report.qmd` | HAL working paper | Complete |
+| Data paper | `data-paper.qmd` | Scientific Data | Outline + reused sections |
+| Companion paper | `companion-paper.qmd` | Scientometrics / QSS | Outline |
+
+All four are Quarto documents sharing fragments via `{{< include >}}` from `_includes/`.
 
 ## Repository Structure
 
 ```
+├── _quarto.yml                       # Quarto project config (4 documents)
+├── manuscript.qmd                    # Main article (Œconomia)
+├── technical-report.qmd              # Full pipeline documentation (10 sections)
+├── data-paper.qmd                    # Corpus data paper (Scientific Data)
+├── companion-paper.qmd               # Methods companion (Scientometrics/QSS)
+├── _includes/                        # Shared Markdown fragments (10 files)
 ├── CLAUDE.md                         # AI handoff: data paths, conventions, status
-├── PLAN.md                           # Manuscript structure (v3, three-act, five figures)
+├── PLAN.md                           # Manuscript structure (three-act, five figures)
 ├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
-├── technical-report.md               # Full pipeline documentation (10 sections)
-├── extended abstract.md              # Submitted extended abstract
-├── notes.md                          # Working notes, draft arguments
+├── Makefile                          # Build: make manuscript, make papers, make figures
 ├── scripts/                          # Python analysis pipeline
 ├── figures/                          # Generated figures (tracked)
 ├── tables/                           # Generated tables (tracked)
+├── bibliography/                     # main.bib + oeconomia.csl
 ├── data/catalogs/                    # Small curated data (het_core.csv only; rest in ~/data/...)
 ├── release/                          # Releases outside CIRED. Append-only.
-├── attic/                            # Old stuff to delete when paper is accepted
-├── AI tech reports/                  # AI-assisted research (SciSpace CSVs + analyses)
-├── corpus ISTEX/                     # 484-article dataset (not tracked in git)
-├── bibliography/                     # main.bib (PDFs not tracked in git)
-└── docs/                             # Œconomia journal info, book project notes
+├── docs/                             # Œconomia journal info, book project notes
+└── attic/                            # Old stuff to delete when paper is accepted
 ```
 
 ## Research Corpus

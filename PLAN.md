@@ -1,7 +1,7 @@
 # Manuscript Plan (v4 — updated 2026-03-04)
 
 **Target:** ~9,000 words for Œconomia "Varia" submission
-**Source:** Extended abstract (submitted 2026-01-15) + computational results (technical-report.md)
+**Source:** Extended abstract (submitted 2026-01-15) + computational results (technical-report.qmd)
 **Pre-requisite:** Confirm with editor (language, length, timeline)
 **Current word count:** ~9,600 rendered (8,500 markdown)
 
@@ -120,22 +120,26 @@ All sections drafted, numbered per Œconomia style (Arabic, not Roman).
 
 - [ ] Tag repo `v1.0-submission` + push tag
 - [ ] Archive on Zenodo (via GitHub integration) → get DOI
-- [ ] Upload `technical-report.md` to HAL as working paper → get HAL ID
+- [ ] Upload `technical-report.qmd` to HAL as working paper → get HAL ID
   - Must include breakpoint analysis evidence (figures, method description) — the manuscript
     cites structural breaks repeatedly but never shows the divergence plots or method details.
     The HAL working paper is the minimum credible home for this evidence;
-    alternatively, a companion methods paper (see below) would be the stronger venue.
+    alternatively, the companion methods paper would be the stronger venue.
 - [ ] Add "Data and code availability" paragraph to manuscript (before Bibliography)
 - [ ] Draft cover letter pointing reviewers to HAL + Zenodo
-- [ ] Companion methods paper (Scientometrics/QSS): parked for post-acceptance
+- [ ] Data paper (`data-paper.qmd`): corpus documentation for Scientific Data — outline ready
+- [ ] Companion methods paper (`companion-paper.qmd`): Scientometrics/QSS — outline ready
   - Stronger case now: the Œconomia manuscript leans heavily on breakpoint results
     it cannot fully present. A peer-reviewed companion would let us cite it properly.
 
 ## Build
 
 ```bash
-make all          # builds manuscript.pdf + manuscript.odt
-make clean        # removes PDF + ODT
+make all          # builds manuscript (PDF + DOCX) + 3 companion papers (PDF)
+make manuscript   # builds manuscript.pdf + manuscript.docx only
+make papers       # builds technical-report.pdf, data-paper.pdf, companion-paper.pdf
+make figures      # regenerates all figures
+make clean        # removes all build outputs
 ```
 
 ## Documentation files
@@ -145,6 +149,8 @@ make clean        # removes PDF + ODT
 | `CLAUDE.md` | AI handoff (data path, conventions, status) | Current |
 | `AGENTS.md` | Writing guidelines, workflow rules, script commands | Current |
 | `docs/oeconomia-style.md` | Œconomia house style (eyeballed from 15-4 samples) | Current |
-| `technical-report.md` | Full pipeline documentation (10 sections) | Current |
+| `technical-report.qmd` | Full pipeline documentation (10 sections, Quarto) | Current |
+| `data-paper.qmd` | Corpus data paper (Scientific Data format) | Outline |
+| `companion-paper.qmd` | Methods companion (Scientometrics/QSS) | Outline |
 | `notes.md` | Working notes, draft arguments, empirical observations | Active |
 | `extended abstract.md` | Submitted abstract (2026-01-15) | Archival |
