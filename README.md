@@ -44,14 +44,20 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `_inc
 ├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
 ├── Makefile                          # Build: make manuscript, make papers, make figures
 ├── scripts/                          # Python analysis pipeline
-├── figures/                          # Generated figures (tracked)
-├── tables/                           # Generated tables (tracked)
+├── figures/                          # Generated figures (tracked, see below)
+├── tables/                           # Generated tables (tracked, see below)
 ├── bibliography/                     # main.bib + oeconomia.csl
 ├── data/catalogs/                    # Small curated data (het_core.csv only; rest in ~/data/...)
 ├── release/                          # Releases outside CIRED. Append-only.
 ├── docs/                             # Œconomia journal info, book project notes
 └── attic/                            # Old stuff to delete when paper is accepted
 ```
+
+## Generated outputs
+
+`figures/` and `tables/` (including interactive HTML) are tracked in git.
+They are regenerable via `make figures`, but tracking them ensures the
+documents build from a fresh clone without running the full data pipeline.
 
 ## Research Corpus
 
