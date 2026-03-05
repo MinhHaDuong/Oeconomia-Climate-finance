@@ -1,7 +1,9 @@
 # Makefile — Counting Climate Finance (Œconomia)
 #
 # Usage:
-#   make            Build manuscript.pdf + manuscript.odt
+#   make            Build all documents (manuscript + 3 companion papers)
+#   make manuscript Build manuscript only (PDF + DOCX)
+#   make papers     Build technical report, data paper, companion paper
 #   make figures    Regenerate all figures (from existing data)
 #   make data       Run slow API collection scripts
 #   make archive    Package code + data, validate, create tarball
@@ -15,7 +17,7 @@
 DATA_DIR    ?= $(HOME)/data/projets/Oeconomia-Climate-finance/catalogs
 BIB         := bibliography/main.bib
 CSL         := bibliography/oeconomia.csl
-SRC         := manuscript.md
+SRC         := manuscript.qmd
 
 REFINED     := $(DATA_DIR)/refined_works.csv
 ECON_YEARLY := $(DATA_DIR)/openalex_econ_yearly.csv
@@ -27,20 +29,34 @@ OVERLAP     := $(DATA_DIR)/openalex_econ_fin_overlap.csv
 export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
-# ── Pandoc ────────────────────────────────────────────────
-PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
+# ── Quarto ───────────────────────────────────────────────
+INCLUDES    := $(wildcard _includes/*.md)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all figures data clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures data clean rebuild archive verify-remote
 
-all: manuscript.pdf manuscript.odt
+all: manuscript papers
 
-# ── Manuscript (Stage 2) ─────────────────────────────────
+manuscript: manuscript.pdf manuscript.docx
+
+papers: technical-report.pdf data-paper.pdf companion-paper.pdf
+
+# ── Manuscript ───────────────────────────────────────────
 manuscript.pdf: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
-	pandoc $< $(PANDOC_OPTS) --pdf-engine=xelatex -o $@
+	quarto render $< --to pdf
 
-manuscript.odt: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
-	pandoc $< $(PANDOC_OPTS) -o $@
+manuscript.docx: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
+	quarto render $< --to docx
+
+# ── Companion documents ─────────────────────────────────
+technical-report.pdf: technical-report.qmd $(INCLUDES) $(BIB)
+	quarto render $< --to pdf
+
+data-paper.pdf: data-paper.qmd $(INCLUDES) $(BIB)
+	quarto render $< --to pdf
+
+companion-paper.pdf: companion-paper.qmd $(INCLUDES) $(BIB)
+	quarto render $< --to pdf
 
 # ── Figures (Stage 1) ────────────────────────────────────
 # Fig 1: emergence (economics total + CF share)
@@ -158,6 +174,7 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:
-	rm -f manuscript.pdf manuscript.odt
+	rm -f manuscript.pdf manuscript.docx
+	rm -f technical-report.pdf data-paper.pdf companion-paper.pdf
 
 rebuild: clean all

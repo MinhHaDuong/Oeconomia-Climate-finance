@@ -1,0 +1,14 @@
+project:
+  type: default
+  render:
+    - manuscript.qmd
+    - technical-report.qmd
+    - data-paper.qmd
+    - companion-paper.qmd
+
+bibliography: bibliography/main.bib
+
+format:
+  pdf:
+    pdf-engine: xelatex
+    cite-method: citeproc

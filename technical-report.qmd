@@ -1,0 +1,51 @@
+---
+title: "Technical Report: Data Analysis Pipeline"
+author: "Minh Ha-Duong"
+date: "2026-03-05"
+bibliography: bibliography/main.bib
+format:
+  pdf:
+    pdf-engine: xelatex
+---
+
+This document describes the computational pipeline used to produce the bibliometric analysis in "How Climate Finance Became an Economic Object" (submitted to *Oeconomia*). The pipeline transforms a multi-source literature corpus into five figures and their associated robustness checks. All scripts are in `scripts/`, all generated data in `~/data/projets/Oeconomia-Climate-finance/catalogs/` (configurable via the `CLIMATE_FINANCE_DATA` environment variable), and all outputs in `figures/` and `tables/`.
+
+---
+
+{{< include _includes/corpus-construction.md >}}
+
+---
+
+{{< include _includes/corpus-refinement.md >}}
+
+---
+
+{{< include _includes/embedding-generation.md >}}
+
+---
+
+{{< include _includes/structural-breaks.md >}}
+
+---
+
+{{< include _includes/alluvial-diagram.md >}}
+
+---
+
+{{< include _includes/bimodality-analysis.md >}}
+
+---
+
+{{< include _includes/pca-scatter.md >}}
+
+---
+
+{{< include _includes/citation-genealogy.md >}}
+
+---
+
+{{< include _includes/core-vs-full.md >}}
+
+---
+
+{{< include _includes/reproducibility.md >}}
