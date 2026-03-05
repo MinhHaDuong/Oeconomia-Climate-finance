@@ -4,6 +4,7 @@
 #   make            Build manuscript.pdf + manuscript.odt
 #   make figures    Regenerate all figures (from existing data)
 #   make data       Run slow API collection scripts
+#   make archive    Package code + data, validate, create tarball
 #   make clean      Remove build outputs
 #   make rebuild    Clean + rebuild everything
 
@@ -30,7 +31,7 @@ export SOURCE_DATE_EPOCH := 0
 PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all figures data clean rebuild
+.PHONY: all figures data clean rebuild archive
 
 all: manuscript.pdf manuscript.odt
 
@@ -90,6 +91,46 @@ data:
 	uv run python scripts/count_openalex_econ_cf.py --scope finance
 	uv run python scripts/count_openalex_econ_fin_overlap.py
 	uv run python scripts/count_repec_econ_cf.py
+
+# ── Replication archive ─────────────────────────────────
+SHELL := /bin/bash
+ARCHIVE_NAME := climate-finance-replication
+ARCHIVE_DATA := refined_works.csv embeddings.npy semantic_clusters.csv \
+                citations.csv openalex_econ_yearly.csv \
+                openalex_econ_fin_overlap.csv openalex_finance_yearly.csv \
+                repec_econ_yearly.csv
+ARCHIVE_TMP  := /tmp/$(ARCHIVE_NAME)
+
+archive: figures
+	@echo "=== Building replication archive ==="
+	rm -rf $(ARCHIVE_TMP)
+	mkdir -p $(ARCHIVE_TMP)/data/catalogs
+	git archive HEAD | tar -x -C $(ARCHIVE_TMP)
+	rm -rf $(ARCHIVE_TMP)/figures $(ARCHIVE_TMP)/tables
+	$(foreach f,$(ARCHIVE_DATA),cp $(DATA_DIR)/$(f) $(ARCHIVE_TMP)/data/catalogs/;)
+	@echo "=== Validating: uv sync + make figures ==="
+	cd $(ARCHIVE_TMP) && uv sync --quiet
+	cd $(ARCHIVE_TMP) && CLIMATE_FINANCE_DATA=$(ARCHIVE_TMP)/data $(MAKE) figures
+	@echo "=== Comparing checksums (figures in both) ==="
+	@fail=0; for f in figures/*.png; do \
+	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
+	    a=$$(md5sum "$$f" | cut -d' ' -f1); \
+	    b=$$(md5sum "$(ARCHIVE_TMP)/$$f" | cut -d' ' -f1); \
+	    if [ "$$a" != "$$b" ]; then echo "MISMATCH: $$f"; fail=1; fi; \
+	  fi; \
+	done; [ $$fail -eq 0 ] && echo "FIGURES: PASS" || { echo "FIGURES: FAIL"; exit 1; }
+	@fail=0; for f in tables/*.csv; do \
+	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
+	    a=$$(md5sum "$$f" | cut -d' ' -f1); \
+	    b=$$(md5sum "$(ARCHIVE_TMP)/$$f" | cut -d' ' -f1); \
+	    if [ "$$a" != "$$b" ]; then echo "MISMATCH: $$f"; fail=1; fi; \
+	  fi; \
+	done; [ $$fail -eq 0 ] && echo "TABLES: PASS" || { echo "TABLES: FAIL"; exit 1; }
+	@echo "=== Creating tarball ==="
+	tar czf $(ARCHIVE_NAME).tar.gz -C /tmp --exclude='.venv' --exclude='__pycache__' $(ARCHIVE_NAME)
+	@du -h $(ARCHIVE_NAME).tar.gz
+	rm -rf $(ARCHIVE_TMP)
+	@echo "Done: $(ARCHIVE_NAME).tar.gz"
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:

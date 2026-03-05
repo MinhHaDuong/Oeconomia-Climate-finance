@@ -26,6 +26,9 @@ __pycache__/
 *.pyc
 .mypy_cache/
 
+# Replication archive
+*.tar.gz
+
 # OS and editor artifacts
 .DS_Store
 *~
