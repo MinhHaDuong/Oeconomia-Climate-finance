@@ -23,30 +23,32 @@ Publishing a few articles to lay the groundwork for a book project described in 
 
 | Document | File | Target journal | Status |
 |----------|------|----------------|--------|
-| Manuscript | `manuscript.qmd` | Œconomia (Varia) | Draft, revising |
-| Technical report | `technical-report.qmd` | HAL working paper | Complete |
-| Data paper | `data-paper.qmd` | Scientific Data | Outline + reused sections |
-| Companion paper | `companion-paper.qmd` | Scientometrics / QSS | Outline |
+| Manuscript | `content/manuscript.qmd` | Œconomia (Varia) | Draft, revising |
+| Technical report | `content/technical-report.qmd` | HAL working paper | Complete |
+| Data paper | `content/data-paper.qmd` | Scientific Data | Outline + reused sections |
+| Companion paper | `content/companion-paper.qmd` | Scientometrics / QSS | Outline |
 
-All four are Quarto documents sharing fragments via `{{< include >}}` from `_includes/`.
+All four are Quarto documents sharing fragments via `{{< include >}}` from `content/_includes/`.
 
 ## Repository Structure
 
 ```
 ├── _quarto.yml                       # Quarto project config (4 documents)
-├── manuscript.qmd                    # Main article (Œconomia)
-├── technical-report.qmd              # Full pipeline documentation (10 sections)
-├── data-paper.qmd                    # Corpus data paper (Scientific Data)
-├── companion-paper.qmd               # Methods companion (Scientometrics/QSS)
-├── _includes/                        # Shared Markdown fragments (10 files)
+├── content/                          # All Quarto source material
+│   ├── manuscript.qmd                # Main article (Œconomia)
+│   ├── technical-report.qmd          # Full pipeline documentation (10 sections)
+│   ├── data-paper.qmd                # Corpus data paper (Scientific Data)
+│   ├── companion-paper.qmd           # Methods companion (Scientometrics/QSS)
+│   ├── _includes/                    # Shared Markdown fragments (10 files)
+│   ├── bibliography/                 # main.bib + oeconomia.csl
+│   ├── figures/                      # Generated figures (tracked, see below)
+│   └── tables/                       # Generated tables (tracked, see below)
+├── output/                           # Quarto rendered output (gitignored)
 ├── CLAUDE.md                         # AI handoff: data paths, conventions, status
 ├── PLAN.md                           # Manuscript structure (three-act, five figures)
 ├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
 ├── Makefile                          # Build: make manuscript, make papers, make figures
 ├── scripts/                          # Python analysis pipeline
-├── figures/                          # Generated figures (tracked, see below)
-├── tables/                           # Generated tables (tracked, see below)
-├── bibliography/                     # main.bib + oeconomia.csl
 ├── data/catalogs/                    # Small curated data (het_core.csv only; rest in ~/data/...)
 ├── release/                          # Releases outside CIRED. Append-only.
 ├── docs/                             # Œconomia journal info, book project notes
@@ -55,7 +57,7 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `_inc
 
 ## Generated outputs
 
-`figures/` and `tables/` (including interactive HTML) are tracked in git.
+`content/figures/` and `content/tables/` (including interactive HTML) are tracked in git.
 They are regenerable via `make figures`, but tracking them ensures the
 documents build from a fresh clone without running the full data pipeline.
 

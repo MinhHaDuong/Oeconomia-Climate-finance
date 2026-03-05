@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, normalize_title, save_csv
 
 YAML_PATH = os.path.join(BASE_DIR, "data", "teaching_sources.yaml")
-TABLES_DIR = os.path.join(BASE_DIR, "tables")
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 
 def load_teaching_sources():

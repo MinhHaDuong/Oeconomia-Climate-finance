@@ -25,8 +25,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
 
 # --- Paths ---
-FIGURES_DIR = os.path.join(BASE_DIR, "figures")
-TABLES_DIR = os.path.join(BASE_DIR, "tables")
+FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 

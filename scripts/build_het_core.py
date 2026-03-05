@@ -28,7 +28,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_csv
 
-TABLES_DIR = os.path.join(BASE_DIR, "tables")
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 # ── CONFIG ──────────────────────────────────────────────────────────────
 

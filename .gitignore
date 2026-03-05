@@ -5,7 +5,7 @@ attic/
 corpus ISTEX/
 
 # PDFs in bibliography (keep .bib only)
-bibliography/*.pdf
+content/bibliography/*.pdf
 
 # Binary document formats (MD versions tracked instead)
 *.odt
@@ -40,6 +40,5 @@ __pycache__/
 
 /.quarto/
 
-# Quarto HTML test renders
-*.html
-*_files/
+# Quarto output directory
+output/

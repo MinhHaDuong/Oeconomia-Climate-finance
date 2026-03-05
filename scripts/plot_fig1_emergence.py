@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description="Plot Figure 1: emergence")
 parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation")
 args = parser.parse_args()
 
-FIGURES_DIR = os.path.join(BASE_DIR, "figures")
+FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
 INCOMPLETE_FROM = 2022

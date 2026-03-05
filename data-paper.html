@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Minh Ha-Duong">
+<meta name="dcterms.date" content="2026-03-05">
+
+<title>A Multilingual Corpus of Climate Finance Literature, 1990–2025: Construction, Validation, and Semantic Embeddings</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="data-paper_files/libs/clipboard/clipboard.min.js"></script>
+<script src="data-paper_files/libs/quarto-html/quarto.js"></script>
+<script src="data-paper_files/libs/quarto-html/popper.min.js"></script>
+<script src="data-paper_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="data-paper_files/libs/quarto-html/anchor.min.js"></script>
+<link href="data-paper_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="data-paper_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="data-paper_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="data-paper_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="data-paper_files/libs/bootstrap/bootstrap-1bc8a17f135ab3d594c857e9f48e611b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data-paper.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">A Multilingual Corpus of Climate Finance Literature, 1990–2025: Construction, Validation, and Semantic Embeddings</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Minh Ha-Duong </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 5, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="background-summary" class="level2">
+<h2 class="anchored" data-anchor-id="background-summary">Background &amp; Summary</h2>
+<p>Climate finance—the financial flows directed at mitigating and adapting to climate change—has become one of the most politically salient objects in international economic governance. The $100 billion annual commitment made at Copenhagen in 2009, and the $300 billion New Collective Quantified Goal agreed at Baku in 2024, are contested not only in their adequacy but in their very definition: what counts as climate finance depends on accounting conventions that are themselves the subject of ongoing dispute <span class="citation" data-cites="roberts_weikmans2017 michaelowa2007">(<a href="#ref-roberts_weikmans2017" role="doc-biblioref">Roberts and Weikmans 2017</a>; <a href="#ref-michaelowa2007" role="doc-biblioref">Michaelowa and Michaelowa 2007</a>)</span>.</p>
+<p>A growing body of bibliometric and scientometric work has begun to map the climate finance literature, but existing datasets are either narrowly scoped (single database, English only) or lack the curation needed for reproducible analysis. This data descriptor presents a multilingual, deduplicated, and validated corpus of 22,113 works on climate finance published between 1990 and 2025, assembled from seven bibliographic sources spanning academic publications, institutional grey literature, and curated teaching materials. The corpus is accompanied by 384-dimensional sentence-transformer embeddings for the 18,798 works with abstracts of sufficient length, enabling semantic analysis without requiring users to re-run the embedding pipeline.</p>
+<p>The dataset was constructed to support the historical analysis presented in <span class="citation" data-cites="haduong2026">(<a href="#ref-haduong2026" role="doc-biblioref"><strong>haduong2026?</strong></a>, submitted to <em>Oeconomia</em>)</span>, but its scope and curation make it suitable for a wide range of research applications: topic modelling, structural break detection, citation network analysis, bibliometric mapping of the climate finance field, and cross-lingual studies of how climate finance is discussed in different linguistic traditions.</p>
+<p>The corpus is multilingual by design. While English-language works dominate (91.4%), the search strategy explicitly targeted French (<em>finance climat</em>, <em>finance climatique</em>), Chinese (气候融资, 气候金融), Japanese (気候金融, グリーンファイナンス), and German-language literature through ISTEX, bibCNRS, and multilingual OpenAlex queries. This deliberate multilingual scope, though it yields a modest non-English share, provides a foundation for cross-linguistic studies that monolingual corpora cannot support.</p>
+<p>Key statistics:</p>
+<ul>
+<li><strong>22,113</strong> refined works after deduplication and quality filtering</li>
+<li><strong>18,798</strong> works with sentence-transformer embeddings (384 dimensions)</li>
+<li><strong>1,176</strong> core works (cited <span class="math inline">\(\geq\)</span> 50 times), forming the field’s intellectual backbone</li>
+<li><strong>7 sources</strong>: OpenAlex, OpenAlex (historical), ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI), teaching canon</li>
+<li><strong>Languages</strong>: English (91.4%), Portuguese, Spanish, French, Chinese, Japanese, German, and others</li>
+<li><strong>Full audit trail</strong>: every inclusion/exclusion decision recorded in <code>corpus_audit.csv</code></li>
+</ul>
+</section>
+<section id="methods" class="level2">
+<h2 class="anchored" data-anchor-id="methods">Methods</h2>
+<section id="corpus-construction" class="level3">
+<h3 class="anchored" data-anchor-id="corpus-construction">Corpus construction</h3>
+</section>
+</section>
+<section id="corpus-construction-1" class="level2">
+<h2 class="anchored" data-anchor-id="corpus-construction-1">1. Corpus Construction</h2>
+<section id="sources" class="level3">
+<h3 class="anchored" data-anchor-id="sources">Sources</h3>
+<p>The corpus assembles academic and grey literature from seven sources:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Source</th>
+<th>Script</th>
+<th>Records</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>OpenAlex</td>
+<td><code>catalog_openalex.py</code></td>
+<td>~11,313</td>
+<td>Broad English-language academic literature</td>
+</tr>
+<tr class="even">
+<td>OpenAlex (historical)</td>
+<td><code>catalog_openalex_historical.py</code></td>
+<td>variable</td>
+<td>Pre-2000 and non-English historical works</td>
+</tr>
+<tr class="odd">
+<td>ISTEX</td>
+<td><code>catalog_istex.py</code></td>
+<td>482</td>
+<td>French national archive (full-text JSON)</td>
+</tr>
+<tr class="even">
+<td>bibCNRS</td>
+<td><code>catalog_bibcnrs.py</code></td>
+<td>242</td>
+<td>Non-English literature (FR, ZH, JA, DE)</td>
+</tr>
+<tr class="odd">
+<td>SciSpace</td>
+<td><code>catalog_scispsace.py</code></td>
+<td>663</td>
+<td>AI-curated thematic corpus</td>
+</tr>
+<tr class="even">
+<td>Grey literature</td>
+<td><code>catalog_grey.py</code></td>
+<td>213</td>
+<td>OECD, UNFCCC, World Bank, CPI reports</td>
+</tr>
+<tr class="odd">
+<td>Teaching canon</td>
+<td>manual</td>
+<td>variable</td>
+<td>Papers appearing in 2+ syllabi</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="search-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="search-strategy">Search strategy</h3>
+<ul>
+<li><strong>OpenAlex:</strong> Cursor-paginated queries using <code>filter=default.search:"climate finance"</code> and <code>filter=default.search:"finance climat"</code> (captures French variants). Abstracts reconstructed from OpenAlex inverted index format. Polite-pool access with <code>mailto</code> header.</li>
+<li><strong>ISTEX:</strong> Full-text query <code>"climate finance" OR "finance climat" OR "finance climatique"</code> on the national archive.</li>
+<li><strong>bibCNRS:</strong> Title-field searches in French (<code>"finance climat" OR "finance climatique"</code>), Chinese (气候融资 OR 气候金融), Japanese (気候金融 OR グリーンファイナンス OR 気候ファイナンス), and German. Manual RIS export.</li>
+<li><strong>Grey literature:</strong> A curated YAML seed list (16 key policy documents) plus the World Bank Open Knowledge Repository API (query <code>"climate finance"</code>, first 200 results).</li>
+</ul>
+</section>
+<section id="merge-and-deduplication" class="level3">
+<h3 class="anchored" data-anchor-id="merge-and-deduplication">Merge and deduplication</h3>
+<p>The merge script (<code>scripts/catalog_merge.py</code>) applies two deduplication passes:</p>
+<ol type="1">
+<li><strong>DOI-based deduplication:</strong> DOIs are normalized (lowercased, URL prefix stripped). Records sharing the same DOI are merged using a source priority order: openalex &gt; openalex_historical &gt; scopus &gt; istex &gt; jstor &gt; bibcnrs &gt; scispsace &gt; grey &gt; teaching. The maximum <code>cited_by_count</code> across duplicates is retained; other fields use the best non-empty value following source priority.</li>
+<li><strong>Title+year deduplication:</strong> Records without DOIs are grouped by normalized title (lowercased, punctuation stripped) and year. Groups are merged using the same priority logic.</li>
+</ol>
+<p>A <code>source_count</code> field tracks how many sources contributed to each record. The output is <code>unified_works.csv</code>.</p>
+</section>
+<section id="corpus-refinement" class="level3">
+<h3 class="anchored" data-anchor-id="corpus-refinement">Corpus refinement</h3>
+</section>
+</section>
+<section id="corpus-refinement-1" class="level2">
+<h2 class="anchored" data-anchor-id="corpus-refinement-1">2. Corpus Refinement</h2>
+<p>The refinement script (<code>scripts/corpus_refine.py</code>) implements a four-phase pipeline:</p>
+<section id="phase-a-flagging" class="level3">
+<h3 class="anchored" data-anchor-id="phase-a-flagging">Phase A: Flagging</h3>
+<p>Five flags are applied to each paper:</p>
+<ol type="1">
+<li><strong>Missing metadata:</strong> Papers lacking a title are always flagged. Papers missing only author or year are flagged only if the title also lacks “safe” domain words (a curated list of 30+ terms across English, French, German, Spanish, Chinese, and Japanese).</li>
+<li><strong>No abstract + irrelevant title:</strong> Papers with abstracts shorter than 50 characters whose titles lack safe domain words.</li>
+<li><strong>Title blacklist:</strong> Papers whose titles contain noise terms (e.g., “blockchain,” “cryptocurrency,” “deep learning,” “metaverse”) but no safe domain words.</li>
+<li><strong>Citation isolation:</strong> Papers published before 2020 that are neither cited by nor citing any other paper in the corpus (requires <code>citations.csv</code>; skipped when stale).</li>
+<li><strong>Semantic outlier:</strong> Papers whose embedding cosine distance from the corpus centroid exceeds mean + 2 standard deviations (requires <code>embeddings.npy</code>).</li>
+</ol>
+<p>An abstract relevance check tests whether at least 2 of 4 concept groups (climate, finance, development, environment) appear in the text.</p>
+</section>
+<section id="phase-b-protection" class="level3">
+<h3 class="anchored" data-anchor-id="phase-b-protection">Phase B: Protection</h3>
+<p>Papers are protected from removal if they meet any of: cited_by_count &gt;= 50, appear in 2+ sources, are cited within the corpus, or appear in 2+ teaching syllabi.</p>
+</section>
+<section id="phase-c-verification" class="level3">
+<h3 class="anchored" data-anchor-id="phase-c-verification">Phase C: Verification</h3>
+<ul>
+<li><strong>Blacklist validation:</strong> Confirms all noise-term matches in titles are properly caught.</li>
+<li><strong>LLM audit:</strong> A stratified random sample of 50 flagged and 50 unflagged papers is submitted to <code>google/gemma-2-27b-it</code> via OpenRouter. Each paper is classified as relevant or irrelevant to climate finance. Type I error rate (flagged but LLM-relevant) and Type II error rate (unflagged but LLM-irrelevant) are reported.</li>
+</ul>
+</section>
+<section id="phase-d-filtering" class="level3">
+<h3 class="anchored" data-anchor-id="phase-d-filtering">Phase D: Filtering</h3>
+<p>Flagged, non-protected papers are removed. An audit trail (<code>corpus_audit.csv</code>) records the decision for every paper.</p>
+<p><strong>Result:</strong> The refined corpus contains 22,113 papers in <code>refined_works.csv</code>.</p>
+</section>
+<section id="embedding-generation" class="level3">
+<h3 class="anchored" data-anchor-id="embedding-generation">Embedding generation</h3>
+</section>
+</section>
+<section id="embedding-generation-1" class="level2">
+<h2 class="anchored" data-anchor-id="embedding-generation-1">3. Embedding Generation</h2>
+<p><strong>Script:</strong> <code>scripts/analyze_embeddings.py</code></p>
+<p><strong>Model:</strong> <code>paraphrase-multilingual-MiniLM-L12-v2</code> (sentence-transformers library). This is a 12-layer multilingual BERT producing 384-dimensional vectors, chosen for its ability to place abstracts in English, French, Chinese, Japanese, and German into a shared semantic space.</p>
+<p><strong>Input selection:</strong> Papers from <code>refined_works.csv</code> with an abstract longer than 50 characters and a publication year between 1990 and 2025.</p>
+<p><strong>Encoding parameters:</strong> - Batch size: 256 - Normalization: L2-normalized embeddings - Runtime: approximately 16 minutes on CPU for ~18,800 abstracts</p>
+<p><strong>Output:</strong> <code>embeddings.npy</code> – a NumPy array of shape (18,798 x 384), cached for reuse by downstream scripts. A size-consistency check ensures the embedding count matches the filtered DataFrame row count.</p>
+<p><strong>Additional outputs:</strong> - UMAP projection (n_components=2, n_neighbors=15, min_dist=0.05, cosine metric, random_state=42) - KMeans clustering (k=6, n_init=20, random_state=42) on UMAP coordinates - Cluster assignments saved to <code>semantic_clusters.csv</code></p>
+</section>
+<section id="data-records" class="level2">
+<h2 class="anchored" data-anchor-id="data-records">Data Records</h2>
+<p>The dataset consists of the following files, all stored in the data directory (<code>~/data/projets/Oeconomia-Climate-finance/catalogs/</code>, configurable via the <code>CLIMATE_FINANCE_DATA</code> environment variable):</p>
+<section id="refined_works.csv" class="level3">
+<h3 class="anchored" data-anchor-id="refined_works.csv">refined_works.csv</h3>
+<p>The primary corpus file. Each row represents one deduplicated work.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 29%">
+<col style="width: 22%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>id</code></td>
+<td>string</td>
+<td>OpenAlex work ID (where available) or source-specific identifier</td>
+</tr>
+<tr class="even">
+<td><code>doi</code></td>
+<td>string</td>
+<td>Normalized DOI (lowercased, prefix stripped); may be empty</td>
+</tr>
+<tr class="odd">
+<td><code>title</code></td>
+<td>string</td>
+<td>Work title</td>
+</tr>
+<tr class="even">
+<td><code>author</code></td>
+<td>string</td>
+<td>First author or “Unknown”</td>
+</tr>
+<tr class="odd">
+<td><code>year</code></td>
+<td>integer</td>
+<td>Publication year (1990–2025)</td>
+</tr>
+<tr class="even">
+<td><code>abstract</code></td>
+<td>string</td>
+<td>Abstract text; empty for works without abstracts</td>
+</tr>
+<tr class="odd">
+<td><code>cited_by_count</code></td>
+<td>integer</td>
+<td>Maximum citation count across all source records</td>
+</tr>
+<tr class="even">
+<td><code>source</code></td>
+<td>string</td>
+<td>Primary source (by priority order)</td>
+</tr>
+<tr class="odd">
+<td><code>source_count</code></td>
+<td>integer</td>
+<td>Number of distinct sources contributing this record</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td>string</td>
+<td>Work type (article, book-chapter, report, etc.)</td>
+</tr>
+<tr class="odd">
+<td><code>language</code></td>
+<td>string</td>
+<td>Detected language code (ISO 639-1)</td>
+</tr>
+<tr class="even">
+<td><code>venue</code></td>
+<td>string</td>
+<td>Publication venue (journal, series, or publisher)</td>
+</tr>
+<tr class="odd">
+<td><code>is_flagged</code></td>
+<td>boolean</td>
+<td>Whether the work was flagged during refinement</td>
+</tr>
+<tr class="even">
+<td><code>is_protected</code></td>
+<td>boolean</td>
+<td>Whether the work was protected from removal</td>
+</tr>
+<tr class="odd">
+<td><code>flag_reason</code></td>
+<td>string</td>
+<td>Reason for flagging (if applicable)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Size:</strong> 22,113 rows.</p>
+</section>
+<section id="embeddings.npy" class="level3">
+<h3 class="anchored" data-anchor-id="embeddings.npy">embeddings.npy</h3>
+<p>NumPy array of shape (18,798 <span class="math inline">\(\times\)</span> 384), containing L2-normalized sentence-transformer embeddings. Rows correspond to the subset of <code>refined_works.csv</code> with abstracts longer than 50 characters and publication years 1990–2025, in the same row order.</p>
+<p><strong>Model:</strong> <code>paraphrase-multilingual-MiniLM-L12-v2</code> (sentence-transformers library).</p>
+</section>
+<section id="corpus_audit.csv" class="level3">
+<h3 class="anchored" data-anchor-id="corpus_audit.csv">corpus_audit.csv</h3>
+<p>Complete audit trail recording every inclusion/exclusion decision during corpus refinement. Each row corresponds to one work from the pre-refinement <code>unified_works.csv</code>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 29%">
+<col style="width: 22%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>id</code></td>
+<td>string</td>
+<td>Work identifier</td>
+</tr>
+<tr class="even">
+<td><code>decision</code></td>
+<td>string</td>
+<td><code>kept</code>, <code>removed</code>, or <code>protected</code></td>
+</tr>
+<tr class="odd">
+<td><code>flag_reason</code></td>
+<td>string</td>
+<td>Why the work was flagged (if applicable)</td>
+</tr>
+<tr class="even">
+<td><code>protection_reason</code></td>
+<td>string</td>
+<td>Why the work was protected (if applicable)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="semantic_clusters.csv" class="level3">
+<h3 class="anchored" data-anchor-id="semantic_clusters.csv">semantic_clusters.csv</h3>
+<p>KMeans cluster assignments (k=6) for all embedded works.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>id</code></td>
+<td>string</td>
+<td>Work identifier</td>
+</tr>
+<tr class="even">
+<td><code>cluster</code></td>
+<td>integer</td>
+<td>Cluster label (0–5)</td>
+</tr>
+<tr class="odd">
+<td><code>umap_x</code></td>
+<td>float</td>
+<td>UMAP 2D projection, x-coordinate</td>
+</tr>
+<tr class="even">
+<td><code>umap_y</code></td>
+<td>float</td>
+<td>UMAP 2D projection, y-coordinate</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="citations.csv" class="level3">
+<h3 class="anchored" data-anchor-id="citations.csv">citations.csv</h3>
+<p>Internal citation network extracted via Crossref enrichment.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cited_id</code></td>
+<td>string</td>
+<td>Work identifier of the cited paper</td>
+</tr>
+<tr class="even">
+<td><code>citing_id</code></td>
+<td>string</td>
+<td>Work identifier of the citing paper</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="source-specific-catalog-files" class="level3">
+<h3 class="anchored" data-anchor-id="source-specific-catalog-files">Source-specific catalog files</h3>
+<p>Individual source catalogs are preserved as <code>{source}_works.csv</code> files (e.g., <code>openalex_works.csv</code>, <code>istex_works.csv</code>), enabling provenance tracking back to individual sources. The merge script (<code>catalog_merge.py</code>) combines these into <code>unified_works.csv</code>, from which <code>refined_works.csv</code> is derived.</p>
+</section>
+</section>
+<section id="technical-validation" class="level2">
+<h2 class="anchored" data-anchor-id="technical-validation">Technical Validation</h2>
+<section id="deduplication-effectiveness" class="level3">
+<h3 class="anchored" data-anchor-id="deduplication-effectiveness">Deduplication effectiveness</h3>
+<p>The merge pipeline reduces raw records through two passes:</p>
+<ol type="1">
+<li><strong>DOI-based deduplication</strong> normalizes DOIs and merges records sharing the same DOI, retaining the maximum citation count and best metadata by source priority.</li>
+<li><strong>Title+year deduplication</strong> catches records lacking DOIs by matching on normalized title and publication year.</li>
+</ol>
+<p>The <code>source_count</code> field tracks multi-source agreement: works appearing in 2+ independent sources have higher confidence. Of the 22,113 refined works, 3,847 (17.4%) appear in multiple sources.</p>
+</section>
+<section id="llm-audit" class="level3">
+<h3 class="anchored" data-anchor-id="llm-audit">LLM audit</h3>
+<p>A stratified random sample of 100 works (50 flagged, 50 unflagged) was evaluated by <code>google/gemma-2-27b-it</code> via OpenRouter. Each work was classified as relevant or irrelevant to climate finance based on its title and abstract.</p>
+<ul>
+<li><strong>Type I error</strong> (flagged but LLM-relevant): indicates over-aggressive filtering</li>
+<li><strong>Type II error</strong> (unflagged but LLM-irrelevant): indicates under-filtering</li>
+</ul>
+<p>Both error rates are reported in the refinement script’s output and in <code>corpus_audit.csv</code>. The LLM audit serves as an independent check on the rule-based flagging pipeline, not as a ground truth, since relevance to “climate finance” is itself a contested category.</p>
+</section>
+<section id="coverage-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="coverage-analysis">Coverage analysis</h3>
+<p>The seven-source design provides complementary coverage:</p>
+<ul>
+<li><strong>OpenAlex</strong> provides the broadest English-language academic coverage</li>
+<li><strong>ISTEX</strong> captures French-language literature from the national archive</li>
+<li><strong>bibCNRS</strong> adds non-English academic literature (Chinese, Japanese, German)</li>
+<li><strong>Grey literature</strong> includes institutional reports (OECD, UNFCCC, World Bank, CPI) that are central to the field but absent from academic databases</li>
+<li><strong>Teaching canon</strong> ensures that pedagogically canonical works are represented</li>
+</ul>
+</section>
+<section id="embedding-quality" class="level3">
+<h3 class="anchored" data-anchor-id="embedding-quality">Embedding quality</h3>
+<p>The multilingual sentence-transformer model (<code>paraphrase-multilingual-MiniLM-L12-v2</code>) places abstracts in English, French, Chinese, Japanese, and German into a shared 384-dimensional semantic space. Embedding quality was validated through:</p>
+<ul>
+<li><strong>UMAP visualization</strong>: 2D projection shows coherent thematic clusters</li>
+<li><strong>KMeans clustering</strong> (k=6): produces interpretable thematic groups (CDM/carbon markets, green finance, climate action/adaptation, renewable energy, carbon trading/forestry, social/water management)</li>
+<li><strong>Downstream analyses</strong>: structural break detection and bimodality testing produce substantively interpretable results, consistent across embedding-based and independent TF-IDF-based methods (embedding–lexical correlation r = 0.683 on the efficiency–accountability axis)</li>
+</ul>
+</section>
+</section>
+<section id="usage-notes" class="level2">
+<h2 class="anchored" data-anchor-id="usage-notes">Usage Notes</h2>
+<section id="reproducing-the-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="reproducing-the-dataset">Reproducing the dataset</h3>
+</section>
+</section>
+<section id="reproducibility" class="level2">
+<h2 class="anchored" data-anchor-id="reproducibility">10. Reproducibility</h2>
+<section id="environment-setup" class="level3">
+<h3 class="anchored" data-anchor-id="environment-setup">Environment setup</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync    <span class="co"># installs all dependencies from pyproject.toml</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Key packages: pandas, numpy, scikit-learn, scipy, matplotlib, seaborn, sentence-transformers, torch (CPU-only, pinned via <code>[tool.uv.sources]</code>), networkx, python-louvain, hdbscan, umap-learn, adjustText, diptest (optional). Python &gt;= 3.10.</p>
+</section>
+<section id="script-execution-order" class="level3">
+<h3 class="anchored" data-anchor-id="script-execution-order">Script execution order</h3>
+<p>The pipeline has strict data dependencies. Scripts must be run in this order:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 1: Corpus construction (requires API access or local data)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_istex.py              <span class="co"># parse ISTEX JSON</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_openalex.py            <span class="co"># query OpenAlex API (~15 min)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_openalex_historical.py <span class="co"># historical works</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_bibcnrs.py             <span class="co"># parse bibCNRS RIS exports</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_scispsace.py           <span class="co"># parse SciSpace CSVs</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_grey.py                <span class="co"># World Bank API + YAML seeds</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 2: Merge and refine</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/catalog_merge.py               <span class="co"># → unified_works.csv</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/corpus_refine.py <span class="at">--apply</span>       <span class="co"># → refined_works.csv (22,113)</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 3: Embeddings (slow, ~16 min CPU)</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_embeddings.py          <span class="co"># → embeddings.npy (18,798 x 384)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 4: Co-citation (depends on citations.csv from enrich_citations.py)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_cocitation.py          <span class="co"># → communities.csv</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 5: Figures (each depends on refined_works.csv + embeddings.npy)</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/plot_fig1_emergence.py         <span class="co"># Fig 1: emergence</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py            <span class="co"># Figs 2 + 3: breakpoints + alluvial</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py <span class="at">--core-only</span>   <span class="co"># Figs 2b + 3b: core analysis</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_bimodality.py          <span class="co"># Fig 5: bimodality (must run before genealogy)</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_bimodality.py <span class="at">--core-only</span>  <span class="co"># Fig 5 core variant</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_genealogy.py           <span class="co"># Fig 4: citation genealogy</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/plot_fig45_pca_scatter.py <span class="at">--core-only</span> <span class="at">--supervised</span>  <span class="co"># Fig 4: seed axis scatter (paper)</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/plot_fig45_pca_scatter.py      <span class="co"># Fig 4: unsupervised PCA scatter (appendix)</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 6: Robustness appendices</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py <span class="at">--robustness</span>   <span class="co"># k-sensitivity (k=4,5,6,7)</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py <span class="at">--core-only</span> <span class="at">--censor-gap</span> 1  <span class="co"># censored breaks</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py <span class="at">--core-only</span> <span class="at">--censor-gap</span> 2</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py <span class="at">--censor-gap</span> 1</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_alluvial.py <span class="at">--censor-gap</span> 2</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python scripts/analyze_genealogy.py <span class="at">--robustness</span>  <span class="co"># Louvain resolution sensitivity</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="data-dependencies" class="level3">
+<h3 class="anchored" data-anchor-id="data-dependencies">Data dependencies</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Script</th>
+<th>Reads</th>
+<th>Writes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>catalog_merge.py</code></td>
+<td><code>*_works.csv</code></td>
+<td><code>unified_works.csv</code></td>
+</tr>
+<tr class="even">
+<td><code>corpus_refine.py</code></td>
+<td><code>unified_works.csv</code>, <code>citations.csv</code><em>, <code>embeddings.npy</code></em></td>
+<td><code>refined_works.csv</code>, <code>corpus_audit.csv</code></td>
+</tr>
+<tr class="odd">
+<td><code>analyze_embeddings.py</code></td>
+<td><code>refined_works.csv</code></td>
+<td><code>embeddings.npy</code>, <code>semantic_clusters.csv</code></td>
+</tr>
+<tr class="even">
+<td><code>analyze_alluvial.py</code></td>
+<td><code>refined_works.csv</code>, <code>embeddings.npy</code></td>
+<td><code>fig2_breakpoints</code>, <code>fig3_alluvial</code>, <code>tab2_*.csv</code>, <code>cluster_labels.json</code></td>
+</tr>
+<tr class="odd">
+<td><code>analyze_bimodality.py</code></td>
+<td><code>refined_works.csv</code>, <code>embeddings.npy</code></td>
+<td><code>fig5a/5b/5c</code>, <code>tab5_bimodality.csv</code>, <code>tab5_pole_papers.csv</code>, <code>tab5_axis_detection.csv</code></td>
+</tr>
+<tr class="even">
+<td><code>analyze_genealogy.py</code></td>
+<td><code>refined_works.csv</code>, <code>citations.csv</code>, <code>semantic_clusters.csv</code>, <code>tab5_pole_papers.csv</code></td>
+<td><code>fig4_genealogy</code>, <code>tab3_lineages.csv</code></td>
+</tr>
+<tr class="odd">
+<td><code>plot_fig45_pca_scatter.py</code></td>
+<td><code>refined_works.csv</code>, <code>embeddings.npy</code></td>
+<td><code>fig4_seed_axis_core</code>, <code>fig4_pca_scatter</code>, <code>tab4_*.csv</code></td>
+</tr>
+</tbody>
+</table>
+<p>* Optional; skipped with <code>--skip-citation-flag</code> or when file is absent.</p>
+</section>
+<section id="data-location" class="level3">
+<h3 class="anchored" data-anchor-id="data-location">Data location</h3>
+<p>All generated data lives outside the repository at <code>~/data/projets/Oeconomia-Climate-finance/</code>. This path can be overridden by setting the <code>CLIMATE_FINANCE_DATA</code> environment variable. The <code>scripts/utils.py</code> module resolves <code>BASE_DIR</code> (repository root) and <code>CATALOGS_DIR</code> (data/catalogs/) for all scripts.</p>
+</section>
+<section id="expected-runtimes-cpu" class="level3">
+<h3 class="anchored" data-anchor-id="expected-runtimes-cpu">Expected runtimes (CPU)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>OpenAlex harvest</td>
+<td>~15 min</td>
+</tr>
+<tr class="even">
+<td>Crossref citation enrichment</td>
+<td>~3–4 hours</td>
+</tr>
+<tr class="odd">
+<td>Embedding generation</td>
+<td>~16 min</td>
+</tr>
+<tr class="even">
+<td>Breakpoint + alluvial analysis</td>
+<td>~2 min</td>
+</tr>
+<tr class="odd">
+<td>Bimodality analysis</td>
+<td>~1 min</td>
+</tr>
+<tr class="even">
+<td>Citation genealogy</td>
+<td>~1 min</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="repec-local-mirror" class="level3">
+<h3 class="anchored" data-anchor-id="repec-local-mirror">RePEc local mirror</h3>
+<p>The script <code>count_repec_econ_cf.py</code> reads from a local mirror of the RePEc ReDIF archives, providing an independent economics baseline for Figure 1.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mirror setup (several GB, ~30 min)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/data/datasets/external/RePEc</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rsync</span> <span class="at">-va</span> <span class="at">--delete</span> rsync://rsync.repec.org/RePEc-ReDIF/ ~/data/datasets/external/RePEc/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The mirror was last synced 2026-02-26 (~2,334 archive directories). Re-run the same rsync command to update. Override the default path with <code>REPEC_ROOT</code> environment variable or <code>--repec-root</code> flag.</p>
+</section>
+<section id="cross-machine-reproducibility" class="level3">
+<h3 class="anchored" data-anchor-id="cross-machine-reproducibility">Cross-machine reproducibility</h3>
+<p>Figures that do not involve KMeans clustering (fig1_emergence, fig4_genealogy, fig4_seed_axis_core, figA_1a_robustness) are <strong>byte-identical</strong> across machines when <code>PYTHONHASHSEED=0</code> and <code>SOURCE_DATE_EPOCH=0</code> are set (the Makefile exports both).</p>
+<p>Figures that depend on KMeans (fig2_breakpoints, fig3_alluvial, fig5a_bimodality, and their core variants) may differ across machines. This is because scikit-learn’s KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. The resulting cluster assignments can differ at the margin, producing visually similar but not byte-identical figures. Substantive results (breakpoint years, ΔBIC values, period boundaries) are robust to these differences.</p>
+</section>
+<section id="non-reproducible-steps" class="level3">
+<h3 class="anchored" data-anchor-id="non-reproducible-steps">Non-reproducible steps</h3>
+<ul>
+<li>ISTEX corpus download (requires institutional access)</li>
+<li>bibCNRS export (requires CNRS Janus credentials, manual browser export)</li>
+<li>Citation enrichment timing may vary due to Crossref index updates</li>
+<li>LLM audit (requires <code>OPENROUTER_API_KEY</code>; can be skipped with <code>--skip-llm</code>)</li>
+<li>RePEc mirror requires rsync access to <code>rsync.repec.org</code></li>
+</ul>
+<p>All scripts support a <code>--no-pdf</code> flag to skip PDF generation and produce PNG only.</p>
+</section>
+<section id="suggested-applications" class="level3">
+<h3 class="anchored" data-anchor-id="suggested-applications">Suggested applications</h3>
+<p>The corpus and embeddings support several research directions:</p>
+<ul>
+<li><strong>Structural break detection</strong>: the sliding-window divergence method described in the companion technical report detects endogenous breakpoints in the field’s semantic evolution</li>
+<li><strong>Bimodality and polarization analysis</strong>: embedding-based and lexical axes reveal the efficiency–accountability divide structuring the field</li>
+<li><strong>Topic modelling</strong>: the embeddings serve as input for BERTopic, top2vec, or other embedding-based topic models</li>
+<li><strong>Citation network analysis</strong>: <code>citations.csv</code> enables co-citation, bibliographic coupling, and genealogy studies</li>
+<li><strong>Cross-lingual comparison</strong>: the multilingual embeddings place non-English works in the same semantic space as English ones, enabling cross-lingual clustering</li>
+<li><strong>Temporal evolution</strong>: the 35-year span (1990–2025) supports diachronic analyses of concept emergence, vocabulary change, and field structure dynamics</li>
+</ul>
+</section>
+<section id="limitations" class="level3">
+<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
+<ul>
+<li>Non-English coverage, while deliberate, remains limited (8.6% of corpus). Studies requiring deep coverage of specific non-English traditions should supplement this corpus with targeted searches.</li>
+<li>Citation counts reflect OpenAlex data as of the collection date and are biased toward older and English-language works.</li>
+<li>The LLM audit provides a probabilistic check, not a definitive relevance judgment. Users with strict inclusion criteria should apply their own filtering.</li>
+<li>Grey literature records often lack abstracts, limiting their utility for embedding-based analyses.</li>
+</ul>
+</section>
+</section>
+<section id="code-availability" class="level2">
+<h2 class="anchored" data-anchor-id="code-availability">Code Availability</h2>
+<p>All scripts for corpus construction, refinement, embedding generation, and analysis are available in the project repository. The pipeline requires Python <span class="math inline">\(\geq\)</span> 3.10 and is managed with <code>uv</code> (dependency resolution from <code>pyproject.toml</code>). Individual scripts support a <code>--no-pdf</code> flag to produce PNG outputs without requiring a LaTeX installation.</p>
+<p>Scripts are organised in <code>scripts/</code> with a shared <code>utils.py</code> module providing data path resolution and common utilities. See the technical report for the complete dependency graph and execution order.</p>
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-michaelowa2007" class="csl-entry" role="listitem">
+Michaelowa, Axel, and Katharina Michaelowa. 2007. <span>“Climate or Development: Is <span>ODA</span> Diverted from Its Original Purpose?”</span> <em>Climatic Change</em> 84 (1): 5–21. <a href="https://doi.org/10.1007/s10584-007-9270-3">https://doi.org/10.1007/s10584-007-9270-3</a>.
+</div>
+<div id="ref-roberts_weikmans2017" class="csl-entry" role="listitem">
+Roberts, J. Timmons, and Romain Weikmans. 2017. <span>“Postface: Fragmentation, Failing Trust and Enduring Tensions over What Counts as Climate Finance.”</span> <em>International Environmental Agreements: Politics, Law and Economics</em> 17 (1): 129–37. <a href="https://doi.org/10.1007/s10784-016-9347-4">https://doi.org/10.1007/s10784-016-9347-4</a>.
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

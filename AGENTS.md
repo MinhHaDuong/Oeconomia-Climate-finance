@@ -8,7 +8,7 @@ See `notes.md` for working notes and the original detailed outline.
 ## Project Structure
 
 This is a Quarto multi-document project (`_quarto.yml`). Four outputs share
-reusable fragments in `_includes/` via `{{< include >}}` directives:
+reusable fragments in `content/_includes/` via `{{< include >}}` directives:
 
 - `manuscript.qmd` — main Œconomia article (self-contained, no includes)
 - `technical-report.qmd` — pipeline documentation (composed entirely of includes)
@@ -122,8 +122,8 @@ When working on multiple tickets:
 ### File management
 - Working drafts: Quarto Markdown (`.qmd`); final submission: PDF or DOCX
 - Build with `make` (calls `quarto render` under the hood)
-- Shared fragments live in `_includes/` — edit there, all documents update
-- Bibliography: `bibliography/main.bib`, author-date style
+- Shared fragments live in `content/_includes/` — edit there, all documents update
+- Bibliography: `content/bibliography/main.bib`, author-date style
 - Version control: old versions in `attic/`, submissions in `release/`
 
 ### Dependency management

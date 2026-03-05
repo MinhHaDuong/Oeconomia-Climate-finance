@@ -7,16 +7,16 @@ See:
 
 ## Project structure
 
-Quarto multi-document project (`_quarto.yml`). Four outputs:
+Quarto multi-document project (`_quarto.yml`). Source files in `content/`, rendered output in `output/`. Four outputs:
 
 | Document | File | Target |
 |----------|------|--------|
-| Manuscript | `manuscript.qmd` | Œconomia (Varia) |
-| Technical report | `technical-report.qmd` | HAL working paper |
-| Data paper | `data-paper.qmd` | Scientific Data |
-| Companion paper | `companion-paper.qmd` | Scientometrics / QSS |
+| Manuscript | `content/manuscript.qmd` | Œconomia (Varia) |
+| Technical report | `content/technical-report.qmd` | HAL working paper |
+| Data paper | `content/data-paper.qmd` | Scientific Data |
+| Companion paper | `content/companion-paper.qmd` | Scientometrics / QSS |
 
-Shared fragments in `_includes/` (10 files), reused via `{{< include >}}`.
+Shared fragments in `content/_includes/` (10 files), reused via `{{< include >}}`.
 
 ## Data
 

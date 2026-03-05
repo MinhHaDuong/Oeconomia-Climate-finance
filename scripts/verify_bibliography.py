@@ -19,7 +19,7 @@ from rapidfuzz import fuzz
 from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
 
 # --- Paths ---
-TABLES_DIR = os.path.join(BASE_DIR, "tables")
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 BIB_PATH = os.path.join(BASE_DIR, "bibliography", "main.bib")

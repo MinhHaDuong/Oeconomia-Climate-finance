@@ -8,7 +8,7 @@ format:
     pdf-engine: xelatex
 ---
 
-This document describes the computational pipeline used to produce the bibliometric analysis in "How Climate Finance Became an Economic Object" (submitted to *Oeconomia*). The pipeline transforms a multi-source literature corpus into five figures and their associated robustness checks. All scripts are in `scripts/`, all generated data in `~/data/projets/Oeconomia-Climate-finance/catalogs/` (configurable via the `CLIMATE_FINANCE_DATA` environment variable), and all outputs in `figures/` and `tables/`.
+This document describes the computational pipeline used to produce the bibliometric analysis in "How Climate Finance Became an Economic Object" (submitted to *Oeconomia*). The pipeline transforms a multi-source literature corpus into five figures and their associated robustness checks. All scripts are in `scripts/`, all generated data in `~/data/projets/Oeconomia-Climate-finance/catalogs/` (configurable via the `CLIMATE_FINANCE_DATA` environment variable), and all outputs in `content/figures/` and `content/tables/`.
 
 ---
 

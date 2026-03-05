@@ -1,12 +1,13 @@
 project:
   type: default
+  output-dir: output
   render:
-    - manuscript.qmd
-    - technical-report.qmd
-    - data-paper.qmd
-    - companion-paper.qmd
+    - content/manuscript.qmd
+    - content/technical-report.qmd
+    - content/data-paper.qmd
+    - content/companion-paper.qmd
 
-bibliography: bibliography/main.bib
+bibliography: content/bibliography/main.bib
 
 format:
   pdf:
