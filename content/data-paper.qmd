@@ -1,0 +1,179 @@
+---
+title: "A Multilingual Corpus of Climate Finance Literature, 1990--2025: Construction, Validation, and Semantic Embeddings"
+author: "Minh Ha-Duong"
+date: "2026-03-05"
+bibliography: bibliography/main.bib
+format:
+  pdf:
+    pdf-engine: xelatex
+---
+
+## Background & Summary
+
+Climate finance---the financial flows directed at mitigating and adapting to climate change---has become one of the most politically salient objects in international economic governance. The \$100 billion annual commitment made at Copenhagen in 2009, and the \$300 billion New Collective Quantified Goal agreed at Baku in 2024, are contested not only in their adequacy but in their very definition: what counts as climate finance depends on accounting conventions that are themselves the subject of ongoing dispute [@roberts_weikmans2017; @michaelowa2007].
+
+A growing body of bibliometric and scientometric work has begun to map the climate finance literature, but existing datasets are either narrowly scoped (single database, English only) or lack the curation needed for reproducible analysis. This data descriptor presents a multilingual, deduplicated, and validated corpus of 22,113 works on climate finance published between 1990 and 2025, assembled from seven bibliographic sources spanning academic publications, institutional grey literature, and curated teaching materials. The corpus is accompanied by 384-dimensional sentence-transformer embeddings for the 18,798 works with abstracts of sufficient length, enabling semantic analysis without requiring users to re-run the embedding pipeline.
+
+The dataset was constructed to support the historical analysis presented in @haduong2026 [submitted to *Oeconomia*], but its scope and curation make it suitable for a wide range of research applications: topic modelling, structural break detection, citation network analysis, bibliometric mapping of the climate finance field, and cross-lingual studies of how climate finance is discussed in different linguistic traditions.
+
+The corpus is multilingual by design. While English-language works dominate (91.4%), the search strategy explicitly targeted French (*finance climat*, *finance climatique*), Chinese (气候融资, 气候金融), Japanese (気候金融, グリーンファイナンス), and German-language literature through ISTEX, bibCNRS, and multilingual OpenAlex queries. This deliberate multilingual scope, though it yields a modest non-English share, provides a foundation for cross-linguistic studies that monolingual corpora cannot support.
+
+Key statistics:
+
+- **22,113** refined works after deduplication and quality filtering
+- **18,798** works with sentence-transformer embeddings (384 dimensions)
+- **1,176** core works (cited $\geq$ 50 times), forming the field's intellectual backbone
+- **7 sources**: OpenAlex, OpenAlex (historical), ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI), teaching canon
+- **Languages**: English (91.4%), Portuguese, Spanish, French, Chinese, Japanese, German, and others
+- **Full audit trail**: every inclusion/exclusion decision recorded in `corpus_audit.csv`
+
+## Methods
+
+### Corpus construction
+
+{{< include _includes/corpus-construction.md >}}
+
+### Corpus refinement
+
+{{< include _includes/corpus-refinement.md >}}
+
+### Embedding generation
+
+{{< include _includes/embedding-generation.md >}}
+
+## Data Records
+
+The dataset consists of the following files, all stored in the data directory (`~/data/projets/Oeconomia-Climate-finance/catalogs/`, configurable via the `CLIMATE_FINANCE_DATA` environment variable):
+
+### refined_works.csv
+
+The primary corpus file. Each row represents one deduplicated work.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | string | OpenAlex work ID (where available) or source-specific identifier |
+| `doi` | string | Normalized DOI (lowercased, prefix stripped); may be empty |
+| `title` | string | Work title |
+| `author` | string | First author or "Unknown" |
+| `year` | integer | Publication year (1990--2025) |
+| `abstract` | string | Abstract text; empty for works without abstracts |
+| `cited_by_count` | integer | Maximum citation count across all source records |
+| `source` | string | Primary source (by priority order) |
+| `source_count` | integer | Number of distinct sources contributing this record |
+| `type` | string | Work type (article, book-chapter, report, etc.) |
+| `language` | string | Detected language code (ISO 639-1) |
+| `venue` | string | Publication venue (journal, series, or publisher) |
+| `is_flagged` | boolean | Whether the work was flagged during refinement |
+| `is_protected` | boolean | Whether the work was protected from removal |
+| `flag_reason` | string | Reason for flagging (if applicable) |
+
+**Size:** 22,113 rows.
+
+### embeddings.npy
+
+NumPy array of shape (18,798 $\times$ 384), containing L2-normalized sentence-transformer embeddings. Rows correspond to the subset of `refined_works.csv` with abstracts longer than 50 characters and publication years 1990--2025, in the same row order.
+
+**Model:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers library).
+
+### corpus_audit.csv
+
+Complete audit trail recording every inclusion/exclusion decision during corpus refinement. Each row corresponds to one work from the pre-refinement `unified_works.csv`.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | string | Work identifier |
+| `decision` | string | `kept`, `removed`, or `protected` |
+| `flag_reason` | string | Why the work was flagged (if applicable) |
+| `protection_reason` | string | Why the work was protected (if applicable) |
+
+### semantic_clusters.csv
+
+KMeans cluster assignments (k=6) for all embedded works.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | string | Work identifier |
+| `cluster` | integer | Cluster label (0--5) |
+| `umap_x` | float | UMAP 2D projection, x-coordinate |
+| `umap_y` | float | UMAP 2D projection, y-coordinate |
+
+### citations.csv
+
+Internal citation network extracted via Crossref enrichment.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `cited_id` | string | Work identifier of the cited paper |
+| `citing_id` | string | Work identifier of the citing paper |
+
+### Source-specific catalog files
+
+Individual source catalogs are preserved as `{source}_works.csv` files (e.g., `openalex_works.csv`, `istex_works.csv`), enabling provenance tracking back to individual sources. The merge script (`catalog_merge.py`) combines these into `unified_works.csv`, from which `refined_works.csv` is derived.
+
+## Technical Validation
+
+### Deduplication effectiveness
+
+The merge pipeline reduces raw records through two passes:
+
+1. **DOI-based deduplication** normalizes DOIs and merges records sharing the same DOI, retaining the maximum citation count and best metadata by source priority.
+2. **Title+year deduplication** catches records lacking DOIs by matching on normalized title and publication year.
+
+The `source_count` field tracks multi-source agreement: works appearing in 2+ independent sources have higher confidence. Of the 22,113 refined works, 3,847 (17.4%) appear in multiple sources.
+
+### LLM audit
+
+A stratified random sample of 100 works (50 flagged, 50 unflagged) was evaluated by `google/gemma-2-27b-it` via OpenRouter. Each work was classified as relevant or irrelevant to climate finance based on its title and abstract.
+
+- **Type I error** (flagged but LLM-relevant): indicates over-aggressive filtering
+- **Type II error** (unflagged but LLM-irrelevant): indicates under-filtering
+
+Both error rates are reported in the refinement script's output and in `corpus_audit.csv`. The LLM audit serves as an independent check on the rule-based flagging pipeline, not as a ground truth, since relevance to "climate finance" is itself a contested category.
+
+### Coverage analysis
+
+The seven-source design provides complementary coverage:
+
+- **OpenAlex** provides the broadest English-language academic coverage
+- **ISTEX** captures French-language literature from the national archive
+- **bibCNRS** adds non-English academic literature (Chinese, Japanese, German)
+- **Grey literature** includes institutional reports (OECD, UNFCCC, World Bank, CPI) that are central to the field but absent from academic databases
+- **Teaching canon** ensures that pedagogically canonical works are represented
+
+### Embedding quality
+
+The multilingual sentence-transformer model (`paraphrase-multilingual-MiniLM-L12-v2`) places abstracts in English, French, Chinese, Japanese, and German into a shared 384-dimensional semantic space. Embedding quality was validated through:
+
+- **UMAP visualization**: 2D projection shows coherent thematic clusters
+- **KMeans clustering** (k=6): produces interpretable thematic groups (CDM/carbon markets, green finance, climate action/adaptation, renewable energy, carbon trading/forestry, social/water management)
+- **Downstream analyses**: structural break detection and bimodality testing produce substantively interpretable results, consistent across embedding-based and independent TF-IDF-based methods (embedding--lexical correlation r = 0.683 on the efficiency--accountability axis)
+
+## Usage Notes
+
+### Reproducing the dataset
+
+{{< include _includes/reproducibility.md >}}
+
+### Suggested applications
+
+The corpus and embeddings support several research directions:
+
+- **Structural break detection**: the sliding-window divergence method described in the companion technical report detects endogenous breakpoints in the field's semantic evolution
+- **Bimodality and polarization analysis**: embedding-based and lexical axes reveal the efficiency--accountability divide structuring the field
+- **Topic modelling**: the embeddings serve as input for BERTopic, top2vec, or other embedding-based topic models
+- **Citation network analysis**: `citations.csv` enables co-citation, bibliographic coupling, and genealogy studies
+- **Cross-lingual comparison**: the multilingual embeddings place non-English works in the same semantic space as English ones, enabling cross-lingual clustering
+- **Temporal evolution**: the 35-year span (1990--2025) supports diachronic analyses of concept emergence, vocabulary change, and field structure dynamics
+
+### Limitations
+
+- Non-English coverage, while deliberate, remains limited (8.6% of corpus). Studies requiring deep coverage of specific non-English traditions should supplement this corpus with targeted searches.
+- Citation counts reflect OpenAlex data as of the collection date and are biased toward older and English-language works.
+- The LLM audit provides a probabilistic check, not a definitive relevance judgment. Users with strict inclusion criteria should apply their own filtering.
+- Grey literature records often lack abstracts, limiting their utility for embedding-based analyses.
+
+## Code Availability
+
+All scripts for corpus construction, refinement, embedding generation, and analysis are available in the project repository. The pipeline requires Python $\geq$ 3.10 and is managed with `uv` (dependency resolution from `pyproject.toml`). Individual scripts support a `--no-pdf` flag to produce PNG outputs without requiring a LaTeX installation.
+
+Scripts are organised in `scripts/` with a shared `utils.py` module providing data path resolution and common utilities. See the technical report for the complete dependency graph and execution order.

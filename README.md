@@ -17,32 +17,57 @@ Publishing a few articles to lay the groundwork for a book project described in 
 2026-02-18 Manuscript plan established. See `PLAN.md`.
 2026-02-26 Bibliometric analysis complete. Three-act periodization from breakpoint detection.
 2026-03-03 All figures finalized (core subset, censored breaks, PCA scatter). Ready for manuscript drafting.
+2026-03-05 Refactored into Quarto multi-document project (4 outputs, shared includes).
+
+## Documents
+
+| Document | File | Target journal | Status |
+|----------|------|----------------|--------|
+| Manuscript | `content/manuscript.qmd` | Œconomia (Varia) | Draft, revising |
+| Technical report | `content/technical-report.qmd` | HAL working paper | Complete |
+| Data paper | `content/data-paper.qmd` | Scientific Data | Outline + reused sections |
+| Companion paper | `content/companion-paper.qmd` | Scientometrics / QSS | Outline |
+
+All four are Quarto documents sharing fragments via `{{< include >}}` from `content/_includes/`.
 
 ## Repository Structure
 
 ```
-├── CLAUDE.md                         # AI handoff: data paths, conventions, status
-├── PLAN.md                           # Manuscript structure (v3, three-act, five figures)
+├── _quarto.yml                       # Quarto project config (4 documents)
+├── content/                          # All Quarto source material
+│   ├── manuscript.qmd                # Main article (Œconomia)
+│   ├── technical-report.qmd          # Full pipeline documentation (10 sections)
+│   ├── data-paper.qmd                # Corpus data paper (Scientific Data)
+│   ├── companion-paper.qmd           # Methods companion (Scientometrics/QSS)
+│   ├── _includes/                    # Shared Markdown fragments (10 files)
+│   ├── bibliography/                 # main.bib + oeconomia.csl
+│   ├── figures/                      # Generated figures (tracked, see below)
+│   └── tables/                       # Generated tables (tracked, see below)
+├── output/                           # Quarto rendered output (gitignored)
+├── CLAUDE.md                         # AI handoff: lean index + status
+├── PLAN.md                           # Manuscript structure (three-act, five figures)
 ├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
-├── technical-report.md               # Full pipeline documentation (10 sections)
-├── extended abstract.md              # Submitted extended abstract
-├── notes.md                          # Working notes, draft arguments
+├── Makefile                          # Build: make manuscript, make papers, make figures
 ├── scripts/                          # Python analysis pipeline
-├── figures/                          # Generated figures (tracked)
-├── tables/                           # Generated tables (tracked)
 ├── data/catalogs/                    # Small curated data (het_core.csv only; rest in ~/data/...)
 ├── release/                          # Releases outside CIRED. Append-only.
-├── attic/                            # Old stuff to delete when paper is accepted
-├── AI tech reports/                  # AI-assisted research (SciSpace CSVs + analyses)
-├── corpus ISTEX/                     # 484-article dataset (not tracked in git)
-├── bibliography/                     # main.bib (PDFs not tracked in git)
-└── docs/                             # Œconomia journal info, book project notes
+├── docs/                             # Œconomia journal info, book project notes
+└── attic/                            # Old stuff to delete when paper is accepted
 ```
+
+## Data
+
+All generated data at `~/data/projets/Oeconomia-Climate-finance/`
+(override: `CLIMATE_FINANCE_DATA` env var; see `scripts/utils.py`).
+
+`content/figures/` and `content/tables/` (including interactive HTML) are tracked in git.
+They are regenerable via `make figures`, but tracking them ensures the
+documents build from a fresh clone without running the full data pipeline.
 
 ## Research Corpus
 
 ### Bibliometric corpus (~22,000 works)
-Built from multiple sources (OpenAlex, ISTEX, Scopus, JSTOR, BibCNRS, grey literature), merged and deduplicated. Generated data lives at `~/data/projets/Oeconomia-Climate-finance/catalogs/` (see `CLAUDE.md` for details).
+Built from multiple sources (OpenAlex, ISTEX, Scopus, JSTOR, BibCNRS, grey literature), merged and deduplicated. Generated data lives at `~/data/projets/Oeconomia-Climate-finance/catalogs/`.
 
 ### Primary Literature
 - **ISTEX corpus:** 484 articles with "Climate finance" OR "Finance climat" OR "Finance climatique" (full-text PDFs)
@@ -77,8 +102,9 @@ Topic-specific analyses with CSV datasets:
 
 ## Next Steps
 
-See `CLAUDE.md` for AI handoff (data paths, conventions, status).
+See `CLAUDE.md` for AI handoff (lean index + status).
 See `PLAN.md` for manuscript structure and drafting plan.
+See `AGENTS.md` for writing guidelines, conventions, and workflow rules.
 
 ## Contact
 

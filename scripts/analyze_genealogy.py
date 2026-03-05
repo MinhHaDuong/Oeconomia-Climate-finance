@@ -27,8 +27,8 @@ from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_figure
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Paths ---
-FIGURES_DIR = os.path.join(BASE_DIR, "figures")
-TABLES_DIR = os.path.join(BASE_DIR, "tables")
+FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 

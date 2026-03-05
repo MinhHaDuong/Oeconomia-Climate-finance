@@ -5,7 +5,7 @@ attic/
 corpus ISTEX/
 
 # PDFs in bibliography (keep .bib only)
-bibliography/*.pdf
+content/bibliography/*.pdf
 
 # Binary document formats (MD versions tracked instead)
 *.odt
@@ -37,3 +37,10 @@ __pycache__/
 # Claude Code config
 .claude/
 
+
+/.quarto/
+
+# Quarto output directory and HTML test renders
+output/
+*.html
+*_files/

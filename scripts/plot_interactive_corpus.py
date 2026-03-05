@@ -36,8 +36,8 @@ parser.add_argument("--no-pdf", action="store_true",
 args = parser.parse_args()
 
 # --- Paths ---
-FIGURES_DIR = os.path.join(BASE_DIR, "figures")
-TABLES_DIR = os.path.join(BASE_DIR, "tables")
+FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")

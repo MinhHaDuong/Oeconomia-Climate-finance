@@ -1,7 +1,9 @@
 # Makefile — Counting Climate Finance (Œconomia)
 #
 # Usage:
-#   make            Build manuscript.pdf + manuscript.odt
+#   make            Build all documents (manuscript + 3 companion papers)
+#   make manuscript Build manuscript only (PDF + DOCX)
+#   make papers     Build technical report, data paper, companion paper
 #   make figures    Regenerate all figures (from existing data)
 #   make data       Run slow API collection scripts
 #   make archive    Package code + data, validate, create tarball
@@ -13,9 +15,9 @@
 # or ~/data/projets/Oeconomia-Climate-finance/).  DATA_DIR here is only
 # for Make's timestamp-based dependency tracking.
 DATA_DIR    ?= $(HOME)/data/projets/Oeconomia-Climate-finance/catalogs
-BIB         := bibliography/main.bib
-CSL         := bibliography/oeconomia.csl
-SRC         := manuscript.md
+BIB         := content/bibliography/main.bib
+CSL         := content/bibliography/oeconomia.csl
+SRC         := content/manuscript.qmd
 
 REFINED     := $(DATA_DIR)/refined_works.csv
 ECON_YEARLY := $(DATA_DIR)/openalex_econ_yearly.csv
@@ -27,61 +29,75 @@ OVERLAP     := $(DATA_DIR)/openalex_econ_fin_overlap.csv
 export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
-# ── Pandoc ────────────────────────────────────────────────
-PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
+# ── Quarto ───────────────────────────────────────────────
+INCLUDES    := $(wildcard content/_includes/*.md)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all figures data clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures data clean rebuild archive verify-remote
 
-all: manuscript.pdf manuscript.odt
+all: manuscript papers
 
-# ── Manuscript (Stage 2) ─────────────────────────────────
-manuscript.pdf: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
-	pandoc $< $(PANDOC_OPTS) --pdf-engine=xelatex -o $@
+manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
-manuscript.odt: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
-	pandoc $< $(PANDOC_OPTS) -o $@
+papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
+
+# ── Manuscript ───────────────────────────────────────────
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) content/figures/fig1_emergence.png content/figures/fig3_alluvial.png
+	quarto render $< --to pdf
+
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) content/figures/fig1_emergence.png content/figures/fig3_alluvial.png
+	quarto render $< --to docx
+
+# ── Companion documents ─────────────────────────────────
+output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB)
+	quarto render $< --to pdf
+
+output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB)
+	quarto render $< --to pdf
+
+output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB)
+	quarto render $< --to pdf
 
 # ── Figures (Stage 1) ────────────────────────────────────
 # Fig 1: emergence (economics total + CF share)
-figures/fig1_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
+content/figures/fig1_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
 	uv run python $< --no-pdf
 
 # Figs 2+3: breakpoints + alluvial (co-produced by one script run)
-figures/fig3_alluvial.png figures/fig2_breakpoints.png &: \
+content/figures/fig3_alluvial.png content/figures/fig2_breakpoints.png &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
 # Figs 2b+3b: core-only variants (co-produced)
-figures/fig3b_alluvial_core.png figures/fig2b_breakpoints_core.png &: \
+content/figures/fig3b_alluvial_core.png content/figures/fig2b_breakpoints_core.png &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
 
 # Fig 4: citation genealogy (needs bimodality output for pole assignments)
-figures/fig4_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) tables/tab5_pole_papers.csv
+content/figures/fig4_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
+		$(REFINED) content/tables/tab5_pole_papers.csv
 	uv run python $< --no-pdf
 
 # Fig 4 alt: PCA seed-axis scatter (core, supervised)
-figures/fig4_seed_axis_core.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
+content/figures/fig4_seed_axis_core.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --supervised --no-pdf
 
 # Figs 5a/5b/5c: bimodality tests (co-produced)
-figures/fig5a_bimodality.png tables/tab5_pole_papers.csv &: \
+content/figures/fig5a_bimodality.png content/tables/tab5_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
 # Fig A.1a: robustness (econ vs finance vs RePEc)
-figures/figA_1a_robustness.png: scripts/plot_fig1_robustness.py scripts/plot_helpers.py \
+content/figures/figA_1a_robustness.png: scripts/plot_fig1_robustness.py scripts/plot_helpers.py \
 		$(ECON_YEARLY) $(OVERLAP)
 	uv run python $< --no-pdf
 
 # Aggregate
-MANUSCRIPT_FIGS := figures/fig1_emergence.png figures/fig3_alluvial.png
+MANUSCRIPT_FIGS := content/figures/fig1_emergence.png content/figures/fig3_alluvial.png
 ALL_FIGS := $(MANUSCRIPT_FIGS) \
-            figures/fig3b_alluvial_core.png \
-            figures/fig4_genealogy.png figures/fig4_seed_axis_core.png \
-            figures/fig5a_bimodality.png figures/figA_1a_robustness.png
+            content/figures/fig3b_alluvial_core.png \
+            content/figures/fig4_genealogy.png content/figures/fig4_seed_axis_core.png \
+            content/figures/fig5a_bimodality.png content/figures/figA_1a_robustness.png
 
 figures: $(ALL_FIGS)
 
@@ -106,21 +122,21 @@ archive: figures
 	rm -rf $(ARCHIVE_TMP)
 	mkdir -p $(ARCHIVE_TMP)/data/catalogs
 	git archive HEAD | tar -x -C $(ARCHIVE_TMP)
-	rm -rf $(ARCHIVE_TMP)/figures $(ARCHIVE_TMP)/tables
+	rm -rf $(ARCHIVE_TMP)/content/figures $(ARCHIVE_TMP)/content/tables
 	$(foreach f,$(ARCHIVE_DATA),cp $(DATA_DIR)/$(f) $(ARCHIVE_TMP)/data/catalogs/;)
 	@echo "=== Validating: uv sync + make figures ==="
 	cd $(ARCHIVE_TMP) && uv sync --quiet --no-group corpus
 	cd $(ARCHIVE_TMP) && CLIMATE_FINANCE_DATA=$(ARCHIVE_TMP)/data \
 		$(MAKE) DATA_DIR=$(ARCHIVE_TMP)/data/catalogs figures
 	@echo "=== Comparing checksums (figures in both) ==="
-	@fail=0; for f in figures/*.png; do \
+	@fail=0; for f in content/figures/*.png; do \
 	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
 	    a=$$(md5sum "$$f" | cut -d' ' -f1); \
 	    b=$$(md5sum "$(ARCHIVE_TMP)/$$f" | cut -d' ' -f1); \
 	    if [ "$$a" != "$$b" ]; then echo "MISMATCH: $$f"; fail=1; fi; \
 	  fi; \
 	done; [ $$fail -eq 0 ] && echo "FIGURES: PASS" || { echo "FIGURES: FAIL"; exit 1; }
-	@fail=0; for f in tables/*.csv; do \
+	@fail=0; for f in content/tables/*.csv; do \
 	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
 	    a=$$(md5sum "$$f" | cut -d' ' -f1); \
 	    b=$$(md5sum "$(ARCHIVE_TMP)/$$f" | cut -d' ' -f1); \
@@ -130,7 +146,7 @@ archive: figures
 	@echo "=== Creating tarball ==="
 	tar czf $(ARCHIVE_NAME).tar.gz -C /tmp \
 		--exclude='.venv' --exclude='__pycache__' \
-		--exclude='figures' --exclude='tables' \
+		--exclude='content/figures' --exclude='content/tables' \
 		$(ARCHIVE_NAME)
 	@du -h $(ARCHIVE_NAME).tar.gz
 	rm -rf $(ARCHIVE_TMP)
@@ -151,13 +167,13 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 	  uv sync --quiet --no-group corpus && \
 	  CLIMATE_FINANCE_DATA=$(REMOTE_DIR)/data make DATA_DIR=$(REMOTE_DIR)/data/catalogs figures && \
 	  echo === Checksums === && \
-	  md5sum figures/*.png tables/*.csv | sort -k2"'
+	  md5sum content/figures/*.png content/tables/*.csv | sort -k2"'
 	@echo "=== Local checksums ==="
-	@md5sum figures/*.png tables/*.csv | sort -k2
+	@md5sum content/figures/*.png content/tables/*.csv | sort -k2
 	@echo "=== Compare visually or diff the above ==="
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:
-	rm -f manuscript.pdf manuscript.odt
+	rm -rf output/
 
 rebuild: clean all

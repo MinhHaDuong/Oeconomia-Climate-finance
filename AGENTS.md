@@ -1,9 +1,22 @@
 # AI Agent Guidelines for Climate Finance History Project
 
-See `CLAUDE.md` for data paths and current status.
+See `CLAUDE.md` for current status.
+See `README.md` for project overview, repository structure, data paths.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
-See `technical-report.md` for the full data pipeline documentation.
-See `notes.md` for working notes and the original detailed outline.
+See `content/technical-report.qmd` for the full data pipeline documentation.
+
+## Project Structure
+
+This is a Quarto multi-document project (`_quarto.yml`). Four outputs share
+reusable fragments in `content/_includes/` via `{{< include >}}` directives:
+
+- `content/manuscript.qmd` — main Œconomia article (self-contained, no includes)
+- `technical-report.qmd` — pipeline documentation (composed entirely of includes)
+- `data-paper.qmd` — corpus data paper (reuses corpus-construction + reproducibility)
+- `companion-paper.qmd` — methods companion (reuses all analysis sections)
+
+Build with `make manuscript` (PDF + DOCX) or `make papers` (3 companion PDFs).
+`make all` builds everything. See `Makefile` for targets.
 
 ## Writing Guidelines
 
@@ -107,10 +120,17 @@ When working on multiple tickets:
 4. Clean up worktree branches after pushing named branches
 
 ### File management
-- Working drafts: Markdown (`.md`); final submission: ODT or DOCX
-- Convert with Pandoc: `pandoc input.md -o output.odt`
-- Bibliography: `bibliography/main.bib`, author-date style
+- Working drafts: Quarto Markdown (`.qmd`); final submission: PDF or DOCX
+- Build with `make` (calls `quarto render` under the hood)
+- Shared fragments live in `content/_includes/` — edit there, all documents update
+- Bibliography: `content/bibliography/main.bib`, author-date style
 - Version control: old versions in `attic/`, submissions in `release/`
+
+### Conventions
+- `uv sync` to install (never pip). `uv run python scripts/...` to execute.
+- All scripts support `--no-pdf`.
+- `make` builds all documents. `make manuscript` builds manuscript only. `make papers` builds the 3 companion documents. `make figures` regenerates all figures (byte-reproducible).
+- House style: `docs/oeconomia-style.md` (eyeballed from 15-4 samples)
 
 ### Dependency management
 - **Always use `uv sync`** to install dependencies. Never use `pip` or `uv pip`.
@@ -187,13 +207,13 @@ Convert excess em-dash parentheticals to:
 
 ```bash
 # Blacklisted words (expect 0)
-grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' manuscript.md
+grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' content/manuscript.qmd
 
 # Em-dash heavy paragraphs (expect 0 lines with 3+)
-grep -cP '---.*---.*---' manuscript.md
+grep -cP '---.*---.*---' content/manuscript.qmd
 
 # Contrast farming (expect ≤3)
-grep -cP 'not .{3,60}, but ' manuscript.md
+grep -cP 'not .{3,60}, but ' content/manuscript.qmd
 ```
 
 Reference: Liang et al. 2024, "Mapping the Increasing Use of LLMs in Scientific Papers" (arXiv:2406.07016)

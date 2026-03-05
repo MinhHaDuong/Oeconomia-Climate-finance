@@ -18,7 +18,7 @@ The historical argument is grounded in a computational analysis of approximately
 
 The manuscript is approximately 9,400 words with 47 bibliographic references, 2 figures, and 1 table. A full replication archive (data, code, and technical report) is available at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
 
-The paper is not under consideration elsewhere. A version of the abstract was presented at the ESHET-HES Joint Conference (Nice, May 2026).
+The paper is not under consideration elsewhere. A version of the abstract has been accepted for presentation at the ESHET-HES Joint Conference (Nice, May 2026).
 
 I would be happy to provide any additional information needed for the evaluation process.
 
@@ -51,7 +51,7 @@ The manuscript currently cites a GitHub repository. Before submission, three com
    - Fill metadata: title, author, license (CC-BY-NC to match Oeconomia), description
    - Get DOI (e.g., `10.5281/zenodo.XXXXXXX`)
 3. **Upload technical report to HAL:**
-   - Convert `technical-report.md` to PDF: `pandoc technical-report.md -o technical-report.pdf`
+   - Build PDF: `quarto render technical-report.qmd --to pdf`
    - Deposit on HAL as "Document de travail" / working paper
    - Affiliation: CIRED (UMR 8568)
    - Get HAL ID (e.g., `hal-XXXXXXXX`)
