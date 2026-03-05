@@ -109,7 +109,7 @@ archive: figures
 	rm -rf $(ARCHIVE_TMP)/figures $(ARCHIVE_TMP)/tables
 	$(foreach f,$(ARCHIVE_DATA),cp $(DATA_DIR)/$(f) $(ARCHIVE_TMP)/data/catalogs/;)
 	@echo "=== Validating: uv sync + make figures ==="
-	cd $(ARCHIVE_TMP) && uv sync --quiet
+	cd $(ARCHIVE_TMP) && uv sync --quiet --no-group corpus
 	cd $(ARCHIVE_TMP) && CLIMATE_FINANCE_DATA=$(ARCHIVE_TMP)/data $(MAKE) figures
 	@echo "=== Comparing checksums (figures in both) ==="
 	@fail=0; for f in figures/*.png; do \
@@ -140,14 +140,14 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 	@echo "=== Uploading to $(REMOTE_HOST) ==="
 	scp $(ARCHIVE_NAME).tar.gz $(REMOTE_HOST):/tmp/
 	@echo "=== Running on $(REMOTE_HOST) ==="
-	ssh $(REMOTE_HOST) '\
+	ssh $(REMOTE_HOST) 'bash -l -c "\
 	  cd /tmp && rm -rf $(ARCHIVE_NAME) && \
 	  tar xzf $(ARCHIVE_NAME).tar.gz && \
 	  cd $(ARCHIVE_NAME) && \
-	  uv sync --quiet && \
+	  uv sync --quiet --no-group corpus && \
 	  CLIMATE_FINANCE_DATA=$(REMOTE_DIR)/data make figures && \
-	  echo "=== Checksums ===" && \
-	  md5sum figures/*.png tables/*.csv | sort -k2'
+	  echo === Checksums === && \
+	  md5sum figures/*.png tables/*.csv | sort -k2"'
 	@echo "=== Local checksums ==="
 	@md5sum figures/*.png tables/*.csv | sort -k2
 	@echo "=== Compare visually or diff the above ==="

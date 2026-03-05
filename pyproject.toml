@@ -5,21 +5,25 @@ description = "Literature corpus and bibliometric analysis for Œconomia climate
 requires-python = ">=3.10"
 dependencies = [
     "pandas",
+    "matplotlib",
+    "seaborn",
+    "scikit-learn",
+    "plotly",
     "requests",
     "pyyaml",
-    "networkx",
-    "python-louvain",
+]
+
+[dependency-groups]
+corpus = [
     "torch",
     "sentence-transformers",
     "umap-learn",
     "hdbscan",
-    "matplotlib",
-    "seaborn",
-    "scikit-learn",
+    "networkx",
+    "python-louvain",
     "beautifulsoup4",
     "pdfplumber",
     "ddgs",
-    "plotly",
     "bibtexparser",
     "rapidfuzz",
 ]

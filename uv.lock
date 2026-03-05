@@ -342,24 +342,28 @@ name = "climate-finance-het"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "bibtexparser" },
-    { name = "ddgs" },
-    { name = "hdbscan" },
     { name = "matplotlib" },
-    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pdfplumber" },
     { name = "plotly" },
-    { name = "python-louvain" },
     { name = "pyyaml" },
-    { name = "rapidfuzz" },
     { name = "requests" },
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "seaborn" },
+]
+
+[package.dev-dependencies]
+corpus = [
+    { name = "beautifulsoup4" },
+    { name = "bibtexparser" },
+    { name = "ddgs" },
+    { name = "hdbscan" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pdfplumber" },
+    { name = "python-louvain" },
+    { name = "rapidfuzz" },
     { name = "sentence-transformers" },
     { name = "torch", version = "2.10.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.10.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
@@ -368,21 +372,25 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "matplotlib" },
+    { name = "pandas" },
+    { name = "plotly" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "scikit-learn" },
+    { name = "seaborn" },
+]
+
+[package.metadata.requires-dev]
+corpus = [
     { name = "beautifulsoup4" },
     { name = "bibtexparser" },
     { name = "ddgs" },
     { name = "hdbscan" },
-    { name = "matplotlib" },
     { name = "networkx" },
-    { name = "pandas" },
     { name = "pdfplumber" },
-    { name = "plotly" },
     { name = "python-louvain" },
-    { name = "pyyaml" },
     { name = "rapidfuzz" },
-    { name = "requests" },
-    { name = "scikit-learn" },
-    { name = "seaborn" },
     { name = "sentence-transformers" },
     { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
     { name = "umap-learn" },
