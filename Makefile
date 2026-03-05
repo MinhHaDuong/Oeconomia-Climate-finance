@@ -128,7 +128,10 @@ archive: figures
 	  fi; \
 	done; [ $$fail -eq 0 ] && echo "TABLES: PASS" || { echo "TABLES: FAIL"; exit 1; }
 	@echo "=== Creating tarball ==="
-	tar czf $(ARCHIVE_NAME).tar.gz -C /tmp --exclude='.venv' --exclude='__pycache__' $(ARCHIVE_NAME)
+	tar czf $(ARCHIVE_NAME).tar.gz -C /tmp \
+		--exclude='.venv' --exclude='__pycache__' \
+		--exclude='figures' --exclude='tables' \
+		$(ARCHIVE_NAME)
 	@du -h $(ARCHIVE_NAME).tar.gz
 	rm -rf $(ARCHIVE_TMP)
 	@echo "Done: $(ARCHIVE_NAME).tar.gz"
