@@ -28,3 +28,14 @@ Papers are protected from removal if they meet any of: cited_by_count >= 50, app
 Flagged, non-protected papers are removed. An audit trail (`corpus_audit.csv`) records the decision for every paper.
 
 **Result:** The refined corpus contains 22,113 papers in `refined_works.csv`.
+
+### Venue-cleaning decisions
+
+The following venue normalization rules were applied to ensure valid historical inference from venue tables:
+
+- `Climate finance and the USD 100 billion goal` → treated as **report_series** (not journal).
+- `MF Policy Paper` → normalized to **IMF Policy Paper**, treated as **report_series**.
+- `DepositOnce` → treated as **repository_or_index** (not journal).
+- `Research Online`-type labels → treated as **repository_or_index**.
+
+These decisions matter for interpretation: institutional and repository channels remain central in the core, reinforcing the argument that economists and policy institutions (OECD, World Bank, IMF) helped structure the debate through report/working-paper infrastructures, not only journal publication.

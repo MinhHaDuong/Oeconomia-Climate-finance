@@ -67,6 +67,15 @@ Section 2 reviews related work. Section 3 describes the corpus (cross-referencin
 
 <!-- Existing bibliometric studies of climate finance: mostly descriptive (publication counts, keyword analysis, co-authorship networks). No study has applied endogenous break detection or tested for bimodal community structure. -->
 
+<!-- NOTE (salvaged from notes.md): Core works are published in a distinctive venue ecology.
+Journal venues by prominence: Sustainability, Nature Climate Change, Climate Policy, Climatic Change,
+Review of Financial Studies, Journal of Financial Economics, Journal of Banking & Finance, Energy Economics.
+WP/report series: IMF Working Paper, OECD environment/economics/development co-operation working papers,
+World Bank policy research working papers, OECD/IEA climate change expert group papers,
+IMF Staff Climate Notes, IMF Staff Country Reports, World Bank eBook/report variants.
+Venue labels are heterogeneous (same institution appears under multiple strings);
+final tables should use canonicalized venue mapping. -->
+
 [TO WRITE: Brief review of existing climate finance bibliometrics. Establish that no prior study has applied the methods proposed here.]
 
 
@@ -147,6 +156,28 @@ The corpus was designed for breadth (seven sources, five languages) and transpar
 - The divide is real but not the field's dominant axis
 -->
 
+<!-- NOTE (salvaged from notes.md): HET interpretations of discovered axes.
+
+1. Seeded embedding axis (efficiency ↔ accountability): opposition between market-calculative
+   expertise (mobilization/leverage) and public-accounting expertise (additionality/equity/commensuration).
+   Strong global bimodality (ΔBIC=1264), strongest in 2015–2025.
+
+2. Seeded lexical axis: confirms the divide is visible in language-level categories, not only
+   in embedding geometry (ΔBIC=8961, r≈0.683 with embedding axis).
+
+3. Unsupervised lexical PCs:
+   - PC1: broad climate/development discourse vs multilingual/noise tail (low alignment to main divide)
+   - PC2: Kyoto/CDM mechanism vocabulary vs contemporary climate-finance/governance (chronological-regime axis)
+   - PC3 (main aligned): treaty-era climate/development framing vs green-finance/model/data framing (|r|≈0.583)
+   - PC4: financialization/development vs land-use/forestry/REDD (r≈0.371)
+   - PC5: carbon-market/trading vs renewable-energy project framing (topic-instrument axis)
+
+4. Unsupervised embedding PCs:
+   - emb_PC2 (r≈0.671, ΔBIC≈932) and emb_PC4 (r≈-0.598, ΔBIC≈450) recover the same cleavage.
+
+Bottom line: the main divide is robust across supervised/unsupervised, lexical/embedding representations;
+auxiliary axes capture period (Kyoto/CDM → green finance), sectoral domain, and policy-instrument differences. -->
+
 [TO WRITE: Present PCA results showing that the efficiency-accountability divide is a secondary, not primary, axis of variation.]
 
 ### 5.5 Core vs. full corpus comparison
@@ -158,19 +189,44 @@ The corpus was designed for breadth (seven sources, five languages) and transpar
 
 <!-- ~1,000 words -->
 
-### 6.1 Generalizability
+### 6.1 Publication infrastructure and the construction of the field
+
+<!-- NOTE (salvaged from notes.md): Four arguments discovered from venue analysis.
+
+Argument A — The field is institutionalized through publication infrastructure, not only journals.
+Evidence: OECD/World Bank/IMF appear strongly in report_series and working_paper_series channels.
+Claim: climate-finance economics matured through a hybrid communication regime where policy
+institutions produced canonical definitions before (and alongside) journal consolidation.
+
+Argument B — Economists' authority is embedded in organizations, not only individuals.
+Evidence: high institutional presence in core counts and strong weight of World Bank/OECD/IMF venues.
+Claim: debates on what counts as climate finance are structured by institutional economics teams
+that maintain reporting templates, valuation conventions, and comparability standards.
+
+Argument C — Measurement controversies are linked to venue ecology.
+Evidence: many influential items are in report/WP series where methods are operationalized.
+Claim: disputes over the $100bn trajectory are struggles over institutionalized quantification regimes.
+
+Argument D — The core corpus is hybrid and requires explicit venue cleaning for valid historical inference.
+Evidence: repository/index labels (SSRN/RePEc/DepositOnce) can appear as pseudo-journals without cleaning.
+Claim: methodological reflexivity on venue classification is part of the substantive argument
+about how economic objects are constructed. -->
+
+[TO WRITE: Discuss how the venue ecology reveals field structure. Develop arguments A–D above.]
+
+### 6.2 Generalizability
 
 <!-- The framework (embedding + sliding-window divergence + censored gaps + bimodality testing) is domain-agnostic. Requirements: a corpus with timestamps and abstracts. The method could be applied to any field where endogenous periodization is desirable. -->
 
 [TO WRITE: Discuss how the framework could be applied to other fields. Identify the minimal requirements (timestamped abstracts, sufficient corpus size).]
 
-### 6.2 Comparison with topic model approaches
+### 6.3 Comparison with topic model approaches
 
 <!-- Advantages: no bag-of-words assumption, captures within-topic drift, endogenous break detection, multilingual by default (via multilingual embeddings). Disadvantages: less interpretable than topic labels, sensitive to embedding model choice, k-means as a discretization step. -->
 
 [TO WRITE: Systematic comparison with LDA/STM/BERTopic. When would each approach be preferred?]
 
-### 6.3 Limitations
+### 6.4 Limitations
 
 <!--
 - Embedding model choice: paraphrase-multilingual-MiniLM-L12-v2 is a general-purpose model; domain-specific models (SciBERT, ClimateBERT) might perform differently
@@ -182,7 +238,7 @@ The corpus was designed for breadth (seven sources, five languages) and transpar
 
 [TO WRITE: Discuss limitations systematically. Reference robustness checks where available.]
 
-### 6.4 Methodological contribution
+### 6.5 Methodological contribution
 
 <!-- The censored-gap variant is, to our knowledge, novel in the scientometrics literature. It addresses a fundamental concern with change-point detection in semantic spaces: that apparent breaks may reflect gradual transitions rather than genuine discontinuities. The framework's two-level design (full corpus vs. core) provides a principled way to distinguish volume-driven from structure-driven change. -->
 
