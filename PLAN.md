@@ -125,12 +125,16 @@ All sections drafted, numbered per Œconomia style (Arabic, not Roman).
     cites structural breaks repeatedly but never shows the divergence plots or method details.
     The HAL working paper is the minimum credible home for this evidence;
     alternatively, the companion methods paper would be the stronger venue.
-- [ ] Add "Data and code availability" paragraph to manuscript (before Bibliography)
+- [x] Add "Data and code availability" paragraph to manuscript (before Bibliography)
 - [ ] Draft cover letter pointing reviewers to HAL + Zenodo
 - [ ] Data paper (`data-paper.qmd`): corpus documentation for Scientific Data — outline ready
+  - When moving from outline to submission, rewrite included sections in
+    Scientific Data voice (data-centric) rather than shipping tech-report prose verbatim.
 - [ ] Companion methods paper (`companion-paper.qmd`): Scientometrics/QSS — outline ready
   - Stronger case now: the Œconomia manuscript leans heavily on breakpoint results
     it cannot fully present. A peer-reviewed companion would let us cite it properly.
+  - Rewrite included sections in Scientometrics voice (method-centric) at submission time.
+  - No prior-publication friction: tech report on HAL is a preprint; both journals accept preprint-posted material.
 
 ## Build
 
