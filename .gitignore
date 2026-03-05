@@ -39,3 +39,7 @@ __pycache__/
 
 
 /.quarto/
+
+# Quarto HTML test renders
+*.html
+*_files/
