@@ -24,6 +24,7 @@ data/syllabi/
 .venv/
 __pycache__/
 *.pyc
+.mypy_cache/
 uv.lock
 
 # OS and editor artifacts
