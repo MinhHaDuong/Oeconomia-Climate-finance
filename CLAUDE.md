@@ -23,6 +23,13 @@ Shared fragments in `_includes/` (10 files), reused via `{{< include >}}`.
 All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 (override: `CLIMATE_FINANCE_DATA` env var; see `scripts/utils.py`)
 
+## Generated outputs
+
+`figures/` and `tables/` are tracked in git. They are generated artifacts
+(`make figures`), but tracking them ensures the repo builds from a fresh clone
+without running the full data pipeline. The HTML interactive figures are also
+tracked. Total size is ~11 MB, acceptable for this project.
+
 ## Conventions
 
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
