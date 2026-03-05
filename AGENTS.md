@@ -201,13 +201,13 @@ Convert excess em-dash parentheticals to:
 
 ```bash
 # Blacklisted words (expect 0)
-grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' manuscript.md
+grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' manuscript.qmd
 
 # Em-dash heavy paragraphs (expect 0 lines with 3+)
-grep -cP '---.*---.*---' manuscript.md
+grep -cP '---.*---.*---' manuscript.qmd
 
 # Contrast farming (expect ≤3)
-grep -cP 'not .{3,60}, but ' manuscript.md
+grep -cP 'not .{3,60}, but ' manuscript.qmd
 ```
 
 Reference: Liang et al. 2024, "Mapping the Increasing Use of LLMs in Scientific Papers" (arXiv:2406.07016)
