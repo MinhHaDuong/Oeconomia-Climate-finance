@@ -31,7 +31,7 @@ export SOURCE_DATE_EPOCH := 0
 PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all figures data clean rebuild archive verify-remote
+.PHONY: all quarto figures data clean rebuild archive verify-remote
 
 all: manuscript.pdf manuscript.odt
 
@@ -41,6 +41,10 @@ manuscript.pdf: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_all
 
 manuscript.odt: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
 	pandoc $< $(PANDOC_OPTS) -o $@
+
+# ── Quarto build (alternative renderer) ──────────────────
+quarto: manuscript.qmd $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
+	quarto render manuscript.qmd --to pdf
 
 # ── Figures (Stage 1) ────────────────────────────────────
 # Fig 1: emergence (economics total + CF share)
@@ -159,5 +163,6 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 # ── Housekeeping ─────────────────────────────────────────
 clean:
 	rm -f manuscript.pdf manuscript.odt
+	rm -rf _freeze .quarto
 
 rebuild: clean all

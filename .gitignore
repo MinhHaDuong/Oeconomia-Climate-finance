@@ -26,6 +26,10 @@ __pycache__/
 *.pyc
 .mypy_cache/
 
+# Quarto
+_freeze/
+.quarto/
+
 # Replication archive
 *.tar.gz
 

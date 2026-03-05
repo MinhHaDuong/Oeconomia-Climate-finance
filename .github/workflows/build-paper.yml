@@ -1,0 +1,44 @@
+name: Build paper (Quarto)
+
+on:
+  push:
+    paths:
+      - "manuscript.qmd"
+      - "bibliography/**"
+      - "figures/fig1_emergence.png"
+      - "figures/fig3_alluvial.png"
+      - ".github/workflows/build-paper.yml"
+  pull_request:
+    paths:
+      - "manuscript.qmd"
+      - "bibliography/**"
+      - "figures/fig1_emergence.png"
+      - "figures/fig3_alluvial.png"
+      - ".github/workflows/build-paper.yml"
+
+jobs:
+  build:
+    name: Render manuscript to PDF
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Install TinyTeX (LaTeX for PDF rendering)
+        run: quarto install tinytex --no-prompt
+
+      - name: Render manuscript
+        run: quarto render manuscript.qmd --to pdf
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manuscript-pdf
+          path: manuscript.pdf
+          if-no-files-found: error
