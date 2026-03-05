@@ -1,0 +1,6 @@
+# Exclude internal docs from replication archive (git archive)
+ai-tech-reports/ export-ignore
+AGENTS.md export-ignore
+CLAUDE.md export-ignore
+PLAN.md export-ignore
+docs/ export-ignore

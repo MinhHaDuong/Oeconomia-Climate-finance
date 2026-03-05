@@ -31,7 +31,7 @@ export SOURCE_DATE_EPOCH := 0
 PANDOC_OPTS := --citeproc --bibliography=$(BIB) --csl=$(CSL)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all figures data clean rebuild archive
+.PHONY: all figures data clean rebuild archive verify-remote
 
 all: manuscript.pdf manuscript.odt
 
@@ -131,6 +131,26 @@ archive: figures
 	@du -h $(ARCHIVE_NAME).tar.gz
 	rm -rf $(ARCHIVE_TMP)
 	@echo "Done: $(ARCHIVE_NAME).tar.gz"
+
+# ── Remote verification ─────────────────────────────────
+REMOTE_HOST ?= padme
+REMOTE_DIR  := /tmp/$(ARCHIVE_NAME)
+
+verify-remote: $(ARCHIVE_NAME).tar.gz
+	@echo "=== Uploading to $(REMOTE_HOST) ==="
+	scp $(ARCHIVE_NAME).tar.gz $(REMOTE_HOST):/tmp/
+	@echo "=== Running on $(REMOTE_HOST) ==="
+	ssh $(REMOTE_HOST) '\
+	  cd /tmp && rm -rf $(ARCHIVE_NAME) && \
+	  tar xzf $(ARCHIVE_NAME).tar.gz && \
+	  cd $(ARCHIVE_NAME) && \
+	  uv sync --quiet && \
+	  CLIMATE_FINANCE_DATA=$(REMOTE_DIR)/data make figures && \
+	  echo "=== Checksums ===" && \
+	  md5sum figures/*.png tables/*.csv | sort -k2'
+	@echo "=== Local checksums ==="
+	@md5sum figures/*.png tables/*.csv | sort -k2
+	@echo "=== Compare visually or diff the above ==="
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:
