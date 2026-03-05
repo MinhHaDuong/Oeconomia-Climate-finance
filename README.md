@@ -44,7 +44,7 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 │   ├── figures/                      # Generated figures (tracked, see below)
 │   └── tables/                       # Generated tables (tracked, see below)
 ├── output/                           # Quarto rendered output (gitignored)
-├── CLAUDE.md                         # AI handoff: data paths, conventions, status
+├── CLAUDE.md                         # AI handoff: lean index + status
 ├── PLAN.md                           # Manuscript structure (three-act, five figures)
 ├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
 ├── Makefile                          # Build: make manuscript, make papers, make figures
@@ -55,7 +55,10 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 └── attic/                            # Old stuff to delete when paper is accepted
 ```
 
-## Generated outputs
+## Data
+
+All generated data at `~/data/projets/Oeconomia-Climate-finance/`
+(override: `CLIMATE_FINANCE_DATA` env var; see `scripts/utils.py`).
 
 `content/figures/` and `content/tables/` (including interactive HTML) are tracked in git.
 They are regenerable via `make figures`, but tracking them ensures the
@@ -64,7 +67,7 @@ documents build from a fresh clone without running the full data pipeline.
 ## Research Corpus
 
 ### Bibliometric corpus (~22,000 works)
-Built from multiple sources (OpenAlex, ISTEX, Scopus, JSTOR, BibCNRS, grey literature), merged and deduplicated. Generated data lives at `~/data/projets/Oeconomia-Climate-finance/catalogs/` (see `CLAUDE.md` for details).
+Built from multiple sources (OpenAlex, ISTEX, Scopus, JSTOR, BibCNRS, grey literature), merged and deduplicated. Generated data lives at `~/data/projets/Oeconomia-Climate-finance/catalogs/`.
 
 ### Primary Literature
 - **ISTEX corpus:** 484 articles with "Climate finance" OR "Finance climat" OR "Finance climatique" (full-text PDFs)
@@ -99,8 +102,9 @@ Topic-specific analyses with CSV datasets:
 
 ## Next Steps
 
-See `CLAUDE.md` for AI handoff (data paths, conventions, status).
+See `CLAUDE.md` for AI handoff (lean index + status).
 See `PLAN.md` for manuscript structure and drafting plan.
+See `AGENTS.md` for writing guidelines, conventions, and workflow rules.
 
 ## Contact
 
