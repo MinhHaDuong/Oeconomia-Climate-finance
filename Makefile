@@ -110,7 +110,8 @@ archive: figures
 	$(foreach f,$(ARCHIVE_DATA),cp $(DATA_DIR)/$(f) $(ARCHIVE_TMP)/data/catalogs/;)
 	@echo "=== Validating: uv sync + make figures ==="
 	cd $(ARCHIVE_TMP) && uv sync --quiet --no-group corpus
-	cd $(ARCHIVE_TMP) && CLIMATE_FINANCE_DATA=$(ARCHIVE_TMP)/data $(MAKE) figures
+	cd $(ARCHIVE_TMP) && CLIMATE_FINANCE_DATA=$(ARCHIVE_TMP)/data \
+		$(MAKE) DATA_DIR=$(ARCHIVE_TMP)/data/catalogs figures
 	@echo "=== Comparing checksums (figures in both) ==="
 	@fail=0; for f in figures/*.png; do \
 	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
@@ -145,7 +146,7 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 	  tar xzf $(ARCHIVE_NAME).tar.gz && \
 	  cd $(ARCHIVE_NAME) && \
 	  uv sync --quiet --no-group corpus && \
-	  CLIMATE_FINANCE_DATA=$(REMOTE_DIR)/data make figures && \
+	  CLIMATE_FINANCE_DATA=$(REMOTE_DIR)/data make DATA_DIR=$(REMOTE_DIR)/data/catalogs figures && \
 	  echo === Checksums === && \
 	  md5sum figures/*.png tables/*.csv | sort -k2"'
 	@echo "=== Local checksums ==="
