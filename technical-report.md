@@ -520,6 +520,12 @@ rsync -va --delete rsync://rsync.repec.org/RePEc-ReDIF/ ~/data/datasets/external
 
 The mirror was last synced 2026-02-26 (~2,334 archive directories). Re-run the same rsync command to update. Override the default path with `REPEC_ROOT` environment variable or `--repec-root` flag.
 
+### Cross-machine reproducibility
+
+Figures that do not involve KMeans clustering (fig1_emergence, fig4_genealogy, fig4_seed_axis_core, figA_1a_robustness) are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
+
+Figures that depend on KMeans (fig2_breakpoints, fig3_alluvial, fig5a_bimodality, and their core variants) may differ across machines. This is because scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. The resulting cluster assignments can differ at the margin, producing visually similar but not byte-identical figures. Substantive results (breakpoint years, ΔBIC values, period boundaries) are robust to these differences.
+
 ### Non-reproducible steps
 
 - ISTEX corpus download (requires institutional access)
