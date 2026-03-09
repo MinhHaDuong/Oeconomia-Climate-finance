@@ -44,6 +44,10 @@ This document describes the computational pipeline used to produce the bibliomet
 
 ---
 
+{{< include _includes/cocitation-communities.md >}}
+
+---
+
 {{< include _includes/core-vs-full.md >}}
 
 ---
