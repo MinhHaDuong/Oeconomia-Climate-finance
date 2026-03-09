@@ -148,6 +148,12 @@ uv run python scripts/count_openalex_econ_cf.py --scope finance  # OpenAlex fina
 uv run python scripts/count_openalex_econ_fin_overlap.py         # Econ/Finance overlap (ID sets)
 uv run python scripts/count_repec_econ_cf.py                     # RePEc yearly (needs local mirror)
 
+# Citation enrichment (run in order; both are resumable)
+uv run python scripts/enrich_citations_batch.py                  # Crossref references (do first)
+uv run python scripts/enrich_citations_openalex.py               # OpenAlex referenced_works (fills gap)
+uv run python scripts/qc_citations.py                            # Verify citation quality (30-sample)
+# Or simply: make citations  (runs all three in order)
+
 # Figures
 uv run python scripts/plot_fig1_emergence.py     # Fig 1 (reads openalex_econ_yearly.csv)
 uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + overlap CSVs)
@@ -215,6 +221,36 @@ grep -cP '---.*---.*---' content/manuscript.qmd
 # Contrast farming (expect ≤3)
 grep -cP 'not .{3,60}, but ' content/manuscript.qmd
 ```
+
+### Citation Graph
+
+`citations.csv` (595,923 rows) was built from two sources:
+
+- **Crossref** (`enrich_citations_batch.py`): 358,005 rows, covers papers where publishers deposit reference lists
+- **OpenAlex** (`enrich_citations_openalex.py`): +237,918 rows, fills the gap using `referenced_works`
+
+**Overall coverage**: 13,699 / 17,533 corpus DOIs (78%) appear as source papers.
+**Core coverage** (cited ≥ 50): 1,353 / 1,461 (93%).
+**Quality**: precision = recall = 1.000 verified against Crossref on 30-paper sample.
+**Structural ceiling**: the remaining 22% are at publishers (preprints, small journals, regional outlets) with no API reference metadata. Next step: PDF OCR with GROBID for core papers.
+
+The OpenAlex enrichment uses a two-phase approach:
+1. Batch-fetch `referenced_works` (list of OpenAlex IDs) for each corpus DOI via filter endpoint
+2. Batch-resolve OpenAlex IDs → DOIs + title/year/journal via `openalex:W1|W2|...` filter
+
+Both scripts are resumable: Crossref uses `.citations_batch_checkpoint.csv`, OpenAlex uses `.citations_oa_done.txt`.
+
+### Intellectual Traditions (Table 1) — Status
+
+Empirical detection via co-citation community detection is implemented (`analyze_cocitation.py`, `compare_communities_across_windows.py`). Analysis across four time windows (pre-2007, pre-2015, pre-2020, full) reveals:
+
+- Pre-2007: 18 small, distinct communities — econometrics, institutions, adaptation, aid, CDM, etc.
+- Pre-2015: merger into mega-community (97 papers), modularity drops to 0.14
+- Post-2020: re-crystallizes into 6 stable communities (Q=0.45): climate risk, governance, adaptation, Paris, green bonds, earth systems
+
+Only the governance/accountability lineage (DiMaggio → Keohane → Weikmans) persists across all four windows. With the enriched citation graph (78% coverage), re-running the co-citation analysis should yield stronger community signal, especially for the pre-2007 period.
+
+**Table 1 is still pending**: the user's interpretation maps pre-2007 communities 1-2 = environmental economics, 3-4 = burden-sharing, 5 = aid/CDM. Needs final write-up after re-running with enriched data.
 
 Reference: Liang et al. 2024, "Mapping the Increasing Use of LLMs in Scientific Papers" (arXiv:2406.07016)
 

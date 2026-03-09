@@ -7,9 +7,15 @@ Do NOT add project structure, data paths, conventions, or guidelines here.
 - PLAN.md — manuscript structure (three-act, five figures)
 - AGENTS.md — writing guidelines, workflow rules, conventions, quality standards
 
-## Status (2026-03-05)
+## Status (2026-03-09)
 
 - Manuscript: ~9,400 words, 47 bib entries, 2 figures + 1 table
 - Corpus: 22,113 refined works, 18,798 with embeddings, 1,176 core
-- Quarto refactoring complete: 4 documents, 10 shared includes
-- **Next: revision and submission**
+- Citation graph: 595,923 rows, 78% corpus coverage (Crossref + OpenAlex)
+  - QC verified: precision = recall = 1.0 on 30-paper sample
+  - Remaining 22%: publishers without API reference metadata
+  - **Next session**: OCR/PDF extraction to recover 7% core gap
+- Quarto: 4 documents, 11 shared includes (added citation-quality.md)
+- Table 1 (intellectual traditions): empirical detection pending re-run
+  co-citation communities with enriched citation graph
+- **Next: re-run co-citation analysis, finalize Table 1, submit**
