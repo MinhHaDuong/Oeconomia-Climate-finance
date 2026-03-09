@@ -1,9 +1,9 @@
-source,total,core
-openalex,21007,1399
-openalex_historical,10072,702
-istex,436,37
-bibcnrs,233,0
-scispsace,661,35
-grey,209,2
-teaching,71,62
-TOTAL (deduplicated),22113,1461
+Source,Query,Raw,Refined,non-EN,%Journal,%DOI,%Refs
+OpenAlex,"title/abstract search: ""climate finance"", ""finance climat""",21401,21007,808,83%,80%,36%
+OpenAlex (historical),"14 pre-2009 terms (CDM, carbon finance, adaptation fund, ...)",10136,10072,386,84%,72%,33%
+ISTEX,"French institutional full-text repository (Springer, Elsevier, Wiley)",482,436,16,100%,100%,86%
+bibCNRS,"non-English queries: FR, ZH, JA via WoS/EconLit/FRANCIS",233,233,6,85%,14%,1%
+SciSpace,AI-curated seed expansion (systematic review + RIS export),663,661,3,74%,80%,46%
+Grey literature,"World Bank OKR API + curated YAML (OECD, UNFCCC reports)",213,209,0,100%,70%,0%
+Teaching canon,MBA/doctoral syllabi (hand-curated seed list),73,71,0,96%,96%,83%
+TOTAL (deduplicated),,22561,22113,820,83%,79%,37%
