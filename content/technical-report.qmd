@@ -48,6 +48,10 @@ This document describes the computational pipeline used to produce the bibliomet
 
 ---
 
+{{< include _includes/citation-quality.md >}}
+
+---
+
 {{< include _includes/core-vs-full.md >}}
 
 ---

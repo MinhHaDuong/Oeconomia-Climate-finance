@@ -33,7 +33,7 @@ export SOURCE_DATE_EPOCH := 0
 INCLUDES    := $(wildcard content/_includes/*.md)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures data clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures data citations clean rebuild archive verify-remote
 
 all: manuscript papers
 
@@ -102,11 +102,18 @@ ALL_FIGS := $(MANUSCRIPT_FIGS) \
 figures: $(ALL_FIGS)
 
 # ── Data collection (slow — not in default target) ───────
-data:
+data: citations
 	uv run python scripts/count_openalex_econ_cf.py
 	uv run python scripts/count_openalex_econ_cf.py --scope finance
 	uv run python scripts/count_openalex_econ_fin_overlap.py
 	uv run python scripts/count_repec_econ_cf.py
+
+# Citation enrichment: run Crossref first, then OpenAlex to fill the gap.
+# Both scripts are resumable; re-running only fetches what's missing.
+citations:
+	uv run python scripts/enrich_citations_batch.py
+	uv run python scripts/enrich_citations_openalex.py
+	uv run python scripts/qc_citations.py
 
 # ── Replication archive ─────────────────────────────────
 SHELL := /bin/bash
