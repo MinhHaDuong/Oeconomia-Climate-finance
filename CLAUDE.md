@@ -11,11 +11,9 @@ Do NOT add project structure, data paths, conventions, or guidelines here.
 
 - Manuscript: ~9,400 words, 47 bib entries, 2 figures + 1 table
 - Corpus: 22,113 refined works, 18,798 with embeddings, 1,176 core
-- Citation graph: 595,923 rows, 78% corpus coverage (Crossref + OpenAlex)
-  - QC verified: precision = recall = 1.0 on 30-paper sample
-  - Remaining 22%: publishers without API reference metadata
-  - **Next session**: OCR/PDF extraction to recover 7% core gap
-- Quarto: 4 documents, 11 shared includes (added citation-quality.md)
-- Table 1 (intellectual traditions): empirical detection pending re-run
-  co-citation communities with enriched citation graph
-- **Next: re-run co-citation analysis, finalize Table 1, submit**
+- Citation graph: 595,923 rows, 61% corpus coverage
+- Quarto: 4 documents, 11 shared includes
+- Figures redesigned for Oeconomia (grayscale, 12cm, serif): Fig 1, Fig 2, Table 2 done
+- Corpus QA: language/type/LLM verification scripts written and applied
+- Table 1 (traditions): co-citation communities across 3 windows, merge after 2007
+- **Next**: corpus relevance tightening, Table 1, manuscript text updates
