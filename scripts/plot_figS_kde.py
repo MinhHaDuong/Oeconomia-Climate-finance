@@ -1,0 +1,94 @@
+"""Grayscale KDE of the efficiency-accountability axis scores for the supplement.
+
+Produces:
+- content/figures/figS_kde.png (+.pdf unless --no-pdf)
+"""
+
+import argparse
+import os
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy.stats import gaussian_kde
+from sklearn.mixture import GaussianMixture
+
+sys.path.insert(0, os.path.dirname(__file__))
+from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT, FILL
+from utils import BASE_DIR, save_figure
+
+apply_style()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="KDE of bimodality axis scores")
+    parser.add_argument("--no-pdf", action="store_true", help="Skip PDF output")
+    args = parser.parse_args()
+
+    # Load scores
+    path = os.path.join(BASE_DIR, "content", "tables", "tab5_pole_papers.csv")
+    df = pd.read_csv(path)
+    scores = df["axis_score"].dropna().values
+    print(f"Loaded {len(scores)} axis scores from {path}")
+
+    # KDE
+    x = np.linspace(scores.min() - 0.1, scores.max() + 0.1, 500)
+    kde = gaussian_kde(scores)
+    density = kde(x)
+
+    # Fit 2-component GMM
+    gmm = GaussianMixture(n_components=2, random_state=42)
+    gmm.fit(scores.reshape(-1, 1))
+
+    # Also fit 1-component for BIC comparison
+    gmm1 = GaussianMixture(n_components=1, random_state=42)
+    gmm1.fit(scores.reshape(-1, 1))
+    delta_bic = gmm1.bic(scores.reshape(-1, 1)) - gmm.bic(scores.reshape(-1, 1))
+
+    # Component curves
+    from scipy.stats import norm
+
+    for k in range(2):
+        mu = gmm.means_[k, 0]
+        sigma = np.sqrt(gmm.covariances_[k, 0, 0])
+        weight = gmm.weights_[k]
+        comp_density = weight * norm.pdf(x, mu, sigma)
+        if k == 0:
+            comp1 = comp_density
+        else:
+            comp2 = comp_density
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(FIGWIDTH, 3.0))
+
+    ax.fill_between(x, density, color=FILL, alpha=0.7)
+    ax.plot(x, density, color=DARK, linewidth=1.0, label="KDE")
+    ax.plot(x, comp1, color=MED, linewidth=0.8, linestyle="--", label="GMM component 1")
+    ax.plot(x, comp2, color=LIGHT, linewidth=0.8, linestyle="--", label="GMM component 2")
+
+    # Vertical line at 0
+    ax.axvline(0, color=MED, linewidth=0.5, linestyle=":")
+
+    # Annotation
+    ax.text(
+        0.97, 0.93,
+        f"\u0394BIC = {delta_bic:,.0f}",
+        transform=ax.transAxes,
+        ha="right", va="top",
+        fontsize=7, color=DARK,
+    )
+
+    ax.set_xlabel("\u2190 Accountability \u2014 Score \u2014 Efficiency \u2192")
+    ax.set_ylabel("Density")
+    ax.legend(loc="upper left", frameon=False)
+
+    fig.tight_layout()
+
+    out_path = os.path.join(BASE_DIR, "content", "figures", "figS_kde")
+    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    main()

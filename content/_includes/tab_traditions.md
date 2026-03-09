@@ -1,0 +1,7 @@
+| Tradition | Key references | Core question | What it contributed to climate finance |
+|:----------|:---------------|:--------------|:---------------------------------------|
+| Environmental economics (externality framework) | @ayres_kneese1969; @nordhaus1992; @manne_richels1992; @stern2007; @weitzman2007; @weitzman2009 | What should the carbon price be? | Cost-benefit logic, optimal abatement paths, shadow prices of carbon --- but no concept of North--South financial *flows* |
+| Development economics (categories of aid) | @desrosieres1998; @michaelowa2007; OECD DAC statistical directives; Rio markers (1998) | How to count and channel aid effectively? | ODA accounting infrastructure, concessionality thresholds, bilateral/multilateral classifications --- the readymade measurement apparatus grafted onto climate finance after Copenhagen |
+| Burden-sharing (equity in collective action) | @negishi1960; UNFCCC Art. 4.3 (1992); Kyoto Protocol (1997); @michaelowa2019; @stadelmann2011 | Who should pay for climate action? | Differentiated responsibilities, equity principles, "new and additional" resources --- but transfers remained welfare-theoretic constructs, not tracked financial flows |
+
+: Three intellectual traditions preceding the emergence of climate finance as a distinct economic object (pre-2007). Each tradition addressed aspects of what would later be called climate finance, but none constituted it as a category with its own metrics and institutions. {#tbl-traditions}
