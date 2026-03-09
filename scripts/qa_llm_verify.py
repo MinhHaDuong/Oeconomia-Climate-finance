@@ -45,31 +45,27 @@ def build_prompt(row):
     source = str(row.get("source", "") or "")
 
     text = f"""You are a research librarian verifying bibliographic metadata.
-Given this record, answer each question with a JSON object.
 
 RECORD:
-  Title: {title}
-  Author: {first_author}
-  Year: {year}
-  Journal: {journal}
-  DOI: {doi}
-  Language tag: {language}
-  Source: {source}
-  Abstract (truncated): {abstract}
+- Title: {title}
+- Author: {first_author}
+- Year: {year}
+- Journal: {journal}
+- DOI: {doi}
+- Language tag: {language}
+- Source database: {source}
+- Abstract: {abstract}
 
-QUESTIONS (answer in JSON):
-1. "language_correct": Is the language tag "{language}" correct for this record's
-   title/abstract text? Answer true/false. If false, give "language_should_be" (ISO 639-1 code).
-2. "doc_type": What type of document is this? One of: article, review, book,
-   book-chapter, report, working-paper, conference-paper, dissertation, other.
-3. "doi_looks_valid": Does the DOI "{doi}" look like a plausible DOI for this record?
-   Answer true/false/na (na if no DOI).
-4. "refs_expected": Would you expect Crossref to have reference data for this record?
-   Answer true (journal article with DOI), false (grey lit, book, no DOI), or uncertain.
-5. "is_climate_finance": Is this record genuinely about climate finance or closely related?
-   Answer true/false/borderline.
+Return a JSON object with exactly these keys:
+{{"language_correct": true or false, "language_should_be": "xx" or null, "doc_type": "article" or "review" or "book" or "book-chapter" or "report" or "working-paper" or "conference-paper" or "dissertation" or "other", "doi_looks_valid": true or false or "na", "refs_expected": true or false or "uncertain", "is_climate_finance": true or false or "borderline"}}
 
-Respond ONLY with a JSON object, no markdown fences, no explanation."""
+For language_correct: is "{language}" the correct ISO 639-1 code for the title/abstract language? If the language tag is empty/missing, answer false and provide language_should_be.
+For doc_type: classify based on all metadata clues.
+For doi_looks_valid: "na" if DOI is empty.
+For refs_expected: true if a journal article with a DOI (Crossref likely has references).
+For is_climate_finance: does this work study climate finance, green finance, carbon markets, climate adaptation/mitigation funding, or closely related topics?
+
+JSON only, no markdown, no explanation."""
 
     return text
 

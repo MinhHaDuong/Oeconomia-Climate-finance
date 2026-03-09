@@ -1,9 +1,9 @@
 Source,Query,Raw,Refined,non-EN,%Journal,%DOI,%Refs
-OpenAlex,"title/abstract search: ""climate finance"", ""finance climat""",21401,21007,808,83%,80%,36%
-OpenAlex (historical),"14 pre-2009 terms (CDM, carbon finance, adaptation fund, ...)",10136,10072,386,84%,72%,33%
-ISTEX,"French institutional full-text repository (Springer, Elsevier, Wiley)",482,436,16,100%,100%,86%
-bibCNRS,"non-English queries: FR, ZH, JA via WoS/EconLit/FRANCIS",233,233,6,85%,14%,1%
-SciSpace,AI-curated seed expansion (systematic review + RIS export),663,661,3,74%,80%,46%
-Grey literature,"World Bank OKR API + curated YAML (OECD, UNFCCC reports)",213,209,0,100%,70%,0%
-Teaching canon,MBA/doctoral syllabi (hand-curated seed list),73,71,0,96%,96%,83%
-TOTAL (deduplicated),,22561,22113,820,83%,79%,37%
+OpenAlex,"title/abstract search: ""climate finance"", ""finance climat""",21401,21007,564,83%,80%,62%
+OpenAlex (historical),"14 pre-2009 terms (CDM, carbon finance, adaptation fund, ...)",10136,10072,156,84%,72%,57%
+ISTEX,"French institutional full-text repository (Springer, Elsevier, Wiley)",482,436,14,100%,100%,88%
+bibCNRS,"non-English queries: FR, ZH, JA via WoS/EconLit/FRANCIS",233,233,169,85%,14%,1%
+SciSpace,AI-curated seed expansion (systematic review + RIS export),663,661,21,74%,80%,63%
+Grey literature,"World Bank OKR API + curated YAML (OECD, UNFCCC reports)",213,209,19,14%,70%,6%
+Teaching canon,MBA/doctoral syllabi (hand-curated seed list),73,71,0,96%,96%,90%
+TOTAL (deduplicated),,22561,22113,773,82%,79%,61%
