@@ -69,9 +69,11 @@ The primary corpus file. Each row represents one deduplicated work.
 
 **Size:** 22,113 rows.
 
-### embeddings.npy
+### embeddings.npz
 
-NumPy array of shape (18,798 $\times$ 384), containing L2-normalized sentence-transformer embeddings. Rows correspond to the subset of `refined_works.csv` with abstracts longer than 50 characters and publication years 1990--2025, in the same row order.
+Compressed NumPy archive containing L2-normalized sentence-transformer embeddings. Each work's embedded text concatenates its title, abstract (if available), and keywords. Rows correspond to works in `refined_works.csv` with non-empty titles and publication years 1990--2025.
+
+**Contents:** `vectors` (N $\times$ 384 float32), `keys` (DOI or source_id per row), `model` (model name), `text_fields` (input specification). The keyed cache supports incremental updates --- only new works are encoded when the corpus grows.
 
 **Model:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers library).
 
