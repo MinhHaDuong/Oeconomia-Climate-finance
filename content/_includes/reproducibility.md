@@ -57,7 +57,7 @@ uv run python scripts/analyze_genealogy.py --robustness  # Louvain resolution se
 | `catalog_merge.py` | `*_works.csv` | `unified_works.csv` |
 | `corpus_refine.py` | `unified_works.csv`, `citations.csv`*, `embeddings.npy`* | `refined_works.csv`, `corpus_audit.csv` |
 | `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npy`, `semantic_clusters.csv` |
-| `analyze_alluvial.py` | `refined_works.csv`, `embeddings.npy` | `fig_breakpoints`, `fig_alluvial`, `tab_*.csv`, `cluster_labels.json` |
+| `analyze_alluvial.py` | `refined_works.csv`, `embeddings.npy` | `fig_breakpoints`, `fig_composition`, `tab_*.csv`, `cluster_labels.json` |
 | `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npy` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |
 | `analyze_genealogy.py` | `refined_works.csv`, `citations.csv`, `semantic_clusters.csv`, `tab_pole_papers.csv` | `fig_genealogy`, `tab_lineages.csv` |
 | `plot_fig45_pca_scatter.py` | `refined_works.csv`, `embeddings.npy` | `fig_seed_axis_core`, `fig_pca_scatter`, `tab_*.csv` |
@@ -93,9 +93,9 @@ The mirror was last synced 2026-02-26 (~2,334 archive directories). Re-run the s
 
 ### Cross-machine reproducibility
 
-Figures that do not involve KMeans clustering (fig_emergence, fig_genealogy, fig_seed_axis_core, fig_robustness) are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
+Figures that do not involve KMeans clustering (fig_bars, fig_genealogy, fig_seed_axis_core, fig_robustness) are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
 
-Figures that depend on KMeans (fig_breakpoints, fig_alluvial, fig_bimodality, and their core variants) may differ across machines. This is because scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. The resulting cluster assignments can differ at the margin, producing visually similar but not byte-identical figures. Substantive results (breakpoint years, ΔBIC values, period boundaries) are robust to these differences.
+Figures that depend on KMeans (fig_breakpoints, fig_composition, fig_bimodality, and their core variants) may differ across machines. This is because scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. The resulting cluster assignments can differ at the margin, producing visually similar but not byte-identical figures. Substantive results (breakpoint years, ΔBIC values, period boundaries) are robust to these differences.
 
 ### Non-reproducible steps
 

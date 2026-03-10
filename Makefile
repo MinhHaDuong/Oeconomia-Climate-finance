@@ -120,6 +120,7 @@ corpus-discover:
 
 # Phase 2: Enrich abstracts + citations (parallel), then embeddings
 # Abstracts and citations are independent; embeddings need abstracts.
+# Requires: uv sync --group corpus  (torch, sentence-transformers, hdbscan, …)
 corpus-enrich:
 	uv run python scripts/enrich_abstracts.py
 	uv run python scripts/enrich_citations_batch.py
