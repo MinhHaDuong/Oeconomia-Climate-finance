@@ -103,6 +103,26 @@ def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
     raise RuntimeError(f"Failed after {max_retries} retries: {url}")
 
 
+EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
+
+
+def load_embeddings():
+    """Load embedding vectors from the .npz cache.
+
+    Returns the (N, 384) float32 array. Raises FileNotFoundError if missing.
+    Also supports legacy .npy files for backwards compatibility.
+    """
+    import numpy as np
+
+    if os.path.exists(EMBEDDINGS_PATH):
+        return np.load(EMBEDDINGS_PATH)["vectors"]
+    # Legacy fallback
+    legacy = os.path.join(CATALOGS_DIR, "embeddings.npy")
+    if os.path.exists(legacy):
+        return np.load(legacy)
+    raise FileNotFoundError(f"No embeddings found at {EMBEDDINGS_PATH}")
+
+
 def save_csv(df, path):
     """Save DataFrame to CSV with UTF-8 encoding."""
     os.makedirs(os.path.dirname(path), exist_ok=True)

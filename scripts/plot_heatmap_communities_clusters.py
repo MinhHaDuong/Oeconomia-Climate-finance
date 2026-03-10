@@ -84,8 +84,8 @@ in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 df = works[has_abstract & in_range].copy().reset_index(drop=True)
 print(f"Works with abstracts (1990-2025): {len(df)}")
 
-embeddings_path = os.path.join(CATALOGS_DIR, "embeddings.npy")
-embeddings = np.load(embeddings_path)
+embeddings_path = os.path.join(CATALOGS_DIR, "embeddings.npz")
+embeddings = np.load(embeddings_path, allow_pickle=True)["vectors"]
 if len(embeddings) != len(df):
     raise RuntimeError(
         f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "

@@ -42,7 +42,7 @@ BASE_DIR = MAIN_REPO
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(TABLES_DIR, exist_ok=True)
 
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
+EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
 # ============================================================
 # SEED DEFINITIONS
@@ -162,7 +162,7 @@ in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 emb_mask = has_abstract & in_range
 emb_df = works[emb_mask].copy().reset_index(drop=True)
 
-embeddings = np.load(EMBEDDINGS_PATH)
+embeddings = np.load(EMBEDDINGS_PATH, allow_pickle=True)["vectors"]
 assert len(embeddings) == len(emb_df), f"Embedding mismatch: {len(embeddings)} vs {len(emb_df)}"
 print(f"Papers with embeddings: {len(emb_df)} ({embeddings.shape[1]}D)")
 

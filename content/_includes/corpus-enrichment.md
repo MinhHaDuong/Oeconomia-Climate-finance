@@ -39,7 +39,7 @@ The script `analyze_embeddings.py` computes 384-dimensional sentence embeddings 
 
 Outputs:
 
-- `embeddings.npy`: Dense embedding matrix (N × 384).
+- `embeddings.npz`: Compressed embedding cache (vectors, DOI keys, model metadata).
 - `semantic_clusters.csv`: Cluster assignments from HDBSCAN, with UMAP coordinates for visualization.
 
 Embeddings are needed for semantic outlier detection (flag 5 in §3) and for the alluvial and bimodality analyses.

@@ -39,7 +39,7 @@ CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(TABLES_DIR, exist_ok=True)
 
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
+EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
 # =============================================================================
 # 1. Load data and align embeddings (same logic as analyze_bimodality.py)
@@ -58,7 +58,7 @@ has_abstract = works["abstract"].notna() & (works["abstract"].str.len() > 50)
 in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 df_all = works[has_abstract & in_range].copy().reset_index(drop=True)
 
-embeddings_all = np.load(EMBEDDINGS_PATH)
+embeddings_all = np.load(EMBEDDINGS_PATH, allow_pickle=True)["vectors"]
 assert len(embeddings_all) == len(df_all), (
     f"Embedding alignment mismatch: {len(embeddings_all)} embeddings vs {len(df_all)} papers"
 )

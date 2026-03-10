@@ -7,7 +7,7 @@ Phase B: Protect key papers (high citations, multi-source, cited in corpus)
 Phase C: Verify flags (blacklist validation, LLM random-sample audit)
 Phase D: Apply filter (only after verification)
 
-Reads:  data/catalogs/unified_works.csv, citations.csv, embeddings.npy
+Reads:  data/catalogs/unified_works.csv, citations.csv, embeddings.npz
 Writes: data/catalogs/refined_works.csv, data/catalogs/corpus_audit.csv
 
 Usage:
@@ -26,10 +26,9 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_csv
+from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, save_csv
 
 # --- Paths ---
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 
 # --- Title blacklist ---
@@ -703,7 +702,8 @@ def main():
         emb_df = emb_df[(emb_df["year_num"] >= 1990) & (emb_df["year_num"] <= 2025)]
         emb_df = emb_df.reset_index(drop=True)
 
-        embeddings = np.load(EMBEDDINGS_PATH)
+        cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
+        embeddings = cache["vectors"] if "vectors" in cache.files else cache
         if len(embeddings) != len(emb_df):
             print(f"  WARNING: embedding size mismatch ({len(embeddings)} vs {len(emb_df)})")
             print(f"  Skipping semantic outlier detection.")

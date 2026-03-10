@@ -29,7 +29,7 @@ from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
-from utils import BASE_DIR, CATALOGS_DIR, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, load_embeddings, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -49,7 +49,6 @@ TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
 
 # --- Constants ---
 CITE_THRESHOLD = 50
@@ -111,11 +110,11 @@ print("Loading data...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
-has_abstract = works["abstract"].notna() & (works["abstract"].str.len() > 50)
+has_title = works["title"].notna() & (works["title"].str.len() > 0)
 in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
-df = works[has_abstract & in_range].copy().reset_index(drop=True)
+df = works[has_title & in_range].copy().reset_index(drop=True)
 
-embeddings = np.load(EMBEDDINGS_PATH)
+embeddings = load_embeddings()
 assert len(embeddings) == len(df), (
     f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
 )

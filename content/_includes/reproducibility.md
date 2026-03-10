@@ -25,13 +25,13 @@ uv run python scripts/catalog_grey.py                # World Bank API + YAML see
 uv run python scripts/catalog_merge.py               # → unified_works.csv
 uv run python scripts/corpus_refine.py --apply       # → refined_works.csv (22,113)
 
-# Stage 3: Embeddings (slow, ~16 min CPU)
-uv run python scripts/analyze_embeddings.py          # → embeddings.npy (18,798 x 384)
+# Stage 3: Embeddings (~16 min full, incremental for additions)
+uv run python scripts/analyze_embeddings.py          # → embeddings.npz (incremental cache)
 
 # Stage 4: Co-citation (depends on citations.csv from enrich_citations.py)
 uv run python scripts/analyze_cocitation.py          # → communities.csv
 
-# Stage 5: Figures (each depends on refined_works.csv + embeddings.npy)
+# Stage 5: Figures (each depends on refined_works.csv + embeddings.npz)
 uv run python scripts/plot_fig1_emergence.py         # emergence
 uv run python scripts/analyze_alluvial.py            # breakpoints + alluvial
 uv run python scripts/analyze_alluvial.py --core-only   # core analysis
@@ -55,12 +55,12 @@ uv run python scripts/analyze_genealogy.py --robustness  # Louvain resolution se
 | Script | Reads | Writes |
 |---|---|---|
 | `catalog_merge.py` | `*_works.csv` | `unified_works.csv` |
-| `corpus_refine.py` | `unified_works.csv`, `citations.csv`*, `embeddings.npy`* | `refined_works.csv`, `corpus_audit.csv` |
-| `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npy`, `semantic_clusters.csv` |
-| `analyze_alluvial.py` | `refined_works.csv`, `embeddings.npy` | `fig_breakpoints`, `fig_composition`, `tab_*.csv`, `cluster_labels.json` |
-| `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npy` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |
+| `corpus_refine.py` | `unified_works.csv`, `citations.csv`*, `embeddings.npz`* | `refined_works.csv`, `corpus_audit.csv` |
+| `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npz` (incremental cache), `semantic_clusters.csv` |
+| `analyze_alluvial.py` | `refined_works.csv`, `embeddings.npz` | `fig_breakpoints`, `fig_composition`, `tab_*.csv`, `cluster_labels.json` |
+| `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npz` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |
 | `analyze_genealogy.py` | `refined_works.csv`, `citations.csv`, `semantic_clusters.csv`, `tab_pole_papers.csv` | `fig_genealogy`, `tab_lineages.csv` |
-| `plot_fig45_pca_scatter.py` | `refined_works.csv`, `embeddings.npy` | `fig_seed_axis_core`, `fig_pca_scatter`, `tab_*.csv` |
+| `plot_fig45_pca_scatter.py` | `refined_works.csv`, `embeddings.npz` | `fig_seed_axis_core`, `fig_pca_scatter`, `tab_*.csv` |
 
 \* Optional; skipped with `--skip-citation-flag` or when file is absent.
 
@@ -74,7 +74,7 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 |---|---|
 | OpenAlex harvest | ~15 min |
 | Crossref citation enrichment | ~3--4 hours |
-| Embedding generation | ~16 min |
+| Embedding generation | ~16 min full; incremental for additions |
 | Breakpoint + alluvial analysis | ~2 min |
 | Bimodality analysis | ~1 min |
 | Citation genealogy | ~1 min |

@@ -35,7 +35,7 @@ from sklearn.metrics import adjusted_rand_score
 import matplotlib.ticker as ticker
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, load_embeddings, normalize_doi, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -45,7 +45,6 @@ TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npy")
 
 # COP events for annotation
 COP_EVENTS = {
@@ -99,14 +98,14 @@ print("Loading unified works...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
-# Filter: must have abstract, year in range (matches embedding generation)
-has_abstract = works["abstract"].notna() & (works["abstract"].str.len() > 50)
+# Filter: must have title, year in range (matches embedding generation)
+has_title = works["title"].notna() & (works["title"].str.len() > 0)
 in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
-df = works[has_abstract & in_range].copy().reset_index(drop=True)
-print(f"Works with abstracts (1990-2025): {len(df)}")
+df = works[has_title & in_range].copy().reset_index(drop=True)
+print(f"Works with titles (1990-2025): {len(df)}")
 
-print(f"Loading cached embeddings from {EMBEDDINGS_PATH}...")
-embeddings = np.load(EMBEDDINGS_PATH)
+print("Loading cached embeddings...")
+embeddings = load_embeddings()
 if len(embeddings) != len(df):
     raise RuntimeError(
         f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "

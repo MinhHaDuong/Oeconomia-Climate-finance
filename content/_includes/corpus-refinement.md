@@ -10,7 +10,7 @@ Six flags are applied to each paper:
 2. **No abstract + irrelevant title:** Papers with abstracts shorter than 50 characters whose titles lack safe domain words. (Re-evaluated after abstract enrichment — papers that gained abstracts may be unflagged.)
 3. **Title blacklist:** Papers whose titles contain noise terms (e.g., "blockchain," "cryptocurrency," "deep learning," "metaverse") but no safe domain words.
 4. **Citation isolation:** Papers published before 2020 that are neither cited by nor citing any other paper in the corpus. Requires `citations.csv` from §2.3.
-5. **Semantic outlier:** Papers whose embedding cosine distance from the corpus centroid exceeds mean + 2 standard deviations. Requires `embeddings.npy` from §2.4.
+5. **Semantic outlier:** Papers whose embedding cosine distance from the corpus centroid exceeds mean + 2 standard deviations. Requires `embeddings.npz` from §2.4.
 6. **LLM relevance:** Papers with weak concept-group coverage (fewer than 2 of 4 groups: climate, finance, development, environment) are scored by a language model (Gemini Flash via OpenRouter). Papers classified as irrelevant are flagged. Requires abstracts from §2.2.
 
 | Flag | Prerequisite | Phase available |
@@ -19,7 +19,7 @@ Six flags are applied to each paper:
 | 2. No abstract | None (re-evaluated after abstract enrichment) | Cheap filter |
 | 3. Title blacklist | None | Cheap filter |
 | 4. Citation isolation | `citations.csv` | Full refine only |
-| 5. Semantic outlier | `embeddings.npy` | Full refine only |
+| 5. Semantic outlier | `embeddings.npz` | Full refine only |
 | 6. LLM relevance | Abstracts + LLM API | Full refine only |
 
 ### Phase B: Protection
