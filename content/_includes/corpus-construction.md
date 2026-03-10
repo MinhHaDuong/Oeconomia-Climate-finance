@@ -2,7 +2,7 @@
 
 ### Sources
 
-The corpus assembles academic and grey literature from seven sources. Four are fully automated (reproducible from the repository and an internet connection); two require manual export from institutional portals; one is a commercial AI tool export.
+The corpus assembles academic and grey literature from seven sources. Five are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
 
 | Source | Script | Automation | Coverage |
 |---|---|---|---|
@@ -14,7 +14,7 @@ The corpus assembles academic and grey literature from seven sources. Four are f
 | bibCNRS | `catalog_bibcnrs.py` | **Hand-harvested** (CNRS Janus auth) | Non-English literature (FR, ZH, JA) via WoS/EconLit/FRANCIS |
 | SciSpace | `catalog_scispsace.py` | **Hand-harvested** (commercial tool) | AI-curated thematic corpus (RIS + CSV exports) |
 
-The two hand-harvested sources cannot currently be automated: bibCNRS requires CNRS institutional credentials with no public API, and SciSpace is a commercial AI research tool requiring manual export. Together they contribute ~780 works before deduplication (~3% of the unified corpus), primarily filling gaps in non-English coverage and AI-curated seed papers. Their inclusion is justified by multi-source overlap validation: 536 works appear in both a hand-harvested and an automated source, confirming retrieval consistency.
+The two hand-harvested sources cannot currently be automated: bibCNRS requires CNRS institutional credentials with no public API, and SciSpace is a commercial AI research tool requiring manual export. Together they contribute ~900 works before deduplication (~3% of the unified corpus), primarily filling gaps in non-English coverage and AI-curated seed papers. Their inclusion is justified by multi-source overlap validation: over 500 works appear in both a hand-harvested and an automated source, confirming retrieval consistency.
 
 ### Search strategy: tiered keyword taxonomy
 
@@ -30,7 +30,7 @@ The search strategy uses a four-tier query taxonomy reflecting the evolving voca
 
 ### Data architecture
 
-Raw API responses are stored in an append-only pool (`pool/openalex/`, `pool/semanticscholar/`) as gzipped JSONL files — one file per query term. This preserves the complete API response for future re-extraction without re-downloading. Extracted records are derived reproducibly into `*_works.csv` catalog files. Citation links from OpenAlex's `referenced_works` field are extracted directly during the catalog build, reducing dependence on Crossref for citation enrichment.
+Raw API responses are stored in an append-only pool (`pool/openalex/`, `pool/semanticscholar/`, `pool/istex/`) as gzipped JSONL files — one file per query term. This preserves the complete API response for future re-extraction without re-downloading. Extracted records are derived reproducibly into `*_works.csv` catalog files. Citation links from OpenAlex's `referenced_works` field are extracted directly during the catalog build, reducing dependence on Crossref for citation enrichment.
 
 ### Why not Crossref for discovery?
 
