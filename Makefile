@@ -102,10 +102,19 @@ ALL_FIGS := $(MANUSCRIPT_FIGS) \
 figures: $(ALL_FIGS)
 
 # ── Corpus pipeline (slow — downloads from APIs) ─────────
+# Phase 1: Discovery (5 automated sources + 2 hand-harvested imports)
+# Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
+# pre-placed in $(DATA_DIR) before running.
+# Phase 2: Merge → teaching canon → re-merge → refine
+# (teaching canon matches readings against unified_works.csv,
+#  then re-merge incorporates teaching_works.csv)
 corpus:
+	uv run python scripts/catalog_istex.py --api
 	uv run python scripts/catalog_openalex.py --resume
 	uv run python scripts/catalog_semanticscholar.py --resume
 	uv run python scripts/catalog_grey.py
+	uv run python scripts/catalog_merge.py
+	uv run python scripts/build_teaching_canon.py
 	uv run python scripts/catalog_merge.py
 	uv run python scripts/corpus_refine.py --apply --skip-llm
 
