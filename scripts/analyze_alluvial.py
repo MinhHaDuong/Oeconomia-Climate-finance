@@ -7,14 +7,14 @@ Method:
 - Alluvial diagram using data-derived periods
 
 Produces:
-- figures/fig2_breakpoints.pdf: JS divergence time series with COP overlay
-- figures/fig3_alluvial.pdf: Community flows across data-derived periods
-- tables/tab2_breakpoints.csv: Yearly divergence metrics for w=2,3,4
-- tables/tab2_breakpoint_robustness.csv: Top breakpoints, stability flags
-- tables/tab2_alluvial.csv: Period-community paper counts
+- figures/fig_breakpoints.pdf: JS divergence time series with COP overlay
+- figures/fig_alluvial.pdf: Community flows across data-derived periods
+- tables/tab_breakpoints.csv: Yearly divergence metrics for w=2,3,4
+- tables/tab_breakpoint_robustness.csv: Top breakpoints, stability flags
+- tables/tab_alluvial.csv: Period-community paper counts
 
 With --robustness flag:
-- tables/tab2_k_sensitivity.csv: JS divergence for k=4,5,6,7
+- tables/tab_k_sensitivity.csv: JS divergence for k=4,5,6,7
 """
 
 import argparse

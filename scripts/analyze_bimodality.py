@@ -8,12 +8,12 @@ Method:
 - Validate with TF-IDF and keyword co-occurrence
 
 Produces:
-- figures/fig5_bimodality.pdf: KDE of embedding scores by period
-- figures/fig5_bimodality_lexical.pdf: TF-IDF version (appendix)
-- figures/fig5_bimodality_keywords.pdf: Keyword scatter (appendix)
-- tables/tab5_bimodality.csv: Dip test p-values, GMM BIC, pole paper counts
-- tables/tab5_pole_papers.csv: Per-paper score and pole assignment
-- tables/tab5_axis_detection.csv: Unsupervised TF-IDF components and alignment to pole axis
+- figures/fig_bimodality.pdf: KDE of embedding scores by period
+- figures/fig_bimodality_lexical.pdf: TF-IDF version (appendix)
+- figures/fig_bimodality_keywords.pdf: Keyword scatter (appendix)
+- tables/tab_bimodality.csv: Dip test p-values, GMM BIC, pole paper counts
+- tables/tab_pole_papers.csv: Per-paper score and pole assignment
+- tables/tab_axis_detection.csv: Unsupervised TF-IDF components and alignment to pole axis
 """
 
 import argparse

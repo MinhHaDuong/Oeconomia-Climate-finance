@@ -8,8 +8,8 @@ Two modes:
                  Best on full corpus (3 qualifying PCs). Good for appendix.
 
 Produces:
-- figures/fig4_pca_scatter*.{png,pdf}: Scatter plot(s)
-- tables/tab4*_pca_components*.csv: Component metadata
+- figures/fig_pca_scatter*.{png,pdf}: Scatter plot(s)
+- tables/tab_pca_components*.csv: Component metadata
 
 Usage:
     uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised [--no-pdf]

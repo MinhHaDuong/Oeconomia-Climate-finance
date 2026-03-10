@@ -6,9 +6,9 @@ Method (Small 1973, White & Griffith 1981):
   communities using the Louvain algorithm.
 
 Produces:
-- figures/fig2_communities.pdf: Co-citation network with community coloring
+- figures/fig_communities.pdf: Co-citation network with community coloring
 - data/catalogs/communities.csv: Community assignments for top-cited works
-- tables/tab2_community_summary.csv: Top works per community
+- tables/tab_community_summary.csv: Top works per community
 """
 
 import os

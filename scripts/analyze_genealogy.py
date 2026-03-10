@@ -4,8 +4,8 @@ Visualizes the citation DAG constrained by community structure, with papers
 positioned by year (x-axis) and lineage band (y-axis).
 
 Produces:
-- figures/fig4_genealogy.pdf: Citation genealogy (~500+ papers)
-- tables/tab3_lineages.csv: Lineage assignments for backbone papers
+- figures/fig_genealogy.pdf: Citation genealogy (~500+ papers)
+- tables/tab_lineages.csv: Lineage assignments for backbone papers
 
 Options:
   --robustness        Louvain resolution sensitivity (R3)
