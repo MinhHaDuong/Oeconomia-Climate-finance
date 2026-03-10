@@ -42,7 +42,7 @@ SAFE_TITLE = [
     "climate", "carbon", "emission", "energy", "green", "environment",
     "sustainable", "adaptation", "mitigation", "renewable", "finance",
     "fund", "investment", "development", "aid", "cdm", "kyoto", "gef",
-    "paris agreement", "unfccc", "cop", "redd",
+    "paris agreement", "unfccc", "cop", "redd", "jetp",
     # French
     "climat", "financ", "carbone", "durable",
     # German
