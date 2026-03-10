@@ -84,14 +84,19 @@ def main():
     n_periods = len(pct)
     n_clusters = len(pct.columns)
 
+    # Reorder clusters by share change from first to last period:
+    # declining clusters (negative change) first, growing clusters last.
+    share_change = pct.iloc[-1] - pct.iloc[0]
+    ordered_cols = share_change.sort_values().index.tolist()
+
     # Figure: horizontal stacked bars (one per period)
     fig, ax = plt.subplots(figsize=(FIGWIDTH, 2.8))
 
     y_pos = np.arange(n_periods)
     bar_height = 0.55
 
-    for i, col in enumerate(pct.columns):
-        left = pct.iloc[:, :i].sum(axis=1).values if i > 0 else np.zeros(n_periods)
+    for i, col in enumerate(ordered_cols):
+        left = pct[ordered_cols[:i]].sum(axis=1).values if i > 0 else np.zeros(n_periods)
         widths = pct[col].values
         style = CLUSTER_STYLES[i]
         bars = ax.barh(
@@ -134,9 +139,9 @@ def main():
             fontsize=7, color=MED,
         )
 
-    # Legend below the chart
+    # Legend below the chart (ordered to match bar segments)
     handles = []
-    for i, col in enumerate(pct.columns):
+    for i, col in enumerate(ordered_cols):
         name = CLUSTER_NAMES.get(col, f"Cluster {col}")
         # Single-line version for legend
         name_oneline = name.replace("\n", " ")
