@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 # --- Dimensions ---
-FIGWIDTH = 5.0  # inches = 12.7 cm
+FIGWIDTH = 120 / 25.4  # 120 mm = 4.724 inches
 DPI = 300
 
 # --- Grayscale palette ---
@@ -56,7 +56,7 @@ def apply_style():
     mpl.rcParams.update(RCPARAMS)
 
 
-def add_period_bands(ax, y_frac=0.97, fontsize=6.5):
+def add_period_bands(ax, y_frac=0.97, fontsize=7):
     """Draw subtle vertical shading and labels for the three periods.
 
     Parameters
@@ -93,4 +93,4 @@ def add_period_lines(ax, events=None):
         ax.axvline(year - 0.5, color=MED, linewidth=0.5, linestyle="--",
                    zorder=1)
         ax.text(year - 0.3, 0.93, label, transform=ax.get_xaxis_transform(),
-                ha="left", va="top", fontsize=6, color=DARK, rotation=90)
+                ha="left", va="top", fontsize=7, color=DARK, rotation=90)

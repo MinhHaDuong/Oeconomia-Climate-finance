@@ -1,32 +1,34 @@
-"""Fig 1 (bars): Climate finance papers per year, 2000-2025.
+"""Fig 1 (bars): Corpus documents per year, 2000-2025.
 
-Simple bar chart for Oeconomia submission showing growth of climate finance
-scholarship with period boundaries.
+Stacked bar chart showing total corpus size and the subset mentioning
+"climate finance" in title or abstract. For Oeconomia submission.
 """
 
 import argparse
 import os
+import re
 import sys
 
 import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import (
     apply_style, FIGWIDTH, DPI, MED, LIGHT, DARK, FILL,
-    INCOMPLETE_FROM, add_period_bands, add_period_lines,
+    INCOMPLETE_FROM, PERIODS, add_period_bands, add_period_lines,
 )
 from utils import CATALOGS_DIR, save_figure, BASE_DIR
 
 apply_style()
 
-# Override font sizes for readability at 120mm print width (8-10pt minimum)
-import matplotlib.pyplot as plt
 matplotlib.rcParams.update({
     "axes.labelsize": 10,
     "xtick.labelsize": 9,
     "ytick.labelsize": 9,
 })
+
+CF_PATTERN = re.compile(r"\bclimate[\s-]?finance\b", re.IGNORECASE)
 
 
 def main():
@@ -35,38 +37,75 @@ def main():
                         help="Skip PDF output")
     args = parser.parse_args()
 
-    # --- Load data ---
-    csv_path = os.path.join(CATALOGS_DIR, "openalex_econ_yearly.csv")
-    df = pd.read_csv(csv_path)
-    df = df[(df["year"] >= 2000) & (df["year"] <= 2025)].copy()
-    df = df.sort_values("year")
+    # --- Load corpus ---
+    csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    df = pd.read_csv(csv_path, usecols=["year", "title", "abstract"],
+                     dtype={"year": "Int64"})
+    df = df[(df["year"] >= 1992) & (df["year"] <= 2023)].copy()
 
-    years = df["year"].values
-    counts = df["n_climate_finance"].values
+    # Flag papers mentioning "climate finance" in title or abstract
+    title = df["title"].fillna("")
+    abstract = df["abstract"].fillna("")
+    df["has_cf"] = title.str.contains(CF_PATTERN) | abstract.str.contains(CF_PATTERN)
+
+    yearly = df.groupby("year")["has_cf"].agg(["sum", "count"])
+    yearly.columns = ["cf", "total"]
+    yearly["other"] = yearly["total"] - yearly["cf"]
+    yearly = yearly.sort_index()
+
+    years = yearly.index.values
+    cf = yearly["cf"].values
+    other = yearly["other"].values
 
     # --- Plot ---
     fig, ax = plt.subplots(figsize=(FIGWIDTH, 3.5))
 
-    # All bars same color (no incomplete-year distinction)
-    ax.bar(years, counts,
-           color=MED, edgecolor="white", linewidth=0.3, zorder=2)
+    ax.bar(years, cf, color=DARK, edgecolor="white", linewidth=0.3,
+           zorder=2, label='"Climate finance"')
+    ax.bar(years, other, bottom=cf, color=LIGHT, edgecolor="white",
+           linewidth=0.3, zorder=2, label="Broader corpus")
 
-    # --- Period bands and lines ---
-    add_period_bands(ax)
-    add_period_lines(ax)
+    # --- Period bands (no vertical lines — save ink) ---
+    bands = [
+        ("Before", 1990, 2007, FILL, 1999),
+        ("Crystallisation", 2007, 2015, "#EEEEEE", None),
+        ("Disputes", 2015, 2024, FILL, None),
+    ]
+    for label, x0, x1, color, label_x in bands:
+        ax.axvspan(x0, x1, color=color, alpha=0.4, zorder=0, linewidth=0)
+        cx = label_x if label_x else (x0 + x1) / 2
+        ax.text(cx, 0.97, label, transform=ax.get_xaxis_transform(),
+                ha="center", va="top", fontsize=7, fontstyle="italic",
+                color=MED)
+    # Event labels at period boundaries (centered on the boundary)
+    for year, label in [
+        (1992, "Rio\nUNFCCC\n(1992)"),
+        (2007, "Bali\nAction Plan\n(2007)"),
+        (2015, "Paris\nAgreement\n(2015)"),
+    ]:
+        ax.text(year, 0.88, label, transform=ax.get_xaxis_transform(),
+                ha="center", va="top", fontsize=7, color=MED,
+                multialignment="center")
+
+    # --- Legend (reverse order to match stacked bars: broader on top) ---
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[::-1], labels[::-1],
+              loc="upper left", frameon=False, bbox_to_anchor=(0.0, 0.62))
 
     # --- Axes ---
-    ax.set_xlim(1999.5, 2025.5)
-    ax.set_xticks(range(2000, 2026, 5))
-    ax.tick_params(axis="x", rotation=0)  # horizontal tick labels
+    ax.set_xlim(1990, 2023.5)
+    ax.set_xticks(range(1995, 2024, 5))
+    ax.tick_params(axis="x", rotation=0)
 
-    # Move y-axis to the right side (near the data)
+    # No axis spines — ticks only
     ax.yaxis.set_label_position("right")
     ax.yaxis.tick_right()
-    ax.spines["right"].set_visible(True)
-    ax.spines["left"].set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
-    ax.set_ylabel("Number of works")
+    ax.text(2024, 2600, "Number\nof works", ha="left", va="bottom",
+            fontsize=10, color=DARK)
+    ax.set_ylabel("")
     ax.set_xlabel("")
 
     fig.tight_layout()
