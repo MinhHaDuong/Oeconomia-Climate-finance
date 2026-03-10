@@ -61,9 +61,9 @@ def main():
     fig, ax = plt.subplots(figsize=(FIGWIDTH, 3.5))
 
     ax.bar(years, cf, color=DARK, edgecolor="white", linewidth=0.3,
-           zorder=2, label='"Climate finance"')
+           zorder=2, label='of which: "climate finance" in title or abstract')
     ax.bar(years, other, bottom=cf, color=LIGHT, edgecolor="white",
-           linewidth=0.3, zorder=2, label="Broader corpus")
+           linewidth=0.3, zorder=2, label="UNFCCC financial mechanism literature")
 
     # --- Period bands (no vertical lines — save ink) ---
     bands = [
