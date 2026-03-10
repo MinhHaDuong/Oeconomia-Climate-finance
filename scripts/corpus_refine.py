@@ -100,10 +100,112 @@ def title_has_safe_words(title):
 
 
 # ============================================================
+# Flag 6: LLM relevance scoring with cache
+# ============================================================
+
+LLM_CACHE_PATH = os.path.join(CATALOGS_DIR, "llm_relevance_cache.csv")
+
+
+def load_llm_relevance_cache():
+    """Load cached LLM relevance scores {doi: bool}."""
+    cache = {}
+    if os.path.exists(LLM_CACHE_PATH):
+        df = pd.read_csv(LLM_CACHE_PATH, dtype=str, keep_default_na=False)
+        for _, row in df.iterrows():
+            cache[row["doi"]] = row["relevant"].lower() == "true"
+    return cache
+
+
+def save_llm_relevance_cache(cache):
+    """Save LLM relevance cache to CSV."""
+    rows = [{"doi": doi, "relevant": str(rel)} for doi, rel in cache.items()]
+    pd.DataFrame(rows).to_csv(LLM_CACHE_PATH, index=False)
+
+
+def score_relevance_llm(df_subset, batch_size=15):
+    """Score papers for climate finance relevance via LLM.
+
+    Sends batched prompts to OpenRouter. Returns {doi: bool}.
+    """
+    import json
+    import urllib.request
+
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    if not api_key:
+        print("    WARNING: no OPENROUTER_API_KEY, skipping LLM scoring")
+        return {}
+
+    results = {}
+    rows = list(df_subset.itertuples())
+
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
+
+        # Build batch prompt
+        papers = []
+        dois = []
+        for j, row in enumerate(batch):
+            title = str(getattr(row, "title", ""))[:150]
+            abstract = str(getattr(row, "abstract", ""))[:250]
+            doi = getattr(row, "doi_norm", "")
+            dois.append(doi)
+            papers.append(f"{j+1}. Title: {title}\n   Abstract: {abstract}")
+
+        prompt = (
+            "For each paper below, determine if it is about climate finance, "
+            "climate policy economics, carbon markets, green investment, "
+            "or environmental finance for developing countries.\n"
+            "Answer with ONLY a JSON object mapping paper numbers to true/false.\n"
+            "Example: {\"1\": true, \"2\": false, \"3\": true}\n\n"
+            + "\n\n".join(papers)
+        )
+
+        body = json.dumps({
+            "model": "google/gemini-2.5-flash",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 200,
+            "temperature": 0,
+        }).encode()
+
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                result = json.loads(resp.read())
+            answer = result["choices"][0]["message"]["content"].strip()
+            # Parse JSON from response (handle markdown code blocks)
+            answer = re.sub(r"```json?\s*", "", answer)
+            answer = re.sub(r"```", "", answer)
+            scores = json.loads(answer)
+
+            for j, doi in enumerate(dois):
+                key = str(j + 1)
+                if key in scores and doi:
+                    results[doi] = bool(scores[key])
+        except Exception as e:
+            print(f"    LLM batch error: {e}")
+
+        time.sleep(1.0)
+        print(f"    Scored {min(i + batch_size, len(rows))}/{len(rows)}",
+              end="\r")
+
+    print()
+    return results
+
+
+# ============================================================
 # Phase A: Flag papers
 # ============================================================
 
-def flag_papers(df, citations_df, embeddings, emb_df, skip_citation_flag=False):
+def flag_papers(df, citations_df, embeddings, emb_df,
+                skip_citation_flag=False, skip_llm_relevance=False):
     """Apply all flagging rules (vectorized). Returns df with 'flags' column."""
     n = len(df)
     flags = [[] for _ in range(n)]
@@ -216,6 +318,48 @@ def flag_papers(df, citations_df, embeddings, emb_df, skip_citation_flag=False):
               f"(threshold: {threshold:.3f}, mean: {mean_dist:.3f}, std: {std_dist:.3f})")
     else:
         print("  Flag 5: skipped (no embeddings)")
+
+    # Flag 6: LLM relevance (for papers with low concept-group coverage)
+    if not skip_llm_relevance:
+        print("  Computing LLM relevance scores...")
+        # Identify candidates: papers with abstract but < 2 concept groups hit
+        has_text = abstract_s.str.len() > 50
+        low_concept = ~df["title"].fillna("").apply(
+            lambda t: text_has_concept_groups(str(t), min_groups=2)
+        ) & ~abstract_s.apply(
+            lambda a: text_has_concept_groups(str(a), min_groups=2)
+        )
+        candidates_mask = has_text & low_concept
+        # Don't re-flag already-flagged papers
+        already_flagged = pd.Series([len(f) > 0 for f in flags], index=df.index)
+        candidates_mask = candidates_mask & ~already_flagged
+
+        n_candidates = candidates_mask.sum()
+        if n_candidates > 0:
+            cache = load_llm_relevance_cache()
+            candidates = df[candidates_mask]
+            uncached = candidates[~candidates["doi_norm"].isin(cache)]
+            print(f"    Candidates: {n_candidates} "
+                  f"(cached: {n_candidates - len(uncached)}, "
+                  f"to score: {len(uncached)})")
+
+            if len(uncached) > 0:
+                new_scores = score_relevance_llm(uncached)
+                cache.update(new_scores)
+                save_llm_relevance_cache(cache)
+
+            # Flag papers scored as irrelevant
+            n_flag6 = 0
+            for i in candidates_mask[candidates_mask].index:
+                doi = df.at[i, "doi_norm"]
+                if doi in cache and not cache[doi]:
+                    flags[i].append("llm_irrelevant")
+                    n_flag6 += 1
+            print(f"  Flag 6 (LLM irrelevant): {n_flag6}")
+        else:
+            print("  Flag 6: no candidates (all papers pass concept-group check)")
+    else:
+        print("  Flag 6: skipped (--skip-llm)")
 
     df["flags"] = flags
     return df
@@ -563,7 +707,8 @@ def main():
     # Phase A: Flag
     print("\n=== Phase A: Flagging papers ===")
     df = flag_papers(df, citations_df, embeddings, emb_df,
-                     skip_citation_flag=args.skip_citation_flag)
+                     skip_citation_flag=args.skip_citation_flag,
+                     skip_llm_relevance=args.skip_llm)
 
     # Phase B: Protect
     print("\n=== Phase B: Protecting key papers ===")

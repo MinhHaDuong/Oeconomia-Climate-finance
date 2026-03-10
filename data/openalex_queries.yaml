@@ -1,0 +1,156 @@
+# OpenAlex query taxonomy for climate finance corpus
+#
+# Tiers reflect precision: Tier 1 terms are unambiguous, Tier 3-4 need
+# post-hoc relevance filtering (concept-group check on abstract text).
+#
+# Informed by keyword mining of 1,406 core papers (cited_by_count >= 50)
+# run on 2026-03-10 via mine_openalex_keywords.py.
+#
+# Each term is searched via OpenAlex default.search (title + abstract + fulltext).
+
+# --- Concept groups for relevance filtering (Tiers 3-4) ---
+concept_groups:
+  climate:
+    - climate
+    - emission
+    - greenhouse
+    - warming
+    - carbon
+    - mitigation
+    - adaptation
+    - ghg
+    - co2
+  finance:
+    - finance
+    - fund
+    - investment
+    - cost
+    - market
+    - aid
+    - grant
+    - loan
+    - subsidy
+    - fiscal
+    - monetary
+    - budget
+    - bond
+    - insurance
+  development:
+    - development
+    - developing
+    - country
+    - nation
+    - capacity
+    - transfer
+    - poverty
+    - oda
+    - bilateral
+    - multilateral
+  environment:
+    - environment
+    - energy
+    - renewable
+    - sustainable
+    - conservation
+    - ecology
+    - biodiversity
+    - forest
+    - deforestation
+
+# --- Tiered queries ---
+tiers:
+
+  # Tier 1: Core terms — high precision, no post-filter needed
+  # These terms unambiguously denote climate finance as a topic.
+  1:
+    description: Core climate finance terms (multilingual)
+    min_concept_groups: 0
+    terms:
+      # English
+      - "climate finance"
+      - "carbon finance"
+      # French
+      - "finance climat"
+      - "finance climatique"
+      # German
+      - "Klimafinanzierung"
+      # Spanish
+      - "financiamiento climático"
+      - "financiación climática"
+      # Portuguese
+      - "financiamento climático"
+      # Arabic
+      - "تمويل المناخ"
+      # Chinese
+      - "气候融资"
+      - "气候金融"
+      # Japanese
+      - "気候金融"
+      - "グリーンファイナンス"
+      # Key institutions (unambiguous)
+      - "green climate fund"
+      - "adaptation fund"
+
+  # Tier 2: Institutional and diplomatic vocabulary — no post-filter needed
+  # Specific enough to produce relevant results without concept-group check.
+  2:
+    description: Institutional, diplomatic, and market-specific terms
+    min_concept_groups: 0
+    terms:
+      # Kyoto era
+      - "clean development mechanism"
+      - "GEF climate"
+      - "Kyoto mechanism finance"
+      # UNFCCC architecture
+      - "UNFCCC financial mechanism"
+      - "standing committee on finance climate"
+      - "article 9 Paris agreement"
+      # Post-Paris / COP29
+      - "new collective quantified goal"
+      - "NCQG climate"
+      - "100 billion climate"
+      - "loss and damage fund"
+      - "loss and damage finance"
+      - "just transition finance"
+      # Markets and instruments
+      - "climate bonds"
+      - "green bonds climate"
+      - "sustainable finance climate"
+      - "REDD+ finance"
+      - "carbon offset climate"
+      - "carbon credit climate"
+      - "emissions trading climate"
+      # MDB / governance
+      - "multilateral development bank climate"
+      # Flows
+      - "adaptation financing climate"
+      - "mitigation finance"
+      - "climate risk finance"
+      - "stranded assets climate"
+
+  # Tier 3: Broader scholarly terms — need 2-of-4 concept group filter
+  # These terms are climate-adjacent; abstract must mention at least
+  # 2 concept groups (climate, finance, development, environment).
+  3:
+    description: Broader scholarly terms (relevance-filtered)
+    min_concept_groups: 2
+    terms:
+      - "carbon market development"
+      - "emission trading finance"
+      - "climate aid development"
+      - "environmental finance developing"
+      - "green investment climate"
+      - "climate investment fund"
+      - "Kyoto mechanism finance"
+      - "mitigation investment climate"
+      - "climate policy finance"
+      - "green economy climate"
+
+  # Tier 4: Broad disciplinary context — need 3-of-4 concept group filter
+  # Very broad terms that would swamp the corpus without strict filtering.
+  4:
+    description: Disciplinary context (strict relevance filter)
+    min_concept_groups: 3
+    terms:
+      - "environmental economics climate"
+      - "ecological economics climate"

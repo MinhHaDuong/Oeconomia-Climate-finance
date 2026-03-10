@@ -33,7 +33,7 @@ export SOURCE_DATE_EPOCH := 0
 INCLUDES    := $(wildcard content/_includes/*.md)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures data citations clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures data citations corpus deploy-corpus clean rebuild archive verify-remote
 
 all: manuscript papers
 
@@ -42,10 +42,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
 # ── Manuscript ───────────────────────────────────────────
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) content/figures/fig1_emergence.png content/figures/fig3_alluvial.png
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) content/figures/fig_emergence.png content/figures/fig_alluvial.png
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) content/figures/fig1_emergence.png content/figures/fig3_alluvial.png
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) content/figures/fig_emergence.png content/figures/fig_alluvial.png
 	quarto render $< --to docx
 
 # ── Companion documents ─────────────────────────────────
@@ -59,47 +59,64 @@ output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BI
 	quarto render $< --to pdf
 
 # ── Figures (Stage 1) ────────────────────────────────────
-# Fig 1: emergence (economics total + CF share)
-content/figures/fig1_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
+# Emergence (economics total + CF share)
+content/figures/fig_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
 	uv run python $< --no-pdf
 
-# Figs 2+3: breakpoints + alluvial (co-produced by one script run)
-content/figures/fig3_alluvial.png content/figures/fig2_breakpoints.png &: \
+# Breakpoints + alluvial (co-produced by one script run)
+content/figures/fig_alluvial.png content/figures/fig_breakpoints.png &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Figs 2b+3b: core-only variants (co-produced)
-content/figures/fig3b_alluvial_core.png content/figures/fig2b_breakpoints_core.png &: \
+# Core-only variants (co-produced)
+content/figures/fig_alluvial_core.png content/figures/fig_breakpoints_core.png &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
 
-# Fig 4: citation genealogy (needs bimodality output for pole assignments)
-content/figures/fig4_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab5_pole_papers.csv
+# Citation genealogy (needs bimodality output for pole assignments)
+content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
+		$(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $< --no-pdf
 
-# Fig 4 alt: PCA seed-axis scatter (core, supervised)
-content/figures/fig4_seed_axis_core.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
+# PCA seed-axis scatter (core, supervised)
+content/figures/fig_seed_axis_core.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --supervised --no-pdf
 
-# Figs 5a/5b/5c: bimodality tests (co-produced)
-content/figures/fig5a_bimodality.png content/tables/tab5_pole_papers.csv &: \
+# Bimodality tests (co-produced)
+content/figures/fig_bimodality.png content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Fig A.1a: robustness (econ vs finance vs RePEc)
-content/figures/figA_1a_robustness.png: scripts/plot_fig1_robustness.py scripts/plot_helpers.py \
+# Robustness (econ vs finance vs RePEc)
+content/figures/fig_robustness.png: scripts/plot_fig1_robustness.py scripts/plot_helpers.py \
 		$(ECON_YEARLY) $(OVERLAP)
 	uv run python $< --no-pdf
 
 # Aggregate
-MANUSCRIPT_FIGS := content/figures/fig1_emergence.png content/figures/fig3_alluvial.png
+MANUSCRIPT_FIGS := content/figures/fig_emergence.png content/figures/fig_alluvial.png
 ALL_FIGS := $(MANUSCRIPT_FIGS) \
-            content/figures/fig3b_alluvial_core.png \
-            content/figures/fig4_genealogy.png content/figures/fig4_seed_axis_core.png \
-            content/figures/fig5a_bimodality.png content/figures/figA_1a_robustness.png
+            content/figures/fig_alluvial_core.png \
+            content/figures/fig_genealogy.png content/figures/fig_seed_axis_core.png \
+            content/figures/fig_bimodality.png content/figures/fig_robustness.png
 
 figures: $(ALL_FIGS)
+
+# ── Corpus pipeline (slow — downloads from APIs) ─────────
+corpus:
+	uv run python scripts/catalog_openalex.py --resume
+	uv run python scripts/catalog_semanticscholar.py --resume
+	uv run python scripts/catalog_grey.py
+	uv run python scripts/catalog_merge.py
+	uv run python scripts/corpus_refine.py --apply --skip-llm
+
+deploy-corpus:
+	ssh $(REMOTE_HOST) 'bash -l -c "\
+	  cd ~/Oeconomia-Climate-finance && \
+	  git pull && \
+	  uv sync && \
+	  nohup make corpus > corpus.log 2>&1 &"'
+	@echo "Corpus pipeline started on $(REMOTE_HOST). Monitor with:"
+	@echo "  ssh $(REMOTE_HOST) 'tail -f ~/Oeconomia-Climate-finance/corpus.log'"
 
 # ── Data collection (slow — not in default target) ───────
 data: citations

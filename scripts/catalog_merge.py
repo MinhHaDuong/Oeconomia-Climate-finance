@@ -21,20 +21,17 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, WORKS_COLUMNS, normalize_doi,
                    normalize_title, save_csv)
 
-SOURCE_PRIORITY = ["openalex", "openalex_historical", "scopus", "istex", "jstor", "bibcnrs", "scispsace", "grey", "teaching"]
+SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "jstor", "bibcnrs", "scispsace", "grey", "teaching"]
 
 
 def pick_best(group, col):
     """Pick best non-empty value from a group following source priority."""
-    for src in SOURCE_PRIORITY:
-        rows = group[group["source"] == src]
-        for _, row in rows.iterrows():
-            val = row[col]
-            if pd.notna(val) and str(val).strip():
-                return val
-    # Fallback: first non-empty
-    for _, row in group.iterrows():
-        val = row[col]
+    # Build priority rank for each row
+    src_rank = group["source"].map(
+        {s: i for i, s in enumerate(SOURCE_PRIORITY)}
+    ).fillna(99)
+    ordered = group.loc[src_rank.sort_values().index, col]
+    for val in ordered:
         if pd.notna(val) and str(val).strip():
             return val
     return ""
