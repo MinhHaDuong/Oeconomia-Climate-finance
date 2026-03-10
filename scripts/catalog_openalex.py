@@ -329,7 +329,11 @@ def main():
     # Load existing pool IDs for resume
     existing_ids = set()
     if args.resume:
-        existing_ids = load_pool_ids("openalex")
+        raw_ids = load_pool_ids("openalex")
+        # Strip URL prefix to match the short ID format used in fetch_query
+        existing_ids = {
+            rid.replace("https://openalex.org/", "") for rid in raw_ids
+        }
         print(f"Pool contains {len(existing_ids)} existing OpenAlex IDs")
 
     # Download phase
