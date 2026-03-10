@@ -42,10 +42,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
 # ── Manuscript ───────────────────────────────────────────
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) content/figures/fig_emergence.png content/figures/fig_alluvial.png
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) content/figures/fig_bars.png content/figures/fig_composition.png
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) content/figures/fig_emergence.png content/figures/fig_alluvial.png
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) content/figures/fig_bars.png content/figures/fig_composition.png
 	quarto render $< --to docx
 
 # ── Companion documents ─────────────────────────────────
