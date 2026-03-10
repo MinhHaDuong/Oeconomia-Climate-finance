@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import torch
 import umap
 from sentence_transformers import SentenceTransformer
 
@@ -62,10 +63,12 @@ else:
     embeddings = None
 
 if embeddings is None:
-    print("Loading multilingual sentence-transformer model...")
+    n_cpu = os.cpu_count() or 4
+    torch.set_num_threads(n_cpu)
+    print(f"Loading multilingual sentence-transformer model ({n_cpu} threads)...")
     model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
-    print(f"Encoding {len(df)} abstracts (this may take a while on CPU)...")
+    print(f"Encoding {len(df)} abstracts...")
     abstracts = df["abstract"].tolist()
     embeddings = model.encode(
         abstracts,
