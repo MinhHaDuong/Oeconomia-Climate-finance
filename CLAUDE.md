@@ -7,12 +7,13 @@ Do NOT add project structure, data paths, conventions, or guidelines here.
 - PLAN.md — manuscript structure (three-act, five figures)
 - AGENTS.md — writing guidelines, workflow rules, conventions, quality standards
 
-## Status (2026-03-09)
+## Status (2026-03-10)
 
 - Manuscript: ~9,400 words, 47 bib entries, 2 figures + 1 table
 - Corpus: 22,113 refined works, 18,798 with embeddings, 1,176 core
 - Citation graph: 595,923 rows, 61% corpus coverage
-- Quarto: 4 documents, 11 shared includes
+- Quarto: 4 documents, 11 shared includes, cross-refs (`@fig-*`, `@tbl-*`)
+- Figures/tables: numeric prefixes removed (fig1_ → fig_, tab2_ → tab_)
 - Figures redesigned for Oeconomia (grayscale, 12cm, serif): Fig 1, Fig 2, Table 2 done
 - Corpus QA: language/type/LLM verification scripts written and applied
 - Table 1 (traditions): co-citation communities across 3 windows, merge after 2007
