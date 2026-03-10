@@ -15,7 +15,7 @@ Cluster labels are derived from abstract TF-IDF distinctiveness rather than nois
 3. Domain-generic stopwords are removed (e.g., "climate," "finance," "paper," "study," "countries").
 4. The top 3 terms are selected with bigram/unigram deduplication: if all tokens in a candidate term are already covered by previously selected terms (or their stems), the candidate is skipped.
 
-Labels and paper counts are saved to `cluster_labels.json` and `tab2_alluvial.csv`.
+Labels and paper counts are saved to `cluster_labels.json` and `tab_alluvial.csv`.
 
 ### Core share annotations
 

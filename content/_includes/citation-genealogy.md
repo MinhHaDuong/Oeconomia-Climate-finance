@@ -11,7 +11,7 @@ Papers from `refined_works.csv` with an abstract longer than 50 characters, a va
 Each backbone paper is assigned to one of three bands using two data sources:
 
 1. **KMeans semantic clusters** (from `semantic_clusters.csv`): cluster 2 corresponds to CDM/projects/mechanism literature.
-2. **Bimodality axis scores** (from `tab5_pole_papers.csv`): papers with negative axis scores lean accountability; positive scores lean efficiency.
+2. **Bimodality axis scores** (from `tab_pole_papers.csv`): papers with negative axis scores lean accountability; positive scores lean efficiency.
 
 Assignment logic:
 - If a paper belongs to KMeans cluster 2 (CDM), it is assigned to **Band 0: CDM / Kyoto heritage**.
@@ -31,6 +31,6 @@ Internal citation edges are extracted from `citations.csv`: an edge (A -> B) exi
 
 ### Outputs
 
-- `fig4_genealogy.{png,pdf}` -- static figure
-- `fig4_genealogy.html` -- interactive HTML/SVG version with hover tooltips and DOI click-through
-- `tab3_lineages.csv` -- lineage assignments for all backbone papers
+- `fig_genealogy.{png,pdf}` -- static figure
+- `fig_genealogy.html` -- interactive HTML/SVG version with hover tooltips and DOI click-through
+- `tab_lineages.csv` -- lineage assignments for all backbone papers

@@ -140,7 +140,7 @@ print(f"Backbone papers (with valid year): {len(backbone_dois)}")
 # ============================================================
 
 # Load bimodality pole scores if available
-pole_path = os.path.join(TABLES_DIR, "tab5_pole_papers.csv")
+pole_path = os.path.join(TABLES_DIR, "tab_pole_papers.csv")
 use_bimodal = os.path.exists(pole_path)
 
 # CDM cluster ID (cluster 2 from KMeans labels — "cdm / projects / mechanism cdm")
@@ -151,13 +151,13 @@ BAND_NAMES = {0: "CDM / Kyoto heritage", 1: "Accountability pole", 2: "Efficienc
 BAND_COLORS_RGB = {0: "#F4A261", 1: "#457B9D", 2: "#E63946"}
 
 if use_bimodal:
-    print("Loading bimodality axis scores from tab5_pole_papers.csv...")
+    print("Loading bimodality axis scores from tab_pole_papers.csv...")
     pole_df = pd.read_csv(pole_path)
     pole_df["doi_norm"] = pole_df["doi"].apply(normalize_doi)
     doi_to_score = dict(zip(pole_df["doi_norm"], pole_df["axis_score"]))
     print(f"  Pole scores for {len(doi_to_score)} papers")
 else:
-    print("WARNING: tab5_pole_papers.csv not found. Run analyze_bimodality.py first.")
+    print("WARNING: tab_pole_papers.csv not found. Run analyze_bimodality.py first.")
     print("Falling back to 6-cluster KMeans lineages.")
     doi_to_score = {}
 
@@ -442,7 +442,7 @@ ax.set_title(
 ax.axis("off")
 
 plt.tight_layout()
-fig_path = os.path.join(FIGURES_DIR, "fig4_genealogy")
+fig_path = os.path.join(FIGURES_DIR, "fig_genealogy")
 save_figure(fig, fig_path, no_pdf=args.no_pdf)
 plt.close()
 
@@ -677,10 +677,10 @@ document.querySelectorAll('.node').forEach(el => {{
 </script>
 </body></html>"""
 
-html_path = os.path.join(FIGURES_DIR, "fig4_genealogy.html")
+html_path = os.path.join(FIGURES_DIR, "fig_genealogy.html")
 with open(html_path, "w") as f:
     f.write(html_content)
-print(f"Saved interactive version → figures/fig4_genealogy.html")
+print(f"Saved interactive version → figures/fig_genealogy.html")
 
 
 # ============================================================
@@ -702,8 +702,8 @@ for d in backbone_dois:
     })
 
 lineage_df = pd.DataFrame(rows).sort_values(["lineage", "cited_by_count"], ascending=[True, False])
-lineage_df.to_csv(os.path.join(TABLES_DIR, "tab3_lineages.csv"), index=False)
-print(f"Saved lineage table → tables/tab3_lineages.csv ({len(lineage_df)} papers)")
+lineage_df.to_csv(os.path.join(TABLES_DIR, "tab_lineages.csv"), index=False)
+print(f"Saved lineage table → tables/tab_lineages.csv ({len(lineage_df)} papers)")
 
 
 # ============================================================
@@ -775,8 +775,8 @@ if args.robustness:
             sens_rows.append(row)
 
         sens_df = pd.DataFrame(sens_rows)
-        sens_df.to_csv(os.path.join(TABLES_DIR, "tab3_louvain_sensitivity.csv"), index=False)
-        print(f"Saved Louvain sensitivity → tables/tab3_louvain_sensitivity.csv")
+        sens_df.to_csv(os.path.join(TABLES_DIR, "tab_louvain_sensitivity.csv"), index=False)
+        print(f"Saved Louvain sensitivity → tables/tab_louvain_sensitivity.csv")
 
         # ARI between resolution levels
         print("\n  Pairwise ARI:")

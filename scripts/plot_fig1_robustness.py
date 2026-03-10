@@ -97,12 +97,12 @@ def main():
         a2.set_ylabel("Share (%)", color=C_SHARE)
 
     fig.suptitle(
-        "Figure A.1a: Economics baseline vs Finance and RePEc checks",
+        "Economics baseline vs Finance and RePEc checks",
         fontsize=13, y=0.995,
     )
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.985))
 
-    save_figure(fig, os.path.join(BASE_DIR, "figures", "figA_1a_robustness"),
+    save_figure(fig, os.path.join(BASE_DIR, "content", "figures", "fig_robustness"),
                 no_pdf=args.no_pdf)
     plt.close(fig)
     print("Done.")

@@ -7,8 +7,8 @@ Method:
 - Cross-validate with co-citation communities (if available)
 
 Produces:
-- figures/fig3_semantic.pdf: 2D semantic map colored by cluster
-- figures/fig3_semantic_lang.pdf: Same map colored by language
+- figures/fig_semantic.pdf: 2D semantic map colored by cluster
+- figures/fig_semantic_lang.pdf: Same map colored by language
 - data/catalogs/embeddings.npy: Raw embedding vectors
 - data/catalogs/semantic_clusters.csv: Cluster assignments
 """
@@ -192,9 +192,9 @@ ax.set_xlabel("UMAP 1")
 ax.set_ylabel("UMAP 2")
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig3_semantic.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig3_semantic.png"), dpi=150, bbox_inches="tight")
-print(f"\nSaved Figure 3a → figures/fig3_semantic.pdf")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.pdf"), dpi=300, bbox_inches="tight")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.png"), dpi=150, bbox_inches="tight")
+print(f"\nSaved semantic map → figures/fig_semantic.pdf")
 plt.close()
 
 
@@ -242,9 +242,9 @@ ax.set_xlabel("UMAP 1")
 ax.set_ylabel("UMAP 2")
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig3_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig3_semantic_lang.png"), dpi=150, bbox_inches="tight")
-print(f"Saved Figure 3b → figures/fig3_semantic_lang.pdf")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.png"), dpi=150, bbox_inches="tight")
+print(f"Saved semantic map (language) → figures/fig_semantic_lang.pdf")
 plt.close()
 
 
@@ -290,9 +290,9 @@ ax.set_xlabel("UMAP 1")
 ax.set_ylabel("UMAP 2")
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig3_semantic_period.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig3_semantic_period.png"), dpi=150, bbox_inches="tight")
-print(f"Saved Figure 3c → figures/fig3_semantic_period.pdf")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.pdf"), dpi=300, bbox_inches="tight")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.png"), dpi=150, bbox_inches="tight")
+print(f"Saved semantic map (period) → figures/fig_semantic_period.pdf")
 plt.close()
 
 

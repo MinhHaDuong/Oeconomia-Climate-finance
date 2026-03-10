@@ -97,19 +97,19 @@ if args.core_only:
 
 # Output naming: use "_core" suffix for figures and "b" prefix for tables in core mode
 if args.core_only:
-    FIG5A = "fig5a_bimodality_core"
-    FIG5B = "fig5b_bimodality_lexical_core"
-    FIG5C = "fig5c_bimodality_keywords_core"
-    TAB5_BIM = "tab5b_bimodality_core.csv"
-    TAB5_AXIS = "tab5b_axis_detection_core.csv"
-    TAB5_POLE = "tab5b_pole_papers_core.csv"
+    FIG5A = "fig_bimodality_core"
+    FIG5B = "fig_bimodality_lexical_core"
+    FIG5C = "fig_bimodality_keywords_core"
+    TAB5_BIM = "tab_bimodality_core.csv"
+    TAB5_AXIS = "tab_axis_detection_core.csv"
+    TAB5_POLE = "tab_pole_papers_core.csv"
 else:
-    FIG5A = "fig5a_bimodality"
-    FIG5B = "fig5b_bimodality_lexical"
-    FIG5C = "fig5c_bimodality_keywords"
-    TAB5_BIM = "tab5_bimodality.csv"
-    TAB5_AXIS = "tab5_axis_detection.csv"
-    TAB5_POLE = "tab5_pole_papers.csv"
+    FIG5A = "fig_bimodality"
+    FIG5B = "fig_bimodality_lexical"
+    FIG5C = "fig_bimodality_keywords"
+    TAB5_BIM = "tab_bimodality.csv"
+    TAB5_AXIS = "tab_axis_detection.csv"
+    TAB5_POLE = "tab_pole_papers.csv"
 
 df["abstract_lower"] = df["abstract"].str.lower()
 df["year"] = df["year"].astype(int)
@@ -634,8 +634,8 @@ print(f"\nSaved → tables/{TAB5_BIM}")
 # Combine TF-IDF SVD and embedding PCA rows
 all_axis_rows = component_rows + emb_component_rows
 axis_tab = pd.DataFrame(all_axis_rows).sort_values("component")
-axis_tab.to_csv(os.path.join(TABLES_DIR, "tab5_axis_detection.csv"), index=False)
-print("Saved → tables/tab5_axis_detection.csv")
+axis_tab.to_csv(os.path.join(TABLES_DIR, "tab_axis_detection.csv"), index=False)
+print("Saved → tables/tab_axis_detection.csv")
 
 # Per-paper scores
 pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",

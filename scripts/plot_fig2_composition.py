@@ -6,7 +6,7 @@ from Before (1990-2006) through Crystallisation (2007-2014) to Disputes
 (2015-2025). Self-explanatory for HPS readers: no statistical jargon.
 
 Inputs:
-  - content/tables/tab2_alluvial.csv  (period × cluster counts)
+  - content/tables/tab_alluvial.csv  (period × cluster counts)
   - data/catalogs/cluster_labels.json (cluster names)
 
 Outputs:
@@ -65,7 +65,7 @@ def main():
     args = parser.parse_args()
 
     # Load alluvial data (period × cluster counts)
-    csv_path = os.path.join(BASE_DIR, "content", "tables", "tab2_alluvial.csv")
+    csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_alluvial.csv")
     df = pd.read_csv(csv_path, index_col=0)
     # Columns are cluster indices as strings: "0", "1", ..., "5"
 
@@ -155,7 +155,7 @@ def main():
     fig.tight_layout(rect=[0, 0.12, 1, 1])
 
     # Save
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig2_composition")
+    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_composition")
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 

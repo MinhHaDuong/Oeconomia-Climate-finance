@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     # Load scores
-    path = os.path.join(BASE_DIR, "content", "tables", "tab5_pole_papers.csv")
+    path = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
     df = pd.read_csv(path)
     scores = df["axis_score"].dropna().values
     print(f"Loaded {len(scores)} axis scores from {path}")
@@ -85,7 +85,7 @@ def main():
 
     fig.tight_layout()
 
-    out_path = os.path.join(BASE_DIR, "content", "figures", "figS_kde")
+    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_kde")
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 

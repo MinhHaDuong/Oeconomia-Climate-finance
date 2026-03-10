@@ -72,7 +72,7 @@ def main():
     fig.tight_layout()
 
     # --- Save ---
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig1_bars")
+    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_bars")
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 

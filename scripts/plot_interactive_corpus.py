@@ -47,8 +47,8 @@ BIB_PATH = os.path.join(BASE_DIR, "bibliography", "main.bib")
 
 # Tab5 can be in tables/ (repo) or catalogs/ (data dir) — try both
 TAB5_CANDIDATES = [
-    os.path.join(TABLES_DIR, "tab5_pole_papers.csv"),
-    os.path.join(CATALOGS_DIR, "tab5_pole_papers.csv"),
+    os.path.join(TABLES_DIR, "tab_pole_papers.csv"),
+    os.path.join(CATALOGS_DIR, "tab_pole_papers.csv"),
 ]
 
 CITE_THRESHOLD = 50
@@ -75,7 +75,7 @@ works["cited_by_count"] = pd.to_numeric(works["cited_by_count"], errors="coerce"
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 
 
-# ── 2. Load axis scores (tab5_pole_papers.csv) ────────────────────────
+# ── 2. Load axis scores (tab_pole_papers.csv) ────────────────────────
 tab5_path = None
 for candidate in TAB5_CANDIDATES:
     if os.path.exists(candidate):
@@ -84,7 +84,7 @@ for candidate in TAB5_CANDIDATES:
 
 if tab5_path is None:
     raise FileNotFoundError(
-        "tab5_pole_papers.csv not found in tables/ or catalogs/. "
+        "tab_pole_papers.csv not found in tables/ or catalogs/. "
         "Run analyze_bimodality.py first."
     )
 

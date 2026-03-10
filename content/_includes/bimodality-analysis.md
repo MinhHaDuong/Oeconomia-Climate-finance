@@ -40,7 +40,7 @@ For each paper, the count of efficiency-pole and accountability-pole keywords in
 
 ### Core subset analysis (`--core-only`)
 
-When run with `--core-only`, the script restricts to papers with cited_by_count >= 50 (~1,176 papers), re-identifies pole papers within the core, and re-computes centroids and projections on core embeddings only. Output files receive a `_core` suffix (e.g., `fig5a_bimodality_core.png`, `tab5b_bimodality_core.csv`).
+When run with `--core-only`, the script restricts to papers with cited_by_count >= 50 (~1,176 papers), re-identifies pole papers within the core, and re-computes centroids and projections on core embeddings only. Output files receive a `_core` suffix (e.g., `fig_bimodality_core.png`, `tab_bimodality_core.csv`).
 
 Core results:
 - **Pole papers:** 49 efficiency, 14 accountability (much sparser than full corpus)
@@ -50,7 +50,7 @@ Core results:
 
 ### PCA axis detection (Step 7b)
 
-For each embedding PCA component (PC1–PC5), the script computes cosine similarity with the supervised seed axis and tests for bimodality (ΔBIC). It also correlates each PC's scores with TF-IDF features to produce interpretive term labels (top 10 positive and negative terms per PC). Results are saved to `tab5_axis_detection.csv`.
+For each embedding PCA component (PC1–PC5), the script computes cosine similarity with the supervised seed axis and tests for bimodality (ΔBIC). It also correlates each PC's scores with TF-IDF features to produce interpretive term labels (top 10 positive and negative terms per PC). Results are saved to `tab_axis_detection.csv`.
 
 Key findings on full corpus:
 - **emb_PC2** (5.4% variance, cosine = 0.557 with seed axis, ΔBIC = 932) most closely aligns with efficiency↔accountability
@@ -62,11 +62,11 @@ On core:
 
 ### Outputs
 
-- `fig5a_bimodality.png` -- KDE of embedding scores by period (main figure)
-- `fig5b_bimodality_lexical.png` -- TF-IDF version (appendix)
-- `fig5c_bimodality_keywords.png` -- keyword scatter (appendix)
-- `fig5a_bimodality_core.png` -- core KDE (appendix)
-- `tab5_bimodality.csv` -- summary statistics (ΔBIC, pole counts, correlation)
-- `tab5_pole_papers.csv` -- per-paper axis scores and pole assignments
-- `tab5_axis_detection.csv` -- PCA component alignment with seed axis + term labels
-- `tab5b_bimodality_core.csv`, `tab5b_axis_detection_core.csv`, `tab5b_pole_papers_core.csv` -- core equivalents
+- `fig_bimodality.png` -- KDE of embedding scores by period (main figure)
+- `fig_bimodality_lexical.png` -- TF-IDF version (appendix)
+- `fig_bimodality_keywords.png` -- keyword scatter (appendix)
+- `fig_bimodality_core.png` -- core KDE (appendix)
+- `tab_bimodality.csv` -- summary statistics (ΔBIC, pole counts, correlation)
+- `tab_pole_papers.csv` -- per-paper axis scores and pole assignments
+- `tab_axis_detection.csv` -- PCA component alignment with seed axis + term labels
+- `tab_bimodality_core.csv`, `tab_axis_detection_core.csv`, `tab_pole_papers_core.csv` -- core equivalents

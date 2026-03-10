@@ -95,6 +95,6 @@ ax.legend(handles=legend_elements, loc="center right", fontsize=9,
           framealpha=0.9, ncol=1, bbox_to_anchor=(0.62, 0.45))
 
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, "fig1_emergence"), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, "fig_emergence"), no_pdf=args.no_pdf)
 plt.close()
 print("Done.")

@@ -15,7 +15,7 @@ Projects all papers onto the efficiency↔accountability seed axis (identical to
 - **Vertical dashes:** COP events (Rio, Kyoto, Copenhagen, Paris, Glasgow, Baku)
 - **Period bands:** light background shading for each period
 
-Recommended with `--core-only` for the paper figure (`fig4_seed_axis_core.png`), showing 1,176 influential papers. The seed axis is bimodal in core (ΔBIC = 112), and the yearly median reveals a drift from the accountability side toward efficiency over time.
+Recommended with `--core-only` for the paper figure (`fig_seed_axis_core.png`), showing 1,176 influential papers. The seed axis is bimodal in core (ΔBIC = 112), and the yearly median reveals a drift from the accountability side toward efficiency over time.
 
 ### Unsupervised mode (default)
 
@@ -32,7 +32,7 @@ On core (1,176 papers), no PC passes ΔBIC > 200 (max = 46). Unsupervised bimoda
 
 ### Outputs
 
-- `fig4_seed_axis_core.png` -- supervised axis, core papers (paper figure)
-- `fig4_pca_scatter.png` -- unsupervised 3-panel, full corpus (appendix)
-- `tab4_seed_axis_core.csv` -- seed axis metadata (variance, ΔBIC, pole terms)
-- `tab4_pca_components.csv` -- unsupervised PC metadata
+- `fig_seed_axis_core.png` -- supervised axis, core papers (paper figure)
+- `fig_pca_scatter.png` -- unsupervised 3-panel, full corpus (appendix)
+- `tab_seed_axis_core.csv` -- seed axis metadata (variance, ΔBIC, pole terms)
+- `tab_pca_components.csv` -- unsupervised PC metadata

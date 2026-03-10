@@ -215,8 +215,8 @@ for c in sorted(comm_df["community"].unique()):
         })
 
 summary_df = pd.DataFrame(summary_rows)
-summary_df.to_csv(os.path.join(TABLES_DIR, "tab2_community_summary.csv"), index=False)
-print(f"Saved community summary → tables/tab2_community_summary.csv")
+summary_df.to_csv(os.path.join(TABLES_DIR, "tab_community_summary.csv"), index=False)
+print(f"Saved community summary → tables/tab_community_summary.csv")
 
 print("\n=== Community profiles ===")
 for c in sorted(comm_df["community"].unique()):
@@ -291,7 +291,7 @@ ax.set_title(
 ax.axis("off")
 
 plt.tight_layout()
-fig.savefig(os.path.join(FIGURES_DIR, "fig2_communities.pdf"), dpi=300, bbox_inches="tight")
-fig.savefig(os.path.join(FIGURES_DIR, "fig2_communities.png"), dpi=150, bbox_inches="tight")
-print(f"\nSaved Figure 2 → figures/fig2_communities.pdf")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_communities.pdf"), dpi=300, bbox_inches="tight")
+fig.savefig(os.path.join(FIGURES_DIR, "fig_communities.png"), dpi=150, bbox_inches="tight")
+print(f"\nSaved communities figure → figures/fig_communities.pdf")
 plt.close()

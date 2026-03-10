@@ -93,14 +93,14 @@ ACCOUNTABILITY_TERMS = {
 # Output naming
 if args.supervised:
     suffix = "_core" if args.core_only else ""
-    FIG_STEM = f"fig4_seed_axis{suffix}"
-    TAB_FILE = f"tab4_seed_axis{suffix}.csv"
+    FIG_STEM = f"fig_seed_axis{suffix}"
+    TAB_FILE = f"tab_seed_axis{suffix}.csv"
 elif args.core_only:
-    FIG_STEM = "fig4_pca_scatter_core"
-    TAB_FILE = "tab4b_pca_components_core.csv"
+    FIG_STEM = "fig_pca_scatter_core"
+    TAB_FILE = "tab_pca_components_core.csv"
 else:
-    FIG_STEM = "fig4_pca_scatter"
-    TAB_FILE = "tab4_pca_components.csv"
+    FIG_STEM = "fig_pca_scatter"
+    TAB_FILE = "tab_pca_components.csv"
 
 
 # ============================================================

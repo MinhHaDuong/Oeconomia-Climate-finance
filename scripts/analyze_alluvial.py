@@ -70,18 +70,18 @@ args = parser.parse_args()
 
 # Output naming depends on mode
 if args.core_only:
-    FIG_BP = "fig2b_breakpoints_core"
-    FIG_AL = "fig3b_alluvial_core"
-    TAB_BP = "tab2b_breakpoints_core.csv"
-    TAB_BP_ROBUST = "tab2b_breakpoint_robustness_core.csv"
-    TAB_AL = "tab2b_alluvial_core.csv"
+    FIG_BP = "fig_breakpoints_core"
+    FIG_AL = "fig_alluvial_core"
+    TAB_BP = "tab_breakpoints_core.csv"
+    TAB_BP_ROBUST = "tab_breakpoint_robustness_core.csv"
+    TAB_AL = "tab_alluvial_core.csv"
     LABEL_FILE = "cluster_labels_core.json"
 else:
-    FIG_BP = "fig2_breakpoints"
-    FIG_AL = "fig3_alluvial"
-    TAB_BP = "tab2_breakpoints.csv"
-    TAB_BP_ROBUST = "tab2_breakpoint_robustness.csv"
-    TAB_AL = "tab2_alluvial.csv"
+    FIG_BP = "fig_breakpoints"
+    FIG_AL = "fig_alluvial"
+    TAB_BP = "tab_breakpoints.csv"
+    TAB_BP_ROBUST = "tab_breakpoint_robustness.csv"
+    TAB_AL = "tab_alluvial.csv"
     LABEL_FILE = "cluster_labels.json"
 
 if args.censor_gap > 0:
@@ -606,7 +606,7 @@ ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
 
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, FIG_BP), no_pdf=args.no_pdf)
-print(f"  (Figure 2)")
+print(f"  ({FIG_BP})")
 plt.close()
 
 
@@ -777,7 +777,7 @@ ax.axis("off")
 
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, FIG_AL), no_pdf=args.no_pdf)
-print(f"  (Figure 3)")
+print(f"  ({FIG_AL})")
 plt.close()
 
 
@@ -995,8 +995,8 @@ if args.robustness and not args.core_only:
     for k in k_values:
         k_data[f"js_k{k}"] = [k_results[k].get(y, np.nan) for y in years]
     k_df = pd.DataFrame(k_data)
-    k_df.to_csv(os.path.join(TABLES_DIR, "tab2_k_sensitivity.csv"), index=False)
-    print(f"Saved k-sensitivity table → tables/tab2_k_sensitivity.csv")
+    k_df.to_csv(os.path.join(TABLES_DIR, "tab_k_sensitivity.csv"), index=False)
+    print(f"Saved k-sensitivity table → tables/tab_k_sensitivity.csv")
 
     # Overlay plot
     fig, ax = plt.subplots(figsize=(12, 5))
@@ -1017,7 +1017,7 @@ if args.robustness and not args.core_only:
                  fontsize=12, pad=15)
     ax.legend(fontsize=9, framealpha=0.9)
     plt.tight_layout()
-    save_figure(fig, os.path.join(FIGURES_DIR, "figA_k_sensitivity"), no_pdf=args.no_pdf)
+    save_figure(fig, os.path.join(FIGURES_DIR, "fig_k_sensitivity"), no_pdf=args.no_pdf)
     plt.close()
 
 # ============================================================
@@ -1124,8 +1124,8 @@ if n_A >= 5 and n_B >= 5:
         "doc_freq_after": doc_freq_B.astype(int),
         "clean": valid_mask,
     }).sort_values("diff", ascending=False)
-    tfidf_df.to_csv(os.path.join(TABLES_DIR, "tab2_lexical_tfidf.csv"), index=False)
-    print(f"\nSaved TF-IDF table → tables/tab2_lexical_tfidf.csv "
+    tfidf_df.to_csv(os.path.join(TABLES_DIR, "tab_lexical_tfidf.csv"), index=False)
+    print(f"\nSaved TF-IDF table → tables/tab_lexical_tfidf.csv "
           f"({valid_mask.sum()} clean / {len(tfidf_df)} total terms)")
 
     # --- Reusable TF-IDF bar chart function ---
@@ -1242,7 +1242,7 @@ if n_A >= 5 and n_B >= 5:
         )
 
         plt.tight_layout()
-        fname = f"figA_lexical_tfidf{suffix}"
+        fname = f"fig_lexical_tfidf{suffix}"
         save_figure(fig, os.path.join(FIGURES_DIR, fname), no_pdf=args.no_pdf)
         print(f"    (A={nA}, B={nB})")
         plt.close()
