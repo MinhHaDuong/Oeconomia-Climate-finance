@@ -4,8 +4,8 @@
 Reads all data/catalogs/*_works.csv files and produces:
   data/catalogs/unified_works.csv
 
-Deduplication: DOI-based (primary), then title+year fuzzy match (fallback).
-Priority for field values: openalex > scopus > istex > jstor > bibcnrs > grey
+Deduplication: DOI-based (primary), then normalized title+year match (fallback).
+Priority for field values follows SOURCE_PRIORITY list.
 
 Usage:
     python scripts/catalog_merge.py
