@@ -104,16 +104,18 @@ All sections drafted, numbered per Œconomia style (Arabic, not Roman).
 
 ### Remaining — Figures & tables
 - [x] Fig 1 (bars): self-explaining legend ("UNFCCC financial mechanism literature" / "of which: climate finance"), caption updated, grayscale 120mm, starts 1992
-- [ ] Fig 2 (composition): regenerate in Oeconomia style — consider relocating from §2 to §3 or §4
+- [x] Fig 2 (composition): dynamic labels from cluster_labels.json, grayscale style — labels may need human polish
 - [ ] Table 1 (traditions): tradition detection via co-citation clustering for §1.5 — or relocate to conclusion if communities don't separate pre-2007
 - [ ] Period detection: regenerate divergence curves + top-terms table for §2.5
 - [ ] Quantitative support for efficiency–accountability tension in §3.4
 
 ### Remaining — Structure & text
 - [ ] Human proofread of full manuscript
+- [ ] Change title (TBD)
+- [ ] Regenerate French résumé and English abstract
+- [ ] Page break before introduction + "Introduction" entry in PDF bookmarks/TOC
 - [ ] Redistribute quantitative method details: what stays in-text, what goes to footnotes, what to annex
 - [ ] Content polish pass (opening hook, figure cross-references)
-- [ ] French abstract (Résumé)
 - [ ] Keywords (FR + EN)
 - [ ] Final word count trim if needed (currently ~9,600 rendered, target ~9,000)
 - [ ] Proofread bibliography formatting (DOI on separate line per Œconomia style)
