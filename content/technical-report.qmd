@@ -16,11 +16,11 @@ This document describes the computational pipeline used to produce the bibliomet
 
 ---
 
-{{< include _includes/corpus-refinement.md >}}
+{{< include _includes/corpus-enrichment.md >}}
 
 ---
 
-{{< include _includes/embedding-generation.md >}}
+{{< include _includes/corpus-refinement.md >}}
 
 ---
 

@@ -54,15 +54,30 @@ The merge script (`scripts/catalog_merge.py`) applies two deduplication passes:
 
 A `source_count` field tracks how many sources contributed to each record. The output is `unified_works.csv`.
 
-### Relevance filtering
+### Pipeline overview
 
-Corpus refinement (`scripts/corpus_refine.py`) applies six flags:
+The full corpus pipeline runs in three phases:
 
-1. Missing metadata (title, author, year)
-2. No abstract with irrelevant title
-3. Title blacklist (blockchain, cryptocurrency, etc. — unless title also has climate/finance safe words)
-4. Citation isolation: pre-2019 papers with DOI but no citations in or out of corpus
-5. Semantic outlier: >2σ from embedding centroid (cosine distance)
-6. LLM relevance: papers with weak concept-group coverage scored by Gemini Flash; irrelevant papers flagged
+```
+  7 sources ──→ merge ──→ unified_works.csv
+                               │
+                               ▼
+                        cheap filter (flags 1-3)
+                               │
+                    ┌──────────┴──────────┐
+                    ▼                     ▼
+             enrich abstracts      enrich citations
+              (OA, S2, ISTEX)      (Crossref, OA refs)
+                    │                     │
+                    ▼                     │
+             generate embeddings          │
+                    │                     │
+                    └──────────┬──────────┘
+                               ▼
+                        full refine (flags 1-6)
+                               │
+                               ▼
+                        refined_works.csv
+```
 
-Papers are protected from removal if they have high citations (>=50), appear in multiple sources, are cited within the corpus, or belong to the teaching canon. A random-sample LLM audit verifies Type I/II error rates.
+A cheap pre-filter (flags 1–3: missing metadata, irrelevant titles, blacklisted terms) removes obvious junk before the expensive enrichment phase. Abstract and citation enrichment run independently; embedding generation requires abstracts. The full refinement pass then applies all six flags, including citation isolation (flag 4), semantic outlier detection (flag 5), and LLM relevance scoring (flag 6). See §2 (Corpus Enrichment) and §3 (Corpus Refinement) for details.

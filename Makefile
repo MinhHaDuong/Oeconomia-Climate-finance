@@ -33,7 +33,7 @@ export SOURCE_DATE_EPOCH := 0
 INCLUDES    := $(wildcard content/_includes/*.md)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures data citations corpus deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures data citations corpus corpus-discover corpus-enrich corpus-refine deploy-corpus clean rebuild archive verify-remote
 
 all: manuscript papers
 
@@ -102,13 +102,13 @@ ALL_FIGS := $(MANUSCRIPT_FIGS) \
 figures: $(ALL_FIGS)
 
 # ── Corpus pipeline (slow — downloads from APIs) ─────────
-# Phase 1: Discovery (5 automated sources + 2 hand-harvested imports)
+# Three phases: discover → enrich → refine
 # Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
 # pre-placed in $(DATA_DIR) before running.
-# Phase 2: Merge → teaching canon → re-merge → refine
-# (teaching canon matches readings against unified_works.csv,
-#  then re-merge incorporates teaching_works.csv)
-corpus:
+corpus: corpus-discover corpus-enrich corpus-refine
+
+# Phase 1: Discovery + merge + cheap filter (flags 1-3 only)
+corpus-discover:
 	uv run python scripts/catalog_istex.py --api
 	uv run python scripts/catalog_openalex.py --resume
 	uv run python scripts/catalog_semanticscholar.py --resume
@@ -116,7 +116,20 @@ corpus:
 	uv run python scripts/catalog_merge.py
 	uv run python scripts/build_teaching_canon.py
 	uv run python scripts/catalog_merge.py
-	uv run python scripts/corpus_refine.py --apply --skip-llm
+	uv run python scripts/corpus_refine.py --apply --cheap
+
+# Phase 2: Enrich abstracts + citations (parallel), then embeddings
+# Abstracts and citations are independent; embeddings need abstracts.
+corpus-enrich:
+	uv run python scripts/enrich_abstracts.py
+	uv run python scripts/enrich_citations_batch.py
+	uv run python scripts/enrich_citations_openalex.py
+	uv run python scripts/qc_citations.py
+	uv run python scripts/analyze_embeddings.py
+
+# Phase 3: Full refinement with all 6 flags
+corpus-refine:
+	uv run python scripts/corpus_refine.py --apply
 
 deploy-corpus:
 	ssh $(REMOTE_HOST) 'bash -l -c "\

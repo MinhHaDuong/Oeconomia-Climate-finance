@@ -667,16 +667,24 @@ def main():
                         help="Skip LLM audit step")
     parser.add_argument("--skip-citation-flag", action="store_true",
                         help="Skip citation isolation flag (use when citations are stale)")
+    parser.add_argument("--cheap", action="store_true",
+                        help="Cheap filter: only flags 1-3 (metadata, no-abstract, blacklist). "
+                             "Use before enrichment to remove obvious junk.")
     args = parser.parse_args()
+
+    # --cheap implies skipping everything that needs external data
+    if args.cheap:
+        args.skip_llm = True
+        args.skip_citation_flag = True
 
     print("Loading data...")
     works_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
     df = pd.read_csv(works_path)
     print(f"  Unified works: {len(df)}")
 
-    # Load citations
+    # Load citations (skip in cheap mode)
     citations_df = None
-    if os.path.exists(CITATIONS_PATH):
+    if not args.cheap and os.path.exists(CITATIONS_PATH):
         citations_df = pd.read_csv(CITATIONS_PATH)
         citations_df["source_doi"] = citations_df["source_doi"].apply(
             lambda x: normalize_doi(x) if pd.notna(x) else "")
@@ -684,10 +692,10 @@ def main():
             lambda x: normalize_doi(x) if pd.notna(x) else "")
         print(f"  Citations: {len(citations_df)}")
 
-    # Load embeddings (if available)
+    # Load embeddings (skip in cheap mode)
     embeddings = None
     emb_df = None
-    if os.path.exists(EMBEDDINGS_PATH):
+    if not args.cheap and os.path.exists(EMBEDDINGS_PATH):
         # Embeddings correspond to works with abstracts in 1990-2025
         emb_df = df.copy()
         emb_df = emb_df[emb_df["abstract"].notna() & (emb_df["abstract"].str.len() > 50)]
@@ -703,6 +711,9 @@ def main():
             emb_df = None
         else:
             print(f"  Embeddings: {len(embeddings)}")
+
+    if args.cheap:
+        print("\n=== CHEAP MODE: flags 1-3 only ===")
 
     # Phase A: Flag
     print("\n=== Phase A: Flagging papers ===")

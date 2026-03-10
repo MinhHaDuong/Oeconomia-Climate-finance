@@ -1,18 +1,26 @@
-## 2. Corpus Refinement
+## 3. Corpus Refinement
 
-The refinement script (`scripts/corpus_refine.py`) implements a four-phase pipeline:
+The full refinement pass (`corpus_refine.py --apply`) runs after enrichment (§2) has populated abstracts, citations, and embeddings. It implements a four-phase pipeline applying six flags — three cheap flags that need no external data, and three that depend on enrichment outputs.
 
 ### Phase A: Flagging
 
-Five flags are applied to each paper:
+Six flags are applied to each paper:
 
 1. **Missing metadata:** Papers lacking a title are always flagged. Papers missing only author or year are flagged only if the title also lacks "safe" domain words (a curated list of 30+ terms across English, French, German, Spanish, Chinese, and Japanese).
-2. **No abstract + irrelevant title:** Papers with abstracts shorter than 50 characters whose titles lack safe domain words.
+2. **No abstract + irrelevant title:** Papers with abstracts shorter than 50 characters whose titles lack safe domain words. (Re-evaluated after abstract enrichment — papers that gained abstracts may be unflagged.)
 3. **Title blacklist:** Papers whose titles contain noise terms (e.g., "blockchain," "cryptocurrency," "deep learning," "metaverse") but no safe domain words.
-4. **Citation isolation:** Papers published before 2020 that are neither cited by nor citing any other paper in the corpus (requires `citations.csv`; skipped when stale).
-5. **Semantic outlier:** Papers whose embedding cosine distance from the corpus centroid exceeds mean + 2 standard deviations (requires `embeddings.npy`).
+4. **Citation isolation:** Papers published before 2020 that are neither cited by nor citing any other paper in the corpus. Requires `citations.csv` from §2.3.
+5. **Semantic outlier:** Papers whose embedding cosine distance from the corpus centroid exceeds mean + 2 standard deviations. Requires `embeddings.npy` from §2.4.
+6. **LLM relevance:** Papers with weak concept-group coverage (fewer than 2 of 4 groups: climate, finance, development, environment) are scored by a language model (Gemini Flash via OpenRouter). Papers classified as irrelevant are flagged. Requires abstracts from §2.2.
 
-An abstract relevance check tests whether at least 2 of 4 concept groups (climate, finance, development, environment) appear in the text.
+| Flag | Prerequisite | Phase available |
+|------|-------------|----------------|
+| 1. Missing metadata | None | Cheap filter |
+| 2. No abstract | None (re-evaluated after abstract enrichment) | Cheap filter |
+| 3. Title blacklist | None | Cheap filter |
+| 4. Citation isolation | `citations.csv` | Full refine only |
+| 5. Semantic outlier | `embeddings.npy` | Full refine only |
+| 6. LLM relevance | Abstracts + LLM API | Full refine only |
 
 ### Phase B: Protection
 
