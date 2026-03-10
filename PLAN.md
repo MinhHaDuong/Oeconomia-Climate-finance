@@ -102,19 +102,23 @@ All sections drafted, numbered per Œconomia style (Arabic, not Roman).
 - [x] Code audit (all 7 scripts pass, byte-reproducible pipeline)
 - [x] PDF + ODT build clean (no warnings)
 
-### Remaining
-- [ ] Content polish pass (currently editing: opening hook, figure cross-references)
+### Remaining — Figures & tables
+- [x] Fig 1 (bars): self-explaining legend ("UNFCCC financial mechanism literature" / "of which: climate finance"), caption updated, grayscale 120mm, starts 1992
+- [ ] Fig 2 (composition): regenerate in Oeconomia style — consider relocating from §2 to §3 or §4
+- [ ] Table 1 (traditions): tradition detection via co-citation clustering for §1.5 — or relocate to conclusion if communities don't separate pre-2007
+- [ ] Period detection: regenerate divergence curves + top-terms table for §2.5
+- [ ] Quantitative support for efficiency–accountability tension in §3.4
+
+### Remaining — Structure & text
+- [ ] Human proofread of full manuscript
+- [ ] Redistribute quantitative method details: what stays in-text, what goes to footnotes, what to annex
+- [ ] Content polish pass (opening hook, figure cross-references)
 - [ ] French abstract (Résumé)
 - [ ] Keywords (FR + EN)
 - [ ] Final word count trim if needed (currently ~9,600 rendered, target ~9,000)
 - [ ] Proofread bibliography formatting (DOI on separate line per Œconomia style)
 - [ ] Final `make clean && make all` + visual check
 - [ ] Move current draft to `release/` for submission
-- [ ] Consider restructuring: consolidate quantitative material into a dedicated section
-  - Move intro paragraph "We ground this historical argument..." + Figures 1–2
-  - Move §2.5 (publication infrastructure) and §2.6 (efficiency–accountability divide)
-  - Rationale: separates the historical narrative (§1–3) from the computational evidence
-  - Trade-off: cleaner structure vs. losing the current integration of data within narrative
 
 ## Phase 4 — Submission packaging (NOT STARTED)
 
