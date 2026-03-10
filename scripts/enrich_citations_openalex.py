@@ -142,6 +142,19 @@ def main():
         normalize_doi(d) for d in works["doi"].unique()
         if normalize_doi(d) not in ("", "nan", "none")
     ]
+
+    # Skip DOIs already covered by openalex_citations.csv (extracted during
+    # catalog_openalex.py discovery — no need to re-fetch from the API).
+    oa_citations_path = os.path.join(CATALOGS_DIR, "openalex_citations.csv")
+    if os.path.exists(oa_citations_path):
+        oa_done = set(
+            pd.read_csv(oa_citations_path, usecols=["source_doi"],
+                        dtype=str, keep_default_na=False)["source_doi"]
+            .apply(normalize_doi).unique()
+        )
+        print(f"Skipping {len(oa_done)} DOIs already in openalex_citations.csv")
+        done_dois |= oa_done
+
     missing = [d for d in all_dois if d not in done_dois]
     if args.limit:
         missing = missing[:args.limit]
