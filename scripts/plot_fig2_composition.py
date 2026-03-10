@@ -32,15 +32,23 @@ apply_style()
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-# Short readable labels for the six clusters
-CLUSTER_NAMES = {
-    "0": "Climate action &\nadaptation",
-    "1": "Green finance &\nbonds",
-    "2": "CDM & carbon\nmarkets",
-    "3": "Renewable\nenergy",
-    "4": "Forestry &\nemissions trading",
-    "5": "Social dimensions\n& water",
-}
+# Load cluster labels from alluvial analysis (TF-IDF distinctive terms)
+_labels_path = os.path.join(CATALOGS_DIR, "cluster_labels.json")
+if os.path.exists(_labels_path):
+    with open(_labels_path) as f:
+        _raw = json.load(f)
+    # Format "green / bonds / financing" → "Green, bonds &\nfinancing"
+    def _format_label(terms_str):
+        terms = [t.strip() for t in terms_str.split("/")]
+        if len(terms) >= 3:
+            return f"{terms[0].capitalize()}, {terms[1]} &\n{terms[2]}"
+        if len(terms) == 2:
+            return f"{terms[0].capitalize()} &\n{terms[1]}"
+        return terms[0].capitalize()
+    CLUSTER_NAMES = {k: _format_label(v) for k, v in _raw.items()}
+else:
+    # Fallback if cluster_labels.json not yet generated
+    CLUSTER_NAMES = {str(i): f"Cluster {i}" for i in range(6)}
 
 # Grayscale + hatching patterns for 6 clusters (print-friendly)
 CLUSTER_STYLES = [
