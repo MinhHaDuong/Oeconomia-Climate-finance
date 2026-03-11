@@ -145,6 +145,11 @@ def load_cluster_labels(n_clusters=6):
     return {i: f"Cluster {i}" for i in range(n_clusters)}
 
 
+# Embeddings live in a separate .npz rather than as columns in refined_works.csv:
+# - Size: 384 floats × 30k rows as CSV text ≈ 500 MB vs. ~45 MB compressed binary
+# - Incremental cache: stores keys + text hashes + model config so only new/changed
+#   works are re-encoded on each run (~16 min full, seconds incremental)
+# - Load speed: numpy reads the array in one shot; no parsing of 11M float strings
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
 
