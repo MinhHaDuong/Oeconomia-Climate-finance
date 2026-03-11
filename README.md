@@ -1,4 +1,4 @@
-# Climate Finance History - Œconomia Article Project
+8# Climate Finance History - Œconomia Article Project
 
 **Title:** Counting Climate Finance: How an Economic Object Was Made (1990-2025)
 
@@ -108,7 +108,7 @@ See `AGENTS.md` for writing guidelines, conventions, and workflow rules.
 
 ## Contact
 
-- **Managing Editor:** Francesco Sergi (francesco.sergi@u-pec.fr)
+- **Managing Editor**
 - **Journal:** Œconomia – History / Methodology / Philosophy
   - https://journals.openedition.org/oeconomia/
   - http://journals.sfu.ca/oeconomia
