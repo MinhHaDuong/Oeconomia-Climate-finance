@@ -12,9 +12,13 @@ import requests
 # --- Paths ---
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.environ.get(
-    "CLIMATE_FINANCE_DATA",
-    os.path.expanduser("~/data/projets/Oeconomia-Climate-finance"),
+_DATA_CANDIDATES = [
+    os.path.expanduser("~/data/projets/Oeconomia-Climate-finance"),  # doudou
+    "/data/projets/Oeconomia-Climate-finance",                       # padme
+]
+DATA_DIR = os.environ.get("CLIMATE_FINANCE_DATA") or next(
+    (p for p in _DATA_CANDIDATES if os.path.isdir(p)),
+    _DATA_CANDIDATES[0],  # fallback even if missing
 )
 CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
 EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
