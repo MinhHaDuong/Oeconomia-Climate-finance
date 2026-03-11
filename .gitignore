@@ -18,6 +18,10 @@ content/bibliography/*.pdf
 # Generated data lives outside repo (path set in .env)
 data/
 
+# Generated figures and tables (regenerate with: make figures)
+content/figures/
+content/tables/
+
 # Python / uv
 .venv/
 __pycache__/

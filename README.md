@@ -47,8 +47,8 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 │   ├── companion-paper.qmd           # Methods companion (Scientometrics/QSS)
 │   ├── _includes/                    # Shared Markdown fragments (10 files)
 │   ├── bibliography/                 # main.bib + oeconomia.csl
-│   ├── figures/                      # Generated figures (tracked, see below)
-│   └── tables/                       # Generated tables (tracked, see below)
+│   ├── figures/                      # Generated figures (gitignored)
+│   └── tables/                       # Generated tables (gitignored)
 ├── output/                           # Quarto rendered output (gitignored)
 ├── CLAUDE.md                         # AI handoff: lean index + status
 ├── PLAN.md                           # Manuscript structure (three-act, five figures)
@@ -65,9 +65,13 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 (override: `CLIMATE_FINANCE_DATA` env var; see `scripts/utils.py`).
 
-`content/figures/` and `content/tables/` (including interactive HTML) are tracked in git.
-They are regenerable via `make figures`, but tracking them ensures the
-documents build from a fresh clone without running the full data pipeline.
+`content/figures/` and `content/tables/` are gitignored — they are 100% script-generated.
+After cloning, regenerate them before building documents:
+
+```bash
+make figures        # regenerates all figures and tables (~2 min)
+make manuscript     # builds PDF (requires figures)
+```
 
 ## Literature Indexing Pipeline
 
