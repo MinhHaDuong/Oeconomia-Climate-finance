@@ -41,7 +41,7 @@ def openalex_get(params, delay=0.15):
     params.setdefault("mailto", MAILTO)
     resp = requests.get(OA_BASE, params=params, headers=HEADERS, timeout=60)
     if resp.status_code == 429:
-        wait = int(resp.headers.get("Retry-After", 10))
+        wait = min(int(resp.headers.get("Retry-After", 10)), 60)
         print(f"  Rate limited. Waiting {wait}s...")
         time.sleep(wait)
         resp = requests.get(OA_BASE, params=params, headers=HEADERS, timeout=60)

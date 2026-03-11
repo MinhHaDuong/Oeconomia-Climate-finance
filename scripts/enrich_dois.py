@@ -72,7 +72,7 @@ def search_doi(title, year=None):
         params["filter"] = f"publication_year:{year_int}"
 
     try:
-        resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=0.5)
+        resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=1.0)
         results = resp.json().get("results", [])
     except Exception as e:
         print(f"  Search failed for '{title[:60]}': {e}")
