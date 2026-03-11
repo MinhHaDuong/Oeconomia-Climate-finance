@@ -164,13 +164,25 @@ When working on multiple tickets:
 ### Running scripts
 
 Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
-```bash
-# Data collection (slow — API calls)
-uv run python scripts/count_openalex_econ_cf.py                  # OpenAlex econ yearly
-uv run python scripts/count_openalex_econ_cf.py --scope finance  # OpenAlex finance yearly
-uv run python scripts/count_openalex_econ_fin_overlap.py         # Econ/Finance overlap (ID sets)
-uv run python scripts/count_repec_econ_cf.py                     # RePEc yearly (needs local mirror)
 
+### Pipeline phases
+
+The pipeline has three phases with a strict contract between them:
+
+**Phase 1 — Corpus building** (slow, API-dependent, run rarely):
+- Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
+- Outputs (the contract): `refined_works.csv`, `embeddings.npz`, `citations.csv`
+- Run with: `make corpus`
+
+**Phase 2 — Analysis & figures** (fast, deterministic, run often):
+- Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`
+- Reads ONLY Phase 1 outputs; produces `content/figures/` and `content/tables/`
+- Run with: `make figures`
+
+**Phase 3 — Render** (Quarto → PDF/DOCX):
+- Run with: `make manuscript` or `make papers`
+
+```bash
 # Citation enrichment (run in order; both are resumable)
 uv run python scripts/enrich_citations_batch.py                  # Crossref references (do first)
 uv run python scripts/enrich_citations_openalex.py               # OpenAlex referenced_works (fills gap)
@@ -178,8 +190,6 @@ uv run python scripts/qc_citations.py                            # Verify citati
 # Or simply: make citations  (runs all three in order)
 
 # Figures
-uv run python scripts/plot_fig1_emergence.py     # Fig 1 (reads openalex_econ_yearly.csv)
-uv run python scripts/plot_fig1_robustness.py    # Fig A.1a (reads all yearly + overlap CSVs)
 uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3 (full corpus)
 uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core: cited ≥ 50)
 uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix

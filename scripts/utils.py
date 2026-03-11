@@ -30,6 +30,15 @@ EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 POOL_DIR = os.path.join(DATA_DIR, "pool")
 
+# --- Phase 1 → Phase 2 contract ---
+# Phase 1 (corpus building) produces these files in CATALOGS_DIR.
+# Phase 2 (analysis & figures) reads ONLY these files.
+PHASE1_OUTPUTS = {
+    "refined_works.csv",   # 30k deduplicated works
+    "embeddings.npz",      # 384-dim sentence embeddings
+    "citations.csv",       # 775k citation links
+}
+
 # --- CSV schemas ---
 
 WORKS_COLUMNS = [

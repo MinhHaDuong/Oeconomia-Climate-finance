@@ -32,7 +32,6 @@ uv run python scripts/analyze_embeddings.py          # → embeddings.npz (incre
 uv run python scripts/analyze_cocitation.py          # → communities.csv
 
 # Stage 5: Figures (each depends on refined_works.csv + embeddings.npz)
-uv run python scripts/plot_fig1_emergence.py         # emergence
 uv run python scripts/analyze_alluvial.py            # breakpoints + alluvial
 uv run python scripts/analyze_alluvial.py --core-only   # core analysis
 uv run python scripts/analyze_bimodality.py          # bimodality (must run before genealogy)
@@ -79,21 +78,9 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 | Bimodality analysis | ~1 min |
 | Citation genealogy | ~1 min |
 
-### RePEc local mirror
-
-The script `count_repec_econ_cf.py` reads from a local mirror of the RePEc ReDIF archives, providing an independent economics baseline for the emergence figure.
-
-```bash
-# Mirror setup (several GB, ~30 min)
-mkdir -p ~/data/datasets/external/RePEc
-rsync -va --delete rsync://rsync.repec.org/RePEc-ReDIF/ ~/data/datasets/external/RePEc/
-```
-
-The mirror was last synced 2026-02-26 (~2,334 archive directories). Re-run the same rsync command to update. Override the default path with `REPEC_ROOT` environment variable or `--repec-root` flag.
-
 ### Cross-machine reproducibility
 
-Figures that do not involve KMeans clustering (fig_bars, fig_genealogy, fig_seed_axis_core, fig_robustness) are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
+Figures that do not involve KMeans clustering (fig_bars, fig_genealogy, fig_seed_axis_core) are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
 
 Figures that depend on KMeans (fig_breakpoints, fig_composition, fig_bimodality, and their core variants) may differ across machines. This is because scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. The resulting cluster assignments can differ at the margin, producing visually similar but not byte-identical figures. Substantive results (breakpoint years, ΔBIC values, period boundaries) are robust to these differences.
 
@@ -103,6 +90,4 @@ Figures that depend on KMeans (fig_breakpoints, fig_composition, fig_bimodality,
 - bibCNRS export (requires CNRS Janus credentials, manual browser export)
 - Citation enrichment timing may vary due to Crossref index updates
 - LLM audit (requires `OPENROUTER_API_KEY`; can be skipped with `--skip-llm`)
-- RePEc mirror requires rsync access to `rsync.repec.org`
-
 All scripts support a `--no-pdf` flag to skip PDF generation and produce PNG only.

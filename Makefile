@@ -66,9 +66,9 @@ all: manuscript papers
 #   refined_works.csv    30k deduplicated works
 #   embeddings.npz       384-dim sentence embeddings
 #   citations.csv        775k citation links
-#   het_mostcited_50.csv Core subset (cited ≥ 50)
 #
 # Phase 2 scripts read ONLY these files.
+# het_mostcited_50.csv is a Phase 2 derived product (build_het_core.py).
 
 corpus: corpus-discover corpus-enrich corpus-refine corpus-manifest
 
