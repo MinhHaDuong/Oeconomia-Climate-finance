@@ -103,10 +103,20 @@ def main():
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    ax.text(2024, 2600, "Number\nof works", ha="left", va="bottom",
-            fontsize=10, color=DARK)
     ax.set_ylabel("")
     ax.set_xlabel("")
+
+    # Replace topmost visible tick (4000) with "Number of works", no tick mark
+    yticks = [t for t in ax.get_yticks() if t <= 4000]
+    ylabels = [str(int(v)) for v in yticks]
+    ylabels[-1] = "Number\nof works"
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(ylabels, fontsize=9)
+    tick_labels = ax.get_yticklabels()
+    tick_labels[-1].set_fontsize(10)
+    tick_labels[-1].set_color(DARK)
+    ax.yaxis.get_major_ticks()[-1].tick1line.set_visible(False)
+    ax.yaxis.get_major_ticks()[-1].tick2line.set_visible(False)
 
     fig.tight_layout()
 
