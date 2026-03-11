@@ -15,15 +15,17 @@
 #   make rebuild    Clean + rebuild everything
 
 # ── Paths ─────────────────────────────────────────────────
-# Scripts find data via scripts/utils.py (CLIMATE_FINANCE_DATA env var
-# or ~/data/projets/Oeconomia-Climate-finance/).  DATA_DIR here is only
-# for Make's timestamp-based dependency tracking.
-DATA_DIR    ?= $(HOME)/data/projets/Oeconomia-Climate-finance/catalogs
+# Machine-specific path set in .env (see .env.example).
+# Python scripts read the same file via utils.py.
+-include .env
+export CLIMATE_FINANCE_DATA
+DATA_DIR     ?= $(CLIMATE_FINANCE_DATA)/catalogs
 BIB         := content/bibliography/main.bib
 CSL         := content/bibliography/oeconomia.csl
 SRC         := content/manuscript.qmd
 
 REFINED     := $(DATA_DIR)/refined_works.csv
+MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
 ECON_YEARLY := $(DATA_DIR)/openalex_econ_yearly.csv
 OVERLAP     := $(DATA_DIR)/openalex_econ_fin_overlap.csv
 
@@ -64,11 +66,21 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
+# ── Tables (generated, included by Quarto) ──────────────
+MANUSCRIPT_TABLES := content/tables/tab_core_venues_top10.md
+
+# Core subset → venues table
+$(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
+	uv run python $<
+
 # ── Manuscript ───────────────────────────────────────────
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES)
 	quarto render $< --to docx
 
 # ── Companion documents ─────────────────────────────────

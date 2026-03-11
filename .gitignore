@@ -12,13 +12,11 @@ content/bibliography/*.pdf
 *.docx
 *.pdf
 
-# Generated data lives outside repo: ~/data/projets/Oeconomia-Climate-finance/
-# Only config/docs tracked in data/ ; ignore everything else
-data/catalogs/*
-!data/catalogs/het_core.csv
-data/exports/
-data/raw
-data/syllabi/
+# Machine-specific data path (see .env.example)
+.env
+
+# Generated data lives outside repo (path set in .env)
+data/
 
 # Python / uv
 .venv/
