@@ -25,7 +25,7 @@ from scipy.sparse import lil_matrix
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, load_cluster_labels, normalize_doi, save_figure
 
 apply_style()
 import matplotlib.pyplot as plt
@@ -56,15 +56,7 @@ RESOLUTION = 1.0
 RANDOM_STATE = 42
 K_CLUSTERS = 6
 
-# Short cluster names (same order as analyze_alluvial.py cluster indices 0-5)
-CLUSTER_SHORT = {
-    0: "Climate action",
-    1: "Green finance",
-    2: "CDM",
-    3: "Renewable",
-    4: "Forestry",
-    5: "Social",
-}
+CLUSTER_SHORT = load_cluster_labels()
 
 # ============================================================
 # Step 1: Load data and run KMeans

@@ -22,17 +22,9 @@ from sklearn.cluster import KMeans
 
 # Add scripts dir to path for utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from utils import CATALOGS_DIR, normalize_doi
+from utils import CATALOGS_DIR, load_cluster_labels, normalize_doi
 
-# KMeans cluster labels (same order as analyze_alluvial.py)
-CLUSTER_LABELS = {
-    0: "Climate action & adaptation",
-    1: "Green finance & bonds",
-    2: "CDM & carbon markets",
-    3: "Renewable energy",
-    4: "Forestry & emissions trading",
-    5: "Social dimensions & water",
-}
+CLUSTER_LABELS = load_cluster_labels()
 
 # ============================================================
 # Step 1: Load data and embeddings, run KMeans (k=6)

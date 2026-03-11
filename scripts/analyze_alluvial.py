@@ -19,6 +19,7 @@ With --robustness flag:
 
 import argparse
 import os
+import re
 import warnings
 from collections import Counter
 
@@ -488,12 +489,31 @@ LABEL_STOPWORDS = {
     "countries", "country", "policy", "policies", "global", "world",
     "international", "national", "economic", "economics", "development",
     # Tech buzzwords (uninformative as cluster labels)
-    "blockchain", "esg", "theory",
+    "blockchain", "esg", "theory", "usd",
     # Metadata artifacts
     "pdf", "http", "https", "www", "vol", "pp",
 }
 
-abstracts_for_tfidf = df["abstract"].fillna("").tolist()
+# Acronym → expansion mappings: collapse expansions into acronyms in text
+# so component words don't get double-counted in TF-IDF.
+ACRONYM_EXPANSIONS = {
+    r"\benvironmental[,]?\s+social\s+(?:and\s+)?governance\b": "ESG",
+    r"\bclean\s+development\s+mechanism\b": "CDM",
+    r"\bemissions?\s+trading\s+(?:system|scheme)\b": "ETS",
+    r"\bunited\s+nations\s+framework\s+convention\s+on\s+climate\s+change\b": "UNFCCC",
+    r"\bconference\s+of\s+(?:the\s+)?parties\b": "COP",
+    r"\bgreen\s+climate\s+fund\b": "GCF",
+    r"\bsustainable\s+development\s+goals?\b": "SDGs",
+    r"\bnationally\s+determined\s+contributions?\b": "NDCs",
+}
+
+def _collapse_acronyms(text):
+    """Replace known expansions with their acronyms to avoid double-counting."""
+    for pattern, acronym in ACRONYM_EXPANSIONS.items():
+        text = re.sub(pattern, acronym, text, flags=re.IGNORECASE)
+    return text
+
+abstracts_for_tfidf = [_collapse_acronyms(a) for a in df["abstract"].fillna("").tolist()]
 min_df_val = 3 if args.core_only else 5  # lower for smaller corpus
 label_vectorizer = TfidfVectorizer(
     ngram_range=(1, 2), max_features=8000, sublinear_tf=True,
@@ -514,36 +534,134 @@ for c in range(K_DEFAULT):
     c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
     distinctiveness = c_mean - corpus_mean
 
-    # Rank all candidate terms, prefer bigrams over overlapping unigrams
-    candidates = []
+    # Collect candidate terms above baseline, filtering stopwords.
+    # Build separate unigram and bigram pools to ensure bigrams aren't
+    # drowned out by individually high-scoring unigrams.
+    uni_candidates = []
+    bi_candidates = []
     for i in np.argsort(distinctiveness)[::-1]:
         term = label_features[i]
         tokens = term.split()
         if any(t in LABEL_STOPWORDS for t in tokens):
             continue
-        if len(tokens) == 1 and len(tokens[0]) < 3:
-            continue
-        candidates.append((term, float(distinctiveness[i])))
-        if len(candidates) >= 15:
+        if distinctiveness[i] <= 0:
             break
+        if " " in term:
+            if len(bi_candidates) < 20:
+                bi_candidates.append((term, float(distinctiveness[i])))
+        else:
+            if len(tokens[0]) < 3:
+                continue
+            if len(uni_candidates) < 30:
+                uni_candidates.append((term, float(distinctiveness[i])))
+        if len(uni_candidates) >= 30 and len(bi_candidates) >= 20:
+            break
+    # Interleave: bigrams first (more informative), then unigrams
+    candidates = bi_candidates + uni_candidates
 
-    # Select top 3, avoiding redundancy between unigrams and bigrams
+    # Promote bigrams: if a bigram's score is within 50% of the best
+    # unigram it contains, prefer the bigram (more informative).
+    unigram_scores = {t: s for t, s in candidates if " " not in t}
+    bigrams = [(t, s) for t, s in candidates if " " in t]
+    promoted = set()
+    for bigram, bi_score in bigrams:
+        parts = bigram.split()
+        best_uni = max((unigram_scores.get(p, 0) for p in parts), default=0)
+        if best_uni > 0 and bi_score >= best_uni * 0.5:
+            promoted.add(bigram)
+
+    # Select terms until we reach 10 words, preferring bigrams
+    MAX_WORDS = 10
+
+    def _word_count(terms):
+        return sum(len(t.split()) for t in terms)
+
     scored = []
     used_tokens = set()
+    # First pass: promoted bigrams
     for term, _ in candidates:
-        tokens = set(term.split())
-        # Skip if all tokens already covered by previously selected terms
-        if tokens.issubset(used_tokens):
+        if term not in promoted:
             continue
-        # Skip near-duplicate unigrams (e.g., "forest" when "forests" selected)
+        if _word_count(scored) + len(term.split()) > MAX_WORDS:
+            continue
+        tokens = set(term.split())
         stems = {t.rstrip("s") for t in tokens}
         used_stems = {t.rstrip("s") for t in used_tokens}
         if stems.issubset(used_stems):
             continue
         scored.append(term)
         used_tokens.update(tokens)
-        if len(scored) == 3:
+        if _word_count(scored) >= MAX_WORDS:
             break
+    # Second pass: fill remaining words with unigrams
+    for term, _ in candidates:
+        if _word_count(scored) >= MAX_WORDS:
+            break
+        if " " in term and term not in promoted:
+            continue
+        if _word_count(scored) + len(term.split()) > MAX_WORDS:
+            continue
+        tokens = set(term.split())
+        if tokens.issubset(used_tokens):
+            continue
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
+        scored.append(term)
+        used_tokens.update(tokens)
+    # Merge pass: if two selected unigrams form a bigram whose distinctiveness
+    # exceeds the weaker unigram, merge them to free a slot.
+    bigram_dist = {}
+    for idx_f, feat in enumerate(label_features):
+        if " " in feat:
+            bigram_dist[feat] = distinctiveness[idx_f]
+    unigram_dist = {}
+    for idx_f, feat in enumerate(label_features):
+        if " " not in feat:
+            unigram_dist[feat] = distinctiveness[idx_f]
+    merged = True
+    while merged:
+        merged = False
+        for i, a in enumerate(scored):
+            if " " in a:
+                continue
+            for j, b in enumerate(scored):
+                if j <= i or " " in b:
+                    continue
+                for bigram in (f"{a} {b}", f"{b} {a}"):
+                    if bigram not in bigram_dist:
+                        continue
+                    # Only merge if bigram is more distinctive than weaker component
+                    weaker = min(unigram_dist.get(a, 0), unigram_dist.get(b, 0))
+                    if bigram_dist[bigram] >= weaker:
+                        scored[i] = bigram
+                        scored.pop(j)
+                        used_tokens.update(bigram.split())
+                        merged = True
+                        break
+                if merged:
+                    break
+            if merged:
+                break
+    # Fill freed slots
+    for term, _ in candidates:
+        if _word_count(scored) >= MAX_WORDS:
+            break
+        if _word_count(scored) + len(term.split()) > MAX_WORDS:
+            continue
+        tokens = set(term.split())
+        if tokens.issubset(used_tokens):
+            continue
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
+        if " " in term and term not in promoted:
+            continue
+        scored.append(term)
+        used_tokens.update(tokens)
+
     cluster_labels[c] = " / ".join(scored) if scored else f"Cluster {c}"
 
 print("\nCluster labels:")

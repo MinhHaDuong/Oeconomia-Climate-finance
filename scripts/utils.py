@@ -112,6 +112,30 @@ def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
     raise RuntimeError(f"Failed after {max_retries} retries: {url}")
 
 
+_CLUSTER_LABELS_PATH = os.path.join(CATALOGS_DIR, "cluster_labels.json")
+
+
+def load_cluster_labels(n_clusters=6):
+    """Load cluster labels from cluster_labels.json.
+
+    Returns dict with int keys: {0: "term1 / term2 / term3", ...}.
+    Falls back to generic "Cluster N" labels with a warning.
+    """
+    import warnings
+
+    if os.path.exists(_CLUSTER_LABELS_PATH):
+        with open(_CLUSTER_LABELS_PATH) as f:
+            raw = json.load(f)
+        return {int(k): v for k, v in raw.items()}
+
+    warnings.warn(
+        f"cluster_labels.json not found at {_CLUSTER_LABELS_PATH}. "
+        "Run: uv run python scripts/analyze_alluvial.py",
+        stacklevel=2,
+    )
+    return {i: f"Cluster {i}" for i in range(n_clusters)}
+
+
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
 

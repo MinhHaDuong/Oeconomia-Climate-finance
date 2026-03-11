@@ -17,7 +17,6 @@ Usage:
 """
 
 import argparse
-import json
 import os
 import sys
 
@@ -26,35 +25,30 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT
-from utils import BASE_DIR, CATALOGS_DIR, save_figure
+from utils import BASE_DIR, load_cluster_labels, save_figure
 
 apply_style()
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.path import Path
 
-# Load cluster labels from alluvial analysis (TF-IDF distinctive terms)
-_labels_path = os.path.join(CATALOGS_DIR, "cluster_labels.json")
-if os.path.exists(_labels_path):
-    with open(_labels_path) as f:
-        _raw = json.load(f)
+_ACRONYMS = {"gcf", "cop", "unfccc", "ets", "cdm", "redd", "sdgs", "ndcs", "esg", "co2"}
 
-    def _short_label(terms_str):
-        """First two terms, title-cased, joined by ' & '."""
-        terms = [t.strip().capitalize() for t in terms_str.split("/")]
-        return " & ".join(terms[:2])
+def _format_term(term):
+    """Title-case, but render known acronyms in ALL CAPS."""
+    if term.lower() in _ACRONYMS:
+        return term.upper()
+    return term.capitalize()
 
-    CLUSTER_NAMES = {k: _short_label(v) for k, v in _raw.items()}
-else:
-    import warnings
+def _short_label(terms_str, width=30):
+    """Format terms as comma-separated text, wrapped at `width` characters."""
+    import textwrap
+    terms = [_format_term(t.strip()) for t in terms_str.split("/")]
+    flat = ", ".join(terms)
+    return textwrap.fill(flat, width=width)
 
-    warnings.warn(
-        f"cluster_labels.json not found at {_labels_path}. "
-        "Run: uv run python scripts/analyze_alluvial.py  "
-        "Legend will show uninformative 'Cluster N' labels.",
-        stacklevel=1,
-    )
-    CLUSTER_NAMES = {str(i): f"Cluster {i}" for i in range(6)}
+_raw_labels = load_cluster_labels()
+CLUSTER_NAMES = {str(k): _short_label(v) for k, v in _raw_labels.items()}
 
 # Six well-spaced solid greys
 CLUSTER_COLORS = ["#1a1a1a", "#4d4d4d", "#808080", "#a6a6a6", "#cccccc", "#f0f0f0"]
@@ -126,7 +120,7 @@ def main():
                 text_color = "white" if i <= 2 else DARK
                 ax.text(
                     x_pos[j], cy, f"{h:.0f}%",
-                    ha="center", va="center", fontsize=6,
+                    ha="center", va="center", fontsize=7,
                     fontweight="bold", color=text_color, zorder=4,
                 )
 
@@ -150,12 +144,13 @@ def main():
         arrow_char = "\u2191" if delta > 0 else "\u2193"
         n_arrows = max(1, round(abs(delta) / 5))
         arrows = arrow_char * n_arrows
-        text_color = DARK if i >= 3 else MED
+        text_color = DARK
         if top - bot > 5:
             ax.text(
                 x_pos[last] + bar_width / 2 + 0.06, mid,
                 f"{name}  {arrows}",
-                ha="left", va="center", fontsize=6, color=text_color,
+                ha="left", va="center", fontsize=7, color=text_color,
+                linespacing=1.2,
             )
 
     # Period labels below bars, with N counts
@@ -179,7 +174,7 @@ def main():
     )
 
     # Clean up: no axis labels, no ticks
-    ax.set_xlim(-0.5, x_pos[-1] + bar_width / 2 + 1.6)
+    ax.set_xlim(-0.5, x_pos[-1] + bar_width / 2 + 2.0)
     ax.set_ylim(0, 110)
     ax.set_xticks([])
     ax.set_yticks([])
