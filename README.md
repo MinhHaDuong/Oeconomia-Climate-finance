@@ -30,6 +30,12 @@ Publishing a few articles to lay the groundwork for a book project described in 
 
 All four are Quarto documents sharing fragments via `{{< include >}}` from `content/_includes/`.
 
+## Prerequisites
+
+- **[Quarto](https://quarto.org/docs/get-started/)** (≥ 1.4) — document rendering (`make manuscript`, `make papers`)
+- **[TinyTeX](https://quarto.org/docs/output-formats/pdf-engine.html)** or a full TeX Live install with XeLaTeX — PDF output (`quarto install tinytex` after installing Quarto)
+- **[uv](https://docs.astral.sh/uv/)** — Python dependency management (figures, corpus pipeline)
+
 ## Repository Structure
 
 ```
