@@ -6,10 +6,6 @@
 #   make papers     Build technical report, data paper, companion paper
 #   make figures    Regenerate all figures (from existing data)
 #   make figures-manuscript  Figures for the Oeconomia article only
-#   make figures-datapaper   Figures for the data descriptor
-#   make figures-companion   Figures for the quantitative paper
-#   make figures-techrep     Figures for the technical report (robustness)
-#   make data       Run slow API collection scripts
 #   make archive    Package code + data, validate, create tarball
 #   make clean      Remove build outputs
 #   make rebuild    Clean + rebuild everything
@@ -26,8 +22,6 @@ SRC         := content/manuscript.qmd
 
 REFINED     := $(DATA_DIR)/refined_works.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
-ECON_YEARLY := $(DATA_DIR)/openalex_econ_yearly.csv
-OVERLAP     := $(DATA_DIR)/openalex_econ_fin_overlap.csv
 
 # ── Reproducibility ───────────────────────────────────────
 # PYTHONHASHSEED=0  → deterministic dict/set iteration order
@@ -41,15 +35,13 @@ INCLUDES    := $(wildcard content/_includes/*.md)
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
 
-DATAPAPER_FIGS  := content/figures/fig_emergence.png \
-                   content/figures/fig_semantic.png
+DATAPAPER_FIGS  := content/figures/fig_semantic.png
 
 COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluvial.png \
                    content/figures/fig_breaks.png \
                    content/figures/fig_bimodality.png \
                    content/figures/fig_seed_axis_core.png content/figures/fig_pca_scatter.png \
-                   content/figures/fig_genealogy.png \
-                   content/figures/fig_robustness.png
+                   content/figures/fig_genealogy.png
 
 TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
                    content/figures/fig_bimodality_core.png \
@@ -58,7 +50,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep data citations corpus corpus-discover corpus-enrich corpus-refine deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep citations corpus corpus-discover corpus-enrich corpus-refine deploy-corpus clean rebuild archive verify-remote
 
 all: manuscript papers
 
@@ -86,6 +78,14 @@ $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
 	uv run python $<
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
+	uv run python $<
+
+# Corpus source statistics
+content/tables/tab_corpus_sources.csv: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+# Citation quality report
+content/tables/qc_citations_report.json: scripts/qc_citations.py scripts/utils.py $(REFINED)
 	uv run python $<
 
 # ── Manuscript ───────────────────────────────────────────
@@ -118,10 +118,6 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 	uv run python $< --no-pdf
 
 # -- Data paper --
-# Emergence (economics total + CF share)
-content/figures/fig_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
-	uv run python $< --no-pdf
-
 # Semantic UMAP maps (3 co-produced figures)
 content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/figures/fig_semantic_period.png &: \
 		scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
@@ -129,7 +125,8 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 
 # -- Companion paper (quantitative) --
 # Breakpoints + alluvial (co-produced by one script run)
-content/figures/fig_alluvial.png content/figures/fig_breakpoints.png &: \
+content/figures/fig_alluvial.png content/figures/fig_breakpoints.png \
+		content/tables/tab_alluvial.csv content/tables/tab_breakpoints.csv &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
@@ -138,8 +135,9 @@ content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.p
 		content/tables/tab_breakpoints.csv
 	uv run python $< --no-pdf
 
-# Bimodality tests (co-produced)
-content/figures/fig_bimodality.png content/tables/tab_pole_papers.csv &: \
+# Bimodality tests (co-produced: figure + 3 tables)
+content/figures/fig_bimodality.png content/tables/tab_pole_papers.csv \
+		content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
@@ -156,19 +154,15 @@ content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py
 		$(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $< --no-pdf
 
-# Robustness (econ vs finance vs RePEc)
-content/figures/fig_robustness.png: scripts/plot_fig1_robustness.py scripts/plot_helpers.py \
-		$(ECON_YEARLY) $(OVERLAP)
-	uv run python $< --no-pdf
-
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only variants (co-produced)
 content/figures/fig_alluvial_core.png content/figures/fig_breakpoints_core.png &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
 
-# Bimodality core variant
-content/figures/fig_bimodality_core.png: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+# Bimodality core variant (co-produced: figure + table)
+content/figures/fig_bimodality_core.png content/tables/tab_bimodality_core.csv &: \
+		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
 
 # KDE supplementary
@@ -225,13 +219,6 @@ deploy-corpus:
 	@echo "Corpus pipeline started on $(REMOTE_HOST). Monitor with:"
 	@echo "  ssh $(REMOTE_HOST) 'tail -f ~/Oeconomia-Climate-finance/corpus.log'"
 
-# ── Data collection (slow — not in default target) ───────
-data: citations
-	uv run python scripts/count_openalex_econ_cf.py
-	uv run python scripts/count_openalex_econ_cf.py --scope finance
-	uv run python scripts/count_openalex_econ_fin_overlap.py
-	uv run python scripts/count_repec_econ_cf.py
-
 # Citation enrichment: run Crossref first, then OpenAlex to fill the gap.
 # Both scripts are resumable; re-running only fetches what's missing.
 citations:
@@ -243,9 +230,7 @@ citations:
 SHELL := /bin/bash
 ARCHIVE_NAME := climate-finance-replication
 ARCHIVE_DATA := refined_works.csv embeddings.npy semantic_clusters.csv \
-                citations.csv openalex_econ_yearly.csv \
-                openalex_econ_fin_overlap.csv openalex_finance_yearly.csv \
-                repec_econ_yearly.csv
+                citations.csv
 ARCHIVE_TMP  := /tmp/$(ARCHIVE_NAME)
 
 archive: figures
