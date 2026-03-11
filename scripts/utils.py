@@ -112,7 +112,10 @@ def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
         time.sleep(delay)
         resp = requests.get(url, params=params, headers=headers, timeout=30)
         if resp.status_code == 429:
-            retry_after = int(resp.headers.get("Retry-After", 2 ** (attempt + 1)))
+            retry_after = min(
+                int(resp.headers.get("Retry-After", 2 ** (attempt + 1))),
+                60,  # cap at 60s regardless of header
+            )
             print(f"  Rate limited. Waiting {retry_after}s...")
             time.sleep(retry_after)
             continue

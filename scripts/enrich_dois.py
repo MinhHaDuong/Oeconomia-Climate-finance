@@ -64,11 +64,15 @@ def search_doi(title, year=None):
         "per_page": 5,
         "mailto": MAILTO,
     }
-    if year and str(year).isdigit():
-        params["filter"] = f"publication_year:{int(year)}"
+    try:
+        year_int = int(float(year)) if year and pd.notna(year) else None
+    except (ValueError, TypeError):
+        year_int = None
+    if year_int:
+        params["filter"] = f"publication_year:{year_int}"
 
     try:
-        resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=0.15)
+        resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=0.5)
         results = resp.json().get("results", [])
     except Exception as e:
         print(f"  Search failed for '{title[:60]}': {e}")
@@ -101,11 +105,15 @@ def main():
     print(f"Loaded {len(df)} works from {corpus_path}")
 
     # Identify DOI-less works with titles
+    # Skip OpenAlex-only sources: if OA doesn't have a DOI, re-querying OA won't help
     doi_col = df["doi"].fillna("").astype(str).str.strip()
     has_doi = doi_col.apply(lambda x: bool(x) and x.lower() not in ("", "nan", "none"))
     has_title = df["title"].notna() & (df["title"].str.strip() != "")
-    candidates = df[~has_doi & has_title].copy()
-    print(f"Candidates (no DOI, has title): {len(candidates)}")
+    is_oa_only = df["source"] == "openalex"
+    candidates = df[~has_doi & has_title & ~is_oa_only].copy()
+    skipped_oa = int((~has_doi & has_title & is_oa_only).sum())
+    print(f"Candidates (no DOI, has title, non-OA-only): {len(candidates)}")
+    print(f"Skipped (OpenAlex-only, DOI unresolvable): {skipped_oa}")
 
     # Load cache — skip already-processed
     cache = load_cache()
