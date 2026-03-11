@@ -202,7 +202,9 @@ content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.p
 	uv run python $< --no-pdf
 
 # Bimodality tests (co-produced)
-content/figures/fig_bimodality.png content/tables/tab_pole_papers.csv &: \
+content/figures/fig_bimodality.png \
+content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
+content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
@@ -238,8 +240,11 @@ content/figures/fig_alluvial_core.png: \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
 	uv run python $< --core-only --no-pdf
 
-# Bimodality core variant
-content/figures/fig_bimodality_core.png: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+# Bimodality core variant (co-produced)
+content/figures/fig_bimodality_core.png \
+content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
+content/tables/tab_pole_papers_core.csv &: \
+		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
 
 # KDE supplementary
