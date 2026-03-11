@@ -5,6 +5,10 @@
 #   make manuscript Build manuscript only (PDF + DOCX)
 #   make papers     Build technical report, data paper, companion paper
 #   make figures    Regenerate all figures (from existing data)
+#   make figures-manuscript  Figures for the Oeconomia article only
+#   make figures-datapaper   Figures for the data descriptor
+#   make figures-companion   Figures for the quantitative paper
+#   make figures-techrep     Figures for the technical report (robustness)
 #   make data       Run slow API collection scripts
 #   make archive    Package code + data, validate, create tarball
 #   make clean      Remove build outputs
@@ -32,8 +36,27 @@ export SOURCE_DATE_EPOCH := 0
 # ── Quarto ───────────────────────────────────────────────
 INCLUDES    := $(wildcard content/_includes/*.md)
 
+# ── Per-document figure sets ─────────────────────────────
+MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
+
+DATAPAPER_FIGS  := content/figures/fig_emergence.png \
+                   content/figures/fig_semantic.png
+
+COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluvial.png \
+                   content/figures/fig_breaks.png \
+                   content/figures/fig_bimodality.png \
+                   content/figures/fig_seed_axis_core.png content/figures/fig_pca_scatter.png \
+                   content/figures/fig_genealogy.png \
+                   content/figures/fig_robustness.png
+
+TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
+                   content/figures/fig_bimodality_core.png \
+                   content/figures/fig_kde.png
+
+ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
+
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures data citations corpus corpus-discover corpus-enrich corpus-refine deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep data citations corpus corpus-discover corpus-enrich corpus-refine deploy-corpus clean rebuild archive verify-remote
 
 all: manuscript papers
 
@@ -42,10 +65,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
 # ── Manuscript ───────────────────────────────────────────
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) content/figures/fig_bars.png content/figures/fig_composition.png
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) content/figures/fig_bars.png content/figures/fig_composition.png
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS)
 	quarto render $< --to docx
 
 # ── Companion documents ─────────────────────────────────
@@ -58,33 +81,55 @@ output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB)
 output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB)
 	quarto render $< --to pdf
 
-# ── Figures (Stage 1) ────────────────────────────────────
+# ── Figures ──────────────────────────────────────────────
+
+# -- Manuscript (Oeconomia article) --
+# Fig 1 (bars): corpus growth per year
+content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+# Fig 2 (composition): thematic clusters across periods
+content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
+		content/tables/tab_alluvial.csv
+	uv run python $< --no-pdf
+
+# -- Data paper --
 # Emergence (economics total + CF share)
 content/figures/fig_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
 	uv run python $< --no-pdf
 
+# Semantic UMAP maps (3 co-produced figures)
+content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/figures/fig_semantic_period.png &: \
+		scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+# -- Companion paper (quantitative) --
 # Breakpoints + alluvial (co-produced by one script run)
 content/figures/fig_alluvial.png content/figures/fig_breakpoints.png &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Core-only variants (co-produced)
-content/figures/fig_alluvial_core.png content/figures/fig_breakpoints_core.png &: \
-		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --no-pdf
+# Period divergence curves
+content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py \
+		content/tables/tab_breakpoints.csv
+	uv run python $< --no-pdf
 
-# Citation genealogy (needs bimodality output for pole assignments)
-content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab_pole_papers.csv
+# Bimodality tests (co-produced)
+content/figures/fig_bimodality.png content/tables/tab_pole_papers.csv &: \
+		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
 # PCA seed-axis scatter (core, supervised)
 content/figures/fig_seed_axis_core.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --supervised --no-pdf
 
-# Bimodality tests (co-produced)
-content/figures/fig_bimodality.png content/tables/tab_pole_papers.csv &: \
-		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+# PCA scatter (unsupervised)
+content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+# Citation genealogy (needs bimodality output for pole assignments)
+content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
+		$(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $< --no-pdf
 
 # Robustness (econ vs finance vs RePEc)
@@ -92,13 +137,25 @@ content/figures/fig_robustness.png: scripts/plot_fig1_robustness.py scripts/plot
 		$(ECON_YEARLY) $(OVERLAP)
 	uv run python $< --no-pdf
 
-# Aggregate
-MANUSCRIPT_FIGS := content/figures/fig_emergence.png content/figures/fig_alluvial.png
-ALL_FIGS := $(MANUSCRIPT_FIGS) \
-            content/figures/fig_alluvial_core.png \
-            content/figures/fig_genealogy.png content/figures/fig_seed_axis_core.png \
-            content/figures/fig_bimodality.png content/figures/fig_robustness.png
+# -- Technical report (robustness, variants, supplementary) --
+# Core-only variants (co-produced)
+content/figures/fig_alluvial_core.png content/figures/fig_breakpoints_core.png &: \
+		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
+	uv run python $< --core-only --no-pdf
 
+# Bimodality core variant
+content/figures/fig_bimodality_core.png: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+	uv run python $< --core-only --no-pdf
+
+# KDE supplementary
+content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --no-pdf
+
+figures-manuscript: $(MANUSCRIPT_FIGS)
+figures-datapaper:  $(DATAPAPER_FIGS)
+figures-companion:  $(COMPANION_FIGS)
+figures-techrep:    $(TECHREP_FIGS)
 figures: $(ALL_FIGS)
 
 # ── Corpus pipeline (slow — downloads from APIs) ─────────
