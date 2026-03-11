@@ -4,7 +4,7 @@
 Replaces the former two-script approach (catalog_openalex.py +
 catalog_openalex_historical.py) with a single tiered query engine.
 
-Query terms are defined in data/openalex_queries.yaml (4 tiers).
+Query terms are defined in config/openalex_queries.yaml (4 tiers).
 Raw API responses are stored in pool/openalex/ (gzipped JSONL, append-only).
 Extracted records go to catalogs/openalex_works.csv.
 
@@ -29,7 +29,7 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO,
+from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO,
                    normalize_doi, reconstruct_abstract, polite_get,
                    save_csv, pool_path, append_to_pool, load_pool_ids,
                    load_pool_records)
@@ -46,7 +46,7 @@ OA_SELECT = ",".join([
 
 def load_query_config():
     """Load tiered query configuration from YAML."""
-    yaml_path = os.path.join(BASE_DIR, "data", "openalex_queries.yaml")
+    yaml_path = os.path.join(CONFIG_DIR, "openalex_queries.yaml")
     with open(yaml_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config

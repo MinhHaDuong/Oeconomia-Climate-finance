@@ -2,7 +2,7 @@
 """Build catalog of grey literature (reports, policy documents).
 
 Combines:
-  - Curated seed list from data/grey_sources.yaml
+  - Curated seed list from config/grey_sources.yaml
   - World Bank Open Knowledge Repository API search
 
 Produces: data/catalogs/grey_works.csv
@@ -17,7 +17,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, DATA_DIR, WORKS_COLUMNS,
+from utils import (CATALOGS_DIR, CONFIG_DIR, WORKS_COLUMNS,
                    normalize_doi, polite_get, save_csv)
 
 # Try to import yaml; fall back to a simple parser if not installed
@@ -27,7 +27,7 @@ try:
 except ImportError:
     HAS_YAML = False
 
-SEED_FILE = os.path.join(DATA_DIR, "grey_sources.yaml")
+SEED_FILE = os.path.join(CONFIG_DIR, "grey_sources.yaml")
 
 WB_SEARCH_URL = "https://openknowledge.worldbank.org/server/api/discover/search/objects"
 

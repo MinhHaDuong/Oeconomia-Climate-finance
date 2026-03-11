@@ -18,7 +18,7 @@ The two hand-harvested sources cannot currently be automated: bibCNRS requires C
 
 ### Search strategy: tiered keyword taxonomy
 
-The search strategy uses a four-tier query taxonomy reflecting the evolving vocabulary of climate finance scholarship. The taxonomy is defined in `data/openalex_queries.yaml` and was informed by keyword mining of 1,406 core papers (cited_by_count >= 50).
+The search strategy uses a four-tier query taxonomy reflecting the evolving vocabulary of climate finance scholarship. The taxonomy is defined in `config/openalex_queries.yaml` and was informed by keyword mining of 1,406 core papers (cited_by_count >= 50).
 
 **Tier 1 — Core terms** (no post-filter): Unambiguous climate finance terminology in eight languages. English (`"climate finance"`, `"carbon finance"`), French (`"finance climat"`, `"finance climatique"`), German (`"Klimafinanzierung"`), Spanish, Portuguese, Arabic, Chinese, Japanese. Also includes institution names: `"green climate fund"`, `"adaptation fund"`.
 
@@ -41,9 +41,9 @@ OpenAlex indexes 100% of Crossref's DOI registry and adds abstracts, concepts, t
 - **ISTEX:** The ISTEX search API (`api.istex.fr`) is queried for `"climate finance" OR "finance climat" OR "finance climatique"`. Raw responses are stored in the pool (`pool/istex/`) following the same append-only architecture as OpenAlex. ISTEX adds full-text metadata from Springer, Elsevier, and Wiley archives accessible through the French national license.
 - **bibCNRS** (hand-harvested): Title-field searches in French (`"finance climat"`), Chinese (`"气候金融"`), and Japanese (`"気候金融"`) on the bibCNRS portal (`bib.cnrs.fr`), which aggregates WoS, EconLit, and FRANCIS. Requires CNRS Janus institutional credentials; no public API exists. RIS exports are saved to `data/exports/` and parsed by the script. Harvested February 2026; 242 works.
 - **SciSpace** (hand-harvested): An AI-curated corpus produced by SciSpace's systematic review tool, exported as RIS and CSV files. The tool's proprietary discovery algorithm complements keyword-based search. Harvested January 2026; 663 works.
-- **Grey literature:** A curated YAML seed list (`data/grey_sources.yaml`, 16 key policy documents from OECD, UNFCCC, CPI) plus automated search of the World Bank Open Knowledge Repository API (capped at 200 results). Fully reproducible.
+- **Grey literature:** A curated YAML seed list (`config/grey_sources.yaml`, 16 key policy documents from OECD, UNFCCC, CPI) plus automated search of the World Bank Open Knowledge Repository API (capped at 200 results). Fully reproducible.
 - **Semantic Scholar:** Same tiered queries as OpenAlex. Adds coverage of arXiv preprints, dissertations, and working papers that OpenAlex may miss. Free API with offset-based pagination (capped at ~10K per query). Pool-based storage in `pool/semanticscholar/`.
-- **Teaching canon:** Syllabus readings from 15 institutions (doctoral, masters, MBA, MOOC programs across 6 regions) are defined in `data/teaching_sources.yaml` and matched programmatically to the corpus by `build_teaching_canon.py`. Papers appearing in 2+ syllabi but absent from the corpus are added as seed works.
+- **Teaching canon:** Syllabus readings from 15 institutions (doctoral, masters, MBA, MOOC programs across 6 regions) are defined in `config/teaching_sources.yaml` and matched programmatically to the corpus by `build_teaching_canon.py`. Papers appearing in 2+ syllabi but absent from the corpus are added as seed works.
 
 ### Merge and deduplication
 

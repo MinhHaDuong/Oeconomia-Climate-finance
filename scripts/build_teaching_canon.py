@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build a teaching canon: match syllabus readings to our corpus, score, identify gaps.
 
-Reads:  data/teaching_sources.yaml, data/catalogs/refined_works.csv
-Writes: data/catalogs/teaching_canon.csv   (scored works in corpus)
-        data/catalogs/teaching_gaps.csv    (syllabus readings NOT in corpus)
-        data/catalogs/teaching_works.csv   (gap works formatted for merge pipeline)
+Reads:  config/teaching_sources.yaml, catalogs/refined_works.csv
+Writes: catalogs/teaching_canon.csv   (scored works in corpus)
+        catalogs/teaching_gaps.csv    (syllabus readings NOT in corpus)
+        catalogs/teaching_works.csv   (gap works formatted for merge pipeline)
         tables/teaching_canon.csv          (summary table for publication)
 
 Usage:
@@ -18,9 +18,9 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, normalize_title, save_csv
+from utils import CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, normalize_title, save_csv
 
-YAML_PATH = os.path.join(BASE_DIR, "data", "teaching_sources.yaml")
+YAML_PATH = os.path.join(CONFIG_DIR, "teaching_sources.yaml")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 

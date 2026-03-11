@@ -2,7 +2,7 @@
 """Harvest climate finance literature from Semantic Scholar.
 
 Uses the same tiered query taxonomy as catalog_openalex.py
-(data/openalex_queries.yaml). Raw API responses stored in
+(config/openalex_queries.yaml). Raw API responses stored in
 pool/semanticscholar/ (gzipped JSONL, append-only).
 
 Semantic Scholar Academic Graph API:
@@ -33,7 +33,7 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS,
+from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS,
                    normalize_doi, save_csv,
                    pool_path, append_to_pool, load_pool_ids,
                    load_pool_records)
@@ -50,7 +50,7 @@ S2_FIELDS = ",".join([
 
 def load_query_config():
     """Load tiered query configuration from YAML."""
-    yaml_path = os.path.join(BASE_DIR, "data", "openalex_queries.yaml")
+    yaml_path = os.path.join(CONFIG_DIR, "openalex_queries.yaml")
     with open(yaml_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
