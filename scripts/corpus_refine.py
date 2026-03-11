@@ -121,18 +121,69 @@ def save_llm_relevance_cache(cache):
     pd.DataFrame(rows).to_csv(LLM_CACHE_PATH, index=False)
 
 
-def score_relevance_llm(df_subset, batch_size=15):
-    """Score papers for climate finance relevance via LLM.
-
-    Sends batched prompts to OpenRouter. Returns {doi: bool}.
-    """
+def _llm_call(prompt, backend, api_key, model):
+    """Send prompt to LLM backend. Returns parsed response text."""
     import json
     import urllib.request
 
-    api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key:
-        print("    WARNING: no OPENROUTER_API_KEY, skipping LLM scoring")
-        return {}
+    if backend == "ollama":
+        body = json.dumps({
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+            "options": {"temperature": 0},
+        }).encode()
+        url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+        req = urllib.request.Request(
+            f"{url}/api/chat",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            result = json.loads(resp.read())
+        return result["message"]["content"].strip()
+    else:
+        # OpenRouter
+        body = json.dumps({
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 200,
+            "temperature": 0,
+        }).encode()
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            result = json.loads(resp.read())
+        return result["choices"][0]["message"]["content"].strip()
+
+
+def score_relevance_llm(df_subset, batch_size=15):
+    """Score papers for climate finance relevance via LLM.
+
+    Supports two backends via LLM_BACKEND env var:
+      - "openrouter" (default): uses OPENROUTER_API_KEY + google/gemini-2.5-flash
+      - "ollama": uses local ollama server + OLLAMA_MODEL (default: qwen2.5:32b)
+    """
+    import json
+
+    backend = os.environ.get("LLM_BACKEND", "openrouter").lower()
+    if backend == "ollama":
+        model = os.environ.get("OLLAMA_MODEL", "qwen2.5:32b")
+        api_key = ""
+        batch_size = min(batch_size, 5)  # smaller batches for local models
+        print(f"    Using ollama backend (model={model})")
+    else:
+        api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        model = "google/gemini-2.5-flash"
+        if not api_key:
+            print("    WARNING: no OPENROUTER_API_KEY, skipping LLM scoring")
+            return {}
 
     results = {}
     rows = list(df_subset.itertuples())
@@ -159,26 +210,8 @@ def score_relevance_llm(df_subset, batch_size=15):
             + "\n\n".join(papers)
         )
 
-        body = json.dumps({
-            "model": "google/gemini-2.5-flash",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 200,
-            "temperature": 0,
-        }).encode()
-
-        req = urllib.request.Request(
-            "https://openrouter.ai/api/v1/chat/completions",
-            data=body,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-        )
-
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json.loads(resp.read())
-            answer = result["choices"][0]["message"]["content"].strip()
+            answer = _llm_call(prompt, backend, api_key, model)
             # Parse JSON from response (handle markdown code blocks)
             answer = re.sub(r"```json?\s*", "", answer)
             answer = re.sub(r"```", "", answer)
@@ -191,7 +224,7 @@ def score_relevance_llm(df_subset, batch_size=15):
         except Exception as e:
             print(f"    LLM batch error: {e}")
 
-        time.sleep(1.0)
+        time.sleep(1.0 if backend == "openrouter" else 0.1)
         print(f"    Scored {min(i + batch_size, len(rows))}/{len(rows)}",
               end="\r")
 

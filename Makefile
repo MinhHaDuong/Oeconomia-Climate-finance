@@ -199,10 +199,13 @@ corpus-discover:
 	uv run python scripts/catalog_merge.py
 	uv run python scripts/corpus_refine.py --apply --cheap
 
-# Phase 2: Enrich abstracts + citations (parallel), then embeddings
+# Phase 2: Enrich metadata, abstracts, citations, then embeddings
+# DOI resolution and type fix run first (unlock more abstract/citation sources).
 # Abstracts and citations are independent; embeddings need abstracts.
 # Requires: uv sync --group corpus  (torch, sentence-transformers, hdbscan, …)
 corpus-enrich:
+	uv run python scripts/qa_detect_type.py --apply
+	uv run python scripts/enrich_dois.py
 	uv run python scripts/enrich_abstracts.py
 	uv run python scripts/enrich_citations_batch.py
 	uv run python scripts/enrich_citations_openalex.py
