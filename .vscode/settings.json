@@ -1,3 +1,9 @@
 {
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "claudeCode.initialPermissionMode": "bypassPermissions",
+    "claudeCode.allowDangerouslySkipPermissions": true,
+    "claudeCode.respectGitIgnore": true,
+    "claudeCode.autosave": true,
+    "claudeCode.usePythonEnvironment": false,
+    "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true
 }
