@@ -174,8 +174,8 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 	uv run python $<
 
 # -- Companion paper (quantitative) --
-# Breakpoints + alluvial (co-produced by one script run)
-content/figures/fig_alluvial.png content/figures/fig_breakpoints.png &: \
+# Breakpoints + alluvial + tab_alluvial.csv (all co-produced by one script run)
+content/figures/fig_alluvial.png content/figures/fig_breakpoints.png content/tables/tab_alluvial.csv &: \
 		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
