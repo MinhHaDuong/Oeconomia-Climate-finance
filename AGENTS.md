@@ -6,11 +6,11 @@ See `README.md` for project overview, repository structure, data paths.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
 See `content/technical-report.qmd` for the full data pipeline documentation.
 
-## Status (2026-03-10, evening)
+## Status (2026-03-11)
 
 - Manuscript: ~9,400 words, 47 bib entries, 2 figures + 1 table
-- Corpus: 22,113 refined works, 18,798 with embeddings, 1,176 core
-- Citation graph: 595,923 rows, 61% corpus coverage
+- Corpus: 30,085 refined works, 29,252 with embeddings, 2,284 core
+- Citation graph: 775,288 rows, 74% corpus coverage
 - Quarto: 4 documents, 11 shared includes, cross-refs (`@fig-*`, `@tbl-*`)
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992, caption updated
 - Fig 2 (composition): horizontal stacked % bars, Oeconomia style — may relocate to §3–4
@@ -55,7 +55,7 @@ Build with `make manuscript` (PDF + DOCX) or `make papers` (3 companion PDFs).
 - Track evolution of key terms across time
 
 ### Data Analysis
-The full corpus (~22,000 works from OpenAlex + ISTEX + Scopus + grey lit) supports:
+The full corpus (~30,000 works from OpenAlex + ISTEX + Scopus + grey lit) supports:
 - Bibliometric analysis (publication volume, co-citation networks, community detection)
 - Embedding-based analysis (structural breaks, semantic clustering, bimodality)
 - Lexical analysis (TF-IDF validation, term emergence)
@@ -247,13 +247,13 @@ grep -cP 'not .{3,60}, but ' content/manuscript.qmd
 
 ### Citation Graph
 
-`citations.csv` (595,923 rows) was built from two sources:
+`citations.csv` (775,288 rows) was built from two sources:
 
-- **Crossref** (`enrich_citations_batch.py`): 358,005 rows, covers papers where publishers deposit reference lists
-- **OpenAlex** (`enrich_citations_openalex.py`): +237,918 rows, fills the gap using `referenced_works`
+- **Crossref** (`enrich_citations_batch.py`): covers papers where publishers deposit reference lists
+- **OpenAlex** (`enrich_citations_openalex.py`): fills the gap using `referenced_works`
 
-**Overall coverage**: 13,699 / 17,533 corpus DOIs (78%) appear as source papers.
-**Core coverage** (cited ≥ 50): 1,353 / 1,461 (93%).
+**Overall coverage**: 17,248 / 23,194 corpus DOIs (74%) appear as source papers.
+**Core coverage** (cited ≥ 50): 2,284 core works.
 **Quality**: precision = recall = 1.000 verified against Crossref on 30-paper sample.
 **Structural ceiling**: the remaining 22% are at publishers (preprints, small journals, regional outlets) with no API reference metadata. Next step: PDF OCR with GROBID for core papers.
 

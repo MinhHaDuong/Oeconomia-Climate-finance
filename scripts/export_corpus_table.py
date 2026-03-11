@@ -25,31 +25,27 @@ CORE_THRESHOLD = 50
 SOURCE_META = {
     "openalex": {
         "label": "OpenAlex",
-        "query": 'title/abstract search: "climate finance", "finance climat"',
-    },
-    "openalex_historical": {
-        "label": "OpenAlex (historical)",
-        "query": "14 pre-2009 terms (CDM, carbon finance, adaptation fund, ...)",
+        "query": "4-tier keyword taxonomy, 9 languages (default.search on title+abstract+fulltext)",
     },
     "istex": {
         "label": "ISTEX",
-        "query": "French institutional full-text repository (Springer, Elsevier, Wiley)",
+        "query": '"climate finance" OR "finance climat*" on French institutional archive',
     },
     "bibcnrs": {
         "label": "bibCNRS",
-        "query": "non-English queries: FR, ZH, JA via WoS/EconLit/FRANCIS",
+        "query": "FR, ZH, JA queries via WoS/EconLit/FRANCIS (CNRS portal)",
     },
     "scispsace": {
         "label": "SciSpace",
-        "query": "AI-curated seed expansion (systematic review + RIS export)",
+        "query": "AI-curated systematic review (RIS + CSV exports)",
     },
     "grey": {
         "label": "Grey literature",
-        "query": "World Bank OKR API + curated YAML (OECD, UNFCCC reports)",
+        "query": "World Bank Open Knowledge Repository API + curated YAML (OECD, UNFCCC, CPI)",
     },
     "teaching": {
         "label": "Teaching canon",
-        "query": "MBA/doctoral syllabi (hand-curated seed list)",
+        "query": "Syllabi from 15 programmes (doctoral, MBA, professional, MOOC)",
     },
 }
 
