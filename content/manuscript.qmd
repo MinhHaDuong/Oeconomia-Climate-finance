@@ -137,17 +137,7 @@ Two structural breaks bracket the crystallization period. The first, detected at
 
 The publication ecology of the 1,176 most-cited works confirms the institutional character of the crystallization. Alongside conventional academic journals (*Climate Policy*, *Nature Climate Change*, *Climatic Change*), the core includes a substantial share of institutional publications (@tbl-venues). Category-making power was exercised not through peer-reviewed articles alone but through the "grey" channels of policy reports, expert group papers, and institutional working paper series. The OECD/IEA Climate Change Expert Group Papers provided the technical foundations for DAC reporting standards. The Climate Policy Initiative's annual *Global Landscape of Climate Finance* report [@buchner2013], first published in 2012, became the most widely cited single source on climate finance volumes. These publications acquired epistemic authority through a productive circularity: they were produced by the institutions responsible for *implementing* the categories they described---a circularity that reinforced the categories' stability but also insulated them from external challenge [@gieryn1983].
 
-| Venue | Papers | Type |
-|:------|-------:|:-----|
-| World Bank reports and working papers | 55 | Institutional |
-| OECD publications (incl. IEA Expert Group) | 45 | Institutional |
-| Sustainability | 26 | Journal |
-| IMF working papers | 13 | Institutional |
-| UNFCCC/climate fund reports | 11 | Institutional |
-| Nature Climate Change | 9 | Journal |
-| Climate Policy | 9 | Journal |
-
-: Top publication venues in the core subset (works cited 50 times or more), by number of papers. Authors' analysis of the corpus (core subset, N = 1,176). Venues grouped by publisher where institutional series overlap. Repositories (SSRN, RePEc) excluded as they duplicate content published elsewhere. {#tbl-venues}
+{{< include tables/tab_core_venues_top10.md >}}
 
 Critically, the most influential papers show *no structural break at all* across the 2005--2020 period. The categories through which economists analysed climate finance---carbon markets, green bonds, adaptation, accountability---were established by the mid-2000s. The breaks detected in the full corpus are driven by the influx of new, lower-cited scholarship, not by a reorientation of influential works. This finding supports the thesis that crystallization was a categorical event: the concepts were set once and have structured all subsequent debate.
 

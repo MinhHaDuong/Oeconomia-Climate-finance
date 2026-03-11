@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Export manuscript-ready markdown tables for core publication venues.
+"""Export manuscript-ready venue table for core publication venues.
+
+Produces a Quarto-includable markdown table grouping venues by publisher
+where institutional series overlap, matching the manuscript's @tbl-venues.
 
 Reads:
-- $DATA/catalogs/het_core.csv
+- $DATA/catalogs/het_mostcited_50.csv
 
 Writes:
-- tables/tab_core_venues_top10.md
+- content/tables/tab_core_venues_top10.md
 
 Usage:
     uv run python scripts/export_core_venues_markdown.py
@@ -14,7 +17,6 @@ Usage:
 import argparse
 import os
 import sys
-from datetime import date
 
 import pandas as pd
 
@@ -22,61 +24,35 @@ sys.path.insert(0, os.path.dirname(__file__))
 from summarize_core_venues import canonical_venue, venue_type
 from utils import BASE_DIR, CATALOGS_DIR
 
+TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
+
+# Institutional publisher groups: label → list of canonical venue prefixes
+PUBLISHER_GROUPS = [
+    ("World Bank reports and working papers", ["World Bank"], "Institutional"),
+    ("OECD publications (incl. IEA Expert Group)", ["OECD"], "Institutional"),
+    ("IMF working papers", ["IMF"], "Institutional"),
+    ("UNFCCC/climate fund reports", ["Climate finance and the USD 100 billion goal"], "Institutional"),
+]
+
+# Top journals to include (by paper count, after institutional groups)
+N_TOP_JOURNALS = 3
+
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Export top core venues as markdown tables")
+    parser = argparse.ArgumentParser(description="Export top core venues as markdown table")
     parser.add_argument(
         "--core",
         type=str,
-        default=os.path.join(CATALOGS_DIR, "het_core.csv"),
+        default=os.path.join(CATALOGS_DIR, "het_mostcited_50.csv"),
         help="Input core works CSV",
-    )
-    parser.add_argument(
-        "--top",
-        type=int,
-        default=10,
-        help="Top N venues per table",
     )
     parser.add_argument(
         "--out",
         type=str,
-        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_top10.md"),
-        help="Output markdown file",
+        default=os.path.join(TABLES_DIR, "tab_core_venues_top10.md"),
+        help="Output markdown file (Quarto-includable)",
     )
     return parser.parse_args()
-
-
-def summarize(df, types, top_n):
-    subset = df[df["venue_type"].isin(types)].copy()
-    out = (
-        subset.groupby("venue_canonical", as_index=False)
-        .agg(n_core_works=("venue_raw", "size"), cited_by_sum=("cited_by_count", "sum"))
-        .sort_values(["n_core_works", "cited_by_sum"], ascending=[False, False])
-        .head(top_n)
-        .reset_index(drop=True)
-    )
-    return out
-
-
-def summarize_institutions(df):
-    out = (
-        df.groupby("institution_group", as_index=False)
-        .agg(n_core_works=("venue_raw", "size"), cited_by_sum=("cited_by_count", "sum"))
-        .sort_values(["n_core_works", "cited_by_sum"], ascending=[False, False])
-        .reset_index(drop=True)
-    )
-    return out
-
-
-def to_markdown_table(df, label_col="venue_canonical", label_name="Venue"):
-    if df.empty:
-        return f"| {label_name} | Core works | Citation sum |\n|---|---:|---:|\n"
-
-    rows = [f"| {label_name} | Core works | Citation sum |", "|---|---:|---:|"]
-    for _, row in df.iterrows():
-        label = str(row[label_col]).replace("|", "\\|")
-        rows.append(f"| {label} | {int(row['n_core_works'])} | {int(row['cited_by_sum'])} |")
-    return "\n".join(rows) + "\n"
 
 
 def main():
@@ -93,42 +69,67 @@ def main():
     df["venue_raw"] = df["venue_raw"].mask(df["venue_raw"].eq(""), "[missing]")
     df["venue_canonical"] = df["venue_raw"].map(canonical_venue)
     df["venue_type"] = df["venue_canonical"].map(venue_type)
-    df["cited_by_count"] = pd.to_numeric(df.get("cited_by_count", 0), errors="coerce").fillna(0).astype(int)
-    low = df["venue_canonical"].str.lower()
-    df["institution_group"] = "Other/None"
-    df.loc[low.str.contains("oecd", na=False), "institution_group"] = "OECD"
-    df.loc[low.str.contains("world bank", na=False), "institution_group"] = "World Bank"
-    df.loc[low.str.contains("imf", na=False), "institution_group"] = "IMF"
 
-    journals = summarize(df, ["journal"], args.top)
-    series = summarize(df, ["working_paper_series", "report_series"], args.top)
-    institutions = summarize_institutions(df)
+    n_core = len(df)
 
-    header = [
-        "# Core Venues (Top Lists)",
-        "",
-        f"Generated: {date.today().isoformat()}",
-        "Source: catalogs/het_core.csv (resolved via CLIMATE_FINANCE_DATA)",
-        "",
-        "## Top Journals (by number of core works)",
-        "",
-        to_markdown_table(journals, label_col="venue_canonical", label_name="Venue"),
-        "## Top Report/Working-Paper Series (by number of core works)",
-        "",
-        to_markdown_table(series, label_col="venue_canonical", label_name="Venue"),
-        "## Institutional Presence in Core (OECD / World Bank / IMF)",
-        "",
-        to_markdown_table(institutions, label_col="institution_group", label_name="Institution"),
+    # Build grouped rows: institutional publishers
+    table_rows = []
+    used_indices = set()
+    for label, prefixes, vtype in PUBLISHER_GROUPS:
+        mask = df["venue_canonical"].str.lower().apply(
+            lambda v: any(v.startswith(p.lower()) for p in prefixes)
+        )
+        count = mask.sum()
+        if count > 0:
+            table_rows.append((label, count, vtype))
+            used_indices.update(df[mask].index)
+
+    # Top journals (not already consumed by institutional groups)
+    remaining = df.drop(index=used_indices)
+    journals = remaining[remaining["venue_type"] == "journal"]
+    top_journals = (
+        journals.groupby("venue_canonical")
+        .size()
+        .sort_values(ascending=False)
+        .head(N_TOP_JOURNALS)
+    )
+    for venue, count in top_journals.items():
+        table_rows.append((venue, count, "Journal"))
+
+    # Sort: institutional first (descending), then journals (descending)
+    inst_rows = [(v, n, t) for v, n, t in table_rows if t == "Institutional"]
+    jour_rows = [(v, n, t) for v, n, t in table_rows if t == "Journal"]
+    inst_rows.sort(key=lambda x: -x[1])
+    jour_rows.sort(key=lambda x: -x[1])
+    table_rows = inst_rows + jour_rows
+
+    # Render Quarto-compatible markdown
+    lines = [
+        "| Venue | Papers | Type |",
+        "|:------|-------:|:-----|",
     ]
-    content = "\n".join(header)
+    for venue, count, vtype in table_rows:
+        lines.append(f"| {venue} | {count} | {vtype} |")
+
+    lines.append("")
+    lines.append(
+        f": Top publication venues in the core subset (works cited 50 times or more), "
+        f"by number of papers. Authors' analysis of the corpus "
+        f"(core subset, N = {n_core:,}). "
+        f"Venues grouped by publisher where institutional series overlap. "
+        f"Repositories (SSRN, RePEc) excluded as they duplicate content "
+        f"published elsewhere. {{#tbl-venues}}"
+    )
+
+    content = "\n".join(lines) + "\n"
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as handle:
         handle.write(content)
 
-    print(f"Saved markdown table: {args.out}")
-    print(f"  Journals rows: {len(journals)}")
-    print(f"  Series rows: {len(series)}")
+    print(f"Saved manuscript table: {args.out}")
+    for venue, count, vtype in table_rows:
+        print(f"  {venue}: {count} ({vtype})")
 
 
 if __name__ == "__main__":

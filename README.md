@@ -55,7 +55,6 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 ├── AGENTS.md                         # Writing guidelines, workflow rules, quality standards
 ├── Makefile                          # Build: make manuscript, make papers, make figures
 ├── scripts/                          # Python analysis pipeline
-├── data/catalogs/                    # Small curated data (het_core.csv only; rest in ~/data/...)
 ├── release/                          # Releases outside CIRED. Append-only.
 ├── docs/                             # Œconomia journal info, book project notes
 └── attic/                            # Old stuff to delete when paper is accepted
@@ -70,25 +69,59 @@ All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 They are regenerable via `make figures`, but tracking them ensures the
 documents build from a fresh clone without running the full data pipeline.
 
-## Research Corpus
+## Literature Indexing Pipeline
 
-### Bibliometric corpus (~22,000 works)
-Built from multiple sources (OpenAlex, ISTEX, Scopus, JSTOR, BibCNRS, grey literature), merged and deduplicated. Generated data lives at `~/data/projets/Oeconomia-Climate-finance/catalogs/`.
+Multi-source catalog of academic and grey literature on climate finance.
+All sources searched for: `"climate finance" OR "finance climat" OR "finance climatique"`.
 
-### Primary Literature
-- **ISTEX corpus:** 484 articles with "Climate finance" OR "Finance climat" OR "Finance climatique" (full-text PDFs)
-- Located in: `corpus ISTEX/istex-subset-2025-11-27/`
+### Data inventory
 
-### Systematic Reviews (SciSpace)
-Topic-specific analyses with CSV datasets:
-- Additionality debates
-- Double counting and transparency
-- OECD Rio markers methodology
-- Grant-equivalent vs. concessionality
-- Mobilized private finance
-- Performativity and STS perspectives
-- UNFCCC Standing Committee on Finance
-- Historical evolution (1990-2025)
+| File | Rows | Description |
+|------|------|-------------|
+| `catalogs/istex_works.csv` | 482 | ISTEX corpus (local JSON metadata) |
+| `catalogs/istex_refs.csv` | 19,744 | Cited references extracted from ISTEX articles |
+| `catalogs/openalex_works.csv` | 11,313 | OpenAlex API query (free, no auth) |
+| `catalogs/bibcnrs_works.csv` | 242 | bibCNRS exports: French, Chinese, Japanese, German (deduplicated) |
+| `catalogs/scispsace_works.csv` | 663 | SciSpace AI-curated corpus (RIS + CSV, deduplicated) |
+| `catalogs/grey_works.csv` | 213 | 16 curated seed entries + 200 World Bank OKR API |
+| `catalogs/unified_works.csv` | 12,372 | Deduplicated merge of all sources (474 multi-source) |
+| `catalogs/citations.csv` | 232,218 | Crossref citation links (176K with DOIs, from 4,710 source DOIs) |
+
+### CSV schema
+
+**Works** (`*_works.csv`):
+`source, source_id, doi, title, first_author, all_authors, year, journal, abstract, language, keywords, categories, cited_by_count, affiliations`
+
+**References** (`istex_refs.csv`, `citations.csv`):
+`source_doi, source_id, ref_doi, ref_title, ref_first_author, ref_year, ref_journal, ref_raw`
+
+### Scripts
+
+| Script | Source | Auth required |
+|--------|--------|---------------|
+| `catalog_istex.py` | Local JSON files | No |
+| `catalog_openalex.py` | OpenAlex API | No (free, polite pool) |
+| `catalog_grey.py` | YAML seed + World Bank OKR API | No |
+| `catalog_bibcnrs.py` | bibCNRS RIS exports | Yes (CNRS Janus) |
+| `catalog_scispsace.py` | SciSpace AI tech reports | No (local files) |
+| `catalog_merge.py` | Merges all `*_works.csv` | No |
+| `enrich_citations.py` | Crossref API | No (polite pool) |
+
+Retired: `catalog_scopus.py` and `catalog_jstor.py` — OpenAlex already indexes their content.
+
+### How to re-run
+
+1. **Re-merge after changes**: `python3 scripts/catalog_merge.py`
+2. **Refresh OpenAlex**: `python3 scripts/catalog_openalex.py`
+3. **Update grey literature**: edit `config/grey_sources.yaml`, run `python3 scripts/catalog_grey.py`
+4. **Add bibCNRS exports**: save RIS files to exports dir, run `python3 scripts/catalog_bibcnrs.py`, then re-merge
+
+### Known limitations
+
+- Crossref enrichment resolved 4,710/10,347 DOIs (rest returned 404)
+- Grey literature coverage is partial: OECD iLibrary and UNFCCC have no bulk API
+- OpenAlex under-represents non-English literature; bibCNRS adds 233 non-English works
+- Chinese-language literature (CNKI) remains largely uncovered
 
 ## Key Themes
 

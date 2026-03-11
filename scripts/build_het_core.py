@@ -9,9 +9,9 @@ Pipeline:
   5. Select top TARGET_N with diversity quotas
   6. Output CSV
 
-Reads:  data/catalogs/refined_works.csv, data/catalogs/citations.csv,
-        data/catalogs/teaching_canon.csv
-Writes: data/catalogs/het_core.csv, tables/het_core_summary.csv
+Reads:  $DATA/catalogs/refined_works.csv, $DATA/catalogs/citations.csv,
+        $DATA/catalogs/teaching_canon.csv
+Writes: $DATA/catalogs/het_mostcited_50.csv
 
 Usage:
     python scripts/build_het_core.py
@@ -26,9 +26,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_csv
-
-TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
+from utils import CATALOGS_DIR, normalize_doi, save_csv
 
 # ── CONFIG ──────────────────────────────────────────────────────────────
 
@@ -471,18 +469,8 @@ def main():
     out["pagerank"] = out["pagerank"].map(lambda x: f"{x:.6f}")
     out["score"] = out["score"].round(4)
 
-    het_path = os.path.join(CATALOGS_DIR, "het_core.csv")
+    het_path = os.path.join(CATALOGS_DIR, "het_mostcited_50.csv")
     save_csv(out, het_path)
-
-    # Summary table for publication
-    os.makedirs(TABLES_DIR, exist_ok=True)
-    summary_cols = [
-        "doi", "title", "first_author", "year", "journal",
-        "cited_by_count", "cit_per_year", "score", "is_institutional_report",
-    ]
-    summary = out[summary_cols].copy()
-    summary_path = os.path.join(TABLES_DIR, "het_core_summary.csv")
-    save_csv(summary, summary_path)
 
     # Print funnel
     print(f"\n{'='*60}")

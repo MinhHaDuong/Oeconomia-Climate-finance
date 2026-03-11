@@ -2,7 +2,7 @@
 """Summarize publication venues for core works.
 
 Reads:
-- $DATA/catalogs/het_core.csv
+- $DATA/catalogs/het_mostcited_50.csv
 
 Writes:
 - tables/tab_core_venues_journals.csv
@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--core",
         type=str,
-        default=os.path.join(CATALOGS_DIR, "het_core.csv"),
+        default=os.path.join(CATALOGS_DIR, "het_mostcited_50.csv"),
         help="Input core works CSV",
     )
     parser.add_argument(
@@ -41,31 +41,31 @@ def parse_args():
     parser.add_argument(
         "--out-all",
         type=str,
-        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_all.csv"),
+        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_venues_all.csv"),
         help="Output path for all venues summary",
     )
     parser.add_argument(
         "--out-journals",
         type=str,
-        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_journals.csv"),
+        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_venues_journals.csv"),
         help="Output path for journal-only summary",
     )
     parser.add_argument(
         "--out-series",
         type=str,
-        default=os.path.join(BASE_DIR, "tables", "tab_core_venues_series.csv"),
+        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_venues_series.csv"),
         help="Output path for report/WP series summary",
     )
     parser.add_argument(
         "--out-institutions",
         type=str,
-        default=os.path.join(BASE_DIR, "tables", "tab_core_institutions.csv"),
+        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_institutions.csv"),
         help="Output path for institution summary (OECD/WB/IMF/other)",
     )
     parser.add_argument(
         "--out-institution-types",
         type=str,
-        default=os.path.join(BASE_DIR, "tables", "tab_core_institution_by_type.csv"),
+        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_institution_by_type.csv"),
         help="Output path for institution x venue_type summary",
     )
     return parser.parse_args()
