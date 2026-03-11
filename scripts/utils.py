@@ -30,6 +30,15 @@ EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 POOL_DIR = os.path.join(DATA_DIR, "pool")
 
+# --- Phase 1 → Phase 2 contract ---
+# Phase 1 (corpus building) produces these files in CATALOGS_DIR.
+# Phase 2 (analysis & figures) reads ONLY these files.
+PHASE1_OUTPUTS = {
+    "refined_works.csv",   # 30k deduplicated works
+    "embeddings.npz",      # 384-dim sentence embeddings
+    "citations.csv",       # 775k citation links
+}
+
 # --- CSV schemas ---
 
 WORKS_COLUMNS = [
@@ -136,6 +145,11 @@ def load_cluster_labels(n_clusters=6):
     return {i: f"Cluster {i}" for i in range(n_clusters)}
 
 
+# Embeddings live in a separate .npz rather than as columns in refined_works.csv:
+# - Size: 384 floats × 30k rows as CSV text ≈ 500 MB vs. ~45 MB compressed binary
+# - Incremental cache: stores keys + text hashes + model config so only new/changed
+#   works are re-encoded on each run (~16 min full, seconds incremental)
+# - Load speed: numpy reads the array in one shot; no parsing of 11M float strings
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
 

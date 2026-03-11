@@ -164,6 +164,24 @@ When working on multiple tickets:
 ### Running scripts
 
 Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
+
+### Pipeline phases
+
+The pipeline has three phases with a strict contract between them:
+
+**Phase 1 — Corpus building** (slow, API-dependent, run rarely):
+- Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
+- Outputs (the contract): `refined_works.csv`, `embeddings.npz`, `citations.csv`
+- Run with: `make corpus`
+
+**Phase 2 — Analysis & figures** (fast, deterministic, run often):
+- Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`
+- Reads ONLY Phase 1 outputs; produces `content/figures/` and `content/tables/`
+- Run with: `make figures`
+
+**Phase 3 — Render** (Quarto → PDF/DOCX):
+- Run with: `make manuscript` or `make papers`
+
 ```bash
 # Citation enrichment (run in order; both are resumable)
 uv run python scripts/enrich_citations_batch.py                  # Crossref references (do first)

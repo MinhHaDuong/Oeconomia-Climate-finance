@@ -34,7 +34,7 @@ Raw API responses are stored in an append-only pool (`pool/openalex/`, `pool/sem
 
 ### Why not Crossref for discovery?
 
-OpenAlex indexes 100% of Crossref's DOI registry and adds abstracts, concepts, topics, and affiliations that Crossref lacks. Using Crossref as a discovery source would be fully redundant with OpenAlex. Crossref remains used exclusively for enriching citation reference lists (via `enrich_citations.py`) where OpenAlex's `referenced_works` field is incomplete.
+OpenAlex indexes 100% of Crossref's DOI registry and adds abstracts, concepts, topics, and affiliations that Crossref lacks. Using Crossref as a discovery source would be fully redundant with OpenAlex. Crossref remains used exclusively for enriching citation reference lists (via `enrich_citations_batch.py` + `enrich_citations_openalex.py`) where OpenAlex's `referenced_works` field is incomplete.
 
 ### Other sources
 
