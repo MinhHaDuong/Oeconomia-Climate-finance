@@ -35,7 +35,7 @@ Papers are protected from removal if they meet any of: cited_by_count >= 50, app
 
 Flagged, non-protected papers are removed. An audit trail (`corpus_audit.csv`) records the decision for every paper.
 
-**Result:** The refined corpus contains 22,113 papers in `refined_works.csv`.
+**Result:** The refined corpus contains {{< var corpus_total >}} papers in `refined_works.csv`.
 
 ### Venue-cleaning decisions
 

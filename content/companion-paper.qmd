@@ -83,7 +83,7 @@ final tables should use canonicalized venue mapping. -->
 
 <!-- ~500 words. Cross-reference the data descriptor. -->
 
-The analysis uses a multilingual corpus of 22,113 works on climate finance (1990--2025), assembled from seven bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, 18,798 works have abstracts of sufficient length for embedding, and 1,176 constitute a "core" subset (cited $\geq$ 50 times) representing the field's intellectual backbone.
+The analysis uses a multilingual corpus of {{< var corpus_total >}} works on climate finance (1990--2025), assembled from seven bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< var corpus_with_embeddings >}} works have abstracts of sufficient length for embedding, and {{< var corpus_core >}} constitute a "core" subset (cited $\geq$ {{< var corpus_core_threshold >}} times) representing the field's intellectual backbone.
 
 The corpus was designed for breadth (seven sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). Sentence-transformer embeddings (384 dimensions, `paraphrase-multilingual-MiniLM-L12-v2`) place all abstracts into a shared semantic space regardless of language.
 

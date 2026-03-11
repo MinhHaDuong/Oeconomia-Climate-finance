@@ -66,6 +66,18 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
+# ── Statistics (computed from pipeline outputs) ──────────
+STATS := _variables.yml
+
+$(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
+		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
+		content/tables/tab_axis_detection.csv content/tables/tab_corpus_sources.csv \
+		content/tables/qc_citations_report.json
+	uv run python $<
+
+stats: $(STATS)
+.PHONY: stats
+
 # ── Tables (generated, included by Quarto) ──────────────
 MANUSCRIPT_TABLES := content/tables/tab_core_venues_top10.md
 
@@ -77,20 +89,20 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 	uv run python $<
 
 # ── Manuscript ───────────────────────────────────────────
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
 	quarto render $< --to docx
 
 # ── Companion documents ─────────────────────────────────
-output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB)
+output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB)
+output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB)
+output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
 # ── Figures ──────────────────────────────────────────────

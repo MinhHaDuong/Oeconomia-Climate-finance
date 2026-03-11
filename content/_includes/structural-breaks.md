@@ -40,7 +40,7 @@ Local maxima above z = 1.5 are identified as candidates, subject to the constrai
 
 Because the corpus grows rapidly over time, divergence peaks could be driven by uneven sample sizes rather than thematic change. We compute Pearson correlations between each divergence series and the year-over-year growth rate of paper counts. Correlations |*r*| > 0.5 would flag a confounded metric.
 
-### Results: full corpus (N = 18,798)
+### Results: full corpus (N = {{< var corpus_with_embeddings >}})
 
 #### Baseline (*k* = 0)
 
@@ -79,7 +79,7 @@ With a 2-year gap, only one breakpoint survives:
 
 The sole surviving break at **2009** (Copenhagen COP) confirms that the late-2000s semantic shift is the dominant structural feature of the corpus. The 2013 JS break disappears, suggesting it reflects a more gradual thematic redistribution that does not survive the removal of adjacent years. The 2009 result aligns with the thesis that climate finance crystallized as a distinct economic object around the Copenhagen moment.
 
-### Results: core subset (N = 1,176, cited_by_count ≥ 50)
+### Results: core subset (N = {{< var corpus_core >}}, cited_by_count ≥ {{< var corpus_core_threshold >}})
 
 The core subset contains only highly-cited papers — the *influential* works that define the field's intellectual structure.
 
@@ -117,7 +117,7 @@ The censored-gap analysis reinforces the main breakpoint at **2009** (Copenhagen
 
 | Corpus | *k* = 0 | *k* = 1 | *k* = 2 |
 |--------|---------|---------|---------|
-| Full (18,798) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
-| Core (1,176) | 2023* | 2023* | 2023* |
+| Full ({{< var corpus_with_embeddings >}}) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
+| Core ({{< var corpus_core >}}) | 2023* | 2023* | 2023* |
 
 \* Boundary artifact only.

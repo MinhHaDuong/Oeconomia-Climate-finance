@@ -18,9 +18,10 @@ content/bibliography/*.pdf
 # Generated data lives outside repo (path set in .env)
 data/
 
-# Generated figures and tables (regenerate with: make figures)
+# Generated figures, tables, and stats (regenerate with: make figures / make stats)
 content/figures/
 content/tables/
+_variables.yml
 
 # Python / uv
 .venv/

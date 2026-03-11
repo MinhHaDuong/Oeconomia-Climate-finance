@@ -6,16 +6,15 @@
 
 ### Coverage
 
-The citation graph was built by querying Crossref and OpenAlex for every DOI in `refined_works.csv`. Of 17,533 unique corpus DOIs, 13,699 (78%) appear as source papers in `citations.csv`, contributing 595,923 reference rows of which 509,966 (86%) carry a resolved reference DOI. OpenAlex contributed 237,918 rows complementing the 358,005 from Crossref.
+The citation graph was built by querying Crossref and OpenAlex for every DOI in `refined_works.csv`. Of {{< var cite_total_dois >}} unique corpus DOIs, {{< var cite_fetched_dois >}} ({{< var cite_coverage_pct >}}%) appear as source papers in `citations.csv`, contributing {{< var cite_total_rows >}} reference rows of which {{< var cite_doi_ref_rows >}} ({{< var cite_doi_ref_pct >}}%) carry a resolved reference DOI. OpenAlex complemented the {{< var cite_crossref_rows >}} rows from Crossref.
 
 | Metric | Value |
 |--------|-------|
-| Corpus DOIs | 17,533 |
-| DOIs with citation data | 13,699 (78%) |
-| Total reference rows | 595,923 |
-| Rows with resolved ref DOI | 509,966 (86%) |
-| Crossref-sourced rows | 358,005 |
-| OpenAlex-sourced rows | 237,918 |
+| Corpus DOIs | {{< var cite_total_dois >}} |
+| DOIs with citation data | {{< var cite_fetched_dois >}} ({{< var cite_coverage_pct >}}%) |
+| Total reference rows | {{< var cite_total_rows >}} |
+| Rows with resolved ref DOI | {{< var cite_doi_ref_rows >}} ({{< var cite_doi_ref_pct >}}%) |
+| Crossref-sourced rows | {{< var cite_crossref_rows >}} |
 
 Coverage varies by period:
 
@@ -27,7 +26,7 @@ Coverage varies by period:
 
 Coverage is significantly higher for the most-cited works (core papers with $\geq 50$ incoming citations): 1,353 of 1,461 (93%) have reference data.
 
-The remaining 3,834 never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
+The remaining {{< var cite_never_fetched >}} never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
 
 ### Quality verification
 
