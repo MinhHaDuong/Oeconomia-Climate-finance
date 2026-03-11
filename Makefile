@@ -1,18 +1,18 @@
 # Makefile — Counting Climate Finance (Œconomia)
 #
+# Three-phase pipeline:
+#   Phase 1: make corpus       Corpus building (slow — API calls, run rarely)
+#   Phase 2: make figures      Analysis & figures (fast, deterministic, run often)
+#   Phase 3: make manuscript   Render documents (Quarto → PDF/DOCX)
+#
 # Usage:
-#   make            Build all documents (manuscript + 3 companion papers)
-#   make manuscript Build manuscript only (PDF + DOCX)
-#   make papers     Build technical report, data paper, companion paper
-#   make figures    Regenerate all figures (from existing data)
-#   make figures-manuscript  Figures for the Oeconomia article only
-#   make figures-datapaper   Figures for the data descriptor
-#   make figures-companion   Figures for the quantitative paper
-#   make figures-techrep     Figures for the technical report (robustness)
-#   make data       Run slow API collection scripts
-#   make archive    Package code + data, validate, create tarball
-#   make clean      Remove build outputs
-#   make rebuild    Clean + rebuild everything
+#   make              Build all documents (manuscript + 3 companion papers)
+#   make manuscript   Build manuscript only (PDF + DOCX)
+#   make papers       Build technical report, data paper, companion paper
+#   make figures      Regenerate all figures (from existing data)
+#   make archive      Package code + data, validate, create tarball
+#   make clean        Remove build outputs
+#   make rebuild      Clean + rebuild everything
 
 # ── Paths ─────────────────────────────────────────────────
 # Machine-specific path set in .env (see .env.example).
@@ -26,8 +26,7 @@ SRC         := content/manuscript.qmd
 
 REFINED     := $(DATA_DIR)/refined_works.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
-ECON_YEARLY := $(DATA_DIR)/openalex_econ_yearly.csv
-OVERLAP     := $(DATA_DIR)/openalex_econ_fin_overlap.csv
+MANIFEST    := $(DATA_DIR)/corpus_manifest.json
 
 # ── Reproducibility ───────────────────────────────────────
 # PYTHONHASHSEED=0  → deterministic dict/set iteration order
@@ -41,15 +40,13 @@ INCLUDES    := $(wildcard content/_includes/*.md)
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
 
-DATAPAPER_FIGS  := content/figures/fig_emergence.png \
-                   content/figures/fig_semantic.png
+DATAPAPER_FIGS  := content/figures/fig_semantic.png
 
 COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluvial.png \
                    content/figures/fig_breaks.png \
                    content/figures/fig_bimodality.png \
                    content/figures/fig_seed_axis_core.png content/figures/fig_pca_scatter.png \
-                   content/figures/fig_genealogy.png \
-                   content/figures/fig_robustness.png
+                   content/figures/fig_genealogy.png
 
 TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
                    content/figures/fig_bimodality_core.png \
@@ -58,13 +55,84 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep data citations corpus corpus-discover corpus-enrich corpus-refine deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
 
 all: manuscript papers
 
-manuscript: output/content/manuscript.pdf output/content/manuscript.docx
+# ═══════════════════════════════════════════════════════════
+# PHASE 1 — Corpus Building (slow, API-dependent, run rarely)
+# ═══════════════════════════════════════════════════════════
+# Outputs (the Phase 1 → Phase 2 contract):
+#   refined_works.csv    30k deduplicated works
+#   embeddings.npz       384-dim sentence embeddings
+#   citations.csv        775k citation links
+#   het_mostcited_50.csv Core subset (cited ≥ 50)
+#
+# Phase 2 scripts read ONLY these files.
 
-papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
+corpus: corpus-discover corpus-enrich corpus-refine corpus-manifest
+
+# Phase 1a: Discovery + merge + cheap filter (flags 1-3 only)
+# Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
+# pre-placed in $(DATA_DIR) before running.
+corpus-discover:
+	uv run python scripts/catalog_istex.py --api
+	uv run python scripts/catalog_openalex.py --resume
+	uv run python scripts/catalog_semanticscholar.py --resume
+	uv run python scripts/catalog_grey.py
+	uv run python scripts/catalog_merge.py
+	uv run python scripts/build_teaching_canon.py
+	uv run python scripts/catalog_merge.py
+	uv run python scripts/corpus_refine.py --apply --cheap
+
+# Phase 1b: Enrich metadata, abstracts, citations, then embeddings
+# DOI resolution and type fix run first (unlock more abstract/citation sources).
+# Abstracts and citations are independent; embeddings need abstracts.
+# Requires: uv sync --group corpus  (torch, sentence-transformers, hdbscan, …)
+corpus-enrich:
+	uv run python scripts/qa_detect_type.py --apply
+	uv run python scripts/enrich_dois.py
+	uv run python scripts/enrich_abstracts.py
+	uv run python scripts/enrich_citations_batch.py
+	uv run python scripts/enrich_citations_openalex.py
+	uv run python scripts/qc_citations.py
+	uv run python scripts/analyze_embeddings.py
+
+# Phase 1c: Full refinement with all 6 flags
+corpus-refine:
+	uv run python scripts/corpus_refine.py --apply
+
+# Phase 1d: Record checksums of contract files
+corpus-manifest:
+	uv run python scripts/corpus_manifest.py
+
+# Citation enrichment shortcut (also part of corpus-enrich).
+# Both scripts are resumable; re-running only fetches what's missing.
+citations:
+	uv run python scripts/enrich_citations_batch.py
+	uv run python scripts/enrich_citations_openalex.py
+	uv run python scripts/qc_citations.py
+
+deploy-corpus:
+	ssh $(REMOTE_HOST) 'bash -l -c "\
+	  cd ~/Oeconomia-Climate-finance && \
+	  git pull && \
+	  uv sync && \
+	  nohup make corpus > corpus.log 2>&1 &"'
+	@echo "Corpus pipeline started on $(REMOTE_HOST). Monitor with:"
+	@echo "  ssh $(REMOTE_HOST) 'tail -f ~/Oeconomia-Climate-finance/corpus.log'"
+
+# ═══════════════════════════════════════════════════════════
+# PHASE 2 — Analysis & Figures (fast, deterministic, run often)
+# ═══════════════════════════════════════════════════════════
+# Inputs: Phase 1 outputs only (refined_works.csv, embeddings.npz,
+#         citations.csv, het_mostcited_50.csv).
+# Outputs: content/figures/*.png, content/tables/*.csv, _variables.yml
+
+# Warn if Phase 1 manifest is missing
+check-corpus:
+	@test -f "$(MANIFEST)" \
+		|| echo "WARNING: No corpus manifest found. Run 'make corpus' first."
 
 # ── Statistics (computed from pipeline outputs) ──────────
 STATS := _variables.yml
@@ -76,7 +144,6 @@ $(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
 	uv run python $<
 
 stats: $(STATS)
-.PHONY: stats
 
 # ── Tables (generated, included by Quarto) ──────────────
 MANUSCRIPT_TABLES := content/tables/tab_core_venues_top10.md
@@ -87,23 +154,6 @@ $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
 	uv run python $<
-
-# ── Manuscript ───────────────────────────────────────────
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
-	quarto render $< --to pdf
-
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
-	quarto render $< --to docx
-
-# ── Companion documents ─────────────────────────────────
-output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB) $(STATS)
-	quarto render $< --to pdf
-
-output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB) $(STATS)
-	quarto render $< --to pdf
-
-output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB) $(STATS)
-	quarto render $< --to pdf
 
 # ── Figures ──────────────────────────────────────────────
 
@@ -118,10 +168,6 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 	uv run python $< --no-pdf
 
 # -- Data paper --
-# Emergence (economics total + CF share)
-content/figures/fig_emergence.png: scripts/plot_fig1_emergence.py scripts/plot_helpers.py $(ECON_YEARLY)
-	uv run python $< --no-pdf
-
 # Semantic UMAP maps (3 co-produced figures)
 content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/figures/fig_semantic_period.png &: \
 		scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
@@ -156,11 +202,6 @@ content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py
 		$(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $< --no-pdf
 
-# Robustness (econ vs finance vs RePEc)
-content/figures/fig_robustness.png: scripts/plot_fig1_robustness.py scripts/plot_helpers.py \
-		$(ECON_YEARLY) $(OVERLAP)
-	uv run python $< --no-pdf
-
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only variants (co-produced)
 content/figures/fig_alluvial_core.png content/figures/fig_breakpoints_core.png &: \
@@ -176,76 +217,40 @@ content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scri
 		content/tables/tab_pole_papers.csv
 	uv run python $< --no-pdf
 
-figures-manuscript: $(MANUSCRIPT_FIGS)
-figures-datapaper:  $(DATAPAPER_FIGS)
-figures-companion:  $(COMPANION_FIGS)
-figures-techrep:    $(TECHREP_FIGS)
-figures: $(ALL_FIGS)
+figures-manuscript: check-corpus $(MANUSCRIPT_FIGS)
+figures-datapaper:  check-corpus $(DATAPAPER_FIGS)
+figures-companion:  check-corpus $(COMPANION_FIGS)
+figures-techrep:    check-corpus $(TECHREP_FIGS)
+figures: check-corpus $(ALL_FIGS)
 
-# ── Corpus pipeline (slow — downloads from APIs) ─────────
-# Three phases: discover → enrich → refine
-# Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
-# pre-placed in $(DATA_DIR) before running.
-corpus: corpus-discover corpus-enrich corpus-refine
+# ═══════════════════════════════════════════════════════════
+# PHASE 3 — Render (Quarto → PDF/DOCX)
+# ═══════════════════════════════════════════════════════════
 
-# Phase 1: Discovery + merge + cheap filter (flags 1-3 only)
-corpus-discover:
-	uv run python scripts/catalog_istex.py --api
-	uv run python scripts/catalog_openalex.py --resume
-	uv run python scripts/catalog_semanticscholar.py --resume
-	uv run python scripts/catalog_grey.py
-	uv run python scripts/catalog_merge.py
-	uv run python scripts/build_teaching_canon.py
-	uv run python scripts/catalog_merge.py
-	uv run python scripts/corpus_refine.py --apply --cheap
+manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
-# Phase 2: Enrich metadata, abstracts, citations, then embeddings
-# DOI resolution and type fix run first (unlock more abstract/citation sources).
-# Abstracts and citations are independent; embeddings need abstracts.
-# Requires: uv sync --group corpus  (torch, sentence-transformers, hdbscan, …)
-corpus-enrich:
-	uv run python scripts/qa_detect_type.py --apply
-	uv run python scripts/enrich_dois.py
-	uv run python scripts/enrich_abstracts.py
-	uv run python scripts/enrich_citations_batch.py
-	uv run python scripts/enrich_citations_openalex.py
-	uv run python scripts/qc_citations.py
-	uv run python scripts/analyze_embeddings.py
+papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-# Phase 3: Full refinement with all 6 flags
-corpus-refine:
-	uv run python scripts/corpus_refine.py --apply
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
+	quarto render $< --to pdf
 
-deploy-corpus:
-	ssh $(REMOTE_HOST) 'bash -l -c "\
-	  cd ~/Oeconomia-Climate-finance && \
-	  git pull && \
-	  uv sync && \
-	  nohup make corpus > corpus.log 2>&1 &"'
-	@echo "Corpus pipeline started on $(REMOTE_HOST). Monitor with:"
-	@echo "  ssh $(REMOTE_HOST) 'tail -f ~/Oeconomia-Climate-finance/corpus.log'"
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
+	quarto render $< --to docx
 
-# ── Data collection (slow — not in default target) ───────
-data: citations
-	uv run python scripts/count_openalex_econ_cf.py
-	uv run python scripts/count_openalex_econ_cf.py --scope finance
-	uv run python scripts/count_openalex_econ_fin_overlap.py
-	uv run python scripts/count_repec_econ_cf.py
+output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB) $(STATS)
+	quarto render $< --to pdf
 
-# Citation enrichment: run Crossref first, then OpenAlex to fill the gap.
-# Both scripts are resumable; re-running only fetches what's missing.
-citations:
-	uv run python scripts/enrich_citations_batch.py
-	uv run python scripts/enrich_citations_openalex.py
-	uv run python scripts/qc_citations.py
+output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB) $(STATS)
+	quarto render $< --to pdf
+
+output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB) $(STATS)
+	quarto render $< --to pdf
 
 # ── Replication archive ─────────────────────────────────
 SHELL := /bin/bash
 ARCHIVE_NAME := climate-finance-replication
 ARCHIVE_DATA := refined_works.csv embeddings.npy semantic_clusters.csv \
-                citations.csv openalex_econ_yearly.csv \
-                openalex_econ_fin_overlap.csv openalex_finance_yearly.csv \
-                repec_econ_yearly.csv
+                citations.csv
 ARCHIVE_TMP  := /tmp/$(ARCHIVE_NAME)
 
 archive: figures
