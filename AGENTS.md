@@ -125,6 +125,8 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 ## Technical Notes
 
 ### Git versioning
+- **Hooks**: checked into `hooks/`. After cloning, run `git config core.hooksPath hooks`.
+  The pre-commit hook rejects changes to `CLAUDE.md` (must stay `@AGENTS.md`).
 - **Commit frequently** — do not let work accumulate without versioning
 - **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`. This preserves uncommitted work on `main` and enables parallel ticket work.
 - **One branch per ticket**, named `t{N}-short-description` (e.g., `t3-censored-breaks`)

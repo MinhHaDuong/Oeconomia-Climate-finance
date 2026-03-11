@@ -1,0 +1,8 @@
+#!/bin/sh
+# Reject commits that modify CLAUDE.md
+# CLAUDE.md should contain only "@AGENTS.md" — all edits go to AGENTS.md
+
+if git diff --cached --name-only | grep -qx 'CLAUDE.md'; then
+    echo "ERROR: CLAUDE.md is protected. Edit AGENTS.md instead." >&2
+    exit 1
+fi
