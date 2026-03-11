@@ -139,6 +139,13 @@ check-corpus:
 # ── Statistics (computed from pipeline outputs) ──────────
 STATS := _variables.yml
 
+content/tables/tab_corpus_sources.csv: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+content/tables/qc_citations_report.json: scripts/qc_citations.py scripts/utils.py \
+		$(DATA_DIR)/citations.csv
+	uv run python $<
+
 $(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
 		content/tables/tab_axis_detection.csv content/tables/tab_corpus_sources.csv \
