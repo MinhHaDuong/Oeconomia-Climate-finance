@@ -57,6 +57,8 @@ ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIG
 # ── Default target ────────────────────────────────────────
 .PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
 
+.DEFAULT_GOAL := manuscript
+
 all: manuscript papers
 
 # ═══════════════════════════════════════════════════════════
