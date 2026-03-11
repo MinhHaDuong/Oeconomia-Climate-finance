@@ -174,9 +174,24 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 	uv run python $<
 
 # -- Companion paper (quantitative) --
-# Breakpoints + alluvial + tab_alluvial.csv (all co-produced by one script run)
-content/figures/fig_alluvial.png content/figures/fig_breakpoints.png content/tables/tab_alluvial.csv &: \
-		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
+# Compute tables (prerequisite for fig_composition and both companion figures)
+content/tables/tab_alluvial.csv content/tables/tab_breakpoints.csv \
+content/tables/tab_breakpoint_robustness.csv content/tables/cluster_labels.json \
+content/tables/tab_core_shares.csv &: \
+		scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+# Breakpoints figure
+content/figures/fig_breakpoints.png: \
+		scripts/plot_fig_breakpoints.py scripts/utils.py \
+		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
+		content/tables/tab_alluvial.csv
+	uv run python $< --no-pdf
+
+# Alluvial figure
+content/figures/fig_alluvial.png: \
+		scripts/plot_fig_alluvial.py scripts/utils.py \
+		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
 	uv run python $< --no-pdf
 
 # Period divergence curves
@@ -203,9 +218,22 @@ content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py
 	uv run python $< --no-pdf
 
 # -- Technical report (robustness, variants, supplementary) --
-# Core-only variants (co-produced)
-content/figures/fig_alluvial_core.png content/figures/fig_breakpoints_core.png &: \
-		scripts/analyze_alluvial.py scripts/utils.py $(REFINED)
+# Core-only compute tables
+content/tables/tab_alluvial_core.csv content/tables/tab_breakpoints_core.csv \
+content/tables/tab_breakpoint_robustness_core.csv content/tables/cluster_labels_core.json &: \
+		scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+	uv run python $< --core-only --no-pdf
+
+# Core-only figures
+content/figures/fig_breakpoints_core.png: \
+		scripts/plot_fig_breakpoints.py scripts/utils.py \
+		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
+		content/tables/tab_alluvial_core.csv
+	uv run python $< --core-only --no-pdf
+
+content/figures/fig_alluvial_core.png: \
+		scripts/plot_fig_alluvial.py scripts/utils.py \
+		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
 	uv run python $< --core-only --no-pdf
 
 # Bimodality core variant
