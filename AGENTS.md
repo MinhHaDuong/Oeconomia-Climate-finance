@@ -1,5 +1,7 @@
 # AI Agent Guidelines for Climate Finance History Project
 
+> **Do NOT modify `CLAUDE.md`.** It contains only `@AGENTS.md` and must stay that way. All instructions and status live here in `AGENTS.md`.
+
 See `README.md` for project overview, repository structure, data paths.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
 See `content/technical-report.qmd` for the full data pipeline documentation.
