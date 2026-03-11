@@ -47,7 +47,14 @@ if os.path.exists(_labels_path):
         return terms[0].capitalize()
     CLUSTER_NAMES = {k: _format_label(v) for k, v in _raw.items()}
 else:
-    # Fallback if cluster_labels.json not yet generated
+    # Fallback if cluster_labels.json not yet generated — run analyze_alluvial.py first
+    import warnings
+    warnings.warn(
+        f"cluster_labels.json not found at {_labels_path}. "
+        "Run: uv run python scripts/analyze_alluvial.py  "
+        "Legend will show uninformative 'Cluster N' labels.",
+        stacklevel=1,
+    )
     CLUSTER_NAMES = {str(i): f"Cluster {i}" for i in range(6)}
 
 # Grayscale + hatching patterns for 6 clusters (print-friendly)
