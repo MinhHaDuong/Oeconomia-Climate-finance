@@ -91,7 +91,7 @@ In retrospect, these three traditions had remarkably little contact before the l
 
 ### 1.5 Corpus evidence
 
-The computational analysis corroborates this picture of disconnection. Climate finance scholarship within economics was negligible before 2007---fewer than 50 works per year, a fraction of a percent of the discipline's output (@fig-bars). What literature existed was dispersed across the three traditions with little cross-citation; the thematic composition chart (@fig-composition) shows the CDM/Kyoto cluster dominating this first period, with the thematic communities that would later characterise the field still small or absent.
+The computational analysis corroborates this picture of disconnection. Climate finance scholarship within economics was negligible before 2007---fewer than 50 works per year (@fig-bars). What literature existed was dispersed across the three traditions with little cross-citation; the thematic composition chart (@fig-composition) shows the CDM/Kyoto cluster dominating this first period, with the thematic communities that would later characterise the field still small or absent.
 
 ![Thematic composition of climate finance scholarship across three periods. Six clusters identified by K-means on sentence-transformer embeddings of titles, abstracts, and keywords; shares show each cluster's proportion of publications in each period.](figures/fig_composition.png){#fig-composition}
 

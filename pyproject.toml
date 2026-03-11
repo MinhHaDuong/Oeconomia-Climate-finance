@@ -9,7 +9,7 @@ dependencies = [
     "seaborn",
     "scikit-learn",
     "plotly",
-    "networkx"
+    "networkx",
     "requests",
     "pyyaml",
     "langdetect>=1.0.9",
@@ -21,7 +21,7 @@ corpus = [
     "torch",
     "sentence-transformers",
     "umap-learn",
-    "hdbscan",,
+    "hdbscan",
     "python-louvain",
     "beautifulsoup4",
     "pdfplumber",
