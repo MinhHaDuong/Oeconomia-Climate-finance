@@ -190,11 +190,16 @@ uv run python scripts/qc_citations.py                            # Verify citati
 # Or simply: make citations  (runs all three in order)
 
 # Figures
-uv run python scripts/analyze_alluvial.py        # Fig 2 + Fig 3 (full corpus)
-uv run python scripts/analyze_alluvial.py --core-only   # Fig 2b + Fig 3b (core: cited ≥ 50)
-uv run python scripts/analyze_alluvial.py --robustness  # k-sensitivity appendix
-uv run python scripts/analyze_alluvial.py --censor-gap 1  # Censored breaks (k=1)
-uv run python scripts/analyze_alluvial.py --censor-gap 2  # Censored breaks (k=2)
+uv run python scripts/compute_alluvial.py        # Compute tables (full corpus)
+uv run python scripts/plot_fig_breakpoints.py    # fig_breakpoints.png (reads tab_breakpoints.csv)
+uv run python scripts/plot_fig_alluvial.py       # fig_alluvial.png + HTML (reads tab_alluvial.csv)
+uv run python scripts/compute_alluvial.py --core-only          # Tables (core: cited ≥ 50)
+uv run python scripts/plot_fig_breakpoints.py --core-only      # fig_breakpoints_core.png
+uv run python scripts/plot_fig_alluvial.py --core-only         # fig_alluvial_core.png
+uv run python scripts/compute_alluvial.py --robustness         # k-sensitivity appendix
+uv run python scripts/compute_alluvial.py --censor-gap 1       # Censored breaks (k=1)
+uv run python scripts/compute_alluvial.py --censor-gap 2       # Censored breaks (k=2)
+# Legacy: analyze_alluvial.py still works as a thin wrapper calling all three scripts
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
 uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)
