@@ -30,7 +30,9 @@ URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 
 
-def fetch_batch(dois, delay=0.2, counters=None):
+def fetch_batch(dois, delay=0.2, counters=None,
+                request_timeout=60.0, max_retries=5,
+                retry_backoff=2.0, retry_jitter=1.0):
     """Fetch references for a batch of DOIs using the filter endpoint."""
     if counters is None:
         counters = {}
@@ -41,8 +43,17 @@ def fetch_batch(dois, delay=0.2, counters=None):
         "rows": len(dois),
         "mailto": MAILTO,
     }
-    resp = retry_get(URL, params=params, headers=HEADERS, delay=delay,
-                     max_retries=5, timeout=60, counters=counters)
+    resp = retry_get(
+        URL,
+        params=params,
+        headers=HEADERS,
+        delay=delay,
+        max_retries=max_retries,
+        timeout=max(1.0, float(request_timeout)),
+        backoff_base=retry_backoff,
+        jitter_max=retry_jitter,
+        counters=counters,
+    )
     resp.raise_for_status()
 
     rows = []
@@ -129,6 +140,9 @@ def main():
         with open(args.log_jsonl, "a") as _f:
             _f.write(_json.dumps(record) + "\n")
 
+    # If explicitly starting fresh, discard any stale unmerged checkpoint.
+    if not args.resume and os.path.exists(CHECKPOINT_PATH):
+        os.remove(CHECKPOINT_PATH)
     # Load existing citations to find already-fetched DOIs
     if os.path.exists(CITATIONS_PATH):
         existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
@@ -189,6 +203,10 @@ def main():
         try:
             refs, found_dois = fetch_batch(
                 batch_dois, delay=args.delay, counters=counters,
+                request_timeout=args.request_timeout,
+                max_retries=args.max_retries,
+                retry_backoff=args.retry_backoff,
+                retry_jitter=args.retry_jitter,
             )
         except Exception as e:
             print(f"  ERROR batch {batch_num}: {e}")
