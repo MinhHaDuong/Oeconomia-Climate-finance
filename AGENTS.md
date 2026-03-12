@@ -161,6 +161,10 @@ When working on multiple tickets:
 - torch is pinned to CPU-only builds via `[tool.uv.sources]` (no NVIDIA/CUDA).
 - To add a dependency: edit `pyproject.toml`, then run `uv sync`.
 
+### Data location
+- Data lives **outside the repo**, at the path set by `CLIMATE_FINANCE_DATA` in `.env`.
+- `scripts/utils.py` reads `.env` and exports `DATA_DIR`, `CATALOGS_DIR`, `EMBEDDINGS_PATH`. Never hardcode `data/catalogs/` relative to the repo — it doesn't exist there.
+
 ### Running scripts
 
 Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
