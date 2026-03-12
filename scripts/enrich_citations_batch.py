@@ -20,7 +20,7 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, REFS_COLUMNS, MAILTO, normalize_doi
+from utils import CATALOGS_DIR, REFS_COLUMNS, MAILTO, normalize_doi, sort_dois_by_priority
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_batch_checkpoint.csv")
@@ -68,12 +68,18 @@ def fetch_batch(dois, delay=0.2):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Batch-enrich citations")
+    parser = argparse.ArgumentParser(
+        description="Batch-enrich citations (DOIs processed in priority order: "
+                    "most-cited works first, deterministic)"
+    )
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--limit", type=int, default=0,
-                        help="Max DOIs to process (0=all)")
+                        help="Max DOIs to process in priority order (0=all)")
     parser.add_argument("--delay", type=float, default=0.2,
                         help="Delay between batch requests")
+    parser.add_argument("--works-input", default="refined_works.csv",
+                        metavar="FILE",
+                        help="Works CSV filename in CATALOGS_DIR (default: refined_works.csv)")
     args = parser.parse_args()
 
     # Load existing citations to find already-fetched DOIs
@@ -97,14 +103,17 @@ def main():
         ckpt = pd.DataFrame(columns=REFS_COLUMNS)
 
     # All DOIs in refined_works
-    works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"),
+    works = pd.read_csv(os.path.join(CATALOGS_DIR, args.works_input),
                         dtype=str, keep_default_na=False)
     all_dois = [normalize_doi(d) for d in works["doi"].unique() if d]
     all_dois = [d for d in all_dois if d and d not in ("", "nan", "none")]
 
-    # Also track DOIs that Crossref returned nothing for (no entry / no refs)
-    # so we don't re-query them. Store in checkpoint with a sentinel row.
-    missing = [d for d in all_dois if d not in done_dois]
+    # Sort by priority (most-cited works first) for deterministic ordering.
+    # The checkpoint ensures already-done DOIs are skipped regardless of order,
+    # so priority only determines which DOIs are chosen when --limit is set.
+    all_dois_sorted = sort_dois_by_priority(all_dois, works)
+    missing = [d for d in all_dois_sorted if d not in done_dois]
+
     if args.limit:
         missing = missing[:args.limit]
 

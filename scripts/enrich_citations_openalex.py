@@ -25,7 +25,7 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, MAILTO, REFS_COLUMNS, normalize_doi
+from utils import CATALOGS_DIR, MAILTO, REFS_COLUMNS, normalize_doi, sort_dois_by_priority
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
@@ -107,7 +107,9 @@ def resolve_openalex_ids(oa_ids):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Enrich citations from OpenAlex")
+    parser = argparse.ArgumentParser(
+        description="Enrich citations from OpenAlex (DOIs processed in priority order: "
+                    "most-cited works first, deterministic)")
     parser.add_argument("--batch-size", type=int, default=50,
                         help="DOIs per OpenAlex request (max ~100)")
     parser.add_argument("--resolve-batch-size", type=int, default=100,
@@ -155,7 +157,9 @@ def main():
         print(f"Skipping {len(oa_done)} DOIs already in openalex_citations.csv")
         done_dois |= oa_done
 
-    missing = [d for d in all_dois if d not in done_dois]
+    # Sort by priority (most-cited works first) for deterministic ordering.
+    all_dois_sorted = sort_dois_by_priority(all_dois, works)
+    missing = [d for d in all_dois_sorted if d not in done_dois]
     if args.limit:
         missing = missing[:args.limit]
 
