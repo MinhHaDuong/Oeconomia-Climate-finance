@@ -56,28 +56,33 @@ A `source_count` field tracks how many sources contributed to each record. The o
 
 ### Pipeline overview
 
-The full corpus pipeline runs in three phases:
+The full corpus pipeline runs in four steps (Makefile targets: `corpus-discover`,
+`corpus-enrich`, `corpus-extend`, `corpus-filter`):
 
 ```
-  7 sources ──→ merge ──→ unified_works.csv
+  7 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
                                │
                                ▼
-                        cheap filter (flags 1-3)
-                               │
-                    ┌──────────┴──────────┐
-                    ▼                     ▼
-             enrich abstracts      enrich citations
-              (OA, S2, ISTEX)      (Crossref, OA refs)
-                    │                     │
-                    ▼                     │
-             generate embeddings          │
-                    │                     │
-                    └──────────┬──────────┘
-                               ▼
-                        full refine (flags 1-6)
+                        enrich DOIs / abstracts / citations
                                │
                                ▼
-                        refined_works.csv
+                        enriched_works.csv      [corpus-enrich]
+                               │
+                               ▼
+                        flag all works (flags 1-6, no rows removed)
+                               │
+                               ▼
+                        extended_works.csv      [corpus-extend]
+                               │
+                               ▼
+                        apply policy → audit → refined_works.csv  [corpus-filter]
 ```
 
-A cheap pre-filter (flags 1–3: missing metadata, irrelevant titles, blacklisted terms) removes obvious junk before the expensive enrichment phase. Abstract and citation enrichment run independently; embedding generation requires abstracts. The full refinement pass then applies all six flags, including citation isolation (flag 4), semantic outlier detection (flag 5), and LLM relevance scoring (flag 6). See §2 (Corpus Enrichment) and §3 (Corpus Refinement) for details.
+Enrichment (DOIs via OpenAlex, abstracts from OA/S2/ISTEX, citations from
+Crossref and OpenAlex) runs on the full `unified_works.csv` so that all
+metadata is available when the flagging rules are evaluated. The extend step
+computes six quality flags for every work without removing any rows; the
+filter step then applies the retention policy and writes the final
+`refined_works.csv` together with `corpus_audit.csv`. See §2 (Corpus
+Enrichment) and §3 (Corpus Refinement) for details.
+

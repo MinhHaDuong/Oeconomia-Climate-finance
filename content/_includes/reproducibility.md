@@ -21,6 +21,15 @@ make manuscript  # Phase 3: render PDF + DOCX
 The Phase 1 → Phase 2 contract is three files in `$CLIMATE_FINANCE_DATA/catalogs/`:
 `refined_works.csv`, `embeddings.npz`, `citations.csv`.
 
+Phase 1 itself has four steps and three intermediate artifacts:
+
+| Step | Make target | Reads | Writes |
+|---|---|---|---|
+| Discover | `corpus-discover` | source catalogs | `unified_works.csv` |
+| Enrich | `corpus-enrich` | `unified_works.csv` | `enriched_works.csv` |
+| Extend | `corpus-extend` | `enriched_works.csv` | `extended_works.csv` |
+| Filter | `corpus-filter` | `extended_works.csv` | `refined_works.csv` |
+
 See `AGENTS.md` for individual script invocations and the `Makefile` for full dependency graph.
 
 ### Data dependencies
@@ -28,7 +37,12 @@ See `AGENTS.md` for individual script invocations and the `Makefile` for full de
 | Script | Reads | Writes |
 |---|---|---|
 | `catalog_merge.py` | `*_works.csv` | `unified_works.csv` |
-| `corpus_refine.py` | `unified_works.csv`, `citations.csv`*, `embeddings.npz`* | `refined_works.csv`, `corpus_audit.csv` |
+| `enrich_dois.py` | `unified_works.csv` | `enriched_works.csv` |
+| `enrich_abstracts.py` | `enriched_works.csv` | `enriched_works.csv` (in-place) |
+| `enrich_citations_batch.py` | `enriched_works.csv` | `citations.csv` (append) |
+| `enrich_citations_openalex.py` | `enriched_works.csv` | `citations.csv` (append) |
+| `corpus_refine.py --extend` | `enriched_works.csv`, `citations.csv`*, `embeddings.npz`* | `extended_works.csv` |
+| `corpus_refine.py --filter` | `extended_works.csv` | `refined_works.csv`, `corpus_audit.csv` |
 | `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npz` (incremental cache), `semantic_clusters.csv` |
 | `analyze_alluvial.py` | `refined_works.csv`, `embeddings.npz` | `fig_breakpoints`, `fig_composition`, `tab_*.csv`, `cluster_labels.json` |
 | `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npz` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |

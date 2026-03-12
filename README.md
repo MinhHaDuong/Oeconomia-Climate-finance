@@ -89,6 +89,8 @@ All sources searched for: `"climate finance" OR "finance climat" OR "finance cli
 | `catalogs/scispsace_works.csv` | 663 | SciSpace AI-curated corpus (RIS + CSV, deduplicated) |
 | `catalogs/grey_works.csv` | 213 | 16 curated seed entries + 200 World Bank OKR API |
 | `catalogs/unified_works.csv` | 12,372 | Deduplicated merge of all sources (474 multi-source) |
+| `catalogs/enriched_works.csv` | 12,372 | After DOI/abstract/citation enrichment (Phase 1b output) |
+| `catalogs/extended_works.csv` | 12,372 | All works with quality flags, no rows removed (Phase 1c output) |
 | `catalogs/citations.csv` | 232,218 | Crossref citation links (176K with DOIs, from 4,710 source DOIs) |
 
 ### CSV schema
