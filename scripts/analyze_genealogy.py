@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, load_refined_citations, normalize_doi, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -81,7 +81,7 @@ for _, row in works.iterrows():
 
 # Load citations
 print("Loading citations...")
-cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
+cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 cit = cit[(cit["source_doi"] != "") & (cit["ref_doi"] != "")]

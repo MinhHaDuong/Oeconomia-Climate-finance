@@ -167,7 +167,7 @@ deploy-corpus:
 # ═══════════════════════════════════════════════════════════
 # PHASE 2 — Analysis & Figures (fast, deterministic, run often)
 # ═══════════════════════════════════════════════════════════
-# Inputs: Phase 1 outputs only (refined_works.csv, embeddings.npz, citations.csv).
+# Inputs: Phase 1 outputs only (refined_works.csv, refined_embeddings.npz, refined_citations.csv).
 # het_mostcited_50.csv is produced within Phase 2 by build_het_core.py.
 # Outputs: content/figures/*.png, content/tables/*.csv, _variables.yml
 

@@ -274,7 +274,7 @@ import sys
 
 # Check if we can reconstruct paper data for tooltips
 try:
-    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_embeddings as _load_embeddings
+    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_refined_embeddings as _load_embeddings
     import pandas as _pd
     from sklearn.cluster import KMeans as _KMeans
 

@@ -22,7 +22,7 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, load_refined_citations, normalize_doi
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
@@ -32,7 +32,7 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 
 # --- Load data ---
 print("Loading citations...")
-cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
+cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 
