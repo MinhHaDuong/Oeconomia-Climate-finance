@@ -8,7 +8,7 @@ The broad landscape of "scholarship around climate finance." This includes not o
 
 ### Core subset (~{{< var corpus_core >}} papers, cited_by_count >= {{< var corpus_core_threshold >}})
 
-The influential intellectual core. These are the papers that have shaped the field's concepts, debates, and categories. The core subset is analyzed separately by passing `--core-only` to `analyze_alluvial.py`.
+The influential intellectual core. These are the papers that have shaped the field's concepts, debates, and categories. The core subset is analyzed separately by passing `--core-only` to `compute_alluvial.py` and the corresponding plotting scripts.
 
 ### Key differences
 
