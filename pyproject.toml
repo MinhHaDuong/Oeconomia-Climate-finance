@@ -15,6 +15,7 @@ dependencies = [
     "langdetect>=1.0.9",
     "pdfplumber",
     "pytest",
+    "requests-mock",
 ]
 
 [dependency-groups]

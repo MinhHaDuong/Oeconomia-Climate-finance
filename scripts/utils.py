@@ -35,9 +35,11 @@ POOL_DIR = os.path.join(DATA_DIR, "pool")
 # Phase 1 (corpus building) produces these files in CATALOGS_DIR.
 # Phase 2 (analysis & figures) reads ONLY these files.
 PHASE1_OUTPUTS = {
-    "refined_works.csv",   # 30k deduplicated works
-    "embeddings.npz",      # 384-dim sentence embeddings
-    "citations.csv",       # 775k citation links
+    "refined_works.csv",        # filtered corpus population (row order canonical)
+    "refined_embeddings.npz",   # embedding vectors aligned 1:1 with refined_works.csv rows
+    "refined_citations.csv",    # citation edges restricted to refined DOIs
+    "embeddings.npz",           # full embedding cache (internal, not for Phase 2)
+    "citations.csv",            # full citation graph (internal, not for Phase 2)
 }
 
 # --- CSV schemas ---
@@ -126,19 +128,21 @@ def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
 
 
 def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
-              timeout=60, counters=None):
+              timeout=60, counters=None, backoff_base=2.0, jitter_max=1.0):
     """HTTP GET with bounded exponential backoff+jitter and optional counter tracking.
 
     Parameters
     ----------
-    url:         Request URL.
-    params:      Query parameters dict.
-    headers:     HTTP headers dict.
-    delay:       Base polite delay before each attempt (seconds).
-    max_retries: Maximum number of retry attempts for 429/5xx/timeout.
-    timeout:     Per-request timeout in seconds.
-    counters:    Optional dict to update with keys:
-                 ``retries``, ``rate_limited``, ``server_errors``, ``client_errors``.
+    url:          Request URL.
+    params:       Query parameters dict.
+    headers:      HTTP headers dict.
+    delay:        Base polite delay before each attempt (seconds).
+    max_retries:  Maximum number of retry attempts for 429/5xx/timeout.
+    timeout:      Per-request timeout in seconds.
+    counters:     Optional dict to update with keys:
+                  ``retries``, ``rate_limited``, ``server_errors``, ``client_errors``.
+    backoff_base: Base for exponential backoff (seconds, default 2.0).
+    jitter_max:   Maximum random jitter added to each backoff (seconds, default 1.0).
 
     Returns
     -------
@@ -166,22 +170,22 @@ def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
         except requests.exceptions.Timeout as exc:
             last_exc = exc
             counters["retries"] = counters.get("retries", 0) + 1
-            backoff = min(2 ** attempt + random.uniform(0, 1), 60)
+            backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
             print(f"  Timeout on attempt {attempt + 1}/{max_retries}, retrying in {backoff:.1f}s...")
             time.sleep(backoff)
             continue
         except requests.exceptions.RequestException as exc:
             last_exc = exc
             counters["retries"] = counters.get("retries", 0) + 1
-            backoff = min(2 ** attempt + random.uniform(0, 1), 60)
+            backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
             time.sleep(backoff)
             continue
 
         if resp.status_code == 429:
             counters["rate_limited"] = counters.get("rate_limited", 0) + 1
             counters["retries"] = counters.get("retries", 0) + 1
-            retry_after = min(int(resp.headers.get("Retry-After", 2 ** (attempt + 1))), 120)
-            jitter = random.uniform(0, 2)
+            retry_after = min(int(resp.headers.get("Retry-After", backoff_base ** (attempt + 1))), 120)
+            jitter = random.uniform(0, min(jitter_max * 2, 2))
             wait = retry_after + jitter
             print(f"  Rate limited (429), waiting {wait:.1f}s...")
             time.sleep(wait)
@@ -189,7 +193,7 @@ def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
         if resp.status_code >= 500:
             counters["server_errors"] = counters.get("server_errors", 0) + 1
             counters["retries"] = counters.get("retries", 0) + 1
-            backoff = min(2 ** attempt + random.uniform(0, 1), 60)
+            backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
             print(f"  Server error {resp.status_code} on attempt {attempt + 1}/{max_retries}, "
                   f"retrying in {backoff:.1f}s...")
             time.sleep(backoff)
@@ -266,6 +270,13 @@ def load_cluster_labels(n_clusters=6):
 # - Load speed: numpy reads the array in one shot; no parsing of 11M float strings
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
+# Phase 1 → Phase 2 aligned canonical artifacts (produced by corpus-align step).
+# refined_embeddings.npz rows are 1:1 with refined_works.csv rows.
+# refined_citations.csv source_doi values are a subset of refined_works.csv DOIs.
+REFINED_WORKS_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
+REFINED_EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "refined_embeddings.npz")
+REFINED_CITATIONS_PATH = os.path.join(CATALOGS_DIR, "refined_citations.csv")
+
 
 def load_embeddings():
     """Load embedding vectors from the .npz cache.
@@ -282,6 +293,41 @@ def load_embeddings():
     if os.path.exists(legacy):
         return np.load(legacy)
     raise FileNotFoundError(f"No embeddings found at {EMBEDDINGS_PATH}")
+
+
+def load_refined_embeddings():
+    """Load embedding vectors aligned 1:1 with refined_works.csv rows.
+
+    Returns the (N, D) float32 array where N == len(refined_works.csv).
+    Raises FileNotFoundError with a remediation hint if the file is missing.
+    Run ``make corpus-align`` (or ``uv run python scripts/corpus_align.py``)
+    to produce this file.
+    """
+    import numpy as np
+
+    if not os.path.exists(REFINED_EMBEDDINGS_PATH):
+        raise FileNotFoundError(
+            f"refined_embeddings.npz not found at {REFINED_EMBEDDINGS_PATH}. "
+            "Run: uv run python scripts/corpus_align.py"
+        )
+    return np.load(REFINED_EMBEDDINGS_PATH)["vectors"]
+
+
+def load_refined_citations():
+    """Load citation edges restricted to refined_works.csv source DOIs.
+
+    Returns a DataFrame whose ``source_doi`` values are all members of
+    ``normalize_doi(refined_works.csv.doi)``.
+    Raises FileNotFoundError with a remediation hint if the file is missing.
+    Run ``make corpus-align`` (or ``uv run python scripts/corpus_align.py``)
+    to produce this file.
+    """
+    if not os.path.exists(REFINED_CITATIONS_PATH):
+        raise FileNotFoundError(
+            f"refined_citations.csv not found at {REFINED_CITATIONS_PATH}. "
+            "Run: uv run python scripts/corpus_align.py"
+        )
+    return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 
 
 def save_csv(df, path):

@@ -392,16 +392,41 @@ def main():
                         help="Input/output works CSV (default: unified_works.csv)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier for the run report (default: timestamp)")
+    parser.add_argument("--resume", action="store_true", default=True,
+                        help="Resume from existing caches/checkpoints (default: True)")
+    parser.add_argument("--no-resume", dest="resume", action="store_false",
+                        help="Ignore existing caches and start fresh")
     parser.add_argument("--checkpoint-every", type=int, default=50,
                         help="Flush Step 2/4 caches every N batches/items (default: 50)")
+    parser.add_argument("--request-timeout", type=float, default=60.0,
+                        help="Per-request timeout in seconds (default: 60)")
+    parser.add_argument("--max-retries", type=int, default=5,
+                        help="Maximum retries for transient failures (default: 5)")
+    parser.add_argument("--retry-backoff", type=float, default=2.0,
+                        help="Base for exponential backoff in seconds (default: 2.0)")
+    parser.add_argument("--retry-jitter", type=float, default=1.0,
+                        help="Max random jitter added to backoff (default: 1.0)")
+    parser.add_argument("--log-jsonl", default=None,
+                        help="Path to write JSONL event log (optional)")
     args = parser.parse_args()
 
     run_id = args.run_id or make_run_id()
     t0 = time.time()
 
+    def _log_event(event_type, **kwargs):
+        """Write a structured event to the optional JSONL log."""
+        if not args.log_jsonl:
+            return
+        import json as _json
+        record = {"run_id": run_id, "event": event_type,
+                  "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kwargs}
+        with open(args.log_jsonl, "a") as _f:
+            _f.write(_json.dumps(record) + "\n")
+
     path = args.works_input
     df = pd.read_csv(path)
     print(f"Loaded {len(df)} works from {path}")
+    _log_event("start", works_count=len(df), works_input=path)
 
     # Compute working columns
     df["_missing"] = df["abstract"].apply(is_missing)
@@ -428,6 +453,7 @@ def main():
         name, func = steps[step_num]
         before = int(df["_missing"].sum())
         print(f"Step {step_num}: {name} ({before} still missing)")
+        _log_event("step_start", step=step_num, name=name, missing_before=before)
 
         # Steps 2 and 4 accept checkpoint_every; others accept just counters
         if step_num in (2, 4):
@@ -441,6 +467,7 @@ def main():
         step_results[f"step{step_num}_after"] = after
         step_results[f"step{step_num}_filled"] = filled
         print(f"  → filled {filled}, remaining: {after}\n")
+        _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
 
     # Save
     final_missing = int(df["_missing"].sum())
@@ -464,6 +491,8 @@ def main():
     counters.update(step_results)
     report_path = save_run_report(counters, run_id, "enrich_abstracts")
     print(f"Run report: {report_path}")
+    _log_event("complete", elapsed_seconds=round(elapsed, 1),
+               total_filled=counters["total_filled"], report_path=report_path)
 
 
 if __name__ == "__main__":

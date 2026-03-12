@@ -97,11 +97,37 @@ def main():
                         help="Works CSV to read DOIs from (default: unified_works.csv)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier for the run report (default: timestamp)")
+    parser.add_argument("--resume", action="store_true", default=True,
+                        help="Resume from existing checkpoint (default: True)")
+    parser.add_argument("--no-resume", dest="resume", action="store_false",
+                        help="Ignore existing checkpoint and start fresh")
+    parser.add_argument("--checkpoint-every", type=int, default=50,
+                        help="Flush checkpoint every N batches (default: 50, 0=only at end)")
+    parser.add_argument("--request-timeout", type=float, default=60.0,
+                        help="Per-request timeout in seconds (default: 60)")
+    parser.add_argument("--max-retries", type=int, default=5,
+                        help="Maximum retries for transient failures (default: 5)")
+    parser.add_argument("--retry-backoff", type=float, default=2.0,
+                        help="Base for exponential backoff in seconds (default: 2.0)")
+    parser.add_argument("--retry-jitter", type=float, default=1.0,
+                        help="Max random jitter added to backoff (default: 1.0)")
+    parser.add_argument("--log-jsonl", default=None,
+                        help="Path to write JSONL event log (optional)")
     args = parser.parse_args()
 
     run_id = args.run_id or make_run_id()
     t0 = time.time()
     counters = {}
+
+    def _log_event(event_type, **kwargs):
+        """Write a structured event to the optional JSONL log."""
+        if not args.log_jsonl:
+            return
+        import json as _json
+        record = {"run_id": run_id, "event": event_type,
+                  "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kwargs}
+        with open(args.log_jsonl, "a") as _f:
+            _f.write(_json.dumps(record) + "\n")
 
     # Load existing citations to find already-fetched DOIs
     if os.path.exists(CITATIONS_PATH):
@@ -115,7 +141,7 @@ def main():
         done_dois = set()
 
     # Also count DOIs from checkpoint (partial run)
-    if os.path.exists(CHECKPOINT_PATH):
+    if args.resume and os.path.exists(CHECKPOINT_PATH):
         ckpt = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
         ckpt_dois = set(ckpt["source_doi"].apply(normalize_doi)) - {"", "nan", "none"}
         done_dois |= ckpt_dois
@@ -137,6 +163,8 @@ def main():
         missing = missing[:args.limit]
 
     print_resume_preview(done_dois, all_dois, missing)
+    _log_event("start", dois_total=len(all_dois), dois_done_before=len(done_dois),
+               dois_to_fetch=len(missing))
 
     if not missing:
         print("Nothing to fetch.")
@@ -151,16 +179,20 @@ def main():
     total_found = 0
     errors = 0
     checkpoint_flushes = 0
+    n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
+    checkpoint_every = args.checkpoint_every if args.checkpoint_every > 0 else n_batches + 1
 
     for i in range(0, len(missing), args.batch_size):
         batch_dois = missing[i:i + args.batch_size]
         batch_num = i // args.batch_size + 1
-        n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
 
         try:
-            refs, found_dois = fetch_batch(batch_dois, delay=args.delay, counters=counters)
+            refs, found_dois = fetch_batch(
+                batch_dois, delay=args.delay, counters=counters,
+            )
         except Exception as e:
             print(f"  ERROR batch {batch_num}: {e}")
+            _log_event("batch_error", batch=batch_num, error=str(e))
             errors += 1
             if errors > 10:
                 print("Too many errors, stopping.")
@@ -175,7 +207,6 @@ def main():
             batch_df = pd.DataFrame(refs, columns=REFS_COLUMNS)
             batch_df.to_csv(CHECKPOINT_PATH, mode="a", header=False,
                             index=False)
-            checkpoint_flushes += 1
 
         # Record DOIs found but with no refs (so we skip on resume)
         for d in found_dois - {r["source_doi"] for r in refs}:
@@ -186,6 +217,11 @@ def main():
             }])
             sentinel.to_csv(CHECKPOINT_PATH, mode="a", header=False,
                             index=False)
+
+        checkpoint_flushes += 1
+        if checkpoint_flushes % checkpoint_every == 0:
+            _log_event("checkpoint", batch=batch_num, total_refs=total_refs,
+                       total_found=total_found)
 
         elapsed = time.time() - t0
         rate = (i + len(batch_dois)) / elapsed if elapsed > 0 else 0
@@ -238,6 +274,8 @@ def main():
     })
     report_path = save_run_report(counters, run_id, "enrich_citations_batch")
     print(f"Run report: {report_path}")
+    _log_event("complete", elapsed_seconds=round(elapsed, 1),
+               refs_written=total_refs, report_path=report_path)
 
 
 if __name__ == "__main__":

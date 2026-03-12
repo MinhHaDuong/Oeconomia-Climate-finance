@@ -29,6 +29,8 @@ UNIFIED     := $(DATA_DIR)/unified_works.csv
 ENRICHED    := $(DATA_DIR)/enriched_works.csv
 EXTENDED    := $(DATA_DIR)/extended_works.csv
 REFINED     := $(DATA_DIR)/refined_works.csv
+REFINED_EMB := $(DATA_DIR)/refined_embeddings.npz
+REFINED_CIT := $(DATA_DIR)/refined_citations.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
 MANIFEST    := $(DATA_DIR)/corpus_manifest.json
 
@@ -59,7 +61,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -72,15 +74,18 @@ all: manuscript papers
 # Artifact chain (the contract between sub-phases):
 #   1a unified_works.csv      raw merged catalog, no filtering
 #   1b enriched_works.csv     metadata/abstract/DOI enrichment applied
-#      + citations.csv        full citation graph
-#      + embeddings.npz       sentence embeddings
+#      + citations.csv        full citation graph (cache)
+#      + embeddings.npz       sentence embeddings (cache)
 #   1c extended_works.csv     diagnostic flags/protection columns added, no rows removed
 #   1d refined_works.csv      keep/remove policy applied; corpus_audit.csv produced
+#   1e refined_embeddings.npz embedding vectors aligned 1:1 with refined_works.csv rows
+#      refined_citations.csv  citation edges restricted to refined DOIs (Phase 2 canonical)
 #
-# Phase 2 scripts read ONLY: refined_works.csv, embeddings.npz, citations.csv.
+# Phase 2 scripts read ONLY: refined_works.csv, refined_embeddings.npz, refined_citations.csv.
+# (embeddings.npz and citations.csv are enrichment caches, not Phase 2 inputs.)
 # het_mostcited_50.csv is a Phase 2 derived product (build_het_core.py).
 
-corpus: corpus-discover corpus-enrich corpus-extend corpus-filter corpus-manifest
+corpus: corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-manifest
 
 # Phase 1a: Discovery + merge → unified_works.csv
 # Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
@@ -130,7 +135,16 @@ corpus-filter:
 # Backward-compat alias (old corpus-refine = extend + filter combined)
 corpus-refine: corpus-extend corpus-filter
 
-# Phase 1e: Record checksums of contract files
+# Phase 1e: Produce row-aligned Phase 2 contract artifacts.
+# Fails fast if refined_works.csv or embeddings.npz is missing.
+# Produces: refined_embeddings.npz (1:1 with refined_works.csv rows)
+#           refined_citations.csv  (source_doi ⊆ refined DOIs)
+corpus-align:
+	@test -f "$(REFINED)" \
+		|| { echo "ERROR: $(REFINED) missing — run 'make corpus-filter' first."; exit 1; }
+	uv run python scripts/corpus_align.py
+
+# Phase 1f: Record checksums of contract files
 corpus-manifest:
 	uv run python scripts/corpus_manifest.py
 
