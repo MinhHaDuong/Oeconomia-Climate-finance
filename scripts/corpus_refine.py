@@ -187,6 +187,7 @@ def score_relevance_llm(df_subset, batch_size=15):
 
     results = {}
     rows = list(df_subset.itertuples())
+    retries_left = 3  # consecutive error budget before giving up
 
     for i in range(0, len(rows), batch_size):
         batch = rows[i:i + batch_size]
@@ -221,12 +222,21 @@ def score_relevance_llm(df_subset, batch_size=15):
                 key = str(j + 1)
                 if key in scores and doi:
                     results[doi] = bool(scores[key])
+            retries_left = 3  # reset on success
         except Exception as e:
             print(f"    LLM batch error: {e}")
+            retries_left -= 1
+            if retries_left <= 0:
+                print("    Too many consecutive errors, stopping LLM scoring")
+                break
 
         time.sleep(1.0 if backend == "openrouter" else 0.1)
-        print(f"    Scored {min(i + batch_size, len(rows))}/{len(rows)}",
-              end="\r")
+        done = min(i + batch_size, len(rows))
+        print(f"    Scored {done}/{len(rows)}", end="\r")
+
+        # Incremental cache save every 100 papers
+        if done % 100 < batch_size:
+            save_llm_relevance_cache({**load_llm_relevance_cache(), **results})
 
     print()
     return results
