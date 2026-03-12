@@ -14,6 +14,7 @@ dependencies = [
     "pyyaml",
     "langdetect>=1.0.9",
     "pdfplumber",
+    "pytest",
 ]
 
 [dependency-groups]
