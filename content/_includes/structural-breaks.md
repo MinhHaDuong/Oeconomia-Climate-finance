@@ -1,6 +1,6 @@
 ## 4. Structural Break Detection
 
-**Script:** `scripts/analyze_alluvial.py`
+**Scripts:** `scripts/compute_alluvial.py` + `scripts/plot_fig_breakpoints.py`
 
 This analysis detects endogenous structural breaks in the temporal evolution of the corpus's thematic composition. Rather than imposing external periodizations from COP milestones or policy events, we ask: at what years did the *semantic structure* of climate finance scholarship shift most sharply?
 

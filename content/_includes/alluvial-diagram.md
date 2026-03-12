@@ -1,6 +1,6 @@
 ## 5. Alluvial Diagram
 
-**Script:** `scripts/analyze_alluvial.py` (same script as breakpoint detection)
+**Scripts:** `scripts/compute_alluvial.py` + `scripts/plot_fig_alluvial.py`
 
 ### Period assignment
 
