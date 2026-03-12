@@ -3,17 +3,19 @@ name: Build paper (Quarto)
 on:
   push:
     paths:
-      - "manuscript.qmd"
+      - "manuscript.md"
       - "bibliography/**"
       - "figures/fig1_emergence.png"
       - "figures/fig3_alluvial.png"
+      - "_quarto.yml"
       - ".github/workflows/build-paper.yml"
   pull_request:
     paths:
-      - "manuscript.qmd"
+      - "manuscript.md"
       - "bibliography/**"
       - "figures/fig1_emergence.png"
       - "figures/fig3_alluvial.png"
+      - "_quarto.yml"
       - ".github/workflows/build-paper.yml"
 
 jobs:
@@ -34,7 +36,7 @@ jobs:
         run: quarto install tinytex --no-prompt
 
       - name: Render manuscript
-        run: quarto render manuscript.qmd --to pdf
+        run: quarto render manuscript.md --to pdf
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4

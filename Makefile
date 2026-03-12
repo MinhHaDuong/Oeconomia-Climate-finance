@@ -43,8 +43,8 @@ manuscript.odt: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_all
 	pandoc $< $(PANDOC_OPTS) -o $@
 
 # ── Quarto build (alternative renderer) ──────────────────
-quarto: manuscript.qmd $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
-	quarto render manuscript.qmd --to pdf
+quarto: $(SRC) $(BIB) $(CSL) figures/fig1_emergence.png figures/fig3_alluvial.png
+	quarto render $(SRC) --to pdf
 
 # ── Figures (Stage 1) ────────────────────────────────────
 # Fig 1: emergence (economics total + CF share)
