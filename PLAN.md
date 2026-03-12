@@ -114,7 +114,7 @@ All sections drafted, numbered per Œconomia style (Arabic, not Roman).
 - [ ] Change title (TBD)
 - [ ] Regenerate French résumé and English abstract
 - [ ] Page break before introduction + "Introduction" entry in PDF bookmarks/TOC
-- [ ] Redistribute quantitative method details: what stays in-text, what goes to footnotes, what to annex
+- [x] Redistribute quantitative method details: ΔBIC values, cluster counts, language % removed from manuscript prose; qualitative claims retained; details belong in companion paper
 - [ ] Content polish pass (opening hook, figure cross-references)
 - [ ] Keywords (FR + EN)
 - [ ] Final word count trim if needed (currently ~9,600 rendered, target ~9,000)
