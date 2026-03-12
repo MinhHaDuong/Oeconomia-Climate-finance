@@ -28,6 +28,7 @@ _variables.yml
 __pycache__/
 *.pyc
 .mypy_cache/
+.cache/
 
 # Replication archive
 *.tar.gz
