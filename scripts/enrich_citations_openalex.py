@@ -116,6 +116,9 @@ def main():
                         help="Max source DOIs to process (0=all)")
     parser.add_argument("--delay", type=float, default=0.15,
                         help="Delay between API requests (seconds)")
+    parser.add_argument("--works-input",
+                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+                        help="Works CSV to read DOIs from (default: unified_works.csv)")
     args = parser.parse_args()
 
     # ── Load done-set (resumable) ─────────────────────────────────────────
@@ -135,7 +138,7 @@ def main():
 
     # ── Corpus DOIs ───────────────────────────────────────────────────────
     works = pd.read_csv(
-        os.path.join(CATALOGS_DIR, "refined_works.csv"),
+        args.works_input,
         dtype=str, keep_default_na=False,
     )
     all_dois = [

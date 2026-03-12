@@ -318,9 +318,12 @@ def main():
                         help="Show counts, don't modify data")
     parser.add_argument("--step", type=int, default=0,
                         help="Run only this step (1-5, 0=all)")
+    parser.add_argument("--works-input",
+                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+                        help="Input/output works CSV (default: unified_works.csv)")
     args = parser.parse_args()
 
-    path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    path = args.works_input
     df = pd.read_csv(path)
     print(f"Loaded {len(df)} works from {path}")
 

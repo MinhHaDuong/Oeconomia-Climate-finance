@@ -74,6 +74,9 @@ def main():
                         help="Max DOIs to process (0=all)")
     parser.add_argument("--delay", type=float, default=0.2,
                         help="Delay between batch requests")
+    parser.add_argument("--works-input",
+                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+                        help="Works CSV to read DOIs from (default: unified_works.csv)")
     args = parser.parse_args()
 
     # Load existing citations to find already-fetched DOIs
@@ -96,8 +99,8 @@ def main():
     else:
         ckpt = pd.DataFrame(columns=REFS_COLUMNS)
 
-    # All DOIs in refined_works
-    works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"),
+    # All DOIs in works input
+    works = pd.read_csv(args.works_input,
                         dtype=str, keep_default_na=False)
     all_dois = [normalize_doi(d) for d in works["doi"].unique() if d]
     all_dois = [d for d in all_dois if d and d not in ("", "nan", "none")]

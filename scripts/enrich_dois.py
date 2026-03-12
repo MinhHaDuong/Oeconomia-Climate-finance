@@ -97,10 +97,17 @@ def main():
                         help="Show what would be done without modifying files")
     parser.add_argument("--limit", type=int, default=0,
                         help="Max works to process (0=all)")
+    parser.add_argument("--works-input",
+                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+                        help="Input works CSV (default: unified_works.csv)")
+    parser.add_argument("--works-output",
+                        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
+                        help="Output works CSV (default: enriched_works.csv)")
     args = parser.parse_args()
 
     # Load corpus
-    corpus_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    corpus_path = args.works_input
+    output_path = args.works_output
     df = pd.read_csv(corpus_path)
     print(f"Loaded {len(df)} works from {corpus_path}")
 
@@ -166,11 +173,15 @@ def main():
 
     if resolved == 0:
         print("No new DOIs to apply.")
+        # Still copy input → output if they differ
+        if output_path != corpus_path:
+            save_csv(df, output_path)
+            print(f"Copied {len(df)} rows to {output_path}")
         return
 
     # Apply resolved DOIs to corpus
     resolved_map = {k: v for k, v in cache.items() if v}
-    print(f"Applying {len(resolved_map)} resolved DOIs to refined_works.csv...")
+    print(f"Applying {len(resolved_map)} resolved DOIs → {output_path}...")
 
     mask = df["source_id"].isin(resolved_map) & ~has_doi
     applied = 0
@@ -180,8 +191,8 @@ def main():
         df.at[idx, "doi"] = new_doi
         applied += 1
 
-    save_csv(df, corpus_path)
-    print(f"Applied {applied} DOIs. Saved {corpus_path}")
+    save_csv(df, output_path)
+    print(f"Applied {applied} DOIs. Saved {output_path}")
 
 
 if __name__ == "__main__":
