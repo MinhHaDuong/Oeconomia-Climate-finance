@@ -300,3 +300,69 @@ def save_figure(fig, path_stem, no_pdf=False, dpi=150):
         fig.savefig(f"{path_stem}.pdf", dpi=max(dpi, 300), bbox_inches="tight")
     print(f"Saved → {os.path.basename(path_stem)}.png" +
           ("" if no_pdf else " + .pdf"))
+
+
+# --- Enrichment priority ---
+
+def compute_priority_scores(works_df: pd.DataFrame) -> pd.DataFrame:
+    """Return works_df with a deterministic ``_priority`` score column and
+    per-component ``_score_*`` columns (higher score = process first).
+
+    Priority is based on:
+    - ``_score_cited``   : raw ``cited_by_count`` (normalised: most-cited first)
+    - ``_score_sources`` : ``source_count`` × 10  (multi-source works first)
+    - ``_score_year``    : (year − 1990) × 0.01   (slight recency bonus)
+    - ``_score_tiebreak``: stable MD5 hash of DOI  (fully deterministic)
+
+    The function is pure: same input rows → same scores, regardless of row order.
+    """
+    import hashlib
+
+    df = works_df.copy()
+
+    cited = pd.to_numeric(df.get("cited_by_count", pd.Series(0, index=df.index)),
+                          errors="coerce").fillna(0).clip(lower=0)
+
+    sources = pd.to_numeric(df.get("source_count", pd.Series(1, index=df.index)),
+                            errors="coerce").fillna(1).clip(lower=0)
+
+    year = pd.to_numeric(df.get("year", pd.Series(1990, index=df.index)),
+                         errors="coerce").fillna(1990)
+
+    doi_str = df["doi"].fillna("").astype(str)
+    tiebreak = doi_str.apply(
+        lambda d: int(hashlib.md5(d.encode()).hexdigest(), 16) % 1_000_000 / 1_000_000
+    )
+
+    df["_score_cited"] = cited.values
+    df["_score_sources"] = (sources * 10).values
+    df["_score_year"] = ((year - 1990) * 0.01).values
+    df["_score_tiebreak"] = tiebreak.values
+    df["_priority"] = (
+        df["_score_cited"] + df["_score_sources"] + df["_score_year"] + df["_score_tiebreak"]
+    )
+
+    return df
+
+
+def sort_dois_by_priority(dois: list, works_df: pd.DataFrame) -> list:
+    """Return *dois* sorted by descending priority score.
+
+    DOIs absent from ``works_df`` are appended at the end (score = 0),
+    preserving their relative insertion order for stability.
+
+    Parameters
+    ----------
+    dois:      List of normalised DOI strings to sort.
+    works_df:  Works DataFrame with at minimum a ``doi`` column.
+
+    Returns
+    -------
+    Sorted list of DOIs (highest priority first).
+    """
+    scored = compute_priority_scores(works_df)
+    doi_to_priority = dict(zip(
+        scored["doi"].fillna("").astype(str),
+        scored["_priority"],
+    ))
+    return sorted(dois, key=lambda d: doi_to_priority.get(d, -1), reverse=True)
