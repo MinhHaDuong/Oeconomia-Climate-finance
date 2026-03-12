@@ -48,7 +48,7 @@ See `AGENTS.md` for individual script invocations and the `Makefile` for full de
 | `corpus_refine.py --extend` | `enriched_works.csv`, `citations.csv`*, `embeddings.npz`* | `extended_works.csv` |
 | `corpus_refine.py --filter` | `extended_works.csv` | `refined_works.csv`, `corpus_audit.csv` |
 | `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npz` (incremental cache), `semantic_clusters.csv` |
-| `compute_alluvial.py` | `refined_works.csv`, `refined_embeddings.npz` | `tab_alluvial.csv`, `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `cluster_labels.json`, `tab_core_shares.csv`, `tab_lexical_tfidf.csv` |
+| `compute_alluvial.py` | `refined_works.csv`, `refined_embeddings.npz` | `tab_alluvial.csv`, `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `cluster_labels.json`, `tab_core_shares.csv`; with `--lexical`: `tab_lexical_tfidf.csv` + `fig_lexical_tfidf_*.png` |
 | `plot_fig_breakpoints.py` | `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `tab_alluvial.csv` | `fig_breakpoints.png` |
 | `plot_fig_alluvial.py` | `tab_alluvial.csv`, `cluster_labels.json` | `fig_alluvial.png`, `fig_alluvial.html` |
 | `analyze_bimodality.py` | `refined_works.csv`, `refined_embeddings.npz` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |

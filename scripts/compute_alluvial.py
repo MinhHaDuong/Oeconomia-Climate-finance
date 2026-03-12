@@ -3,11 +3,13 @@
 Reads:  refined_works.csv, refined_embeddings.npz
 Writes: tab_breakpoints.csv, tab_breakpoint_robustness.csv,
         tab_alluvial.csv, cluster_labels.json,
-        tab_core_shares.csv (full corpus only: core paper counts per period/cluster),
-        tab_lexical_tfidf.csv (full corpus only),
+        tab_core_shares.csv (full corpus only: core paper counts per period/cluster)
+
+Optional outputs (require explicit flags):
+        tab_lexical_tfidf.csv + fig_lexical_tfidf_*.png (--lexical only),
         tab_k_sensitivity.csv + fig_k_sensitivity.png (--robustness only)
 
-Flags: --core-only, --censor-gap N, --robustness, --no-pdf
+Flags: --core-only, --censor-gap N, --robustness, --lexical, --no-pdf
 
 Downstream scripts read these outputs:
   plot_fig_breakpoints.py  →  tab_breakpoints.csv, tab_breakpoint_robustness.csv, tab_alluvial.csv
@@ -60,6 +62,8 @@ parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--censor-gap", type=int, default=0,
                     help="Number of transition years to censor before each test point (default: 0)")
+parser.add_argument("--lexical", action="store_true",
+                    help="Run lexical TF-IDF validation and produce bar-chart figures (off by default)")
 args = parser.parse_args()
 
 # Output naming depends on mode
@@ -716,9 +720,14 @@ if args.robustness and not args.core_only:
 # ============================================================
 # Step 8: Lexical validation of the 2009 break (TF-IDF)
 # ============================================================
+# Requires --lexical flag.  Produces figures + tab_lexical_tfidf.csv.
 
 if args.core_only:
     print("\nDone (core-only mode — skipping lexical validation).")
+    import sys; sys.exit(0)
+
+if not args.lexical:
+    print("\nDone (pass --lexical to also run TF-IDF validation and bar-chart figures).")
     import sys; sys.exit(0)
 
 print("\n=== Lexical validation: TF-IDF at detected breakpoints ===")

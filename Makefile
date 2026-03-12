@@ -223,12 +223,19 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 	uv run python $<
 
 # -- Companion paper (quantitative) --
-# Compute tables (prerequisite for fig_composition and both companion figures)
-content/tables/tab_alluvial.csv content/tables/tab_breakpoints.csv \
-content/tables/tab_breakpoint_robustness.csv content/tables/cluster_labels.json \
-content/tables/tab_core_shares.csv &: \
-		scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+# Compute tables (prerequisite for fig_composition and both companion figures).
+# A stamp file gates the single compute_alluvial.py invocation so each table
+# can be listed as an independent prerequisite without re-running the script.
+.stamps/alluvial: scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+	@mkdir -p .stamps
 	uv run python $< --no-pdf
+	@touch $@
+
+content/tables/tab_alluvial.csv: .stamps/alluvial
+content/tables/tab_breakpoints.csv: .stamps/alluvial
+content/tables/tab_breakpoint_robustness.csv: .stamps/alluvial
+content/tables/cluster_labels.json: .stamps/alluvial
+content/tables/tab_core_shares.csv: .stamps/alluvial
 
 # Breakpoints figure
 content/figures/fig_breakpoints.png: \
@@ -269,11 +276,16 @@ content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py
 	uv run python $< --no-pdf
 
 # -- Technical report (robustness, variants, supplementary) --
-# Core-only compute tables
-content/tables/tab_alluvial_core.csv content/tables/tab_breakpoints_core.csv \
-content/tables/tab_breakpoint_robustness_core.csv content/tables/cluster_labels_core.json &: \
-		scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+# Core-only compute tables (stamp-gated, same pattern as full-corpus)
+.stamps/alluvial_core: scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+	@mkdir -p .stamps
 	uv run python $< --core-only --no-pdf
+	@touch $@
+
+content/tables/tab_alluvial_core.csv: .stamps/alluvial_core
+content/tables/tab_breakpoints_core.csv: .stamps/alluvial_core
+content/tables/tab_breakpoint_robustness_core.csv: .stamps/alluvial_core
+content/tables/cluster_labels_core.json: .stamps/alluvial_core
 
 # Core-only figures
 content/figures/fig_breakpoints_core.png: \
@@ -392,6 +404,6 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:
-	rm -rf output/
+	rm -rf output/ .stamps/
 
 rebuild: clean all

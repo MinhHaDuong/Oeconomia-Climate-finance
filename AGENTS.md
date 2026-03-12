@@ -208,9 +208,10 @@ uv run python scripts/compute_alluvial.py --core-only          # Tables (core: c
 uv run python scripts/plot_fig_breakpoints.py --core-only      # fig_breakpoints_core.png
 uv run python scripts/plot_fig_alluvial.py --core-only         # fig_alluvial_core.png
 uv run python scripts/compute_alluvial.py --robustness         # k-sensitivity appendix
+uv run python scripts/compute_alluvial.py --lexical            # TF-IDF validation + bar charts
 uv run python scripts/compute_alluvial.py --censor-gap 1       # Censored breaks (k=1)
 uv run python scripts/compute_alluvial.py --censor-gap 2       # Censored breaks (k=2)
-# Legacy: analyze_alluvial.py still works as a thin wrapper calling all three scripts
+# DEPRECATED (remove after v1.0): analyze_alluvial.py thin wrapper calling all three scripts
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
 uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)
