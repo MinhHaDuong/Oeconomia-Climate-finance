@@ -61,13 +61,16 @@ def main():
     parser.add_argument("--never-fetched-n", type=int, default=30,
                         help="Number of never-fetched DOIs to probe (default 30)")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--works-input",
+                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+                        help="Works CSV to read DOIs from (default: unified_works.csv)")
     args = parser.parse_args()
 
     np.random.seed(args.seed)
 
-    # ── Load data ────────────────────────────────────────────────────────────
+    # ── Load data ────────────────────────────────────────────────────────────────
     cit_path = os.path.join(CATALOGS_DIR, "citations.csv")
-    works_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    works_path = args.works_input
 
     cit = pd.read_csv(cit_path, low_memory=False)
     cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
