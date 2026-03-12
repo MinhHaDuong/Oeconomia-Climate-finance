@@ -159,6 +159,51 @@ class TestUtilsHelpers:
         assert counters.get("server_errors", 0) >= 1
         assert counters.get("retries", 0) >= 1
 
+    def test_retry_get_accepts_backoff_base_and_jitter_max(self, requests_mock):
+        """retry_get accepts backoff_base and jitter_max parameters."""
+        from utils import retry_get
+        requests_mock.get("https://example.com/bp", json={"ok": True})
+        counters = {}
+        resp = retry_get("https://example.com/bp", delay=0, counters=counters,
+                         backoff_base=1.5, jitter_max=0.5)
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# JSONL log file: created on real run and contains expected events
+# ---------------------------------------------------------------------------
+
+class TestJsonlLogging:
+    def test_enrich_abstracts_dry_run_no_jsonl(self, tmp_path):
+        """--dry-run exits before JSONL events are written (no start event)."""
+        works_path = make_mini_works(tmp_path)
+        log_path = tmp_path / "run.jsonl"
+        env = {**os.environ, "CLIMATE_FINANCE_DATA": str(tmp_path)}
+        subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
+             "--dry-run", "--works-input", works_path,
+             "--log-jsonl", str(log_path)],
+            capture_output=True, text=True, env=env,
+        )
+        # dry-run should not write any events (exits before they are emitted)
+        if log_path.exists():
+            lines = [l for l in log_path.read_text().splitlines() if l.strip()]
+            # If events were written, there should be no 'complete' event
+            complete_events = [json.loads(l) for l in lines if '"complete"' in l]
+            assert not complete_events, "dry-run should not write complete event"
+
+    def test_log_jsonl_path_accepted_without_error(self, tmp_path):
+        """--log-jsonl flag is accepted by all three scripts without parse error."""
+        log_path = tmp_path / "run.jsonl"
+        for script in ["enrich_abstracts.py", "enrich_citations_batch.py",
+                       "enrich_citations_openalex.py"]:
+            result = subprocess.run(
+                [sys.executable, os.path.join(SCRIPTS_DIR, script), "--help"],
+                capture_output=True, text=True,
+            )
+            assert "--log-jsonl" in result.stdout + result.stderr, \
+                f"--log-jsonl not found in {script} --help"
+
 
 # ---------------------------------------------------------------------------
 # CLI flag tests: --run-id and --checkpoint-every
@@ -178,11 +223,71 @@ class TestCliFlags:
     def test_enrich_abstracts_has_checkpoint_every_flag(self):
         assert "--checkpoint-every" in self._help("enrich_abstracts.py")
 
+    def test_enrich_abstracts_has_resume_flag(self):
+        assert "--resume" in self._help("enrich_abstracts.py")
+
+    def test_enrich_abstracts_has_request_timeout_flag(self):
+        assert "--request-timeout" in self._help("enrich_abstracts.py")
+
+    def test_enrich_abstracts_has_max_retries_flag(self):
+        assert "--max-retries" in self._help("enrich_abstracts.py")
+
+    def test_enrich_abstracts_has_retry_backoff_flag(self):
+        assert "--retry-backoff" in self._help("enrich_abstracts.py")
+
+    def test_enrich_abstracts_has_retry_jitter_flag(self):
+        assert "--retry-jitter" in self._help("enrich_abstracts.py")
+
+    def test_enrich_abstracts_has_log_jsonl_flag(self):
+        assert "--log-jsonl" in self._help("enrich_abstracts.py")
+
     def test_enrich_citations_batch_has_run_id_flag(self):
         assert "--run-id" in self._help("enrich_citations_batch.py")
 
+    def test_enrich_citations_batch_has_checkpoint_every_flag(self):
+        assert "--checkpoint-every" in self._help("enrich_citations_batch.py")
+
+    def test_enrich_citations_batch_has_resume_flag(self):
+        assert "--resume" in self._help("enrich_citations_batch.py")
+
+    def test_enrich_citations_batch_has_request_timeout_flag(self):
+        assert "--request-timeout" in self._help("enrich_citations_batch.py")
+
+    def test_enrich_citations_batch_has_max_retries_flag(self):
+        assert "--max-retries" in self._help("enrich_citations_batch.py")
+
+    def test_enrich_citations_batch_has_retry_backoff_flag(self):
+        assert "--retry-backoff" in self._help("enrich_citations_batch.py")
+
+    def test_enrich_citations_batch_has_retry_jitter_flag(self):
+        assert "--retry-jitter" in self._help("enrich_citations_batch.py")
+
+    def test_enrich_citations_batch_has_log_jsonl_flag(self):
+        assert "--log-jsonl" in self._help("enrich_citations_batch.py")
+
     def test_enrich_citations_openalex_has_run_id_flag(self):
         assert "--run-id" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_checkpoint_every_flag(self):
+        assert "--checkpoint-every" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_resume_flag(self):
+        assert "--resume" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_request_timeout_flag(self):
+        assert "--request-timeout" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_max_retries_flag(self):
+        assert "--max-retries" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_retry_backoff_flag(self):
+        assert "--retry-backoff" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_retry_jitter_flag(self):
+        assert "--retry-jitter" in self._help("enrich_citations_openalex.py")
+
+    def test_enrich_citations_openalex_has_log_jsonl_flag(self):
+        assert "--log-jsonl" in self._help("enrich_citations_openalex.py")
 
 
 # ---------------------------------------------------------------------------

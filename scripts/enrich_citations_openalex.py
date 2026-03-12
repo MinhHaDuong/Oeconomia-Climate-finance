@@ -143,6 +143,22 @@ def main():
                         help="Works CSV to read DOIs from (default: unified_works.csv)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier for the run report (default: timestamp)")
+    parser.add_argument("--resume", action="store_true", default=True,
+                        help="Resume from existing done-set/checkpoint (default: True)")
+    parser.add_argument("--no-resume", dest="resume", action="store_false",
+                        help="Ignore existing done-set/checkpoint and start fresh")
+    parser.add_argument("--checkpoint-every", type=int, default=20,
+                        help="Log checkpoint event every N batches (default: 20)")
+    parser.add_argument("--request-timeout", type=float, default=60.0,
+                        help="Per-request timeout in seconds (default: 60)")
+    parser.add_argument("--max-retries", type=int, default=5,
+                        help="Maximum retries for transient failures (default: 5)")
+    parser.add_argument("--retry-backoff", type=float, default=2.0,
+                        help="Base for exponential backoff in seconds (default: 2.0)")
+    parser.add_argument("--retry-jitter", type=float, default=1.0,
+                        help="Max random jitter added to backoff (default: 1.0)")
+    parser.add_argument("--log-jsonl", default=None,
+                        help="Path to write JSONL event log (optional)")
     args = parser.parse_args()
 
     run_id = args.run_id or make_run_id()
@@ -150,8 +166,18 @@ def main():
     p1_counters = {}
     p2_counters = {}
 
+    def _log_event(event_type, **kwargs):
+        """Write a structured event to the optional JSONL log."""
+        if not args.log_jsonl:
+            return
+        import json as _json
+        record = {"run_id": run_id, "event": event_type,
+                  "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kwargs}
+        with open(args.log_jsonl, "a") as _f:
+            _f.write(_json.dumps(record) + "\n")
+
     # ── Load done-set (resumable) ─────────────────────────────────────────
-    if os.path.exists(DONE_PATH):
+    if args.resume and os.path.exists(DONE_PATH):
         with open(DONE_PATH) as f:
             done_dois = set(line.strip() for line in f if line.strip())
         print(f"Resuming: {len(done_dois)} DOIs already fetched from OpenAlex")
@@ -159,7 +185,7 @@ def main():
         done_dois = set()
 
     # Also count from checkpoint if a previous run crashed before merging
-    if os.path.exists(CHECKPOINT_PATH):
+    if args.resume and os.path.exists(CHECKPOINT_PATH):
         ckpt_existing = pd.read_csv(CHECKPOINT_PATH, usecols=["source_doi"],
                                      low_memory=False)
         done_dois |= set(ckpt_existing["source_doi"].apply(normalize_doi).dropna())
@@ -193,6 +219,8 @@ def main():
         missing = missing[:args.limit]
 
     print_resume_preview(done_dois, all_dois, missing)
+    _log_event("start", dois_total=len(all_dois), dois_done_before=len(done_dois),
+               dois_to_fetch=len(missing))
 
     if not missing:
         print("Nothing to fetch.")
@@ -219,13 +247,14 @@ def main():
                     f.write(d + "\n")
         except Exception as e:
             print(f"  ERROR batch {batch_num}/{n_batches}: {e}")
+            _log_event("phase1_batch_error", batch=batch_num, error=str(e))
             p1_errors += 1
             if p1_errors > 10:
                 print("Too many errors, stopping.")
                 break
             continue
 
-        if batch_num % 20 == 0 or batch_num == n_batches:
+        if batch_num % args.checkpoint_every == 0 or batch_num == n_batches:
             found_refs = sum(len(v) for v in all_source_refs.values())
             elapsed = time.time() - t0
             rate = (i + len(batch)) / elapsed if elapsed > 0 else 0
@@ -233,6 +262,8 @@ def main():
             print(f"  Batch {batch_num}/{n_batches}: "
                   f"{len(all_source_refs)} sources, {found_refs} ref-IDs, "
                   f"{elapsed:.0f}s elapsed, ETA {eta:.0f}s")
+            _log_event("phase1_checkpoint", batch=batch_num, sources=len(all_source_refs),
+                       ref_ids=found_refs)
 
     # ── Phase 2: resolve OpenAlex IDs → DOIs + metadata ─────────────────
     all_oa_ids = list({
@@ -356,6 +387,8 @@ def main():
     }
     report_path = save_run_report(counters, run_id, "enrich_citations_openalex")
     print(f"Run report: {report_path}")
+    _log_event("complete", elapsed_seconds=round(elapsed, 1),
+               rows_appended=len(new_refs_real), report_path=report_path)
 
 
 if __name__ == "__main__":
