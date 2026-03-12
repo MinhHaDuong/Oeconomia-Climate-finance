@@ -193,10 +193,27 @@ def print_summary(df):
 # Apply filter
 # ============================================================
 
-def apply_filter(df):
+def apply_filter(df, output_path=None, audit_path=None):
     """Remove flagged non-protected papers."""
+    if output_path is None:
+        output_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    if audit_path is None:
+        audit_path = os.path.join(CATALOGS_DIR, "corpus_audit.csv")
+
+    # Re-evaluate flags if we have individual columns (boolean) rather than list
+    flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
+    if "flags" not in df.columns or df["flags"].apply(
+            lambda x: isinstance(x, str)).any():
+        # Reconstruct flags from boolean columns or parse string repr
+        import ast
+        if "flags" in df.columns:
+            df["flags"] = df["flags"].apply(
+                lambda x: ast.literal_eval(x) if isinstance(x, str) else (x or []))
+        else:
+            df["flags"] = merge_flags(df, FLAG_COLUMNS)
+
     df["action"] = "keep"
-    mask_remove = (df["flags"].apply(len) > 0) & (~df["protected"])
+    mask_remove = (df["flags"].apply(len) > 0) & (~df["protected"].fillna(False))
     df.loc[mask_remove, "action"] = "remove"
 
     n_remove = mask_remove.sum()
@@ -208,8 +225,7 @@ def apply_filter(df):
     # Save audit
     audit_df = df[["doi", "title", "year", "cited_by_count", "source_count",
                     "protected", "protect_reason", "action"]].copy()
-    audit_df["flags"] = df["flags"].apply(lambda f: "|".join(f) if f else "")
-    audit_path = os.path.join(CATALOGS_DIR, "corpus_audit.csv")
+    audit_df["flags"] = df["flags"].apply(lambda f: "|".join(f) if isinstance(f, list) else str(f))
     audit_df.to_csv(audit_path, index=False)
     print(f"  Saved audit -> {audit_path}")
 
@@ -220,11 +236,28 @@ def apply_filter(df):
                  "citation_isolated_old", "semantic_outlier", "semantic_outlier_dist",
                  "llm_irrelevant"],
         errors="ignore")
-    refined_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
-    save_csv(keep_df, refined_path)
-    print(f"  Saved refined corpus -> {refined_path} ({len(keep_df)} papers)")
+    save_csv(keep_df, output_path)
+    print(f"  Saved refined corpus -> {output_path} ({len(keep_df)} papers)")
 
     return keep_df
+
+
+def save_extended(df, output_path):
+    """Save extended_works.csv — all rows, with flag/protection columns added."""
+    # Mark would-remove candidates (for audit visibility, but keep all rows)
+    flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
+    if "flags" not in df.columns:
+        df["flags"] = merge_flags(df, FLAG_COLUMNS)
+
+    flagged = df["flags"].apply(len) > 0
+    protected = df["protected"].fillna(False)
+    df["action"] = "keep"
+    df.loc[flagged & ~protected, "action"] = "would_remove"
+
+    save_csv(df, output_path)
+    n_would_remove = (df["action"] == "would_remove").sum()
+    print(f"  Saved extended corpus -> {output_path} "
+          f"({len(df)} rows, {n_would_remove} would-remove candidates)")
 
 
 def save_dry_run_audit(df):
@@ -242,73 +275,54 @@ def save_dry_run_audit(df):
 
 
 # ============================================================
-# Main
+# Shared data loading
 # ============================================================
 
-def main():
-    parser = argparse.ArgumentParser(description="Corpus refinement: flag -> verify -> filter")
-    parser.add_argument("--apply", action="store_true",
-                        help="Apply filter (default: dry run, flag + verify only)")
-    parser.add_argument("--skip-llm", action="store_true",
-                        help="Skip LLM scoring + audit step")
-    parser.add_argument("--skip-citation-flag", action="store_true",
-                        help="Skip citation isolation flag")
-    parser.add_argument("--cheap", action="store_true",
-                        help="Cheap filter: only flags 1-3 (metadata, no-abstract, blacklist)")
-    args = parser.parse_args()
-
-    # --cheap implies skipping everything that needs external data
-    if args.cheap:
-        args.skip_llm = True
-        args.skip_citation_flag = True
-
-    # Load config
-    config = _load_config()
-
-    print("Loading data...")
-    works_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
+def load_input_works(works_path):
+    """Load works CSV and normalise DOIs."""
     df = pd.read_csv(works_path)
-    print(f"  Unified works: {len(df)}")
-
-    # Normalize DOIs once (used by flags 4, 5, 6 and protection)
+    print(f"  Loaded: {len(df)} rows from {works_path}")
     df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+    return df
 
-    # Load citations (skip in cheap mode)
-    citations_df = None
-    if not args.cheap and os.path.exists(CITATIONS_PATH):
-        citations_df = pd.read_csv(CITATIONS_PATH)
-        citations_df["source_doi"] = citations_df["source_doi"].apply(
-            lambda x: normalize_doi(x) if pd.notna(x) else "")
-        citations_df["ref_doi"] = citations_df["ref_doi"].apply(
-            lambda x: normalize_doi(x) if pd.notna(x) else "")
-        print(f"  Citations: {len(citations_df)}")
 
-    # Load embeddings (skip in cheap mode)
-    embeddings = None
-    emb_df = None
-    has_embeddings = False
-    if not args.cheap and os.path.exists(EMBEDDINGS_PATH):
-        emb_df = df.copy()
-        emb_df = emb_df[emb_df["abstract"].notna() & (emb_df["abstract"].str.len() > 50)]
-        emb_df["year_num"] = pd.to_numeric(emb_df["year"], errors="coerce")
-        emb_df = emb_df[(emb_df["year_num"] >= 1990) & (emb_df["year_num"] <= 2025)]
-        emb_df = emb_df.reset_index(drop=True)
+def load_citations(cheap=False):
+    if cheap or not os.path.exists(CITATIONS_PATH):
+        return None
+    citations_df = pd.read_csv(CITATIONS_PATH)
+    citations_df["source_doi"] = citations_df["source_doi"].apply(
+        lambda x: normalize_doi(x) if pd.notna(x) else "")
+    citations_df["ref_doi"] = citations_df["ref_doi"].apply(
+        lambda x: normalize_doi(x) if pd.notna(x) else "")
+    print(f"  Citations: {len(citations_df)}")
+    return citations_df
 
-        cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
-        embeddings = cache["vectors"] if "vectors" in cache.files else cache
-        if len(embeddings) != len(emb_df):
-            print(f"  WARNING: embedding size mismatch ({len(embeddings)} vs {len(emb_df)})")
-            print(f"  Skipping semantic outlier detection.")
-            embeddings = None
-            emb_df = None
-        else:
-            has_embeddings = True
-            print(f"  Embeddings: {len(embeddings)}")
 
-    if args.cheap:
+def load_embeddings(df, cheap=False):
+    """Return (embeddings, emb_df, has_embeddings)."""
+    if cheap or not os.path.exists(EMBEDDINGS_PATH):
+        return None, None, False
+    emb_df = df.copy()
+    emb_df = emb_df[emb_df["abstract"].notna() & (emb_df["abstract"].str.len() > 50)]
+    emb_df["year_num"] = pd.to_numeric(emb_df["year"], errors="coerce")
+    emb_df = emb_df[(emb_df["year_num"] >= 1990) & (emb_df["year_num"] <= 2025)]
+    emb_df = emb_df.reset_index(drop=True)
+    cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
+    embeddings = cache["vectors"] if "vectors" in cache.files else cache
+    if len(embeddings) != len(emb_df):
+        print(f"  WARNING: embedding size mismatch ({len(embeddings)} vs {len(emb_df)}), skipping.")
+        return None, None, False
+    print(f"  Embeddings: {len(embeddings)}")
+    return embeddings, emb_df, True
+
+
+def run_flagging(df, args, config, citations_df, embeddings, emb_df, has_embeddings):
+    """Run all flags + protection + verification. Returns df with flag columns."""
+    cheap = getattr(args, "cheap", False)
+
+    if cheap:
         print("\n=== CHEAP MODE: flags 1-3 only ===")
 
-    # ---- Flags 1-3: always run, fast, no external deps ----
     print("\n=== Phase A: Flagging papers ===")
     df["missing_metadata"] = flag_missing_metadata(df, config)
     print(f"  Flag 1 (missing metadata): {df['missing_metadata'].sum()}")
@@ -319,8 +333,7 @@ def main():
     df["title_blacklist"] = flag_title_blacklist(df, config)
     print(f"  Flag 3 (title blacklist): {df['title_blacklist'].sum()}")
 
-    # ---- Flag 4: citation isolation ----
-    if args.skip_citation_flag:
+    if getattr(args, "skip_citation_flag", False):
         print("  Flag 4: skipped (--skip-citation-flag)")
     else:
         try:
@@ -330,7 +343,6 @@ def main():
         except ValueError as e:
             print(f"  Flag 4 skipped: {e}")
 
-    # ---- Flag 5: semantic outlier ----
     if has_embeddings:
         try:
             df["semantic_outlier"], df["semantic_outlier_dist"] = flag_semantic_outlier(
@@ -342,8 +354,8 @@ def main():
     else:
         print("  Flag 5: skipped (no embeddings)")
 
-    # ---- Flag 6: LLM relevance (streaming) ----
-    if not args.skip_llm:
+    skip_llm = getattr(args, "skip_llm", False)
+    if not skip_llm:
         print("  Computing LLM relevance scores...")
         prior_flags = [c for c in FLAG_COLUMNS[:5] if c in df.columns]
         already_flagged = df[prior_flags].any(axis=1) if prior_flags else pd.Series(False, index=df.index)
@@ -358,35 +370,117 @@ def main():
     else:
         print("  Flag 6: skipped (--skip-llm)")
 
-    # ---- Merge into combined flags list ----
     df["flags"] = merge_flags(df, FLAG_COLUMNS)
 
-    # ---- Protection ----
     print("\n=== Phase B: Protecting key papers ===")
     df["protected"], df["protect_reason"] = compute_protection(
         df, config, citations_df=citations_df)
     print(f"  Protected papers: {df['protected'].sum()}")
 
-    # ---- Verification ----
     print("\n=== Phase C: Verification ===")
     verify_blacklist(df, config)
 
-    if not args.skip_llm:
+    if not skip_llm:
         print("\n=== C2: LLM audit ===")
         print("  (Use scripts/qa_refine_audit.py for full audit)")
     else:
         print("\n=== C2: LLM audit SKIPPED (--skip-llm) ===")
 
     print_summary(df)
+    return df, has_embeddings
 
-    # ---- Apply or dry run ----
-    if args.apply:
+
+# ============================================================
+# Main
+# ============================================================
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Corpus refinement: flag → verify → extend → filter",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Modes:\n"
+            "  --extend  Phase 1c: annotate enriched_works.csv → extended_works.csv (no row removal)\n"
+            "  --filter  Phase 1d: apply policy extended_works.csv → refined_works.csv\n"
+            "  --apply   Compat: full pipeline on unified_works.csv → refined_works.csv\n"
+            "  (no flag) Dry run: flag + verify, write audit only"
+        ),
+    )
+    parser.add_argument("--extend", action="store_true",
+                        help="Phase 1c: compute flags/protection, write extended_works.csv (no filtering)")
+    parser.add_argument("--filter", action="store_true",
+                        help="Phase 1d: read extended_works.csv, apply policy, write refined_works.csv")
+    parser.add_argument("--apply", action="store_true",
+                        help="Compat alias: full flag+filter pipeline (unified → refined)")
+    parser.add_argument("--works-input", default=None,
+                        help=("Input works CSV. Defaults: "
+                              "--extend=enriched_works.csv, "
+                              "--filter=extended_works.csv, "
+                              "--apply=unified_works.csv"))
+    parser.add_argument("--works-output", default=None,
+                        help=("Output works CSV. Defaults: "
+                              "--extend=extended_works.csv, "
+                              "--filter/--apply=refined_works.csv"))
+    parser.add_argument("--skip-llm", action="store_true",
+                        help="Skip LLM scoring + audit step")
+    parser.add_argument("--skip-citation-flag", action="store_true",
+                        help="Skip citation isolation flag")
+    parser.add_argument("--cheap", action="store_true",
+                        help="Cheap filter: only flags 1-3 (metadata, no-abstract, blacklist)")
+    args = parser.parse_args()
+
+    if args.cheap:
+        args.skip_llm = True
+        args.skip_citation_flag = True
+
+    # ── Resolve defaults ───────────────────────────────────────────────────
+    if args.extend:
+        default_input = os.path.join(CATALOGS_DIR, "enriched_works.csv")
+        default_output = os.path.join(CATALOGS_DIR, "extended_works.csv")
+    elif args.filter:
+        default_input = os.path.join(CATALOGS_DIR, "extended_works.csv")
+        default_output = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    else:  # --apply or dry-run (backward compat)
+        default_input = os.path.join(CATALOGS_DIR, "unified_works.csv")
+        default_output = os.path.join(CATALOGS_DIR, "refined_works.csv")
+
+    works_input = args.works_input or default_input
+    works_output = args.works_output or default_output
+
+    # ── Filter mode: read existing extended artifact, apply policy ─────────
+    if args.filter:
+        print(f"=== FILTER MODE: {works_input} → {works_output} ===")
+        df = pd.read_csv(works_input)
+        print(f"  Loaded: {len(df)} rows from {works_input}")
+        audit_path = os.path.join(os.path.dirname(works_output), "corpus_audit.csv")
+        apply_filter(df, output_path=works_output, audit_path=audit_path)
+        return
+
+    # ── Extend / apply modes: run flagging pipeline ────────────────────────
+    mode_label = "EXTEND" if args.extend else ("APPLY" if args.apply else "DRY RUN")
+    print(f"=== {mode_label} MODE: {works_input} → {works_output} ===")
+
+    config = _load_config()
+    print("Loading data...")
+    df = load_input_works(works_input)
+    citations_df = load_citations(cheap=getattr(args, "cheap", False))
+    embeddings, emb_df, has_embeddings = load_embeddings(
+        df, cheap=getattr(args, "cheap", False))
+
+    df, has_embeddings = run_flagging(
+        df, args, config, citations_df, embeddings, emb_df, has_embeddings)
+
+    if args.extend:
+        save_extended(df, works_output)
+    elif args.apply:
         check_apply_gates(df, args, has_embeddings)
-        apply_filter(df)
+        audit_path = os.path.join(os.path.dirname(works_output), "corpus_audit.csv")
+        apply_filter(df, output_path=works_output, audit_path=audit_path)
     else:
-        print("\n=== DRY RUN: use --apply to actually filter ===")
+        print("\n=== DRY RUN: use --extend / --filter / --apply to write output ===")
         save_dry_run_audit(df)
 
 
 if __name__ == "__main__":
     main()
+

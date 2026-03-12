@@ -175,8 +175,13 @@ The pipeline has three phases with a strict contract between them:
 
 **Phase 1 — Corpus building** (slow, API-dependent, run rarely):
 - Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
-- Outputs (the contract): `refined_works.csv`, `embeddings.npz`, `citations.csv`
-- Run with: `make corpus`
+- Four steps with intermediate artifacts in `$CLIMATE_FINANCE_DATA/catalogs/`:
+  1. **corpus-discover**: merge sources → `unified_works.csv`
+  2. **corpus-enrich**: enrich DOIs/abstracts/citations on `unified_works.csv` → `enriched_works.csv`
+  3. **corpus-extend**: flag all works (no rows removed) → `extended_works.csv`
+  4. **corpus-filter**: apply policy, audit → `refined_works.csv` (final Phase 1 output)
+- Phase 1 → Phase 2 **contract**: `refined_works.csv`, `embeddings.npz`, `citations.csv`
+- Run with: `make corpus` (all four steps) or individual targets
 
 **Phase 2 — Analysis & figures** (fast, deterministic, run often):
 - Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`
