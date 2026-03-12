@@ -37,17 +37,30 @@ OA_BASE = "https://api.openalex.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 
 
-def openalex_get(params, delay=0.15, counters=None):
+def openalex_get(params, delay=0.15, counters=None,
+                 request_timeout=60.0, max_retries=5,
+                 retry_backoff=2.0, retry_jitter=1.0):
     """GET request to OpenAlex with polite delay and retry/backoff."""
     if counters is None:
         counters = {}
     params.setdefault("mailto", MAILTO)
-    resp = retry_get(OA_BASE, params=params, headers=HEADERS, delay=delay,
-                     max_retries=5, timeout=60, counters=counters)
+    resp = retry_get(
+        OA_BASE,
+        params=params,
+        headers=HEADERS,
+        delay=delay,
+        max_retries=max_retries,
+        timeout=max(1.0, float(request_timeout)),
+        backoff_base=retry_backoff,
+        jitter_max=retry_jitter,
+        counters=counters,
+    )
     return resp.json()
 
 
-def fetch_source_batch(dois, counters=None):
+def fetch_source_batch(dois, counters=None,
+                       request_timeout=60.0, max_retries=5,
+                       retry_backoff=2.0, retry_jitter=1.0):
     """Phase 1: fetch referenced_works for a batch of source DOIs.
 
     Returns dict {source_doi: [openalex_id, ...]}
@@ -55,11 +68,18 @@ def fetch_source_batch(dois, counters=None):
     if counters is None:
         counters = {}
     doi_values = "|".join(dois)
-    data = openalex_get({
-        "filter": f"doi:{doi_values}",
-        "select": "id,doi,referenced_works",
-        "per-page": len(dois),
-    }, counters=counters)
+    data = openalex_get(
+        {
+            "filter": f"doi:{doi_values}",
+            "select": "id,doi,referenced_works",
+            "per-page": len(dois),
+        },
+        counters=counters,
+        request_timeout=request_timeout,
+        max_retries=max_retries,
+        retry_backoff=retry_backoff,
+        retry_jitter=retry_jitter,
+    )
     result = {}
     for item in data.get("results", []):
         source_doi = normalize_doi(item.get("doi", ""))
@@ -72,7 +92,9 @@ def fetch_source_batch(dois, counters=None):
     return result
 
 
-def resolve_openalex_ids(oa_ids, counters=None):
+def resolve_openalex_ids(oa_ids, counters=None,
+                         request_timeout=60.0, max_retries=5,
+                         retry_backoff=2.0, retry_jitter=1.0):
     """Phase 2: resolve a list of OpenAlex IDs → (id, doi, title, year, journal).
 
     Returns dict {oa_id: {doi, title, year, journal}}
@@ -82,11 +104,18 @@ def resolve_openalex_ids(oa_ids, counters=None):
     if counters is None:
         counters = {}
     id_filter = "|".join(oa_ids)
-    data = openalex_get({
-        "filter": f"openalex:{id_filter}",
-        "select": "id,doi,title,publication_year,primary_location",
-        "per-page": len(oa_ids),
-    }, counters=counters)
+    data = openalex_get(
+        {
+            "filter": f"openalex:{id_filter}",
+            "select": "id,doi,title,publication_year,primary_location",
+            "per-page": len(oa_ids),
+        },
+        counters=counters,
+        request_timeout=request_timeout,
+        max_retries=max_retries,
+        retry_backoff=retry_backoff,
+        retry_jitter=retry_jitter,
+    )
     result = {}
     for item in data.get("results", []):
         oa_id = item.get("id", "").split("/")[-1]
@@ -176,6 +205,12 @@ def main():
         with open(args.log_jsonl, "a") as _f:
             _f.write(_json.dumps(record) + "\n")
 
+    # If explicitly starting fresh, discard done-set and unmerged checkpoint.
+    if not args.resume:
+        if os.path.exists(DONE_PATH):
+            os.remove(DONE_PATH)
+        if os.path.exists(CHECKPOINT_PATH):
+            os.remove(CHECKPOINT_PATH)
     # ── Load done-set (resumable) ─────────────────────────────────────────
     if args.resume and os.path.exists(DONE_PATH):
         with open(DONE_PATH) as f:
@@ -240,7 +275,14 @@ def main():
         batch = missing[i:i + args.batch_size]
         batch_num = i // args.batch_size + 1
         try:
-            result = fetch_source_batch(batch, counters=p1_counters)
+            result = fetch_source_batch(
+                batch,
+                counters=p1_counters,
+                request_timeout=args.request_timeout,
+                max_retries=args.max_retries,
+                retry_backoff=args.retry_backoff,
+                retry_jitter=args.retry_jitter,
+            )
             all_source_refs.update(result)
             with open(DONE_PATH, "a") as f:
                 for d in batch:
@@ -282,7 +324,14 @@ def main():
         batch_ids = all_oa_ids[i:i + args.resolve_batch_size]
         batch_num = i // args.resolve_batch_size + 1
         try:
-            resolved = resolve_openalex_ids(batch_ids, counters=p2_counters)
+            resolved = resolve_openalex_ids(
+                batch_ids,
+                counters=p2_counters,
+                request_timeout=args.request_timeout,
+                max_retries=args.max_retries,
+                retry_backoff=args.retry_backoff,
+                retry_jitter=args.retry_jitter,
+            )
             id_metadata.update(resolved)
         except Exception as e:
             print(f"  ERROR resolve batch {batch_num}/{n_resolve_batches}: {e}")

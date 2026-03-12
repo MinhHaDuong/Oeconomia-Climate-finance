@@ -18,10 +18,13 @@ make figures     # Phase 2: analysis & figures (fast, deterministic)
 make manuscript  # Phase 3: render PDF + DOCX
 ```
 
-The Phase 1 → Phase 2 contract is three files in `$CLIMATE_FINANCE_DATA/catalogs/`:
-`refined_works.csv`, `embeddings.npz`, `citations.csv`.
+The Phase 1 → Phase 2 contract is three aligned files in `$CLIMATE_FINANCE_DATA/catalogs/`:
+`refined_works.csv`, `refined_embeddings.npz`, `refined_citations.csv`.
 
-Phase 1 itself has four steps and three intermediate artifacts:
+`embeddings.npz` and `citations.csv` remain internal Phase 1 caches and are not
+default Phase 2 inputs.
+
+Phase 1 itself has five steps and four intermediate artifacts:
 
 | Step | Make target | Reads | Writes |
 |---|---|---|---|
@@ -29,6 +32,7 @@ Phase 1 itself has four steps and three intermediate artifacts:
 | Enrich | `corpus-enrich` | `unified_works.csv` | `enriched_works.csv` |
 | Extend | `corpus-extend` | `enriched_works.csv` | `extended_works.csv` |
 | Filter | `corpus-filter` | `extended_works.csv` | `refined_works.csv` |
+| Align | `corpus-align` | `refined_works.csv`, `embeddings.npz`, `citations.csv` | `refined_embeddings.npz`, `refined_citations.csv` |
 
 See `AGENTS.md` for individual script invocations and the `Makefile` for full dependency graph.
 
@@ -44,12 +48,12 @@ See `AGENTS.md` for individual script invocations and the `Makefile` for full de
 | `corpus_refine.py --extend` | `enriched_works.csv`, `citations.csv`*, `embeddings.npz`* | `extended_works.csv` |
 | `corpus_refine.py --filter` | `extended_works.csv` | `refined_works.csv`, `corpus_audit.csv` |
 | `analyze_embeddings.py` | `refined_works.csv` | `embeddings.npz` (incremental cache), `semantic_clusters.csv` |
-| `compute_alluvial.py` | `refined_works.csv`, `embeddings.npz` | `tab_alluvial.csv`, `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `cluster_labels.json`, `tab_core_shares.csv`, `tab_lexical_tfidf.csv` |
+| `compute_alluvial.py` | `refined_works.csv`, `refined_embeddings.npz` | `tab_alluvial.csv`, `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `cluster_labels.json`, `tab_core_shares.csv`, `tab_lexical_tfidf.csv` |
 | `plot_fig_breakpoints.py` | `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `tab_alluvial.csv` | `fig_breakpoints.png` |
 | `plot_fig_alluvial.py` | `tab_alluvial.csv`, `cluster_labels.json` | `fig_alluvial.png`, `fig_alluvial.html` |
-| `analyze_bimodality.py` | `refined_works.csv`, `embeddings.npz` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |
-| `analyze_genealogy.py` | `refined_works.csv`, `citations.csv`, `semantic_clusters.csv`, `tab_pole_papers.csv` | `fig_genealogy`, `tab_lineages.csv` |
-| `plot_fig45_pca_scatter.py` | `refined_works.csv`, `embeddings.npz` | `fig_seed_axis_core`, `fig_pca_scatter`, `tab_*.csv` |
+| `analyze_bimodality.py` | `refined_works.csv`, `refined_embeddings.npz` | `fig_bimodality*`, `tab_bimodality.csv`, `tab_pole_papers.csv`, `tab_axis_detection.csv` |
+| `analyze_genealogy.py` | `refined_works.csv`, `refined_citations.csv`, `semantic_clusters.csv`, `tab_pole_papers.csv` | `fig_genealogy`, `tab_lineages.csv` |
+| `plot_fig45_pca_scatter.py` | `refined_works.csv`, `refined_embeddings.npz` | `fig_seed_axis_core`, `fig_pca_scatter`, `tab_*.csv` |
 
 \* Optional; skipped with `--skip-citation-flag` or when file is absent.
 

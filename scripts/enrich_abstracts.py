@@ -27,7 +27,7 @@ import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, save_csv,
-                   reconstruct_abstract, normalize_doi, polite_get,
+                   reconstruct_abstract, normalize_doi,
                    retry_get, save_run_report, make_run_id)
 
 MIN_ABSTRACT_LEN = 20
@@ -137,7 +137,9 @@ def step1_cross_source(df, counters):
 
 # --- Step 2: OpenAlex re-query ---
 
-def step2_openalex(df, counters, checkpoint_every=50):
+def step2_openalex(df, counters, checkpoint_every=50,
+                   request_timeout=60.0, max_retries=5,
+                   retry_backoff=2.0, retry_jitter=1.0):
     """Re-query OpenAlex for works that may now have abstracts."""
     cache = load_cache("openalex_abstracts")
     missing = df.index[df["_missing"] & df["source"].str.contains("openalex", na=False)]
@@ -172,8 +174,16 @@ def step2_openalex(df, counters, checkpoint_every=50):
             "mailto": MAILTO,
         }
         try:
-            resp = polite_get("https://api.openalex.org/works",
-                              params=params, delay=0.15)
+            resp = retry_get(
+                "https://api.openalex.org/works",
+                params=params,
+                delay=0.15,
+                timeout=max(1, int(request_timeout)),
+                max_retries=max_retries,
+                backoff_base=retry_backoff,
+                jitter_max=retry_jitter,
+                counters=counters,
+            )
             results = {
                 r["id"].replace("https://openalex.org/", ""):
                     reconstruct_abstract(r.get("abstract_inverted_index"))
@@ -290,7 +300,9 @@ def extract_first_paragraph(path):
 
 # --- Step 4: Semantic Scholar ---
 
-def step4_semantic_scholar(df, counters, checkpoint_every=50):
+def step4_semantic_scholar(df, counters, checkpoint_every=50,
+                           request_timeout=60.0, max_retries=5,
+                           retry_backoff=2.0, retry_jitter=1.0):
     """Fetch abstracts from Semantic Scholar for remaining DOI-bearing works."""
     cache = load_cache("s2_abstracts")
     missing = df.index[df["_missing"] & df["_has_doi"]]
@@ -317,9 +329,11 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50):
             resp = retry_get(
                 f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
                 params={"fields": "abstract"},
-                timeout=15,
+                timeout=max(1, int(request_timeout)),
                 delay=3.0,
-                max_retries=3,
+                max_retries=max_retries,
+                backoff_base=retry_backoff,
+                jitter_max=retry_jitter,
                 counters=s2_counters,
             )
             if resp.status_code == 200:
@@ -435,6 +449,12 @@ def main():
 
     total_missing_before = int(df["_missing"].sum())
 
+    if not args.resume:
+        for cache_name in ("openalex_abstracts", "s2_abstracts"):
+            cache_path = os.path.join(CACHE_DIR, f"{cache_name}.csv")
+            if os.path.exists(cache_path):
+                os.remove(cache_path)
+
     print_resume_preview(df)
 
     if args.dry_run:
@@ -457,7 +477,15 @@ def main():
 
         # Steps 2 and 4 accept checkpoint_every; others accept just counters
         if step_num in (2, 4):
-            filled = func(df, counters, args.checkpoint_every)
+            filled = func(
+                df,
+                counters,
+                args.checkpoint_every,
+                args.request_timeout,
+                args.max_retries,
+                args.retry_backoff,
+                args.retry_jitter,
+            )
         else:
             filled = func(df, counters)
 

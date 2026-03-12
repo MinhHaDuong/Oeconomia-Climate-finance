@@ -56,8 +56,8 @@ A `source_count` field tracks how many sources contributed to each record. The o
 
 ### Pipeline overview
 
-The full corpus pipeline runs in four steps (Makefile targets: `corpus-discover`,
-`corpus-enrich`, `corpus-extend`, `corpus-filter`):
+The full corpus pipeline runs in five steps (Makefile targets: `corpus-discover`,
+`corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
 
 ```
   7 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
@@ -76,6 +76,10 @@ The full corpus pipeline runs in four steps (Makefile targets: `corpus-discover`
                                │
                                ▼
                         apply policy → audit → refined_works.csv  [corpus-filter]
+                               │
+                               ▼
+                        align caches to filtered rows:
+                        refined_embeddings.npz + refined_citations.csv  [corpus-align]
 ```
 
 Enrichment (DOIs via OpenAlex, abstracts from OA/S2/ISTEX, citations from
@@ -83,6 +87,8 @@ Crossref and OpenAlex) runs on the full `unified_works.csv` so that all
 metadata is available when the flagging rules are evaluated. The extend step
 computes six quality flags for every work without removing any rows; the
 filter step then applies the retention policy and writes the final
-`refined_works.csv` together with `corpus_audit.csv`. See §2 (Corpus
+`refined_works.csv` together with `corpus_audit.csv`. The align step then
+produces the Phase 2 canonical inputs (`refined_embeddings.npz`,
+`refined_citations.csv`) from full enrichment caches. See §2 (Corpus
 Enrichment) and §3 (Corpus Refinement) for details.
 

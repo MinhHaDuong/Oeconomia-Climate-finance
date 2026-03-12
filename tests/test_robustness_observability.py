@@ -412,3 +412,110 @@ class TestStepCounters:
         ea.step3_istex(df, counters)
         assert "step3_attempted" in counters
         assert counters["step3_attempted"] >= 0
+
+
+# ---------------------------------------------------------------------------
+# Retry parameter plumbing tests
+# ---------------------------------------------------------------------------
+
+class TestRetryParameterPlumbing:
+    def test_crossref_fetch_batch_forwards_retry_knobs(self, monkeypatch):
+        import enrich_citations_batch as ecb
+
+        captured = {}
+
+        class DummyResponse:
+            status_code = 200
+
+            def json(self):
+                return {"message": {"items": []}}
+
+            def raise_for_status(self):
+                return None
+
+        def fake_retry_get(url, **kwargs):
+            captured.update(kwargs)
+            return DummyResponse()
+
+        monkeypatch.setattr(ecb, "retry_get", fake_retry_get)
+
+        rows, found = ecb.fetch_batch(
+            ["10.1/a"],
+            request_timeout=12.5,
+            max_retries=7,
+            retry_backoff=1.7,
+            retry_jitter=0.3,
+        )
+        assert rows == []
+        assert found == set()
+        assert captured["timeout"] == 12.5
+        assert captured["max_retries"] == 7
+        assert captured["backoff_base"] == 1.7
+        assert captured["jitter_max"] == 0.3
+
+    def test_openalex_get_forwards_retry_knobs(self, monkeypatch):
+        import enrich_citations_openalex as ecoa
+
+        captured = {}
+
+        class DummyResponse:
+            def json(self):
+                return {"results": []}
+
+        def fake_retry_get(url, **kwargs):
+            captured.update(kwargs)
+            return DummyResponse()
+
+        monkeypatch.setattr(ecoa, "retry_get", fake_retry_get)
+
+        result = ecoa.openalex_get(
+            {"filter": "doi:10.1/a"},
+            request_timeout=9.0,
+            max_retries=4,
+            retry_backoff=1.4,
+            retry_jitter=0.2,
+        )
+        assert result == {"results": []}
+        assert captured["timeout"] == 9.0
+        assert captured["max_retries"] == 4
+        assert captured["backoff_base"] == 1.4
+        assert captured["jitter_max"] == 0.2
+
+    def test_abstract_step2_forwards_retry_knobs(self, monkeypatch):
+        import enrich_abstracts as ea
+
+        captured = {}
+
+        class DummyResponse:
+            def json(self):
+                return {"results": []}
+
+        def fake_retry_get(url, **kwargs):
+            captured.update(kwargs)
+            return DummyResponse()
+
+        monkeypatch.setattr(ea, "retry_get", fake_retry_get)
+        monkeypatch.setattr(ea, "load_cache", lambda _name: {})
+        monkeypatch.setattr(ea, "save_cache", lambda _name, _data: None)
+
+        df = pd.DataFrame({
+            "doi": ["10.1/a"],
+            "abstract": [""],
+            "source": ["openalex"],
+            "source_id": ["W1"],
+            "_missing": [True],
+        })
+        counters = {}
+        ea.step2_openalex(
+            df,
+            counters,
+            checkpoint_every=1,
+            request_timeout=8.0,
+            max_retries=6,
+            retry_backoff=1.3,
+            retry_jitter=0.4,
+        )
+        assert captured["timeout"] == 8.0
+        assert captured["max_retries"] == 6
+        assert captured["backoff_base"] == 1.3
+        assert captured["jitter_max"] == 0.4

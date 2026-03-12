@@ -25,7 +25,9 @@ from scipy.sparse import lil_matrix
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
-from utils import BASE_DIR, CATALOGS_DIR, load_cluster_labels, normalize_doi, save_figure
+from utils import (BASE_DIR, CATALOGS_DIR, load_cluster_labels,
+                   load_refined_citations, load_refined_embeddings,
+                   normalize_doi, save_figure)
 
 apply_style()
 import matplotlib.pyplot as plt
@@ -76,8 +78,7 @@ in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 df = works[has_abstract & in_range].copy().reset_index(drop=True)
 print(f"Works with abstracts (1990-2025): {len(df)}")
 
-embeddings_path = os.path.join(CATALOGS_DIR, "embeddings.npz")
-embeddings = np.load(embeddings_path, allow_pickle=True)["vectors"]
+embeddings = load_refined_embeddings()
 if len(embeddings) != len(df):
     raise RuntimeError(
         f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "
@@ -106,7 +107,7 @@ print(f"Papers with KMeans cluster assignments: {len(doi_to_cluster)}")
 print("\n--- Step 2: Load citations ---")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 
-cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
+cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 cit = cit[

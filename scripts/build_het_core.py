@@ -9,7 +9,7 @@ Pipeline:
   5. Select top TARGET_N with diversity quotas
   6. Output CSV
 
-Reads:  $DATA/catalogs/refined_works.csv, $DATA/catalogs/citations.csv,
+Reads:  $DATA/catalogs/refined_works.csv, $DATA/catalogs/refined_citations.csv,
         $DATA/catalogs/teaching_canon.csv
 Writes: $DATA/catalogs/het_mostcited_50.csv
 
@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, normalize_doi, save_csv
+from utils import CATALOGS_DIR, load_refined_citations, normalize_doi, save_csv
 
 # ── CONFIG ──────────────────────────────────────────────────────────────
 
@@ -307,9 +307,8 @@ def main():
     print("\n── Step 3: Citation centrality (PageRank) ──")
     s2_dois = set(s2["doi_norm"]) - {""}
 
-    cit_path = os.path.join(CATALOGS_DIR, "citations.csv")
-    if os.path.exists(cit_path):
-        cit = pd.read_csv(cit_path, dtype=str, keep_default_na=False)
+    try:
+        cit = load_refined_citations().astype(str)
         cit["source_doi_norm"] = cit["source_doi"].apply(normalize_doi)
         cit["ref_doi_norm"] = cit["ref_doi"].apply(normalize_doi)
         cit = cit[(cit["source_doi_norm"] != "") & (cit["ref_doi_norm"] != "")]
@@ -330,8 +329,8 @@ def main():
         print(f"  Nodes with edges: {n_with_edges} / {len(s2_dois)}")
 
         pr = nx.pagerank(G, alpha=0.85)
-    else:
-        print("  No citations.csv found — centrality = 0 for all")
+    except FileNotFoundError:
+        print("  No refined_citations.csv found — centrality = 0 for all")
         pr = {}
 
     s2["pagerank"] = s2["doi_norm"].map(pr).fillna(0.0)

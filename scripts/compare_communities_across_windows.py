@@ -28,7 +28,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Add scripts dir to path for utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from utils import CATALOGS_DIR, normalize_doi
+from utils import CATALOGS_DIR, load_refined_citations, normalize_doi
 
 # ============================================================
 # Parameters
@@ -76,7 +76,7 @@ for row in works.loc[valid].itertuples(index=False):
 
 # Load citations
 print("Loading citations...")
-cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
+cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 cit = cit[

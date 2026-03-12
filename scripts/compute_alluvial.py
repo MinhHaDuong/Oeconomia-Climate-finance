@@ -1,6 +1,6 @@
 """Endogenous structural break detection: compute alluvial tables and cluster labels.
 
-Reads:  refined_works.csv, embeddings.npz
+Reads:  refined_works.csv, refined_embeddings.npz
 Writes: tab_breakpoints.csv, tab_breakpoint_robustness.csv,
         tab_alluvial.csv, cluster_labels.json,
         tab_core_shares.csv (full corpus only: core paper counts per period/cluster),
@@ -31,7 +31,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import adjusted_rand_score
 
-from utils import BASE_DIR, CATALOGS_DIR, load_embeddings, normalize_doi, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, load_refined_embeddings, normalize_doi, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -100,7 +100,7 @@ df = works[has_title & in_range].copy().reset_index(drop=True)
 print(f"Works with titles (1990-2025): {len(df)}")
 
 print("Loading cached embeddings...")
-embeddings = load_embeddings()
+embeddings = load_refined_embeddings()
 if len(embeddings) != len(df):
     raise RuntimeError(
         f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "

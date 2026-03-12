@@ -22,7 +22,8 @@ from sklearn.cluster import KMeans
 
 # Add scripts dir to path for utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from utils import CATALOGS_DIR, load_cluster_labels, normalize_doi
+from utils import (CATALOGS_DIR, load_cluster_labels, load_refined_citations,
+                   load_refined_embeddings, normalize_doi)
 
 CLUSTER_LABELS = load_cluster_labels()
 
@@ -44,8 +45,7 @@ in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 df = works[has_abstract & in_range].copy().reset_index(drop=True)
 print(f"Works with abstracts (1990-2025): {len(df)}")
 
-embeddings_path = os.path.join(CATALOGS_DIR, "embeddings.npz")
-embeddings = np.load(embeddings_path, allow_pickle=True)["vectors"]
+embeddings = load_refined_embeddings()
 if len(embeddings) != len(df):
     raise RuntimeError(
         f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "
@@ -90,7 +90,7 @@ for _, row in works.iterrows():
 
 # Load citations
 print("Loading citations...")
-cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
+cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 cit = cit[(cit["source_doi"] != "") & (cit["ref_doi"] != "")]
