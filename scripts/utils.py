@@ -3,6 +3,7 @@
 import gzip
 import json
 import os
+import random
 import re
 import time
 
@@ -122,6 +123,116 @@ def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
         resp.raise_for_status()
         return resp
     raise RuntimeError(f"Failed after {max_retries} retries: {url}")
+
+
+def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
+              timeout=60, counters=None):
+    """HTTP GET with bounded exponential backoff+jitter and optional counter tracking.
+
+    Parameters
+    ----------
+    url:         Request URL.
+    params:      Query parameters dict.
+    headers:     HTTP headers dict.
+    delay:       Base polite delay before each attempt (seconds).
+    max_retries: Maximum number of retry attempts for 429/5xx/timeout.
+    timeout:     Per-request timeout in seconds.
+    counters:    Optional dict to update with keys:
+                 ``retries``, ``rate_limited``, ``server_errors``, ``client_errors``.
+
+    Returns
+    -------
+    requests.Response on success.
+
+    Raises
+    ------
+    RuntimeError after all retries are exhausted.
+    """
+    if params is None:
+        params = {}
+    if "mailto" not in params and "mailto" not in url:
+        params["mailto"] = MAILTO
+    if headers is None:
+        headers = {}
+    headers.setdefault("User-Agent", f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})")
+    if counters is None:
+        counters = {}
+
+    last_exc = None
+    for attempt in range(max_retries):
+        try:
+            time.sleep(delay)
+            resp = requests.get(url, params=params, headers=headers, timeout=timeout)
+        except requests.exceptions.Timeout as exc:
+            last_exc = exc
+            counters["retries"] = counters.get("retries", 0) + 1
+            backoff = min(2 ** attempt + random.uniform(0, 1), 60)
+            print(f"  Timeout on attempt {attempt + 1}/{max_retries}, retrying in {backoff:.1f}s...")
+            time.sleep(backoff)
+            continue
+        except requests.exceptions.RequestException as exc:
+            last_exc = exc
+            counters["retries"] = counters.get("retries", 0) + 1
+            backoff = min(2 ** attempt + random.uniform(0, 1), 60)
+            time.sleep(backoff)
+            continue
+
+        if resp.status_code == 429:
+            counters["rate_limited"] = counters.get("rate_limited", 0) + 1
+            counters["retries"] = counters.get("retries", 0) + 1
+            retry_after = min(int(resp.headers.get("Retry-After", 2 ** (attempt + 1))), 120)
+            jitter = random.uniform(0, 2)
+            wait = retry_after + jitter
+            print(f"  Rate limited (429), waiting {wait:.1f}s...")
+            time.sleep(wait)
+            continue
+        if resp.status_code >= 500:
+            counters["server_errors"] = counters.get("server_errors", 0) + 1
+            counters["retries"] = counters.get("retries", 0) + 1
+            backoff = min(2 ** attempt + random.uniform(0, 1), 60)
+            print(f"  Server error {resp.status_code} on attempt {attempt + 1}/{max_retries}, "
+                  f"retrying in {backoff:.1f}s...")
+            time.sleep(backoff)
+            last_exc = resp.status_code
+            continue
+        if resp.status_code >= 400:
+            counters["client_errors"] = counters.get("client_errors", 0) + 1
+            resp.raise_for_status()
+        return resp
+
+    raise RuntimeError(
+        f"Failed after {max_retries} attempts: {url} "
+        f"(last error: {last_exc})"
+    )
+
+
+def save_run_report(data, run_id, script_name):
+    """Persist a structured run-summary dict as JSON in catalogs/run_reports/.
+
+    Parameters
+    ----------
+    data:        Dict of counters / metadata to save.
+    run_id:      Unique run identifier string (e.g. timestamp or ``--run-id`` value).
+    script_name: Short script name used as filename prefix.
+
+    Returns
+    -------
+    Path to the saved JSON file (str).
+    """
+    reports_dir = os.path.join(CATALOGS_DIR, "run_reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    safe_run_id = re.sub(r"[^\w.-]", "_", run_id)
+    filename = f"{script_name}__{safe_run_id}.json"
+    path = os.path.join(reports_dir, filename)
+    payload = {"script": script_name, "run_id": run_id, **data}
+    with open(path, "w") as f:
+        json.dump(payload, f, indent=2, default=str)
+    return path
+
+
+def make_run_id():
+    """Return a UTC timestamp string suitable for use as a run-id."""
+    return time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
 
 
 _CLUSTER_LABELS_PATH = os.path.join(CATALOGS_DIR, "cluster_labels.json")

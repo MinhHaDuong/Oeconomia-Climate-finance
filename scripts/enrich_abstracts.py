@@ -12,6 +12,7 @@ metadata, so step 2 covers everything Crossref would provide.
 
 Usage:
     python scripts/enrich_abstracts.py [--dry-run] [--step N]
+                                       [--run-id ID] [--checkpoint-every N]
 """
 
 import argparse
@@ -26,7 +27,8 @@ import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, save_csv,
-                   reconstruct_abstract, normalize_doi, polite_get)
+                   reconstruct_abstract, normalize_doi, polite_get,
+                   retry_get, save_run_report, make_run_id)
 
 MIN_ABSTRACT_LEN = 20
 CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
@@ -71,11 +73,37 @@ def save_cache(name, data):
     df.to_csv(path, index=False)
 
 
+def _cache_size(name):
+    """Return number of entries in a named cache (0 if absent)."""
+    path = os.path.join(CACHE_DIR, f"{name}.csv")
+    if not os.path.exists(path):
+        return 0
+    try:
+        return max(0, sum(1 for _ in open(path)) - 1)  # rows minus header
+    except Exception:
+        return 0
+
+
+def print_resume_preview(df):
+    """Print a startup summary showing cache sizes and estimated workload."""
+    total = len(df)
+    missing = df["abstract"].apply(is_missing).sum()
+    oa_cache = _cache_size("openalex_abstracts")
+    s2_cache = _cache_size("s2_abstracts")
+    print("── Resume preview ─────────────────────────────────────────")
+    print(f"  Total works:            {total}")
+    print(f"  Missing abstracts:      {missing} ({missing / total * 100:.1f}%)")
+    print(f"  OpenAlex cache entries: {oa_cache}")
+    print(f"  Semantic Scholar cache: {s2_cache}")
+    print("────────────────────────────────────────────────────────────\n")
+
+
 # --- Step 1: Cross-source backfill ---
 
-def step1_cross_source(df):
+def step1_cross_source(df, counters):
     """Fill missing abstracts from other records with the same DOI."""
     missing = df.index[df["_missing"]]
+    counters["step1_attempted"] = len(missing)
     if len(missing) == 0:
         return 0
 
@@ -103,12 +131,13 @@ def step1_cross_source(df):
                 df.at[idx, "abstract"] = ab
                 df.at[idx, "_missing"] = False
                 filled += 1
+    counters["step1_filled"] = filled
     return filled
 
 
 # --- Step 2: OpenAlex re-query ---
 
-def step2_openalex(df):
+def step2_openalex(df, counters, checkpoint_every=50):
     """Re-query OpenAlex for works that may now have abstracts."""
     cache = load_cache("openalex_abstracts")
     missing = df.index[df["_missing"] & df["source"].str.contains("openalex", na=False)]
@@ -117,16 +146,21 @@ def step2_openalex(df):
 
     # Collect source_ids to query (skip cached)
     to_query = []
+    cache_hits = 0
     for idx in missing:
         sid = str(df.at[idx, "source_id"])
         if sid in cache:
+            cache_hits += 1
             continue
         to_query.append((idx, sid))
 
-    print(f"  OpenAlex: {len(to_query)} uncached IDs to query")
+    counters["step2_attempted"] = len(to_query)
+    counters["step2_cache_hits"] = cache_hits
+    print(f"  OpenAlex: {len(to_query)} uncached IDs to query ({cache_hits} cache hits)")
 
     # Batch query (50 per request)
     batch_size = 50
+    batches_done = 0
     for i in range(0, len(to_query), batch_size):
         batch = to_query[i:i + batch_size]
         ids = [sid for _, sid in batch]
@@ -149,8 +183,13 @@ def step2_openalex(df):
                 cache[sid] = results.get(sid, "")
         except Exception as e:
             print(f"  Warning: batch {i} failed: {e}")
+            counters["step2_errors"] = counters.get("step2_errors", 0) + 1
             for sid in ids:
                 cache.setdefault(sid, "")
+
+        batches_done += 1
+        if batches_done % checkpoint_every == 0:
+            save_cache("openalex_abstracts", cache)
 
         if (i // batch_size) % 20 == 0 and i > 0:
             print(f"  OpenAlex: {i + len(batch)}/{len(to_query)}")
@@ -159,6 +198,7 @@ def step2_openalex(df):
 
     # Apply cached results
     filled = 0
+    empty = 0
     for idx in missing:
         sid = str(df.at[idx, "source_id"])
         ab = clean_abstract(cache.get(sid, ""))
@@ -166,16 +206,21 @@ def step2_openalex(df):
             df.at[idx, "abstract"] = ab
             df.at[idx, "_missing"] = False
             filled += 1
+        else:
+            empty += 1
+    counters["step2_filled"] = filled
+    counters["step2_empty_result"] = empty
     return filled
 
 
 # --- Step 3: ISTEX fulltext extraction ---
 
-def step3_istex(df):
+def step3_istex(df, counters):
     """Extract abstracts from locally downloaded ISTEX TEI XML files."""
     missing = df.index[
         df["_missing"] & df["source"].str.contains("istex", na=False)
     ]
+    counters["step3_attempted"] = len(missing)
     if len(missing) == 0:
         return 0
 
@@ -208,6 +253,7 @@ def step3_istex(df):
                 df.at[idx, "_missing"] = False
                 filled += 1
 
+    counters["step3_filled"] = filled
     return filled
 
 
@@ -216,7 +262,6 @@ def extract_abstract_tei(path):
     try:
         tree = ET.parse(path)
         root = tree.getroot()
-        # TEI namespace
         ns = {"tei": "http://www.tei-c.org/ns/1.0"}
         for ab_elem in root.iter("{http://www.tei-c.org/ns/1.0}abstract"):
             text = "".join(ab_elem.itertext())
@@ -245,7 +290,7 @@ def extract_first_paragraph(path):
 
 # --- Step 4: Semantic Scholar ---
 
-def step4_semantic_scholar(df):
+def step4_semantic_scholar(df, counters, checkpoint_every=50):
     """Fetch abstracts from Semantic Scholar for remaining DOI-bearing works."""
     cache = load_cache("s2_abstracts")
     missing = df.index[df["_missing"] & df["_has_doi"]]
@@ -253,43 +298,66 @@ def step4_semantic_scholar(df):
         return 0
 
     to_query = []
+    cache_hits = 0
     for idx in missing:
         doi = normalize_doi(df.at[idx, "doi"])
         if doi in cache:
+            cache_hits += 1
             continue
         to_query.append((idx, doi))
 
-    print(f"  Semantic Scholar: {len(to_query)} uncached DOIs to query")
+    counters["step4_attempted"] = len(to_query)
+    counters["step4_cache_hits"] = cache_hits
+    print(f"  Semantic Scholar: {len(to_query)} uncached DOIs to query ({cache_hits} cache hits)")
 
+    s2_counters = {}
     for i, (idx, doi) in enumerate(to_query):
         try:
-            resp = requests.get(
+            # S2 public API requires ≥3s between requests to avoid 429s
+            resp = retry_get(
                 f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
                 params={"fields": "abstract"},
                 timeout=15,
+                delay=3.0,
+                max_retries=3,
+                counters=s2_counters,
             )
             if resp.status_code == 200:
                 ab = resp.json().get("abstract", "") or ""
                 cache[doi] = clean_abstract(ab)
+                if cache[doi]:
+                    counters["step4_success"] = counters.get("step4_success", 0) + 1
+                else:
+                    counters["step4_empty_result"] = counters.get("step4_empty_result", 0) + 1
             elif resp.status_code in (404, 400):
-                cache[doi] = ""
-            elif resp.status_code == 429:
-                print(f"  S2 rate limited, sleeping 60s...")
-                time.sleep(60)
+                counters["step4_4xx"] = counters.get("step4_4xx", 0) + 1
                 cache[doi] = ""
             else:
                 cache[doi] = ""
+        except requests.exceptions.HTTPError as e:
+            status = e.response.status_code if e.response is not None else 0
+            if status in (404, 400):
+                counters["step4_4xx"] = counters.get("step4_4xx", 0) + 1
+            else:
+                counters["step4_5xx"] = counters.get("step4_5xx", 0) + 1
+            if i < 3:
+                print(f"  Warning: S2 {doi}: {e}")
+            cache[doi] = ""
         except Exception as e:
             if i < 3:
                 print(f"  Warning: S2 {doi}: {e}")
             cache[doi] = ""
-        time.sleep(3.0)
 
-        if (i + 1) % 50 == 0:
+        if (i + 1) % checkpoint_every == 0:
             print(f"  Semantic Scholar: {i + 1}/{len(to_query)}")
             save_cache("s2_abstracts", cache)
 
     save_cache("s2_abstracts", cache)
+
+    counters["step4_retries"] = s2_counters.get("retries", 0)
+    counters["step4_rate_limited"] = s2_counters.get("rate_limited", 0)
+    counters["step4_server_errors"] = s2_counters.get("server_errors", 0)
+    counters["step4_client_errors"] = s2_counters.get("client_errors", 0)
 
     filled = 0
     for idx in missing:
@@ -299,6 +367,7 @@ def step4_semantic_scholar(df):
             df.at[idx, "abstract"] = ab
             df.at[idx, "_missing"] = False
             filled += 1
+    counters["step4_filled"] = filled
     return filled
 
 
@@ -321,7 +390,14 @@ def main():
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
                         help="Input/output works CSV (default: unified_works.csv)")
+    parser.add_argument("--run-id", default=None,
+                        help="Unique run identifier for the run report (default: timestamp)")
+    parser.add_argument("--checkpoint-every", type=int, default=50,
+                        help="Flush Step 2/4 caches every N batches/items (default: 50)")
     args = parser.parse_args()
+
+    run_id = args.run_id or make_run_id()
+    t0 = time.time()
 
     path = args.works_input
     df = pd.read_csv(path)
@@ -332,9 +408,9 @@ def main():
     doi_s = df["doi"].apply(normalize_doi)
     df["_has_doi"] = doi_s.apply(lambda x: bool(x) and x not in ("", "nan", "none"))
 
-    total_missing = df["_missing"].sum()
-    print(f"Missing abstracts: {total_missing} / {len(df)} "
-          f"({total_missing / len(df) * 100:.1f}%)\n")
+    total_missing_before = int(df["_missing"].sum())
+
+    print_resume_preview(df)
 
     if args.dry_run:
         print("Dry run — not modifying data.")
@@ -342,22 +418,52 @@ def main():
 
     steps = STEPS if args.step == 0 else {args.step: STEPS[args.step]}
 
+    counters = {
+        "missing_before": total_missing_before,
+        "total_works": len(df),
+    }
+    step_results = {}
+
     for step_num in sorted(steps):
         name, func = steps[step_num]
-        before = df["_missing"].sum()
+        before = int(df["_missing"].sum())
         print(f"Step {step_num}: {name} ({before} still missing)")
-        filled = func(df)
-        after = df["_missing"].sum()
+
+        # Steps 2 and 4 accept checkpoint_every; others accept just counters
+        if step_num in (2, 4):
+            filled = func(df, counters, args.checkpoint_every)
+        else:
+            filled = func(df, counters)
+
+        after = int(df["_missing"].sum())
+        step_results[f"step{step_num}_name"] = name
+        step_results[f"step{step_num}_before"] = before
+        step_results[f"step{step_num}_after"] = after
+        step_results[f"step{step_num}_filled"] = filled
         print(f"  → filled {filled}, remaining: {after}\n")
 
     # Save
-    final_missing = df["_missing"].sum()
+    final_missing = int(df["_missing"].sum())
     df.drop(columns=["_missing", "_has_doi"], inplace=True)
     save_csv(df, path)
 
+    elapsed = time.time() - t0
+
     print(f"Done. Abstracts: {len(df) - final_missing}/{len(df)} "
           f"({(len(df) - final_missing) / len(df) * 100:.1f}%)")
-    print(f"Filled {total_missing - final_missing} abstracts total.")
+    print(f"Filled {total_missing_before - final_missing} abstracts total.")
+    print(f"Elapsed: {elapsed:.0f}s")
+
+    # Structured run report
+    counters.update({
+        "missing_after": final_missing,
+        "total_filled": total_missing_before - final_missing,
+        "elapsed_seconds": round(elapsed, 1),
+        "steps_run": sorted(steps.keys()),
+    })
+    counters.update(step_results)
+    report_path = save_run_report(counters, run_id, "enrich_abstracts")
+    print(f"Run report: {report_path}")
 
 
 if __name__ == "__main__":

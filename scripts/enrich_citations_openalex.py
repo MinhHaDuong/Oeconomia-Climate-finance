@@ -13,6 +13,7 @@ Uses a persistent done-set (.citations_oa_done.txt) so runs are resumable.
 
 Usage:
     uv run python scripts/enrich_citations_openalex.py [--batch-size 50] [--limit N]
+                                                        [--run-id ID]
 """
 
 import argparse
@@ -25,7 +26,8 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, MAILTO, REFS_COLUMNS, normalize_doi, sort_dois_by_priority
+from utils import (CATALOGS_DIR, MAILTO, REFS_COLUMNS, normalize_doi,
+                   sort_dois_by_priority, retry_get, save_run_report, make_run_id)
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
@@ -35,59 +37,56 @@ OA_BASE = "https://api.openalex.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 
 
-def openalex_get(params, delay=0.15):
-    """GET request to OpenAlex with polite delay and rate-limit handling."""
-    time.sleep(delay)
+def openalex_get(params, delay=0.15, counters=None):
+    """GET request to OpenAlex with polite delay and retry/backoff."""
+    if counters is None:
+        counters = {}
     params.setdefault("mailto", MAILTO)
-    resp = requests.get(OA_BASE, params=params, headers=HEADERS, timeout=60)
-    if resp.status_code == 429:
-        wait = min(int(resp.headers.get("Retry-After", 10)), 60)
-        print(f"  Rate limited. Waiting {wait}s...")
-        time.sleep(wait)
-        resp = requests.get(OA_BASE, params=params, headers=HEADERS, timeout=60)
-    resp.raise_for_status()
+    resp = retry_get(OA_BASE, params=params, headers=HEADERS, delay=delay,
+                     max_retries=5, timeout=60, counters=counters)
     return resp.json()
 
 
-def fetch_source_batch(dois):
+def fetch_source_batch(dois, counters=None):
     """Phase 1: fetch referenced_works for a batch of source DOIs.
 
     Returns dict {source_doi: [openalex_id, ...]}
     """
-    # OpenAlex multi-value filter: single key with |-separated values
+    if counters is None:
+        counters = {}
     doi_values = "|".join(dois)
     data = openalex_get({
         "filter": f"doi:{doi_values}",
         "select": "id,doi,referenced_works",
         "per-page": len(dois),
-    })
+    }, counters=counters)
     result = {}
     for item in data.get("results", []):
         source_doi = normalize_doi(item.get("doi", ""))
         if not source_doi:
             continue
         ref_ids = item.get("referenced_works", []) or []
-        # IDs are full URLs like https://openalex.org/W123; normalize to Wxxxxxx
         result[source_doi] = [
             r.split("/")[-1] for r in ref_ids if r
         ]
     return result
 
 
-def resolve_openalex_ids(oa_ids):
+def resolve_openalex_ids(oa_ids, counters=None):
     """Phase 2: resolve a list of OpenAlex IDs → (id, doi, title, year, journal).
 
     Returns dict {oa_id: {doi, title, year, journal}}
     """
     if not oa_ids:
         return {}
-    # OpenAlex ID filter uses openalex: prefix with |-separated short IDs
+    if counters is None:
+        counters = {}
     id_filter = "|".join(oa_ids)
     data = openalex_get({
         "filter": f"openalex:{id_filter}",
         "select": "id,doi,title,publication_year,primary_location",
         "per-page": len(oa_ids),
-    })
+    }, counters=counters)
     result = {}
     for item in data.get("results", []):
         oa_id = item.get("id", "").split("/")[-1]
@@ -106,6 +105,27 @@ def resolve_openalex_ids(oa_ids):
     return result
 
 
+def print_resume_preview(done_dois, all_dois, missing):
+    """Print a startup summary of done-set/checkpoint state and remaining workload."""
+    print("── Resume preview ─────────────────────────────────────────")
+    print(f"  Corpus DOIs total:      {len(all_dois)}")
+    print(f"  Done-set entries:       {len(done_dois)}")
+    if os.path.exists(DONE_PATH):
+        try:
+            n = sum(1 for _ in open(DONE_PATH) if _.strip())
+            print(f"  Done-set file rows:     {n}")
+        except Exception:
+            pass
+    if os.path.exists(CHECKPOINT_PATH):
+        try:
+            n = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
+            print(f"  Checkpoint rows:        {n}")
+        except Exception:
+            pass
+    print(f"  Remaining to fetch:     {len(missing)}")
+    print("────────────────────────────────────────────────────────────\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Enrich citations from OpenAlex (DOIs processed in priority order: "
@@ -121,7 +141,14 @@ def main():
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
                         help="Works CSV to read DOIs from (default: unified_works.csv)")
+    parser.add_argument("--run-id", default=None,
+                        help="Unique run identifier for the run report (default: timestamp)")
     args = parser.parse_args()
+
+    run_id = args.run_id or make_run_id()
+    t0 = time.time()
+    p1_counters = {}
+    p2_counters = {}
 
     # ── Load done-set (resumable) ─────────────────────────────────────────
     if os.path.exists(DONE_PATH):
@@ -148,8 +175,7 @@ def main():
         if normalize_doi(d) not in ("", "nan", "none")
     ]
 
-    # Skip DOIs already covered by openalex_citations.csv (extracted during
-    # catalog_openalex.py discovery — no need to re-fetch from the API).
+    # Skip DOIs already covered by openalex_citations.csv
     oa_citations_path = os.path.join(CATALOGS_DIR, "openalex_citations.csv")
     if os.path.exists(oa_citations_path):
         oa_done = set(
@@ -166,9 +192,7 @@ def main():
     if args.limit:
         missing = missing[:args.limit]
 
-    print(f"Corpus DOIs:   {len(all_dois)}")
-    print(f"Already done:  {len(done_dois)}")
-    print(f"To fetch:      {len(missing)}")
+    print_resume_preview(done_dois, all_dois, missing)
 
     if not missing:
         print("Nothing to fetch.")
@@ -180,26 +204,23 @@ def main():
 
     # ── Phase 1: collect referenced_works IDs ────────────────────────────
     print("\nPhase 1: fetching referenced_works from OpenAlex...")
-    t0 = time.time()
-    # source_doi → list of OpenAlex IDs
     all_source_refs = {}
-    errors = 0
+    p1_errors = 0
     n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
 
     for i in range(0, len(missing), args.batch_size):
         batch = missing[i:i + args.batch_size]
         batch_num = i // args.batch_size + 1
         try:
-            result = fetch_source_batch(batch)
+            result = fetch_source_batch(batch, counters=p1_counters)
             all_source_refs.update(result)
-            # Record all queried DOIs as done (even if not found in OA)
             with open(DONE_PATH, "a") as f:
                 for d in batch:
                     f.write(d + "\n")
         except Exception as e:
             print(f"  ERROR batch {batch_num}/{n_batches}: {e}")
-            errors += 1
-            if errors > 10:
+            p1_errors += 1
+            if p1_errors > 10:
                 print("Too many errors, stopping.")
                 break
             continue
@@ -214,7 +235,6 @@ def main():
                   f"{elapsed:.0f}s elapsed, ETA {eta:.0f}s")
 
     # ── Phase 2: resolve OpenAlex IDs → DOIs + metadata ─────────────────
-    # Collect all unique referenced OpenAlex IDs
     all_oa_ids = list({
         oa_id
         for ref_list in all_source_refs.values()
@@ -224,19 +244,19 @@ def main():
     print(f"\nPhase 2: resolving {len(all_oa_ids)} unique OpenAlex IDs to DOIs...")
 
     id_metadata = {}
-    resolve_errors = 0
+    p2_errors = 0
     n_resolve_batches = (len(all_oa_ids) + args.resolve_batch_size - 1) // args.resolve_batch_size
 
     for i in range(0, len(all_oa_ids), args.resolve_batch_size):
         batch_ids = all_oa_ids[i:i + args.resolve_batch_size]
         batch_num = i // args.resolve_batch_size + 1
         try:
-            resolved = resolve_openalex_ids(batch_ids)
+            resolved = resolve_openalex_ids(batch_ids, counters=p2_counters)
             id_metadata.update(resolved)
         except Exception as e:
             print(f"  ERROR resolve batch {batch_num}/{n_resolve_batches}: {e}")
-            resolve_errors += 1
-            if resolve_errors > 10:
+            p2_errors += 1
+            if p2_errors > 10:
                 print("Too many errors, stopping resolution.")
                 break
             continue
@@ -270,9 +290,9 @@ def main():
     print("\nMerging into citations.csv...")
     existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
 
+    rows_deduped = 0
     if os.path.exists(CHECKPOINT_PATH) and os.path.getsize(CHECKPOINT_PATH) > 0:
         new_refs = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
-        # Drop sentinel rows (all key fields empty)
         is_sentinel = (
             (new_refs["ref_doi"].isna() | (new_refs["ref_doi"] == ""))
             & (new_refs["ref_title"].isna() | (new_refs["ref_title"] == ""))
@@ -288,9 +308,9 @@ def main():
             new_refs_real["source_doi"].apply(normalize_doi),
             new_refs_real["ref_doi"].fillna("").apply(normalize_doi),
         ))
-        new_refs_real = new_refs_real[
-            ~new_refs_real["_key"].isin(existing_keys)
-        ].drop(columns=["_key"])
+        dupes_mask = new_refs_real["_key"].isin(existing_keys)
+        rows_deduped = int(dupes_mask.sum())
+        new_refs_real = new_refs_real[~dupes_mask].drop(columns=["_key"])
 
         combined = pd.concat([existing, new_refs_real], ignore_index=True)
         combined.to_csv(CITATIONS_PATH, index=False)
@@ -298,9 +318,12 @@ def main():
         print(f"  Old rows:          {len(existing)}")
         print(f"  New rows (deduped): {len(new_refs_real)}")
         print(f"  Sentinels dropped: {is_sentinel.sum()}")
+        print(f"  Duplicates removed: {rows_deduped}")
         print(f"  Combined:          {len(combined)}")
     else:
         print("  No new data to merge.")
+        new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
+        combined = existing
 
     elapsed = time.time() - t0
     print(f"\nDone in {elapsed:.0f}s")
@@ -308,8 +331,31 @@ def main():
     print(f"  OpenAlex IDs found: {len(all_oa_ids)}")
     print(f"  IDs resolved:       {len(id_metadata)}")
     print(f"  Reference rows:     {len(rows)}")
-    print(f"  Errors (fetch):     {errors}")
-    print(f"  Errors (resolve):   {resolve_errors}")
+    print(f"  Errors (fetch):     {p1_errors}")
+    print(f"  Errors (resolve):   {p2_errors}")
+
+    counters = {
+        "dois_total": len(all_dois),
+        "dois_done_before": len(done_dois),
+        "dois_to_fetch": len(missing),
+        "sources_processed": len(all_source_refs),
+        "openalex_ids_found": len(all_oa_ids),
+        "ids_resolved": len(id_metadata),
+        "rows_built": len(rows),
+        "rows_appended": len(new_refs_real),
+        "rows_deduped": rows_deduped,
+        "p1_errors": p1_errors,
+        "p2_errors": p2_errors,
+        "p1_retries": p1_counters.get("retries", 0),
+        "p1_rate_limited": p1_counters.get("rate_limited", 0),
+        "p1_server_errors": p1_counters.get("server_errors", 0),
+        "p2_retries": p2_counters.get("retries", 0),
+        "p2_rate_limited": p2_counters.get("rate_limited", 0),
+        "p2_server_errors": p2_counters.get("server_errors", 0),
+        "elapsed_seconds": round(elapsed, 1),
+    }
+    report_path = save_run_report(counters, run_id, "enrich_citations_openalex")
+    print(f"Run report: {report_path}")
 
 
 if __name__ == "__main__":

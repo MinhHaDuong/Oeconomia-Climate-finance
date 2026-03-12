@@ -8,6 +8,7 @@ Appends new rows to the existing citations.csv (does not overwrite).
 
 Usage:
     uv run python scripts/enrich_citations_batch.py [--batch-size 50] [--limit N]
+                                                     [--run-id ID]
 """
 
 import argparse
@@ -20,7 +21,8 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, REFS_COLUMNS, MAILTO, normalize_doi, sort_dois_by_priority
+from utils import (CATALOGS_DIR, REFS_COLUMNS, MAILTO, normalize_doi,
+                   sort_dois_by_priority, retry_get, save_run_report, make_run_id)
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_batch_checkpoint.csv")
@@ -28,8 +30,10 @@ URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 
 
-def fetch_batch(dois, delay=0.2):
+def fetch_batch(dois, delay=0.2, counters=None):
     """Fetch references for a batch of DOIs using the filter endpoint."""
+    if counters is None:
+        counters = {}
     doi_filter = ",".join(f"doi:{d}" for d in dois)
     params = {
         "filter": doi_filter,
@@ -37,13 +41,8 @@ def fetch_batch(dois, delay=0.2):
         "rows": len(dois),
         "mailto": MAILTO,
     }
-    time.sleep(delay)
-    resp = requests.get(URL, params=params, headers=HEADERS, timeout=60)
-    if resp.status_code == 429:
-        retry_after = int(resp.headers.get("Retry-After", 10))
-        print(f"  Rate limited. Waiting {retry_after}s...")
-        time.sleep(retry_after)
-        resp = requests.get(URL, params=params, headers=HEADERS, timeout=60)
+    resp = retry_get(URL, params=params, headers=HEADERS, delay=delay,
+                     max_retries=5, timeout=60, counters=counters)
     resp.raise_for_status()
 
     rows = []
@@ -67,6 +66,22 @@ def fetch_batch(dois, delay=0.2):
     return rows, found_dois
 
 
+def print_resume_preview(done_dois, all_dois, missing):
+    """Print a startup summary showing checkpoint state and remaining workload."""
+    print("── Resume preview ─────────────────────────────────────────")
+    print(f"  Corpus DOIs total:      {len(all_dois)}")
+    print(f"  Already done:           {len(done_dois)}")
+    print(f"  Checkpoint present:     {os.path.exists(CHECKPOINT_PATH)}")
+    if os.path.exists(CHECKPOINT_PATH):
+        try:
+            n = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
+            print(f"  Checkpoint rows:        {n}")
+        except Exception:
+            pass
+    print(f"  Remaining to fetch:     {len(missing)}")
+    print("────────────────────────────────────────────────────────────\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Batch-enrich citations (DOIs processed in priority order: "
@@ -80,7 +95,13 @@ def main():
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
                         help="Works CSV to read DOIs from (default: unified_works.csv)")
+    parser.add_argument("--run-id", default=None,
+                        help="Unique run identifier for the run report (default: timestamp)")
     args = parser.parse_args()
+
+    run_id = args.run_id or make_run_id()
+    t0 = time.time()
+    counters = {}
 
     # Load existing citations to find already-fetched DOIs
     if os.path.exists(CITATIONS_PATH):
@@ -109,17 +130,13 @@ def main():
     all_dois = [d for d in all_dois if d and d not in ("", "nan", "none")]
 
     # Sort by priority (most-cited works first) for deterministic ordering.
-    # The checkpoint ensures already-done DOIs are skipped regardless of order,
-    # so priority only determines which DOIs are chosen when --limit is set.
     all_dois_sorted = sort_dois_by_priority(all_dois, works)
     missing = [d for d in all_dois_sorted if d not in done_dois]
 
     if args.limit:
         missing = missing[:args.limit]
 
-    print(f"Total DOIs: {len(all_dois)}")
-    print(f"Already done: {len(done_dois)}")
-    print(f"To fetch: {len(missing)}")
+    print_resume_preview(done_dois, all_dois, missing)
 
     if not missing:
         print("Nothing to fetch.")
@@ -133,7 +150,7 @@ def main():
     total_refs = 0
     total_found = 0
     errors = 0
-    t0 = time.time()
+    checkpoint_flushes = 0
 
     for i in range(0, len(missing), args.batch_size):
         batch_dois = missing[i:i + args.batch_size]
@@ -141,7 +158,7 @@ def main():
         n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
 
         try:
-            refs, found_dois = fetch_batch(batch_dois, delay=args.delay)
+            refs, found_dois = fetch_batch(batch_dois, delay=args.delay, counters=counters)
         except Exception as e:
             print(f"  ERROR batch {batch_num}: {e}")
             errors += 1
@@ -158,6 +175,7 @@ def main():
             batch_df = pd.DataFrame(refs, columns=REFS_COLUMNS)
             batch_df.to_csv(CHECKPOINT_PATH, mode="a", header=False,
                             index=False)
+            checkpoint_flushes += 1
 
         # Record DOIs found but with no refs (so we skip on resume)
         for d in found_dois - {r["source_doi"] for r in refs}:
@@ -199,12 +217,27 @@ def main():
         print(f"  Combined: {len(combined)} rows")
     else:
         print("  No new data to merge.")
+        new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
+        combined = existing
 
     elapsed = time.time() - t0
     print(f"\nDone in {elapsed:.0f}s")
     print(f"  DOIs found in Crossref: {total_found}")
     print(f"  Total new references: {total_refs}")
     print(f"  Errors: {errors}")
+
+    counters.update({
+        "dois_total": len(all_dois),
+        "dois_done_before": len(done_dois),
+        "dois_to_fetch": len(missing),
+        "dois_found": total_found,
+        "refs_written": total_refs,
+        "checkpoint_flush_count": checkpoint_flushes,
+        "errors": errors,
+        "elapsed_seconds": round(elapsed, 1),
+    })
+    report_path = save_run_report(counters, run_id, "enrich_citations_batch")
+    print(f"Run report: {report_path}")
 
 
 if __name__ == "__main__":
