@@ -1,0 +1,21 @@
+doi,title,first_author,year,abstract,cited_by_count,source_count,journal,source,source_id
+,,,,,0,1,,openalex,W001
+10.1000/safe-no-author,Climate change adaptation finance overview,,2018,,5,1,Nature Climate Change,openalex,W002
+10.1000/complete,Climate finance flows in developing countries,Smith,2015,This paper examines climate finance and investment flows in developing countries with adaptation and mitigation strategies discussed at length for policy purposes,100,2,World Development,openalex,W003
+10.1000/no-abstract,Some random technical paper,Jones,2020,,2,1,J Tech,openalex,W004
+10.1000/no-abstract-safe,Green energy finance mechanisms,Lee,2019,,3,1,Energy Policy,openalex,W005
+10.1000/blockchain,Blockchain applications in supply chain,Wang,2021,A study of blockchain technology in supply chain management and logistics optimization for modern enterprises,1,1,J Blockchain,openalex,W006
+10.1000/blockchain-climate,Blockchain for climate carbon markets,Chen,2021,Using blockchain to improve carbon credit markets and climate finance tracking in developing nations,10,1,Environ Sci,openalex,W007
+10.1000/old-isolated,Economic theory of trade barriers,Brown,2010,Trade barriers and their economic implications for international commerce and policy development,0,1,J Econ,openalex,W008
+10.1000/old-cited,Early climate economics paper,Green,2005,Climate change economics and finance for sustainable development in poor countries,200,1,Climatic Change,openalex,W009
+10.1000/recent-isolated,Machine learning in healthcare,Wilson,2022,Application of machine learning algorithms to healthcare diagnostics and patient outcome prediction,0,1,J Health,openalex,W010
+10.1000/semantic-normal,Carbon pricing and green bonds,Taylor,2018,Analysis of carbon pricing mechanisms and green bond markets for climate investment in developing economies,15,1,Climate Policy,openalex,W011
+10.1000/low-concept,Regional water management systems,Davis,2017,Water management infrastructure and governance in semi-arid regions of sub-Saharan Africa,3,1,Water Resources,openalex,W012
+10.1000/multi-source,Climate adaptation funding analysis,Miller,2016,Climate adaptation finance and investment in developing country national budgets and governance structures,30,2,Dev Policy Rev,scopus,W013
+10.1000/teaching,Stern Review on climate economics,Stern,2006,The economics of climate change and carbon emissions reduction through investment and financial mechanisms,500,1,HM Treasury,openalex,W014
+10.1000/protected-flagged,,Anonymous,,Missing metadata but highly cited,300,3,Nature,openalex,W015
+10.1000/deep-learning,Deep learning for image recognition,Zhang,2020,Convolutional neural networks for image classification and object detection in computer vision tasks,5,1,J AI,openalex,W016
+10.1000/llm-candidate,Urban planning challenges,Park,2019,Urban planning and infrastructure development in growing metropolitan areas across Southeast Asian nations,2,1,Urban Studies,openalex,W017
+10.1000/llm-relevant,Environmental policy assessment,Kim,2018,Environmental policy and sustainable energy investment assessment in developing countries with climate risks,8,1,Env Policy,openalex,W018
+10.1000/no-doi,Some paper without DOI,Adams,2015,Climate finance and carbon markets in development economics and sustainable energy investment strategies,4,1,Working Paper,openalex,W019
+10.1000/japanese-safe,気候ファイナンスの研究,Tanaka,2020,Climate finance research in Japanese context with sustainable development analysis,2,1,Japanese J Env,openalex,W020

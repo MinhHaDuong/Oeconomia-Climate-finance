@@ -1,0 +1,62 @@
+noise_title:
+  - blockchain
+  - cryptocurrency
+  - bitcoin
+  - deep learning
+  - neural network
+
+safe_title:
+  - climate
+  - carbon
+  - emission
+  - energy
+  - green
+  - environment
+  - sustainable
+  - finance
+  - fund
+  - investment
+  - development
+
+concept_groups:
+  climate: [climate, emission, greenhouse, warming, carbon, mitigation, adaptation]
+  finance: [finance, fund, investment, cost, market, aid, grant, loan]
+  development: [development, developing, country, nation, capacity, transfer]
+  environment: [environment, energy, renewable, sustainable, conservation, ecology]
+min_concept_groups: 2
+
+citation_isolation:
+  max_year: 2019
+
+semantic_outlier:
+  sigma: 2
+
+llm_relevance:
+  backend: openrouter
+  openrouter_model: google/gemini-2.5-flash
+  ollama_model: "qwen2.5:32b"
+  ollama_url: "http://localhost:11434"
+  batch_size: 3
+  ollama_batch_size: 2
+  max_consecutive_errors: 3
+  title_max_chars: 150
+  abstract_max_chars: 250
+  prompt_template: |
+    For each paper below, determine if it is about climate finance,
+    climate policy economics, carbon markets, green investment,
+    or environmental finance for developing countries.
+    Answer with ONLY a JSON object mapping paper numbers to true/false.
+    Example: {"1": true, "2": false, "3": true}
+
+protection:
+  min_cited_by: 50
+  min_source_count: 2
+  min_teaching_count: 2
+
+audit:
+  model: google/gemma-2-27b-it
+  sample_size: 10
+  prompt_template: |
+    Is this paper about climate finance? Answer YES or NO.
+    Title: {title}
+    Abstract: {abstract}
