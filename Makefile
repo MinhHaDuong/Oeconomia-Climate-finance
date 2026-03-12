@@ -24,6 +24,10 @@ BIB         := content/bibliography/main.bib
 CSL         := content/bibliography/oeconomia.csl
 SRC         := content/manuscript.qmd
 
+# Phase 1 artifact chain (the contract between phases)
+UNIFIED     := $(DATA_DIR)/unified_works.csv
+ENRICHED    := $(DATA_DIR)/enriched_works.csv
+EXTENDED    := $(DATA_DIR)/extended_works.csv
 REFINED     := $(DATA_DIR)/refined_works.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
 MANIFEST    := $(DATA_DIR)/corpus_manifest.json
@@ -55,7 +59,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -64,19 +68,24 @@ all: manuscript papers
 # ═══════════════════════════════════════════════════════════
 # PHASE 1 — Corpus Building (slow, API-dependent, run rarely)
 # ═══════════════════════════════════════════════════════════
-# Outputs (the Phase 1 → Phase 2 contract):
-#   refined_works.csv    30k deduplicated works
-#   embeddings.npz       384-dim sentence embeddings
-#   citations.csv        775k citation links
 #
-# Phase 2 scripts read ONLY these files.
+# Artifact chain (the contract between sub-phases):
+#   1a unified_works.csv      raw merged catalog, no filtering
+#   1b enriched_works.csv     metadata/abstract/DOI enrichment applied
+#      + citations.csv        full citation graph
+#      + embeddings.npz       sentence embeddings
+#   1c extended_works.csv     diagnostic flags/protection columns added, no rows removed
+#   1d refined_works.csv      keep/remove policy applied; corpus_audit.csv produced
+#
+# Phase 2 scripts read ONLY: refined_works.csv, embeddings.npz, citations.csv.
 # het_mostcited_50.csv is a Phase 2 derived product (build_het_core.py).
 
-corpus: corpus-discover corpus-enrich corpus-refine corpus-manifest
+corpus: corpus-discover corpus-enrich corpus-extend corpus-filter corpus-manifest
 
-# Phase 1a: Discovery + merge + cheap filter (flags 1-3 only)
+# Phase 1a: Discovery + merge → unified_works.csv
 # Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
 # pre-placed in $(DATA_DIR) before running.
+# No filtering here — filtering is deferred to corpus-extend / corpus-filter.
 corpus-discover:
 	uv run python scripts/catalog_istex.py --api
 	uv run python scripts/catalog_openalex.py --resume
@@ -85,26 +94,43 @@ corpus-discover:
 	uv run python scripts/catalog_merge.py
 	uv run python scripts/build_teaching_canon.py
 	uv run python scripts/catalog_merge.py
-	uv run python scripts/corpus_refine.py --apply --cheap
 
-# Phase 1b: Enrich metadata, abstracts, citations, then embeddings
+# Phase 1b: Enrich → enriched_works.csv + citations.csv + embeddings.npz
+# Fails fast if unified_works.csv is missing.
 # DOI resolution and type fix run first (unlock more abstract/citation sources).
 # Abstracts and citations are independent; embeddings need abstracts.
 # Requires: uv sync --group corpus  (torch, sentence-transformers, hdbscan, …)
 corpus-enrich:
+	@test -f "$(UNIFIED)" \
+		|| { echo "ERROR: $(UNIFIED) missing — run 'make corpus-discover' first."; exit 1; }
 	uv run python scripts/qa_detect_type.py --apply
-	uv run python scripts/enrich_dois.py
-	uv run python scripts/enrich_abstracts.py
-	uv run python scripts/enrich_citations_batch.py
-	uv run python scripts/enrich_citations_openalex.py
-	uv run python scripts/qc_citations.py
-	uv run python scripts/analyze_embeddings.py
+	uv run python scripts/enrich_dois.py --works-input "$(UNIFIED)" --works-output "$(ENRICHED)"
+	uv run python scripts/enrich_abstracts.py --works-input "$(ENRICHED)"
+	uv run python scripts/enrich_citations_batch.py --works-input "$(ENRICHED)"
+	uv run python scripts/enrich_citations_openalex.py --works-input "$(ENRICHED)"
+	uv run python scripts/qc_citations.py --works-input "$(ENRICHED)"
+	uv run python scripts/analyze_embeddings.py --works-input "$(ENRICHED)"
 
-# Phase 1c: Full refinement with all 6 flags
-corpus-refine:
-	uv run python scripts/corpus_refine.py --apply
+# Phase 1c: Extend → extended_works.csv (flags/protection only, no row removal)
+# Fails fast if enriched_works.csv is missing.
+corpus-extend:
+	@test -f "$(ENRICHED)" \
+		|| { echo "ERROR: $(ENRICHED) missing — run 'make corpus-enrich' first."; exit 1; }
+	uv run python scripts/corpus_refine.py --extend \
+		--works-input "$(ENRICHED)" --works-output "$(EXTENDED)"
 
-# Phase 1d: Record checksums of contract files
+# Phase 1d: Filter → refined_works.csv + corpus_audit.csv
+# Fails fast if extended_works.csv is missing.
+corpus-filter:
+	@test -f "$(EXTENDED)" \
+		|| { echo "ERROR: $(EXTENDED) missing — run 'make corpus-extend' first."; exit 1; }
+	uv run python scripts/corpus_refine.py --filter \
+		--works-input "$(EXTENDED)" --works-output "$(REFINED)"
+
+# Backward-compat alias (old corpus-refine = extend + filter combined)
+corpus-refine: corpus-extend corpus-filter
+
+# Phase 1e: Record checksums of contract files
 corpus-manifest:
 	uv run python scripts/corpus_manifest.py
 
