@@ -75,8 +75,8 @@ llm_relevance:
   # Reranker backend (local cross-encoder, no API needed)
   reranker_model: BAAI/bge-reranker-v2-m3
   reranker_query: >
-    Relevance for the history of economic thought on climate finance
-  reranker_threshold: 0.5
+    climate policy and financial mechanisms
+  reranker_threshold: 0.0049
   reranker_batch_size: 64
   # LLM backends (fallback)
   openrouter_model: google/gemini-2.5-flash
