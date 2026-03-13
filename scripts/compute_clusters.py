@@ -61,6 +61,7 @@ print(f"Loaded {len(df)} works, embeddings shape: {embeddings.shape}")
 # ============================================================
 
 K_DEFAULT = 6
+CITE_THRESHOLD = 50
 
 print(f"\nFitting global KMeans (k={K_DEFAULT}) on full corpus...")
 kmeans = KMeans(n_clusters=K_DEFAULT, random_state=42, n_init=20)
