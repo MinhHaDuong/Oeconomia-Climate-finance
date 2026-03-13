@@ -383,17 +383,19 @@ def _identify_candidates(df, config, already_flagged):
 
 
 def _reranker_streaming(df, config, *, already_flagged):
-    """Score papers with a local cross-encoder reranker. Yields (indices, partial_series)."""
+    """Score ALL papers with a cross-encoder reranker, prioritized by heuristic.
+
+    Priority 1: concept-group failures (most likely to be flagged) — yields results
+    Priority 2: remaining papers (expected to mostly pass) — scores cached for future use
+
+    Cache is checkpointed after each batch, so interrupting preserves progress.
+    Yields (indices, partial_series) for Flag 6 candidates only.
+    """
     import torch
     from sentence_transformers import CrossEncoder
 
     llm_cfg = config["llm_relevance"]
     candidates_mask, doi_norm = _identify_candidates(df, config, already_flagged)
-
-    n_candidates = candidates_mask.sum()
-    if n_candidates == 0:
-        print("  Flag 6: no candidates (all papers pass concept-group check)")
-        return
 
     model_name = llm_cfg["reranker_model"]
     query = llm_cfg["reranker_query"]
@@ -403,26 +405,44 @@ def _reranker_streaming(df, config, *, already_flagged):
     abstract_max = llm_cfg.get("abstract_max_chars", 250)
 
     cache = _load_llm_cache(config)
-    candidate_indices = df.index[candidates_mask].tolist()
 
-    uncached_indices = [
-        i for i in candidate_indices
-        if doi_norm.at[i] not in cache or doi_norm.at[i] == ""
-    ]
-    cached_count = n_candidates - len(uncached_indices)
-    print(f"    Candidates: {n_candidates} "
-          f"(cached: {cached_count}, to score: {len(uncached_indices)})")
+    # All papers with text worth scoring (abstract > 50 chars or title present)
+    abstract_s = df["abstract"].fillna("").astype(str).str.strip()
+    has_text = abstract_s.str.len() > 50
+    scoreable = has_text & ~already_flagged
 
-    # Yield cached results
-    if cached_count > 0:
+    # Priority 1: concept-group failures (Flag 6 candidates)
+    priority1_indices = df.index[candidates_mask].tolist()
+    # Priority 2: papers that pass concept-group check (background scoring)
+    priority2_indices = df.index[scoreable & ~candidates_mask].tolist()
+
+    # Split each priority into cached / uncached
+    def uncached(indices):
+        return [i for i in indices
+                if doi_norm.at[i] not in cache or doi_norm.at[i] == ""]
+
+    p1_uncached = uncached(priority1_indices)
+    p2_uncached = uncached(priority2_indices)
+    p1_cached = len(priority1_indices) - len(p1_uncached)
+    p2_cached = len(priority2_indices) - len(p2_uncached)
+
+    print(f"    Priority 1 (concept-group failures): {len(priority1_indices)} "
+          f"(cached: {p1_cached}, to score: {len(p1_uncached)})")
+    print(f"    Priority 2 (background scoring): {len(priority2_indices)} "
+          f"(cached: {p2_cached}, to score: {len(p2_uncached)})")
+
+    # Yield cached results for Flag 6 candidates
+    if p1_cached > 0:
         cached_results = pd.Series(False, index=df.index[candidates_mask], dtype=bool)
-        for i in candidate_indices:
+        for i in priority1_indices:
             d = doi_norm.at[i]
             if d in cache:
                 cached_results.at[i] = not _is_relevant(cache[d], threshold)
-        yield candidate_indices, cached_results
+        yield priority1_indices, cached_results
 
-    if not uncached_indices:
+    # Combine uncached: priority 1 first, then priority 2
+    all_uncached = p1_uncached + p2_uncached
+    if not all_uncached:
         return
 
     # Load model — auto-detect GPU
@@ -442,11 +462,12 @@ def _reranker_streaming(df, config, *, already_flagged):
     reranker = CrossEncoder(model_name, device=device)
     print(f"    Model loaded in {time.time() - t0:.1f}s")
 
-    # Score in batches
-    total_batches = (len(uncached_indices) + batch_size - 1) // batch_size
-    for batch_num in range(0, len(uncached_indices), batch_size):
-        batch_idx = uncached_indices[batch_num:batch_num + batch_size]
-        current_batch = batch_num // batch_size + 1
+    # Score in batches, checkpointing after each
+    p1_boundary = len(p1_uncached)
+    total_batches = (len(all_uncached) + batch_size - 1) // batch_size
+    for batch_start in range(0, len(all_uncached), batch_size):
+        batch_idx = all_uncached[batch_start:batch_start + batch_size]
+        current_batch = batch_start // batch_size + 1
 
         texts = []
         dois = []
@@ -465,14 +486,20 @@ def _reranker_streaming(df, config, *, already_flagged):
 
         _save_llm_cache(cache, config)
 
-        partial = pd.Series(False, index=pd.Index(batch_idx), dtype=bool)
-        for idx_val, doi in zip(batch_idx, dois):
-            if doi in cache:
-                partial.at[idx_val] = not _is_relevant(cache[doi], threshold)
-        yield batch_idx, partial
+        # Only yield results for priority 1 (Flag 6 candidates)
+        p1_in_batch = [i for i in batch_idx if i in set(p1_uncached)]
+        if p1_in_batch:
+            partial = pd.Series(False, index=pd.Index(p1_in_batch), dtype=bool)
+            for idx_val in p1_in_batch:
+                d = doi_norm.at[idx_val]
+                if d in cache:
+                    partial.at[idx_val] = not _is_relevant(cache[d], threshold)
+            yield p1_in_batch, partial
 
+        # Progress reporting
+        phase = "P1" if batch_start < p1_boundary else "P2"
         if current_batch < total_batches:
-            print(f"    batch {current_batch}/{total_batches}")
+            print(f"    [{phase}] batch {current_batch}/{total_batches}")
 
 
 def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
