@@ -31,6 +31,17 @@ PERIOD_BREAKS = [2007, 2015]
 
 INCOMPLETE_FROM = 2022  # OpenAlex indexing incomplete from this year
 
+# --- COP / landmark events (superset; scripts pick what they need) ---
+COP_EVENTS = {
+    1992: "Rio",
+    1997: "Kyoto",
+    2009: "Copenhagen",
+    2010: "Cancún",
+    2015: "Paris",
+    2021: "Glasgow",
+    2024: "Baku",
+}
+
 # --- rcParams for Oeconomia house style ---
 RCPARAMS = {
     "font.family": "serif",

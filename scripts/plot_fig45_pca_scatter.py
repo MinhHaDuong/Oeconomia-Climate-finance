@@ -29,6 +29,7 @@ from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
+from plot_style import COP_EVENTS
 from utils import BASE_DIR, CATALOGS_DIR, load_refined_embeddings, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -64,15 +65,6 @@ PERIOD_COLORS = {
     "1990\u20132006": "#8da0cb",
     "2007\u20132014": "#fc8d62",
     "2015\u20132025": "#66c2a5",
-}
-
-COP_EVENTS = {
-    1992: "Rio",
-    1997: "Kyoto",
-    2009: "Copenhagen",
-    2015: "Paris",
-    2021: "Glasgow",
-    2024: "Baku",
 }
 
 # Pole vocabularies (same as analyze_bimodality.py)

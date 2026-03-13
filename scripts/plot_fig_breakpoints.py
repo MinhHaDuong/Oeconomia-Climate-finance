@@ -19,23 +19,13 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from plot_style import COP_EVENTS
 from utils import BASE_DIR, save_figure
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
-
-# COP events for annotation
-COP_EVENTS = {
-    1992: "Rio",
-    1997: "Kyoto",
-    2009: "Copenhagen",
-    2010: "Cancún",
-    2015: "Paris",
-    2021: "Glasgow",
-    2024: "Baku",
-}
 
 WINDOW_SIZES = [2, 3, 4]
 CITE_THRESHOLD = 50
