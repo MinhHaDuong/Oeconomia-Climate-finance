@@ -51,17 +51,17 @@ TRADITION_LABELS = {
     "other":   None,
 }
 
-# Grayscale shades for three traditions + background
+# Colors for three traditions (Electronic Supplement — color allowed); grey for others
 TRADITION_COLORS = {
-    "pricing": DARK,       # "#333333"
-    "cdm":     MED,        # "#777777"
-    "unfccc":  "#AAAAAA",
-    "other":   "#DDDDDD",
+    "pricing": "#1a6496",   # steel blue
+    "cdm":     "#e07b39",   # terracotta / amber
+    "unfccc":  "#4a9e6b",   # muted green
+    "other":   "#DDDDDD",   # light grey
 }
 TRADITION_EDGE_COLORS = {
-    "pricing": DARK,
-    "cdm":     MED,
-    "unfccc":  "#888888",
+    "pricing": "#1a6496",
+    "cdm":     "#e07b39",
+    "unfccc":  "#4a9e6b",
     "other":   "#CCCCCC",
 }
 
