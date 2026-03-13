@@ -60,7 +60,7 @@ period_labels = alluvial_data.index.tolist()
 n_periods = len(period_labels)
 n_clusters = len(alluvial_data.columns)
 
-with open(os.path.join(CATALOGS_DIR, LABEL_FILE)) as f:
+with open(os.path.join(TABLES_DIR, LABEL_FILE)) as f:
     cluster_labels_raw = json.load(f)
 cluster_labels = {int(k): v for k, v in cluster_labels_raw.items()}
 

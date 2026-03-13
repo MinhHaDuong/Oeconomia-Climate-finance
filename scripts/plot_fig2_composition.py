@@ -7,7 +7,7 @@ to Disputes (2015-2025).
 
 Inputs:
   - content/tables/tab_alluvial.csv  (period × cluster counts)
-  - $DATA/catalogs/cluster_labels.json (cluster names)
+  - content/tables/cluster_labels.json (cluster names)
 
 Outputs:
   - content/figures/fig_composition.png (+.pdf unless --no-pdf)

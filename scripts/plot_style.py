@@ -26,6 +26,9 @@ PERIODS = [
     ("Disputes", 2015, 2025),
 ]
 
+# Period break years (boundaries between acts). Derived from PERIODS above.
+PERIOD_BREAKS = [2007, 2015]
+
 INCOMPLETE_FROM = 2022  # OpenAlex indexing incomplete from this year
 
 # --- rcParams for Oeconomia house style ---

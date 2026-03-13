@@ -42,7 +42,7 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 CLUSTERS_PATH = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
-CLUSTER_LABELS_PATH = os.path.join(CATALOGS_DIR, "cluster_labels.json")
+CLUSTER_LABELS_PATH = os.path.join(TABLES_DIR, "cluster_labels.json")
 BIB_PATH = os.path.join(BASE_DIR, "bibliography", "main.bib")
 
 # Tab5 can be in tables/ (repo) or catalogs/ (data dir) — try both
