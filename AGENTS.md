@@ -6,9 +6,9 @@ See `README.md` for project overview, repository structure, data paths.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
 See `content/technical-report.qmd` for the full data pipeline documentation.
 
-## Status (2026-03-12)
+## Status (2026-03-13)
 
-- Manuscript: ~9,200 words, 47 bib entries, 2 figures + 1 table
+- Manuscript: ~9,200 words, 55 bib entries, 3 figures + 2 tables
 - Manuscript variable dependencies reduced to 1 (`corpus_total_approx`)
 - Phase 2→3 contract documented in manuscript.qmd header comment
 - ΔBIC values, cluster counts, language % moved out of manuscript prose (belong in companion)
@@ -16,17 +16,17 @@ See `content/technical-report.qmd` for the full data pipeline documentation.
 - Citation graph: 775,288 rows, 74% corpus coverage
 - Quarto: 4 documents, 11 shared includes, cross-refs (`@fig-*`, `@tbl-*`)
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992, caption updated
-- Fig 2 (composition): horizontal stacked % bars, Oeconomia style — may relocate to §3–4
+- Fig 2 (composition): relocated to §3.4 (thematic decomposition argument); removed from §1.5
+- Fig S1 (traditions): co-citation network, color, Electronic Supplement — PR #88 open
 - Table 2 (poles): efficiency vs accountability terms — done
-- Table 1 (traditions): BLOCKED — co-citation communities merge after 2007
+- Table 1 (traditions): caption updated; §1.5 now cites co-citation evidence (Q=0.68)
 - Peer-review simulation docs archived in `docs/peer-review-simulation-20260310/`
 - **Next priorities**:
   1. Human proofread of full manuscript
-  2. Corpus update ongoing (enrichment pipeline)
-  3. Regen Fig 2 — consider relocating to §3 or §4
-  4. Table 1 — tradition detection for §1.5, or relocate to conclusion
-  5. Regen period detection curves + terms table for §2.5
-  6. Move ΔBIC details + cluster counts to companion paper
+  2. Merge PR #88 (t23-tradition-figure: §1.5 + fig_traditions + bib)
+  3. Corpus update ongoing (enrichment pipeline)
+  4. Regen period detection curves + terms table for §2.5
+  5. Move ΔBIC details + cluster counts to companion paper
 
 ## Project Structure
 
