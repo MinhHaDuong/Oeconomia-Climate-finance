@@ -60,16 +60,18 @@ works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
 has_title = works["title"].notna() & (works["title"].str.len() > 0)
 in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
-df = works[has_title & in_range].copy().reset_index(drop=True)
+keep_mask = (has_title & in_range).values
+df = works[keep_mask].copy().reset_index(drop=True)
 print(f"Works with titles (1990-2025): {len(df)}")
 
 print("Loading cached embeddings...")
-embeddings = load_refined_embeddings()
-if len(embeddings) != len(df):
+all_embeddings = load_refined_embeddings()
+if len(all_embeddings) != len(works):
     raise RuntimeError(
-        f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "
-        "Re-run analyze_embeddings.py first."
+        f"Embedding/refined_works row count mismatch ({len(all_embeddings)} vs {len(works)}). "
+        "Re-run: uv run python scripts/corpus_align.py"
     )
+embeddings = all_embeddings[keep_mask]
 print(f"Embedding shape: {embeddings.shape}")
 
 CITE_THRESHOLD = 50
