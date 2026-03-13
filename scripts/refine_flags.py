@@ -425,12 +425,21 @@ def _reranker_streaming(df, config, *, already_flagged):
     if not uncached_indices:
         return
 
-    # Load model
-    n_cpu = os.cpu_count() or 4
-    torch.set_num_threads(n_cpu)
-    print(f"    Loading reranker: {model_name} ({n_cpu} threads)...")
+    # Load model — auto-detect GPU
+    device_cfg = llm_cfg.get("reranker_device", "auto")
+    if device_cfg == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = device_cfg
+    if device == "cpu":
+        n_cpu = os.cpu_count() or 4
+        torch.set_num_threads(n_cpu)
+        print(f"    Loading reranker: {model_name} ({n_cpu} CPU threads)...")
+    else:
+        gpu_name = torch.cuda.get_device_name(0)
+        print(f"    Loading reranker: {model_name} (GPU: {gpu_name})...")
     t0 = time.time()
-    reranker = CrossEncoder(model_name)
+    reranker = CrossEncoder(model_name, device=device)
     print(f"    Model loaded in {time.time() - t0:.1f}s")
 
     # Score in batches

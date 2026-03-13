@@ -228,16 +228,23 @@ def calibrate(args):
             print(f"  {i:3d}. {q}")
         return
 
-    # Load model
+    # Load model — auto-detect GPU
     import torch
     from sentence_transformers import CrossEncoder
 
     model_name = args.model or DEFAULT_MODEL
-    n_cpu = os.cpu_count() or 4
-    torch.set_num_threads(n_cpu)
-    print(f"\nLoading reranker: {model_name} ({n_cpu} threads)...")
+    device = args.device
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cpu":
+        n_cpu = os.cpu_count() or 4
+        torch.set_num_threads(n_cpu)
+        print(f"\nLoading reranker: {model_name} ({n_cpu} CPU threads)...")
+    else:
+        gpu_name = torch.cuda.get_device_name(0)
+        print(f"\nLoading reranker: {model_name} (GPU: {gpu_name})...")
     t0 = time.time()
-    reranker = CrossEncoder(model_name)
+    reranker = CrossEncoder(model_name, device=device)
     print(f"  Model loaded in {time.time() - t0:.1f}s")
 
     # Subsample for query search: keep it small for CPU speed
@@ -396,6 +403,8 @@ def main():
         description="Calibrate cross-encoder reranker for Flag 6 relevance scoring")
     parser.add_argument("--model", default=None,
                         help=f"Reranker model name (default: {DEFAULT_MODEL})")
+    parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"],
+                        help="Device for inference (default: auto-detect)")
     parser.add_argument("--hitl", action="store_true",
                         help="Export boundary cases for human review")
     parser.add_argument("--queries-only", action="store_true",
