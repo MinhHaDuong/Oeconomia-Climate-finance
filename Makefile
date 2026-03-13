@@ -325,7 +325,7 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 # filenames are dynamic — they depend on detected break years, so make cannot
 # declare them as static targets)
 .PHONY: lexical-figures
-lexical-figures: content/tables/tab_breakpoint_robustness.csv
+lexical-figures: content/tables/tab_lexical_tfidf.csv
 	uv run python scripts/plot_fig_lexical_tfidf.py --no-pdf
 
 figures-manuscript: check-corpus $(MANUSCRIPT_FIGS)

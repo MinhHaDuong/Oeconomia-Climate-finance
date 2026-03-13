@@ -203,7 +203,7 @@ uv run python scripts/qc_citations.py                            # Verify citati
 # Figures — alluvial pipeline (split into focused scripts as of #73)
 uv run python scripts/compute_breakpoints.py     # tab_breakpoints.csv, tab_breakpoint_robustness.csv
 uv run python scripts/compute_clusters.py        # tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
-uv run python scripts/compute_lexical.py         # tab_lexical_tfidf.csv (reads tab_breakpoint_robustness.csv)
+uv run python scripts/compute_lexical.py         # tab_lexical_tfidf.csv (all breaks + controls, with p-values)
 uv run python scripts/plot_fig_breakpoints.py    # fig_breakpoints.png
 uv run python scripts/plot_fig_alluvial.py       # fig_alluvial.png + .html
 uv run python scripts/compute_breakpoints.py --core-only       # Core variants of breakpoints tables

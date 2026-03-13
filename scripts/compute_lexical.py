@@ -2,7 +2,7 @@
 
 Reads:  refined_works.csv,
         tab_breakpoint_robustness.csv (to derive detected break years)
-Writes: tab_lexical_tfidf.csv
+Writes: tab_lexical_tfidf.csv (all break years + control years, with p-values)
 
 Flags:
   --no-pdf  Accepted for interface compatibility; no-op (no figures generated)
@@ -22,6 +22,9 @@ TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 # --- Shared lexical denoising constants (imported by plot_fig_lexical_tfidf.py) ---
 MIN_PERIOD_DF = 3
 EXTRA_STOPS = {"mid", "vol", "hope", "gives", "new", "use", "used", "using"}
+
+# Control years appended after detected breaks
+CONTROL_YEARS = [2015, 2021]
 
 
 def is_clean_term(term):
@@ -76,25 +79,35 @@ if __name__ == "__main__":
     detected_breaks = sorted(robust_df["year"].tolist()[:3])
     print(f"Detected break years (from tab_breakpoint_robustness.csv): {detected_breaks}")
 
-    main_break = detected_breaks[0] if detected_breaks else 2009
+    # All years to compute: detected breaks + control years
+    break_years = sorted(set(detected_breaks) | {yr for yr in CONTROL_YEARS})
+    print(f"Computing TF-IDF for years: {break_years}")
 
     # ============================================================
-    # Step 2: TF-IDF comparison at main break year
+    # Step 2: TF-IDF comparison at each break year
     # ============================================================
 
-    print(f"\n=== Lexical validation: TF-IDF at detected breakpoints ===")
+    N_PERM = 1000
+    WINDOW_AFTER = 3
+    all_rows = []
 
-    mask_A = df["year"] < main_break
-    mask_B = (df["year"] >= main_break + 1) & (df["year"] <= main_break + 3)
+    for break_year in break_years:
+        print(f"\n=== Lexical validation: TF-IDF at {break_year} ===")
 
-    texts_A = df.loc[mask_A, "abstract"].dropna().tolist()
-    texts_B = df.loc[mask_B, "abstract"].dropna().tolist()
-    n_A = len(texts_A)
-    n_B = len(texts_B)
-    print(f"Period A (before {main_break}): {n_A} abstracts")
-    print(f"Period B ({main_break+1}-{main_break+3}):   {n_B} abstracts")
+        mask_A = df["year"] < break_year
+        mask_B = (df["year"] >= break_year + 1) & (df["year"] <= break_year + WINDOW_AFTER)
 
-    if n_A >= 5 and n_B >= 5:
+        texts_A = df.loc[mask_A, "abstract"].dropna().tolist()
+        texts_B = df.loc[mask_B, "abstract"].dropna().tolist()
+        n_A = len(texts_A)
+        n_B = len(texts_B)
+        print(f"Period A (before {break_year}): {n_A} abstracts")
+        print(f"Period B ({break_year+1}-{break_year+WINDOW_AFTER}):   {n_B} abstracts")
+
+        if n_A < 5 or n_B < 5:
+            print(f"WARNING: Too few abstracts for {break_year}, skipping.")
+            continue
+
         vectorizer = TfidfVectorizer(
             stop_words="english",
             ngram_range=(1, 2),
@@ -129,7 +142,22 @@ if __name__ == "__main__":
         print(f"Denoising: filtered {n_filtered}/{len(feature_names)} terms "
               f"(min {MIN_PERIOD_DF} docs in enriched period, {len(EXTRA_STOPS)} extra stop words)")
 
+        # Permutation test for significance thresholds
+        rng = np.random.RandomState(42)
+        max_abs_diffs = np.zeros(N_PERM)
+        n_total = n_A + n_B
+        for p in range(N_PERM):
+            perm = rng.permutation(n_total)
+            perm_A = np.asarray(X[perm[:n_A]].mean(axis=0)).flatten()
+            perm_B = np.asarray(X[perm[n_A:]].mean(axis=0)).flatten()
+            max_abs_diffs[p] = np.max(np.abs(perm_B - perm_A))
+        sig_95 = float(np.percentile(max_abs_diffs, 95))
+        sig_99 = float(np.percentile(max_abs_diffs, 99))
+        print(f"Permutation test ({N_PERM} perm): |ΔTFIDF| threshold "
+              f"p<0.05={sig_95:.4f}, p<0.01={sig_99:.4f}")
+
         tfidf_df = pd.DataFrame({
+            "break_year": break_year,
             "term": feature_names,
             "mean_tfidf_before": mean_A,
             "mean_tfidf_after": mean_B,
@@ -137,12 +165,27 @@ if __name__ == "__main__":
             "doc_freq_before": doc_freq_A.astype(int),
             "doc_freq_after": doc_freq_B.astype(int),
             "clean": valid_mask,
-        }).sort_values("diff", ascending=False)
-        tfidf_df.to_csv(os.path.join(TABLES_DIR, "tab_lexical_tfidf.csv"), index=False)
+            "n_before": n_A,
+            "n_after": n_B,
+            "sig_95": sig_95,
+            "sig_99": sig_99,
+        })
+        all_rows.append(tfidf_df)
+        print(f"  {valid_mask.sum()} clean / {len(tfidf_df)} total terms")
+
+    # ============================================================
+    # Step 3: Concatenate and save
+    # ============================================================
+
+    if all_rows:
+        result = pd.concat(all_rows, ignore_index=True)
+        out_path = os.path.join(TABLES_DIR, "tab_lexical_tfidf.csv")
+        result.to_csv(out_path, index=False)
+        years_saved = sorted(result["break_year"].unique())
         print(f"\nSaved TF-IDF table → tables/tab_lexical_tfidf.csv "
-              f"({valid_mask.sum()} clean / {len(tfidf_df)} total terms)")
+              f"({len(result)} rows, break years: {years_saved})")
         print("Run plot_fig_lexical_tfidf.py to generate the figures.")
     else:
-        print("WARNING: Too few abstracts for TF-IDF comparison.")
+        print("\nWARNING: No break years had enough abstracts for TF-IDF comparison.")
 
     print("\nDone.")
