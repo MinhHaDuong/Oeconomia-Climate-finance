@@ -14,6 +14,27 @@ noise_title:
   - chatgpt
   - generative ai
 
+# Exact-match titles: journal front/back matter, not research papers
+noise_title_exact:
+  - index
+  - references
+  - issue information
+  - abbreviations
+  - full issue
+  - bibliography
+  - contributors
+  - notes
+  - front matter
+  - contents
+  - acronyms
+  - preliminary material
+  - prelims
+  - glossary
+  - webwatch
+  - news
+  - weather news
+  - titelei/inhaltsverzeichnis
+
 safe_title:
   - climate
   - carbon
@@ -71,7 +92,14 @@ semantic_outlier:
   sigma: 2
 
 llm_relevance:
-  backend: openrouter
+  backend: reranker
+  # Reranker backend (local cross-encoder, no API needed)
+  reranker_model: BAAI/bge-reranker-v2-m3
+  reranker_query: >
+    climate policy and financial mechanisms
+  reranker_threshold: 0.002
+  reranker_batch_size: 64
+  # LLM backends (fallback)
   openrouter_model: google/gemini-2.5-flash
   ollama_model: "qwen2.5:32b"
   ollama_url: "http://localhost:11434"
