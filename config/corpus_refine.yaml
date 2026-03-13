@@ -76,7 +76,7 @@ llm_relevance:
   reranker_model: BAAI/bge-reranker-v2-m3
   reranker_query: >
     climate policy and financial mechanisms
-  reranker_threshold: 0.0049
+  reranker_threshold: 0.002
   reranker_batch_size: 64
   # LLM backends (fallback)
   openrouter_model: google/gemini-2.5-flash
