@@ -18,7 +18,7 @@ The citation graph was built by querying Crossref and OpenAlex for every DOI in 
 
 Coverage varies by period:
 
-{{< include tab_citation_coverage.md >}}
+{{< include _includes/tab_citation_coverage.md >}}
 
 The remaining {{< var cite_never_fetched >}} never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
 
