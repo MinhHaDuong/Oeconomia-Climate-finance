@@ -34,9 +34,7 @@ parser = argparse.ArgumentParser(description="Plot lexical TF-IDF bar charts at 
 parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
 args = parser.parse_args()
 
-# --- Shared constants (must match compute_lexical.py) ---
-MIN_PERIOD_DF = 3
-EXTRA_STOPS = {"mid", "vol", "hope", "gives", "new", "use", "used", "using"}
+from compute_lexical import EXTRA_STOPS, MIN_PERIOD_DF, is_clean_term
 
 
 # --- Load data ---
@@ -99,17 +97,12 @@ def _plot_from_precomputed(X, names, nA, nB, break_year, window_after=3, n_show=
     print(f"  Permutation test ({N_PERM} perm): |ΔTFIDF| threshold "
           f"p<0.05={sig_95:.4f}, p<0.01={sig_99:.4f}")
 
-    # Denoising
+    # Denoising (uses shared is_clean_term from compute_lexical)
     dfA = np.asarray((X[:nA] > 0).sum(axis=0)).flatten()
     dfB = np.asarray((X[nA:] > 0).sum(axis=0)).flatten()
     ok = np.zeros(len(names), dtype=bool)
     for i, t in enumerate(names):
-        toks = t.split()
-        if len(toks) == 1 and len(toks[0]) < 3:
-            continue
-        if all(tok.isdigit() for tok in toks):
-            continue
-        if len(toks) == 1 and toks[0] in EXTRA_STOPS:
+        if not is_clean_term(t):
             continue
         if d[i] < 0 and dfA[i] >= MIN_PERIOD_DF:
             ok[i] = True
