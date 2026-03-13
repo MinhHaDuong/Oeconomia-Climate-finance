@@ -33,6 +33,12 @@ __pycache__/
 # Replication archive
 *.tar.gz
 
+# Generated reference list (regenerate with: uv run python scripts/gen_missing_references.py)
+docs/missing_references.txt
+
+# DOI-fetch stub (real tool lives at ~/CNRS/code/DOI-fetch/)
+code/doifetch/
+
 # OS and editor artifacts
 .DS_Store
 *~
