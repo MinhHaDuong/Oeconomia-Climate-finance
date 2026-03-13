@@ -126,7 +126,8 @@ def flag_no_abstract(df, config):
 # ============================================================
 
 def flag_title_blacklist(df, config):
-    """Flag papers whose title matches noise words but not safe words.
+    """Flag papers whose title matches noise words but not safe words,
+    or whose title exactly matches journal front/back matter.
 
     Returns pd.Series[bool] aligned with df.index.
     """
@@ -140,7 +141,16 @@ def flag_title_blacklist(df, config):
     title_has_noise = title_lower.str.contains(noise_pattern, na=False)
     title_has_safe = title_lower.str.contains(safe_pattern, na=False)
 
-    return title_has_noise & ~title_has_safe
+    noise_match = title_has_noise & ~title_has_safe
+
+    # Exact-match titles (journal front/back matter)
+    exact_noise = config.get("noise_title_exact", [])
+    if exact_noise:
+        exact_set = {t.lower().strip() for t in exact_noise}
+        exact_match = title_lower.isin(exact_set)
+        noise_match = noise_match | exact_match
+
+    return noise_match
 
 
 # ============================================================

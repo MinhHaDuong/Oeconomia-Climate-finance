@@ -14,6 +14,27 @@ noise_title:
   - chatgpt
   - generative ai
 
+# Exact-match titles: journal front/back matter, not research papers
+noise_title_exact:
+  - index
+  - references
+  - issue information
+  - abbreviations
+  - full issue
+  - bibliography
+  - contributors
+  - notes
+  - front matter
+  - contents
+  - acronyms
+  - preliminary material
+  - prelims
+  - glossary
+  - webwatch
+  - news
+  - weather news
+  - titelei/inhaltsverzeichnis
+
 safe_title:
   - climate
   - carbon
