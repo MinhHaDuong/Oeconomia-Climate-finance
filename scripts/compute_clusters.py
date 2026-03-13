@@ -1,8 +1,8 @@
 """KMeans clustering, alluvial flow tables, and cluster labeling.
 
 Reads:  refined_works.csv, refined_embeddings.npz
-Writes: tab_alluvial.csv, cluster_labels.json (in CATALOGS_DIR),
-        tab_core_shares.csv (full corpus only)
+Writes: tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
+        (all in TABLES_DIR; full corpus only for tab_core_shares.csv)
 
 Flags:
   --core-only  Restrict to highly-cited papers (cited_by_count >= 50)
@@ -360,8 +360,8 @@ print("\nCluster labels:")
 for c, label in cluster_labels.items():
     print(f"  {c}: {label}")
 
-with open(os.path.join(CATALOGS_DIR, LABEL_FILE), "w") as f:
+with open(os.path.join(TABLES_DIR, LABEL_FILE), "w") as f:
     json.dump({str(k): v for k, v in cluster_labels.items()}, f)
-print(f"Saved cluster labels → data/catalogs/{LABEL_FILE}")
+print(f"Saved cluster labels → tables/{LABEL_FILE}")
 
 print("\nDone.")

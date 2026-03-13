@@ -321,7 +321,9 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 		content/tables/tab_k_sensitivity.csv
 	uv run python $< --no-pdf
 
-# Lexical TF-IDF figures (one per detected break year; phony drives the script)
+# Lexical TF-IDF figures (one per detected break year; .PHONY because output
+# filenames are dynamic — they depend on detected break years, so make cannot
+# declare them as static targets)
 .PHONY: lexical-figures
 lexical-figures: content/tables/tab_breakpoint_robustness.csv
 	uv run python scripts/plot_fig_lexical_tfidf.py --no-pdf

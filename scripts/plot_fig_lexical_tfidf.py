@@ -7,6 +7,12 @@ Writes: fig_lexical_tfidf_{year}.png (and .pdf unless --no-pdf) for each break y
 Flags: --no-pdf
 
 Run compute_breakpoints.py and compute_lexical.py first.
+
+Note: This script re-reads refined_works.csv and re-computes TF-IDF rather than
+reading tab_lexical_tfidf.csv, because:
+  - The table only stores the main break year comparison
+  - This script generates charts for all detected breaks + control years (2015, 2021)
+  - Each break year requires a separate TF-IDF vocabulary (different before/after split)
 """
 
 import argparse

@@ -239,7 +239,7 @@ def make_run_id():
     return time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
 
 
-_CLUSTER_LABELS_PATH = os.path.join(CATALOGS_DIR, "cluster_labels.json")
+_CLUSTER_LABELS_PATH = os.path.join(BASE_DIR, "content", "tables", "cluster_labels.json")
 
 
 def load_cluster_labels(n_clusters=6):
