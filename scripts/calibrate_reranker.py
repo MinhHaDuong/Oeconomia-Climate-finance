@@ -148,10 +148,8 @@ def generate_queries():
         "development finance", "climate risk", "green investment",
     ]
 
-    # 2-term and 3-term combinations
+    # 2-term combinations (skip 3-term to keep query count manageable on CPU)
     for combo in itertools.combinations(core_terms[:12], 2):
-        queries.add(", ".join(combo))
-    for combo in itertools.combinations(core_terms[:10], 3):
         queries.add(", ".join(combo))
 
     # The prompt from the existing LLM config
@@ -242,23 +240,20 @@ def calibrate(args):
     reranker = CrossEncoder(model_name)
     print(f"  Model loaded in {time.time() - t0:.1f}s")
 
-    # Subsample for query search if calibration set is large
-    if len(texts) > 500:
-        rng = np.random.default_rng(42)
-        # Stratified sample: keep all positives, sample negatives
-        pos_idx = np.where(labels)[0]
-        neg_idx = np.where(~labels)[0]
-        n_neg_sample = min(len(neg_idx), 500 - len(pos_idx))
-        neg_sample = rng.choice(neg_idx, size=max(n_neg_sample, 0), replace=False)
-        sample_idx = np.sort(np.concatenate([pos_idx, neg_sample]))
-        sample_texts = [texts[i] for i in sample_idx]
-        sample_labels = labels[sample_idx]
-        print(f"  Query search sample: {len(sample_idx)} papers "
-              f"({sample_labels.sum()} pos, {(~sample_labels).sum()} neg)")
-    else:
-        sample_texts = texts
-        sample_labels = labels
-        sample_idx = np.arange(len(texts))
+    # Subsample for query search: keep it small for CPU speed
+    # Target: ~100 pos + ~100 neg = 200 papers (manageable with 220 queries)
+    rng = np.random.default_rng(42)
+    pos_idx = np.where(labels)[0]
+    neg_idx = np.where(~labels)[0]
+    n_pos_sample = min(len(pos_idx), 100)
+    n_neg_sample = min(len(neg_idx), 100)
+    pos_sample = rng.choice(pos_idx, size=n_pos_sample, replace=False)
+    neg_sample = rng.choice(neg_idx, size=n_neg_sample, replace=False)
+    sample_idx = np.sort(np.concatenate([pos_sample, neg_sample]))
+    sample_texts = [texts[i] for i in sample_idx]
+    sample_labels = labels[sample_idx]
+    print(f"  Query search sample: {len(sample_idx)} papers "
+          f"({sample_labels.sum()} pos, {(~sample_labels).sum()} neg)")
 
     # Phase D: Search for best query
     print(f"\n=== Query search ({len(queries)} candidates) ===")
