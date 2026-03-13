@@ -182,3 +182,31 @@ class TestDeprecationDocs:
         src = read_script("compute_alluvial.py")
         assert "compute_clusters.py" in src, \
             "compute_alluvial.py shim should delegate to compute_clusters.py"
+
+
+# ---------------------------------------------------------------------------
+# Argparse strictness: no parse_known_args in compute scripts
+# ---------------------------------------------------------------------------
+
+class TestArgparseStrictness:
+    """Compute scripts must use parse_args() so typos are caught."""
+
+    def test_compute_breakpoints_strict_args(self):
+        src = read_script("compute_breakpoints.py")
+        assert "parse_known_args" not in src, \
+            "compute_breakpoints.py should use parse_args() for strict flag checking"
+
+    def test_compute_clusters_strict_args(self):
+        src = read_script("compute_clusters.py")
+        assert "parse_known_args" not in src, \
+            "compute_clusters.py should use parse_args() for strict flag checking"
+
+    def test_compute_lexical_strict_args(self):
+        src = read_script("compute_lexical.py")
+        assert "parse_known_args" not in src, \
+            "compute_lexical.py should use parse_args() for strict flag checking"
+
+    def test_compute_lexical_has_main_guard(self):
+        src = read_script("compute_lexical.py")
+        assert "if __name__" in src, \
+            "compute_lexical.py needs __main__ guard for importability"
