@@ -2,6 +2,11 @@
 title: "Counting Climate Finance. How Economists Made a Governable Object (1990–2025)"
 subtitle: "*Compter la finance climat. Comment les économistes ont fabriqué un objet gouvernable (1990–2025)*"
 author: "Minh Ha-Duong"
+keywords:
+  - climate finance
+  - quantification
+  - accounting categories
+  - international organisations
 date: "2026-03-04"
 date-format: "MMMM D, YYYY"
 bibliography: bibliography/main.bib
@@ -35,9 +40,9 @@ format:
 
 **Abstract.** How did "climate finance" become a distinct economic object? This paper traces the intellectual history of its construction from 1990 to 2025, arguing that economists did not discover a pre-existing reality but built the accounting categories — Rio markers, mobilised-private-finance methodologies, concessionality thresholds — through which climate-related financial flows were rendered measurable and governable. Drawing on a computational analysis of approximately {{< var corpus_total_approx >}} works, the paper identifies a crystallization between 2007 and 2014, triggered by the Copenhagen commitment, and a persistent bimodal tension between an efficiency pole and an accountability pole that has structured the field ever since.
 
-Mots-clés : finance climat, histoire de la pensée économique, commensuration, performativité, économicisation
+**Mots-clés :** finance climat, quantification, catégories comptables, organisations internationales
 
-Keywords: climate finance, history of economic thought, commensuration, performativity, economization
+**Keywords:** climate finance, quantification, accounting categories, international organisations
 
 \newpage
 
