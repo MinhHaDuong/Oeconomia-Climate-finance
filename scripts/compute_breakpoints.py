@@ -53,6 +53,9 @@ if args.censor_gap > 0:
 
 # ============================================================
 # Step 0: Load data + embeddings
+# Note: each split script (breakpoints, clusters, lexical) loads refined_works.csv
+# independently. When run via the compute_alluvial.py shim this means 3× I/O,
+# but at ~30K rows the cost is negligible vs. the KMeans/TF-IDF compute time.
 # ============================================================
 
 print("Loading unified works...")

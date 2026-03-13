@@ -26,11 +26,16 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 parser = argparse.ArgumentParser(description="Compute lexical TF-IDF table at break years")
 parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
 # parse_known_args: silently ignore flags forwarded by compute_alluvial.py shim
+# (e.g. --core-only — the original code skipped lexical validation in core mode,
+# so this script simply has no --core-only flag; the shim forwards it harmlessly)
 args, _unknown = parser.parse_known_args()
 
 
 # ============================================================
 # Load data
+# Note: each split script (breakpoints, clusters, lexical) loads refined_works.csv
+# independently. When run via the compute_alluvial.py shim this means 3× I/O,
+# but at ~30K rows the cost is negligible vs. the KMeans/TF-IDF compute time.
 # ============================================================
 
 print("Loading unified works...")
