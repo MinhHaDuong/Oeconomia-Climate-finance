@@ -2,12 +2,11 @@
 
 ### Sources
 
-The corpus assembles academic and grey literature from seven sources. Five are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
+The corpus assembles academic and grey literature from {{< var corpus_sources >}} sources. Four are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
 
 | Source | Script | Automation | Coverage |
 |---|---|---|---|
 | OpenAlex | `catalog_openalex.py` | Automated (free API) | Primary academic source: tiered keyword search (4 tiers, ~50 queries) |
-| Semantic Scholar | `catalog_semanticscholar.py` | Automated (free API) | Complementary discovery: arXiv, theses, working papers |
 | ISTEX | `catalog_istex.py --api` | Automated (public API) | French national archive: `"climate finance" OR "finance climat" OR "finance climatique"` |
 | Grey literature | `catalog_grey.py` | Hybrid (YAML seed + World Bank API) | OECD, UNFCCC, World Bank, CPI reports |
 | Teaching canon | `build_teaching_canon.py` | Automated (YAML + corpus matching) | Syllabus readings from 15 institutions matched to corpus |
@@ -42,7 +41,6 @@ OpenAlex indexes 100% of Crossref's DOI registry and adds abstracts, concepts, t
 - **bibCNRS** (hand-harvested): Title-field searches in French (`"finance climat"`), Chinese (`"气候金融"`), and Japanese (`"気候金融"`) on the bibCNRS portal (`bib.cnrs.fr`), which aggregates WoS, EconLit, and FRANCIS. Requires CNRS Janus institutional credentials; no public API exists. RIS exports are saved to `data/exports/` and parsed by the script. Harvested February 2026; 242 works.
 - **SciSpace** (hand-harvested): An AI-curated corpus produced by SciSpace's systematic review tool, exported as RIS and CSV files. The tool's proprietary discovery algorithm complements keyword-based search. Harvested January 2026; 663 works.
 - **Grey literature:** A curated YAML seed list (`config/grey_sources.yaml`, 16 key policy documents from OECD, UNFCCC, CPI) plus automated search of the World Bank Open Knowledge Repository API (capped at 200 results). Fully reproducible.
-- **Semantic Scholar:** Same tiered queries as OpenAlex. Adds coverage of arXiv preprints, dissertations, and working papers that OpenAlex may miss. Free API with offset-based pagination (capped at ~10K per query). Pool-based storage in `pool/semanticscholar/`.
 - **Teaching canon:** Syllabus readings from 15 institutions (doctoral, masters, MBA, MOOC programs across 6 regions) are defined in `config/teaching_sources.yaml` and matched programmatically to the corpus by `build_teaching_canon.py`. Papers appearing in 2+ syllabi but absent from the corpus are added as seed works.
 
 ### Merge and deduplication
@@ -60,7 +58,7 @@ The full corpus pipeline runs in five steps (Makefile targets: `corpus-discover`
 `corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
 
 ```
-  7 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
+  6 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
                                │
                                ▼
                         enrich DOIs / abstracts / citations

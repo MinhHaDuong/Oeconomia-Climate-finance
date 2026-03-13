@@ -18,6 +18,7 @@ Publishing a few articles to lay the groundwork for a book project described in 
 2026-02-26 Bibliometric analysis complete. Three-act periodization from breakpoint detection.
 2026-03-03 All figures finalized (core subset, censored breaks, PCA scatter). Ready for manuscript drafting.
 2026-03-05 Refactored into Quarto multi-document project (4 outputs, shared includes).
+2026-03-13 Corpus frozen at 28,442 refined works. Acceptance test (44 checks) passes.
 
 ## Documents
 
@@ -69,8 +70,10 @@ All generated data at `~/data/projets/Oeconomia-Climate-finance/`
 After cloning, regenerate them before building documents:
 
 ```bash
-make figures        # regenerates all figures and tables (~2 min)
-make manuscript     # builds PDF (requires figures)
+make corpus-validate  # run 44-check acceptance test
+make corpus-tables    # regenerate per-source stats, citation coverage, QC report
+make figures          # regenerate all figures and tables (~2 min)
+make manuscript       # build PDF (requires figures)
 ```
 
 ## Literature Indexing Pipeline

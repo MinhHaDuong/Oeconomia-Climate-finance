@@ -12,8 +12,9 @@ See `content/technical-report.qmd` for the full data pipeline documentation.
 - Manuscript variable dependencies reduced to 1 (`corpus_total_approx`)
 - Phase 2→3 contract documented in manuscript.qmd header comment
 - ΔBIC values, cluster counts, language % moved out of manuscript prose (belong in companion)
-- Corpus: 30,085 refined works, 29,252 with embeddings, 2,284 core
-- Citation graph: 775,288 rows, 74% corpus coverage
+- Corpus: 28,442 refined works (from 35,046 enriched), 34,081 embeddings cached, 2,342 core
+- Citation graph: 775,288 rows, 65% corpus coverage
+- Corpus validation: 44-check acceptance test (`make corpus-validate`), `make corpus-tables`
 - Quarto: 4 documents, 11 shared includes, cross-refs (`@fig-*`, `@tbl-*`)
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992, caption updated
 - Fig 2 (composition): relocated to §3.4 (thematic decomposition argument); removed from §1.5
@@ -184,6 +185,8 @@ The pipeline has three phases with a strict contract between them:
   4. **corpus-filter**: apply policy, audit → `refined_works.csv` (final Phase 1 output)
 - Phase 1 → Phase 2 **contract**: `refined_works.csv`, `embeddings.npz`, `citations.csv`
 - Run with: `make corpus` (all four steps) or individual targets
+- Validate: `make corpus-validate` (44-check acceptance test)
+- Report: `make corpus-tables` (per-source stats, citation coverage, QC report)
 
 **Phase 2 — Analysis & figures** (fast, deterministic, run often):
 - Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`

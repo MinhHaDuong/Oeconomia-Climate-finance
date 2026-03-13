@@ -18,30 +18,25 @@ The citation graph was built by querying Crossref and OpenAlex for every DOI in 
 
 Coverage varies by period:
 
-| Period | Total works | With citation data | Coverage |
-|--------|------------:|-------------------:|---------:|
-| 1990–2006 | 957 | 322 | 34% |
-| 2007–2014 | 5,168 | 2,187 | 42% |
-| 2015–2025 | 15,532 | 10,971 | 71% |
-
-Coverage is significantly higher for the most-cited works (core papers with $\geq 50$ incoming citations): 1,353 of 1,461 (93%) have reference data.
+{{< include tab_citation_coverage.md >}}
 
 The remaining {{< var cite_never_fetched >}} never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
 
 ### Quality verification
 
-A stratified random sample of 30 source DOIs was re-fetched from Crossref and compared entry-by-entry with our stored data (seed 42, verification date: 2026-03-09).
+A stratified random sample of 30 source DOIs was re-fetched from Crossref and compared entry-by-entry with our stored data (seed 42, verification date: 2026-03-12).
 
 | Metric | Value |
 |--------|-------|
-| Papers sampled | 30 |
-| Precision (our DOI refs found in Crossref) | **1.0000** |
-| Recall (Crossref DOI refs we captured) | **1.0000** |
-| Papers with phantom references | 0 / 30 |
-| Papers with missing references | 0 / 30 |
-| Verification date | 2026-03-09 |
+| Papers sampled | 30 (29 found in Crossref) |
+| Aggregate precision (our DOI refs found in Crossref) | **0.648** |
+| Aggregate recall (Crossref DOI refs we captured) | **1.000** |
+| Mean per-paper precision | **0.661** |
+| Mean per-paper recall | **1.000** |
+| Papers with phantom references | 19 / 29 |
+| Papers with missing references | 0 / 29 |
 
-Precision and recall are both exactly 1.0: every reference DOI we store matches Crossref, and we have captured every reference DOI that Crossref reports. The quality of the stored data is perfect for the subset of papers where Crossref provides reference metadata.
+Recall is perfect: every reference DOI that Crossref reports is present in our stored data. Precision against Crossref is 0.65 because OpenAlex contributes additional resolved DOI references that Crossref does not list — these are not false positives but references resolved through OpenAlex's own metadata. For the 10 papers whose references come exclusively from Crossref, precision is 1.0. The 19 papers flagged as having "phantom" references are those where OpenAlex adds DOI refs beyond what Crossref reports; manual inspection confirms these are valid references.
 
 ### Alternative source evaluation
 

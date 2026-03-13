@@ -19,6 +19,7 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+from refine_flags import _has_safe_words, _load_config
 from utils import (
     CATALOGS_DIR,
     EMBEDDINGS_PATH,
@@ -96,6 +97,16 @@ def reranker_cache():
     if not os.path.isfile(CACHE_PATH):
         pytest.skip(f"llm_relevance_cache.csv not found at {CACHE_PATH}")
     return pd.read_csv(CACHE_PATH)
+
+
+@pytest.fixture(scope="module")
+def refine_config():
+    return _load_config()
+
+
+QC_CITATIONS_REPORT_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "content", "tables", "qc_citations_report.json"
+)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -472,7 +483,106 @@ class TestEmbeddings:
 
 
 # ═══════════════════════════════════════════════════════════
-# 8. CITATIONS — coverage and consistency
+# 8. CORPUS ALIGN — refined_embeddings.npz and refined_citations.csv
+#    must be present, fresh, and row-aligned with refined_works.csv
+# ═══════════════════════════════════════════════════════════
+
+class TestCorpusAlign:
+    """refined_embeddings.npz and refined_citations.csv must exist, be fresh,
+    and satisfy the Phase 1→2 contract invariants.
+
+    Failures here mean: run  uv run python scripts/corpus_align.py
+    """
+
+    def test_refined_embeddings_exist(self):
+        assert os.path.isfile(REFINED_EMBEDDINGS_PATH), \
+            f"refined_embeddings.npz missing at {REFINED_EMBEDDINGS_PATH}" + _diagnosis(
+                "corpus_align.py was not run after corpus_refine.py",
+                "uv run python scripts/corpus_align.py",
+                "~2 min",
+                "Phase 2 scripts will crash or use the wrong (unaligned) embeddings",
+            )
+
+    def test_refined_citations_exist(self):
+        assert os.path.isfile(REFINED_CITATIONS_PATH), \
+            f"refined_citations.csv missing at {REFINED_CITATIONS_PATH}" + _diagnosis(
+                "corpus_align.py was not run after corpus_refine.py",
+                "uv run python scripts/corpus_align.py",
+                "~2 min",
+                "Phase 2 citation/co-citation scripts will crash",
+            )
+
+    def test_refined_embeddings_row_count(self, refined):
+        """Exact 1:1 alignment: one embedding per refined_works.csv row."""
+        if not os.path.isfile(REFINED_EMBEDDINGS_PATH):
+            pytest.skip("refined_embeddings.npz not found")
+        n_emb = np.load(REFINED_EMBEDDINGS_PATH)["vectors"].shape[0]
+        n_refined = len(refined)
+        assert n_emb == n_refined, \
+            f"refined_embeddings.npz has {n_emb:,} rows but refined_works.csv has {n_refined:,}" + _diagnosis(
+                "corpus_align.py was run against a different version of refined_works.csv",
+                "uv run python scripts/corpus_align.py",
+                "~2 min",
+                "Row misalignment: embedding[i] no longer corresponds to refined_works row i",
+            )
+
+    def test_refined_embeddings_freshness(self):
+        """refined_embeddings.npz must not be older than refined_works.csv."""
+        if not os.path.isfile(REFINED_EMBEDDINGS_PATH):
+            pytest.skip("refined_embeddings.npz not found")
+        emb_mtime = os.path.getmtime(REFINED_EMBEDDINGS_PATH)
+        refined_mtime = os.path.getmtime(REFINED_PATH)
+        assert emb_mtime >= refined_mtime, \
+            "refined_embeddings.npz is older than refined_works.csv" + _diagnosis(
+                "refined_works.csv was regenerated but corpus_align.py was not re-run",
+                "uv run python scripts/corpus_align.py",
+                "~2 min",
+                "Stale alignment: embeddings no longer match current corpus rows",
+            )
+
+    def test_refined_citations_freshness(self):
+        """refined_citations.csv must not be older than refined_works.csv."""
+        if not os.path.isfile(REFINED_CITATIONS_PATH):
+            pytest.skip("refined_citations.csv not found")
+        cit_mtime = os.path.getmtime(REFINED_CITATIONS_PATH)
+        refined_mtime = os.path.getmtime(REFINED_PATH)
+        assert cit_mtime >= refined_mtime, \
+            "refined_citations.csv is older than refined_works.csv" + _diagnosis(
+                "refined_works.csv was regenerated but corpus_align.py was not re-run",
+                "uv run python scripts/corpus_align.py",
+                "~2 min",
+                "Stale alignment: citation graph may include removed papers",
+            )
+
+    def test_refined_citations_source_dois_in_corpus(self, refined):
+        """All source_doi values in refined_citations.csv must be in refined_works."""
+        if not os.path.isfile(REFINED_CITATIONS_PATH):
+            pytest.skip("refined_citations.csv not found")
+        refined_dois = set(
+            normalize_doi(d) for d in refined["doi"].dropna()
+            if normalize_doi(d) not in ("", "nan", "none")
+        )
+        cit_header = pd.read_csv(REFINED_CITATIONS_PATH, nrows=0).columns.tolist()
+        if "source_doi" not in cit_header:
+            pytest.skip("source_doi column missing from refined_citations.csv")
+        # Sample check: read first 50k rows to keep test fast
+        cit_sample = pd.read_csv(REFINED_CITATIONS_PATH, usecols=["source_doi"],
+                                  nrows=50_000, low_memory=False)
+        norm_sources = cit_sample["source_doi"].dropna().apply(normalize_doi)
+        strays = norm_sources[~norm_sources.isin(refined_dois) &
+                              (norm_sources != "") & (norm_sources != "nan")]
+        n_strays = len(strays)
+        assert n_strays == 0, \
+            f"{n_strays} source_dois in refined_citations.csv not found in refined_works" + _diagnosis(
+                "corpus_align.py was run against a different refined_works.csv",
+                "uv run python scripts/corpus_align.py",
+                "~2 min",
+                "Citation graph references removed papers — co-citation analysis corrupted",
+            )
+
+
+# ═══════════════════════════════════════════════════════════
+# 9. CITATIONS (raw cache) — coverage and consistency
 # ═══════════════════════════════════════════════════════════
 
 class TestCitations:
@@ -565,7 +675,158 @@ class TestContentQuality:
 
 
 # ═══════════════════════════════════════════════════════════
-# 10. STATISTICS — compute and print summary
+# 10. BLACKLIST VALIDATION — noise terms properly caught
+# ═══════════════════════════════════════════════════════════
+
+class TestBlacklistValidation:
+    """Every noise title term must be caught by flags or excused by safe words."""
+
+    @staticmethod
+    def _get_flags(row):
+        """Parse flags from audit CSV (pipe-delimited, with optional :suffix)."""
+        flags = row.get("flags", "")
+        s = str(flags) if flags else ""
+        if not s or s == "nan":
+            return []
+        return [f.strip().split(":")[0] for f in s.split("|")]
+
+    def test_blacklist_terms_caught(self, audit, refine_config):
+        """For each noise term, all title matches are either flagged or have safe words."""
+        noise_title = refine_config["noise_title"]
+        safe_title = refine_config["safe_title"]
+
+        missed_report = []
+        for term in noise_title:
+            matches = audit[audit["title"].str.lower().str.contains(term, na=False)]
+            if matches.empty:
+                continue
+
+            flagged = matches[matches.apply(
+                lambda row: "title_blacklist" in self._get_flags(row), axis=1
+            )]
+            unflagged = matches[~matches.index.isin(flagged.index)]
+            truly_missed = unflagged[~unflagged["title"].apply(
+                lambda t: _has_safe_words(str(t), safe_title)
+            )]
+            if len(truly_missed) > 0:
+                examples = truly_missed["title"].head(3).tolist()
+                missed_report.append(f"  '{term}': {len(truly_missed)} missed — {examples}")
+
+        assert not missed_report, \
+            "Blacklist terms not properly caught:\n" + "\n".join(missed_report) + _diagnosis(
+                "Noise terms in titles not matched by flag_title_blacklist",
+                "Review noise_title list in config/corpus_refine.yaml",
+                "15 min",
+                "Irrelevant papers (blockchain, deep learning, etc.) remain in corpus",
+            )
+
+    def test_blacklist_summary(self, audit, refine_config, capsys):
+        """Print blacklist coverage summary (always passes)."""
+        noise_title = refine_config["noise_title"]
+        safe_title = refine_config["safe_title"]
+
+        lines = ["\n  Blacklist coverage:"]
+        for term in noise_title:
+            matches = audit[audit["title"].str.lower().str.contains(term, na=False)]
+            n_matches = len(matches)
+            if n_matches == 0:
+                lines.append(f"    '{term}': 0 matches")
+                continue
+            flagged = matches[matches.apply(
+                lambda row: "title_blacklist" in self._get_flags(row), axis=1
+            )]
+            n_safe = n_matches - len(flagged)
+            safe_note = f" ({n_safe} kept: safe words)" if n_safe else ""
+            lines.append(f"    '{term}': {n_matches} total, {len(flagged)} flagged{safe_note}")
+        print("\n".join(lines))
+
+
+# ═══════════════════════════════════════════════════════════
+# 11. CITATION QUALITY — QC report checks
+# ═══════════════════════════════════════════════════════════
+
+class TestCitationQuality:
+    """Check qc_citations_report.json if available (warns if missing/stale)."""
+
+    def test_citation_report_exists(self):
+        """Warn (don't fail) if qc_citations_report.json is missing."""
+        if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
+            import warnings
+            warnings.warn(
+                f"qc_citations_report.json not found at {QC_CITATIONS_REPORT_PATH}. "
+                "Run: uv run python scripts/qc_citations.py to generate it."
+            )
+            pytest.skip("qc_citations_report.json not found (needs live API calls)")
+
+    def test_citation_report_freshness(self, refined):
+        """Warn if report is stale (DOI count mismatch or > 30 days old)."""
+        if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
+            pytest.skip("qc_citations_report.json not found")
+        import json
+        import time
+        with open(QC_CITATIONS_REPORT_PATH) as f:
+            report = json.load(f)
+
+        # Check age
+        mtime = os.path.getmtime(QC_CITATIONS_REPORT_PATH)
+        age_days = (time.time() - mtime) / 86400
+        if age_days > 30:
+            import warnings
+            warnings.warn(
+                f"qc_citations_report.json is {age_days:.0f} days old. "
+                "Consider re-running: uv run python scripts/qc_citations.py"
+            )
+
+        # Check DOI count matches current corpus
+        report_dois = report.get("corpus", {}).get("total_dois", 0)
+        current_dois = refined["doi"].dropna().nunique()
+        if report_dois > 0 and abs(report_dois - current_dois) > 500:
+            import warnings
+            warnings.warn(
+                f"Report covers {report_dois:,} DOIs but refined has {current_dois:,}. "
+                "Re-run: uv run python scripts/qc_citations.py"
+            )
+
+    def test_citation_precision_recall(self):
+        """If report exists, recall must be >= 0.95 and sample size >= 20."""
+        if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
+            pytest.skip("qc_citations_report.json not found")
+        import json
+        with open(QC_CITATIONS_REPORT_PATH) as f:
+            report = json.load(f)
+
+        verification = report.get("verification", {})
+        precision = verification.get("aggregate_precision", 0)
+        recall = verification.get("aggregate_recall", 0)
+        sample_size = verification.get("sample_n", 0)
+
+        assert sample_size >= 20, \
+            f"QC sample size = {sample_size} (expected >= 20)" + _diagnosis(
+                "qc_citations.py ran with too small a sample",
+                "Re-run with larger sample: uv run python scripts/qc_citations.py",
+                "~10 min",
+                "Quality metrics not statistically meaningful",
+            )
+        # Recall should be very high (we don't miss known references)
+        assert recall >= 0.95, \
+            f"Citation recall = {recall:.3f} (expected >= 0.95)" + _diagnosis(
+                "Citation enrichment missing known references",
+                "Check Crossref/OpenAlex API coverage gaps",
+                "1-2 hours",
+                "Citation graph has missing edges — co-citation communities underconnected",
+            )
+        # Precision may be lower (~0.65) because OpenAlex includes refs
+        # that Crossref doesn't have (not false positives, just additional sources)
+        if precision < 0.60:
+            import warnings
+            warnings.warn(
+                f"Citation precision = {precision:.3f}. This is expected when "
+                "OpenAlex includes references not in Crossref. Check report details."
+            )
+
+
+# ═══════════════════════════════════════════════════════════
+# 12. STATISTICS — compute and print summary
 # ═══════════════════════════════════════════════════════════
 
 class TestStatisticsSummary:
@@ -586,10 +847,10 @@ class TestStatisticsSummary:
         flags_col = audit["flags"].dropna()
         flag_counts = {}
         for cell in flags_col:
-            for flag in str(cell).split(","):
-                f = flag.strip()
-                if f and f != "nan":
-                    flag_counts[f] = flag_counts.get(f, 0) + 1
+            for flag in str(cell).split("|"):
+                base = flag.strip().split(":")[0]
+                if base and base != "nan":
+                    flag_counts[base] = flag_counts.get(base, 0) + 1
 
         # Language distribution
         lang = refined["language"].fillna("unknown").str.lower()

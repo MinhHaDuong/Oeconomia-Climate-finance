@@ -83,9 +83,9 @@ final tables should use canonicalized venue mapping. -->
 
 <!-- ~500 words. Cross-reference the data descriptor. -->
 
-The analysis uses a multilingual corpus of {{< var corpus_total >}} works on climate finance (1990--2025), assembled from seven bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< var corpus_with_embeddings >}} works have abstracts of sufficient length for embedding, and {{< var corpus_core >}} constitute a "core" subset (cited $\geq$ {{< var corpus_core_threshold >}} times) representing the field's intellectual backbone.
+The analysis uses a multilingual corpus of {{< var corpus_total >}} works on climate finance (1990--2025), assembled from {{< var corpus_sources >}} bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< var corpus_core >}} constitute a "core" subset (cited $\geq$ {{< var corpus_core_threshold >}} times) representing the field's intellectual backbone. Sentence-transformer embeddings ({{< var emb_dimensions >}} dimensions) are available for all works with titles and publication years in range.
 
-The corpus was designed for breadth (seven sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). Sentence-transformer embeddings (384 dimensions, `paraphrase-multilingual-MiniLM-L12-v2`) place all abstracts into a shared semantic space regardless of language.
+The corpus was designed for breadth ({{< var corpus_sources >}} sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). The multilingual embedding model (`paraphrase-multilingual-MiniLM-L12-v2`) places works in English, French, Chinese, Japanese, and German into a shared semantic space.
 
 [TO WRITE: Brief summary table of corpus statistics. Reference data paper for construction details.]
 

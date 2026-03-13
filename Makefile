@@ -61,7 +61,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest corpus-tables corpus-validate deploy-corpus clean rebuild archive verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -163,6 +163,17 @@ deploy-corpus:
 	  nohup make corpus > corpus.log 2>&1 &"'
 	@echo "Corpus pipeline started on $(REMOTE_HOST). Monitor with:"
 	@echo "  ssh $(REMOTE_HOST) 'tail -f ~/Oeconomia-Climate-finance/corpus.log'"
+
+# ── Corpus reporting & validation ─────────────────────────
+content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+corpus-tables: content/tables/tab_corpus_sources.csv \
+               content/tables/qc_citations_report.json \
+               content/_includes/tab_citation_coverage.md
+
+corpus-validate: $(REFINED)
+	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
 
 # ═══════════════════════════════════════════════════════════
 # PHASE 2 — Analysis & Figures (fast, deterministic, run often)

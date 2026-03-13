@@ -36,6 +36,19 @@ Phase 1 itself has five steps and four intermediate artifacts:
 
 See `AGENTS.md` for individual script invocations and the `Makefile` for full dependency graph.
 
+### Corpus validation and reporting
+
+| Command | Purpose |
+|---------|---------|
+| `make corpus-validate` | Run acceptance checks (corpus size, flags, embeddings, citations, blacklist) |
+| `make corpus-tables` | Regenerate per-source stats, citation coverage table, citation QC report |
+
+| Script | Output | Used by |
+|--------|--------|---------|
+| `export_corpus_table.py` | `tab_corpus_sources.csv` | TechRep §1, Data Paper |
+| `export_citation_coverage.py` | `tab_citation_coverage.md` | TechRep §10, Data Paper |
+| `qc_citations.py` | `qc_citations_report.json` | TechRep §10 |
+
 ### Data dependencies
 
 | Script | Reads | Writes |

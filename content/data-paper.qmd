@@ -12,7 +12,7 @@ format:
 
 Climate finance---the financial flows directed at mitigating and adapting to climate change---has become one of the most politically salient objects in international economic governance. The \$100 billion annual commitment made at Copenhagen in 2009, and the \$300 billion New Collective Quantified Goal agreed at Baku in 2024, are contested not only in their adequacy but in their very definition: what counts as climate finance depends on accounting conventions that are themselves the subject of ongoing dispute [@roberts_weikmans2017; @michaelowa2007].
 
-A growing body of bibliometric and scientometric work has begun to map the climate finance literature, but existing datasets are either narrowly scoped (single database, English only) or lack the curation needed for reproducible analysis. This data descriptor presents a multilingual, deduplicated, and validated corpus of {{< var corpus_total >}} works on climate finance published between 1990 and 2025, assembled from seven bibliographic sources spanning academic publications, institutional grey literature, and curated teaching materials. The corpus is accompanied by {{< var emb_dimensions >}}-dimensional sentence-transformer embeddings for the {{< var corpus_with_embeddings >}} works with abstracts of sufficient length, enabling semantic analysis without requiring users to re-run the embedding pipeline.
+Recent bibliometric and scientometric work has begun to map the climate finance literature, but existing datasets are either narrowly scoped (single database, English only) or lack the curation needed for reproducible analysis. This data descriptor presents a multilingual, deduplicated, and validated corpus of {{< var corpus_total >}} works on climate finance published between 1990 and 2025, assembled from {{< var corpus_sources >}} bibliographic sources spanning academic publications, institutional grey literature, and curated teaching materials. The corpus is accompanied by {{< var emb_dimensions >}}-dimensional sentence-transformer embeddings for all works with titles and publication years in the 1990--2025 range (the embedding cache contains {{< var corpus_with_embeddings >}} vectors, including pre-filtering records; the refined corpus itself has {{< var corpus_total >}} works), enabling semantic analysis without requiring users to re-run the embedding pipeline.
 
 The dataset was constructed to support the historical analysis presented in @haduong2026 [submitted to *Oeconomia*], but its scope and curation make it suitable for a wide range of research applications: topic modelling, structural break detection, citation network analysis, bibliometric mapping of the climate finance field, and cross-lingual studies of how climate finance is discussed in different linguistic traditions.
 
@@ -21,9 +21,9 @@ The corpus is multilingual by design. While English-language works dominate ({{<
 Key statistics:
 
 - **{{< var corpus_total >}}** refined works after deduplication and quality filtering
-- **{{< var corpus_with_embeddings >}}** works with sentence-transformer embeddings ({{< var emb_dimensions >}} dimensions)
+- **{{< var corpus_with_embeddings >}}** vectors in the embedding cache ({{< var emb_dimensions >}} dimensions; includes pre-filtering records --- the refined corpus has {{< var corpus_total >}} works)
 - **{{< var corpus_core >}}** core works (cited $\geq$ {{< var corpus_core_threshold >}} times), forming the field's intellectual backbone
-- **{{< var corpus_sources >}} sources**: OpenAlex, OpenAlex (historical), ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI), teaching canon
+- **{{< var corpus_sources >}} sources**: OpenAlex, Semantic Scholar, ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI)
 - **Languages**: English ({{< var lang_english_pct >}}%), Portuguese, Spanish, French, Chinese, Japanese, German, and others
 - **Full audit trail**: every inclusion/exclusion decision recorded in `corpus_audit.csv`
 
@@ -101,7 +101,7 @@ KMeans cluster assignments (k=6) for all embedded works.
 
 ### citations.csv
 
-Internal citation network extracted via Crossref enrichment.
+Internal citation network extracted via Crossref and OpenAlex enrichment.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -134,13 +134,14 @@ Both error rates are reported in the refinement script's output and in `corpus_a
 
 ### Coverage analysis
 
-The seven-source design provides complementary coverage:
+The {{< var corpus_sources >}}-source design provides complementary coverage:
 
-- **OpenAlex** provides the broadest English-language academic coverage
+- **OpenAlex** provides the broadest English-language academic coverage via tiered keyword queries
+- **Semantic Scholar** complements OpenAlex with arXiv preprints, dissertations, and working papers
 - **ISTEX** captures French-language literature from the national archive
-- **bibCNRS** adds non-English academic literature (Chinese, Japanese, German)
+- **bibCNRS** adds non-English academic literature (Chinese, Japanese, German) via WoS/EconLit/FRANCIS
+- **SciSpace** contributes AI-curated seed papers from its systematic review tool
 - **Grey literature** includes institutional reports (OECD, UNFCCC, World Bank, CPI) that are central to the field but absent from academic databases
-- **Teaching canon** ensures that pedagogically canonical works are represented
 
 ### Embedding quality
 
