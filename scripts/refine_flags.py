@@ -463,8 +463,13 @@ def _reranker_streaming(df, config, *, already_flagged):
     print(f"    Model loaded in {time.time() - t0:.1f}s")
 
     # Score in batches, checkpointing after each
+    max_batches = int(llm_cfg.get("reranker_max_batches", 0))  # 0 = unlimited
     p1_boundary = len(p1_uncached)
     total_batches = (len(all_uncached) + batch_size - 1) // batch_size
+    if max_batches > 0:
+        effective_batches = min(max_batches, total_batches)
+        print(f"    Limited to {effective_batches}/{total_batches} batches "
+              f"({effective_batches * batch_size} papers)")
     for batch_start in range(0, len(all_uncached), batch_size):
         batch_idx = all_uncached[batch_start:batch_start + batch_size]
         current_batch = batch_start // batch_size + 1
@@ -500,6 +505,10 @@ def _reranker_streaming(df, config, *, already_flagged):
         phase = "P1" if batch_start < p1_boundary else "P2"
         if current_batch < total_batches:
             print(f"    [{phase}] batch {current_batch}/{total_batches}")
+
+        if max_batches > 0 and current_batch >= max_batches:
+            print(f"    Stopped after {max_batches} batches (reranker_max_batches)")
+            break
 
 
 def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
