@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from utils import BASE_DIR, CATALOGS_DIR, save_figure
+from utils import BASE_DIR, save_figure, load_analysis_corpus
 
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
@@ -40,13 +40,8 @@ EXTRA_STOPS = {"mid", "vol", "hope", "gives", "new", "use", "used", "using"}
 
 
 # --- Load data ---
-print("Loading unified works...")
-works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
-works["year"] = pd.to_numeric(works["year"], errors="coerce")
-has_title = works["title"].notna() & (works["title"].str.len() > 0)
-in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
-df = works[has_title & in_range].copy().reset_index(drop=True)
-print(f"Works with titles (1990-2025): {len(df)}")
+df, _ = load_analysis_corpus(with_embeddings=False)
+print(f"Loaded {len(df)} works")
 
 robust_path = os.path.join(TABLES_DIR, "tab_breakpoint_robustness.csv")
 try:

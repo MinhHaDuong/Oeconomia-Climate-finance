@@ -330,6 +330,51 @@ def load_refined_citations():
     return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 
 
+def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=50):
+    """Load refined_works.csv with standard filtering + optional embeddings.
+
+    Applies: year coercion, title-present filter, year in [1990, 2025],
+    optional core filtering (cited_by_count >= cite_threshold).
+
+    Returns (df, embeddings) where embeddings is None if with_embeddings=False.
+    """
+    import numpy as np
+
+    works = pd.read_csv(REFINED_WORKS_PATH)
+    works["year"] = pd.to_numeric(works["year"], errors="coerce")
+
+    has_title = works["title"].notna() & (works["title"].str.len() > 0)
+    in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+    keep_mask = (has_title & in_range).values
+    df = works[keep_mask].copy().reset_index(drop=True)
+
+    embeddings = None
+    if with_embeddings:
+        all_embeddings = load_refined_embeddings()
+        if len(all_embeddings) != len(works):
+            raise RuntimeError(
+                f"Embedding/refined_works row count mismatch "
+                f"({len(all_embeddings)} vs {len(works)}). "
+                "Re-run: uv run python scripts/corpus_align.py"
+            )
+        embeddings = all_embeddings[keep_mask]
+
+    df["cited_by_count"] = pd.to_numeric(
+        df["cited_by_count"], errors="coerce"
+    ).fillna(0)
+
+    if core_only:
+        core_mask = df["cited_by_count"] >= cite_threshold
+        core_indices = df.index[core_mask].values
+        df = df.loc[core_mask].reset_index(drop=True)
+        if embeddings is not None:
+            embeddings = embeddings[core_indices]
+            assert len(df) == len(embeddings), \
+                "Embedding alignment error after core filtering"
+
+    return df, embeddings
+
+
 def save_csv(df, path):
     """Save DataFrame to CSV with UTF-8 encoding."""
     os.makedirs(os.path.dirname(path), exist_ok=True)

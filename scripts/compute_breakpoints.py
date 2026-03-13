@@ -23,7 +23,7 @@ from scipy.spatial.distance import cosine as cosine_dist
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_embeddings
+from utils import BASE_DIR, load_analysis_corpus
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -53,40 +53,10 @@ if args.censor_gap > 0:
 
 # ============================================================
 # Step 1: Load data + embeddings
-# Note: each split script (breakpoints, clusters, lexical) loads refined_works.csv
-# independently. When run via the compute_alluvial.py shim this means 3× I/O,
-# but at ~30K rows the cost is negligible vs. the KMeans/TF-IDF compute time.
 # ============================================================
 
-print("Loading unified works...")
-works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
-works["year"] = pd.to_numeric(works["year"], errors="coerce")
-
-has_title = works["title"].notna() & (works["title"].str.len() > 0)
-in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
-keep_mask = (has_title & in_range).values
-df = works[keep_mask].copy().reset_index(drop=True)
-print(f"Works with titles (1990-2025): {len(df)}")
-
-print("Loading cached embeddings...")
-all_embeddings = load_refined_embeddings()
-if len(all_embeddings) != len(works):
-    raise RuntimeError(
-        f"Embedding/refined_works row count mismatch ({len(all_embeddings)} vs {len(works)}). "
-        "Re-run: uv run python scripts/corpus_align.py"
-    )
-embeddings = all_embeddings[keep_mask]
-print(f"Embedding shape: {embeddings.shape}")
-
-CITE_THRESHOLD = 50
-df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
-if args.core_only:
-    core_mask = df["cited_by_count"] >= CITE_THRESHOLD
-    core_indices = df.index[core_mask].values
-    df = df.loc[core_mask].reset_index(drop=True)
-    embeddings = embeddings[core_indices]
-    print(f"Core-only mode: {len(df)} papers (cited_by_count >= {CITE_THRESHOLD})")
-    assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
+df, embeddings = load_analysis_corpus(core_only=args.core_only)
+print(f"Loaded {len(df)} works, embeddings shape: {embeddings.shape}")
 
 K_DEFAULT = 6
 N_MIN = 20 if args.core_only else 30
