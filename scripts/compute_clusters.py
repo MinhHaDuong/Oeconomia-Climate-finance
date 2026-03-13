@@ -48,7 +48,7 @@ LABEL_FILE = "cluster_labels_core.json" if args.core_only else "cluster_labels.j
 
 
 # ============================================================
-# Step 0: Load data + embeddings
+# Step 1: Load data + embeddings
 # Note: each split script (breakpoints, clusters, lexical) loads refined_works.csv
 # independently. When run via the compute_alluvial.py shim this means 3× I/O,
 # but at ~30K rows the cost is negligible vs. the KMeans/TF-IDF compute time.
@@ -86,7 +86,7 @@ if args.core_only:
 
 
 # ============================================================
-# Step 1: Global KMeans clustering (k=6, fit once)
+# Step 2: Global KMeans clustering (k=6, fit once)
 # ============================================================
 
 K_DEFAULT = 6
@@ -102,7 +102,7 @@ for c in range(K_DEFAULT):
 
 
 # ============================================================
-# Step 1b: ARI alignment check with Louvain communities
+# Step 3: ARI alignment check with Louvain communities
 # ============================================================
 
 cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
@@ -132,7 +132,7 @@ else:
 
 
 # ============================================================
-# Step 3: Segment into manuscript periods (hard-coded three-act structure)
+# Step 4: Segment into manuscript periods
 # ============================================================
 
 # Period boundaries are independent of break detection results.
@@ -164,7 +164,7 @@ df["period"] = df["year"].apply(assign_period)
 
 
 # ============================================================
-# Step 4: Per-period cluster distributions
+# Step 5: Per-period cluster distributions
 # ============================================================
 
 alluvial_data = pd.crosstab(df["period"], df["cluster"])
@@ -187,7 +187,7 @@ if not args.core_only:
 
 
 # ============================================================
-# Step 5: Label communities from abstract TF-IDF
+# Step 6: Label communities from abstract TF-IDF
 # ============================================================
 
 LABEL_STOPWORDS = {

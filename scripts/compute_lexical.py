@@ -32,7 +32,7 @@ args, _unknown = parser.parse_known_args()
 
 
 # ============================================================
-# Load data
+# Step 1: Load data and detected break years
 # Note: each split script (breakpoints, clusters, lexical) loads refined_works.csv
 # independently. When run via the compute_alluvial.py shim this means 3× I/O,
 # but at ~30K rows the cost is negligible vs. the KMeans/TF-IDF compute time.
@@ -62,7 +62,7 @@ main_break = detected_breaks[0] if detected_breaks else 2009
 
 
 # ============================================================
-# TF-IDF comparison at main break year
+# Step 2: TF-IDF comparison at main break year
 # ============================================================
 
 print(f"\n=== Lexical validation: TF-IDF at detected breakpoints ===")

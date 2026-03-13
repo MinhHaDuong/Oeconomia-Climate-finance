@@ -52,7 +52,7 @@ if args.censor_gap > 0:
 
 
 # ============================================================
-# Step 0: Load data + embeddings
+# Step 1: Load data + embeddings
 # Note: each split script (breakpoints, clusters, lexical) loads refined_works.csv
 # independently. When run via the compute_alluvial.py shim this means 3× I/O,
 # but at ~30K rows the cost is negligible vs. the KMeans/TF-IDF compute time.
@@ -93,7 +93,7 @@ N_MIN = 20 if args.core_only else 30
 
 
 # ============================================================
-# Step 2: Sliding-window structural break detection
+# Step 2: Sliding-window divergence series
 # ============================================================
 
 def compute_js_divergence(p, q):
@@ -185,7 +185,7 @@ print(f"\nSaved divergence table → tables/{TAB_BP}")
 
 
 # ============================================================
-# Step 2b: Detect robust breakpoints
+# Step 3: Detect robust breakpoints
 # ============================================================
 
 def find_local_maxima(series, threshold=1.5):
@@ -290,7 +290,7 @@ for bp in robust_list[:5]:
 detected_breaks = sorted([bp["year"] for bp in robust_list[:3]])
 print(f"\nDetected robust breakpoints: {detected_breaks}")
 
-# Volume confound check
+# Step 4: Volume confound check
 print("\n=== Volume confound check ===")
 yearly_counts = df.groupby("year").size()
 growth_rate = yearly_counts.pct_change().dropna()
@@ -310,7 +310,7 @@ for metric in ["js", "cos"]:
 
 
 # ============================================================
-# Robustness: k-sensitivity table (figure in plot_fig_k_sensitivity.py)
+# Step 5: K-sensitivity table (figure in plot_fig_k_sensitivity.py)
 # ============================================================
 
 if args.robustness and not args.core_only:
