@@ -375,6 +375,23 @@ def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=5
     return df, embeddings
 
 
+def load_analysis_config():
+    """Load config/analysis.yaml (Phase 2 analysis parameters).
+
+    Returns dict with keys: periodization, clustering.
+    """
+    import yaml
+
+    path = os.path.join(CONFIG_DIR, "analysis.yaml")
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"analysis.yaml not found at {path}. "
+            "This file defines Phase 2 analysis parameters."
+        )
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
 def save_csv(df, path):
     """Save DataFrame to CSV with UTF-8 encoding."""
     os.makedirs(os.path.dirname(path), exist_ok=True)

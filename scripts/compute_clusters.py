@@ -27,7 +27,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import adjusted_rand_score
 
-from utils import BASE_DIR, CATALOGS_DIR, load_analysis_corpus, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, load_analysis_config, load_analysis_corpus, normalize_doi
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -39,6 +39,8 @@ parser = argparse.ArgumentParser(description="Compute alluvial tables and cluste
 parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
+parser.add_argument("--breaks", type=str, default=None,
+                    help="Comma-separated period break years (default: from config/analysis.yaml)")
 # parse_known_args: silently ignore flags forwarded by compute_alluvial.py shim
 args, _unknown = parser.parse_known_args()
 
@@ -105,9 +107,12 @@ else:
 # Step 4: Segment into manuscript periods
 # ============================================================
 
-# Period boundaries are independent of break detection results.
-# The three-act structure (2007, 2015) is fixed for the manuscript.
-all_breaks = [2007, 2015]
+# Period boundaries: from --breaks CLI or config/analysis.yaml
+if args.breaks:
+    all_breaks = [int(y.strip()) for y in args.breaks.split(",")]
+else:
+    cfg = load_analysis_config()
+    all_breaks = cfg["periodization"]["breaks"]
 boundaries = [1990] + all_breaks + [2026]
 period_labels = []
 for i in range(len(boundaries) - 1):

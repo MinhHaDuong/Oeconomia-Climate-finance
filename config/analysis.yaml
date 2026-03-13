@@ -1,0 +1,10 @@
+# Phase 2 analysis parameters
+# These control the analysis & figure pipeline (scripts/compute_*, scripts/plot_*)
+# Phase 1 (corpus building) parameters live in corpus_refine.yaml and friends.
+
+periodization:
+  breaks: [2007, 2015]  # Year boundaries between acts (I→II, II→III)
+
+clustering:
+  k: 6                  # Number of KMeans clusters
+  cite_threshold: 50    # Minimum cited_by_count for "core" papers
