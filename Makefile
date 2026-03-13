@@ -223,11 +223,15 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 	uv run python $<
 
 # -- Companion paper (quantitative) --
-# Compute tables (prerequisite for fig_composition and both companion figures)
-content/tables/tab_alluvial.csv content/tables/tab_breakpoints.csv \
-content/tables/tab_breakpoint_robustness.csv content/tables/cluster_labels.json \
+# Structural break tables (independent of clustering)
+content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv &: \
+		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+# Clustering + alluvial flow tables (independent of break detection)
+content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
-		scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+		scripts/compute_clusters.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
 # Breakpoints figure
@@ -269,10 +273,14 @@ content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py
 	uv run python $< --no-pdf
 
 # -- Technical report (robustness, variants, supplementary) --
-# Core-only compute tables
-content/tables/tab_alluvial_core.csv content/tables/tab_breakpoints_core.csv \
-content/tables/tab_breakpoint_robustness_core.csv content/tables/cluster_labels_core.json &: \
-		scripts/compute_alluvial.py scripts/utils.py $(REFINED)
+# Core-only: structural break tables
+content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv &: \
+		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --core-only --no-pdf
+
+# Core-only: clustering + alluvial flow tables
+content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
+		scripts/compute_clusters.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
 
 # Core-only figures
@@ -298,6 +306,25 @@ content/tables/tab_pole_papers_core.csv &: \
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
 	uv run python $< --no-pdf
+
+# Lexical TF-IDF table (diagnostic, not in manuscript)
+content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.py $(REFINED) \
+		content/tables/tab_breakpoint_robustness.csv
+	uv run python $< --no-pdf
+
+# K-sensitivity table (diagnostic, --robustness flag)
+content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --robustness --no-pdf
+
+# K-sensitivity figure
+content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
+		content/tables/tab_k_sensitivity.csv
+	uv run python $< --no-pdf
+
+# Lexical TF-IDF figures (one per detected break year; phony drives the script)
+.PHONY: lexical-figures
+lexical-figures: content/tables/tab_breakpoint_robustness.csv
+	uv run python scripts/plot_fig_lexical_tfidf.py --no-pdf
 
 figures-manuscript: check-corpus $(MANUSCRIPT_FIGS)
 figures-datapaper:  check-corpus $(DATAPAPER_FIGS)

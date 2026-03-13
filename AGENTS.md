@@ -198,17 +198,24 @@ uv run python scripts/enrich_citations_openalex.py               # OpenAlex refe
 uv run python scripts/qc_citations.py                            # Verify citation quality (30-sample)
 # Or simply: make citations  (runs all three in order)
 
-# Figures
-uv run python scripts/compute_alluvial.py        # Compute tables (full corpus)
-uv run python scripts/plot_fig_breakpoints.py    # fig_breakpoints.png (reads tab_breakpoints.csv)
-uv run python scripts/plot_fig_alluvial.py       # fig_alluvial.png + HTML (reads tab_alluvial.csv)
-uv run python scripts/compute_alluvial.py --core-only          # Tables (core: cited ≥ 50)
+# Figures — alluvial pipeline (split into focused scripts as of #73)
+uv run python scripts/compute_breakpoints.py     # tab_breakpoints.csv, tab_breakpoint_robustness.csv
+uv run python scripts/compute_clusters.py        # tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
+uv run python scripts/compute_lexical.py         # tab_lexical_tfidf.csv (reads tab_breakpoint_robustness.csv)
+uv run python scripts/plot_fig_breakpoints.py    # fig_breakpoints.png
+uv run python scripts/plot_fig_alluvial.py       # fig_alluvial.png + .html
+uv run python scripts/compute_breakpoints.py --core-only       # Core variants of breakpoints tables
+uv run python scripts/compute_clusters.py --core-only          # Core variants of alluvial tables
 uv run python scripts/plot_fig_breakpoints.py --core-only      # fig_breakpoints_core.png
 uv run python scripts/plot_fig_alluvial.py --core-only         # fig_alluvial_core.png
-uv run python scripts/compute_alluvial.py --robustness         # k-sensitivity appendix
-uv run python scripts/compute_alluvial.py --censor-gap 1       # Censored breaks (k=1)
-uv run python scripts/compute_alluvial.py --censor-gap 2       # Censored breaks (k=2)
-# Legacy: analyze_alluvial.py still works as a thin wrapper calling all three scripts
+uv run python scripts/compute_breakpoints.py --robustness      # tab_k_sensitivity.csv
+uv run python scripts/plot_fig_k_sensitivity.py                # fig_k_sensitivity.png
+uv run python scripts/plot_fig_lexical_tfidf.py                # fig_lexical_tfidf_{year}.png per break
+uv run python scripts/compute_breakpoints.py --censor-gap 1    # Censored breaks (k=1)
+uv run python scripts/compute_breakpoints.py --censor-gap 2    # Censored breaks (k=2)
+# Deprecated wrappers (removal planned for v1.0 milestone):
+#   compute_alluvial.py  →  calls compute_breakpoints + compute_clusters + compute_lexical
+#   analyze_alluvial.py  →  calls all compute + plot scripts in sequence
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
 uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)
