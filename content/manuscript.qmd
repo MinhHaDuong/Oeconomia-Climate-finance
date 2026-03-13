@@ -178,7 +178,7 @@ Yet these innovations operated within the conceptual infrastructure built during
 
 The basic distinction between public and private, bilateral and multilateral, grants and loans remained unchallenged. Paris refined and extended the measurement apparatus; it did not redesign it. Notably, other measurement regimes developed in parallel without displacing the OECD/DAC framework: the multilateral development banks adopted a joint methodology for tracking climate finance from 2011, using project-level activity-based accounting rather than the DAC's policy-marker approach; and the Green Climate Fund developed its own investment framework and results measurement system. These competing commensurations coexisted rather than converged, each producing different numbers from overlapping financial flows.^[The International Development Finance Club (IDFC), representing 27 national and regional development banks largely from the Global South, publishes its own annual Green Finance Mapping using categories that overlap with but do not replicate the OECD/DAC framework.]
 
-### 3.2 The four controversies intensify
+### 3.2 The four controversies after Paris
 
 The post-Paris period did, however, intensify the four controversies identified in the introduction. Each became more technically sophisticated and more politically charged, but all remained anchored in the categories established during crystallization.
 
