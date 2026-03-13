@@ -49,7 +49,7 @@ def fetch_batch(dois, delay=0.2, counters=None,
         headers=HEADERS,
         delay=delay,
         max_retries=max_retries,
-        timeout=max(1.0, float(request_timeout)),
+        timeout=max(1, int(request_timeout)),
         backoff_base=retry_backoff,
         jitter_max=retry_jitter,
         counters=counters,
@@ -143,6 +143,7 @@ def main():
     # If explicitly starting fresh, discard any stale unmerged checkpoint.
     if not args.resume and os.path.exists(CHECKPOINT_PATH):
         os.remove(CHECKPOINT_PATH)
+
     # Load existing citations to find already-fetched DOIs
     if os.path.exists(CITATIONS_PATH):
         existing = pd.read_csv(CITATIONS_PATH, low_memory=False)

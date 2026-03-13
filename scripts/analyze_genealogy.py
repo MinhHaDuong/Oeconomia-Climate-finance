@@ -22,7 +22,6 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from plot_style import COP_EVENTS
 from utils import BASE_DIR, CATALOGS_DIR, load_refined_citations, normalize_doi, save_figure
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -32,6 +31,16 @@ FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
+
+# COP events
+COP_EVENTS = {
+    1992: "Rio",
+    1997: "Kyoto",
+    2009: "Copenhagen",
+    2015: "Paris",
+    2021: "Glasgow",
+    2024: "Baku",
+}
 
 # Periods (three-act structure from breakpoint detection)
 PERIOD_BOUNDS = [1990, 2007, 2015, 2026]

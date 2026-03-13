@@ -50,7 +50,7 @@ def openalex_get(params, delay=0.15, counters=None,
         headers=HEADERS,
         delay=delay,
         max_retries=max_retries,
-        timeout=max(1.0, float(request_timeout)),
+        timeout=max(1, int(request_timeout)),
         backoff_base=retry_backoff,
         jitter_max=retry_jitter,
         counters=counters,
@@ -211,6 +211,7 @@ def main():
             os.remove(DONE_PATH)
         if os.path.exists(CHECKPOINT_PATH):
             os.remove(CHECKPOINT_PATH)
+
     # ── Load done-set (resumable) ─────────────────────────────────────────
     if args.resume and os.path.exists(DONE_PATH):
         with open(DONE_PATH) as f:
