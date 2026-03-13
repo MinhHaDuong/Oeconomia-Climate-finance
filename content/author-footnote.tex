@@ -1,0 +1,7 @@
+\makeatletter
+\AtBeginDocument{%
+  \g@addto@macro\@author{\textsuperscript{*}}%
+  \let\oldmaketitle\maketitle
+  \renewcommand{\maketitle}{\oldmaketitle\thispagestyle{plain}\renewcommand{\thefootnote}{*}\footnotetext{Corresponding author: minh.ha-duong@cnrs.fr}\renewcommand{\thefootnote}{\arabic{footnote}}\setcounter{footnote}{0}}%
+}
+\makeatother

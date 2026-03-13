@@ -11,20 +11,17 @@ format:
   pdf:
     pdf-engine: xelatex
     include-in-header:
-      text: |
-        \usepackage{fancyhdr}
-        \fancypagestyle{plain}{
-          \fancyhf{}
-          \fancyhead[C]{\small\itshape For submission to Œconomia}
-          \fancyfoot[C]{\thepage}
-          \renewcommand{\headrulewidth}{0pt}
-        }
-        \usepackage{etoolbox}
-        \AtBeginDocument{%
-          \let\oldmaketitle\maketitle
-          \renewcommand{\maketitle}{\oldmaketitle\thispagestyle{plain}\footnotetext{Corresponding author: minh.ha-duong@cnrs.fr}}%
-        }
-        \renewcommand{\CSLBlock}[1]{\newline\noindent #1}
+      - text: |
+          \usepackage{fancyhdr}
+          \fancypagestyle{plain}{
+            \fancyhf{}
+            \fancyhead[C]{\small\itshape For submission to Œconomia}
+            \fancyfoot[C]{\thepage}
+            \renewcommand{\headrulewidth}{0pt}
+          }
+          \usepackage{etoolbox}
+          \renewcommand{\CSLBlock}[1]{\newline\noindent #1}
+      - file: author-footnote.tex
 ---
 
 <!-- Phase 2→3 contract: this manuscript consumes
