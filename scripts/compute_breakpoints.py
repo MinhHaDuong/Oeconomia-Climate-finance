@@ -38,8 +38,7 @@ parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--censor-gap", type=int, default=0,
                     help="Number of transition years to censor before each test point (default: 0)")
-# parse_known_args: silently ignore flags forwarded by compute_alluvial.py shim
-args, _unknown = parser.parse_known_args()
+args = parser.parse_args()
 
 # Output naming depends on mode
 TAB_BP = "tab_breakpoints_core.csv" if args.core_only else "tab_breakpoints.csv"

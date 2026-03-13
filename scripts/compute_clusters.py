@@ -41,8 +41,7 @@ parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--breaks", type=str, default=None,
                     help="Comma-separated period break years (default: from config/analysis.yaml)")
-# parse_known_args: silently ignore flags forwarded by compute_alluvial.py shim
-args, _unknown = parser.parse_known_args()
+args = parser.parse_args()
 
 # Output naming depends on mode
 TAB_AL = "tab_alluvial_core.csv" if args.core_only else "tab_alluvial.csv"

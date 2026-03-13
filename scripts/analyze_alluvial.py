@@ -16,19 +16,46 @@ This wrapper exists so that old usage (e.g. `uv run python scripts/analyze_alluv
 continues to work without modification until v1.0.
 """
 
+import argparse
 import subprocess
 import sys
 
-extra = sys.argv[1:]
+# Which flags each sub-script accepts
+SCRIPT_FLAGS = {
+    "scripts/compute_breakpoints.py": {"--core-only", "--censor-gap", "--robustness", "--no-pdf"},
+    "scripts/compute_clusters.py":    {"--core-only", "--no-pdf", "--breaks"},
+    "scripts/compute_lexical.py":     {"--no-pdf"},
+    "scripts/plot_fig_breakpoints.py": {"--core-only", "--censor-gap", "--no-pdf"},
+    "scripts/plot_fig_alluvial.py":    {"--core-only", "--censor-gap", "--no-pdf"},
+}
 
-for script in [
-    "scripts/compute_breakpoints.py",
-    "scripts/compute_clusters.py",
-    "scripts/compute_lexical.py",
-    "scripts/plot_fig_breakpoints.py",
-    "scripts/plot_fig_alluvial.py",
-]:
-    cmd = [sys.executable, script] + extra
-    result = subprocess.run(cmd)
+parser = argparse.ArgumentParser(description="Full alluvial pipeline (deprecated)")
+parser.add_argument("--core-only", action="store_true")
+parser.add_argument("--censor-gap", type=int, default=0)
+parser.add_argument("--robustness", action="store_true")
+parser.add_argument("--no-pdf", action="store_true")
+parser.add_argument("--breaks", type=str, default=None)
+args = parser.parse_args()
+
+
+def _build_argv(script):
+    """Build argv list for a script, including only its accepted flags."""
+    accepted = SCRIPT_FLAGS[script]
+    argv = []
+    if args.core_only and "--core-only" in accepted:
+        argv.append("--core-only")
+    if args.censor_gap and "--censor-gap" in accepted:
+        argv.extend(["--censor-gap", str(args.censor_gap)])
+    if args.robustness and "--robustness" in accepted:
+        argv.append("--robustness")
+    if args.no_pdf and "--no-pdf" in accepted:
+        argv.append("--no-pdf")
+    if args.breaks and "--breaks" in accepted:
+        argv.extend(["--breaks", args.breaks])
+    return argv
+
+
+for script in SCRIPT_FLAGS:
+    result = subprocess.run([sys.executable, script] + _build_argv(script))
     if result.returncode != 0:
         sys.exit(result.returncode)

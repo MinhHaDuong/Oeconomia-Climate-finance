@@ -50,10 +50,13 @@ if __name__ == "__main__":
     # --- Args ---
     parser = argparse.ArgumentParser(description="Compute lexical TF-IDF table at break years")
     parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
-    # parse_known_args: silently ignore flags forwarded by compute_alluvial.py shim
-    # (e.g. --core-only — the original code skipped lexical validation in core mode,
-    # so this script simply has no --core-only flag; the shim forwards it harmlessly)
-    args, _unknown = parser.parse_known_args()
+    parser.add_argument("--core-only", action="store_true",
+                        help="Not supported (lexical analysis uses full corpus). Prints warning.")
+    args = parser.parse_args()
+
+    if args.core_only:
+        print("WARNING: --core-only is not supported by compute_lexical.py "
+              "(lexical analysis uses the full corpus). Flag ignored.")
 
     # ============================================================
     # Step 1: Load data and detected break years
