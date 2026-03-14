@@ -6,16 +6,8 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 
 ## Current milestone: Revision
 
-- [ ] Table 1 (traditions): co-citation clustering for §1.5
-- [ ] Period detection: regenerate divergence curves + top-terms table for §2.5
-- [ ] Quantitative support for efficiency–accountability tension in §3.4
 - [ ] Human proofread of full manuscript
-- [ ] Change title (TBD)
-- [ ] Regenerate French résumé and English abstract
-- [ ] Content polish pass (opening hook, figure cross-references)
-- [ ] Keywords (FR + EN)
 - [ ] Final word count trim (~9,600 → ~9,000)
-- [ ] Proofread bibliography formatting (DOI on separate line per Œconomia style)
 - [ ] Final `make clean && make all` + visual check
 - [ ] Move draft to `release/` for submission
 
@@ -34,3 +26,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - Drafting: all sections (intro, §1–§4, conclusion)
 - Œconomia house style, AI-tell sweep, code audit, PDF+ODT build clean
 - Doc restructuring: separated concerns (AGENTS → workflow only, domain guidance → docs/), added Dragon Dreaming + TDD + git hooks
+- Agent-agnostic skills: runbooks/, make check, AGENTS.md works with any AI assistant
