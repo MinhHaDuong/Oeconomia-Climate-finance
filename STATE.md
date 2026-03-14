@@ -13,7 +13,7 @@ Last updated: 2026-03-14
 ## Corpus
 
 - 28,442 refined works (from 35,046 enriched), 34,081 embeddings cached, 2,342 core
-- Citation graph: 775,288 rows, 65% coverage
+- Citation graph: 775,288 rows, 74% of DOI-bearing works covered (17,248 / 23,194)
 - Validation: 44-check acceptance test passes (`make corpus-validate`)
 - Ecology filter tightened — need extend + filter + figures regen
 
@@ -36,8 +36,9 @@ Last updated: 2026-03-14
 
 ## Recent
 
-- Doc restructuring complete: AGENTS.md split into focused files (ROADMAP, STATE, docs/writing-guidelines, docs/coding-guidelines). PLAN.md deleted. Dragon Dreaming workflow, TDD, housekeeping triggers added.
-- Pre-commit hook: branch protection, secrets/large files/conflict markers guard. No bypasses.
+- Doc verification audit: fixed citation coverage inconsistency, removed deprecated wrapper refs, added Phase 1 write-guard, restored domain knowledge to writing-guidelines, added `make lint-prose` target.
+- Doc restructuring complete: AGENTS.md split into focused files. Dragon Dreaming workflow, TDD, housekeeping triggers, autonomous Celebrating phase.
+- Pre-commit hook: branch protection, secrets/large files/conflict markers guard.
 
 ## Next priorities
 
