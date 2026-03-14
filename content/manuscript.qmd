@@ -1,6 +1,6 @@
 ---
-title: "Counting Climate Finance. How Economists Made a Governable Object (1990–2025)"
-subtitle: "*Compter la finance climat. Comment les économistes ont fabriqué un objet gouvernable (1990–2025)*"
+title: "Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity"
+subtitle: "*Inventer la finance climat. Des coûts incrémentaux à l'ambiguïté stratégique*"
 author: "Minh Ha-Duong"
 keywords:
   - climate finance
