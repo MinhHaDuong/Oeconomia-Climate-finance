@@ -14,8 +14,9 @@
 | `docs/oeconomia-style.md` | Journal house style | Final formatting |
 | `.env` | Machine-specific paths: `CLIMATE_FINANCE_DATA`, `CLAUDE_MEMORY_DIR` | Script execution |
 | `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
+| `runbooks/` | Step-by-step workflows (celebrate, new-ticket, review-pr) | Multi-step procedures |
 
-Claude Code auto-loads `$CLAUDE_MEMORY_DIR/MEMORY.md` into every conversation (persistent cross-session memory).
+Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md` (auto-loaded by some agents; others should read it at conversation start).
 
 ## Dragon Dreaming workflow
 
@@ -51,29 +52,15 @@ Each step gets its own commit (the git log tells the story: intent → solution 
 - `make clean && make all` is the integration test.
 
 ### Celebrating (autonomous)
-After the Doing phase completes, run this sequence without asking:
-
-1. **Reflect**: what worked, what didn't, what was surprising.
-2. **Update STATE.md**: refresh stats, remove resolved blockers, adjust priorities.
-3. **Update ROADMAP.md**: check off completed items, note new ones that emerged.
-4. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
-5. **Update MEMORY.md**: save durable lessons, prune stale entries.
-6. **Commit** the updates on the current branch (before merging).
-7. **Merge to main**: `git checkout main && git merge --no-ff -m "..." <branch>`.
-8. **Push** and **clean up**: delete local and remote branch.
-9. **Close** the GitHub issue if one exists.
-10. **Offer** to work on AGENTS.md if the workflow can be improved.
+After the Doing phase completes, follow `runbooks/celebrate.md` without asking.
 
 ## Housekeeping triggers
 
 ### Before every commit
 - **Stale check**: re-read any project file you modified or relied on. If it contains outdated numbers, stale status, or dead references, fix them in the same commit. The commit is the quality gate — nothing stale gets versioned.
 
-### After completing a ticket (Celebrating phase)
-- Update `STATE.md`: refresh stats, remove resolved blockers, adjust priorities.
-- Update `ROADMAP.md`: check off completed items, note new ones that emerged.
-- Update `content/technical-report.qmd` if the pipeline, data contract, or methodology changed.
-- Update MEMORY.md: save durable lessons, prune stale entries.
+### After completing a ticket
+See Celebrating phase (steps 1–10 above).
 
 ### At conversation start (time-based)
 - Read `STATE.md` and `ROADMAP.md` — if not from today, refresh from current data.
@@ -99,26 +86,21 @@ After the Doing phase completes, run this sequence without asking:
 
 ### Autonomous workflow
 When working on multiple tickets:
-1. Launch each ticket in its own worktree (Agent tool with `isolation: "worktree"`)
+1. Launch each ticket in its own git worktree
 2. Independent tickets run in parallel
 3. Push each branch and create a PR with summary + test plan
-4. Launch a fresh-context agent in a new worktree to review the PR: read the diff (`gh pr diff`), check against the issue's exit criteria, run local and general tests, and post review comments on the PR (`gh pr review`)
+4. Launch a fresh-context review in a new worktree — follow `runbooks/review-pr.md`
 5. Clean up worktree branches after pushing named branches
 
 ## GitHub Issues as plans
 
-Issues are handoff documents. A new agent will only have the context provided. Each issue must include:
-- **Relevant files** and their roles
-- **Actions** to take (concrete steps)
-- **Verification steps** (how to confirm it's done)
-- **Invariants** (what must not break)
-- **Exit criteria** (definition of done)
+Issues are handoff documents. Follow `runbooks/new-ticket.md` for the template.
 
 Before doing anything on a ticket, clarify the definition of done.
 
 ## Memory policy
 
-### What to remember (let Claude auto-manage MEMORY.md)
+### What to remember (agent-managed persistent memory)
 - User preferences and workflow corrections
 - Machine-specific configuration (paths, API keys, remote machines)
 - Naming conventions and project quirks not obvious from code

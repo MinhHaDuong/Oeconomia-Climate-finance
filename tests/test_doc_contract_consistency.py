@@ -21,6 +21,7 @@ import pytest
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 AGENTS_MD = os.path.join(ROOT, "AGENTS.md")
+CODING_GUIDELINES_MD = os.path.join(ROOT, "docs", "coding-guidelines.md")
 README_MD = os.path.join(ROOT, "README.md")
 CORPUS_CONSTRUCTION_MD = os.path.join(ROOT, "content", "_includes", "corpus-construction.md")
 REPRODUCIBILITY_MD = os.path.join(ROOT, "content", "_includes", "reproducibility.md")
@@ -35,44 +36,44 @@ def read(path):
 # AGENTS.md
 # ---------------------------------------------------------------------------
 
-class TestAgentsMd:
+class TestCodingGuidelinesMd:
+    """Pipeline contract docs moved from AGENTS.md to docs/coding-guidelines.md."""
+
     def test_all_four_artifacts_mentioned(self):
-        """AGENTS.md must mention all four Phase 1 intermediate artifacts."""
-        text = read(AGENTS_MD)
+        """coding-guidelines.md must mention all four Phase 1 intermediate artifacts."""
+        text = read(CODING_GUIDELINES_MD)
         for artifact in ["unified_works.csv", "enriched_works.csv",
                          "extended_works.csv", "refined_works.csv"]:
             assert artifact in text, \
-                f"AGENTS.md missing artifact: {artifact}"
+                f"coding-guidelines.md missing artifact: {artifact}"
 
     def test_all_four_make_targets_mentioned(self):
-        """AGENTS.md must mention all four corpus Makefile targets."""
-        text = read(AGENTS_MD)
+        """coding-guidelines.md must mention all four corpus Makefile targets."""
+        text = read(CODING_GUIDELINES_MD)
         for target in ["corpus-discover", "corpus-enrich", "corpus-extend", "corpus-filter"]:
             assert target in text, \
-                f"AGENTS.md missing Makefile target: {target}"
+                f"coding-guidelines.md missing Makefile target: {target}"
 
     def test_no_cheap_prefilter_as_pipeline_step(self):
-        """AGENTS.md must not describe 'cheap filter' as a step before enrichment."""
-        text = read(AGENTS_MD)
-        # Acceptable: mentioning '--cheap' flag if historical/deprecated context
-        # Unacceptable: prose saying cheap filter runs in Phase 1a before enrichment
+        """coding-guidelines.md must not describe 'cheap filter' as a step before enrichment."""
+        text = read(CODING_GUIDELINES_MD)
         assert "cheap filter" not in text.lower(), \
-            "AGENTS.md still describes 'cheap filter' as a pipeline step"
+            "coding-guidelines.md still describes 'cheap filter' as a pipeline step"
 
     def test_phase1_has_four_steps(self):
-        """AGENTS.md Phase 1 section should describe four steps (discover/enrich/extend/filter)."""
-        text = read(AGENTS_MD)
+        """coding-guidelines.md Phase 1 section should describe four steps."""
+        text = read(CODING_GUIDELINES_MD)
         phase1_section = re.search(
             r"Phase 1.*?(?=Phase 2|##|\Z)", text, re.DOTALL | re.IGNORECASE
         )
-        assert phase1_section, "AGENTS.md must have a Phase 1 section"
+        assert phase1_section, "coding-guidelines.md must have a Phase 1 section"
         section_text = phase1_section.group(0)
         steps_found = sum(
             1 for step in ["discover", "enrich", "extend", "filter"]
             if step in section_text.lower()
         )
         assert steps_found >= 4, (
-            f"AGENTS.md Phase 1 section mentions only {steps_found}/4 pipeline steps "
+            f"coding-guidelines.md Phase 1 section mentions only {steps_found}/4 pipeline steps "
             f"(discover, enrich, extend, filter)"
         )
 
@@ -141,14 +142,10 @@ class TestReproducibilityMd:
 # ---------------------------------------------------------------------------
 
 class TestReadmeMd:
-    def test_artifact_table_has_enriched_works(self):
-        """README.md artifact table must include enriched_works.csv."""
-        text = read(README_MD)
-        assert "enriched_works.csv" in text, \
-            "README.md artifact table missing enriched_works.csv"
+    """README.md is vision-only; pipeline details live in docs/coding-guidelines.md."""
 
-    def test_artifact_table_has_extended_works(self):
-        """README.md artifact table must include extended_works.csv."""
+    def test_points_to_coding_guidelines(self):
+        """README.md should reference coding-guidelines.md for pipeline details."""
         text = read(README_MD)
-        assert "extended_works.csv" in text, \
-            "README.md artifact table missing extended_works.csv"
+        assert "coding-guidelines" in text, \
+            "README.md should reference docs/coding-guidelines.md"
