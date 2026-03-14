@@ -270,9 +270,9 @@ content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# PCA seed-axis scatter (core, supervised)
-content/figures/fig_seed_axis_core.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --supervised --no-pdf
+# Seed-axis violin (core, manuscript figure)
+content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
 
 # PCA scatter (unsupervised)
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
