@@ -33,3 +33,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - Foundations: figures, bibliography audit, empirical findings
 - Drafting: all sections (intro, §1–§4, conclusion)
 - Œconomia house style, AI-tell sweep, code audit, PDF+ODT build clean
+- Doc restructuring: separated concerns (AGENTS → workflow only, domain guidance → docs/), added Dragon Dreaming + TDD + git hooks
