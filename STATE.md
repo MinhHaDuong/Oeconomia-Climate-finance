@@ -21,7 +21,7 @@ Last updated: 2026-03-14
 
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992
 - Fig 2 (composition): relocated to §3.4 (thematic decomposition argument)
-- Fig S1 (traditions): co-citation network, color, Electronic Supplement — PR #88 open
+- Fig S1 (traditions): co-citation network, color, Electronic Supplement (PR #88 merged)
 - Table 2 (poles): efficiency vs accountability terms — done
 - Table 1 (traditions): caption updated; §1.5 cites co-citation evidence (Q=0.68)
 
@@ -33,6 +33,11 @@ Last updated: 2026-03-14
 ## Active PRs
 
 - #99: docs — reasoning levels for git messages
+
+## Recent
+
+- Doc restructuring complete: AGENTS.md split into focused files (ROADMAP, STATE, docs/writing-guidelines, docs/coding-guidelines). PLAN.md deleted. Dragon Dreaming workflow, TDD, housekeeping triggers added.
+- Pre-commit hook: branch protection, secrets/large files/conflict markers guard. No bypasses.
 
 ## Next priorities
 
