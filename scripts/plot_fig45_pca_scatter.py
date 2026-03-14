@@ -114,7 +114,7 @@ has_title = works["title"].notna() & (works["title"].str.len() > 0)
 in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 df = works[has_title & in_range].copy().reset_index(drop=True)
 
-embeddings = load_refined_embeddings()
+embeddings = load_refined_embeddings()[(has_title & in_range).values]
 assert len(embeddings) == len(df), (
     f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
 )

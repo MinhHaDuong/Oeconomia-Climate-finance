@@ -66,7 +66,7 @@ The full corpus (~30,000 works from OpenAlex + ISTEX + Scopus + grey lit) suppor
 
 The three-act periodization is **data-driven** (endogenous break detection), not imposed from COP milestones:
 - I. Before climate finance (1990–2006)
-- II. Crystallization (2007–2014) — breaks at 2007 and 2013
+- II. Crystallization (2007–2014) — single break at 2007–2008
 - III. The established field (2015–2025) — no further breaks
 
 ### Citation Practices
