@@ -65,26 +65,26 @@ def main():
     ax.bar(years, other, bottom=cf, color=LIGHT, edgecolor="white",
            linewidth=0.3, zorder=2, label="UNFCCC financial mechanism literature")
 
-    # --- Period bands (no vertical lines — save ink) ---
+    # --- Period bands ---
     bands = [
         ("Before", 1990, 2007, FILL, 1999),
-        ("Crystallisation", 2007, 2015, "#EEEEEE", None),
+        ("Crystallisation", 2007, 2015, "#E8E8E8", None),
         ("Disputes", 2015, 2024, FILL, None),
     ]
     for label, x0, x1, color, label_x in bands:
-        ax.axvspan(x0, x1, color=color, alpha=0.4, zorder=0, linewidth=0)
+        ax.axvspan(x0, x1, color=color, alpha=0.7, zorder=0, linewidth=0)
         cx = label_x if label_x else (x0 + x1) / 2
         ax.text(cx, 0.97, label, transform=ax.get_xaxis_transform(),
-                ha="center", va="top", fontsize=7, fontstyle="italic",
-                color=MED)
-    # Event labels at period boundaries (centered on the boundary)
+                ha="center", va="top", fontsize=8, fontstyle="italic",
+                color=DARK)
+    # Event labels at period boundaries
     for year, label in [
         (1992, "Rio\nUNFCCC\n(1992)"),
         (2007, "Bali\nAction Plan\n(2007)"),
         (2015, "Paris\nAgreement\n(2015)"),
     ]:
         ax.text(year, 0.88, label, transform=ax.get_xaxis_transform(),
-                ha="center", va="top", fontsize=7, color=MED,
+                ha="center", va="top", fontsize=7.5, color=DARK,
                 multialignment="center")
 
     # --- Legend (reverse order to match stacked bars: broader on top) ---
