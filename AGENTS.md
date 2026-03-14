@@ -128,6 +128,7 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 - **Commit frequently** — do not let work accumulate without versioning
 - **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`. This preserves uncommitted work on `main` and enables parallel ticket work.
 - **One branch per ticket**, named `t{N}-short-description` (e.g., `t3-censored-breaks`)
+- **Definition of Done**: every ticket must state its exit criteria before work begins. If the ticket description is ambiguous, clarify with the author first — never start work on an undefined target. A ticket is done when all its criteria are met, not when effort stops.
 - **Create PRs** for each ticket so the author can review changes before merging
 - Merge to `main` when a milestone is stable
 - Always commit before starting a new phase of work
