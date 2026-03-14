@@ -1,4 +1,5 @@
 noise_title:
+  # Tech/crypto
   - blockchain
   - cryptocurrency
   - bitcoin
@@ -13,6 +14,20 @@ noise_title:
   - virtual reality
   - chatgpt
   - generative ai
+  # Pure ecology / biophysical (no finance angle)
+  - species diversity
+  - species richness
+  - species composition
+  - aboveground biomass
+  - allometric
+  - wood density
+  - tree species
+  - plant species
+  - forest inventory
+  - forest ecology
+  - vegetation index
+  - habitat preference
+  - habitat loss
 
 # Exact-match titles: journal front/back matter, not research papers
 noise_title_exact:
@@ -37,19 +52,22 @@ noise_title_exact:
 
 safe_title:
   - climate
-  - carbon
+  - carbon market
+  - carbon tax
+  - carbon price
+  - carbon credit
+  - carbon trading
+  - carbon offset
   - emission
   - energy
-  - green
-  - environment
-  - sustainable
+  - green bond
+  - green finance
   - adaptation
   - mitigation
   - renewable
   - finance
   - fund
   - investment
-  - development
   - aid
   - cdm
   - kyoto
@@ -79,10 +97,12 @@ safe_title:
   - "\u30D5\u30A1\u30A4\u30CA\u30F3\u30B9"
 
 concept_groups:
-  climate: [climate, emission, greenhouse, warming, carbon, mitigation, adaptation, ghg, co2, ipcc]
-  finance: [finance, fund, investment, cost, market, aid, grant, loan, subsidy, fiscal, monetary, budget, bond, bank, insurance]
-  development: [development, developing, country, nation, capacity, transfer, poverty, oda, governance]
-  environment: [environment, energy, renewable, sustainable, conservation, ecology, biodiversity, forest, pollution, resource]
+  climate: [climate, emission, greenhouse, warming, mitigation, adaptation, ghg, co2, ipcc]
+  finance: [finance, fund, investment, cost, market, aid, grant, loan, subsidy, fiscal, monetary, budget, bond, bank, insurance, payment, pes, offset, trading, price, tax, credit]
+  policy: [policy, governance, regulation, treaty, agreement, unfccc, cop, kyoto, paris, redd, cdm, gef, oda, development, developing, country, nation, transfer, poverty]
+  energy: [energy, renewable, electricity, solar, wind, power, grid, fossil, fuel, transition, decarbonization]
+# Ecology/biophysical terms no longer count as a concept group.
+# Papers must hit climate/energy + finance/policy to pass, not just climate + ecology.
 min_concept_groups: 2
 
 citation_isolation:
