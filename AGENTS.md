@@ -138,6 +138,19 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 - Always commit before starting a new phase of work
 - Propose a commit when a logical unit of work is complete
 
+### Reasoning levels in git messages
+
+Two levels, both git-native (portable, readable with `git log` alone):
+
+**Commit message** — why *this* change:
+- Implementation choice made, alternative not taken
+- One logical unit; keep concise
+
+**Merge commit** (`--no-ff -m`) — why *this branch*:
+- Approach chosen and alternatives rejected
+- Cross-file impact, side effects, residual debt
+- Readable via `git log --merges`
+
 ### Autonomous workflow
 When working on multiple tickets:
 1. Launch each ticket in its own worktree (Agent tool with `isolation: "worktree"`)
