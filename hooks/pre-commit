@@ -1,8 +1,53 @@
 #!/bin/sh
-# Reject commits that modify CLAUDE.md
-# CLAUDE.md should contain only "@AGENTS.md" — all edits go to AGENTS.md
+# Pre-commit guards — keep the repo clean
+# Override any check: ALLOW_MAIN=1, ALLOW_SECRETS=1, ALLOW_LARGE=1
 
+# 1. No commits on main
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "main" ] && [ "$ALLOW_MAIN" != "1" ]; then
+    echo "ERROR: Direct commits to main are not allowed. Work on a branch." >&2
+    echo "  Override: ALLOW_MAIN=1 git commit ..." >&2
+    exit 1
+fi
+
+# 2. CLAUDE.md is locked
 if git diff --cached --name-only | grep -qx 'CLAUDE.md'; then
     echo "ERROR: CLAUDE.md is protected. Edit AGENTS.md instead." >&2
+    exit 1
+fi
+
+# 3. No secrets
+if [ "$ALLOW_SECRETS" != "1" ]; then
+    secrets=$(git diff --cached --name-only | grep -iE '\.env$|\.env\.|credentials|secret|api.?key|\.pem$|\.key$' || true)
+    if [ -n "$secrets" ]; then
+        echo "ERROR: Possible secrets staged:" >&2
+        echo "$secrets" >&2
+        echo "  Override: ALLOW_SECRETS=1 git commit ..." >&2
+        exit 1
+    fi
+fi
+
+# 4. No large files (>500KB)
+if [ "$ALLOW_LARGE" != "1" ]; then
+    large=""
+    for file in $(git diff --cached --name-only --diff-filter=d); do
+        size=$(wc -c < "$file" 2>/dev/null || echo 0)
+        if [ "$size" -gt 512000 ]; then
+            large="$large  $file ($(( size / 1024 ))KB)\n"
+        fi
+    done
+    if [ -n "$large" ]; then
+        echo "ERROR: Large files staged (>500KB):" >&2
+        printf "$large" >&2
+        echo "  Override: ALLOW_LARGE=1 git commit ..." >&2
+        exit 1
+    fi
+fi
+
+# 5. No conflict markers
+conflicts=$(git diff --cached --name-only | xargs grep -l '^<<<<<<<\|^>>>>>>>\|^=======$' 2>/dev/null || true)
+if [ -n "$conflicts" ]; then
+    echo "ERROR: Unresolved merge conflict markers in:" >&2
+    echo "$conflicts" >&2
     exit 1
 fi

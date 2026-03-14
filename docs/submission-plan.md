@@ -14,9 +14,9 @@ Following your encouraging response of February 16, 2026 to my extended abstract
 
 The paper traces how economists working in international organisations — particularly at the OECD Development Assistance Committee — constructed climate finance as a distinct economic object between 1990 and 2025. It argues that they did not discover a pre-existing reality but built the accounting categories (Rio markers, mobilised-private-finance methodologies, concessionality thresholds) through which climate-related financial flows were rendered measurable and governable. Drawing on the sociology of quantification (Desrosieres, Porter), performativity (Callon, MacKenzie), and economization (Caliskan and Callon), the paper situates this construction within the broader history of climate economics.
 
-The historical argument is grounded in a computational analysis of approximately 22,000 works (1990–2025) from seven bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
+The historical argument is grounded in a computational analysis of approximately 28,400 works (1990–2025) from seven bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
 
-The manuscript is approximately 9,400 words with 47 bibliographic references, 2 figures, and 1 table. A full replication archive (data, code, and technical report) is available at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
+The manuscript is approximately 9,600 words with 61 bibliographic references, 3 figures, and 2 tables. A full replication archive (data, code, and technical report) is available at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
 
 The paper is not under consideration elsewhere. A version of the abstract has been accepted for presentation at the ESHET-HES Joint Conference (Nice, May 2026).
 
@@ -57,7 +57,7 @@ The manuscript currently cites a GitHub repository. Before submission, three com
    - Get HAL ID (e.g., `hal-XXXXXXXX`)
 4. **Update manuscript** `Data and code availability` paragraph:
 
-   > **Data and code availability.** The corpus (22,113 works), analysis scripts, and reproducible pipeline are archived at [Zenodo DOI]. The technical report documenting data collection, processing, and analysis procedures is available as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
+   > **Data and code availability.** The corpus (28,442 works), analysis scripts, and reproducible pipeline are archived at [Zenodo DOI]. The technical report documenting data collection, processing, and analysis procedures is available as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
 
 5. **Update bibliography** — add `technical-report` as a `@techreport` entry in `main.bib` so it can be cited in-text (e.g., in the corpus method paragraph of the introduction)
 
@@ -112,7 +112,7 @@ Minh Ha-Duong
 
 ## 2. Reading Plan (Defence Against "Vibewriting")
 
-The manuscript cites 47 works. You need to demonstrate genuine familiarity with each, not just abstract-level knowledge. The risk areas are:
+The manuscript cites 61 works. You need to demonstrate genuine familiarity with each, not just abstract-level knowledge. The risk areas are:
 
 ### Tier 1 — Must read cover-to-cover (or key chapters)
 These are the theoretical backbone. A reviewer could quiz you on any of these.
@@ -257,7 +257,7 @@ Ask them to review for:
 1. Title + puzzle (the $100bn/$300bn that nobody can define)
 2. Research question: how did economists make climate finance countable?
 3. Theoretical toolkit: commensuration, performativity, economization
-4. Method: 22,000 works, embedding-based break detection (keep brief)
+4. Method: 28,400 works, embedding-based break detection (keep brief)
 5. **Act 1** — Before climate finance: three disconnected traditions (1 slide)
 6. **Act 2** — The Copenhagen moment + OECD infrastructure (2-3 slides)
    - Rio markers, the AGF, Stern/Hourcade/Corfee-Morlot as architects

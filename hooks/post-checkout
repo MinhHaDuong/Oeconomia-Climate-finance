@@ -1,0 +1,11 @@
+#!/bin/sh
+# Symlink .env from main worktree into new worktrees
+# .env is gitignored (machine-specific paths), but scripts need it
+
+if [ ! -e .env ]; then
+    main_worktree=$(git worktree list --porcelain | head -1 | sed 's/^worktree //')
+    if [ -f "$main_worktree/.env" ]; then
+        ln -s "$main_worktree/.env" .env
+        echo "Linked .env from main worktree"
+    fi
+fi

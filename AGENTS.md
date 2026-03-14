@@ -1,319 +1,140 @@
 # AI Agent Guidelines for Climate Finance History Project
 
-> **Do NOT modify `CLAUDE.md`.** It contains only `@AGENTS.md` and must stay that way. All instructions and status live here in `AGENTS.md`.
+> `CLAUDE.md` contains only `@AGENTS.md` — do not modify it (enforced by pre-commit hook).
 
-See `README.md` for project overview, repository structure, data paths.
-See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
-See `content/technical-report.qmd` for the full data pipeline documentation.
+## Information sources
 
-## Status (2026-03-13)
+| File | Purpose | When to consult |
+|------|---------|-----------------|
+| `README.md` | Project vision, repo structure, build commands | Onboarding, orientation |
+| `ROADMAP.md` | Milestones, deliverables, what's done | Starting work, picking tasks |
+| `STATE.md` | Current decisions, blockers, stats | Before any task (snapshot of now) |
+| `docs/writing-guidelines.md` | Prose style, language polish, citations | Editing manuscript text |
+| `docs/coding-guidelines.md` | Pipeline, scripts, conventions | Writing or running code |
+| `docs/oeconomia-style.md` | Journal house style | Final formatting |
+| `.env` | Machine-specific paths: `CLIMATE_FINANCE_DATA`, `CLAUDE_MEMORY_DIR` | Script execution |
+| `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
 
-- Manuscript: ~9,200 words, 55 bib entries, 3 figures + 2 tables
-- Manuscript variable dependencies reduced to 1 (`corpus_total_approx`)
-- Phase 2→3 contract documented in manuscript.qmd header comment
-- ΔBIC values, cluster counts, language % moved out of manuscript prose (belong in companion)
-- Corpus: 28,442 refined works (from 35,046 enriched), 34,081 embeddings cached, 2,342 core
-- Citation graph: 775,288 rows, 65% corpus coverage
-- Corpus validation: 44-check acceptance test (`make corpus-validate`), `make corpus-tables`
-- Quarto: 4 documents, 11 shared includes, cross-refs (`@fig-*`, `@tbl-*`)
-- Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992, caption updated
-- Fig 2 (composition): relocated to §3.4 (thematic decomposition argument); removed from §1.5
-- Fig S1 (traditions): co-citation network, color, Electronic Supplement — PR #88 open
-- Table 2 (poles): efficiency vs accountability terms — done
-- Table 1 (traditions): caption updated; §1.5 now cites co-citation evidence (Q=0.68)
-- Peer-review simulation docs archived in `docs/peer-review-simulation-20260310/`
-- **Next priorities**:
-  1. Human proofread of full manuscript
-  2. Merge PR #88 (t23-tradition-figure: §1.5 + fig_traditions + bib)
-  3. Corpus update ongoing (enrichment pipeline)
-  4. Regen period detection curves + terms table for §2.5
-  5. Move ΔBIC details + cluster counts to companion paper
+Claude Code auto-loads `$CLAUDE_MEMORY_DIR/MEMORY.md` into every conversation (persistent cross-session memory).
 
-## Project Structure
+## Dragon Dreaming workflow
 
-This is a Quarto multi-document project (`_quarto.yml`). Four outputs share
-reusable fragments in `content/_includes/` via `{{< include >}}` directives:
+Every task passes through four phases. Name the phase you're in.
 
-- `content/manuscript.qmd` — main Œconomia article (self-contained, no includes)
-- `technical-report.qmd` — pipeline documentation (composed entirely of includes)
-- `data-paper.qmd` — corpus data paper (reuses corpus-construction + reproducibility)
-- `companion-paper.qmd` — methods companion (reuses all analysis sections)
+### Dreaming
+Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like.
 
-Build with `make manuscript` (PDF + DOCX) or `make papers` (3 companion PDFs).
-`make all` builds everything. See `Makefile` for targets.
+### Planning
+Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Write tests first** (see TDD below). No production commits yet.
 
-## Writing Guidelines
+### Doing
+Autonomous execution. Red → green → refactor. Commit at each step. Stay on the branch, protect main.
 
-- Academic but accessible
-- Historical narrative combined with analytical argument
-- Avoid jargon; define terms when first introduced
-- Show, don't just tell (use specific examples, names, dates)
+## Test-driven development
 
-## Task-Specific Guidance
+Write the test before the code. The cycle is:
 
-### Literature Review
-- Prioritize works that show economists' role in category-making
-- Balance institutional documents (OECD, UNFCCC) with critical scholarship
-- Include Global South perspectives (avoid OECD-centric bias)
-- Track evolution of key terms across time
+1. **Red**: write a failing test that defines the expected behavior.
+2. **Green**: write the minimum code to make it pass.
+3. **Refactor**: clean up, then confirm tests still pass.
 
-### Data Analysis
-The full corpus (~30,000 works from OpenAlex + ISTEX + Scopus + grey lit) supports:
-- Bibliometric analysis (publication volume, co-citation networks, community detection)
-- Embedding-based analysis (structural breaks, semantic clustering, bimodality)
-- Lexical analysis (TF-IDF validation, term emergence)
-- Discourse analysis (how "climate finance" is defined across time)
+Each step gets its own commit (the git log tells the story: intent → solution → polish).
 
-The three-act periodization is **data-driven** (endogenous break detection), not imposed from COP milestones:
-- I. Before climate finance (1990–2006)
-- II. Crystallization (2007–2014) — single break at 2007–2008
-- III. The established field (2015–2025) — no further breaks
+### For scripts (pipeline, analysis, figures)
+- Tests live in `tests/`. Run with `uv run pytest`.
+- A new script or changed behavior starts with a test in `tests/test_<module>.py`.
+- Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
 
-### Citation Practices
-- This is a history paper: cite primary sources with dates
-- When discussing controversies, present multiple perspectives fairly
-- Name economists and institutions specifically (not "policymakers" but "OECD DAC")
-- Include both academic and grey literature (reports, policy papers)
+### For manuscript (prose, figures, tables)
+- Verification commands are the "tests": blacklisted words, em-dash density, word count, `make manuscript` build clean.
+- Before editing prose, run the relevant checks. After editing, confirm they still pass.
+- `make clean && make all` is the integration test.
 
-## Things to Avoid
+### Celebrating
+Reflect on lessons learned. Generalize new skills. Update MEMORY.md with durable insights. Clean up: close issues, archive branches, update STATE.md and ROADMAP.md.
 
-- **Don't:** Write as if climate finance naturally exists
-- **Do:** Show how it was constructed through specific choices
-- **Don't:** Assume categories are neutral or technical
-- **Do:** Analyze political implications of measurement choices
-- **Don't:** Oversimplify North-South divides
-- **Do:** Show specific actors and their motivations
+## Housekeeping triggers
 
-## Search Strategies
+### Before every commit
+- **Stale check**: re-read any project file you modified or relied on. If it contains outdated numbers, stale status, or dead references, fix them in the same commit. The commit is the quality gate — nothing stale gets versioned.
 
-### Finding Relevant Passages in ISTEX Corpus
-Search for:
-- Specific economists: "Stern", "Corfee-Morlot"
-- Methodological terms: "Rio marker", "grant equivalent", "mobilized finance"
-- Institutions: "OECD DAC", "Standing Committee on Finance", "Climate Policy Initiative"
-- Temporal markers: "Copenhagen", "Paris Agreement", "100 billion"
+### After completing a ticket (Celebrating phase)
+- Update `STATE.md`: refresh stats, remove resolved blockers, adjust priorities.
+- Update `ROADMAP.md`: check off completed items, note new ones that emerged.
+- Update `content/technical-report.qmd` if the pipeline, data contract, or methodology changed.
+- Update MEMORY.md: save durable lessons, prune stale entries.
 
-### Working with AI Analyses
-The SciSpace reports in `AI tech reports/SciSpace/` contain:
-- Pre-identified key works on specific topics
-- CSV files with structured data
-- `Quick_Reference_Must_Cite_and_Overlooked_Works.md` for literature gaps
+### At conversation start (time-based)
+- Read `STATE.md` and `ROADMAP.md` — if not from today, refresh from current data.
 
-## Quality Standards
+### When to update `content/technical-report.qmd`
+- Pipeline phase contract changed (new inputs/outputs)
+- New script added or existing script's interface changed
+- Data schema changed (columns added/removed in CSV files)
+- Methodology changed (embedding model, clustering params, break detection)
+- NOT for manuscript prose edits, figure styling, or build tweaks
 
-### For Draft Sections
-- Every empirical claim needs a source
-- Every "turning point" needs a date and specific actors
-- Balance description (what happened) with analysis (why it matters)
-- Connect micro-level details to macro-level argument
+## Git discipline
 
-### For Final Review
-- Check that "history of economic thought" framing is prominent
-- Verify all citations are in bibliography
-- Ensure Œconomia style guidelines are followed (see `docs/oeconomia-style.md`)
-- Confirm word count fits journal norms
-
-## Communication with Author
-
-### When to Ask
-- Argument direction is genuinely ambiguous
-- Multiple good sources conflict
-- Author's position on controversial topic is unclear
-
-### When Not to Ask
-- Standard academic practices apply
-- You can research the answer
-- It's a matter of stylistic preference you can reasonably infer
-
-## Technical Notes
-
-### Git versioning
-- **Hooks**: checked into `hooks/`. After cloning, run `git config core.hooksPath hooks`.
-  The pre-commit hook rejects changes to `CLAUDE.md` (must stay `@AGENTS.md`).
-- **Commit frequently** — do not let work accumulate without versioning
-- **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`. This preserves uncommitted work on `main` and enables parallel ticket work.
-- **One branch per ticket**, named `t{N}-short-description` (e.g., `t3-censored-breaks`)
-- **Create PRs** for each ticket so the author can review changes before merging
-- Merge to `main` when a milestone is stable
-- Always commit before starting a new phase of work
-- Propose a commit when a logical unit of work is complete
+- **Always work on a branch.** Branch naming: `t{N}-short-description`.
+- **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers. Each check has an `ALLOW_*=1` override.
+- **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
+- **Hooks** live in `hooks/`. After cloning: `git config core.hooksPath hooks`.
+- **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
+- **Merge commits** (`git merge --no-ff -m`): tactical-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
+- **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
+- **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`.
+- **Create PRs** for each ticket so the author can review changes before merging.
 
 ### Autonomous workflow
 When working on multiple tickets:
 1. Launch each ticket in its own worktree (Agent tool with `isolation: "worktree"`)
 2. Independent tickets run in parallel
 3. Push each branch and create a PR with summary + test plan
-4. Clean up worktree branches after pushing named branches
+4. Launch a fresh-context agent in a new worktree to review the PR: read the diff (`gh pr diff`), check against the issue's exit criteria, run local and general tests, and post review comments on the PR (`gh pr review`)
+5. Clean up worktree branches after pushing named branches
 
-### File management
-- Working drafts: Quarto Markdown (`.qmd`); final submission: PDF or DOCX
-- Build with `make` (calls `quarto render` under the hood)
-- Shared fragments live in `content/_includes/` — edit there, all documents update
-- Bibliography: `content/bibliography/main.bib`, author-date style
-- Version control: old versions in `attic/`, submissions in `release/`
+## GitHub Issues as plans
 
-### Conventions
-- `uv sync` to install (never pip). `uv run python scripts/...` to execute.
-- All scripts support `--no-pdf`.
-- `make` builds all documents. `make manuscript` builds manuscript only. `make papers` builds the 3 companion documents. `make figures` regenerates all figures (byte-reproducible).
-- House style: `docs/oeconomia-style.md` (eyeballed from 15-4 samples)
+Issues are handoff documents. A new agent will only have the context provided. Each issue must include:
+- **Relevant files** and their roles
+- **Actions** to take (concrete steps)
+- **Verification steps** (how to confirm it's done)
+- **Invariants** (what must not break)
+- **Exit criteria** (definition of done)
 
-### Dependency management
-- **Always use `uv sync`** to install dependencies. Never use `pip` or `uv pip`.
-- All dependencies are declared in `pyproject.toml` at project root.
-- torch is pinned to CPU-only builds via `[tool.uv.sources]` (no NVIDIA/CUDA).
-- To add a dependency: edit `pyproject.toml`, then run `uv sync`.
+Before doing anything on a ticket, clarify the definition of done.
 
-### Data location
-- Data lives **outside the repo**, at the path set by `CLIMATE_FINANCE_DATA` in `.env`.
-- `scripts/utils.py` reads `.env` and exports `DATA_DIR`, `CATALOGS_DIR`, `EMBEDDINGS_PATH`. Never hardcode `data/catalogs/` relative to the repo — it doesn't exist there.
+## Memory policy
 
-### Running scripts
+### What to remember (let Claude auto-manage MEMORY.md)
+- User preferences and workflow corrections
+- Machine-specific configuration (paths, API keys, remote machines)
+- Naming conventions and project quirks not obvious from code
 
-Always use `uv run`. All scripts support `--no-pdf` to skip PDF generation.
+### What NOT to remember
+- Anything derivable from code, git history, or other docs
+- Ephemeral task state (use STATE.md or git commits instead)
+- Content already in README, ROADMAP, STATE, or guidelines docs
 
-### Pipeline phases
+### When to update
+- **Celebrating phase**: always review and update memories
+- **After user correction**: save feedback immediately
+- **After discovering a quirk**: save so future sessions don't rediscover it
 
-The pipeline has three phases with a strict contract between them:
+## Communication with author
 
-**Phase 1 — Corpus building** (slow, API-dependent, run rarely):
-- Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
-- Four steps with intermediate artifacts in `$CLIMATE_FINANCE_DATA/catalogs/`:
-  1. **corpus-discover**: merge sources → `unified_works.csv`
-  2. **corpus-enrich**: enrich DOIs/abstracts/citations on `unified_works.csv` → `enriched_works.csv`
-  3. **corpus-extend**: flag all works (no rows removed) → `extended_works.csv`
-  4. **corpus-filter**: apply policy, audit → `refined_works.csv` (final Phase 1 output)
-- Phase 1 → Phase 2 **contract**: `refined_works.csv`, `embeddings.npz`, `citations.csv`
-- Run with: `make corpus` (all four steps) or individual targets
-- Validate: `make corpus-validate` (44-check acceptance test)
-- Report: `make corpus-tables` (per-source stats, citation coverage, QC report)
+### When to ask
+- Argument direction is genuinely ambiguous
+- Multiple good sources conflict
+- Author's position on controversial topic is unclear
 
-**Phase 2 — Analysis & figures** (fast, deterministic, run often):
-- Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`
-- Reads ONLY Phase 1 outputs; produces `content/figures/` and `content/tables/`
-- Run with: `make figures`
+### When not to ask
+- Standard academic practices apply
+- You can research the answer
+- It's a matter of stylistic preference you can reasonably infer
 
-**Phase 3 — Render** (Quarto → PDF/DOCX):
-- Run with: `make manuscript` or `make papers`
-
-```bash
-# Citation enrichment (run in order; both are resumable)
-uv run python scripts/enrich_citations_batch.py                  # Crossref references (do first)
-uv run python scripts/enrich_citations_openalex.py               # OpenAlex referenced_works (fills gap)
-uv run python scripts/qc_citations.py                            # Verify citation quality (30-sample)
-# Or simply: make citations  (runs all three in order)
-
-# Figures — alluvial pipeline (split into focused scripts as of #73)
-uv run python scripts/compute_breakpoints.py     # tab_breakpoints.csv, tab_breakpoint_robustness.csv
-uv run python scripts/compute_clusters.py        # tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
-uv run python scripts/compute_lexical.py         # tab_lexical_tfidf.csv (all breaks + controls, with p-values)
-uv run python scripts/plot_fig_breakpoints.py    # fig_breakpoints.png
-uv run python scripts/plot_fig_alluvial.py       # fig_alluvial.png + .html
-uv run python scripts/compute_breakpoints.py --core-only       # Core variants of breakpoints tables
-uv run python scripts/compute_clusters.py --core-only          # Core variants of alluvial tables
-uv run python scripts/plot_fig_breakpoints.py --core-only      # fig_breakpoints_core.png
-uv run python scripts/plot_fig_alluvial.py --core-only         # fig_alluvial_core.png
-uv run python scripts/compute_breakpoints.py --robustness      # tab_k_sensitivity.csv
-uv run python scripts/plot_fig_k_sensitivity.py                # fig_k_sensitivity.png
-uv run python scripts/plot_fig_lexical_tfidf.py                # fig_lexical_tfidf_{year}.png per break
-uv run python scripts/compute_breakpoints.py --censor-gap 1    # Censored breaks (k=1)
-uv run python scripts/compute_breakpoints.py --censor-gap 2    # Censored breaks (k=2)
-# Deprecated wrappers (removal planned for v1.0 milestone):
-#   compute_alluvial.py  →  calls compute_breakpoints + compute_clusters + compute_lexical
-#   analyze_alluvial.py  →  calls all compute + plot scripts in sequence
-uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
-uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
-uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)
-uv run python scripts/plot_fig45_pca_scatter.py  # Fig 4 PCA scatter (appendix, full corpus)
-uv run python scripts/analyze_genealogy.py       # Fig 4 genealogy (depends on bimodality output)
-uv run python scripts/summarize_core_venues.py   # Core venue tables + institution summaries
-uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table
-```
-
-## Language Polish — AI Tells to Eliminate
-
-This manuscript was co-written with an LLM. Apply these rules on every edit pass.
-
-### Blacklisted words (target: 0 occurrences)
-
-delve, nuanced, multifaceted, pivotal, crucial, robust (unless statistical sense),
-intricate, comprehensive, meticulous, vibrant, arguably, showcasing, underscores,
-foster, tapestry, landscape (unless proper noun, e.g. CPI *Global Landscape*)
-
-### Blacklisted phrases (target: 0 occurrences)
-
-"it is important to note," "in the realm of," "stands as a testament to,"
-"plays a vital role," "the landscape of," "navigating the complexities,"
-"the interplay between," "sheds light on," "a growing body of literature,"
-"offers a lens through which," "it is worth noting," "cannot be overstated"
-
-### Contrast farming (target: ≤3 justified instances)
-
-Pattern: "not X, but Y" used for rhetorical emphasis.
-Each instance must be genuinely contrastive (a real either/or), not decorative.
-Rephrase decorative contrasts with "rather than," "instead of," or restructure.
-
-### Em-dash density (target: ≤2 per paragraph)
-
-Convert excess em-dash parentheticals to:
-- Actual parentheses: `(X, Y, Z)` for lists
-- Commas or semicolons for clause-level asides
-- Periods for genuinely separate thoughts
-
-### Other patterns to avoid
-
-- **Compulsive tricolons**: not every list needs exactly three items
-- **Uniform sentence length**: vary between short and long
-- **Excessive hedging**: cut "perhaps," "it might be argued that," "to some extent"
-- **Over-explanation**: trust the reader; cut "In other words," "That is to say,"
-- **Sentence-initial "Moreover/Furthermore/Additionally"**: use sparingly (≤2 per section)
-
-### Verification command
-
-```bash
-# Blacklisted words (expect 0)
-grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' content/manuscript.qmd
-
-# Em-dash heavy paragraphs (expect 0 lines with 3+)
-grep -cP '---.*---.*---' content/manuscript.qmd
-
-# Contrast farming (expect ≤3)
-grep -cP 'not .{3,60}, but ' content/manuscript.qmd
-```
-
-### Citation Graph
-
-`citations.csv` (775,288 rows) was built from two sources:
-
-- **Crossref** (`enrich_citations_batch.py`): covers papers where publishers deposit reference lists
-- **OpenAlex** (`enrich_citations_openalex.py`): fills the gap using `referenced_works`
-
-**Overall coverage**: 17,248 / 23,194 corpus DOIs (74%) appear as source papers.
-**Core coverage** (cited ≥ 50): 2,284 core works.
-**Quality**: precision = recall = 1.000 verified against Crossref on 30-paper sample.
-**Structural ceiling**: the remaining 22% are at publishers (preprints, small journals, regional outlets) with no API reference metadata. Next step: PDF OCR with GROBID for core papers.
-
-The OpenAlex enrichment uses a two-phase approach:
-1. Batch-fetch `referenced_works` (list of OpenAlex IDs) for each corpus DOI via filter endpoint
-2. Batch-resolve OpenAlex IDs → DOIs + title/year/journal via `openalex:W1|W2|...` filter
-
-Both scripts are resumable: Crossref uses `.citations_batch_checkpoint.csv`, OpenAlex uses `.citations_oa_done.txt`.
-
-### Intellectual Traditions (Table 1) — Status
-
-Empirical detection via co-citation community detection is implemented (`analyze_cocitation.py`, `compare_communities_across_windows.py`). Analysis across four time windows (pre-2007, pre-2015, pre-2020, full) reveals:
-
-- Pre-2007: 18 small, distinct communities — econometrics, institutions, adaptation, aid, CDM, etc.
-- Pre-2015: merger into mega-community (97 papers), modularity drops to 0.14
-- Post-2020: re-crystallizes into 6 stable communities (Q=0.45): climate risk, governance, adaptation, Paris, green bonds, earth systems
-
-Only the governance/accountability lineage (DiMaggio → Keohane → Weikmans) persists across all four windows. With the enriched citation graph (78% coverage), re-running the co-citation analysis should yield stronger community signal, especially for the pre-2007 period.
-
-**Table 1 is still pending**: the user's interpretation maps pre-2007 communities 1-2 = environmental economics, 3-4 = burden-sharing, 5 = aid/CDM. Needs final write-up after re-running with enriched data.
-
-Reference: Liang et al. 2024, "Mapping the Increasing Use of LLMs in Scientific Papers" (arXiv:2406.07016)
-
-## Self-Check Questions
+## Self-check questions
 
 Before producing any substantial text:
 1. Does this advance the core argument? (Climate finance as constructed economic object)
