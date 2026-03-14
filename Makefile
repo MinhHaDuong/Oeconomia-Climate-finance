@@ -61,7 +61,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest corpus-tables corpus-validate deploy-corpus check lint-prose clean rebuild archive verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -429,6 +429,10 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 	@echo "=== Local checksums ==="
 	@md5sum content/figures/*.png content/tables/*.csv | sort -k2
 	@echo "=== Compare visually or diff the above ==="
+
+# ── All checks (tests + lint) ────────────────────────────
+check: lint-prose
+	uv run pytest tests/ -v --tb=short
 
 # ── Prose linting (AI-tell detection) ─────────────────────
 lint-prose:

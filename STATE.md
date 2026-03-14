@@ -36,8 +36,9 @@ Last updated: 2026-03-14
 
 ## Recent
 
-- Doc verification audit: fixed citation coverage inconsistency, removed deprecated wrapper refs, added Phase 1 write-guard, restored domain knowledge to writing-guidelines, added `make lint-prose` target.
-- Doc restructuring complete: AGENTS.md split into focused files. Dragon Dreaming workflow, TDD, housekeeping triggers, autonomous Celebrating phase.
+- Agent-agnostic skills: runbooks/ directory (celebrate, new-ticket, review-pr), `make check` target, AGENTS.md free of Claude-specific references.
+- Doc verification audit: citation coverage unified, deprecated wrapper refs removed, Phase 1 write-guard, `make lint-prose`.
+- Doc restructuring: AGENTS.md → workflow only, domain guidance → docs/, PLAN.md → ROADMAP + STATE.
 - Pre-commit hook: branch protection, secrets/large files/conflict markers guard.
 
 ## Next priorities
