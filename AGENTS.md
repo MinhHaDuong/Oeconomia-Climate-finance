@@ -20,7 +20,7 @@ Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md` (auto-loaded by some a
 
 ## Dragon Dreaming workflow
 
-Every task passes through four phases. Name the phase you're in.
+Every task passes through four phases. Identify and report the phase you're in on startup.
 
 ### Dreaming
 Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like.
