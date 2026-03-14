@@ -2,6 +2,22 @@
 
 Consult this file when editing manuscript prose, bibliography, or literature review.
 
+## Core argument
+
+Climate finance crystallized as an economic object by ~2009. Everything since has been fought within the categories established at that moment. This is intellectual history showing how economists create governable objects through quantification.
+
+## Three-act periodization (data-driven)
+
+- I. Before climate finance (1990–2006) — three disconnected traditions
+- II. Crystallization (2007–2014) — structural breaks at 2007 (cosine) and 2013 (JS)
+- III. The established field (2015–2025) — no further structural break
+
+The periodization is endogenous (embedding-based break detection), not imposed from COP milestones. The core subset (most-cited papers) shows no structural break at all.
+
+## Corpus
+
+~28,400 works from OpenAlex + Semantic Scholar + ISTEX + bibCNRS + SciSpace + grey lit + teaching. Core subset: ~2,300 papers cited ≥ 50 times.
+
 ## Voice and style
 
 - Academic but accessible

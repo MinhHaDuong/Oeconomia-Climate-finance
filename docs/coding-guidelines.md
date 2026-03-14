@@ -41,7 +41,8 @@ Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragm
 
 The pipeline has three phases with a strict contract between them:
 
-**Phase 1 — Corpus building** (slow, API-dependent, run rarely):
+**Phase 1 — Corpus building** (slow, API-dependent, run rarely).
+Phase 1 modifies `$CLIMATE_FINANCE_DATA`. Run only when explicitly requested.
 - Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
 - Four steps with intermediate artifacts in `$CLIMATE_FINANCE_DATA/catalogs/`:
   1. **corpus-discover**: merge sources → `unified_works.csv`
@@ -85,9 +86,6 @@ uv run python scripts/plot_fig_k_sensitivity.py                # fig_k_sensitivi
 uv run python scripts/plot_fig_lexical_tfidf.py                # fig_lexical_tfidf_{year}.png per break
 uv run python scripts/compute_breakpoints.py --censor-gap 1    # Censored breaks (k=1)
 uv run python scripts/compute_breakpoints.py --censor-gap 2    # Censored breaks (k=2)
-# Deprecated wrappers (removal planned for v1.0 milestone):
-#   compute_alluvial.py  →  calls compute_breakpoints + compute_clusters + compute_lexical
-#   analyze_alluvial.py  →  calls all compute + plot scripts in sequence
 uv run python scripts/analyze_bimodality.py      # Fig 5a/5b/5c
 uv run python scripts/analyze_bimodality.py --core-only  # Fig 5a/5b/5c (core: cited ≥ 50)
 uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised  # Fig 4 seed axis (paper)

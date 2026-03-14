@@ -61,7 +61,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest corpus-tables corpus-validate deploy-corpus clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -429,6 +429,19 @@ verify-remote: $(ARCHIVE_NAME).tar.gz
 	@echo "=== Local checksums ==="
 	@md5sum content/figures/*.png content/tables/*.csv | sort -k2
 	@echo "=== Compare visually or diff the above ==="
+
+# ── Prose linting (AI-tell detection) ─────────────────────
+lint-prose:
+	@echo "=== Blacklisted words (expect 0) ==="
+	@count=$$(grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' content/manuscript.qmd || true); \
+	echo "  Found: $$count"; [ "$$count" -eq 0 ] || exit 1
+	@echo "=== Em-dash heavy paragraphs (target 0, currently 7 — fix during proofread) ==="
+	@count=$$(grep -cP -- '---.*---.*---' content/manuscript.qmd || true); \
+	echo "  Found: $$count"; [ "$$count" -le 7 ] || exit 1
+	@echo "=== Contrast farming (expect ≤3) ==="
+	@count=$$(grep -cP 'not .{3,60}, but ' content/manuscript.qmd || true); \
+	echo "  Found: $$count"; [ "$$count" -le 3 ] || exit 1
+	@echo "LINT-PROSE: PASS"
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:
