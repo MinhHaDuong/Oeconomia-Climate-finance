@@ -6,28 +6,23 @@ See `README.md` for project overview, repository structure, data paths.
 See `PLAN.md` for the manuscript action plan (three-act structure, five figures).
 See `content/technical-report.qmd` for the full data pipeline documentation.
 
-## Status (2026-03-13)
+## Status (2026-03-14)
 
+**Dimensions** — what exists (rewrite on each merge to main):
 - Manuscript: ~9,200 words, 55 bib entries, 3 figures + 2 tables
-- Manuscript variable dependencies reduced to 1 (`corpus_total_approx`)
-- Phase 2→3 contract documented in manuscript.qmd header comment
-- ΔBIC values, cluster counts, language % moved out of manuscript prose (belong in companion)
-- Corpus: 28,442 refined works (from 35,046 enriched), 34,081 embeddings cached, 2,342 core
-- Citation graph: 775,288 rows, 65% corpus coverage
-- Corpus validation: 44-check acceptance test (`make corpus-validate`), `make corpus-tables`
-- Quarto: 4 documents, 11 shared includes, cross-refs (`@fig-*`, `@tbl-*`)
-- Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992, caption updated
-- Fig 2 (composition): relocated to §3.4 (thematic decomposition argument); removed from §1.5
-- Fig S1 (traditions): co-citation network, color, Electronic Supplement — PR #88 open
-- Table 2 (poles): efficiency vs accountability terms — done
-- Table 1 (traditions): caption updated; §1.5 now cites co-citation evidence (Q=0.68)
-- Peer-review simulation docs archived in `docs/peer-review-simulation-20260310/`
-- **Next priorities**:
-  1. Human proofread of full manuscript
-  2. Merge PR #88 (t23-tradition-figure: §1.5 + fig_traditions + bib)
-  3. Corpus update ongoing (enrichment pipeline)
-  4. Regen period detection curves + terms table for §2.5
-  5. Move ΔBIC details + cluster counts to companion paper
+- Corpus: 28,442 refined works, 34,081 embeddings, 2,342 core
+- Citation graph: 775,288 rows, 65% coverage
+- Quarto: 4 documents, 11 shared includes
+
+**Open fronts** — what's in progress (drop when merged or abandoned):
+- PR #88 open: t23-tradition-figure (§1.5 + fig_traditions + bib)
+- Corpus enrichment pipeline running
+
+**Next** — what to do (max 5, rewrite freely):
+1. Human proofread of full manuscript
+2. Merge PR #88
+3. Regen period detection curves + terms table for §2.5
+4. Move ΔBIC details + cluster counts to companion paper
 
 ## Project Structure
 
@@ -140,7 +135,7 @@ The SciSpace reports in `AI tech reports/SciSpace/` contain:
 
 ### Reasoning levels in git messages
 
-Two levels, both git-native (portable, readable with `git log` alone):
+Three levels, all git-native (portable, readable with `git log` alone):
 
 **Commit message** — why *this* change:
 - Implementation choice made, alternative not taken
@@ -150,6 +145,16 @@ Two levels, both git-native (portable, readable with `git log` alone):
 - Approach chosen and alternatives rejected
 - Cross-file impact, side effects, residual debt
 - Readable via `git log --merges`
+
+**AGENTS.md Status** — why *here, now*:
+- Rewritten (not appended) on each merge to `main`
+- Three categories with different lifetimes:
+  - **Dimensions**: current counts/sizes — overwrite with fresh numbers
+  - **Open fronts**: in-progress branches/PRs — drop when merged or abandoned
+  - **Next**: up to 5 priorities — rewrite freely, no accumulation
+- Completed work is recorded in merge commits, not in Status
+- Old Status recoverable via `git log -p -- AGENTS.md`
+- Rule: if a fact is only reachable through `git log`, it's properly forgotten
 
 ### Autonomous workflow
 When working on multiple tickets:
