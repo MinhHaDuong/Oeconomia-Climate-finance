@@ -293,10 +293,14 @@ for ax, ax_info in zip(plot_axes, axes_info):
         ax.axvspan(y_start - 0.5, y_end + 0.5,
                    alpha=0.08, color=PERIOD_COLORS[period_label], zorder=0)
 
-    # COP markers
-    for cop_year in COP_EVENTS:
-        ax.axvline(cop_year, color="grey", linestyle="--", alpha=0.3,
-                   linewidth=0.8, zorder=1)
+    # Linear regression trend line (2000–2023, behind data)
+    trend_mask = (df["year"] >= 2000) & (df["year"] <= 2023)
+    trend_years = df.loc[trend_mask, "year"].values.astype(float)
+    trend_scores = scores[trend_mask.values]
+    slope, intercept = np.polyfit(trend_years, trend_scores, 1)
+    x_line = np.array([2000, 2023])
+    ax.plot(x_line, slope * x_line + intercept,
+            color="black", linewidth=1.2, linestyle="--", alpha=0.5, zorder=1)
 
     # Scatter by period
     for period_label, (y_start, y_end) in PERIODS.items():
@@ -309,21 +313,9 @@ for ax, ax_info in zip(plot_axes, axes_info):
 
         ax.scatter(
             df.loc[pmask, "year"].values + jitter, pscores,
-            s=sizes, alpha=0.4, color=PERIOD_COLORS[period_label],
+            s=sizes, alpha=0.7, color=PERIOD_COLORS[period_label],
             edgecolors="none", label=period_label, zorder=2,
         )
-
-    # Yearly median line
-    yearly_med = df.assign(score=scores).groupby("year")["score"].median()
-    ax.plot(yearly_med.index, yearly_med.values,
-            color="black", linewidth=2, zorder=3, label="Yearly median")
-
-    # COP labels
-    ymin, ymax = ax.get_ylim()
-    for cop_year, cop_name in COP_EVENTS.items():
-        ax.text(cop_year + 0.3, ymax - 0.02 * (ymax - ymin),
-                cop_name, fontsize=6, color="grey", alpha=0.7,
-                ha="left", va="top", rotation=90)
 
     # Pole labels
     pos_terms = ax_info.get("top_positive_terms", "")
@@ -355,12 +347,24 @@ for ax, ax_info in zip(plot_axes, axes_info):
                      f"\u0394BIC={dbic:.0f})", fontsize=11)
         ax.set_ylabel(f"PC{ax_info['component']} score", fontsize=10)
     ax.set_xlabel("Year", fontsize=10)
+    ax.set_xlim(1999.5, 2023.5)
+    ax.set_ylim(-0.5, 0.5)
 
-# Legend
-handles = [mpatches.Patch(color=c, label=l, alpha=0.6)
-           for l, c in PERIOD_COLORS.items()]
-handles.append(plt.Line2D([0], [0], color="black", linewidth=2, label="Yearly median"))
-plot_axes[-1].legend(handles=handles, fontsize=8, loc="upper left", framealpha=0.9)
+    # Custom x-axis ticks: add (Bali) under 2007, (Paris) under 2015
+    tick_years = list(range(2000, 2024, 5))  # 2000, 2005, 2010, 2015, 2020
+    if 2007 not in tick_years:
+        tick_years.append(2007)
+    tick_years.sort()
+    tick_labels = []
+    for y in tick_years:
+        if y == 2007:
+            tick_labels.append("2007\n(Bali)")
+        elif y == 2015:
+            tick_labels.append("2015\n(Paris)")
+        else:
+            tick_labels.append(str(y))
+    ax.set_xticks(tick_years)
+    ax.set_xticklabels(tick_labels)
 
 core_label = " (core, cited \u2265 50)" if args.core_only else ""
 if args.supervised:
