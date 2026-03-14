@@ -77,7 +77,7 @@ Reflect on lessons learned. Generalize new skills. Update MEMORY.md with durable
 ## Git discipline
 
 - **Always work on a branch.** Branch naming: `t{N}-short-description`.
-- **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers. Each check has an `ALLOW_*=1` override.
+- **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Hooks** live in `hooks/`. After cloning: `git config core.hooksPath hooks`.
 - **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
