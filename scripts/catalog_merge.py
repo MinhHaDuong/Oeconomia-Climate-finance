@@ -18,7 +18,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, WORKS_COLUMNS, normalize_doi,
+from utils import (CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS, normalize_doi,
                    normalize_title, save_csv)
 
 SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "jstor", "bibcnrs", "scispsace", "grey", "teaching"]
@@ -45,13 +45,18 @@ def merge_group(group):
     result = {}
     for col in WORKS_COLUMNS:
         if col == "source":
-            result[col] = "|".join(sources)
+            # Primary source = highest priority
+            result[col] = sources[0]
         elif col == "cited_by_count":
             # Take max
             counts = pd.to_numeric(group[col], errors="coerce")
             result[col] = int(counts.max()) if counts.notna().any() else ""
         else:
             result[col] = pick_best(group, col)
+    # Boolean provenance columns: 1 if source contributed, 0 otherwise
+    for col in FROM_COLS:
+        src_name = col.replace("from_", "")
+        result[col] = 1 if src_name in sources else 0
     return result
 
 
@@ -114,10 +119,13 @@ def main():
     for col in WORKS_COLUMNS:
         if col not in result.columns:
             result[col] = ""
-    result = result[WORKS_COLUMNS]
+    for col in FROM_COLS:
+        if col not in result.columns:
+            result[col] = 0
+    result = result[WORKS_COLUMNS + FROM_COLS]
 
-    # Add source_count
-    result["source_count"] = result["source"].str.split("|").str.len()
+    # Add source_count (sum of from_* boolean columns)
+    result["source_count"] = result[FROM_COLS].sum(axis=1).astype(int)
 
     # Sort by year desc, then cited_by_count desc
     result["_year_sort"] = pd.to_numeric(result["year"], errors="coerce")
@@ -132,10 +140,11 @@ def main():
     print(f"  Unified works: {len(result)}")
     print(f"  Multi-source works: {(result['source_count'] > 1).sum()}")
     print(f"  Source distribution:")
-    for src in SOURCE_PRIORITY:
-        count = result["source"].str.contains(src).sum()
+    for col in FROM_COLS:
+        src_name = col.replace("from_", "")
+        count = (result[col] == 1).sum()
         if count:
-            print(f"    {src}: {count}")
+            print(f"    {src_name}: {count}")
 
 
 if __name__ == "__main__":
