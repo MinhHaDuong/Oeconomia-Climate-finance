@@ -295,7 +295,7 @@ class TestAuditTrail:
             )
 
     def test_audit_actions_valid(self, audit):
-        valid = {"keep", "remove"}
+        valid = {"keep", "remove", "deduped"}
         actions = set(audit["action"].dropna().unique())
         invalid = actions - valid
         assert not invalid, \
