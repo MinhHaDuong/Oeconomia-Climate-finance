@@ -16,11 +16,9 @@
 #   make rebuild      Clean + rebuild everything
 
 # ── Paths ─────────────────────────────────────────────────
-# Machine-specific path set in .env (see .env.example).
-# Python scripts read the same file via utils.py.
--include .env
-export CLIMATE_FINANCE_DATA
-DATA_DIR     ?= $(CLIMATE_FINANCE_DATA)/catalogs
+# Data lives in data/catalogs/ (managed by DVC).
+# Python scripts resolve the same path via utils.py (BASE_DIR/data).
+DATA_DIR     := data/catalogs
 BIB         := content/bibliography/main.bib
 CSL         := content/bibliography/oeconomia.csl
 SRC         := content/manuscript.qmd
