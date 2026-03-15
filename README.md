@@ -117,3 +117,11 @@ make manuscript       # build PDF (requires figures)
 - **Journal:** Œconomia – History / Methodology / Philosophy
   - https://journals.openedition.org/oeconomia/
   - http://journals.sfu.ca/oeconomia
+
+### DVC on padme (the remote host)
+
+Since padme hosts the DVC remote, it uses a local path override to avoid SSH loopback:
+```bash
+uv run dvc remote modify --local padme url /data/projets/dvc/oeconomia-climate-finance
+```
+This creates `.dvc/config.local` (gitignored) so the override is machine-specific.
