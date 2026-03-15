@@ -513,6 +513,7 @@ class TestRetryParameterPlumbing:
             "source": ["openalex"],
             "source_id": ["W1"],
             "_missing": [True],
+            "from_openalex": [1],
         })
         counters = {}
         ea.step2_openalex(
