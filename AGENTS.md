@@ -85,12 +85,14 @@ See Celebrating phase (steps 1–10 above).
 - **Create PRs** for each ticket so the author can review changes before merging.
 
 ### Autonomous workflow
+When issue exploration lead to multiple action items, open one ticket for each. Then switch to orchestrator role: recursively launch agents to fix the ripe ones and think more about the others, in waves according to dependencies. When they return, switch to verification role to critically assess the work done.
 When working on multiple tickets:
 1. Launch each ticket in its own git worktree
 2. Independent tickets run in parallel
 3. Push each branch and create a PR with summary + test plan
 4. Launch a fresh-context review in a new worktree — follow `runbooks/review-pr.md`
 5. Clean up worktree branches after pushing named branches
+6. Always do a global verification pass after each wave of fixes.
 
 ## GitHub Issues as plans
 
