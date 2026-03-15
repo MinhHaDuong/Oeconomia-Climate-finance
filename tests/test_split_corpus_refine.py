@@ -136,9 +136,27 @@ class TestExtendMode:
         assert output_path.exists()
 
         output_df = pd.read_csv(output_path)
-        for col in ("flags", "protected", "protect_reason", "action"):
+        for col in ("protected", "protect_reason", "action"):
             assert col in output_df.columns, \
                 f"--extend output missing column: {col}"
+
+    def test_extend_mode_no_flags_column(self, tmp_path, enriched_csv):
+        """--extend output must NOT contain a derived 'flags' column.
+
+        The flags list is derived from boolean columns and should only
+        appear as a serialized pipe-string in corpus_audit.csv.
+        """
+        output_path = tmp_path / "extended_works.csv"
+        rc, out = run_script(
+            "--extend",
+            "--works-input", str(enriched_csv),
+            "--works-output", str(output_path),
+            "--skip-llm", "--skip-citation-flag",
+        )
+        assert rc == 0, f"--extend failed:\n{out}"
+        output_df = pd.read_csv(output_path)
+        assert "flags" not in output_df.columns, \
+            "--extend output must not contain derived 'flags' column"
 
     def test_extend_mode_does_not_remove_rows(self, tmp_path, enriched_csv):
         """--extend output must contain all original source_id values."""
@@ -185,9 +203,7 @@ class TestFilterMode:
             "from_scispsace": [0] * 10,
             "from_grey": [0] * 10,
             "from_teaching": [0] * 10,
-            # Flag 3 rows as noise
-            "flags": ['["missing_metadata"]', '["missing_metadata"]', '["missing_metadata"]']
-                     + ["[]"] * 7,
+            # Flag 3 rows as noise (boolean columns only, no derived 'flags')
             "missing_metadata": [True, True, True] + [False] * 7,
             "no_abstract_irrelevant": [False] * 10,
             "title_blacklist": [False] * 10,
