@@ -30,7 +30,8 @@ from utils import CATALOGS_DIR, normalize_doi
 # Paths
 REFINED_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
 ENRICHED_PATH = os.path.join(CATALOGS_DIR, "enriched_works.csv")
-TEACHING_PATH = os.path.join(CATALOGS_DIR, "teaching_canon.csv")
+
+
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 LLM_CACHE_PATH = os.path.join(CATALOGS_DIR, "llm_relevance_cache.csv")
 
@@ -38,22 +39,17 @@ DEFAULT_MODEL = "BAAI/bge-reranker-v2-m3"
 
 
 def load_data():
-    """Load works + teaching canon + citation DOIs."""
+    """Load works + teaching DOIs (from from_teaching column) + citation DOIs."""
     # Prefer enriched (has all papers including flagged ones)
     path = ENRICHED_PATH if os.path.exists(ENRICHED_PATH) else REFINED_PATH
     df = pd.read_csv(path)
     df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
     print(f"Loaded {len(df)} works from {os.path.basename(path)}")
 
-    # Teaching canon
-    teaching_dois = set()
-    if os.path.exists(TEACHING_PATH):
-        tc = pd.read_csv(TEACHING_PATH, dtype=str, keep_default_na=False)
-        for d in tc["doi"]:
-            nd = normalize_doi(d)
-            if nd:
-                teaching_dois.add(nd)
-        print(f"Teaching canon: {len(teaching_dois)} DOIs")
+    # Teaching works via from_teaching column
+    from_teaching = pd.to_numeric(df.get("from_teaching", 0), errors="coerce").fillna(0) == 1
+    teaching_dois = set(df.loc[from_teaching, "doi_norm"]) - {""}
+    print(f"Teaching works (from_teaching=1): {len(teaching_dois)} DOIs")
 
     # Citation target DOIs (papers cited by others in corpus)
     cited_dois = set()
