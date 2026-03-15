@@ -17,7 +17,7 @@ Last updated: 2026-03-15
 - DVC-managed: `dvc.yaml` (5 stages), `dvc.lock` committed, remote padme in sync
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
-- `make check-fast`: 185 passed, 8 failures (tests to adapt to DVC/Makefile refactoring)
+- `make check-fast`: 193 passed, 0 failures
 - Ecology filter tightened — need extend + filter + figures regen
 
 ## Figures & tables
@@ -45,12 +45,11 @@ Last updated: 2026-03-15
 - **DVC chantier complete** (2026-03-15): 10 tickets, data versioned with DVC, pipeline DAG, repro archives, external cache, bidirectional push/pull doudou ↔ padme.
 - **Source normalized to 1NF** (#113): pipe-separated `source` → boolean `from_*` columns. 15 scripts adapted.
 - **Teaching canon refactored** (#114): single merge in discover, `build_teaching_canon.py` simplified (363 → 100 lines), `teaching_canon.csv` eliminated.
-- **Test infra** (#117–#123): `pytest-timeout`, `make check-fast` (185 tests, <2 min). 8 tests still need adapting to DVC/Makefile changes.
+- **Test infra complete** (#117–#123, #129–#130): `pytest-timeout`, `make check-fast` (193 passed, 0 failures). Makefile contract tests updated for DVC delegation; corpus_refine tests skip torch offline.
 - **CLIMATE_FINANCE_DATA removed**: scripts hardcode `data/` relative to repo root. `.env` simplified.
 
 ## Open tickets
 
-- #117: test infra (8 fast-test failures to adapt)
 - #125: DVC-track exports/ and syllabi/
 
 ## Next priorities

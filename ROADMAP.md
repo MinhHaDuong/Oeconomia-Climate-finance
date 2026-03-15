@@ -30,6 +30,6 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - DVC integration (#101–#104, #109): data versioning, pipeline DAG, repro archives, external cache, bidirectional sync
 - Source normalized to 1NF (#113): pipe-separated source → boolean from_* columns
 - Teaching canon refactored (#114): single merge, build_teaching_canon simplified 363→100 lines
-- Test infra (#117–#123): pytest-timeout, make check-fast
+- Test infra (#117–#123, #129–#130): pytest-timeout, make check-fast (193 passed, 0 failures)
 - Fix timeout truncation (#121): remove int() cast on request_timeout
 - DOI dedup in corpus_refine (#120): fixes duplicate OpenAlex IDs and fake grey-lit placeholder DOIs
