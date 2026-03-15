@@ -59,7 +59,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -430,6 +430,10 @@ archive-datapaper: check-corpus
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose
 	uv run pytest tests/ -v --tb=short
+
+# Fast subset: unit tests only (no corpus data or network needed, < 30s).
+check-fast: lint-prose
+	uv run pytest tests/ -v --tb=short -m "not slow"
 
 # ── Prose linting (AI-tell detection) ─────────────────────
 lint-prose:
