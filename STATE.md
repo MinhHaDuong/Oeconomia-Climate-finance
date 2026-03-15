@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-14
+Last updated: 2026-03-15
 
 ## Manuscript
 
@@ -36,9 +36,8 @@ Last updated: 2026-03-14
 
 ## Recent
 
+- **DVC integration complete** (#101–#104): data versioned in `data/`, pipeline DAG in `dvc.yaml`, remote on padme, reproducibility archives for manuscript + data paper. `dvc push`/`dvc pull` syncs machines. Legacy `corpus_manifest.py` and scp-based deploy retired.
 - Agent-agnostic skills: runbooks/ directory (celebrate, new-ticket, review-pr), `make check` target, AGENTS.md free of Claude-specific references.
-- Doc verification audit: citation coverage unified, deprecated wrapper refs removed, Phase 1 write-guard, `make lint-prose`.
-- Doc restructuring: AGENTS.md → workflow only, domain guidance → docs/, PLAN.md → ROADMAP + STATE.
 - Pre-commit hook: branch protection, secrets/large files/conflict markers guard.
 
 ## Next priorities
