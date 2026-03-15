@@ -54,7 +54,7 @@ After the Doing phase completes, follow `runbooks/celebrate.md` without asking.
 
 ## Housekeeping triggers
 
-Follow `runbooks/housekeeping.md` at each trigger point (before commit, conversation start, after ticket).
+Follow `runbooks/housekeeping.md` at each trigger point.
 
 ## Git discipline
 
