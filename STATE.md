@@ -12,9 +12,12 @@ Last updated: 2026-03-15
 
 ## Corpus
 
-- 28,442 refined works (from 35,046 enriched), 34,081 embeddings cached, 2,342 core
-- Citation graph: 775,288 rows, 74% of DOI-bearing works covered (17,248 / 23,194)
-- Validation: 44-check acceptance test passes (`make corpus-validate`)
+- 27,534 refined works (from 35,143 unified), embeddings + citations cached
+- Schema normalized: `from_openalex`, `from_s2`, ..., `from_teaching` boolean columns (1NF)
+- DVC-managed: `dvc.yaml` (5 stages), `dvc.lock` committed, remote padme in sync
+- DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
+- Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
+- `make check-fast`: 193 passed, 0 failures
 - Ecology filter tightened — need extend + filter + figures regen
 
 ## Figures & tables
@@ -33,17 +36,26 @@ Last updated: 2026-03-15
 ## Active PRs
 
 - #99: docs — reasoning levels for git messages
+- #126: ticket — stop persisting derived flags in extended_works.csv
+- #127: extract housekeeping/memory sections from AGENTS.md into runbooks
+- #128: DOI dedup in corpus_refine
 
 ## Recent
 
-- **DVC integration complete** (#101–#104): data versioned in `data/`, pipeline DAG in `dvc.yaml`, remote on padme, reproducibility archives for manuscript + data paper. `dvc push`/`dvc pull` syncs machines. Legacy `corpus_manifest.py` and scp-based deploy retired.
-- Agent-agnostic skills: runbooks/ directory (celebrate, new-ticket, review-pr), `make check` target, AGENTS.md free of Claude-specific references.
-- Pre-commit hook: branch protection, secrets/large files/conflict markers guard.
+- **DVC chantier complete** (2026-03-15): 10 tickets, data versioned with DVC, pipeline DAG, repro archives, external cache, bidirectional push/pull doudou ↔ padme.
+- **Source normalized to 1NF** (#113): pipe-separated `source` → boolean `from_*` columns. 15 scripts adapted.
+- **Teaching canon refactored** (#114): single merge in discover, `build_teaching_canon.py` simplified (363 → 100 lines), `teaching_canon.csv` eliminated.
+- **Test infra complete** (#117–#123, #129–#130): `pytest-timeout`, `make check-fast` (193 passed, 0 failures). Makefile contract tests updated for DVC delegation; corpus_refine tests skip torch offline.
+- **CLIMATE_FINANCE_DATA removed**: scripts hardcode `data/` relative to repo root. `.env` simplified.
+
+## Open tickets
+
+- #125: DVC-track exports/ and syllabi/
 
 ## Next priorities
 
 1. Human proofread of full manuscript
-2. Review and merge PR #99
-3. Corpus update (enrichment pipeline)
+2. Merge PR #128 (DOI dedup) + PR #99 (docs)
+3. Corpus regen (extend + filter + figures after ecology filter tightening)
 4. Regen period detection curves + terms table for §2.5
 5. Move ΔBIC details + cluster counts to companion paper

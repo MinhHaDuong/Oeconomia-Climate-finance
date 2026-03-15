@@ -222,20 +222,71 @@ def apply_filter(df, output_path=None, audit_path=None):
     print(f"  Removing: {n_remove}")
     print(f"  Keeping: {n_keep}")
 
-    # Save audit
-    audit_df = df[["doi", "title", "year", "cited_by_count", "source_count",
-                    "protected", "protect_reason", "action"]].copy()
-    audit_df["flags"] = df["flags"].apply(lambda f: "|".join(f) if isinstance(f, list) else str(f))
-    audit_df.to_csv(audit_path, index=False)
-    print(f"  Saved audit -> {audit_path}")
-
     # Save refined corpus
     keep_df = df[df["action"] == "keep"].drop(
-        columns=["flags", "protected", "protect_reason", "action", "doi_norm",
+        columns=["flags", "protected", "protect_reason", "action",
                  "missing_metadata", "no_abstract_irrelevant", "title_blacklist",
                  "citation_isolated_old", "semantic_outlier", "semantic_outlier_dist",
                  "llm_irrelevant"],
         errors="ignore")
+
+    # Deduplicate on normalized DOI (enrichment steps can reintroduce duplicates
+    # from source JSONs; this is the final quality gate).
+    #
+    # Step 1: clear placeholder DOIs shared by grey-literature records — these are
+    # fake DOIs assigned to multiple distinct grey-lit documents and should not be
+    # used as identifiers.
+    deduped_source_ids = set()
+    if "doi_norm" in keep_df.columns and "from_grey" in keep_df.columns:
+        grey_doi_counts = keep_df.loc[
+            keep_df["from_grey"].fillna(0).astype(bool) & (keep_df["doi_norm"].fillna("") != ""),
+            "doi_norm"
+        ].value_counts()
+        shared_grey_dois = set(grey_doi_counts[grey_doi_counts > 1].index)
+        if shared_grey_dois:
+            mask_fake = keep_df["doi_norm"].isin(shared_grey_dois) & \
+                        keep_df["from_grey"].fillna(0).astype(bool)
+            keep_df.loc[mask_fake, "doi"] = ""
+            keep_df.loc[mask_fake, "doi_norm"] = ""
+            print(f"  Cleared {mask_fake.sum()} fake placeholder DOIs "
+                  f"({len(shared_grey_dois)} shared grey-lit DOIs)")
+
+    # Step 2: deduplicate on normalized DOI, keeping the record with the highest
+    # cited_by_count (OpenAlex sometimes indexes the same paper under two IDs).
+    # Use fillna("") to treat NaN doi_norm (records with no DOI) as "no DOI" —
+    # NaN != "" evaluates to True in pandas, which would incorrectly pull
+    # no-DOI records into the dedup path and collapse them to one row.
+    if "doi_norm" in keep_df.columns:
+        n_before = len(keep_df)
+        keep_df["_cite_sort"] = pd.to_numeric(
+            keep_df["cited_by_count"], errors="coerce").fillna(0)
+        has_doi_mask = keep_df["doi_norm"].fillna("") != ""
+        no_doi_df = keep_df[~has_doi_mask]
+        with_doi_df = keep_df[has_doi_mask].sort_values(
+            "_cite_sort", ascending=False
+        )
+        deduped_mask = with_doi_df.duplicated(subset=["doi_norm"], keep="first")
+        deduped_source_ids = set(with_doi_df.loc[deduped_mask, "source_id"].dropna())
+        with_doi_df = with_doi_df[~deduped_mask]
+        keep_df = pd.concat([with_doi_df, no_doi_df], ignore_index=True).drop(
+            columns=["_cite_sort"])
+        n_dropped = n_before - len(keep_df)
+        if n_dropped:
+            print(f"  Dropped {n_dropped} duplicate-DOI records "
+                  f"(kept highest cited_by_count per DOI)")
+
+    keep_df = keep_df.drop(columns=["doi_norm"], errors="ignore")
+
+    # Save audit — after deduplication so that action=keep count matches refined_works.csv.
+    # Rows dropped by deduplication get action="deduped" to distinguish from filter removes.
+    audit_df = df[["doi", "title", "year", "cited_by_count", "source_count",
+                    "protected", "protect_reason", "action"]].copy()
+    audit_df["flags"] = df["flags"].apply(lambda f: "|".join(f) if isinstance(f, list) else str(f))
+    if deduped_source_ids and "source_id" in df.columns:
+        audit_df.loc[df["source_id"].isin(deduped_source_ids), "action"] = "deduped"
+    audit_df.to_csv(audit_path, index=False)
+    print(f"  Saved audit -> {audit_path}")
+
     save_csv(keep_df, output_path)
     print(f"  Saved refined corpus -> {output_path} ({len(keep_df)} papers)")
 

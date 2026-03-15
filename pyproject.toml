@@ -15,6 +15,7 @@ dependencies = [
     "langdetect>=1.0.9",
     "pdfplumber",
     "pytest",
+    "pytest-timeout",
     "requests-mock",
 ]
 
@@ -35,6 +36,11 @@ corpus = [
     "ddgs",
     "bibtexparser",
     "rapidfuzz",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests that require network access or external data (deselect with '-m \"not slow\"')",
 ]
 
 [[tool.uv.index]]

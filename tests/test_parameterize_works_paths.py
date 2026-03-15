@@ -58,6 +58,8 @@ class TestEnrichDoisCLI:
         assert "enriched_works.csv" in output, \
             "enrich_dois.py --works-output default should be enriched_works.csv"
 
+    @pytest.mark.slow
+    @pytest.mark.timeout(30)
     def test_dry_run_uses_custom_input(self, tmp_path):
         """With --dry-run --works-input, the script reads from the specified path."""
         csv = tmp_path / "custom_input.csv"
