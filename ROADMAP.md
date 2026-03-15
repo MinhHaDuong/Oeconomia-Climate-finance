@@ -27,6 +27,7 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - Œconomia house style, AI-tell sweep, code audit, PDF+ODT build clean
 - Doc restructuring: separated concerns (AGENTS → workflow only, domain guidance → docs/), added Dragon Dreaming + TDD + git hooks
 - Agent-agnostic skills: runbooks/, make check, AGENTS.md works with any AI assistant
+- Agent identity (#109): machine user `HDMX-coding-agent`, classic PAT in `.env`, convention documented in AGENTS.md
 - DVC integration (#101–#104, #109): data versioning, pipeline DAG, repro archives, external cache, bidirectional sync
 - Source normalized to 1NF (#113): pipe-separated source → boolean from_* columns
 - Teaching canon refactored (#114): single merge, build_teaching_canon simplified 363→100 lines
