@@ -11,6 +11,8 @@
 #   make papers       Build technical report, data paper, companion paper
 #   make figures      Regenerate all figures (from existing data)
 #   make archive      Package code + data, validate, create tarball
+#   make archive-manuscript  Minimal package for Oeconomia reviewers
+#   make archive-datapaper   Full pipeline package for data paper
 #   make clean        Remove build outputs
 #   make rebuild      Clean + rebuild everything
 
@@ -60,7 +62,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive archive-manuscript archive-datapaper verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -365,6 +367,128 @@ archive: figures
 	@du -h $(ARCHIVE_NAME).tar.gz
 	rm -rf $(ARCHIVE_TMP)
 	@echo "Done: $(ARCHIVE_NAME).tar.gz"
+
+# ── Manuscript archive (Oeconomia reviewers) ──────────────
+# Minimal self-contained package: Phase 2 contract files + scripts that
+# produce figures + manuscript source.  Reviewers can verify with:
+#   tar xzf archive.tar.gz && cd ... && uv sync && make figures && make manuscript
+MANU_ARCHIVE     := climate-finance-manuscript
+MANU_TMP         := /tmp/$(MANU_ARCHIVE)
+
+# Phase 2 scripts: figure generation, analysis, utilities
+MANU_SCRIPTS     := scripts/plot_fig1_bars.py scripts/plot_fig2_composition.py \
+                    scripts/plot_fig2_breaks.py scripts/plot_fig_breakpoints.py \
+                    scripts/plot_fig_alluvial.py scripts/plot_fig_seed_axis.py \
+                    scripts/plot_fig45_pca_scatter.py scripts/plot_figS_kde.py \
+                    scripts/plot_fig_k_sensitivity.py scripts/plot_fig_lexical_tfidf.py \
+                    scripts/plot_fig_traditions.py scripts/plot_heatmap_communities_clusters.py \
+                    scripts/plot_style.py \
+                    scripts/analyze_bimodality.py scripts/analyze_genealogy.py \
+                    scripts/analyze_alluvial.py scripts/analyze_cocitation.py \
+                    scripts/analyze_embeddings.py \
+                    scripts/compute_breakpoints.py scripts/compute_clusters.py \
+                    scripts/compute_alluvial.py scripts/compute_lexical.py \
+                    scripts/compute_stats.py \
+                    scripts/build_het_core.py \
+                    scripts/export_corpus_table.py scripts/export_core_venues_markdown.py \
+                    scripts/export_citation_coverage.py \
+                    scripts/summarize_core_venues.py \
+                    scripts/qc_citations.py \
+                    scripts/utils.py
+
+# Phase 2 contract files (DVC-managed, may be symlinks)
+MANU_DATA        := refined_works.csv refined_embeddings.npz refined_citations.csv
+
+archive-manuscript: check-corpus
+	@echo "=== Building manuscript archive ==="
+	rm -rf $(MANU_TMP)
+	mkdir -p $(MANU_TMP)/scripts $(MANU_TMP)/config \
+		$(MANU_TMP)/data/catalogs $(MANU_TMP)/content/bibliography \
+		$(MANU_TMP)/content/_includes $(MANU_TMP)/docs $(MANU_TMP)/tests
+	@# Phase 2 contract data (dereference DVC symlinks)
+	$(foreach f,$(MANU_DATA),cp -L $(DATA_DIR)/$(f) $(MANU_TMP)/data/catalogs/;)
+	@# Phase 2 scripts
+	$(foreach f,$(MANU_SCRIPTS),cp $(f) $(MANU_TMP)/$(f);)
+	@# Config files
+	cp -r config/ $(MANU_TMP)/config/
+	@# Build files
+	cp Makefile pyproject.toml uv.lock _quarto.yml $(MANU_TMP)/
+	@# Manuscript source + includes + bibliography
+	cp content/manuscript.qmd content/data-paper.qmd \
+		content/companion-paper.qmd content/technical-report.qmd $(MANU_TMP)/content/ 2>/dev/null || true
+	cp content/author-footnote.tex $(MANU_TMP)/content/ 2>/dev/null || true
+	cp -r content/_includes/ $(MANU_TMP)/content/_includes/
+	cp content/bibliography/main.bib content/bibliography/oeconomia.csl $(MANU_TMP)/content/bibliography/
+	cp content/bibliography/OEconomia_EN_2.bst $(MANU_TMP)/content/bibliography/ 2>/dev/null || true
+	@# Generated figures (if they exist)
+	@if ls content/figures/*.png >/dev/null 2>&1; then \
+		mkdir -p $(MANU_TMP)/content/figures; \
+		cp content/figures/*.png $(MANU_TMP)/content/figures/; \
+	fi
+	@# Generated tables (if they exist)
+	@if ls content/tables/* >/dev/null 2>&1; then \
+		mkdir -p $(MANU_TMP)/content/tables; \
+		cp -r content/tables/* $(MANU_TMP)/content/tables/; \
+	fi
+	@# DVC provenance (lock shows exact pipeline state)
+	cp dvc.yaml $(MANU_TMP)/ 2>/dev/null || true
+	cp dvc.lock $(MANU_TMP)/ 2>/dev/null || true
+	@# Docs (writing guidelines, coding conventions)
+	cp docs/writing-guidelines.md docs/coding-guidelines.md $(MANU_TMP)/docs/ 2>/dev/null || true
+	cp README.md $(MANU_TMP)/ 2>/dev/null || true
+	@# Tests (Phase 2 acceptance tests)
+	cp tests/test_corpus_acceptance.py $(MANU_TMP)/tests/ 2>/dev/null || true
+	@# .env template
+	echo 'CLIMATE_FINANCE_DATA=data' > $(MANU_TMP)/.env
+	@echo "=== Creating tarball ==="
+	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp $(MANU_ARCHIVE)
+	@echo "=== Manuscript archive ==="
+	@du -h $(MANU_ARCHIVE).tar.gz
+	@echo "Files: $$(tar tzf $(MANU_ARCHIVE).tar.gz | wc -l)"
+	rm -rf $(MANU_TMP)
+	@echo "Done: $(MANU_ARCHIVE).tar.gz"
+
+# ── Data paper archive (full pipeline) ────────────────────
+# Complete reproducibility package: all corpus-building scripts, DVC pipeline,
+# pool data, caches.  Reviewers can verify with:
+#   tar xzf archive.tar.gz && cd ... && uv sync && dvc repro
+DPAPER_ARCHIVE   := climate-finance-datapaper
+DPAPER_TMP       := /tmp/$(DPAPER_ARCHIVE)
+
+archive-datapaper: check-corpus
+	@echo "=== Building data paper archive ==="
+	rm -rf $(DPAPER_TMP)
+	mkdir -p $(DPAPER_TMP)
+	@# Start with everything git tracks (excludes .git, respects .gitignore)
+	git archive HEAD | tar -x -C $(DPAPER_TMP)
+	@# Copy all DVC-managed data (dereference symlinks)
+	@echo "  Copying DVC-managed data (this may take a while)..."
+	cp -rL data/ $(DPAPER_TMP)/data/
+	@# Copy generated figures if they exist
+	@if ls content/figures/*.png >/dev/null 2>&1; then \
+		mkdir -p $(DPAPER_TMP)/content/figures; \
+		cp content/figures/*.png $(DPAPER_TMP)/content/figures/; \
+	fi
+	@# Copy generated tables if they exist
+	@if ls content/tables/* >/dev/null 2>&1; then \
+		mkdir -p $(DPAPER_TMP)/content/tables; \
+		cp -r content/tables/* $(DPAPER_TMP)/content/tables/; \
+	fi
+	@# Copy _variables.yml if it exists
+	cp _variables.yml $(DPAPER_TMP)/ 2>/dev/null || true
+	@# .env template
+	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/.env
+	@# Remove items that should not ship
+	rm -rf $(DPAPER_TMP)/.dvc $(DPAPER_TMP)/attic $(DPAPER_TMP)/.claude
+	@echo "=== Creating tarball ==="
+	tar czf $(DPAPER_ARCHIVE).tar.gz -C /tmp \
+		--exclude='__pycache__' --exclude='.venv' \
+		$(DPAPER_ARCHIVE)
+	@echo "=== Data paper archive ==="
+	@du -h $(DPAPER_ARCHIVE).tar.gz
+	@echo "Files: $$(tar tzf $(DPAPER_ARCHIVE).tar.gz | wc -l)"
+	rm -rf $(DPAPER_TMP)
+	@echo "Done: $(DPAPER_ARCHIVE).tar.gz"
 
 # ── Remote verification ─────────────────────────────────
 REMOTE_HOST ?= padme
