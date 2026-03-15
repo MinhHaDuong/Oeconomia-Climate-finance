@@ -13,6 +13,17 @@ Run this sequence after completing a task. Do not skip steps.
 7. **Merge to main**: `git checkout main && git merge --no-ff -m "..." <branch>`.
 8. **Push** and **clean up**: delete local and remote branch.
 9. **Close** the GitHub issue if one exists.
+9b. **Check for tracking issue** (integration review): if the closed issue has a parent, check whether all sibling sub-issues are now closed:
+    ```bash
+    gh issue view <PARENT> --json subIssues
+    ```
+    - If any sibling is still open: do nothing — tracking issue stays open.
+    - If all siblings are now closed, run integration review on the tracking issue:
+      1. Re-read all child PR diffs: for each child, `gh pr list --search "closes:#<child>"`
+      2. Run tests: `make check`
+      3. Check the tracking issue's exit criteria — are they all met?
+      4. If gaps remain: open new sub-issues on the tracking issue, leave it open.
+      5. If all criteria met: close the tracking issue with a summary comment.
 10. **Verify hygiene** — no stale artifacts left behind:
     - `git worktree list` → only main (or active work)
     - `gh issue list` → no orphan issues from completed work

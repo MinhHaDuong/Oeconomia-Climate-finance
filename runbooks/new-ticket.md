@@ -37,3 +37,15 @@ gh issue create --title "short title" --body "$(cat <<'EOF'
 EOF
 )"
 ```
+
+## When investigation spawns sub-issues (tracking issue convention)
+
+If investigation of a ticket reveals multiple independent action items:
+
+1. The original issue becomes the **tracking issue** — leave it open.
+2. Create each sub-issue as a native GitHub child:
+   ```bash
+   gh issue create --title "..." --body "..." --parent <TRACKING_ISSUE_NUMBER>
+   ```
+3. List the child issue numbers in the tracking issue body under a `## Sub-issues` heading.
+4. The tracking issue closes only after integration review (see `runbooks/celebrate.md` step 9b).
