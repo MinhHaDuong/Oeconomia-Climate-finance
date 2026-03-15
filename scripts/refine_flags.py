@@ -383,8 +383,14 @@ def _reranker_streaming(df, config, *, already_flagged):
     Cache is checkpointed after each batch, so interrupting preserves progress.
     Yields (indices, partial_series) for Flag 6 candidates only.
     """
-    import torch
-    from sentence_transformers import CrossEncoder
+    try:
+        import torch  # noqa: F401
+        from sentence_transformers import CrossEncoder
+    except ImportError as exc:
+        raise RuntimeError(
+            "Flag 6 requires torch and sentence-transformers — "
+            "run on padme or install the corpus extras group"
+        ) from exc
 
     llm_cfg = config["llm_relevance"]
     candidates_mask, doi_norm = _identify_candidates(df, config, already_flagged)
