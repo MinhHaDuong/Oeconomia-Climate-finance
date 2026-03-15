@@ -25,7 +25,9 @@ if os.path.isfile(_env_path):
                 _k, _v = _line.split("=", 1)
                 os.environ.setdefault(_k.strip(), _v.strip())
 
-DATA_DIR = os.environ.get("CLIMATE_FINANCE_DATA", "")
+DATA_DIR = os.environ.get("CLIMATE_FINANCE_DATA", "data")
+if not os.path.isabs(DATA_DIR):
+    DATA_DIR = os.path.join(BASE_DIR, DATA_DIR)
 CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
 EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
