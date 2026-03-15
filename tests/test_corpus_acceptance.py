@@ -23,6 +23,7 @@ from refine_flags import _has_safe_words, _load_config
 from utils import (
     CATALOGS_DIR,
     EMBEDDINGS_PATH,
+    FROM_COLS,
     REFINED_CITATIONS_PATH,
     REFINED_EMBEDDINGS_PATH,
     WORKS_COLUMNS,
@@ -663,14 +664,25 @@ class TestContentQuality:
 
     def test_source_diversity(self, refined):
         """Corpus should draw from multiple sources."""
-        sources = refined["source"].str.split("|").explode().str.strip().unique()
-        n_sources = len([s for s in sources if s and str(s) != "nan"])
+        present_cols = [c for c in FROM_COLS if c in refined.columns]
+        n_sources = sum(1 for c in present_cols if (refined[c] == 1).any())
         assert n_sources >= 3, \
             f"Only {n_sources} unique sources (expected >= 3)" + _diagnosis(
                 "Some catalog scripts not run or sources excluded",
                 "Check catalog_merge.py and source pipeline",
                 "1 hour",
                 "Corpus lacks breadth — single-source bias",
+            )
+
+    def test_from_cols_present(self, refined):
+        """All from_* boolean provenance columns must be present."""
+        missing = [c for c in FROM_COLS if c not in refined.columns]
+        assert not missing, \
+            f"Missing from_* columns: {missing}" + _diagnosis(
+                "catalog_merge.py was not updated to produce from_* columns",
+                "Re-run: uv run python scripts/catalog_merge.py",
+                "5 min",
+                "Source provenance tracking broken — multi-source analysis impossible",
             )
 
 
@@ -920,11 +932,13 @@ class TestStatisticsSummary:
             period_lines.append(f"    {label}:  {mask.sum():>6,} papers")
         print("\n".join(period_lines))
 
-        # Source breakdown
-        sources = refined["source"].str.split("|").explode().str.strip()
-        source_counts = sources.value_counts()
+        # Source breakdown (via from_* boolean columns)
+        present_from_cols = [c for c in FROM_COLS if c in refined.columns]
         source_lines = ["\n  Source breakdown:"]
-        for src, cnt in source_counts.head(10).items():
-            source_lines.append(f"    {src:<25s} {cnt:>6,}")
+        for col in present_from_cols:
+            cnt = (refined[col] == 1).sum()
+            if cnt > 0:
+                src_name = col.replace("from_", "")
+                source_lines.append(f"    {src_name:<25s} {cnt:>6,}")
         print("\n".join(source_lines))
         print()

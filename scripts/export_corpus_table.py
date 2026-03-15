@@ -61,7 +61,7 @@ def fetch_oa_status(df):
     Caches results to avoid re-fetching across runs.
     """
     # Only OpenAlex works have queryable source_ids
-    oa_mask = df["source"].str.contains("openalex", na=False)
+    oa_mask = df["from_openalex"] == 1
     oa_ids = df.loc[oa_mask, "source_id"].dropna().unique().tolist()
     print(f"OpenAlex works to check for OA: {len(oa_ids)}")
 
@@ -123,7 +123,7 @@ def detect_local_fulltext(df):
     if os.path.isdir(RAW_DIR):
         raw_ids = set(os.listdir(RAW_DIR))
     df["has_fulltext"] = (
-        df["source"].str.contains("istex", na=False)
+        (df["from_istex"] == 1)
         & df["source_id"].isin(raw_ids)
     )
     n = df["has_fulltext"].sum()
@@ -173,8 +173,9 @@ def main():
     # Compute per-source statistics
     rows = []
     for src in PRIMARY_SOURCES:
-        mask_u = unified["source"].str.contains(src, na=False)
-        mask_r = df["source"].str.contains(src, na=False)
+        from_col = f"from_{src}"
+        mask_u = unified[from_col] == 1 if from_col in unified.columns else unified["source"].str.contains(src, na=False)
+        mask_r = df[from_col] == 1 if from_col in df.columns else df["source"].str.contains(src, na=False)
         sub = df[mask_r]
         meta = SOURCE_META[src]
         n_raw = int(mask_u.sum())

@@ -71,6 +71,13 @@ class TestDeterminism:
             "year": [2010, 2015, 2000, 2020, 2005],
             "cited_by_count": [100, 5, 80, 200, 0],
             "source_count": [3, 1, 2, 4, 1],
+            "from_openalex": [1, 1, 1, 1, 1],
+            "from_semanticscholar": [1, 0, 1, 1, 0],
+            "from_istex": [1, 0, 0, 1, 0],
+            "from_bibcnrs": [0, 0, 0, 1, 0],
+            "from_scispsace": [0, 0, 0, 0, 0],
+            "from_grey": [0, 0, 0, 0, 0],
+            "from_teaching": [0, 0, 0, 0, 0],
         })
 
     def test_same_input_same_output(self, sample_works):
@@ -134,6 +141,13 @@ class TestSortDoisByPriority:
             "year": [2010, 2015, 2005],
             "cited_by_count": [10, 200, 5],
             "source_count": [1, 3, 1],
+            "from_openalex": [1, 1, 1],
+            "from_semanticscholar": [0, 1, 0],
+            "from_istex": [0, 1, 0],
+            "from_bibcnrs": [0, 0, 0],
+            "from_scispsace": [0, 0, 0],
+            "from_grey": [0, 0, 0],
+            "from_teaching": [0, 0, 0],
         })
 
     def test_sort_returns_list(self, sample_works):

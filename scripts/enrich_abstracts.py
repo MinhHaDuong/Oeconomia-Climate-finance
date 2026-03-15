@@ -142,7 +142,7 @@ def step2_openalex(df, counters, checkpoint_every=50,
                    retry_backoff=2.0, retry_jitter=1.0):
     """Re-query OpenAlex for works that may now have abstracts."""
     cache = load_cache("openalex_abstracts")
-    missing = df.index[df["_missing"] & df["source"].str.contains("openalex", na=False)]
+    missing = df.index[df["_missing"] & (df["from_openalex"] == 1)]
     if len(missing) == 0:
         return 0
 
@@ -228,7 +228,7 @@ def step2_openalex(df, counters, checkpoint_every=50,
 def step3_istex(df, counters):
     """Extract abstracts from locally downloaded ISTEX TEI XML files."""
     missing = df.index[
-        df["_missing"] & df["source"].str.contains("istex", na=False)
+        df["_missing"] & (df["from_istex"] == 1)
     ]
     counters["step3_attempted"] = len(missing)
     if len(missing) == 0:

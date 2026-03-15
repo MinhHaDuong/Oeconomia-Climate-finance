@@ -30,6 +30,11 @@ WORKS_COLUMNS = [
     "cited_by_count", "affiliations",
 ]
 
+# Source provenance — boolean columns indicating which sources contributed each work.
+# These replace the old pipe-separated `source` column for multi-source tracking.
+SOURCE_NAMES = ["openalex", "semanticscholar", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
+FROM_COLS = [f"from_{s}" for s in SOURCE_NAMES]
+
 REFS_COLUMNS = [
     "source_doi", "source_id", "ref_doi", "ref_title", "ref_first_author",
     "ref_year", "ref_journal", "ref_raw",

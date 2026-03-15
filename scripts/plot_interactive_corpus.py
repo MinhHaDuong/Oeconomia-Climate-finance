@@ -162,7 +162,7 @@ print(f"  Core papers cited in manuscript: {n_bib}")
 
 
 # ── 6. Identify ISTEX papers ──────────────────────────────────────────
-core["is_istex"] = core["source"].str.contains("istex", case=False, na=False)
+core["is_istex"] = core["from_istex"] == 1 if "from_istex" in core.columns else core["source"].str.contains("istex", case=False, na=False)
 
 # Build ISTEX PDF link: for pure ISTEX papers, source_id is the hash
 # For openalex|istex, source_id is an OpenAlex W-ID (no ISTEX link available)

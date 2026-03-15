@@ -119,7 +119,8 @@ def main():
     # Allocate samples proportional to sqrt(N) for each source
     source_masks = {}
     for src in PRIMARY_SOURCES:
-        source_masks[src] = df["source"].str.contains(src, na=False)
+        from_col = f"from_{src}"
+        source_masks[src] = df[from_col] == 1 if from_col in df.columns else df["source"].str.contains(src, na=False)
 
     import numpy as np
     weights = {src: np.sqrt(mask.sum()) for src, mask in source_masks.items()}
@@ -221,7 +222,7 @@ def main():
     # Per-source breakdown
     print(f"\n=== Per-source error rates ===")
     for src in PRIMARY_SOURCES:
-        mask = rdf["_source"].str.contains(src, na=False)
+        mask = rdf["_source"] == src
         sub = rdf[mask]
         if len(sub) < 2:
             continue
