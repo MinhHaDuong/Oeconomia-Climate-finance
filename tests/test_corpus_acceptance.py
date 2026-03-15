@@ -18,6 +18,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+# Entire module requires corpus data files on disk — slow in CI.
+pytestmark = [pytest.mark.slow, pytest.mark.timeout(120)]
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 from refine_flags import _has_safe_words, _load_config
 from utils import (
