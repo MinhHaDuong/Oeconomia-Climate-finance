@@ -14,7 +14,7 @@ Last updated: 2026-03-15
 
 - 27,534 refined works (from 35,143 unified), embeddings + citations cached
 - Schema normalized: `from_openalex`, `from_s2`, ..., `from_teaching` boolean columns (1NF)
-- DVC-managed: `dvc.yaml` (5 stages), `dvc.lock` committed, remote padme in sync
+- DVC-managed: `dvc.yaml` (6 stages), `dvc.lock` committed, remote padme in sync
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
 - `make check-fast`: 194 passed, 0 failures
@@ -41,6 +41,7 @@ Last updated: 2026-03-15
 
 ## Recent
 
+- **catalog_bibcnrs as DVC stage** (#134, 2026-03-15): `catalog_bibcnrs` stage added to `dvc.yaml`; `data/exports/` tracked via `data/exports.dvc`; `bibcnrs_works.csv.dvc` standalone artifact removed. DAG: `data/exports.dvc → catalog_bibcnrs → discover → …`. Issue #125 (exports/ part) closed.
 - **Agent identity documented** (#109, 2026-03-15): AGENTS.md instructs agents to load `.env` and set `AGENT_GIT_NAME`/`AGENT_GIT_EMAIL`/`AGENT_GH_TOKEN` at session start. Machine user `HDMX-coding-agent` (classic PAT — fine-grained PAT doesn't support collaborator-owned repos).
 - **DVC chantier complete** (2026-03-15): 10 tickets, data versioned with DVC, pipeline DAG, repro archives, external cache, bidirectional push/pull doudou ↔ padme.
 - **Source normalized to 1NF** (#113): pipe-separated `source` → boolean `from_*` columns. 15 scripts adapted.
@@ -51,7 +52,7 @@ Last updated: 2026-03-15
 
 ## Open tickets
 
-- #125: DVC-track exports/ and syllabi/
+- #125: DVC-track syllabi/ (exports/ done in #134)
 
 ## Next priorities
 

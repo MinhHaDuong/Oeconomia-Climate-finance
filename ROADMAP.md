@@ -35,3 +35,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since â€
 - Flags column normalized (#126): removed derived list from extended_works.csv; boolean columns are source of truth
 - Fix timeout truncation (#121): remove int() cast on request_timeout
 - DOI dedup in corpus_refine (#120): fixes duplicate OpenAlex IDs and fake grey-lit placeholder DOIs
+- catalog_bibcnrs as DVC stage (#134): `data/exports/` DVC-tracked; bibcnrs RISâ†’CSV conversion moves from pre-placed artifact to pipeline stage
