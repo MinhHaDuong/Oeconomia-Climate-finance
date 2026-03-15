@@ -138,7 +138,6 @@ llm_relevance:
 protection:
   min_cited_by: 50
   min_source_count: 2
-  min_teaching_count: 2
 
 audit:
   model: google/gemma-2-27b-it
