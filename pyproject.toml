@@ -16,12 +16,15 @@ dependencies = [
     "pdfplumber",
     "pytest",
     "requests-mock",
-    "dvc>=3.67.0",
-    "dvc-ssh>=4.2.2",
 ]
 
 [dependency-groups]
+# Phase 1 corpus building: DVC + heavy ML/NLP deps.
+# Install with: uv sync --group corpus
+# Phase 2/3 users (figures, manuscript) do NOT need this group.
 corpus = [
+    "dvc>=3.67.0",
+    "dvc-ssh>=4.2.2",
     "torch",
     "sentence-transformers",
     "umap-learn",

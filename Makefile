@@ -10,7 +10,6 @@
 #   make manuscript   Build manuscript only (PDF + DOCX)
 #   make papers       Build technical report, data paper, companion paper
 #   make figures      Regenerate all figures (from existing data)
-#   make archive      Package code + data, validate, create tarball
 #   make archive-manuscript  Minimal package for Oeconomia reviewers
 #   make archive-datapaper   Full pipeline package for data paper
 #   make clean        Remove build outputs
@@ -62,7 +61,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive archive-manuscript archive-datapaper verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -86,13 +85,35 @@ all: manuscript papers
 # (embeddings.npz and citations.csv are enrichment caches, not Phase 2 inputs.)
 # het_mostcited_50.csv is a Phase 2 derived product (build_het_core.py).
 
+# ── DVC workflow ─────────────────────────────────────────
+#
+# Phase 1 data is managed by DVC (see dvc.yaml for the pipeline DAG).
+# DVC tracks file hashes: it skips stages whose inputs are unchanged.
+#
+# Typical workflow (any machine):
+#   git pull                     # get latest .dvc pointers + dvc.yaml
+#   uv run dvc pull              # download data matching those pointers
+#   make figures && make manuscript   # Phase 2 + 3 (no DVC needed)
+#
+# After a pipeline run (usually on padme with GPU):
+#   make corpus                  # runs dvc repro (API calls, slow)
+#   uv run dvc push              # upload new artifacts to shared store
+#   git add dvc.lock data/catalogs/.gitignore
+#   git commit && git push       # share the new pointers
+#
+# On any other machine afterward:
+#   git pull && uv run dvc pull  # sync data from the shared store
+#
+# DVC push/pull is bidirectional: whoever runs the pipeline pushes,
+# everyone else pulls. The remote (padme:/data/projets/dvc/...) is a
+# content-addressed store — no conflicts as long as .dvc pointers
+# in git stay in sync.
+
 # Full pipeline — delegates to DVC for dependency tracking and caching.
-# DVC skips stages whose inputs haven't changed since last successful run.
 corpus:
 	uv run dvc repro
 
-# Aliases for individual stages (backward-compatible with old make targets).
-# Each delegates to DVC so dependency tracking remains consistent.
+# Individual stage aliases.
 corpus-discover:
 	uv run dvc repro discover
 
@@ -105,20 +126,13 @@ corpus-extend:
 corpus-filter:
 	uv run dvc repro filter
 
-# Backward-compat alias (old corpus-refine = extend + filter combined)
 corpus-refine:
 	uv run dvc repro extend filter
 
 corpus-align:
 	uv run dvc repro align
 
-# Citation enrichment shortcut (also part of corpus-enrich).
-# Both scripts are resumable; re-running only fetches what's missing.
-citations:
-	uv run python scripts/enrich_citations_batch.py
-	uv run python scripts/enrich_citations_openalex.py
-	uv run python scripts/qc_citations.py
-
+# Upload artifacts to the DVC remote (padme).
 deploy-corpus:
 	uv run dvc push
 
@@ -140,10 +154,14 @@ corpus-validate: $(REFINED)
 # het_mostcited_50.csv is produced within Phase 2 by build_het_core.py.
 # Outputs: content/figures/*.png, content/tables/*.csv, _variables.yml
 
-# Warn if Phase 1 contract files are missing (DVC handles integrity)
+# Gate for Phase 2: verify all three contract files exist.
+# If any is missing, suggest dvc pull (data not synced) or make corpus (not built).
 check-corpus:
-	@test -f "$(REFINED)" \
-		|| echo "WARNING: refined_works.csv missing. Run 'dvc checkout' or 'make corpus' first."
+	@ok=true; \
+	for f in "$(REFINED)" "$(REFINED_EMB)" "$(REFINED_CIT)"; do \
+		test -f "$$f" || { echo "MISSING: $$f"; ok=false; }; \
+	done; \
+	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
 
 # ── Statistics (computed from pipeline outputs) ──────────
 STATS := _variables.yml
@@ -326,122 +344,43 @@ output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB) $(STATS
 output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-# ── Replication archive ─────────────────────────────────
-SHELL := /bin/bash
-ARCHIVE_NAME := climate-finance-replication
-ARCHIVE_DATA := refined_works.csv embeddings.npy semantic_clusters.csv \
-                citations.csv
-ARCHIVE_TMP  := /tmp/$(ARCHIVE_NAME)
-
-archive: figures
-	@echo "=== Building replication archive ==="
-	rm -rf $(ARCHIVE_TMP)
-	mkdir -p $(ARCHIVE_TMP)/data/catalogs
-	git archive HEAD | tar -x -C $(ARCHIVE_TMP)
-	rm -rf $(ARCHIVE_TMP)/content/figures $(ARCHIVE_TMP)/content/tables
-	$(foreach f,$(ARCHIVE_DATA),cp $(DATA_DIR)/$(f) $(ARCHIVE_TMP)/data/catalogs/;)
-	@echo "=== Validating: uv sync + make figures ==="
-	cd $(ARCHIVE_TMP) && uv sync --quiet --no-group corpus
-	cd $(ARCHIVE_TMP) && CLIMATE_FINANCE_DATA=$(ARCHIVE_TMP)/data \
-		$(MAKE) DATA_DIR=$(ARCHIVE_TMP)/data/catalogs figures
-	@echo "=== Comparing checksums (figures in both) ==="
-	@fail=0; for f in content/figures/*.png; do \
-	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
-	    a=$$(md5sum "$$f" | cut -d' ' -f1); \
-	    b=$$(md5sum "$(ARCHIVE_TMP)/$$f" | cut -d' ' -f1); \
-	    if [ "$$a" != "$$b" ]; then echo "MISMATCH: $$f"; fail=1; fi; \
-	  fi; \
-	done; [ $$fail -eq 0 ] && echo "FIGURES: PASS" || { echo "FIGURES: FAIL"; exit 1; }
-	@fail=0; for f in content/tables/*.csv; do \
-	  if [ -f "$(ARCHIVE_TMP)/$$f" ]; then \
-	    a=$$(md5sum "$$f" | cut -d' ' -f1); \
-	    b=$$(md5sum "$(ARCHIVE_TMP)/$$f" | cut -d' ' -f1); \
-	    if [ "$$a" != "$$b" ]; then echo "MISMATCH: $$f"; fail=1; fi; \
-	  fi; \
-	done; [ $$fail -eq 0 ] && echo "TABLES: PASS" || { echo "TABLES: FAIL"; exit 1; }
-	@echo "=== Creating tarball ==="
-	tar czf $(ARCHIVE_NAME).tar.gz -C /tmp \
-		--exclude='.venv' --exclude='__pycache__' \
-		--exclude='content/figures' --exclude='content/tables' \
-		$(ARCHIVE_NAME)
-	@du -h $(ARCHIVE_NAME).tar.gz
-	rm -rf $(ARCHIVE_TMP)
-	@echo "Done: $(ARCHIVE_NAME).tar.gz"
-
 # ── Manuscript archive (Oeconomia reviewers) ──────────────
-# Minimal self-contained package: Phase 2 contract files + scripts that
-# produce figures + manuscript source.  Reviewers can verify with:
+# Minimal self-contained package: git-tracked code + Phase 2 contract data.
+# Reviewers verify with:
 #   tar xzf archive.tar.gz && cd ... && uv sync && make figures && make manuscript
+#
+# Uses git archive for code (auto-tracks new scripts, no manual list)
+# plus the 3 DVC-managed contract files dereferenced from symlinks.
+SHELL            := /bin/bash
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
-
-# Phase 2 scripts: figure generation, analysis, utilities
-MANU_SCRIPTS     := scripts/plot_fig1_bars.py scripts/plot_fig2_composition.py \
-                    scripts/plot_fig2_breaks.py scripts/plot_fig_breakpoints.py \
-                    scripts/plot_fig_alluvial.py scripts/plot_fig_seed_axis.py \
-                    scripts/plot_fig45_pca_scatter.py scripts/plot_figS_kde.py \
-                    scripts/plot_fig_k_sensitivity.py scripts/plot_fig_lexical_tfidf.py \
-                    scripts/plot_fig_traditions.py scripts/plot_heatmap_communities_clusters.py \
-                    scripts/plot_style.py \
-                    scripts/analyze_bimodality.py scripts/analyze_genealogy.py \
-                    scripts/analyze_alluvial.py scripts/analyze_cocitation.py \
-                    scripts/analyze_embeddings.py \
-                    scripts/compute_breakpoints.py scripts/compute_clusters.py \
-                    scripts/compute_alluvial.py scripts/compute_lexical.py \
-                    scripts/compute_stats.py \
-                    scripts/build_het_core.py \
-                    scripts/export_corpus_table.py scripts/export_core_venues_markdown.py \
-                    scripts/export_citation_coverage.py \
-                    scripts/summarize_core_venues.py \
-                    scripts/qc_citations.py \
-                    scripts/utils.py
-
-# Phase 2 contract files (DVC-managed, may be symlinks)
 MANU_DATA        := refined_works.csv refined_embeddings.npz refined_citations.csv
 
 archive-manuscript: check-corpus
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
-	mkdir -p $(MANU_TMP)/scripts $(MANU_TMP)/config \
-		$(MANU_TMP)/data/catalogs $(MANU_TMP)/content/bibliography \
-		$(MANU_TMP)/content/_includes $(MANU_TMP)/docs $(MANU_TMP)/tests
+	mkdir -p $(MANU_TMP)/data/catalogs
+	@# All git-tracked code (scripts, config, content, Makefile, etc.)
+	git archive HEAD | tar -x -C $(MANU_TMP)
 	@# Phase 2 contract data (dereference DVC symlinks)
 	$(foreach f,$(MANU_DATA),cp -L $(DATA_DIR)/$(f) $(MANU_TMP)/data/catalogs/;)
-	@# Phase 2 scripts
-	$(foreach f,$(MANU_SCRIPTS),cp $(f) $(MANU_TMP)/$(f);)
-	@# Config files
-	cp -r config/ $(MANU_TMP)/config/
-	@# Build files
-	cp Makefile pyproject.toml uv.lock _quarto.yml $(MANU_TMP)/
-	@# Manuscript source + includes + bibliography
-	cp content/manuscript.qmd content/data-paper.qmd \
-		content/companion-paper.qmd content/technical-report.qmd $(MANU_TMP)/content/ 2>/dev/null || true
-	cp content/author-footnote.tex $(MANU_TMP)/content/ 2>/dev/null || true
-	cp -r content/_includes/ $(MANU_TMP)/content/_includes/
-	cp content/bibliography/main.bib content/bibliography/oeconomia.csl $(MANU_TMP)/content/bibliography/
-	cp content/bibliography/OEconomia_EN_2.bst $(MANU_TMP)/content/bibliography/ 2>/dev/null || true
-	@# Generated figures (if they exist)
+	@# Generated figures + tables (if they exist)
 	@if ls content/figures/*.png >/dev/null 2>&1; then \
 		mkdir -p $(MANU_TMP)/content/figures; \
 		cp content/figures/*.png $(MANU_TMP)/content/figures/; \
 	fi
-	@# Generated tables (if they exist)
 	@if ls content/tables/* >/dev/null 2>&1; then \
 		mkdir -p $(MANU_TMP)/content/tables; \
 		cp -r content/tables/* $(MANU_TMP)/content/tables/; \
 	fi
-	@# DVC provenance (lock shows exact pipeline state)
-	cp dvc.yaml $(MANU_TMP)/ 2>/dev/null || true
-	cp dvc.lock $(MANU_TMP)/ 2>/dev/null || true
-	@# Docs (writing guidelines, coding conventions)
-	cp docs/writing-guidelines.md docs/coding-guidelines.md $(MANU_TMP)/docs/ 2>/dev/null || true
-	cp README.md $(MANU_TMP)/ 2>/dev/null || true
-	@# Tests (Phase 2 acceptance tests)
-	cp tests/test_corpus_acceptance.py $(MANU_TMP)/tests/ 2>/dev/null || true
 	@# .env template
 	echo 'CLIMATE_FINANCE_DATA=data' > $(MANU_TMP)/.env
+	@# Remove items reviewers don't need
+	rm -rf $(MANU_TMP)/.dvc $(MANU_TMP)/attic $(MANU_TMP)/.claude
 	@echo "=== Creating tarball ==="
-	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp $(MANU_ARCHIVE)
+	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp \
+		--exclude='__pycache__' --exclude='.venv' \
+		$(MANU_ARCHIVE)
 	@echo "=== Manuscript archive ==="
 	@du -h $(MANU_ARCHIVE).tar.gz
 	@echo "Files: $$(tar tzf $(MANU_ARCHIVE).tar.gz | wc -l)"
@@ -489,26 +428,6 @@ archive-datapaper: check-corpus
 	@echo "Files: $$(tar tzf $(DPAPER_ARCHIVE).tar.gz | wc -l)"
 	rm -rf $(DPAPER_TMP)
 	@echo "Done: $(DPAPER_ARCHIVE).tar.gz"
-
-# ── Remote verification ─────────────────────────────────
-REMOTE_HOST ?= padme
-REMOTE_DIR  := /tmp/$(ARCHIVE_NAME)
-
-verify-remote: $(ARCHIVE_NAME).tar.gz
-	@echo "=== Uploading to $(REMOTE_HOST) ==="
-	scp $(ARCHIVE_NAME).tar.gz $(REMOTE_HOST):/tmp/
-	@echo "=== Running on $(REMOTE_HOST) ==="
-	ssh $(REMOTE_HOST) 'bash -l -c "\
-	  cd /tmp && rm -rf $(ARCHIVE_NAME) && \
-	  tar xzf $(ARCHIVE_NAME).tar.gz && \
-	  cd $(ARCHIVE_NAME) && \
-	  uv sync --quiet --no-group corpus && \
-	  CLIMATE_FINANCE_DATA=$(REMOTE_DIR)/data make DATA_DIR=$(REMOTE_DIR)/data/catalogs figures && \
-	  echo === Checksums === && \
-	  md5sum content/figures/*.png content/tables/*.csv | sort -k2"'
-	@echo "=== Local checksums ==="
-	@md5sum content/figures/*.png content/tables/*.csv | sort -k2
-	@echo "=== Compare visually or diff the above ==="
 
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose
