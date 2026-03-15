@@ -59,11 +59,9 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 │   ├── figures/                      # Generated figures (gitignored)
 │   └── tables/                       # Generated tables (gitignored)
 ├── output/                           # Quarto rendered output (gitignored)
-├── CLAUDE.md                         # AI redirect → AGENTS.md
-├── AGENTS.md                         # AI workflow orchestration
-├── ROADMAP.md                        # Milestones and deliverables
-├── STATE.md                          # Current decisions and blockers
-├── Makefile                          # Build: make manuscript, make papers, make figures
+├── config/                           # Pipeline parameters (YAML)
+├── Makefile                          # Build: make manuscript, make figures, make corpus
+├── dvc.yaml                          # Phase 1 pipeline DAG (DVC stages)
 ├── data/                             # DVC-managed data (dvc pull to populate)
 │   ├── catalogs/                    #   Corpus CSVs, embeddings, caches
 │   └── pool/                        #   Raw API responses (gzipped JSONL)
@@ -82,11 +80,15 @@ data is stored in the DVC remote on padme.
 ### Setup (first time after cloning)
 
 ```bash
-cp .env.example .env                    # CLIMATE_FINANCE_DATA=data
-uv sync                                 # Phase 2/3 deps only (no DVC)
+uv sync                                 # Phase 2/3 deps only
 uv sync --group corpus                  # add Phase 1 deps (DVC, torch, etc.)
-uv run dvc pull                         # download data from padme remote
+uv run dvc cache dir /path/to/dvc-cache  # store blobs outside sync/backup dirs
+uv run dvc pull                          # download data (~1.3 GB) from padme
 ```
+
+The DVC cache directory should be outside Nextcloud-synced or snapshotted directories.
+Example paths: `/home/user/data/projets/Oeconomia-Climate-finance/dvc-cache` (doudou),
+`/data/projets/dvc-cache/oeconomia` (padme).
 
 ### Two-machine workflow (doudou ↔ padme)
 
@@ -116,12 +118,15 @@ make figures && make manuscript          # Phase 2 + 3 (no DVC needed)
 
 ### DVC on padme (the remote host)
 
-Since padme hosts the DVC remote, it uses a local path override to avoid SSH
-loopback. Run once after cloning on padme:
+Since padme hosts the DVC remote, run these once after cloning:
 
 ```bash
 uv run dvc remote modify --local padme url /data/projets/dvc/oeconomia-climate-finance
+uv run dvc cache dir /data/projets/dvc-cache/oeconomia
 ```
+
+The remote override avoids SSH loopback (padme accessing itself). Both
+settings are stored in `.dvc/config.local` (gitignored, machine-specific).
 
 ### Building documents
 
