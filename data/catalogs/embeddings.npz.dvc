@@ -1,5 +1,0 @@
-outs:
-- md5: b5e6a31c36c1cafd74711ac04b5f7bb5
-  size: 48790249
-  hash: md5
-  path: embeddings.npz

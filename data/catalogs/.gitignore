@@ -1,21 +1,27 @@
-/openalex_works.csv
-/openalex_citations.csv
+# Pipeline outputs (managed by dvc.yaml stages)
 /istex_works.csv
 /istex_refs.csv
+/openalex_works.csv
+/openalex_citations.csv
 /grey_works.csv
-/bibcnrs_works.csv
-/scispsace_works.csv
 /teaching_works.csv
+/teaching_canon.csv
+/teaching_gaps.csv
 /unified_works.csv
 /enriched_works.csv
-/extended_works.csv
-/refined_works.csv
-/refined_embeddings.npz
-/refined_citations.csv
 /embeddings.npz
 /citations.csv
-/llm_relevance_cache.csv
+/extended_works.csv
+/refined_works.csv
 /corpus_audit.csv
+/refined_embeddings.npz
+/refined_citations.csv
+/corpus_manifest.json
+# Hand-curated inputs (tracked by individual .dvc files)
+/bibcnrs_works.csv
+/scispsace_works.csv
+# Caches and auxiliary files (tracked by individual .dvc files)
+/llm_relevance_cache.csv
 /communities.csv
 /het_core.csv
 /het_mostcited_50.csv
@@ -27,8 +33,6 @@
 /reranker_calibration.csv
 /reranker_hitl_review.csv
 /semantic_clusters.csv
-/teaching_canon.csv
-/teaching_gaps.csv
 /cluster_labels.json
 /cluster_labels_core.json
 /openalex_baselines.json

@@ -1,0 +1,126 @@
+# DVC pipeline — Phase 1: Corpus Building
+#
+# Mirrors Makefile Phase 1a–1f. Run with:
+#   dvc repro              (full pipeline)
+#   dvc repro discover     (single stage)
+#
+# NOTE: discover/enrich stages involve API calls and may take hours.
+# Do not run casually — use `dvc repro --dry` to preview what would run.
+
+stages:
+  # Phase 1a: Discovery + merge → unified_works.csv
+  # Catalog scripts query APIs (ISTEX, OpenAlex, Semantic Scholar) and merge
+  # all per-source CSVs into a single unified catalog. No filtering here.
+  discover:
+    cmd: >-
+      uv run python scripts/catalog_istex.py --api &&
+      uv run python scripts/catalog_openalex.py --resume &&
+      uv run python scripts/catalog_semanticscholar.py --resume &&
+      uv run python scripts/catalog_grey.py &&
+      uv run python scripts/catalog_merge.py &&
+      uv run python scripts/build_teaching_canon.py &&
+      uv run python scripts/catalog_merge.py
+    deps:
+      - scripts/catalog_istex.py
+      - scripts/catalog_openalex.py
+      - scripts/catalog_semanticscholar.py
+      - scripts/catalog_grey.py
+      - scripts/catalog_merge.py
+      - scripts/build_teaching_canon.py
+      - scripts/utils.py
+      - config/openalex_queries.yaml
+      - config/grey_sources.yaml
+      - config/teaching_sources.yaml
+      # Hand-curated inputs (pre-placed, not produced by pipeline)
+      - data/catalogs/bibcnrs_works.csv
+      - data/catalogs/scispsace_works.csv
+    outs:
+      - data/catalogs/istex_works.csv
+      - data/catalogs/istex_refs.csv
+      - data/catalogs/openalex_works.csv
+      - data/catalogs/openalex_citations.csv
+      - data/catalogs/grey_works.csv
+      - data/catalogs/teaching_works.csv
+      - data/catalogs/teaching_canon.csv
+      - data/catalogs/teaching_gaps.csv
+      - data/catalogs/unified_works.csv
+
+  # Phase 1b: Enrich → enriched_works.csv + embeddings.npz + citations.csv
+  # DOI resolution, abstract retrieval, citation graph, sentence embeddings.
+  # Requires uv sync --group corpus (torch, sentence-transformers, etc.)
+  enrich:
+    cmd: >-
+      uv run python scripts/qa_detect_type.py --apply &&
+      uv run python scripts/enrich_dois.py
+        --works-input data/catalogs/unified_works.csv
+        --works-output data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_abstracts.py
+        --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_citations_batch.py
+        --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_citations_openalex.py
+        --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/qc_citations.py
+        --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/analyze_embeddings.py
+        --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/qa_detect_type.py
+      - scripts/enrich_dois.py
+      - scripts/enrich_abstracts.py
+      - scripts/enrich_citations_batch.py
+      - scripts/enrich_citations_openalex.py
+      - scripts/qc_citations.py
+      - scripts/analyze_embeddings.py
+      - scripts/utils.py
+      - data/catalogs/unified_works.csv
+    outs:
+      - data/catalogs/enriched_works.csv
+      - data/catalogs/embeddings.npz
+      - data/catalogs/citations.csv
+
+  # Phase 1c: Extend → extended_works.csv
+  # Adds diagnostic flags and protection columns; no rows removed.
+  extend:
+    cmd: >-
+      uv run python scripts/corpus_refine.py --extend
+        --works-input data/catalogs/enriched_works.csv
+        --works-output data/catalogs/extended_works.csv
+    deps:
+      - scripts/corpus_refine.py
+      - scripts/utils.py
+      - data/catalogs/enriched_works.csv
+    outs:
+      - data/catalogs/extended_works.csv
+
+  # Phase 1d: Filter → refined_works.csv + corpus_audit.csv
+  # Applies keep/remove policy based on flags set in extend stage.
+  filter:
+    cmd: >-
+      uv run python scripts/corpus_refine.py --filter
+        --works-input data/catalogs/extended_works.csv
+        --works-output data/catalogs/refined_works.csv
+    deps:
+      - scripts/corpus_refine.py
+      - scripts/utils.py
+      - data/catalogs/extended_works.csv
+    outs:
+      - data/catalogs/refined_works.csv
+      - data/catalogs/corpus_audit.csv
+
+  # Phase 1e: Align → refined_embeddings.npz + refined_citations.csv
+  # Produces row-aligned Phase 2 contract artifacts:
+  #   refined_embeddings.npz[vectors][i] ↔ refined_works.csv row i
+  #   refined_citations.csv edges restricted to refined DOIs
+  align:
+    cmd: uv run python scripts/corpus_align.py
+    deps:
+      - scripts/corpus_align.py
+      - scripts/utils.py
+      - data/catalogs/refined_works.csv
+      - data/catalogs/embeddings.npz
+      - data/catalogs/citations.csv
+    outs:
+      - data/catalogs/refined_embeddings.npz
+      - data/catalogs/refined_citations.csv
+
