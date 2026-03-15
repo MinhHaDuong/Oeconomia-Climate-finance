@@ -12,16 +12,15 @@ stages:
   # Catalog scripts query APIs (ISTEX, OpenAlex, Semantic Scholar) and merge
   # all per-source CSVs into a single unified catalog. No filtering here.
   #
-  # catalog_merge runs twice: first to produce unified_works.csv from the
-  # 6 sources, then again after build_teaching_canon matches syllabus
-  # readings against that unified corpus and adds missing seed works.
+  # build_teaching_canon extracts syllabus readings into teaching_works.csv
+  # (no corpus matching needed). catalog_merge then merges all 7 sources,
+  # deduplicating by DOI/title and setting from_teaching=1 for teaching works.
   discover:
     cmd: >-
       uv run python scripts/catalog_istex.py --api &&
       uv run python scripts/catalog_openalex.py --resume &&
       uv run python scripts/catalog_semanticscholar.py --resume &&
       uv run python scripts/catalog_grey.py &&
-      uv run python scripts/catalog_merge.py &&
       uv run python scripts/build_teaching_canon.py &&
       uv run python scripts/catalog_merge.py
     deps:
@@ -45,8 +44,6 @@ stages:
       - data/catalogs/openalex_citations.csv
       - data/catalogs/grey_works.csv
       - data/catalogs/teaching_works.csv
-      - data/catalogs/teaching_canon.csv
-      - data/catalogs/teaching_gaps.csv
       - data/catalogs/unified_works.csv
 
   # Phase 1b: Enrich → enriched_works.csv + embeddings.npz + citations.csv
