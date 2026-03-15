@@ -78,12 +78,12 @@ stages:
       size: 64321586
     - path: data/catalogs/teaching_works.csv
       hash: md5
-      md5: f8c4e43529a9888ca867d7e6810e49ce
-      size: 111584
+      md5: 693f649c75438935123dd2b80e9114e2
+      size: 4699
     - path: data/catalogs/unified_works.csv
       hash: md5
-      md5: cb1faad6e72c50cb20c1e5f8d6da8f48
-      size: 66579020
+      md5: 7cd913d64c6ba787d35db5bb61a3c237
+      size: 69123988
   enrich:
     cmd: "uv run python scripts/qa_detect_type.py --apply && uv run python scripts/enrich_dois.py\n\
       \  --works-input data/catalogs/unified_works.csv\n  --works-output data/catalogs/enriched_works.csv
@@ -95,8 +95,8 @@ stages:
     deps:
     - path: data/catalogs/unified_works.csv
       hash: md5
-      md5: cb1faad6e72c50cb20c1e5f8d6da8f48
-      size: 66579020
+      md5: 7cd913d64c6ba787d35db5bb61a3c237
+      size: 69123988
     - path: scripts/analyze_embeddings.py
       hash: md5
       md5: a6a7be768967dc1cf3fb1c1fad918e2b
@@ -140,8 +140,8 @@ stages:
       size: 48790249
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: d829b202ce97e6868d16fa3d66349270
-      size: 68509643
+      md5: 3a40f5cb52b62caacbc6d34859b24d98
+      size: 68988609
   extend:
     cmd: "uv run python scripts/corpus_refine.py --extend\n  --works-input data/catalogs/enriched_works.csv\n\
       \  --works-output data/catalogs/extended_works.csv"
@@ -152,8 +152,8 @@ stages:
       size: 3594
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: d829b202ce97e6868d16fa3d66349270
-      size: 68509643
+      md5: 3a40f5cb52b62caacbc6d34859b24d98
+      size: 68988609
     - path: scripts/corpus_refine.py
       hash: md5
       md5: 6140259712ea4d4744a19fcd45c1b0f1
@@ -169,8 +169,8 @@ stages:
     outs:
     - path: data/catalogs/extended_works.csv
       hash: md5
-      md5: a3ee7d924bfdbd4fcd9dcb670d7f6ee2
-      size: 71057363
+      md5: 3690786232d4d4e567f0c135913e11e6
+      size: 71536329
   filter:
     cmd: "uv run python scripts/corpus_refine.py --filter\n  --works-input data/catalogs/extended_works.csv\n\
       \  --works-output data/catalogs/refined_works.csv"
@@ -181,8 +181,8 @@ stages:
       size: 3594
     - path: data/catalogs/extended_works.csv
       hash: md5
-      md5: a3ee7d924bfdbd4fcd9dcb670d7f6ee2
-      size: 71057363
+      md5: 3690786232d4d4e567f0c135913e11e6
+      size: 71536329
     - path: scripts/corpus_refine.py
       hash: md5
       md5: 6140259712ea4d4744a19fcd45c1b0f1
@@ -202,8 +202,8 @@ stages:
       size: 5151675
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: 2fa2230763ae803e77d15155206273c0
-      size: 55723683
+      md5: f2178b2632d66e4324b594deb5943b0e
+      size: 56097880
   align:
     cmd: uv run python scripts/corpus_align.py
     deps:
@@ -217,8 +217,8 @@ stages:
       size: 48790249
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: 2fa2230763ae803e77d15155206273c0
-      size: 55723683
+      md5: f2178b2632d66e4324b594deb5943b0e
+      size: 56097880
     - path: scripts/corpus_align.py
       hash: md5
       md5: 88beeac21abb724607e450c3a14355e3
