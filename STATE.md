@@ -17,7 +17,7 @@ Last updated: 2026-03-15
 - DVC-managed: `dvc.yaml` (5 stages), `dvc.lock` committed, remote padme in sync
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
-- `make check-fast`: 193 passed, 0 failures
+- `make check-fast`: 194 passed, 0 failures
 - Ecology filter tightened — need extend + filter + figures regen
 
 ## Figures & tables
@@ -36,7 +36,6 @@ Last updated: 2026-03-15
 ## Active PRs
 
 - #99: docs — reasoning levels for git messages
-- #126: ticket — stop persisting derived flags in extended_works.csv
 - #127: extract housekeeping/memory sections from AGENTS.md into runbooks
 - #128: DOI dedup in corpus_refine
 
@@ -45,7 +44,8 @@ Last updated: 2026-03-15
 - **DVC chantier complete** (2026-03-15): 10 tickets, data versioned with DVC, pipeline DAG, repro archives, external cache, bidirectional push/pull doudou ↔ padme.
 - **Source normalized to 1NF** (#113): pipe-separated `source` → boolean `from_*` columns. 15 scripts adapted.
 - **Teaching canon refactored** (#114): single merge in discover, `build_teaching_canon.py` simplified (363 → 100 lines), `teaching_canon.csv` eliminated.
-- **Test infra complete** (#117–#123, #129–#130): `pytest-timeout`, `make check-fast` (193 passed, 0 failures). Makefile contract tests updated for DVC delegation; corpus_refine tests skip torch offline.
+- **Test infra complete** (#117–#123, #129–#130): `pytest-timeout`, `make check-fast` (194 passed, 0 failures). Makefile contract tests updated for DVC delegation; corpus_refine tests skip torch offline.
+- **Flags column normalized** (#126): removed derived `flags` list from `extended_works.csv`; booleans are source of truth, pipe-string serialized to `corpus_audit.csv` only at write time. Three reconstruction guards deleted.
 - **CLIMATE_FINANCE_DATA removed**: scripts hardcode `data/` relative to repo root. `.env` simplified.
 
 ## Open tickets
