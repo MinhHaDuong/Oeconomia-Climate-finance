@@ -91,6 +91,13 @@ class TestExtendMode:
             "type": ["article"] * 10,
             "language": ["en"] * 10,
             "first_author": [f"Author{i}" for i in range(10)],
+            "from_openalex": [1] * 10,
+            "from_semanticscholar": [0] * 10,
+            "from_istex": [0] * 10,
+            "from_bibcnrs": [0] * 10,
+            "from_scispsace": [0] * 10,
+            "from_grey": [0] * 10,
+            "from_teaching": [0] * 10,
         })
         path = tmp_path / "enriched_works.csv"
         df.to_csv(path, index=False)
@@ -171,6 +178,13 @@ class TestFilterMode:
             "type": ["article"] * 10,
             "language": ["en"] * 10,
             "first_author": [f"Author{i}" for i in range(10)],
+            "from_openalex": [1] * 10,
+            "from_semanticscholar": [0] * 10,
+            "from_istex": [0] * 10,
+            "from_bibcnrs": [0] * 10,
+            "from_scispsace": [0] * 10,
+            "from_grey": [0] * 10,
+            "from_teaching": [0] * 10,
             # Flag 3 rows as noise
             "flags": ['["missing_metadata"]', '["missing_metadata"]', '["missing_metadata"]']
                      + ["[]"] * 7,

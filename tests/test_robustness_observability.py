@@ -37,6 +37,13 @@ def make_mini_works(tmp_path):
         "year": [2010, 2015, 2020],
         "cited_by_count": [100, 5, 0],
         "source_count": [2, 1, 1],
+        "from_openalex": [1, 1, 0],
+        "from_semanticscholar": [1, 0, 0],
+        "from_istex": [0, 0, 1],
+        "from_bibcnrs": [0, 0, 0],
+        "from_scispsace": [0, 0, 0],
+        "from_grey": [0, 0, 0],
+        "from_teaching": [0, 0, 0],
     })
     path = tmp_path / "unified_works.csv"
     df.to_csv(path, index=False)
@@ -381,6 +388,8 @@ class TestStepCounters:
             "abstract": ["Has abstract", "", None],
             "source": ["openalex", "openalex", "istex"],
             "source_id": ["W1", "W2", "I1"],
+            "from_openalex": [1, 1, 0],
+            "from_istex": [0, 0, 1],
         })
 
     def test_step1_counter_attempted(self, mini_df, tmp_path):
