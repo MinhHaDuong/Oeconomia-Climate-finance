@@ -87,10 +87,6 @@ def corpus_stats(v):
         multi = (df["source_count"] >= 2).sum()
         v["corpus_multi_source"] = _int(multi)
         v["corpus_multi_source_pct"] = _pct(100 * multi / n)
-    elif "source" in df.columns:
-        multi = df["source"].str.contains(r"\|", na=False).sum()
-        v["corpus_multi_source"] = _int(multi)
-        v["corpus_multi_source_pct"] = _pct(100 * multi / n)
 
     # Language
     if "language" in df.columns:

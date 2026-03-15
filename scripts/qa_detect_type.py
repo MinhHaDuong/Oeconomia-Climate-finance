@@ -178,7 +178,8 @@ def main():
     ]
     print(f"\n=== Document type by source ===")
     for src in PRIMARY_SOURCES:
-        mask = df["source"].str.contains(src, na=False)
+        from_col = f"from_{src}"
+        mask = df[from_col] == 1 if from_col in df.columns else df["source"].str.contains(src, na=False)
         sub = df[mask]
         if len(sub) == 0:
             continue

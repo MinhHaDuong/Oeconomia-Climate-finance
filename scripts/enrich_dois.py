@@ -116,7 +116,7 @@ def main():
     doi_col = df["doi"].fillna("").astype(str).str.strip()
     has_doi = doi_col.apply(lambda x: bool(x) and x.lower() not in ("", "nan", "none"))
     has_title = df["title"].notna() & (df["title"].str.strip() != "")
-    is_oa_only = df["source"] == "openalex"
+    is_oa_only = (df["from_openalex"] == 1) & (df["source_count"] == 1)
     candidates = df[~has_doi & has_title & ~is_oa_only].copy()
     skipped_oa = int((~has_doi & has_title & is_oa_only).sum())
     print(f"Candidates (no DOI, has title, non-OA-only): {len(candidates)}")
