@@ -1,16 +1,19 @@
-"""Tests for Phase 1 Makefile contract — #52.
+"""Tests for Phase 1 Makefile contract — #52, updated for DVC delegation (#129).
 
 Tests verify:
 - Phase 1 target definitions exist in correct order
-- Each phase declares only its contract outputs
-- Fail-fast checks for missing handoff artifacts are present
+- corpus meta-target delegates to DVC (dvc repro)
+- Artifact dependency contracts are expressed in dvc.yaml (not Makefile recipes)
 - The old cheap pre-filter is absent from corpus-discover
 """
 
 import os
 import re
 
+import yaml
+
 MAKEFILE = os.path.join(os.path.dirname(__file__), "..", "Makefile")
+DVC_YAML = os.path.join(os.path.dirname(__file__), "..", "dvc.yaml")
 
 
 def read_makefile():
@@ -44,14 +47,18 @@ class TestTargetPresence:
             "corpus-filter target missing (new Phase 1d)"
 
     def test_corpus_target_chains_all_phases(self):
-        """The 'corpus' meta-target must chain discover -> enrich -> extend -> filter -> manifest."""
+        """The 'corpus' meta-target must delegate to DVC (dvc repro).
+
+        Since DVC now owns the dependency graph (dvc.yaml), the Makefile
+        corpus target simply calls 'dvc repro' rather than chaining individual
+        phase targets. Each stage's artifact dependencies are declared in dvc.yaml.
+        """
         mk = read_makefile()
-        # Find corpus: line and check all four phases appear as prereqs
         m = re.search(r"^corpus\s*:(.*?)(?=\n\S|\Z)", mk, re.MULTILINE | re.DOTALL)
         assert m, "corpus meta-target not found"
         body = m.group(0)
-        for phase in ("corpus-discover", "corpus-enrich", "corpus-extend", "corpus-filter"):
-            assert phase in body, f"{phase} not chained in corpus meta-target"
+        assert "dvc repro" in body, \
+            "corpus meta-target must delegate to 'dvc repro' (DVC owns the pipeline DAG)"
 
 
 # ---------------------------------------------------------------------------
@@ -110,42 +117,53 @@ class TestContractVariables:
 
 
 # ---------------------------------------------------------------------------
-# Fail-fast artifact checks
+# Artifact dependency checks (now in dvc.yaml, not Makefile recipes)
 # ---------------------------------------------------------------------------
+
+def read_dvc_yaml():
+    with open(DVC_YAML) as f:
+        return yaml.safe_load(f)
+
 
 class TestFailFastChecks:
     def test_corpus_enrich_checks_for_unified(self):
-        """corpus-enrich recipe must fail-fast if unified_works.csv is absent."""
-        mk = read_makefile()
-        m = re.search(
-            r"^corpus-enrich\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE
-        )
-        assert m, "corpus-enrich target not found"
-        recipe = m.group(1)
-        assert "unified_works.csv" in recipe or "UNIFIED" in recipe, \
-            "corpus-enrich must reference UNIFIED/unified_works.csv (fail-fast check)"
+        """dvc.yaml enrich stage must declare unified_works.csv as a dependency.
+
+        Previously the Makefile corpus-enrich recipe contained a fail-fast check.
+        Now DVC owns the dependency graph: the contract is expressed in dvc.yaml
+        deps, which DVC enforces before running the stage.
+        """
+        dvc = read_dvc_yaml()
+        assert "enrich" in dvc.get("stages", {}), "enrich stage missing from dvc.yaml"
+        deps = dvc["stages"]["enrich"].get("deps", [])
+        dep_paths = [str(d) for d in deps]
+        assert any("unified_works.csv" in p for p in dep_paths), \
+            "dvc.yaml enrich stage must list unified_works.csv in deps"
 
     def test_corpus_extend_checks_for_enriched(self):
-        """corpus-extend recipe must fail-fast if enriched_works.csv is absent."""
-        mk = read_makefile()
-        m = re.search(
-            r"^corpus-extend\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE
-        )
-        assert m, "corpus-extend target not found"
-        recipe = m.group(1)
-        assert "enriched_works.csv" in recipe or "ENRICHED" in recipe, \
-            "corpus-extend must reference ENRICHED/enriched_works.csv (fail-fast check)"
+        """dvc.yaml extend stage must declare enriched_works.csv as a dependency.
+
+        Previously the Makefile corpus-extend recipe contained a fail-fast check.
+        Now DVC owns the dependency graph: the contract is expressed in dvc.yaml
+        deps, which DVC enforces before running the stage.
+        """
+        dvc = read_dvc_yaml()
+        assert "extend" in dvc.get("stages", {}), "extend stage missing from dvc.yaml"
+        deps = dvc["stages"]["extend"].get("deps", [])
+        dep_paths = [str(d) for d in deps]
+        assert any("enriched_works.csv" in p for p in dep_paths), \
+            "dvc.yaml extend stage must list enriched_works.csv in deps"
 
     def test_corpus_filter_checks_for_extended(self):
-        """corpus-filter recipe must fail-fast if extended_works.csv is absent."""
-        mk = read_makefile()
-        m = re.search(
-            r"^corpus-filter\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE
-        )
-        assert m, "corpus-filter target not found"
-        recipe = m.group(1)
-        assert "extended_works.csv" in recipe or "EXTENDED" in recipe, \
-            "corpus-filter must reference EXTENDED/extended_works.csv (fail-fast check)"
+        """dvc.yaml filter stage must declare extended_works.csv as a dependency.
+
+        Previously the Makefile corpus-filter recipe contained a fail-fast check.
+        Now DVC owns the dependency graph: the contract is expressed in dvc.yaml
+        deps, which DVC enforces before running the stage.
+        """
+        dvc = read_dvc_yaml()
+        assert "filter" in dvc.get("stages", {}), "filter stage missing from dvc.yaml"
+        deps = dvc["stages"]["filter"].get("deps", [])
+        dep_paths = [str(d) for d in deps]
+        assert any("extended_works.csv" in p for p in dep_paths), \
+            "dvc.yaml filter stage must list extended_works.csv in deps"

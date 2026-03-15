@@ -7,7 +7,7 @@ Covers:
 - load_refined_embeddings() and load_refined_citations() raise on missing file
 - corpus_align.py CLI: --dry-run works without writing files
 - corpus_align.py: alignment is correct given synthetic fixture data
-- Makefile declares corpus-align target chained into corpus meta-target
+- Makefile declares corpus-align target; dvc.yaml align stage lists refined_works.csv in deps
 """
 
 import os
@@ -15,12 +15,15 @@ import sys
 import subprocess
 import tempfile
 
+import yaml
+
 import numpy as np
 import pandas as pd
 import pytest
 
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 MAKEFILE = os.path.join(os.path.dirname(__file__), "..", "Makefile")
+DVC_YAML = os.path.join(os.path.dirname(__file__), "..", "dvc.yaml")
 sys.path.insert(0, SCRIPTS_DIR)
 
 
@@ -351,12 +354,17 @@ class TestMakefileContract:
             "corpus-align target missing from Makefile"
 
     def test_corpus_meta_target_includes_corpus_align(self):
-        import re
-        mk = self._read_makefile()
-        m = re.search(r"^corpus\s*:(.*?)(?=\n\S|\Z)", mk, re.MULTILINE | re.DOTALL)
-        assert m, "corpus meta-target not found"
-        assert "corpus-align" in m.group(0), \
-            "corpus-align not chained in corpus meta-target"
+        """dvc.yaml must define an align stage (corpus-align delegates to dvc repro align).
+
+        Previously the test checked the Makefile corpus meta-target listed
+        corpus-align as a prerequisite. Now DVC owns the pipeline DAG:
+        the align stage is declared in dvc.yaml, and corpus-align in the
+        Makefile simply calls 'dvc repro align'.
+        """
+        with open(DVC_YAML) as f:
+            dvc = yaml.safe_load(f)
+        assert "align" in dvc.get("stages", {}), \
+            "align stage missing from dvc.yaml (corpus-align delegates to 'dvc repro align')"
 
     def test_refined_embeddings_variable_declared(self):
         import re
@@ -371,14 +379,17 @@ class TestMakefileContract:
             "REFINED_CIT variable not declared in Makefile"
 
     def test_corpus_align_checks_for_refined(self):
-        """corpus-align recipe must fail-fast if refined_works.csv is absent."""
-        import re
-        mk = self._read_makefile()
-        m = re.search(
-            r"^corpus-align\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE,
-        )
-        assert m, "corpus-align target not found"
-        recipe = m.group(1)
-        assert "refined_works.csv" in recipe or "REFINED" in recipe, \
-            "corpus-align must reference REFINED/refined_works.csv (fail-fast check)"
+        """dvc.yaml align stage must declare refined_works.csv as a dependency.
+
+        Previously the Makefile corpus-align recipe contained a fail-fast check
+        for the presence of refined_works.csv. Now DVC owns the dependency graph:
+        the contract is expressed in dvc.yaml deps, which DVC enforces before
+        running the align stage.
+        """
+        with open(DVC_YAML) as f:
+            dvc = yaml.safe_load(f)
+        assert "align" in dvc.get("stages", {}), "align stage missing from dvc.yaml"
+        deps = dvc["stages"]["align"].get("deps", [])
+        dep_paths = [str(d) for d in deps]
+        assert any("refined_works.csv" in p for p in dep_paths), \
+            "dvc.yaml align stage must list refined_works.csv in deps"
