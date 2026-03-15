@@ -15,8 +15,11 @@ content/bibliography/*.pdf
 # Machine-specific data path (see .env.example)
 .env
 
-# Generated data lives outside repo (path set in .env)
-data/
+# Data directory — DVC manages catalog/pool artifacts (*.dvc files tracked by git)
+# Non-DVC subdirs (exports/, raw/, syllabi/) gitignored here
+data/exports/
+data/raw/
+data/syllabi/
 
 # Generated figures, tables, and stats (regenerate with: make figures / make stats)
 content/figures/

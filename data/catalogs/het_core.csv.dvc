@@ -1,0 +1,5 @@
+outs:
+- md5: ae67187dc42545defcaa146434ce88c2
+  size: 535627
+  hash: md5
+  path: het_core.csv

@@ -16,6 +16,8 @@ dependencies = [
     "pdfplumber",
     "pytest",
     "requests-mock",
+    "dvc>=3.67.0",
+    "dvc-ssh>=4.2.2",
 ]
 
 [dependency-groups]

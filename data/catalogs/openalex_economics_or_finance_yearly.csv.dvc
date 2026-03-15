@@ -1,0 +1,5 @@
+outs:
+- md5: 95d50bcf4ea1b0684f1cacdaa0d17e13
+  size: 5928
+  hash: md5
+  path: openalex_economics_or_finance_yearly.csv

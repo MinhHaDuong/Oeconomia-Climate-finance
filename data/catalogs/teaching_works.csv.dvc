@@ -1,0 +1,5 @@
+outs:
+- md5: f8c4e43529a9888ca867d7e6810e49ce
+  size: 111584
+  hash: md5
+  path: teaching_works.csv
