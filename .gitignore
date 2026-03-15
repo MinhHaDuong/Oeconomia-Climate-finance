@@ -16,8 +16,7 @@ content/bibliography/*.pdf
 .env
 
 # Data directory — DVC manages catalog/pool artifacts (*.dvc files tracked by git)
-# Non-DVC subdirs (exports/, raw/, syllabi/) gitignored here
-data/exports/
+# Non-DVC subdirs (raw/, syllabi/) gitignored here; exports/ managed by data/exports.dvc
 data/raw/
 data/syllabi/
 # Script checkpoint files (resume state, not source of truth)

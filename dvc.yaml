@@ -8,6 +8,18 @@
 # Do not run casually — use `dvc repro --dry` to preview what would run.
 
 stages:
+  # Phase 1a-pre: Parse bibCNRS RIS exports → bibcnrs_works.csv
+  # Hand-exported from bib.cnrs.fr (CNRS credentials required); conversion is
+  # deterministic so it lives in the pipeline rather than as a pre-placed artifact.
+  catalog_bibcnrs:
+    cmd: uv run python scripts/catalog_bibcnrs.py
+    deps:
+      - scripts/catalog_bibcnrs.py
+      - scripts/utils.py
+      - data/exports
+    outs:
+      - data/catalogs/bibcnrs_works.csv
+
   # Phase 1a: Discovery + merge → unified_works.csv
   # Catalog scripts query APIs (ISTEX, OpenAlex, Semantic Scholar) and merge
   # all per-source CSVs into a single unified catalog. No filtering here.
@@ -34,8 +46,8 @@ stages:
       - config/openalex_queries.yaml
       - config/grey_sources.yaml
       - config/teaching_sources.yaml
-      # Hand-curated inputs (pre-placed, not produced by pipeline)
       - data/catalogs/bibcnrs_works.csv
+      # Hand-curated input (pre-placed, not produced by pipeline)
       - data/catalogs/scispsace_works.csv
     outs:
       - data/catalogs/istex_works.csv
