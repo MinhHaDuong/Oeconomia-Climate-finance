@@ -47,6 +47,35 @@ After all agents return:
 6. **Check for stale info**: are STATE.md, ROADMAP.md, docs/* consistent with the changes?
 7. **Post a single review**: `gh pr review <number> --comment --body "..."` or `--approve` / `--request-changes`. Attribute each finding to its perspective and confidence level.
 
+## Code-quality escalation policy
+
+Not every problem must be fixed in the current PR. Escalate according to origin:
+
+| Severity | Rule | Action |
+|---|---|---|
+| **Blocks correctness** (bug, data loss, silent failure) | Fix before merge | request-changes |
+| **Introduced by this PR** (new smell, new anti-pattern, over-engineering) | Fix before merge — you own what you create | request-changes |
+| **Pre-existing but touched by this PR** (edited a smelly function, extended an anti-pattern) | Don't block the PR; file a follow-up ticket | comment + new ticket |
+| **Pre-existing and untouched** (noticed while reviewing nearby code) | Delegate to an investigation agent | agent → assess → file ticket if warranted, drop with reason if not |
+
+**Principle: you own what you touch, you don't own what you read** — but what you read still gets triaged, because investigation is cheap.
+
+### What qualifies as a code-quality finding
+
+- **Code smell**: dead code, duplicated logic, god functions, deep nesting, magic numbers.
+- **Anti-pattern**: reinventing stdlib, mutation in a pipeline, silent exception swallowing, stringly-typed interfaces.
+- **Over-engineering**: premature abstraction, speculative generality, unnecessary indirection, configuration for things that don't vary.
+
+### Delegation protocol for pre-existing issues
+
+When a reviewer spots a pre-existing issue in untouched code:
+
+1. **Spawn an investigation agent** (fresh context, read-only).
+2. The agent checks: Is this already tracked in an open issue? Is it intentional (documented trade-off)? How severe is the impact?
+3. If warranted → agent files a ticket following `runbooks/new-ticket.md`.
+4. If not warranted → agent comments with the reasoning (why it's acceptable or out of scope).
+5. The reviewer does not block the PR for pre-existing issues — focus stays on the diff.
+
 ## What to look for (all perspectives)
 
 - Does every changed file have a reason in the commit message?
