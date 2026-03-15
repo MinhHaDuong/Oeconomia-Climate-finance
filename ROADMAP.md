@@ -36,3 +36,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - Fix timeout truncation (#121): remove int() cast on request_timeout
 - DOI dedup in corpus_refine (#120): fixes duplicate OpenAlex IDs and fake grey-lit placeholder DOIs
 - catalog_bibcnrs as DVC stage (#134): `data/exports/` DVC-tracked; bibcnrs RIS→CSV conversion moves from pre-placed artifact to pipeline stage
+- Memory hygiene (2026-03-15): runbooks updated with stale-entry sweep (celebrate step 5), monthly sweep trigger (housekeeping), list size caps and TTLs (memory.md) — grounded in ACT-R activation-based decay and FadeMem literature
