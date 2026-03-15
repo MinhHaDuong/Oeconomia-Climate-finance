@@ -43,9 +43,9 @@ EOF
 If investigation of a ticket reveals multiple independent action items:
 
 1. The original issue becomes the **tracking issue** — leave it open.
-2. Create each sub-issue as a native GitHub child:
+2. Create each sub-issue as a native GitHub child (`--parent` requires gh ≥ 2.49):
    ```bash
    gh issue create --title "..." --body "..." --parent <TRACKING_ISSUE_NUMBER>
    ```
-3. List the child issue numbers in the tracking issue body under a `## Sub-issues` heading.
-4. The tracking issue closes only after integration review (see `runbooks/celebrate.md` step 9b).
+3. After creating all sub-issues, edit the tracking issue body to add a `## Sub-issues` heading listing each child issue number.
+4. The tracking issue closes only after integration review (see `runbooks/celebrate.md` step 10).
