@@ -33,17 +33,6 @@ EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 POOL_DIR = os.path.join(DATA_DIR, "pool")
 
-# --- Phase 1 → Phase 2 contract ---
-# Phase 1 (corpus building) produces these files in CATALOGS_DIR.
-# Phase 2 (analysis & figures) reads ONLY these files.
-PHASE1_OUTPUTS = {
-    "refined_works.csv",        # filtered corpus population (row order canonical)
-    "refined_embeddings.npz",   # embedding vectors aligned 1:1 with refined_works.csv rows
-    "refined_citations.csv",    # citation edges restricted to refined DOIs
-    "embeddings.npz",           # full embedding cache (internal, not for Phase 2)
-    "citations.csv",            # full citation graph (internal, not for Phase 2)
-}
-
 # --- CSV schemas ---
 
 WORKS_COLUMNS = [

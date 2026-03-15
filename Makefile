@@ -32,7 +32,6 @@ REFINED     := $(DATA_DIR)/refined_works.csv
 REFINED_EMB := $(DATA_DIR)/refined_embeddings.npz
 REFINED_CIT := $(DATA_DIR)/refined_citations.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
-MANIFEST    := $(DATA_DIR)/corpus_manifest.json
 
 # ── Reproducibility ───────────────────────────────────────
 # PYTHONHASHSEED=0  → deterministic dict/set iteration order
@@ -61,7 +60,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-manifest corpus-tables corpus-validate deploy-corpus check lint-prose clean rebuild archive verify-remote
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check-corpus citations corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus check lint-prose clean rebuild archive verify-remote
 
 .DEFAULT_GOAL := manuscript
 
@@ -85,7 +84,7 @@ all: manuscript papers
 # (embeddings.npz and citations.csv are enrichment caches, not Phase 2 inputs.)
 # het_mostcited_50.csv is a Phase 2 derived product (build_het_core.py).
 
-corpus: corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-manifest
+corpus: corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align
 
 # Phase 1a: Discovery + merge → unified_works.csv
 # Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
@@ -144,10 +143,6 @@ corpus-align:
 		|| { echo "ERROR: $(REFINED) missing — run 'make corpus-filter' first."; exit 1; }
 	uv run python scripts/corpus_align.py
 
-# Phase 1f: Record checksums of contract files
-corpus-manifest:
-	uv run python scripts/corpus_manifest.py
-
 # Citation enrichment shortcut (also part of corpus-enrich).
 # Both scripts are resumable; re-running only fetches what's missing.
 citations:
@@ -176,10 +171,10 @@ corpus-validate: $(REFINED)
 # het_mostcited_50.csv is produced within Phase 2 by build_het_core.py.
 # Outputs: content/figures/*.png, content/tables/*.csv, _variables.yml
 
-# Warn if Phase 1 manifest is missing
+# Warn if Phase 1 contract files are missing (DVC handles integrity)
 check-corpus:
-	@test -f "$(MANIFEST)" \
-		|| echo "WARNING: No corpus manifest found. Run 'make corpus' first."
+	@test -f "$(REFINED)" \
+		|| echo "WARNING: refined_works.csv missing. Run 'dvc checkout' or 'make corpus' first."
 
 # ── Statistics (computed from pipeline outputs) ──────────
 STATS := _variables.yml
