@@ -62,7 +62,17 @@ Papers are protected from removal if they meet any of: cited_by_count >= 50, app
 
 ### Phase D: Filtering
 
-Flagged, non-protected papers are removed. An audit trail (`corpus_audit.csv`) records the decision for every paper.
+Flagged, non-protected papers are removed.
+
+### Phase E: Deduplication
+
+Enrichment steps can reintroduce duplicates from source JSONs that the merge step had already deduplicated. Two classes of duplicates are addressed:
+
+1. **Grey-literature placeholder DOIs.** Some grey-literature documents share a fake placeholder DOI (e.g., `10.1108/meq.2003.14.4.541.3`). These are detected as normalized DOIs appearing more than once exclusively among `from_grey` records. The DOI field is cleared for these records so they are not collapsed in the next step.
+
+2. **OpenAlex duplicate IDs.** The same paper is occasionally indexed under two different OpenAlex IDs with the same DOI. After clearing placeholder DOIs, records are deduplicated on `doi_norm`, keeping the record with the highest `cited_by_count` (best bibliometric signal). Records without a DOI (NaN `doi_norm`) are excluded from deduplication to avoid incorrectly collapsing distinct works.
+
+An audit trail (`corpus_audit.csv`) records the decision for every paper: `keep`, `remove` (flagged), or `deduped` (dropped by deduplication).
 
 **Result:** The refined corpus contains {{< var corpus_total >}} papers in `refined_works.csv`.
 
