@@ -85,68 +85,34 @@ all: manuscript papers
 # (embeddings.npz and citations.csv are enrichment caches, not Phase 2 inputs.)
 # het_mostcited_50.csv is a Phase 2 derived product (build_het_core.py).
 
-corpus: corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-manifest
+# Full pipeline — delegates to DVC for dependency tracking and caching.
+# DVC skips stages whose inputs haven't changed since last successful run.
+corpus:
+	uv run dvc repro
 
-# Phase 1a: Discovery + merge → unified_works.csv
-# Hand-harvested CSVs (bibcnrs_works.csv, scispsace_works.csv) must be
-# pre-placed in $(DATA_DIR) before running.
-# No filtering here — filtering is deferred to corpus-extend / corpus-filter.
+# Aliases for individual stages (backward-compatible with old make targets).
+# Each delegates to DVC so dependency tracking remains consistent.
 corpus-discover:
-	uv run python scripts/catalog_istex.py --api
-	uv run python scripts/catalog_openalex.py --resume
-	uv run python scripts/catalog_semanticscholar.py --resume
-	uv run python scripts/catalog_grey.py
-	uv run python scripts/catalog_merge.py
-	uv run python scripts/build_teaching_canon.py
-	uv run python scripts/catalog_merge.py
+	uv run dvc repro discover
 
-# Phase 1b: Enrich → enriched_works.csv + citations.csv + embeddings.npz
-# Fails fast if unified_works.csv is missing.
-# DOI resolution and type fix run first (unlock more abstract/citation sources).
-# Abstracts and citations are independent; embeddings need abstracts.
-# Requires: uv sync --group corpus  (torch, sentence-transformers, hdbscan, …)
 corpus-enrich:
-	@test -f "$(UNIFIED)" \
-		|| { echo "ERROR: $(UNIFIED) missing — run 'make corpus-discover' first."; exit 1; }
-	uv run python scripts/qa_detect_type.py --apply
-	uv run python scripts/enrich_dois.py --works-input "$(UNIFIED)" --works-output "$(ENRICHED)"
-	uv run python scripts/enrich_abstracts.py --works-input "$(ENRICHED)"
-	uv run python scripts/enrich_citations_batch.py --works-input "$(ENRICHED)"
-	uv run python scripts/enrich_citations_openalex.py --works-input "$(ENRICHED)"
-	uv run python scripts/qc_citations.py --works-input "$(ENRICHED)"
-	uv run python scripts/analyze_embeddings.py --works-input "$(ENRICHED)"
+	uv run dvc repro enrich
 
-# Phase 1c: Extend → extended_works.csv (flags/protection only, no row removal)
-# Fails fast if enriched_works.csv is missing.
 corpus-extend:
-	@test -f "$(ENRICHED)" \
-		|| { echo "ERROR: $(ENRICHED) missing — run 'make corpus-enrich' first."; exit 1; }
-	uv run python scripts/corpus_refine.py --extend \
-		--works-input "$(ENRICHED)" --works-output "$(EXTENDED)"
+	uv run dvc repro extend
 
-# Phase 1d: Filter → refined_works.csv + corpus_audit.csv
-# Fails fast if extended_works.csv is missing.
 corpus-filter:
-	@test -f "$(EXTENDED)" \
-		|| { echo "ERROR: $(EXTENDED) missing — run 'make corpus-extend' first."; exit 1; }
-	uv run python scripts/corpus_refine.py --filter \
-		--works-input "$(EXTENDED)" --works-output "$(REFINED)"
+	uv run dvc repro filter
 
 # Backward-compat alias (old corpus-refine = extend + filter combined)
-corpus-refine: corpus-extend corpus-filter
+corpus-refine:
+	uv run dvc repro extend filter
 
-# Phase 1e: Produce row-aligned Phase 2 contract artifacts.
-# Fails fast if refined_works.csv or embeddings.npz is missing.
-# Produces: refined_embeddings.npz (1:1 with refined_works.csv rows)
-#           refined_citations.csv  (source_doi ⊆ refined DOIs)
 corpus-align:
-	@test -f "$(REFINED)" \
-		|| { echo "ERROR: $(REFINED) missing — run 'make corpus-filter' first."; exit 1; }
-	uv run python scripts/corpus_align.py
+	uv run dvc repro align
 
-# Phase 1f: Record checksums of contract files
 corpus-manifest:
-	uv run python scripts/corpus_manifest.py
+	uv run dvc repro manifest
 
 # Citation enrichment shortcut (also part of corpus-enrich).
 # Both scripts are resumable; re-running only fetches what's missing.
