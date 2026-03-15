@@ -231,11 +231,51 @@ def apply_filter(df, output_path=None, audit_path=None):
 
     # Save refined corpus
     keep_df = df[df["action"] == "keep"].drop(
-        columns=["flags", "protected", "protect_reason", "action", "doi_norm",
+        columns=["flags", "protected", "protect_reason", "action",
                  "missing_metadata", "no_abstract_irrelevant", "title_blacklist",
                  "citation_isolated_old", "semantic_outlier", "semantic_outlier_dist",
                  "llm_irrelevant"],
         errors="ignore")
+
+    # Deduplicate on normalized DOI (enrichment steps can reintroduce duplicates
+    # from source JSONs; this is the final quality gate).
+    #
+    # Step 1: clear placeholder DOIs shared by grey-literature records — these are
+    # fake DOIs assigned to multiple distinct grey-lit documents and should not be
+    # used as identifiers.
+    if "doi_norm" in keep_df.columns and "from_grey" in keep_df.columns:
+        grey_doi_counts = keep_df.loc[
+            keep_df["from_grey"].fillna(0).astype(bool) & (keep_df["doi_norm"] != ""),
+            "doi_norm"
+        ].value_counts()
+        shared_grey_dois = set(grey_doi_counts[grey_doi_counts > 1].index)
+        if shared_grey_dois:
+            mask_fake = keep_df["doi_norm"].isin(shared_grey_dois) & \
+                        keep_df["from_grey"].fillna(0).astype(bool)
+            keep_df.loc[mask_fake, "doi"] = ""
+            keep_df.loc[mask_fake, "doi_norm"] = ""
+            print(f"  Cleared {mask_fake.sum()} fake placeholder DOIs "
+                  f"({len(shared_grey_dois)} shared grey-lit DOIs)")
+
+    # Step 2: deduplicate on normalized DOI, keeping the record with the highest
+    # cited_by_count (OpenAlex sometimes indexes the same paper under two IDs).
+    if "doi_norm" in keep_df.columns:
+        n_before = len(keep_df)
+        keep_df["_cite_sort"] = pd.to_numeric(
+            keep_df["cited_by_count"], errors="coerce").fillna(0)
+        has_doi_mask = keep_df["doi_norm"] != ""
+        no_doi_df = keep_df[~has_doi_mask]
+        with_doi_df = keep_df[has_doi_mask].sort_values(
+            "_cite_sort", ascending=False
+        ).drop_duplicates(subset=["doi_norm"], keep="first")
+        keep_df = pd.concat([with_doi_df, no_doi_df], ignore_index=True).drop(
+            columns=["_cite_sort"])
+        n_dropped = n_before - len(keep_df)
+        if n_dropped:
+            print(f"  Dropped {n_dropped} duplicate-DOI records "
+                  f"(kept highest cited_by_count per DOI)")
+
+    keep_df = keep_df.drop(columns=["doi_norm"], errors="ignore")
     save_csv(keep_df, output_path)
     print(f"  Saved refined corpus -> {output_path} ({len(keep_df)} papers)")
 
