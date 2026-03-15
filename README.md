@@ -152,6 +152,4 @@ make manuscript       # build PDF (requires figures)
 
 ## Contact
 
-- **Journal:** Œconomia – History / Methodology / Philosophy
-  - https://journals.openedition.org/oeconomia/
-  - http://journals.sfu.ca/oeconomia
+minh.ha-duong@cnrs.fr

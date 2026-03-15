@@ -1,5 +1,9 @@
 # Informations aux auteurs — Œconomia
 
+** Œconomia – History / Methodology / Philosophy **
+  - https://journals.openedition.org/oeconomia/
+  - http://journals.sfu.ca/oeconomia
+
 ## Table des matières
 
 * [Soumettre un article](#soumettre-un-article)
