@@ -15,19 +15,8 @@ import requests
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 
-# Read .env if present (single source of truth for CLIMATE_FINANCE_DATA)
-_env_path = os.path.join(BASE_DIR, ".env")
-if os.path.isfile(_env_path):
-    with open(_env_path) as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip())
-
-DATA_DIR = os.environ.get("CLIMATE_FINANCE_DATA", "data")
-if not os.path.isabs(DATA_DIR):
-    DATA_DIR = os.path.join(BASE_DIR, DATA_DIR)
+# Data lives in <repo>/data/ (managed by DVC).
+DATA_DIR = os.path.join(BASE_DIR, "data")
 CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
 EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
