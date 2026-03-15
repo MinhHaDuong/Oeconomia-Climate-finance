@@ -14,6 +14,16 @@ See `runbooks/celebrate.md`.
 
 - Read `STATE.md` and `ROADMAP.md` — if not from today, refresh from current data.
 
+## Monthly: stale memory sweep
+
+Trigger: first conversation of each month (check `MEMORY.md` header date or last git touch).
+
+1. Scan every entry in `$CLAUDE_MEMORY_DIR/MEMORY.md` against the staleness criteria in `runbooks/memory.md`.
+2. Scan every `project_*.md` file: if the project state it describes is complete or superseded, delete the file and remove its MEMORY.md pointer.
+3. Check list-type sections against their caps; evict excess entries.
+4. Confirm or reset the clock on any TTL-bearing entry that has expired.
+5. Commit the sweep on `main` with message `housekeeping: monthly memory sweep YYYY-MM`.
+
 ## When to update `content/technical-report.qmd`
 
 - Pipeline phase contract changed (new inputs/outputs)
