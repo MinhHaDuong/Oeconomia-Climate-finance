@@ -18,6 +18,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+# Whole module requires corpus data files — skip with `pytest -m "not slow"`.
+pytestmark = pytest.mark.slow
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 from refine_flags import _has_safe_words, _load_config
 from utils import (

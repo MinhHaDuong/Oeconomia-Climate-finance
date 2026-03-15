@@ -17,6 +17,9 @@ import tempfile
 import pandas as pd
 import pytest
 
+# Whole module runs corpus_refine.py subprocesses — skip with `-m "not slow"`.
+pytestmark = pytest.mark.slow
+
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 PYTHON = sys.executable
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")

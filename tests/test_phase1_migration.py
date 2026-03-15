@@ -13,6 +13,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+# Whole module spawns corpus_refine.py subprocesses — skip with `-m "not slow"`.
+pytestmark = pytest.mark.slow
+
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 sys.path.insert(0, SCRIPTS_DIR)
 

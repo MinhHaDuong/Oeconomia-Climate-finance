@@ -18,6 +18,9 @@ import tempfile
 import pandas as pd
 import pytest
 
+# Whole module spawns enrichment-script subprocesses — skip with `-m "not slow"`.
+pytestmark = pytest.mark.slow
+
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 PYTHON = sys.executable
 
