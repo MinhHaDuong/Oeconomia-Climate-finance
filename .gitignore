@@ -20,6 +20,8 @@ content/bibliography/*.pdf
 data/exports/
 data/raw/
 data/syllabi/
+# Script checkpoint files (resume state, not source of truth)
+data/catalogs/.citations_batch_checkpoint.csv
 
 # Generated figures, tables, and stats (regenerate with: make figures / make stats)
 content/figures/
