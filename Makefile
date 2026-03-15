@@ -156,13 +156,7 @@ citations:
 	uv run python scripts/qc_citations.py
 
 deploy-corpus:
-	ssh $(REMOTE_HOST) 'bash -l -c "\
-	  cd ~/Oeconomia-Climate-finance && \
-	  git pull && \
-	  uv sync && \
-	  nohup make corpus > corpus.log 2>&1 &"'
-	@echo "Corpus pipeline started on $(REMOTE_HOST). Monitor with:"
-	@echo "  ssh $(REMOTE_HOST) 'tail -f ~/Oeconomia-Climate-finance/corpus.log'"
+	uv run dvc push
 
 # ── Corpus reporting & validation ─────────────────────────
 content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
