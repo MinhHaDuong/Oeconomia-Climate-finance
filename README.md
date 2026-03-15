@@ -64,6 +64,9 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 ├── ROADMAP.md                        # Milestones and deliverables
 ├── STATE.md                          # Current decisions and blockers
 ├── Makefile                          # Build: make manuscript, make papers, make figures
+├── data/                             # DVC-managed data (dvc pull to populate)
+│   ├── catalogs/                    #   Corpus CSVs, embeddings, caches
+│   └── pool/                        #   Raw API responses (gzipped JSONL)
 ├── scripts/                          # Python analysis pipeline
 ├── docs/                             # Guidelines, journal info, book project notes
 ├── release/                          # Releases outside CIRED. Append-only.
@@ -72,11 +75,24 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 
 ## Data
 
-All generated data at `~/data/projets/Oeconomia-Climate-finance/`
-(override: `CLIMATE_FINANCE_DATA` env var in `.env`; see `scripts/utils.py`).
+Corpus data lives in `data/` and is version-controlled with [DVC](https://dvc.org/).
+Git tracks `.dvc` pointer files (hashes); the actual data is stored in the DVC remote.
+
+```bash
+# First time after cloning:
+cp .env.example .env        # machine-specific paths
+uv sync                     # install Python deps (including DVC)
+uv run dvc pull              # download data (~1.3 GB) from remote
+
+# After pipeline runs that change data:
+uv run dvc push              # upload updated artifacts to remote
+
+# Check sync status:
+uv run dvc status            # are local files up to date?
+```
 
 `content/figures/` and `content/tables/` are gitignored — they are 100% script-generated.
-After cloning, regenerate them before building documents:
+After cloning and pulling data, regenerate them before building documents:
 
 ```bash
 make corpus-validate  # run 44-check acceptance test
@@ -101,3 +117,11 @@ make manuscript       # build PDF (requires figures)
 - **Journal:** Œconomia – History / Methodology / Philosophy
   - https://journals.openedition.org/oeconomia/
   - http://journals.sfu.ca/oeconomia
+
+### DVC on padme (the remote host)
+
+Since padme hosts the DVC remote, it uses a local path override to avoid SSH loopback:
+```bash
+uv run dvc remote modify --local padme url /data/projets/dvc/oeconomia-climate-finance
+```
+This creates `.dvc/config.local` (gitignored) so the override is machine-specific.

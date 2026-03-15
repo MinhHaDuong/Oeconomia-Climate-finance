@@ -1,0 +1,5 @@
+outs:
+- md5: 398b57db981cdbcbfd9f48b27336f806
+  size: 22203
+  hash: md5
+  path: communities.csv

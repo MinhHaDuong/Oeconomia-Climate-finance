@@ -1,0 +1,5 @@
+outs:
+- md5: 8272d6a661bd257aaaca88464e0573e4
+  size: 37995048
+  hash: md5
+  path: refined_embeddings.npz

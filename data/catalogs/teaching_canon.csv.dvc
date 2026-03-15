@@ -1,0 +1,5 @@
+outs:
+- md5: 7416a2dddaa5967c8127021ca81c0311
+  size: 3482
+  hash: md5
+  path: teaching_canon.csv

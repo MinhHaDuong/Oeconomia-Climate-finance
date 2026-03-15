@@ -1,0 +1,5 @@
+outs:
+- md5: 21be3cfd3e0947eb03385134f1826e14
+  size: 1060524
+  hash: md5
+  path: scispsace_works.csv

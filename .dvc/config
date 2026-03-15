@@ -1,0 +1,5 @@
+[core]
+    autostage = true
+    remote = padme
+['remote "padme"']
+    url = ssh://padme/data/projets/dvc/oeconomia-climate-finance
