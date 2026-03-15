@@ -28,4 +28,5 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - Doc restructuring: separated concerns (AGENTS → workflow only, domain guidance → docs/), added Dragon Dreaming + TDD + git hooks
 - Agent-agnostic skills: runbooks/, make check, AGENTS.md works with any AI assistant
 - DVC integration: data versioning (#101), pipeline DAG (#102), repro packages (#103), retire legacy (#104)
+- Fix timeout truncation (#121): remove `int()` cast on `request_timeout` in enrich scripts — silent float truncation bug
 - DOI dedup in corpus_refine (#120): fixes duplicate OpenAlex IDs and fake grey-lit placeholder DOIs

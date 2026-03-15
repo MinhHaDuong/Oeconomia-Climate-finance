@@ -36,6 +36,7 @@ Last updated: 2026-03-15
 
 ## Recent
 
+- **Fix timeout truncation** (#121, PR #122): removed `int()` cast on `request_timeout` in 3 enrich scripts (4 call sites); `int(12.5)` silently truncated to `12`, losing precision the caller intended.
 - **DOI dedup in corpus_refine** (#120, PR #128): two-step dedup gate fixes 21 OpenAlex duplicate-ID papers and 6 fake grey-lit placeholder DOIs. Corpus count will drop from ~28,442 to ~27,494 on next full regen.
 - **DVC integration complete** (#101–#104): data versioned in `data/`, pipeline DAG in `dvc.yaml`, remote on padme, reproducibility archives for manuscript + data paper. `dvc push`/`dvc pull` syncs machines. Legacy `corpus_manifest.py` and scp-based deploy retired.
 - Agent-agnostic skills: runbooks/ directory (celebrate, new-ticket, review-pr), `make check` target, AGENTS.md free of Claude-specific references.
