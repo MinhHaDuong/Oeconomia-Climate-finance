@@ -11,6 +11,10 @@ stages:
   # Phase 1a: Discovery + merge → unified_works.csv
   # Catalog scripts query APIs (ISTEX, OpenAlex, Semantic Scholar) and merge
   # all per-source CSVs into a single unified catalog. No filtering here.
+  #
+  # catalog_merge runs twice: first to produce unified_works.csv from the
+  # 6 sources, then again after build_teaching_canon matches syllabus
+  # readings against that unified corpus and adds missing seed works.
   discover:
     cmd: >-
       uv run python scripts/catalog_istex.py --api &&
@@ -81,6 +85,7 @@ stages:
 
   # Phase 1c: Extend → extended_works.csv
   # Adds diagnostic flags and protection columns; no rows removed.
+  # corpus_refine.py loads config/corpus_refine.yaml via refine_flags.py.
   extend:
     cmd: >-
       uv run python scripts/corpus_refine.py --extend
@@ -88,13 +93,16 @@ stages:
         --works-output data/catalogs/extended_works.csv
     deps:
       - scripts/corpus_refine.py
+      - scripts/refine_flags.py
       - scripts/utils.py
+      - config/corpus_refine.yaml
       - data/catalogs/enriched_works.csv
     outs:
       - data/catalogs/extended_works.csv
 
   # Phase 1d: Filter → refined_works.csv + corpus_audit.csv
   # Applies keep/remove policy based on flags set in extend stage.
+  # Also loads config/corpus_refine.yaml for retention policy parameters.
   filter:
     cmd: >-
       uv run python scripts/corpus_refine.py --filter
@@ -102,7 +110,9 @@ stages:
         --works-output data/catalogs/refined_works.csv
     deps:
       - scripts/corpus_refine.py
+      - scripts/refine_flags.py
       - scripts/utils.py
+      - config/corpus_refine.yaml
       - data/catalogs/extended_works.csv
     outs:
       - data/catalogs/refined_works.csv
