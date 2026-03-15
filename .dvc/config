@@ -2,4 +2,4 @@
     autostage = true
     remote = padme
 ['remote "padme"']
-    url = ssh://padme/data/dvc/oeconomia-climate-finance
+    url = ssh://padme/data/projets/dvc/oeconomia-climate-finance
