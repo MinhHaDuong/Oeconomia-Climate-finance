@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS, normalize_doi,
                    normalize_title, save_csv)
 
-SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "jstor", "bibcnrs", "scispsace", "grey", "teaching"]
+SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
 
 
 def pick_best(group, col):
