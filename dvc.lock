@@ -1,0 +1,238 @@
+schema: '2.0'
+stages:
+  discover:
+    cmd: uv run python scripts/catalog_istex.py --api && uv run python 
+      scripts/catalog_openalex.py --resume && uv run python 
+      scripts/catalog_semanticscholar.py --resume && uv run python 
+      scripts/catalog_grey.py && uv run python scripts/build_teaching_canon.py 
+      && uv run python scripts/catalog_merge.py
+    deps:
+    - path: config/grey_sources.yaml
+      hash: md5
+      md5: 393a35715ea920e54fd25500987a9642
+      size: 3086
+    - path: config/openalex_queries.yaml
+      hash: md5
+      md5: cdefd461c2a2997fe78778152d0bb881
+      size: 4304
+    - path: config/teaching_sources.yaml
+      hash: md5
+      md5: a7ae55e3cf67e25eb2c86784fb31745a
+      size: 23943
+    - path: data/catalogs/bibcnrs_works.csv
+      hash: md5
+      md5: aad79a049076761e7943646c5e732feb
+      size: 53677
+    - path: data/catalogs/scispsace_works.csv
+      hash: md5
+      md5: 21be3cfd3e0947eb03385134f1826e14
+      size: 1060524
+    - path: scripts/build_teaching_canon.py
+      hash: md5
+      md5: bc70a02b282dcee5acf0e9b02cad0f97
+      size: 3516
+    - path: scripts/catalog_grey.py
+      hash: md5
+      md5: f424528ace5727d862260966ae76ca44
+      size: 5940
+    - path: scripts/catalog_istex.py
+      hash: md5
+      md5: fa970dc29fca83ba5228ea098d3dcc84
+      size: 7722
+    - path: scripts/catalog_merge.py
+      hash: md5
+      md5: be98e426bd1210a5a0993830c415766e
+      size: 5172
+    - path: scripts/catalog_openalex.py
+      hash: md5
+      md5: 0db4c05f9a9d88a58dccdbc017307fb2
+      size: 12521
+    - path: scripts/catalog_semanticscholar.py
+      hash: md5
+      md5: c6e51b548744839b8f9673baa77a605b
+      size: 10024
+    - path: scripts/utils.py
+      hash: md5
+      md5: 44f58019945703d49871b73cd96b0c6d
+      size: 20438
+    outs:
+    - path: data/catalogs/grey_works.csv
+      hash: md5
+      md5: 65225fd373f92d9b9366fefc89c4a998
+      size: 425736
+    - path: data/catalogs/istex_refs.csv
+      hash: md5
+      md5: 192b0a20602d05038c97707501911453
+      size: 16203896
+    - path: data/catalogs/istex_works.csv
+      hash: md5
+      md5: 5ef315ccb2f5e433683421c95f0ba3df
+      size: 1659302
+    - path: data/catalogs/openalex_citations.csv
+      hash: md5
+      md5: 0628392a2758e19bcf4d453ceae177b2
+      size: 43665648
+    - path: data/catalogs/openalex_works.csv
+      hash: md5
+      md5: 29e9c92eeb0bde415eef8500e871ac36
+      size: 64321586
+    - path: data/catalogs/teaching_works.csv
+      hash: md5
+      md5: f8c4e43529a9888ca867d7e6810e49ce
+      size: 111584
+    - path: data/catalogs/unified_works.csv
+      hash: md5
+      md5: cb1faad6e72c50cb20c1e5f8d6da8f48
+      size: 66579020
+  enrich:
+    cmd: "uv run python scripts/qa_detect_type.py --apply && uv run python scripts/enrich_dois.py\n\
+      \  --works-input data/catalogs/unified_works.csv\n  --works-output data/catalogs/enriched_works.csv
+      &&\nuv run python scripts/enrich_abstracts.py\n  --works-input data/catalogs/enriched_works.csv
+      &&\nuv run python scripts/enrich_citations_batch.py\n  --works-input data/catalogs/enriched_works.csv
+      &&\nuv run python scripts/enrich_citations_openalex.py\n  --works-input data/catalogs/enriched_works.csv
+      &&\nuv run python scripts/qc_citations.py\n  --works-input data/catalogs/enriched_works.csv
+      &&\nuv run python scripts/analyze_embeddings.py\n  --works-input data/catalogs/enriched_works.csv"
+    deps:
+    - path: data/catalogs/unified_works.csv
+      hash: md5
+      md5: cb1faad6e72c50cb20c1e5f8d6da8f48
+      size: 66579020
+    - path: scripts/analyze_embeddings.py
+      hash: md5
+      md5: a6a7be768967dc1cf3fb1c1fad918e2b
+      size: 14761
+    - path: scripts/enrich_abstracts.py
+      hash: md5
+      md5: 5bd42aea79ad24539df16c8c13b537cf
+      size: 19031
+    - path: scripts/enrich_citations_batch.py
+      hash: md5
+      md5: 362410159d6740a478d75e3d1a65bc72
+      size: 12867
+    - path: scripts/enrich_citations_openalex.py
+      hash: md5
+      md5: bd424f2b1d62bf02988abab2f9011280
+      size: 18937
+    - path: scripts/enrich_dois.py
+      hash: md5
+      md5: eba13dc70aeb428a8391f06014f9b58f
+      size: 6942
+    - path: scripts/qa_detect_type.py
+      hash: md5
+      md5: 18730bb9cc84d2b91c1e20ee2f796be9
+      size: 8135
+    - path: scripts/qc_citations.py
+      hash: md5
+      md5: d02b079bb6f9129f4d91b1a39310327e
+      size: 10187
+    - path: scripts/utils.py
+      hash: md5
+      md5: 44f58019945703d49871b73cd96b0c6d
+      size: 20438
+    outs:
+    - path: data/catalogs/citations.csv
+      hash: md5
+      md5: b575a855a9e3d5c2829f893170861448
+      size: 300524838
+    - path: data/catalogs/embeddings.npz
+      hash: md5
+      md5: b5e6a31c36c1cafd74711ac04b5f7bb5
+      size: 48790249
+    - path: data/catalogs/enriched_works.csv
+      hash: md5
+      md5: d829b202ce97e6868d16fa3d66349270
+      size: 68509643
+  extend:
+    cmd: "uv run python scripts/corpus_refine.py --extend\n  --works-input data/catalogs/enriched_works.csv\n\
+      \  --works-output data/catalogs/extended_works.csv"
+    deps:
+    - path: config/corpus_refine.yaml
+      hash: md5
+      md5: 610790841a11bd82cd6a49d1e22864f7
+      size: 3594
+    - path: data/catalogs/enriched_works.csv
+      hash: md5
+      md5: d829b202ce97e6868d16fa3d66349270
+      size: 68509643
+    - path: scripts/corpus_refine.py
+      hash: md5
+      md5: 6140259712ea4d4744a19fcd45c1b0f1
+      size: 20357
+    - path: scripts/refine_flags.py
+      hash: md5
+      md5: 1020ac46914c65f13072f936faa1ee84
+      size: 25157
+    - path: scripts/utils.py
+      hash: md5
+      md5: 44f58019945703d49871b73cd96b0c6d
+      size: 20438
+    outs:
+    - path: data/catalogs/extended_works.csv
+      hash: md5
+      md5: a3ee7d924bfdbd4fcd9dcb670d7f6ee2
+      size: 71057363
+  filter:
+    cmd: "uv run python scripts/corpus_refine.py --filter\n  --works-input data/catalogs/extended_works.csv\n\
+      \  --works-output data/catalogs/refined_works.csv"
+    deps:
+    - path: config/corpus_refine.yaml
+      hash: md5
+      md5: 610790841a11bd82cd6a49d1e22864f7
+      size: 3594
+    - path: data/catalogs/extended_works.csv
+      hash: md5
+      md5: a3ee7d924bfdbd4fcd9dcb670d7f6ee2
+      size: 71057363
+    - path: scripts/corpus_refine.py
+      hash: md5
+      md5: 6140259712ea4d4744a19fcd45c1b0f1
+      size: 20357
+    - path: scripts/refine_flags.py
+      hash: md5
+      md5: 1020ac46914c65f13072f936faa1ee84
+      size: 25157
+    - path: scripts/utils.py
+      hash: md5
+      md5: 44f58019945703d49871b73cd96b0c6d
+      size: 20438
+    outs:
+    - path: data/catalogs/corpus_audit.csv
+      hash: md5
+      md5: bc9a5ec4a9896315c31496352edf647c
+      size: 5151675
+    - path: data/catalogs/refined_works.csv
+      hash: md5
+      md5: 2fa2230763ae803e77d15155206273c0
+      size: 55723683
+  align:
+    cmd: uv run python scripts/corpus_align.py
+    deps:
+    - path: data/catalogs/citations.csv
+      hash: md5
+      md5: b575a855a9e3d5c2829f893170861448
+      size: 300524838
+    - path: data/catalogs/embeddings.npz
+      hash: md5
+      md5: b5e6a31c36c1cafd74711ac04b5f7bb5
+      size: 48790249
+    - path: data/catalogs/refined_works.csv
+      hash: md5
+      md5: 2fa2230763ae803e77d15155206273c0
+      size: 55723683
+    - path: scripts/corpus_align.py
+      hash: md5
+      md5: 88beeac21abb724607e450c3a14355e3
+      size: 9029
+    - path: scripts/utils.py
+      hash: md5
+      md5: 44f58019945703d49871b73cd96b0c6d
+      size: 20438
+    outs:
+    - path: data/catalogs/refined_citations.csv
+      hash: md5
+      md5: c713fb12c802fd0c3d1c9991739355d5
+      size: 257399600
+    - path: data/catalogs/refined_embeddings.npz
+      hash: md5
+      md5: 8272d6a661bd257aaaca88464e0573e4
+      size: 37995048
