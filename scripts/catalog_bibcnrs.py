@@ -132,13 +132,10 @@ def main():
 
     all_files = ris_files + bib_files
     if not all_files:
-        # Try any RIS/BibTeX in exports not already handled by other scripts
+        # Try any RIS/BibTeX in exports
         all_ris = set(glob.glob(os.path.join(EXPORTS_DIR, "*.ris")))
         all_bib = set(glob.glob(os.path.join(EXPORTS_DIR, "*.bib")))
-        jstor_files = set(glob.glob(os.path.join(EXPORTS_DIR, "*jstor*"))) | \
-                      set(glob.glob(os.path.join(EXPORTS_DIR, "*constellate*"))) | \
-                      set(glob.glob(os.path.join(EXPORTS_DIR, "*econlit*")))
-        all_files = list((all_ris | all_bib) - jstor_files)
+        all_files = list(all_ris | all_bib)
 
     if not all_files:
         print(INSTRUCTIONS)
