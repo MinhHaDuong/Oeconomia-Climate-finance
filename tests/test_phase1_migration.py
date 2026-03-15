@@ -59,13 +59,18 @@ class TestPhase1Integration:
         env["CLIMATE_FINANCE_DATA"] = str(temp_catalogs.parent)
         
         result = subprocess.run(
-            ["python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"), "--apply"],
+            [
+                "python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+                "--apply", "--skip-llm", "--skip-citation-flag",
+                "--works-input", str(temp_catalogs / "unified_works.csv"),
+                "--works-output", str(temp_catalogs / "refined_works.csv"),
+            ],
             cwd=str(temp_catalogs),
             capture_output=True,
             text=True,
             env=env,
         )
-        
+
         assert result.returncode == 0, (
             f"corpus_refine.py --apply failed:\nstdout: {result.stdout}\n"
             f"stderr: {result.stderr}"
@@ -89,24 +94,19 @@ class TestIncrementiality:
         env = os.environ.copy()
         env["CLIMATE_FINANCE_DATA"] = str(temp_catalogs.parent)
         
+        cmd = [
+            "python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            "--apply", "--skip-llm", "--skip-citation-flag",
+            "--works-input", str(temp_catalogs / "unified_works.csv"),
+            "--works-output", str(temp_catalogs / "refined_works.csv"),
+        ]
+
         # First run
-        subprocess.run(
-            ["python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"), "--apply"],
-            cwd=str(temp_catalogs),
-            capture_output=True,
-            text=True,
-            env=env,
-        )
+        subprocess.run(cmd, cwd=str(temp_catalogs), capture_output=True, text=True, env=env)
         run1 = (temp_catalogs / "refined_works.csv").read_text()
-        
+
         # Second run
-        subprocess.run(
-            ["python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"), "--apply"],
-            cwd=str(temp_catalogs),
-            capture_output=True,
-            text=True,
-            env=env,
-        )
+        subprocess.run(cmd, cwd=str(temp_catalogs), capture_output=True, text=True, env=env)
         run2 = (temp_catalogs / "refined_works.csv").read_text()
         
         assert run1 == run2, "corpus_refine --apply is not idempotent"
