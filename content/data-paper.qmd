@@ -58,8 +58,15 @@ The primary corpus file. Each row represents one deduplicated work.
 | `year` | integer | Publication year (1990--2025) |
 | `abstract` | string | Abstract text; empty for works without abstracts |
 | `cited_by_count` | integer | Maximum citation count across all source records |
-| `source` | string | Primary source (by priority order) |
-| `source_count` | integer | Number of distinct sources contributing this record |
+| `source` | string | Primary source (highest-priority source that contributed this record) |
+| `source_count` | integer | Number of distinct sources contributing this record (sum of `from_*`) |
+| `from_openalex` | integer (0/1) | Whether OpenAlex contributed this record |
+| `from_semanticscholar` | integer (0/1) | Whether Semantic Scholar contributed this record |
+| `from_istex` | integer (0/1) | Whether ISTEX contributed this record |
+| `from_bibcnrs` | integer (0/1) | Whether bibCNRS contributed this record |
+| `from_scispsace` | integer (0/1) | Whether SciSpace contributed this record |
+| `from_grey` | integer (0/1) | Whether grey literature search contributed this record |
+| `from_teaching` | integer (0/1) | Whether teaching canon contributed this record |
 | `type` | string | Work type (article, book-chapter, report, etc.) |
 | `language` | string | Detected language code (ISO 639-1) |
 | `venue` | string | Publication venue (journal, series, or publisher) |
