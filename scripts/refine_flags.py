@@ -54,22 +54,14 @@ def _text_has_concept_groups(text, groups, min_groups):
     return groups_hit >= min_groups
 
 
-def _load_teaching_canon(config):
-    """Load teaching canon DOIs (papers used in N+ syllabi)."""
-    min_count = config.get("protection", {}).get("min_teaching_count", 2)
-    canon_path = os.path.join(CATALOGS_DIR, "teaching_canon.csv")
-    if not os.path.exists(canon_path):
-        return set()
-    canon_df = pd.read_csv(canon_path, dtype=str, keep_default_na=False)
-    canon_df = canon_df[
-        pd.to_numeric(canon_df["teaching_count"], errors="coerce") >= min_count
-    ]
-    dois = set()
-    for d in canon_df["doi"]:
-        nd = normalize_doi(d)
-        if nd:
-            dois.add(nd)
-    return dois
+def _is_from_teaching(df):
+    """Return boolean mask for works originating from teaching sources.
+
+    Uses the from_teaching column set by catalog_merge.py during deduplication.
+    """
+    if "from_teaching" not in df.columns:
+        return pd.Series(False, index=df.index)
+    return pd.to_numeric(df["from_teaching"], errors="coerce").fillna(0) == 1
 
 
 # ============================================================
@@ -665,10 +657,9 @@ def compute_protection(df, config, *, citations_df):
         ref_dois = set(citations_df["ref_doi"].dropna())
     cited_in_corpus = doi_norm.isin(ref_dois) & (doi_norm != "")
 
-    teaching_dois = _load_teaching_canon(config)
-    in_teaching_canon = doi_norm.isin(teaching_dois) & (doi_norm != "")
+    in_teaching = _is_from_teaching(df)
 
-    protected = high_cites | multi_src | cited_in_corpus | in_teaching_canon
+    protected = high_cites | multi_src | cited_in_corpus | in_teaching
 
     # Build reason strings
     reasons = pd.Series("", index=df.index)
@@ -680,8 +671,8 @@ def compute_protection(df, config, *, citations_df):
             r.append(f"multi_source={int(sc.at[i])}")
         if cited_in_corpus.at[i]:
             r.append("cited_in_corpus")
-        if in_teaching_canon.at[i]:
-            r.append("teaching_canon")
+        if in_teaching.at[i]:
+            r.append("from_teaching")
         reasons.at[i] = "; ".join(r)
 
     return protected, reasons

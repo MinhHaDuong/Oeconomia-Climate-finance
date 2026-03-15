@@ -9,8 +9,7 @@ Pipeline:
   5. Select top TARGET_N with diversity quotas
   6. Output CSV
 
-Reads:  $DATA/catalogs/refined_works.csv, $DATA/catalogs/refined_citations.csv,
-        $DATA/catalogs/teaching_canon.csv
+Reads:  $DATA/catalogs/refined_works.csv, $DATA/catalogs/refined_citations.csv
 Writes: $DATA/catalogs/het_mostcited_50.csv
 
 Usage:
@@ -262,15 +261,9 @@ def main():
     df["doi_norm"] = df["doi"].apply(normalize_doi)
     print(f"\nCorpus: {len(df)} papers")
 
-    # Load teaching canon DOIs (bypass theme gate for taught papers)
-    canon_path = os.path.join(CATALOGS_DIR, "teaching_canon.csv")
-    teaching_dois = set()
-    if os.path.exists(canon_path):
-        canon = pd.read_csv(canon_path, dtype=str, keep_default_na=False)
-        for d in canon["doi"]:
-            nd = normalize_doi(d)
-            if nd:
-                teaching_dois.add(nd)
+    # Identify teaching works via from_teaching column (bypass theme gate)
+    from_teaching = pd.to_numeric(df.get("from_teaching", 0), errors="coerce").fillna(0) == 1
+    teaching_dois = set(df.loc[from_teaching, "doi_norm"]) - {""}
 
     # ── Step 1: Theme gate ──────────────────────────────────────────
 
@@ -342,18 +335,13 @@ def main():
         1, CURRENT_YEAR - s2["year_num"]
     )
 
-    # Load teaching canon
-    canon_path = os.path.join(CATALOGS_DIR, "teaching_canon.csv")
-    teaching_scores = {}
-    if os.path.exists(canon_path):
-        canon = pd.read_csv(canon_path, dtype=str, keep_default_na=False)
-        for _, row in canon.iterrows():
-            d = normalize_doi(row.get("doi", ""))
-            tc = pd.to_numeric(row.get("teaching_count", 0), errors="coerce")
-            if d and tc > 0:
-                teaching_scores[d] = tc
-        print(f"  Teaching canon: {len(teaching_scores)} papers loaded")
-    s2["teaching_count"] = s2["doi_norm"].map(teaching_scores).fillna(0)
+    # Teaching bonus: use from_teaching column (binary, no count available)
+    s2_from_teaching = pd.to_numeric(
+        s2.get("from_teaching", 0), errors="coerce"
+    ).fillna(0)
+    n_teaching = (s2_from_teaching == 1).sum()
+    print(f"  Teaching works in S2: {n_teaching}")
+    s2["teaching_count"] = s2_from_teaching
 
     # Normalize signals
     pr_norm = robust_minmax(s2["pagerank"].values)
