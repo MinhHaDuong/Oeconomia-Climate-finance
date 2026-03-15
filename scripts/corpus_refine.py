@@ -79,11 +79,25 @@ def check_apply_gates(df, args, has_embeddings):
 
 
 # ============================================================
-# Merge flags into combined list column
+# Flag serialization (audit artifacts only)
 # ============================================================
 
+def _serialize_flags_pipe(df, flag_cols_present):
+    """Build pipe-delimited flag string from boolean columns for audit CSVs.
+
+    Adds detail suffixes for human readability:
+    - missing_metadata:title,author  (which fields are missing)
+    - semantic_outlier:0.123         (distance from centroid)
+    """
+    result = merge_flags(df, flag_cols_present)
+    return ["|".join(flags) if flags else "" for flags in result]
+
+
 def merge_flags(df, flag_columns):
-    """Build combined 'flags' list column from individual boolean flag columns."""
+    """Build combined flags list from individual boolean flag columns.
+
+    Used only for audit serialization — not persisted to extended_works.csv.
+    """
     result = [[] for _ in range(len(df))]
     for col in flag_columns:
         if col not in df.columns:
@@ -96,7 +110,6 @@ def merge_flags(df, flag_columns):
                 else:
                     result[i].append("semantic_outlier")
             elif col == "missing_metadata":
-                # Reconstruct detail string for backward compat
                 parts = []
                 title_s = str(df.at[i, "title"]) if pd.notna(df.at[i, "title"]) else ""
                 author_s = str(df.at[i, "first_author"]) if pd.notna(df.at[i, "first_author"]) else ""
@@ -128,8 +141,7 @@ def verify_blacklist(df, config):
     all_ok = True
     for noise_term in noise_title:
         matches = df[df["title"].str.lower().str.contains(noise_term, na=False)]
-        flagged = matches[matches["flags"].apply(
-            lambda f: "title_blacklist" in f)]
+        flagged = matches[matches["title_blacklist"].fillna(False)]
         unflagged = matches[~matches.index.isin(flagged.index)]
 
         truly_missed = unflagged[~unflagged["title"].apply(
@@ -155,7 +167,9 @@ def print_summary(df):
     """Print flagging summary."""
     print("\n=== Flagging summary ===")
 
-    flagged = df[df["flags"].apply(len) > 0]
+    flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
+    is_flagged = df[flag_cols_present].fillna(False).any(axis=1)
+    flagged = df[is_flagged]
     protected_flagged = flagged[flagged["protected"]]
     removable = flagged[~flagged["protected"]]
 
@@ -165,24 +179,19 @@ def print_summary(df):
     print(f"  Protected + flagged (kept): {len(protected_flagged)}")
     print(f"  Removal candidates: {len(removable)}")
 
-    # Per flag type
-    flag_counts = {}
-    for flags_list in df["flags"]:
-        for f in flags_list:
-            key = f.split(":")[0]
-            flag_counts[key] = flag_counts.get(key, 0) + 1
-
+    # Per flag type — count directly from boolean columns
     print(f"\n  Flag breakdown:")
-    for key, count in sorted(flag_counts.items(), key=lambda x: -x[1]):
-        print(f"    {key}: {count}")
+    for col in flag_cols_present:
+        count = df[col].fillna(False).sum()
+        if count > 0:
+            print(f"    {col}: {count}")
 
     # Sample removals per flag type
     print(f"\n  Sample removal candidates (10 per flag type):")
-    for flag_type in sorted(flag_counts.keys()):
-        type_removable = removable[removable["flags"].apply(
-            lambda f: any(flag_type in x for x in f))]
+    for col in flag_cols_present:
+        type_removable = removable[removable[col].fillna(False)]
         if len(type_removable) > 0:
-            print(f"\n  --- {flag_type} ({len(type_removable)} removable) ---")
+            print(f"\n  --- {col} ({len(type_removable)} removable) ---")
             for _, row in type_removable.head(10).iterrows():
                 yr = row.get("year", "?")
                 cites = row.get("cited_by_count", 0)
@@ -200,20 +209,11 @@ def apply_filter(df, output_path=None, audit_path=None):
     if audit_path is None:
         audit_path = os.path.join(CATALOGS_DIR, "corpus_audit.csv")
 
-    # Re-evaluate flags if we have individual columns (boolean) rather than list
     flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
-    if "flags" not in df.columns or df["flags"].apply(
-            lambda x: isinstance(x, str)).any():
-        # Reconstruct flags from boolean columns or parse string repr
-        import ast
-        if "flags" in df.columns:
-            df["flags"] = df["flags"].apply(
-                lambda x: ast.literal_eval(x) if isinstance(x, str) else (x or []))
-        else:
-            df["flags"] = merge_flags(df, FLAG_COLUMNS)
+    is_flagged = df[flag_cols_present].fillna(False).any(axis=1)
 
     df["action"] = "keep"
-    mask_remove = (df["flags"].apply(len) > 0) & (~df["protected"].fillna(False))
+    mask_remove = is_flagged & (~df["protected"].fillna(False))
     df.loc[mask_remove, "action"] = "remove"
 
     n_remove = mask_remove.sum()
@@ -281,7 +281,7 @@ def apply_filter(df, output_path=None, audit_path=None):
     # Rows dropped by deduplication get action="deduped" to distinguish from filter removes.
     audit_df = df[["doi", "title", "year", "cited_by_count", "source_count",
                     "protected", "protect_reason", "action"]].copy()
-    audit_df["flags"] = df["flags"].apply(lambda f: "|".join(f) if isinstance(f, list) else str(f))
+    audit_df["flags"] = _serialize_flags_pipe(df, flag_cols_present)
     if deduped_source_ids and "source_id" in df.columns:
         audit_df.loc[df["source_id"].isin(deduped_source_ids), "action"] = "deduped"
     audit_df.to_csv(audit_path, index=False)
@@ -294,18 +294,19 @@ def apply_filter(df, output_path=None, audit_path=None):
 
 
 def save_extended(df, output_path):
-    """Save extended_works.csv — all rows, with flag/protection columns added."""
-    # Mark would-remove candidates (for audit visibility, but keep all rows)
-    flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
-    if "flags" not in df.columns:
-        df["flags"] = merge_flags(df, FLAG_COLUMNS)
+    """Save extended_works.csv — all rows, with flag/protection columns added.
 
-    flagged = df["flags"].apply(len) > 0
+    Boolean flag columns are persisted; the derived 'flags' list is not.
+    """
+    flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
+    is_flagged = df[flag_cols_present].fillna(False).any(axis=1)
     protected = df["protected"].fillna(False)
     df["action"] = "keep"
-    df.loc[flagged & ~protected, "action"] = "would_remove"
+    df.loc[is_flagged & ~protected, "action"] = "would_remove"
 
-    save_csv(df, output_path)
+    # Drop derived flags column if present (boolean columns are the source of truth)
+    out_df = df.drop(columns=["flags"], errors="ignore")
+    save_csv(out_df, output_path)
     n_would_remove = (df["action"] == "would_remove").sum()
     print(f"  Saved extended corpus -> {output_path} "
           f"({len(df)} rows, {n_would_remove} would-remove candidates)")
@@ -313,13 +314,14 @@ def save_extended(df, output_path):
 
 def save_dry_run_audit(df):
     """Save audit CSV in dry-run mode."""
+    flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
     audit_df = df[["doi", "title", "year", "cited_by_count"]].copy()
-    audit_df["flags"] = df["flags"].apply(lambda f: "|".join(f) if f else "")
+    audit_df["flags"] = _serialize_flags_pipe(df, flag_cols_present)
     audit_df["protected"] = df["protected"]
     audit_df["protect_reason"] = df["protect_reason"]
-    flagged_mask = df["flags"].apply(len) > 0
+    is_flagged = df[flag_cols_present].fillna(False).any(axis=1)
     audit_df["action"] = "keep"
-    audit_df.loc[flagged_mask & ~df["protected"], "action"] = "would_remove"
+    audit_df.loc[is_flagged & ~df["protected"], "action"] = "would_remove"
     audit_path = os.path.join(CATALOGS_DIR, "corpus_audit.csv")
     audit_df.to_csv(audit_path, index=False)
     print(f"  Saved dry-run audit -> {audit_path}")
@@ -420,8 +422,6 @@ def run_flagging(df, args, config, citations_df, embeddings, emb_df, has_embeddi
             print("  Flag 6: no candidates scored")
     else:
         print("  Flag 6: skipped (--skip-llm)")
-
-    df["flags"] = merge_flags(df, FLAG_COLUMNS)
 
     print("\n=== Phase B: Protecting key papers ===")
     df["protected"], df["protect_reason"] = compute_protection(
