@@ -124,14 +124,3 @@ stages:
       - data/catalogs/refined_embeddings.npz
       - data/catalogs/refined_citations.csv
 
-  # Phase 1f: Manifest — record checksums of contract files
-  manifest:
-    cmd: uv run python scripts/corpus_manifest.py
-    deps:
-      - scripts/corpus_manifest.py
-      - scripts/utils.py
-      - data/catalogs/refined_works.csv
-      - data/catalogs/refined_embeddings.npz
-      - data/catalogs/refined_citations.csv
-    outs:
-      - data/catalogs/corpus_manifest.json
