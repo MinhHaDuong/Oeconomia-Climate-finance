@@ -1,53 +1,21 @@
-# Memory — persistent memory policy
+# Memory — persistent memory hook
 
-Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md` (auto-loaded by some agents; others should read it at conversation start).
+Run when writing, updating, or sweeping persistent memory.
 
-## What to remember
+Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
 
-- User preferences and workflow corrections
-- Machine-specific configuration (paths, API keys, remote machines)
-- Naming conventions and project quirks not obvious from code
+## When this hook fires
 
-## What NOT to remember
+- During `runbooks/celebrate.md` (step 5)
+- During `runbooks/on-start.md` (step 3d)
+- After a user correction (save feedback immediately)
+- After discovering a project quirk
 
-- Anything derivable from code, git history, or other docs
-- Ephemeral task state (use STATE.md or git commits instead)
-- Content already in README, ROADMAP, STATE, or guidelines docs
+## Procedure
 
-## When to update
-
-- **Celebrating phase**: always review and update memories
-- **After user correction**: save feedback immediately
-- **After discovering a quirk**: save so future sessions don't rediscover it
-
-## List size limits
-
-Any list-type section in MEMORY.md has a hard cap. When appending, if the cap is reached, evict the least-recently-confirmed entry first.
-
-| Section type | Cap |
-|---|---|
-| Corpus statistics (work counts, source counts) | 3 — replace, don't append |
-| Feedback entries | 5 — older feedback should be distilled into runbook changes |
-| Project-state entries (blockers, regen needed) | 3 — stale project state belongs in git history |
-| Named scripts or output files | 10 — if a list exceeds this, the section needs redesign |
-
-## Time limits (TTL)
-
-Entries describing **transient state** expire. After the TTL, either confirm and reset the clock, or archive.
-
-| Memory type | TTL | Action on expiry |
-|---|---|---|
-| Corpus statistics (counts, dates) | 30 days | Re-derive from data or delete |
-| "X needed" / "X blocked" entries | 14 days | File a ticket or delete — don't let blockers rot in memory |
-| Performance benchmarks (timing, size) | 60 days | Re-run or delete |
-| Remote machine config | 90 days | Confirm or delete |
-
-Entries with **no TTL** (stable until explicitly contradicted): workflow preferences, feedback, naming conventions, architectural decisions.
-
-## Staleness criteria (for celebrate.md step 5)
-
-An entry is stale if any of the following are true:
-- It references a file that no longer exists
-- It describes a state marked as resolved elsewhere (STATE.md, closed PR, closed issue)
-- Its TTL has elapsed without confirmation
-- A newer entry in the same section contradicts it
+1. Check the entry against `docs/memory-policy.md`:
+   - Is it something to remember? (not derivable from code/git/docs)
+   - Does it fit within list caps?
+   - Does it have a TTL?
+2. For sweeps: scan every entry against staleness criteria in `docs/memory-policy.md`.
+3. For `project_*.md` files: delete if the state described is complete or superseded; remove MEMORY.md pointer.

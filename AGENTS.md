@@ -14,7 +14,8 @@
 | `docs/oeconomia-style.md` | Journal house style | Final formatting |
 | `.env` | Machine-specific paths: `CLIMATE_FINANCE_DATA`, `CLAUDE_MEMORY_DIR` | Script execution |
 | `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
-| `runbooks/` | Step-by-step workflows (celebrate, housekeeping, memory, new-ticket, review-pr) | Multi-step procedures |
+| `runbooks/` | Hook procedures triggered at workflow events (see Hooks below) | Automated steps |
+| `docs/memory-policy.md` | What to remember, caps, TTLs, staleness criteria | Writing or reviewing memory |
 
 ## Dragon Dreaming workflow
 
@@ -50,26 +51,26 @@ Each step gets its own commit (the git log tells the story: intent → solution 
 - `make clean && make all` is the integration test.
 
 ### Celebrating (autonomous)
-After the Doing phase completes, follow `runbooks/celebrate.md` without asking.
+After the Doing phase completes, the `post-task` hook fires automatically.
 
-## Housekeeping triggers
+## Hooks
 
-Follow `runbooks/housekeeping.md` at each trigger point.
+| Event | Trigger | Runbook |
+|-------|---------|---------|
+| on-start | Beginning of every conversation | `runbooks/on-start.md` |
+| pre-commit | Before every commit | `runbooks/pre-commit.md` |
+| post-task | After completing a ticket | `runbooks/celebrate.md` |
+| new-ticket | Creating a GitHub issue | `runbooks/new-ticket.md` |
+| review-pr | Reviewing a pull request | `runbooks/review-pr.md` |
+| memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
 
 ## Git discipline
 
 - **Always work on a branch.** Branch naming: `t{N}-short-description`.
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
-- **Hooks** live in `hooks/`. After cloning: `git config core.hooksPath hooks`.
-- **Agent identity**: at the start of every agent session, load `.env` and apply the machine-user identity so commits and `gh` calls are attributed to the agent, not the human:
-  ```bash
-  set -a && source .env && set +a
-  git config user.name  "$AGENT_GIT_NAME"
-  git config user.email "$AGENT_GIT_EMAIL"
-  export GH_TOKEN="$AGENT_GH_TOKEN"
-  ```
-  The machine user is `HDMX-coding-agent` (GitHub account). The token is in `.env` as `AGENT_GH_TOKEN` (gitignored, machine-specific).
+- **Git hooks** live in `hooks/`. After cloning: `git config core.hooksPath hooks`.
+- **Agent identity**: set at conversation start by the `on-start` hook. The machine user is `HDMX-coding-agent` (GitHub account). The token is in `.env` as `AGENT_GH_TOKEN` (gitignored, machine-specific).
 - **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
 - **Merge commits** (`git merge --no-ff -m`): tactical-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
@@ -88,13 +89,13 @@ When working on multiple tickets:
 
 ## GitHub Issues as plans
 
-Issues are handoff documents. Follow `runbooks/new-ticket.md` for the template.
+Issues are handoff documents. The `new-ticket` hook defines the template.
 
 Before doing anything on a ticket, clarify the definition of done.
 
 ## Memory policy
 
-Follow `runbooks/memory.md` for what to persist, what to skip, and when to update.
+Policy: `docs/memory-policy.md`. Procedure: `runbooks/memory.md` (fires as a hook).
 
 ## Communication with author
 

@@ -36,7 +36,7 @@ Last updated: 2026-03-15
 ## Active PRs
 
 - #99: docs — reasoning levels for git messages
-- #127: extract housekeeping/memory sections from AGENTS.md into runbooks
+- #140: unified hook system — replace scattered runbook references (supersedes #127)
 - #128: DOI dedup in corpus_refine
 
 ## Recent
