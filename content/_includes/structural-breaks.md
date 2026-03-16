@@ -1,4 +1,4 @@
-## 4. Structural Break Detection
+## 5. Structural Break Detection
 
 **Scripts:** `scripts/compute_alluvial.py` + `scripts/plot_fig_breakpoints.py`
 
@@ -39,6 +39,12 @@ Local maxima above z = 1.5 are identified as candidates, subject to the constrai
 ### Volume confound check
 
 Because the corpus grows rapidly over time, divergence peaks could be driven by uneven sample sizes rather than thematic change. We compute Pearson correlations between each divergence series and the year-over-year growth rate of paper counts. Correlations |*r*| > 0.5 would flag a confounded metric.
+
+@fig-breakpoints shows the divergence profiles; @fig-breaks shows the manuscript's simplified two-metric view.
+
+![Structural break detection: JS divergence and cosine distance z-scores by candidate year and window size.](figures/fig_breakpoints.png){#fig-breakpoints width=100%}
+
+![Breakpoints summary (manuscript figure variant).](figures/fig_breaks.png){#fig-breaks width=80%}
 
 ### Results: full corpus (N = {{< var corpus_with_embeddings >}})
 

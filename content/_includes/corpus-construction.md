@@ -1,10 +1,4 @@
-## 1. Corpus Construction
-
-### Pipeline overview
-
-![DVC pipeline DAG — generated from `dvc.yaml` by `scripts/plot_fig_dag.py`.](figures/fig_dag.png){#fig-dag width=100%}
-
-The corpus building pipeline is managed by DVC (Data Version Control). @fig-dag shows the directed acyclic graph of stages. The five discovery stages run independently and in parallel; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain.
+## 1. Discovery Sources
 
 ### Sources
 
@@ -80,10 +74,9 @@ The merge script (`scripts/catalog_merge.py`) applies two deduplication passes:
 
 Boolean `from_*` columns (one per source) track which databases contributed to each record, and `source_count` is their sum. The `source` column retains the primary source (highest in the priority order). The output is `unified_works.csv`.
 
-### Pipeline overview
+### Pipeline summary
 
-The full corpus pipeline runs in five steps (Makefile targets: `corpus-discover`,
-`corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
+The corpus building pipeline is managed by DVC (Data Version Control; see @fig-dag in §12). The five discovery stages run independently; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain. The five steps correspond to Makefile targets (`corpus-discover`, `corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
 
 ```
   7 sources ──→ merge ──→ unified_works.csv   [corpus-discover]

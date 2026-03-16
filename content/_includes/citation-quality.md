@@ -1,4 +1,4 @@
-## Citation Graph: Coverage and Quality
+## 11. Citation Graph: Coverage and Quality
 
 **Scripts:** `scripts/enrich_citations_batch.py` (Crossref), `scripts/enrich_citations_openalex.py` (OpenAlex), `scripts/qc_citations.py` (verification)
 

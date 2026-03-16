@@ -1,16 +1,21 @@
 ---
-title: "Technical Report: Data Analysis Pipeline"
+title: "Reproducibility Note: Corpus Construction and Bibliometric Analysis"
+subtitle: "Companion to 'Inventing Climate Finance' (submitted to *Oeconomia*)"
 author: "Minh Ha-Duong"
-date: "2026-03-05"
+date: "2026-03-16"
 bibliography: bibliography/main.bib
 format:
   pdf:
     pdf-engine: xelatex
 ---
 
-This document describes the computational pipeline used to produce the bibliometric analysis in "How Climate Finance Became an Economic Object" (submitted to *Oeconomia*). The pipeline transforms a multi-source literature corpus into five figures and their associated robustness checks. All scripts are in `scripts/`, all generated data in `~/data/projets/Oeconomia-Climate-finance/catalogs/` (configurable via the `CLIMATE_FINANCE_DATA` environment variable), and all outputs in `content/figures/` and `content/tables/`.
+This reproducibility note documents the computational pipeline behind the bibliometric analysis in "Inventing Climate Finance: From Incremental Costs to Strategic Ambiguity" (submitted to *Oeconomia*). It is not a standalone paper but a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files. Part I describes how the corpus of {{< var corpus_total >}} works was assembled from {{< var corpus_sources >}} sources, enriched, and filtered. Part II describes the analyses that transform this corpus into the manuscript's figures and tables, closing with environment setup, execution order, and cross-machine reproducibility.
 
----
+All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
+
+\newpage
+
+# Part I: Corpus Construction
 
 {{< include _includes/corpus-construction.md >}}
 
@@ -23,6 +28,12 @@ This document describes the computational pipeline used to produce the bibliomet
 {{< include _includes/corpus-refinement.md >}}
 
 ---
+
+{{< include _includes/core-vs-full.md >}}
+
+\newpage
+
+# Part II: Analysis
 
 {{< include _includes/structural-breaks.md >}}
 
@@ -49,14 +60,6 @@ This document describes the computational pipeline used to produce the bibliomet
 ---
 
 {{< include _includes/citation-quality.md >}}
-
----
-
-{{< include _includes/core-vs-full.md >}}
-
----
-
-{{< include _includes/agentic-workflow.md >}}
 
 ---
 

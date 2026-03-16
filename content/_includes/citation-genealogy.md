@@ -1,4 +1,4 @@
-## 8. Citation Genealogy
+## 9. Citation Genealogy
 
 **Script:** `scripts/analyze_genealogy.py`
 
@@ -29,8 +29,8 @@ Internal citation edges are extracted from `citations.csv`: an edge (A -> B) exi
 - **Node size:** Proportional to the square root of citation count (scaled by sqrt(cited_by_count / 200)).
 - **Cross-lineage arcs:** The top 15 cross-lineage citation edges (ranked by combined citation count of source and target) are highlighted with Bezier arcs.
 
-### Outputs
+### Figure
 
-- `fig_genealogy.{png,pdf}` -- static figure
-- `fig_genealogy.html` -- interactive HTML/SVG version with hover tooltips and DOI click-through
-- `tab_lineages.csv` -- lineage assignments for all backbone papers
+![Citation genealogy: backbone papers by lineage band, with cross-lineage arcs.](figures/fig_genealogy.png){#fig-genealogy width=100%}
+
+An interactive HTML/SVG version with hover tooltips and DOI click-through is available as `fig_genealogy.html`. Lineage assignments for all backbone papers are in `tab_lineages.csv`.
