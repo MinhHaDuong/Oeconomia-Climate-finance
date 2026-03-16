@@ -1,5 +1,11 @@
 ## 1. Corpus Construction
 
+### Pipeline overview
+
+![DVC pipeline DAG — generated from `dvc.yaml` by `scripts/plot_fig_dag.py`.](figures/fig_dag.png){#fig-dag width=100%}
+
+The corpus building pipeline is managed by DVC (Data Version Control). @fig-dag shows the directed acyclic graph of stages. The five discovery stages run independently and in parallel; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain.
+
 ### Sources
 
 The corpus assembles academic and grey literature from {{< var corpus_sources >}} sources. Four are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
