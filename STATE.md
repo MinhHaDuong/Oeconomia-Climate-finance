@@ -18,7 +18,7 @@ Last updated: 2026-03-16
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
 - `make check-fast`: 194 passed, 0 failures
-- Ecology filter tightened — need extend + filter + figures regen
+- Ecology filter tightened and corpus regenerated
 
 ## Figures & tables
 
@@ -31,7 +31,6 @@ Last updated: 2026-03-16
 ## Blockers
 
 - Table 1 pending: co-citation communities don't cleanly separate pre-2007 traditions
-- Corpus regen needed after ecology filter tightening
 
 ## Active PRs
 
@@ -54,7 +53,6 @@ None.
 ## Next priorities
 
 1. Human proofread of full manuscript (#26)
-2. Corpus regen (extend + filter + figures after ecology filter tightening)
-3. Fix teaching source pipeline (#135)
-4. Regen period detection curves + terms table for §2.5
-5. Move ΔBIC details + cluster counts to companion paper (#96)
+2. Fix teaching source pipeline (#135)
+3. Regen period detection curves + terms table for §2.5
+4. Move ΔBIC details + cluster counts to companion paper (#96)
