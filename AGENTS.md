@@ -15,7 +15,6 @@
 | `.env` | Machine-specific paths: `CLIMATE_FINANCE_DATA`, `CLAUDE_MEMORY_DIR` | Script execution |
 | `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
 | `runbooks/` | Procedures fired by workflow triggers (see Triggers below) | Automated steps |
-| `docs/memory-policy.md` | What to remember, caps, TTLs, staleness criteria | Writing or reviewing memory |
 
 ## Dragon Dreaming workflow
 
@@ -95,7 +94,7 @@ Before doing anything on a ticket, clarify the definition of done.
 
 ## Memory policy
 
-Policy: `docs/memory-policy.md`. Procedure: `runbooks/memory.md` (runs as a trigger).
+Policy and procedure: `runbooks/memory.md` (runs as a trigger).
 
 ## Communication with author
 
