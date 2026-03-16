@@ -27,6 +27,7 @@ the daily API budget re-paginating unchanged results.
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -43,8 +44,12 @@ from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO, OPENALEX_API
 
 OA_API = "https://api.openalex.org/works"
 
-# Sidecar file recording the date of the last successful download run.
-# Used by --resume to auto-detect --from-date when not explicitly given.
+# Sidecar file recording per-query completion dates.
+# Used by --resume to auto-detect --from-date per query, so completed
+# queries are skipped or date-filtered independently.
+SIDECAR_PATH = os.path.join(POOL_DIR, "openalex", "_query_dates.json")
+
+# Legacy single-date sidecar (for backwards compatibility)
 LAST_RUN_PATH = os.path.join(POOL_DIR, "openalex", "_last_run.txt")
 
 # Fields to request from OpenAlex (reduces payload, includes referenced_works)
@@ -72,10 +77,39 @@ def build_filter(search_term, from_date=None):
     return f
 
 
-def read_last_run_date(path=None):
-    """Read the date string from the last-run sidecar file.
+def load_query_dates(path=None):
+    """Load per-query completion dates from sidecar JSON.
 
-    Returns the date string (YYYY-MM-DD) or None if the file is missing/empty.
+    Returns dict {query_slug: "YYYY-MM-DD"} or empty dict if missing.
+    Falls back to legacy single-date file if JSON doesn't exist.
+    """
+    if path is None:
+        path = SIDECAR_PATH
+    if os.path.exists(path):
+        with open(path) as fh:
+            return json.load(fh)
+    # Fallback: legacy single-date sidecar → treat as global date for all queries
+    if os.path.exists(LAST_RUN_PATH):
+        with open(LAST_RUN_PATH) as fh:
+            d = fh.read().strip()
+        if d:
+            return {"_global": d}
+    return {}
+
+
+def save_query_dates(dates, path=None):
+    """Save per-query completion dates to sidecar JSON."""
+    if path is None:
+        path = SIDECAR_PATH
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as fh:
+        json.dump(dates, fh, indent=2, sort_keys=True)
+
+
+def read_last_run_date(path=None):
+    """Read the global last-run date (legacy compat).
+
+    Returns the date string (YYYY-MM-DD) or None if no sidecar exists.
     """
     if path is None:
         path = LAST_RUN_PATH
@@ -87,7 +121,7 @@ def read_last_run_date(path=None):
 
 
 def write_last_run_date(path=None, date_str=None):
-    """Write today's date (or a given date string) to the sidecar file."""
+    """Write today's date to the legacy sidecar file."""
     if path is None:
         path = LAST_RUN_PATH
     if date_str is None:
@@ -398,18 +432,20 @@ def main():
         print(f"\nDone. {len(df)} works in openalex_works.csv")
         return
 
-    # Resolve --from-date: explicit flag > sidecar auto-detect > None (full)
-    from_date = args.from_date
-    if from_date is None and args.resume:
-        sidecar_date = read_last_run_date()
-        if sidecar_date:
-            from_date = sidecar_date
-            print(f"Auto-detected --from-date={from_date} from last run sidecar")
-        else:
-            print("No sidecar found — resuming without date filter (full pagination)")
+    # Load per-query sidecar dates for incremental runs
+    query_dates = load_query_dates() if args.resume else {}
+    global_from_date = args.from_date  # explicit --from-date overrides per-query
 
-    if from_date:
-        print(f"Date filter active: from_created_date >= {from_date}")
+    if global_from_date:
+        print(f"Global date filter: from_created_date >= {global_from_date}")
+    elif query_dates:
+        n_dated = sum(1 for k in query_dates if k != "_global")
+        if "_global" in query_dates:
+            print(f"Sidecar: global last-run date {query_dates['_global']}")
+        else:
+            print(f"Sidecar: {n_dated} queries with per-query dates")
+    else:
+        print("No sidecar found — full pagination for all queries")
 
     if not OPENALEX_API_KEY:
         print("WARNING: No OPENALEX_API_KEY found — using free tier (lower budget)")
@@ -418,7 +454,6 @@ def main():
     existing_ids = set()
     if args.resume:
         raw_ids = load_pool_ids("openalex")
-        # Strip URL prefix to match the short ID format used in fetch_query
         existing_ids = {
             rid.replace("https://openalex.org/", "") for rid in raw_ids
         }
@@ -427,9 +462,13 @@ def main():
     # Capture budget at start of run
     budget_start = None
     budget_end = None
+    today = date.today().isoformat()
 
     # Download phase
     grand_total = 0
+    queries_completed = 0
+    queries_skipped = 0
+
     for tier_num in sorted(tiers.keys()):
         tier_cfg = tiers[tier_num]
         desc = tier_cfg.get("description", f"Tier {tier_num}")
@@ -445,9 +484,21 @@ def main():
             slug = query_slug(term)
             pf = pool_path("openalex", slug)
 
+            # Resolve from_date for this query:
+            # explicit --from-date > per-query sidecar > global sidecar > None
+            if global_from_date:
+                from_date = global_from_date
+            elif slug in query_dates:
+                from_date = query_dates[slug]
+            elif "_global" in query_dates:
+                from_date = query_dates["_global"]
+            else:
+                from_date = None
+
             if args.dry_run:
                 count = dry_run_query(term, args.delay, from_date)
-                print(f"  \"{term}\": {count:,} results")
+                date_info = f" (since {from_date})" if from_date else ""
+                print(f"  \"{term}\": {count:,} results{date_info}")
                 grand_total += count
                 continue
 
@@ -464,11 +515,17 @@ def main():
                 budget_start = capture_budget(probe_resp)
                 print(f"Budget at start: ${budget_start}")
 
-            print(f"\nQuerying: \"{term}\"")
+            date_info = f" (since {from_date})" if from_date else ""
+            print(f"\nQuerying: \"{term}\"{date_info}")
             n_new = fetch_query(
                 term, args.delay, args.limit, existing_ids, pf,
                 from_date=from_date)
             grand_total += n_new
+            queries_completed += 1
+
+            # Record per-query completion date
+            query_dates[slug] = today
+            save_query_dates(query_dates)
 
     if args.dry_run:
         print(f"\n{'=' * 60}")
@@ -489,13 +546,12 @@ def main():
 
     print(f"\n{'=' * 60}")
     print(f"Download complete. {grand_total} new records added to pool.")
+    print(f"Queries: {queries_completed} completed, {queries_skipped} skipped")
     print(f"Budget: ${budget_start} → ${budget_end}")
 
-    # Write sidecar for future --resume auto-detection
-    if not args.dry_run:
-        today = date.today().isoformat()
-        write_last_run_date(date_str=today)
-        print(f"Wrote last-run date: {today}")
+    # Also write legacy sidecar for backwards compatibility
+    write_last_run_date(date_str=today)
+    print(f"Sidecar updated: {queries_completed} queries dated {today}")
 
     if not args.pool_only:
         print(f"\n=== Extracting CSV from pool ===")
