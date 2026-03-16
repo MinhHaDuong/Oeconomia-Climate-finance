@@ -2,9 +2,9 @@
 #
 # Mirrors Makefile Phase 1a–1f. Run with:
 #   dvc repro              (full pipeline)
-#   dvc repro discover     (single stage)
+#   dvc repro catalog_merge (discovery + merge)
 #
-# NOTE: discover/enrich stages involve API calls and may take hours.
+# NOTE: catalog_*/enrich stages involve API calls and may take hours.
 # Do not run casually — use `dvc repro --dry` to preview what would run.
 
 stages:
@@ -20,45 +20,76 @@ stages:
     outs:
       - data/catalogs/bibcnrs_works.csv
 
-  # Phase 1a: Discovery + merge → unified_works.csv
-  # Catalog scripts query APIs (ISTEX, OpenAlex, Semantic Scholar) and merge
-  # all per-source CSVs into a single unified catalog. No filtering here.
-  #
-  # build_teaching_yaml converts scraped syllabi into structured YAML.
-  # build_teaching_canon extracts syllabus readings into teaching_works.csv.
-  # catalog_merge then merges all 7 sources, deduplicating by DOI/title
-  # and setting from_teaching=1 for teaching works.
-  discover:
-    cmd: >-
-      uv run python scripts/catalog_istex.py --api &&
-      uv run python scripts/catalog_openalex.py --resume &&
-      uv run python scripts/catalog_semanticscholar.py --resume &&
-      uv run python scripts/catalog_grey.py &&
-      uv run python scripts/build_teaching_yaml.py &&
-      uv run python scripts/build_teaching_canon.py &&
-      uv run python scripts/catalog_merge.py
+  # Phase 1a: Discovery — per-source catalog stages
+  # Each source runs independently; catalog_merge combines them all.
+
+  catalog_istex:
+    cmd: uv run python scripts/catalog_istex.py --api
     deps:
       - scripts/catalog_istex.py
-      - scripts/catalog_openalex.py
-      - scripts/catalog_semanticscholar.py
-      - scripts/catalog_grey.py
-      - scripts/catalog_merge.py
-      - scripts/build_teaching_yaml.py
-      - scripts/build_teaching_canon.py
       - scripts/utils.py
-      - config/openalex_queries.yaml
-      - config/grey_sources.yaml
-      - data/syllabi
-      - data/catalogs/bibcnrs_works.csv
-      # Hand-curated input (pre-placed, not produced by pipeline)
-      - data/catalogs/scispsace_works.csv
     outs:
       - data/catalogs/istex_works.csv
       - data/catalogs/istex_refs.csv
+
+  catalog_openalex:
+    cmd: uv run python scripts/catalog_openalex.py --resume
+    deps:
+      - scripts/catalog_openalex.py
+      - scripts/utils.py
+      - config/openalex_queries.yaml
+    outs:
       - data/catalogs/openalex_works.csv
       - data/catalogs/openalex_citations.csv
+
+  # TEMP: Semantic Scholar skipped for pre-submission (no API key).
+  # Uncomment when S2 access is restored.
+  # catalog_s2:
+  #   cmd: uv run python scripts/catalog_semanticscholar.py --resume
+  #   deps:
+  #     - scripts/catalog_semanticscholar.py
+  #     - scripts/utils.py
+  #   outs:
+  #     - data/catalogs/semanticscholar_works.csv
+
+  catalog_grey:
+    cmd: uv run python scripts/catalog_grey.py
+    deps:
+      - scripts/catalog_grey.py
+      - scripts/utils.py
+      - config/grey_sources.yaml
+    outs:
+      - data/catalogs/grey_works.csv
+
+  # Teaching pipeline: syllabi → YAML → teaching_works.csv
+  # IMPROVEMENT: build_teaching_yaml could be automated from syllabi scraping
+  catalog_teaching:
+    cmd: >-
+      uv run python scripts/build_teaching_yaml.py &&
+      uv run python scripts/build_teaching_canon.py
+    deps:
+      - scripts/build_teaching_yaml.py
+      - scripts/build_teaching_canon.py
+      - scripts/utils.py
+      - data/syllabi
+    outs:
+      - data/catalogs/teaching_works.csv
+
+  # Phase 1a-merge: Merge all per-source CSVs → unified_works.csv
+  # Deduplicates by DOI/title and sets from_* boolean columns.
+  catalog_merge:
+    cmd: uv run python scripts/catalog_merge.py
+    deps:
+      - scripts/catalog_merge.py
+      - scripts/utils.py
+      - data/catalogs/bibcnrs_works.csv
+      - data/catalogs/istex_works.csv
+      - data/catalogs/openalex_works.csv
       - data/catalogs/grey_works.csv
       - data/catalogs/teaching_works.csv
+      # Hand-curated input (pre-placed, not produced by pipeline)
+      - data/catalogs/scispsace_works.csv
+    outs:
       - data/catalogs/unified_works.csv
 
   # Phase 1b: Enrich → enriched_works.csv + embeddings.npz + citations.csv
