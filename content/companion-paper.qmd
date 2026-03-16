@@ -184,7 +184,7 @@ auxiliary axes capture period (Kyoto/CDM → green finance), sectoral domain, an
 
 The bimodality results establish that the efficiency--accountability divide is real and cross-validated. But is it the field's primary axis of variation, or a secondary structure? PCA on the embedding space answers this question.
 
-PC1 (5.5% of variance) separates adaptation and vulnerability research from CDM and engineering literature. Its correlation with the seed axis is negligible (*r* = 0.01). The field's dominant axis of variation is topical, not political: it distinguishes *what* papers study, not *how* they frame the policy problem.
+PC1 ({{< var pca_emb_pc1_var_pct >}}% of variance) separates adaptation and vulnerability research from CDM and engineering literature. Its correlation with the seed axis is negligible (*r* = 0.01). The field's dominant axis of variation is topical, not political: it distinguishes *what* papers study, not *how* they frame the policy problem.
 
 The seed axis loads most strongly on PC2 (*r* = −0.75, {{< var pca_emb_pc2_var_pct >}}% of variance) and secondarily on PC4 (*r* = 0.50, {{< var pca_emb_pc4_var_pct >}}% of variance). No single unsupervised component recovers it. The efficiency--accountability divide cuts diagonally across the embedding space, crosscutting the field's topical structure rather than aligning with any one thematic dimension. On the full corpus, the seed axis explains {{< var bim_var_pct >}}% of total embedding variance---real but modest compared to the topical axes.
 

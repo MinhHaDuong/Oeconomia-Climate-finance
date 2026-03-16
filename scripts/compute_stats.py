@@ -179,7 +179,9 @@ def pca_stats(v):
 
     for _, row in df.iterrows():
         comp = row["component"]
-        if comp == "emb_PC2":
+        if comp == "emb_PC1":
+            v["pca_emb_pc1_var_pct"] = _pct(100 * row["explained_variance_ratio"])
+        elif comp == "emb_PC2":
             v["pca_emb_pc2_var_pct"] = _pct(100 * row["explained_variance_ratio"])
             v["pca_emb_pc2_cosine"] = f"{row['corr_with_embedding_axis']:.3f}"
             v["pca_emb_pc2_dbic"] = _signed_int(row["delta_bic"])
