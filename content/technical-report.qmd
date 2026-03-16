@@ -9,7 +9,7 @@ format:
     pdf-engine: xelatex
 ---
 
-This reproducibility note documents the computational pipeline behind the bibliometric analysis in "Inventing Climate Finance: From Incremental Costs to Strategic Ambiguity" (submitted to *Oeconomia*). It is not a standalone paper but a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files. Part I describes how the corpus of {{< var corpus_total >}} works was assembled from {{< var corpus_sources >}} sources, enriched, and filtered. Part II describes the analyses that transform this corpus into the manuscript's figures and tables. An appendix covers environment setup, execution order, and cross-machine reproducibility.
+This reproducibility note documents the computational pipeline behind the bibliometric analysis in "Inventing Climate Finance: From Incremental Costs to Strategic Ambiguity" (submitted to *Oeconomia*). It is not a standalone paper but a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files. Part I describes how the corpus of {{< var corpus_total >}} works was assembled from {{< var corpus_sources >}} sources, enriched, and filtered. Part II describes the analyses that transform this corpus into the manuscript's figures and tables, closing with environment setup, execution order, and cross-machine reproducibility.
 
 All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
 
@@ -61,8 +61,6 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 {{< include _includes/citation-quality.md >}}
 
-\newpage
-
-# Appendix: Reproducibility
+---
 
 {{< include _includes/reproducibility.md >}}

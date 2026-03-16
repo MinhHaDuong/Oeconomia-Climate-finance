@@ -20,9 +20,9 @@ This analysis tests whether the corpus is structured around two opposed intellec
 
 ### Bimodality testing
 
-- **Gaussian Mixture Model (GMM):** BIC comparison between 1-component and 2-component models. Result: BIC_1 = {{< var bim_bic1 >}}, BIC_2 = {{< var bim_bic2 >}}, **DBIC = {{< var bim_dbic_embedding >}}** (strong evidence for bimodality; DBIC > 10 is conventionally significant).
+- **Gaussian Mixture Model (GMM):** BIC comparison between 1-component and 2-component models. Result: BIC_1 = {{< var bim_bic1 >}}, BIC_2 = {{< var bim_bic2 >}}, **ΔBIC = {{< var bim_dbic_embedding >}}** (strong evidence for bimodality; ΔBIC > 10 is conventionally significant).
 - **KDE visualization:** Kernel density estimate with bandwidth 0.15, split by period (1990--2006, 2007--2014, 2015--2025). GMM component overlays shown as dashed grey lines. @fig-kde shows the overall KDE of embedding scores.
-- **Per-period bimodality:** DBIC = {{< var bim_dbic_pre2007 >}} (1990--2006, n={{< var bim_n_pre2007 >}}), DBIC = {{< var bim_dbic_2007_2014 >}} (2007--2014, n={{< var bim_n_2007_2014 >}}; unimodal), DBIC = {{< var bim_dbic_post2015 >}} (2015--2025, n={{< var bim_n_post2015 >}}; strong bimodality). The bimodal structure emerges most clearly in the established-field period.
+- **Per-period bimodality:** ΔBIC = {{< var bim_dbic_pre2007 >}} (1990--2006, n={{< var bim_n_pre2007 >}}), ΔBIC = {{< var bim_dbic_2007_2014 >}} (2007--2014, n={{< var bim_n_2007_2014 >}}; unimodal), ΔBIC = {{< var bim_dbic_post2015 >}} (2015--2025, n={{< var bim_n_post2015 >}}; strong bimodality). The bimodal structure emerges most clearly in the established-field period.
 
 ![KDE of embedding axis scores with GMM component overlay.](figures/fig_kde.png){#fig-kde width=100%}
 
@@ -33,7 +33,7 @@ An independent lexical validation using the same logic but on TF-IDF representat
 1. Mean TF-IDF vectors computed for each pole's papers.
 2. Lexical axis = difference of pole means, L2-normalized.
 3. All papers projected; scores median-centered.
-4. **Lexical DBIC = {{< var bim_dbic_tfidf >}}** (even stronger bimodality signal).
+4. **Lexical ΔBIC = {{< var bim_dbic_tfidf >}}** (even stronger bimodality signal).
 5. **Embedding--lexical correlation: r = {{< var bim_corr >}}**, confirming that both representations capture the same underlying structure.
 
 ### Method C: Keyword co-occurrence
@@ -78,7 +78,7 @@ On core:
 
 ### Data outputs
 
-- `tab_bimodality.csv` -- summary statistics (DBIC, pole counts, correlation)
+- `tab_bimodality.csv` -- summary statistics (ΔBIC, pole counts, correlation)
 - `tab_pole_papers.csv` -- per-paper axis scores and pole assignments
 - `tab_axis_detection.csv` -- PCA component alignment with seed axis + term labels
 - `tab_bimodality_core.csv`, `tab_axis_detection_core.csv`, `tab_pole_papers_core.csv` -- core equivalents
