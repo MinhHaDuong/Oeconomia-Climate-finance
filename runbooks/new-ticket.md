@@ -28,10 +28,6 @@ What problem or need this addresses. Why now.
 - Definition of done — when is this ticket complete?
 ```
 
-## Before starting work on a ticket
-
-Read the exit criteria. If unclear, clarify with the author before writing code.
-
 ## Command
 
 ```bash

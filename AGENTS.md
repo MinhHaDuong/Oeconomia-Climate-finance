@@ -51,6 +51,7 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 | post-task | After completing a ticket | `runbooks/celebrate.md` |
 | new-ticket | Creating a GitHub issue | `runbooks/new-ticket.md` |
 | review-pr | Reviewing a pull request | `runbooks/review-pr.md` |
+| start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
 | memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
 
 ## Git discipline
@@ -78,9 +79,7 @@ When working on multiple tickets:
 
 ## GitHub Issues as plans
 
-Issues are handoff documents. The `new-ticket` trigger defines the template.
-
-Before doing anything on a ticket, clarify the definition of done.
+Issues are handoff documents. The `new-ticket` trigger defines the template. The `start-ticket` trigger defines how to begin working on one.
 
 ## Memory policy
 
