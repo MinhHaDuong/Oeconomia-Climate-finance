@@ -7,8 +7,6 @@ Last updated: 2026-03-16
 - ~9,600 words (target ~9,000), 61 bib entries
 - 3 figures (emergence, breakpoints, alluvial) + 2 tables (traditions, poles)
 - Variable dependencies reduced to 1 (`corpus_total_approx`)
-- Phase 2→3 contract documented in manuscript.qmd header comment
-- ΔBIC values, cluster counts, language % moved out of prose (belong in companion)
 
 ## Corpus
 
@@ -18,7 +16,6 @@ Last updated: 2026-03-16
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
 - `make check-fast`: 194 passed, 0 failures
-- Ecology filter tightened and corpus regenerated
 
 ## Figures & tables
 
