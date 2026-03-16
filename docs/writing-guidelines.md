@@ -74,6 +74,10 @@ The SciSpace reports in `ai-tech-reports/SciSpace/` contain:
 - CSV files with structured data
 - `Quick_Reference_Must_Cite_and_Overlooked_Works.md` for literature gaps
 
+## Testing
+
+Verification commands are the "tests" for prose. Before editing, run `make check-fast`. After editing, confirm it still passes. `make clean && make all` is the integration test — run before opening a PR.
+
 ## Quality standards
 
 ### For draft sections

@@ -2,6 +2,13 @@
 
 Consult this file when writing or modifying Python scripts, pipeline steps, or build targets.
 
+## Testing
+
+- Tests live in `tests/`. A new script or changed behavior starts with a test in `tests/test_<module>.py`.
+- `make check-fast`: unit tests + prose lint, <30 s — run during development.
+- `make check`: full suite including slow tests — run before opening a PR.
+- Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
+
 ## Conventions
 
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
