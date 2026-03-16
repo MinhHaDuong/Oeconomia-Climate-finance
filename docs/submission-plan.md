@@ -12,11 +12,11 @@ Dear Professor Sergi,
 
 Following your encouraging response of February 16, 2026 to my extended abstract submitted for the special issue on "History of Climate Economics," I am pleased to submit the full manuscript as a Varia contribution.
 
-The paper traces how economists working in international organisations — particularly at the OECD Development Assistance Committee — constructed climate finance as a distinct economic object between 1990 and 2025. It argues that they did not discover a pre-existing reality but built the accounting categories (Rio markers, mobilised-private-finance methodologies, concessionality thresholds) through which climate-related financial flows were rendered measurable and governable. Drawing on the sociology of quantification (Desrosieres, Porter), performativity (Callon, MacKenzie), and economization (Caliskan and Callon), the paper situates this construction within the broader history of climate economics.
+The paper traces how economists working in international organisations — particularly at the OECD Development Assistance Committee — constructed climate finance as a distinct economic object between 1990 and 2025. It argues that they did not discover a pre-existing reality but built the accounting categories (Rio markers, mobilised-private-finance methodologies, concessionality thresholds) through which climate-related financial flows were rendered measurable and governable. Drawing on the sociology of quantification (Desrosières, Porter), performativity (Callon, MacKenzie), and economization (Çalışkan and Callon), the paper situates this construction within the broader history of climate economics.
 
-The historical argument is grounded in a computational analysis of approximately 28,400 works (1990–2025) from seven bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
+The historical argument is grounded in a computational analysis of approximately 27,500 works (1990–2025) from six bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
 
-The manuscript is approximately 9,600 words with 61 bibliographic references, 3 figures, and 2 tables. A full replication archive (data, code, and technical report) is available at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
+The manuscript is approximately 9,600 words with 61 bibliographic references, 3 figures, and 2 tables. A full replication archive (data, code, and technical report) is available at [Zenodo DOI] and the technical report documenting the data pipeline is deposited as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/MinhHaDuong/Oeconomia-Climate-finance.
 
 The paper is not under consideration elsewhere. A version of the abstract has been accepted for presentation at the ESHET-HES Joint Conference (Nice, May 2026).
 
@@ -37,7 +37,7 @@ The manuscript currently cites a GitHub repository. Before submission, three com
 
 | Object | Where | DOI type | What it contains | Cite in manuscript as |
 |--------|-------|----------|------------------|-----------------------|
-| **Replication archive** | Zenodo | Dataset DOI | Code, data (refined_works.csv, embeddings.npy, etc.), figures, pyproject.toml, uv.lock | "Data and code availability" paragraph |
+| **Replication archive** | Zenodo | Dataset DOI | Code, data (refined_works.csv, embeddings.npz, etc.), figures, pyproject.toml, uv.lock — built by `make archive-manuscript` | "Data and code availability" paragraph |
 | **Technical report** | HAL | Working paper | Full pipeline documentation (10 sections): corpus construction, embeddings, break detection, bimodality, reproducibility | Cited in-text where computational methods are described |
 | **Manuscript preprint** (optional) | HAL or SocArXiv | Preprint DOI | The paper itself | Not cited in manuscript, but useful for conference slides and visibility |
 
@@ -47,7 +47,7 @@ The manuscript currently cites a GitHub repository. Before submission, three com
 2. **Create Zenodo archive:**
    - Link GitHub repo to Zenodo (one-time setup via zenodo.org/account/settings/github/)
    - Zenodo auto-creates a release archive from the tag
-   - Or: upload `climate-finance-replication.tar.gz` manually to Zenodo
+   - Or: upload `climate-finance-manuscript.tar.gz` (from `make archive-manuscript`) manually to Zenodo
    - Fill metadata: title, author, license (CC-BY-NC to match Oeconomia), description
    - Get DOI (e.g., `10.5281/zenodo.XXXXXXX`)
 3. **Upload technical report to HAL:**
@@ -57,7 +57,7 @@ The manuscript currently cites a GitHub repository. Before submission, three com
    - Get HAL ID (e.g., `hal-XXXXXXXX`)
 4. **Update manuscript** `Data and code availability` paragraph:
 
-   > **Data and code availability.** The corpus (28,442 works), analysis scripts, and reproducible pipeline are archived at [Zenodo DOI]. The technical report documenting data collection, processing, and analysis procedures is available as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/minh-haDuong/Oeconomia-Climate-finance.
+   > **Data and code availability.** The corpus (27,494 works), analysis scripts, and reproducible pipeline are archived at [Zenodo DOI]. The technical report documenting data collection, processing, and analysis procedures is available as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/MinhHaDuong/Oeconomia-Climate-finance.
 
 5. **Update bibliography** — add `technical-report` as a `@techreport` entry in `main.bib` so it can be cited in-text (e.g., in the corpus method paragraph of the introduction)
 
@@ -234,11 +234,8 @@ Ask them to review for:
 6. Submit
 
 **Timeline:**
-- Week 1-3: Reading plan (you)
-- Week 2: LLM reviews + fixes
-- Week 4-5: CIRED colleague reviews
-- Week 6: Final revision
-- Week 7: Submit to Oeconomia platform as "revision" per Sergi's instructions
+- Submit to Œconomia before ESHET-HES conference (Nice, May 26–29, 2026)
+- Conference presentation serves as trial run; feedback informs R&R if needed
 
 ---
 
@@ -257,7 +254,7 @@ Ask them to review for:
 1. Title + puzzle (the $100bn/$300bn that nobody can define)
 2. Research question: how did economists make climate finance countable?
 3. Theoretical toolkit: commensuration, performativity, economization
-4. Method: 28,400 works, embedding-based break detection (keep brief)
+4. Method: 27,500 works, embedding-based break detection (keep brief)
 5. **Act 1** — Before climate finance: three disconnected traditions (1 slide)
 6. **Act 2** — The Copenhagen moment + OECD infrastructure (2-3 slides)
    - Rio markers, the AGF, Stern/Hourcade/Corfee-Morlot as architects
