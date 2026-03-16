@@ -42,7 +42,8 @@ REFS_COLUMNS = [
 
 # --- Polite pool ---
 
-MAILTO = "minh.haduong@cnrs.fr"
+MAILTO = "minh.ha-duong@cnrs.fr"
+OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")
 
 
 # --- Helpers ---

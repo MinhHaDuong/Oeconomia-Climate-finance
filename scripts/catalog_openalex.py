@@ -29,7 +29,7 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO,
+from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO, OPENALEX_API_KEY,
                    normalize_doi, reconstruct_abstract, polite_get,
                    save_csv, pool_path, append_to_pool, load_pool_ids,
                    load_pool_records)
@@ -166,6 +166,8 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
             "cursor": cursor,
             "mailto": MAILTO,
         }
+        if OPENALEX_API_KEY:
+            params["api_key"] = OPENALEX_API_KEY
         resp = polite_get(OA_API, params=params, delay=delay)
         data = resp.json()
 
@@ -210,6 +212,8 @@ def dry_run_query(search_term, delay):
         "per_page": 1,
         "mailto": MAILTO,
     }
+    if OPENALEX_API_KEY:
+        params["api_key"] = OPENALEX_API_KEY
     resp = polite_get(OA_API, params=params, delay=delay)
     data = resp.json()
     return data.get("meta", {}).get("count", 0)
