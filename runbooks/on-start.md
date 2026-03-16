@@ -1,4 +1,4 @@
-# On start — conversation start hook
+# On start — conversation start trigger
 
 Run at the start of every conversation, before the first response.
 

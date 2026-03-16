@@ -1,10 +1,10 @@
-# Memory — persistent memory hook
+# Memory — persistent memory trigger
 
 Run when writing, updating, or sweeping persistent memory.
 
 Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
 
-## When this hook fires
+## When this trigger runs
 
 - During `runbooks/celebrate.md` (step 5)
 - During `runbooks/on-start.md` (step 3d)

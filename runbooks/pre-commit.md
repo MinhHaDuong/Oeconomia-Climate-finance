@@ -1,4 +1,4 @@
-# Pre-commit — before every commit hook
+# Pre-commit — before every commit trigger
 
 Run before every commit.
 
