@@ -39,7 +39,7 @@ stages:
     cmd: >-
       uv run python scripts/catalog_istex.py --api &&
       uv run python scripts/catalog_openalex.py --resume &&
-      uv run python scripts/catalog_semanticscholar.py --resume &&
+      # uv run python scripts/catalog_semanticscholar.py --resume &&  # TEMP: skipped for pre-submission run (rate-limited, minor source)
       uv run python scripts/catalog_grey.py &&
       uv run python scripts/build_teaching_yaml.py &&
       uv run python scripts/build_teaching_canon.py &&
