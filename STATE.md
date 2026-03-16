@@ -5,7 +5,7 @@ Last updated: 2026-03-16
 ## Manuscript
 
 - ~9,600 words (target ~9,000), 61 bib entries
-- 3 figures (emergence, breakpoints, alluvial) + 2 tables (traditions, poles)
+- 2 figures (emergence, composition) + 3 tables (traditions, poles, venues) + 1 supplement figure (seed axis)
 - Variable dependencies reduced to 1 (`corpus_total_approx`)
 
 ## Corpus
@@ -15,15 +15,17 @@ Last updated: 2026-03-16
 - DVC-managed: `dvc.yaml` (6 stages), `dvc.lock` committed, remote padme in sync
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
-- `make check-fast`: 221 passed, 0 failures
+- `make check-fast`: 229 passed, 0 failures
 
 ## Figures & tables
 
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992
 - Fig 2 (composition): relocated to §3.4 (thematic decomposition argument)
 - Fig S1 (traditions): co-citation network, color, Electronic Supplement (PR #88 merged)
-- Table 2 (poles): efficiency vs accountability terms — done
+- Fig S2 (seed axis): efficiency–accountability scatter, Electronic Supplement (#150, #151)
 - Table 1 (traditions): caption updated; §1.5 cites co-citation evidence (Q=0.68)
+- Table 2 (venues): 17 journals by pole lean, replaces @fig-seed in body (#150, #151)
+- Table (poles): efficiency vs accountability terms — in companion paper
 
 ## Blockers
 
@@ -35,6 +37,7 @@ None.
 
 ## Recent
 
+- **Venue table replaces fig-seed** (#150, #151, 2026-03-16): @tbl-venues (17 journals by pole lean) in §3.4 body; @fig-seed moved to Electronic Supplement. Makefile rule added. 8 tests.
 - **Companion paper complete draft** (#149, 2026-03-16): all [TO WRITE] sections filled. §2 lit review (22 bib entries), §5.1–5.2 results, §6 restructured, §7 conclusion. 27 content tests. §4 Method remains as technical-report includes (editorial pass needed before submission).
 - **Companion paper §5.3–5.4** (#96, #147, 2026-03-16): bimodality results + PCA decomposition prose written, erratum on earlier values, 9 content tests added.
 - **AGENTS.md restructured** (#142, #145, 2026-03-16): Dragon Dreaming phase awareness (Doing runs in fresh context), DD/TDD heading hierarchy fixed, autonomous workflow rewritten as iterative wave cycle, escalation policy added.
