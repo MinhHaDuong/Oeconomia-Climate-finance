@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-15
+Last updated: 2026-03-16
 
 ## Manuscript
 
@@ -35,29 +35,26 @@ Last updated: 2026-03-15
 
 ## Active PRs
 
-- #99: docs — reasoning levels for git messages
-- #140: unified hook system — replace scattered runbook references (supersedes #127)
-- #128: DOI dedup in corpus_refine
+None.
 
 ## Recent
 
-- **catalog_bibcnrs as DVC stage** (#134, 2026-03-15): `catalog_bibcnrs` stage added to `dvc.yaml`; `data/exports/` tracked via `data/exports.dvc`; `bibcnrs_works.csv.dvc` standalone artifact removed. DAG: `data/exports.dvc → catalog_bibcnrs → discover → …`. Issue #125 (exports/ part) closed.
-- **Agent identity documented** (#109, 2026-03-15): AGENTS.md instructs agents to load `.env` and set `AGENT_GIT_NAME`/`AGENT_GIT_EMAIL`/`AGENT_GH_TOKEN` at session start. Machine user `HDMX-coding-agent` (classic PAT — fine-grained PAT doesn't support collaborator-owned repos).
-- **DVC chantier complete** (2026-03-15): 10 tickets, data versioned with DVC, pipeline DAG, repro archives, external cache, bidirectional push/pull doudou ↔ padme.
-- **Source normalized to 1NF** (#113): pipe-separated `source` → boolean `from_*` columns. 15 scripts adapted.
-- **Teaching canon refactored** (#114): single merge in discover, `build_teaching_canon.py` simplified (363 → 100 lines), `teaching_canon.csv` eliminated.
-- **Test infra complete** (#117–#123, #129–#130): `pytest-timeout`, `make check-fast` (194 passed, 0 failures). Makefile contract tests updated for DVC delegation; corpus_refine tests skip torch offline.
-- **Flags column normalized** (#126): removed derived `flags` list from `extended_works.csv`; booleans are source of truth, pipe-string serialized to `corpus_audit.csv` only at write time. Three reconstruction guards deleted.
-- **CLIMATE_FINANCE_DATA removed**: scripts hardcode `data/` relative to repo root. `.env` simplified.
+- **AGENTS.md restructured** (#142, #145, 2026-03-16): Dragon Dreaming phase awareness (Doing runs in fresh context), DD/TDD heading hierarchy fixed, autonomous workflow rewritten as iterative wave cycle, escalation policy added.
+- **Unified trigger system** (#140, 2026-03-16): scattered runbook references replaced with Triggers table in AGENTS.md. Hooks renamed to Triggers to avoid git-hooks confusion.
+- **catalog_bibcnrs as DVC stage** (#134, 2026-03-15): `catalog_bibcnrs` stage added to `dvc.yaml`; `data/exports/` tracked via `data/exports.dvc`.
+- **DVC chantier complete** (2026-03-15): 10 tickets, data versioned with DVC, pipeline DAG, external cache, bidirectional push/pull doudou ↔ padme.
+- **Test infra complete** (#117–#123, #129–#130): `make check-fast` 194 passed, 0 failures.
 
 ## Open tickets
 
-- #125: DVC-track syllabi/ (exports/ done in #134)
+- #135: Fix teaching source pipeline (add generation script, move yaml to data/, DVC-track syllabi)
+- #96: Document seed axis PCA decomposition in companion paper
+- #26: Human proofread of full manuscript
 
 ## Next priorities
 
-1. Human proofread of full manuscript
-2. Merge PR #128 (DOI dedup) + PR #99 (docs)
-3. Corpus regen (extend + filter + figures after ecology filter tightening)
+1. Human proofread of full manuscript (#26)
+2. Corpus regen (extend + filter + figures after ecology filter tightening)
+3. Fix teaching source pipeline (#135)
 4. Regen period detection curves + terms table for §2.5
-5. Move ΔBIC details + cluster counts to companion paper
+5. Move ΔBIC details + cluster counts to companion paper (#96)
