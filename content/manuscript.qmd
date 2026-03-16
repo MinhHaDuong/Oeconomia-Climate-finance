@@ -220,7 +220,7 @@ The tension between the two poles is constitutive: they sustain each other becau
 
 ![Thematic recomposition of climate finance scholarship across three periods. Six clusters were fitted by k-means (k=6) on text embeddings of the full corpus; each panel shows one cluster's share per period. Bold labels are author interpretations; italic terms are the top TF-IDF distinctive words. CDM and renewable energy loses share while green bonds and ESG gains, but no cluster disappears entirely.](figures/fig_composition.png){#fig-composition}
 
-![Distribution of core works (cited ≥ 50) along the efficiency–accountability axis, by period. The axis is defined by the centroid difference between papers containing efficiency-pole terms (leverage, de-risking, blended finance) and accountability-pole terms (additionality, climate justice, grant-equivalent). The bimodal structure persists across all three periods; the efficiency mode grows denser while the accountability mode diversifies rather than disappears. Dots mark period medians.](figures/fig_seed_axis_core.png){#fig-seed}
+![Distribution of core works (cited ≥ 50) along the efficiency–accountability axis, by period. The axis is defined by the centroid difference between papers containing efficiency-pole terms (leverage, de-risking, blended finance) and accountability-pole terms (additionality, climate justice, grant-equivalent). The two-pole structure persists across all three periods; the efficiency pole grows denser while the accountability pole diversifies rather than disappears. Dots mark period medians.](figures/fig_seed_axis_core.png){#fig-seed}
 
 ## Conclusion
 
