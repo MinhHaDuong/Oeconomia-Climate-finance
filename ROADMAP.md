@@ -6,8 +6,8 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 
 ## Current milestone: Revision
 
-- [ ] Fix teaching source pipeline (#135) — blocks corpus regen
-- [ ] Corpus regen → figures, tables, variables update
+- [x] Fix teaching source pipeline (#135)
+- [ ] Corpus regen on padme (in progress) → figures, tables, variables update
 - [ ] Human proofread of full manuscript (#26)
 - [ ] Final word count trim (~9,600 → ~9,000)
 - [ ] Final `make clean && make all` + visual check
@@ -22,6 +22,12 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - [ ] Draft cover letter pointing reviewers to HAL + Zenodo
 - [ ] Companion methods paper (Scientometrics/QSS): parked for post-acceptance
 
+## Post-submission improvements
+
+- [ ] Split enrich stage into independent DVC stages (same pattern as discover split)
+- [ ] Re-enable Semantic Scholar with API key
+- [ ] JETP query: add concept filter to exclude physics journal noise
+
 ## Completed
 
 - Foundations: figures, bibliography audit, empirical findings
@@ -33,9 +39,11 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 - DVC integration (#101–#104, #109): data versioning, pipeline DAG, repro archives, external cache, bidirectional sync
 - Source normalized to 1NF (#113): pipe-separated source → boolean from_* columns
 - Teaching canon refactored (#114): single merge, build_teaching_canon simplified 363→100 lines
-- Test infra (#117–#123, #129–#130): pytest-timeout, make check-fast (194 passed, 0 failures)
+- Test infra (#117–#123, #129–#130): pytest-timeout, make check-fast
 - Flags column normalized (#126): removed derived list from extended_works.csv; boolean columns are source of truth
-- Fix timeout truncation (#121): remove int() cast on request_timeout
-- DOI dedup in corpus_refine (#120): fixes duplicate OpenAlex IDs and fake grey-lit placeholder DOIs
-- catalog_bibcnrs as DVC stage (#134): `data/exports/` DVC-tracked; bibcnrs RIS→CSV conversion moves from pre-placed artifact to pipeline stage
-- Memory hygiene (2026-03-15): runbooks updated with stale-entry sweep (celebrate step 5), monthly sweep trigger (housekeeping), list size caps and TTLs (memory.md) — grounded in ACT-R activation-based decay and FadeMem literature
+- catalog_bibcnrs as DVC stage (#134): data/exports/ DVC-tracked
+- Teaching source pipeline (#135): scraped syllabi → YAML → teaching_works.csv
+- Split discover into per-source DVC stages (#152): parallel, granular, skippable
+- OpenAlex --from-date incremental filtering (#153): budget-aware, sidecar auto-detect
+- Venue table replaces fig-seed (#150, #151): @tbl-venues in §3.4 body
+- Companion paper complete draft (#149): all sections filled
