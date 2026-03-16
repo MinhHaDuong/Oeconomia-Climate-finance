@@ -15,7 +15,7 @@ Last updated: 2026-03-16
 - DVC-managed: `dvc.yaml` (6 stages), `dvc.lock` committed, remote padme in sync
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
-- `make check-fast`: 194 passed, 0 failures
+- `make check-fast`: 203 passed, 0 failures
 
 ## Figures & tables
 
@@ -35,6 +35,7 @@ None.
 
 ## Recent
 
+- **Companion paper §5.3–5.4** (#96, #147, 2026-03-16): bimodality results + PCA decomposition prose written, erratum on earlier values, 9 content tests added.
 - **AGENTS.md restructured** (#142, #145, 2026-03-16): Dragon Dreaming phase awareness (Doing runs in fresh context), DD/TDD heading hierarchy fixed, autonomous workflow rewritten as iterative wave cycle, escalation policy added.
 - **Unified trigger system** (#140, 2026-03-16): scattered runbook references replaced with Triggers table in AGENTS.md. Hooks renamed to Triggers to avoid git-hooks confusion.
 - **catalog_bibcnrs as DVC stage** (#134, 2026-03-15): `catalog_bibcnrs` stage added to `dvc.yaml`; `data/exports/` tracked via `data/exports.dvc`.
@@ -44,6 +45,5 @@ None.
 ## Open tickets
 
 - #135: Fix teaching source pipeline (add generation script, move yaml to data/, DVC-track syllabi)
-- #96: Document seed axis PCA decomposition in companion paper
 - #26: Human proofread of full manuscript
 
