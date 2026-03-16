@@ -27,6 +27,9 @@ stages:
   # IMPROVEMENT: The catalog scripts (ISTEX, OpenAlex, S2, grey, teaching)
   # are independent — they could be separate DVC stages so dvc repro runs
   # them in parallel, with catalog_merge as a downstream merge stage.
+  # This also fixes the granularity problem: currently any change to the
+  # cmd (e.g., removing S2) forces DVC to rerun ALL scripts including
+  # unchanged ones like ISTEX.
   #
   # IMPROVEMENT: teaching canon relies on manually curated YAML from syllabi.
   # A discovery script could scrape syllabi sources automatically.
