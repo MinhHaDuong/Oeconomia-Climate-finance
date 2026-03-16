@@ -19,6 +19,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
+from build_teaching_yaml import _dedup_course_names
 from utils import BASE_DIR, DATA_DIR
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
@@ -64,6 +65,9 @@ def build_breakdown(df):
 def main():
     df = pd.read_csv(INPUT_CSV)
     print(f"Loaded {len(df)} readings from {INPUT_CSV}")
+
+    # Apply course dedup before counting (same logic as build_teaching_yaml.py)
+    df = _dedup_course_names(df)
 
     table = build_breakdown(df)
 
