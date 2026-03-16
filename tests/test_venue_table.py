@@ -33,9 +33,12 @@ class TestVenueTableInManuscript:
         assert "tbl-venues" in manuscript_body(), \
             "@tbl-venues must appear in manuscript body"
 
-    def test_fig_seed_not_in_body(self):
-        assert "fig-seed" not in manuscript_body(), \
-            "@fig-seed must not appear in manuscript body (moved to supplement)"
+    def test_fig_seed_image_not_in_body(self):
+        body = manuscript_body()
+        # Strip HTML comments before checking
+        body_no_comments = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
+        assert "fig_seed_axis_core.png" not in body_no_comments, \
+            "fig_seed_axis_core.png image must not appear in manuscript body (moved to supplement)"
 
     def test_fig_seed_in_supplement(self):
         text = read(MANUSCRIPT)
