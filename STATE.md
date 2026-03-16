@@ -15,7 +15,7 @@ Last updated: 2026-03-16
 - DVC-managed: `dvc.yaml` (6 stages), `dvc.lock` committed, remote padme in sync
 - DVC cache external: `/home/haduong/data/projets/.../dvc-cache` (hors Nextcloud)
 - Validation: `make corpus-validate` 42 passed, 1 pre-existing failure (duplicate DOIs)
-- `make check-fast`: 203 passed, 0 failures
+- `make check-fast`: 221 passed, 0 failures
 
 ## Figures & tables
 
@@ -35,6 +35,7 @@ None.
 
 ## Recent
 
+- **Companion paper complete draft** (#149, 2026-03-16): all [TO WRITE] sections filled. §2 lit review (22 bib entries), §5.1–5.2 results, §6 restructured, §7 conclusion. 27 content tests. §4 Method remains as technical-report includes (editorial pass needed before submission).
 - **Companion paper §5.3–5.4** (#96, #147, 2026-03-16): bimodality results + PCA decomposition prose written, erratum on earlier values, 9 content tests added.
 - **AGENTS.md restructured** (#142, #145, 2026-03-16): Dragon Dreaming phase awareness (Doing runs in fresh context), DD/TDD heading hierarchy fixed, autonomous workflow rewritten as iterative wave cycle, escalation policy added.
 - **Unified trigger system** (#140, 2026-03-16): scattered runbook references replaced with Triggers table in AGENTS.md. Hooks renamed to Triggers to avoid git-hooks confusion.
