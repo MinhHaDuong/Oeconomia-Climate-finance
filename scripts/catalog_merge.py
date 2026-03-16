@@ -27,40 +27,53 @@ from utils import (BASE_DIR, CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS,
 SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
 
 
-def pick_best(group, col):
-    """Pick best non-empty value from a group following source priority."""
-    # Build priority rank for each row
-    src_rank = group["source"].map(
-        {s: i for i, s in enumerate(SOURCE_PRIORITY)}
-    ).fillna(99)
-    ordered = group.loc[src_rank.sort_values().index, col]
-    for val in ordered:
-        if pd.notna(val) and str(val).strip():
-            return val
-    return ""
+SOURCE_RANK = {s: i for i, s in enumerate(SOURCE_PRIORITY)}
 
 
-def merge_group(group):
-    """Merge a group of duplicate records into one."""
-    sources = sorted(group["source"].unique(),
-                     key=lambda s: SOURCE_PRIORITY.index(s)
-                     if s in SOURCE_PRIORITY else 99)
-    result = {}
-    for col in WORKS_COLUMNS:
-        if col == "source":
-            # Primary source = highest priority
-            result[col] = sources[0]
-        elif col == "cited_by_count":
-            # Take max
-            counts = pd.to_numeric(group[col], errors="coerce")
-            result[col] = int(counts.max()) if counts.notna().any() else ""
-        else:
-            result[col] = pick_best(group, col)
-    # Boolean provenance columns: 1 if source contributed, 0 otherwise
+def _dedup_vectorized(df, group_col):
+    """Vectorized dedup: sort by priority, pick first non-empty per group.
+
+    1. Add a priority rank column and sort so highest-priority rows come first.
+    2. Replace empty strings with NaN so groupby().first() skips them.
+    3. Use first() for text columns, max() for cited_by_count, any() for from_*.
+    """
+    df = df.copy()
+    df["_rank"] = df["source"].map(SOURCE_RANK).fillna(99)
+    df = df.sort_values(["_rank", group_col])
+
+    # cited_by_count as numeric for max aggregation
+    df["_cbc_num"] = pd.to_numeric(df["cited_by_count"], errors="coerce")
+
+    # Replace empty strings with NaN so first() skips them
+    text_cols = [c for c in WORKS_COLUMNS if c != "cited_by_count"]
+    df[text_cols] = df[text_cols].replace("", pd.NA)
+
+    # Build aggregation: first() for text, max() for citations, max() for from_*
+    agg = {c: "first" for c in text_cols}
+    agg["_cbc_num"] = "max"
     for col in FROM_COLS:
-        src_name = col.replace("from_", "")
-        result[col] = 1 if src_name in sources else 0
-    return result
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+            agg[col] = "max"
+
+    result = df.groupby(group_col, sort=False).agg(agg)
+
+    # Restore cited_by_count from numeric max
+    result["cited_by_count"] = result["_cbc_num"].apply(
+        lambda x: str(int(x)) if pd.notna(x) else "")
+    result = result.drop(columns=["_cbc_num"])
+
+    # Fill NaN back to empty string
+    result[text_cols] = result[text_cols].fillna("")
+
+    # Ensure from_* columns exist and are int
+    for col in FROM_COLS:
+        if col not in result.columns:
+            result[col] = 0
+        else:
+            result[col] = result[col].astype(int)
+
+    return result.reset_index(drop=True)
 
 
 def catalog_files_from_dvc():
@@ -107,30 +120,37 @@ def main():
     # Normalize DOIs
     combined["_doi_norm"] = combined["doi"].apply(normalize_doi)
 
-    # Pass 1: DOI-based dedup
+    # Set from_* provenance columns based on source field
+    for col in FROM_COLS:
+        src_name = col.replace("from_", "")
+        combined[col] = (combined["source"] == src_name).astype(int)
+
+    # Pass 1: DOI-based dedup (vectorized)
     has_doi = combined[combined["_doi_norm"] != ""]
     no_doi = combined[combined["_doi_norm"] == ""]
     print(f"  With DOI: {len(has_doi)}, without DOI: {len(no_doi)}")
 
-    merged_by_doi = []
+    parts = []
     if len(has_doi) > 0:
-        for doi, group in has_doi.groupby("_doi_norm"):
-            merged_by_doi.append(merge_group(group))
+        parts.append(_dedup_vectorized(has_doi, "_doi_norm"))
+        print(f"  After DOI dedup: {len(parts[-1])}")
 
-    # Pass 2: title+year dedup for records without DOI
-    merged_by_title = []
+    # Pass 2: title+year dedup for records without DOI (vectorized)
     if len(no_doi) > 0:
         no_doi = no_doi.copy()
         no_doi["_title_norm"] = no_doi["title"].apply(normalize_title)
         no_doi["_year"] = no_doi["year"].astype(str).str[:4]
+        # Drop empty titles
+        no_doi = no_doi[no_doi["_title_norm"] != ""]
+        if len(no_doi) > 0:
+            # Composite key for groupby
+            no_doi["_title_year"] = no_doi["_title_norm"] + "|" + no_doi["_year"]
+            parts.append(_dedup_vectorized(no_doi, "_title_year"))
+            print(f"  After title dedup: {len(parts[-1])}")
 
-        for (title, year), group in no_doi.groupby(["_title_norm", "_year"]):
-            if title:  # skip empty titles
-                merged_by_title.append(merge_group(group))
+    result = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
-    all_merged = merged_by_doi + merged_by_title
-    result = pd.DataFrame(all_merged)
-    # Ensure we have all expected columns
+    # Ensure all expected columns
     for col in WORKS_COLUMNS:
         if col not in result.columns:
             result[col] = ""
@@ -139,7 +159,7 @@ def main():
             result[col] = 0
     result = result[WORKS_COLUMNS + FROM_COLS]
 
-    # Add source_count (sum of from_* boolean columns)
+    # Add source_count
     result["source_count"] = result[FROM_COLS].sum(axis=1).astype(int)
 
     # Sort by year desc, then cited_by_count desc
