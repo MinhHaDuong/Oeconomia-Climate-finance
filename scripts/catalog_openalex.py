@@ -13,17 +13,24 @@ Usage:
 
     --tier N          Run only tier N (default: all tiers)
     --resume          Skip OpenAlex IDs already in the pool
+    --from-date D     Only fetch works created on or after YYYY-MM-DD
     --pool-only       Download to pool, don't build CSV
     --extract-only    Build CSV from existing pool, don't download
     --dry-run         Show queries and expected counts, don't fetch
     --limit N         Max records per query (0=all)
     --delay S         Delay between requests (default: 0.15)
+
+When --resume is used without --from-date, the script auto-detects the date
+of the last successful run from a sidecar file (data/pool/openalex/_last_run.txt)
+so that only newly-created OpenAlex records are paginated. This avoids wasting
+the daily API budget re-paginating unchanged results.
 """
 
 import argparse
 import os
 import re
 import sys
+from datetime import date
 
 import pandas as pd
 import yaml
@@ -32,9 +39,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO,
                    normalize_doi, reconstruct_abstract, polite_get,
                    save_csv, pool_path, append_to_pool, load_pool_ids,
-                   load_pool_records)
+                   load_pool_records, POOL_DIR)
 
 OA_API = "https://api.openalex.org/works"
+
+# Sidecar file recording the date of the last successful download run.
+# Used by --resume to auto-detect --from-date when not explicitly given.
+LAST_RUN_PATH = os.path.join(POOL_DIR, "openalex", "_last_run.txt")
 
 # Fields to request from OpenAlex (reduces payload, includes referenced_works)
 OA_SELECT = ",".join([
@@ -42,6 +53,56 @@ OA_SELECT = ",".join([
     "primary_location", "abstract_inverted_index", "language", "keywords",
     "concepts", "cited_by_count", "referenced_works", "type",
 ])
+
+
+def build_filter(search_term, from_date=None):
+    """Build the OpenAlex filter parameter string.
+
+    Args:
+        search_term: The search query text.
+        from_date:   Optional YYYY-MM-DD string to limit to works created
+                     on or after this date (OpenAlex from_created_date filter).
+
+    Returns:
+        Filter string for the OpenAlex API ``filter`` parameter.
+    """
+    f = f'default.search:"{search_term}"'
+    if from_date:
+        f += f",from_created_date:{from_date}"
+    return f
+
+
+def read_last_run_date(path=None):
+    """Read the date string from the last-run sidecar file.
+
+    Returns the date string (YYYY-MM-DD) or None if the file is missing/empty.
+    """
+    if path is None:
+        path = LAST_RUN_PATH
+    if not os.path.exists(path):
+        return None
+    with open(path) as fh:
+        content = fh.read().strip()
+    return content if content else None
+
+
+def write_last_run_date(path=None, date_str=None):
+    """Write today's date (or a given date string) to the sidecar file."""
+    if path is None:
+        path = LAST_RUN_PATH
+    if date_str is None:
+        date_str = date.today().isoformat()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as fh:
+        fh.write(date_str + "\n")
+
+
+def capture_budget(resp):
+    """Extract remaining API budget from response headers.
+
+    Returns the value of X-RateLimit-Remaining-USD or '?' if absent.
+    """
+    return resp.headers.get("X-RateLimit-Remaining-USD", "?")
 
 
 def load_query_config():
@@ -148,10 +209,14 @@ def query_slug(term):
 
 # --- Download phase ---
 
-def fetch_query(search_term, delay, limit, existing_ids, pool_file):
+def fetch_query(search_term, delay, limit, existing_ids, pool_file,
+                from_date=None):
     """Fetch all works matching a search term, append raw JSON to pool.
 
-    Returns (n_new, n_skipped) counts.
+    Args:
+        from_date: Optional YYYY-MM-DD to restrict to recently-created works.
+
+    Returns n_new count.
     """
     cursor = "*"
     total_fetched = 0
@@ -160,7 +225,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
 
     while cursor:
         params = {
-            "filter": f'default.search:"{search_term}"',
+            "filter": build_filter(search_term, from_date),
             "select": OA_SELECT,
             "per_page": 200,
             "cursor": cursor,
@@ -169,7 +234,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
         resp = polite_get(OA_API, params=params, delay=delay)
         data = resp.json()
 
-        remaining = resp.headers.get("X-RateLimit-Remaining-USD", "?")
+        remaining = capture_budget(resp)
         meta = data.get("meta", {})
         total = meta.get("count", "?")
 
@@ -203,10 +268,10 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
     return n_new
 
 
-def dry_run_query(search_term, delay):
+def dry_run_query(search_term, delay, from_date=None):
     """Check how many results a query would return without fetching."""
     params = {
-        "filter": f'default.search:"{search_term}"',
+        "filter": build_filter(search_term, from_date),
         "per_page": 1,
         "mailto": MAILTO,
     }
@@ -301,6 +366,9 @@ def main():
                         help="Run only this tier (default: all)")
     parser.add_argument("--resume", action="store_true",
                         help="Skip OpenAlex IDs already in pool")
+    parser.add_argument("--from-date", type=str, default=None,
+                        help="Only fetch works created on/after YYYY-MM-DD "
+                             "(auto-detected from last run when --resume)")
     parser.add_argument("--pool-only", action="store_true",
                         help="Download to pool, don't build CSV")
     parser.add_argument("--extract-only", action="store_true",
@@ -326,6 +394,19 @@ def main():
         print(f"\nDone. {len(df)} works in openalex_works.csv")
         return
 
+    # Resolve --from-date: explicit flag > sidecar auto-detect > None (full)
+    from_date = args.from_date
+    if from_date is None and args.resume:
+        sidecar_date = read_last_run_date()
+        if sidecar_date:
+            from_date = sidecar_date
+            print(f"Auto-detected --from-date={from_date} from last run sidecar")
+        else:
+            print("No sidecar found — resuming without date filter (full pagination)")
+
+    if from_date:
+        print(f"Date filter active: from_created_date >= {from_date}")
+
     # Load existing pool IDs for resume
     existing_ids = set()
     if args.resume:
@@ -335,6 +416,10 @@ def main():
             rid.replace("https://openalex.org/", "") for rid in raw_ids
         }
         print(f"Pool contains {len(existing_ids)} existing OpenAlex IDs")
+
+    # Capture budget at start of run
+    budget_start = None
+    budget_end = None
 
     # Download phase
     grand_total = 0
@@ -354,14 +439,26 @@ def main():
             pf = pool_path("openalex", slug)
 
             if args.dry_run:
-                count = dry_run_query(term, args.delay)
+                count = dry_run_query(term, args.delay, from_date)
                 print(f"  \"{term}\": {count:,} results")
                 grand_total += count
                 continue
 
+            # Probe budget before first real query
+            if budget_start is None:
+                probe_params = {
+                    "filter": build_filter(term, from_date),
+                    "per_page": 1, "mailto": MAILTO,
+                }
+                probe_resp = polite_get(OA_API, params=probe_params,
+                                        delay=args.delay)
+                budget_start = capture_budget(probe_resp)
+                print(f"Budget at start: ${budget_start}")
+
             print(f"\nQuerying: \"{term}\"")
             n_new = fetch_query(
-                term, args.delay, args.limit, existing_ids, pf)
+                term, args.delay, args.limit, existing_ids, pf,
+                from_date=from_date)
             grand_total += n_new
 
     if args.dry_run:
@@ -370,8 +467,24 @@ def main():
         print(f"(Actual unique count will be lower due to overlap)")
         return
 
+    # Capture budget at end of run via a lightweight probe
+    try:
+        end_params = {"filter": 'default.search:"climate finance"',
+                      "per_page": 1, "mailto": MAILTO}
+        end_resp = polite_get(OA_API, params=end_params, delay=args.delay)
+        budget_end = capture_budget(end_resp)
+    except Exception:
+        budget_end = "?"
+
     print(f"\n{'=' * 60}")
     print(f"Download complete. {grand_total} new records added to pool.")
+    print(f"Budget: ${budget_start} → ${budget_end}")
+
+    # Write sidecar for future --resume auto-detection
+    if not args.dry_run:
+        today = date.today().isoformat()
+        write_last_run_date(date_str=today)
+        print(f"Wrote last-run date: {today}")
 
     if not args.pool_only:
         print(f"\n=== Extracting CSV from pool ===")
