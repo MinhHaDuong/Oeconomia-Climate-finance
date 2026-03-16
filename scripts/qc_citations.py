@@ -22,7 +22,9 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, MAILTO, normalize_doi
+from utils import CATALOGS_DIR, MAILTO, normalize_doi, get_logger
+
+log = get_logger("qc_citations")
 
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 OUTPUT_PATH = os.path.join(
@@ -83,9 +85,8 @@ def main():
     all_dois = set(works["doi_norm"].dropna()) - {"", "nan", "none"}
     never_fetched = all_dois - fetched_dois
 
-    print(f"Corpus DOIs:          {len(all_dois):>7}")
-    print(f"Fetched source DOIs:  {len(fetched_dois):>7}")
-    print(f"Never fetched:        {len(never_fetched):>7}")
+    log.info("Corpus DOIs: %d, fetched: %d, never fetched: %d",
+             len(all_dois), len(fetched_dois), len(never_fetched))
 
     # ── Sample 1: verify fetched DOIs ────────────────────────────────────────
     has_doi_ref = cit[
@@ -105,8 +106,8 @@ def main():
         samples.append(sub.sample(k, random_state=args.seed))
     sample_df = pd.concat(samples).head(n)
 
-    print(f"\nVerification sample:  {len(sample_df)} fetched DOIs")
-    print("Querying Crossref...")
+    log.info("Verification sample: %d fetched DOIs, querying Crossref...",
+             len(sample_df))
 
     verify_results = []
     for _, row in sample_df.iterrows():
@@ -120,7 +121,7 @@ def main():
         if status != "ok":
             verify_results.append({"doi": doi, "source": row.get("source", ""),
                                    "status": status})
-            print(f"  {doi}: {status}")
+            log.warning("%s: %s", doi, status)
             continue
 
         matched = our_refs & cr_doi_refs
@@ -155,19 +156,17 @@ def main():
     phantom = sum(1 for r in ok_v if r.get("only_ours", 0) > 0)
     missing = sum(1 for r in ok_v if r.get("only_cr", 0) > 0)
 
-    print(f"\nVerification results:")
-    print(f"  Success: {len(ok_v)}/{len(verify_results)}")
-    print(f"  Mean precision: {prec:.4f}  Mean recall: {rec:.4f}")
-    print(f"  Agg precision:  {agg_prec:.4f}  Agg recall:  {agg_rec:.4f}")
-    print(f"  Papers with phantom refs: {phantom}")
-    print(f"  Papers with missing refs: {missing}")
+    log.info("Verification: %d/%d OK, precision=%.4f/%.4f, recall=%.4f/%.4f, "
+             "phantom=%d, missing=%d",
+             len(ok_v), len(verify_results), prec, agg_prec, rec, agg_rec,
+             phantom, missing)
 
     # ── Sample 2: probe never-fetched DOIs ───────────────────────────────────
     never_list = list(never_fetched)
     np.random.shuffle(never_list)
     probe_sample = never_list[:args.never_fetched_n]
 
-    print(f"\nProbing {len(probe_sample)} never-fetched DOIs...")
+    log.info("Probing %d never-fetched DOIs...", len(probe_sample))
     probe_results = []
     for doi in probe_sample:
         cr_total, cr_doi_refs, status = fetch_crossref_refs(doi)
@@ -188,10 +187,8 @@ def main():
     est_new = int(len(never_fetched) * (n_has_doi_refs / len(probe_results))
                   * mean_doi_refs) if probe_results else 0
 
-    print(f"  In Crossref: {n_found}/{len(probe_results)}")
-    print(f"  With any refs: {n_has_refs}")
-    print(f"  With DOI refs: {n_has_doi_refs}")
-    print(f"  Est. new DOI-refs if all fetched: ~{est_new}")
+    log.info("Probe: %d/%d in Crossref, %d with refs, %d with DOI refs, ~%d est new",
+             n_found, len(probe_results), n_has_refs, n_has_doi_refs, est_new)
 
     # ── Coverage summary ─────────────────────────────────────────────────────
     total_rows = len(cit)
@@ -236,7 +233,7 @@ def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w") as f:
         json.dump(report, f, indent=2)
-    print(f"\nReport saved to: {OUTPUT_PATH}")
+    log.info("Report saved to: %s", OUTPUT_PATH)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,9 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, get_logger
+
+log = get_logger("analyze_embeddings")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -85,14 +87,14 @@ def main():
     from sentence_transformers import SentenceTransformer
 
     # --- Load data ---
-    print(f"Loading works from {args.works_input}...")
+    log.info("Loading works from %s...", args.works_input)
     works = pd.read_csv(args.works_input)
 
     # Filter: must have a title, year in range
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
     in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
     df = works[has_title & in_range].copy().reset_index(drop=True)
-    print(f"Works with titles (1990-2025): {len(df)}")
+    log.info("Works with titles (1990-2025): %d", len(df))
 
     # Build keys, text, and text hashes
     df["_key"] = df.apply(work_key, axis=1)
@@ -115,14 +117,15 @@ def main():
             key_to_vec = dict(zip(cached_keys, cached_vecs))
             if cached_hashes is not None:
                 key_to_hash = dict(zip(cached_keys, cached_hashes))
-            print(f"Loaded {len(key_to_vec)} cached embeddings (model: {MODEL_NAME}, fields: {TEXT_FIELDS})")
+            log.info("Loaded %d cached embeddings (model: %s, fields: %s)",
+                     len(key_to_vec), MODEL_NAME, TEXT_FIELDS)
         else:
-            print(f"Config changed (model: {cached_model!r}→{MODEL_NAME!r}, "
-                  f"fields: {cached_fields!r}→{TEXT_FIELDS!r}), full recompute")
+            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
+                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
     elif os.path.exists(legacy_path):
-        print(f"Found legacy {legacy_path}, will migrate to .npz (full recompute)")
+        log.info("Found legacy %s, will migrate to .npz (full recompute)", legacy_path)
     else:
-        print("No embedding cache found, full computation")
+        log.info("No embedding cache found, full computation")
 
     # A cached entry is valid only if key exists AND text hash matches
     keys = df["_key"].values
@@ -135,19 +138,19 @@ def main():
     n_new = len(df) - n_cached
     n_stale = sum(1 for k in keys if k in key_to_vec) - n_cached
     if n_stale > 0:
-        print(f"Embeddings: {n_cached} cached, {n_stale} stale (text changed), {n_new - n_stale} new")
+        log.info("Embeddings: %d cached, %d stale, %d new", n_cached, n_stale, n_new - n_stale)
     else:
-        print(f"Embeddings: {n_cached} cached, {n_new} to compute")
+        log.info("Embeddings: %d cached, %d to compute", n_cached, n_new)
 
     # Encode only new works
     if n_new > 0:
         n_cpu = os.cpu_count() or 4
         torch.set_num_threads(n_cpu)
-        print(f"Loading {MODEL_NAME} ({n_cpu} threads)...")
+        log.info("Loading %s (%d threads)...", MODEL_NAME, n_cpu)
         model = SentenceTransformer(MODEL_NAME)
 
         new_texts = df.loc[~hit_mask, "_text"].tolist()
-        print(f"Encoding {n_new} texts...")
+        log.info("Encoding %d texts...", n_new)
         new_vecs = model.encode(
             new_texts,
             batch_size=256,
@@ -173,21 +176,21 @@ def main():
         model=np.array(MODEL_NAME),
         text_fields=np.array(TEXT_FIELDS),
     )
-    print(f"Saved {len(embeddings)} embeddings → {EMBEDDINGS_PATH}")
+    log.info("Saved %d embeddings → %s", len(embeddings), EMBEDDINGS_PATH)
 
     # Clean up legacy file
     if os.path.exists(legacy_path):
         os.remove(legacy_path)
-        print(f"Removed legacy {legacy_path}")
+        log.info("Removed legacy %s", legacy_path)
 
-    print(f"Embedding shape: {embeddings.shape}")
+    log.info("Embedding shape: %s", embeddings.shape)
 
 
     # ============================================================
     # Step 1: UMAP dimensionality reduction
     # ============================================================
 
-    print("\nComputing UMAP projection...")
+    log.info("Computing UMAP projection...")
     reducer = umap.UMAP(
         n_components=2,
         n_neighbors=15,
@@ -199,26 +202,25 @@ def main():
     coords = reducer.fit_transform(embeddings)
     df["umap_x"] = coords[:, 0]
     df["umap_y"] = coords[:, 1]
-    print(f"UMAP done: {coords.shape}")
+    log.info("UMAP done: %s", coords.shape)
 
 
     # ============================================================
     # Step 2: HDBSCAN clustering
     # ============================================================
 
-    print("\nClustering with KMeans (k=6, matching co-citation communities)...")
+    log.info("Clustering with KMeans (k=6, matching co-citation communities)...")
     from sklearn.cluster import KMeans
     kmeans = KMeans(n_clusters=6, random_state=42, n_init=20)
     df["semantic_cluster"] = kmeans.fit_predict(coords)
     n_clusters = 6
     n_noise = 0
-    print(f"Semantic clusters: {n_clusters}")
+    log.info("Semantic clusters: %d", n_clusters)
 
     # Cluster sizes
-    print("\nCluster sizes:")
     for c in sorted(df["semantic_cluster"].unique()):
         label = f"Cluster {c}" if c >= 0 else "Noise"
-        print(f"  {label}: {(df['semantic_cluster'] == c).sum()}")
+        log.info("  %s: %d", label, (df['semantic_cluster'] == c).sum())
 
 
     # ============================================================
@@ -226,7 +228,7 @@ def main():
     # ============================================================
 
     # For each cluster, find most common keywords
-    print("\n=== Cluster keyword profiles ===")
+    log.info("=== Cluster keyword profiles ===")
     for c in range(n_clusters):
         members = df[df["semantic_cluster"] == c]
         # Extract keywords
@@ -237,8 +239,7 @@ def main():
         kw_counts = Counter(all_kw).most_common(10)
         kw_str = ", ".join(f"{k} ({n})" for k, n in kw_counts)
         median_year = int(members["year"].median())
-        print(f"\nCluster {c} (n={len(members)}, median year={median_year}):")
-        print(f"  Top keywords: {kw_str}")
+        log.info("Cluster %d (n=%d, median year=%d): %s", c, len(members), median_year, kw_str)
 
 
     # ============================================================
@@ -247,7 +248,7 @@ def main():
 
     cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
     if os.path.exists(cocit_path):
-        print("\n=== Cross-validation with co-citation communities ===")
+        log.info("=== Cross-validation with co-citation communities ===")
         cocit = pd.read_csv(cocit_path)
         # Match by DOI
         df["doi_norm"] = df["doi"].apply(normalize_doi)
@@ -260,10 +261,9 @@ def main():
                 merged["community"],
                 margins=True,
             )
-            print(f"\nMatched {len(merged)} works with both assignments:")
-            print(cross_tab)
+            log.info("Matched %d works with both assignments:\n%s", len(merged), cross_tab)
         else:
-            print("No DOI matches between semantic clusters and co-citation communities")
+            log.info("No DOI matches between semantic clusters and co-citation communities")
 
 
     # ============================================================
@@ -297,7 +297,7 @@ def main():
     plt.tight_layout()
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.pdf"), dpi=300, bbox_inches="tight")
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.png"), dpi=150, bbox_inches="tight")
-    print(f"\nSaved semantic map → figures/fig_semantic.pdf")
+    log.info("Saved semantic map → figures/fig_semantic.pdf")
     plt.close()
 
 
@@ -347,7 +347,7 @@ def main():
     plt.tight_layout()
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.png"), dpi=150, bbox_inches="tight")
-    print(f"Saved semantic map (language) → figures/fig_semantic_lang.pdf")
+    log.info("Saved semantic map (language) → figures/fig_semantic_lang.pdf")
     plt.close()
 
 
@@ -395,7 +395,7 @@ def main():
     plt.tight_layout()
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.pdf"), dpi=300, bbox_inches="tight")
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.png"), dpi=150, bbox_inches="tight")
-    print(f"Saved semantic map (period) → figures/fig_semantic_period.pdf")
+    log.info("Saved semantic map (period) → figures/fig_semantic_period.pdf")
     plt.close()
 
 
@@ -403,8 +403,7 @@ def main():
     out = df[["source", "doi", "title", "first_author", "year", "language",
               "semantic_cluster", "umap_x", "umap_y"]].copy()
     out.to_csv(CLUSTERS_PATH, index=False)
-    print(f"\nSaved cluster assignments → {CLUSTERS_PATH}")
-    print("Done.")
+    log.info("Saved cluster assignments → %s. Done.", CLUSTERS_PATH)
 
 
 if __name__ == "__main__":

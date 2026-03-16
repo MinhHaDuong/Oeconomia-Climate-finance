@@ -28,7 +28,9 @@ import requests
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, REFS_COLUMNS,
                    normalize_doi, sort_dois_by_priority, retry_get,
-                   save_run_report, make_run_id)
+                   save_run_report, make_run_id, get_logger)
+
+log = get_logger("enrich_citations_openalex")
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
@@ -139,23 +141,8 @@ def resolve_openalex_ids(oa_ids, counters=None,
 
 def print_resume_preview(done_dois, all_dois, missing):
     """Print a startup summary of done-set/checkpoint state and remaining workload."""
-    print("── Resume preview ─────────────────────────────────────────")
-    print(f"  Corpus DOIs total:      {len(all_dois)}")
-    print(f"  Done-set entries:       {len(done_dois)}")
-    if os.path.exists(DONE_PATH):
-        try:
-            n = sum(1 for _ in open(DONE_PATH) if _.strip())
-            print(f"  Done-set file rows:     {n}")
-        except Exception:
-            pass
-    if os.path.exists(CHECKPOINT_PATH):
-        try:
-            n = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
-            print(f"  Checkpoint rows:        {n}")
-        except Exception:
-            pass
-    print(f"  Remaining to fetch:     {len(missing)}")
-    print("────────────────────────────────────────────────────────────\n")
+    log.info("Resume: %d DOIs total, %d done, %d remaining",
+             len(all_dois), len(done_dois), len(missing))
 
 
 def main():
@@ -219,7 +206,7 @@ def main():
     if args.resume and os.path.exists(DONE_PATH):
         with open(DONE_PATH) as f:
             done_dois = set(line.strip() for line in f if line.strip())
-        print(f"Resuming: {len(done_dois)} DOIs already fetched from OpenAlex")
+        log.info("Resuming: %d DOIs already fetched from OpenAlex", len(done_dois))
     else:
         done_dois = set()
 
@@ -228,7 +215,7 @@ def main():
         ckpt_existing = pd.read_csv(CHECKPOINT_PATH, usecols=["source_doi"],
                                      low_memory=False)
         done_dois |= set(ckpt_existing["source_doi"].apply(normalize_doi).dropna())
-        print(f"  (+{len(ckpt_existing)} rows in unmerged checkpoint)")
+        log.info("(+%d rows in unmerged checkpoint)", len(ckpt_existing))
 
     # ── Corpus DOIs ───────────────────────────────────────────────────────
     works = pd.read_csv(
@@ -248,7 +235,7 @@ def main():
                         dtype=str, keep_default_na=False)["source_doi"]
             .apply(normalize_doi).unique()
         )
-        print(f"Skipping {len(oa_done)} DOIs already in openalex_citations.csv")
+        log.info("Skipping %d DOIs already in openalex_citations.csv", len(oa_done))
         done_dois |= oa_done
 
     # Sort by priority (most-cited works first) for deterministic ordering.
@@ -262,7 +249,7 @@ def main():
                dois_to_fetch=len(missing))
 
     if not missing:
-        print("Nothing to fetch.")
+        log.info("Nothing to fetch.")
         return
 
     # Write checkpoint header once
@@ -270,7 +257,7 @@ def main():
         pd.DataFrame(columns=REFS_COLUMNS).to_csv(CHECKPOINT_PATH, index=False)
 
     # ── Phase 1: collect referenced_works IDs ────────────────────────────
-    print("\nPhase 1: fetching referenced_works from OpenAlex...")
+    log.info("Phase 1: fetching referenced_works from OpenAlex...")
     all_source_refs = {}
     p1_errors = 0
     n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
@@ -292,11 +279,11 @@ def main():
                 for d in batch:
                     f.write(d + "\n")
         except Exception as e:
-            print(f"  ERROR batch {batch_num}/{n_batches}: {e}")
+            log.error("Batch %d/%d: %s", batch_num, n_batches, e)
             _log_event("phase1_batch_error", batch=batch_num, error=str(e))
             p1_errors += 1
             if p1_errors > 10:
-                print("Too many errors, stopping.")
+                log.error("Too many errors, stopping.")
                 break
             continue
 
@@ -305,9 +292,8 @@ def main():
             elapsed = time.time() - t0
             rate = (i + len(batch)) / elapsed if elapsed > 0 else 0
             eta = (len(missing) - i - len(batch)) / rate if rate > 0 else 0
-            print(f"  Batch {batch_num}/{n_batches}: "
-                  f"{len(all_source_refs)} sources, {found_refs} ref-IDs, "
-                  f"{elapsed:.0f}s elapsed, ETA {eta:.0f}s")
+            log.info("P1 batch %d/%d: %d sources, %d ref-IDs, ETA %.0fs",
+                     batch_num, n_batches, len(all_source_refs), found_refs, eta)
             _log_event("phase1_checkpoint", batch=batch_num, sources=len(all_source_refs),
                        ref_ids=found_refs)
 
@@ -318,7 +304,7 @@ def main():
         for oa_id in ref_list
         if oa_id
     })
-    print(f"\nPhase 2: resolving {len(all_oa_ids)} unique OpenAlex IDs to DOIs...")
+    log.info("Phase 2: resolving %d unique OpenAlex IDs to DOIs...", len(all_oa_ids))
 
     id_metadata = {}
     p2_errors = 0
@@ -338,19 +324,19 @@ def main():
             )
             id_metadata.update(resolved)
         except Exception as e:
-            print(f"  ERROR resolve batch {batch_num}/{n_resolve_batches}: {e}")
+            log.error("Resolve batch %d/%d: %s", batch_num, n_resolve_batches, e)
             p2_errors += 1
             if p2_errors > 10:
-                print("Too many errors, stopping resolution.")
+                log.error("Too many errors, stopping resolution.")
                 break
             continue
 
         if batch_num % 20 == 0 or batch_num == n_resolve_batches:
-            print(f"  Resolve batch {batch_num}/{n_resolve_batches}: "
-                  f"{len(id_metadata)} IDs resolved")
+            log.info("P2 resolve %d/%d: %d IDs resolved",
+                     batch_num, n_resolve_batches, len(id_metadata))
 
     # ── Build rows and write checkpoint ──────────────────────────────────
-    print("\nBuilding citation rows...")
+    log.info("Building citation rows...")
     rows = []
     for source_doi, ref_ids in all_source_refs.items():
         for oa_id in ref_ids:
@@ -371,7 +357,7 @@ def main():
         batch_df.to_csv(CHECKPOINT_PATH, mode="a", header=False, index=False)
 
     # ── Merge checkpoint into citations.csv ───────────────────────────────
-    print("\nMerging into citations.csv...")
+    log.info("Merging into citations.csv...")
     existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
 
     rows_deduped = 0
@@ -399,24 +385,19 @@ def main():
         combined = pd.concat([existing, new_refs_real], ignore_index=True)
         combined.to_csv(CITATIONS_PATH, index=False)
         os.remove(CHECKPOINT_PATH)
-        print(f"  Old rows:          {len(existing)}")
-        print(f"  New rows (deduped): {len(new_refs_real)}")
-        print(f"  Sentinels dropped: {is_sentinel.sum()}")
-        print(f"  Duplicates removed: {rows_deduped}")
-        print(f"  Combined:          {len(combined)}")
+        log.info("Merged: %d old + %d new (-%d sentinels, -%d dupes) = %d rows",
+                 len(existing), len(new_refs_real),
+                 int(is_sentinel.sum()), rows_deduped, len(combined))
     else:
-        print("  No new data to merge.")
+        log.info("No new data to merge.")
         new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
         combined = existing
 
     elapsed = time.time() - t0
-    print(f"\nDone in {elapsed:.0f}s")
-    print(f"  Sources processed:  {len(all_source_refs)}")
-    print(f"  OpenAlex IDs found: {len(all_oa_ids)}")
-    print(f"  IDs resolved:       {len(id_metadata)}")
-    print(f"  Reference rows:     {len(rows)}")
-    print(f"  Errors (fetch):     {p1_errors}")
-    print(f"  Errors (resolve):   {p2_errors}")
+    log.info("Done in %.0fs: %d sources, %d OA IDs, %d resolved, "
+             "%d rows, errors: %d fetch + %d resolve",
+             elapsed, len(all_source_refs), len(all_oa_ids),
+             len(id_metadata), len(rows), p1_errors, p2_errors)
 
     counters = {
         "dois_total": len(all_dois),
@@ -439,7 +420,7 @@ def main():
         "elapsed_seconds": round(elapsed, 1),
     }
     report_path = save_run_report(counters, run_id, "enrich_citations_openalex")
-    print(f"Run report: {report_path}")
+    log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
                rows_appended=len(new_refs_real), report_path=report_path)
 

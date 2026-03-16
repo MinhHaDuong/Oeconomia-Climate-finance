@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import logging
 import os
 import random
 import re
@@ -10,6 +11,39 @@ import time
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+
+
+# --- Logging ---
+
+def get_logger(name=None):
+    """Return a configured logger for pipeline scripts.
+
+    First call installs a shared StreamHandler on the 'pipeline' root logger
+    with elapsed-time timestamps.  Subsequent calls just return a child logger.
+
+    Usage in scripts::
+
+        from utils import get_logger
+        log = get_logger("enrich_abstracts")
+        log.info("Step 1: cross-source backfill (%d missing)", n)
+    """
+    root = logging.getLogger("pipeline")
+    if not root.handlers:
+        root.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()       # stderr, auto-flushes
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            fmt="%(asctime)s %(levelname)-7s %(message)s",
+            datefmt="%H:%M:%S",
+        )
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
+    if name:
+        return root.getChild(name)
+    return root
+
+
+_utils_log = get_logger("utils")
 
 # --- Paths ---
 
@@ -109,7 +143,7 @@ def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
                 int(resp.headers.get("Retry-After", 2 ** (attempt + 1))),
                 60,  # cap at 60s regardless of header
             )
-            print(f"  Rate limited. Waiting {retry_after}s...")
+            _utils_log.warning("Rate limited. Waiting %ds...", retry_after)
             time.sleep(retry_after)
             continue
         resp.raise_for_status()
@@ -161,7 +195,8 @@ def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
             last_exc = exc
             counters["retries"] = counters.get("retries", 0) + 1
             backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
-            print(f"  Timeout on attempt {attempt + 1}/{max_retries}, retrying in {backoff:.1f}s...")
+            _utils_log.warning("Timeout on attempt %d/%d, retrying in %.1fs...",
+                               attempt + 1, max_retries, backoff)
             time.sleep(backoff)
             continue
         except requests.exceptions.RequestException as exc:
@@ -177,15 +212,15 @@ def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
             retry_after = min(int(resp.headers.get("Retry-After", backoff_base ** (attempt + 1))), 120)
             jitter = random.uniform(0, min(jitter_max * 2, 2))
             wait = retry_after + jitter
-            print(f"  Rate limited (429), waiting {wait:.1f}s...")
+            _utils_log.warning("Rate limited (429), waiting %.1fs...", wait)
             time.sleep(wait)
             continue
         if resp.status_code >= 500:
             counters["server_errors"] = counters.get("server_errors", 0) + 1
             counters["retries"] = counters.get("retries", 0) + 1
             backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
-            print(f"  Server error {resp.status_code} on attempt {attempt + 1}/{max_retries}, "
-                  f"retrying in {backoff:.1f}s...")
+            _utils_log.warning("Server error %d on attempt %d/%d, retrying in %.1fs...",
+                               resp.status_code, attempt + 1, max_retries, backoff)
             time.sleep(backoff)
             last_exc = resp.status_code
             continue
@@ -386,7 +421,7 @@ def save_csv(df, path):
     """Save DataFrame to CSV with UTF-8 encoding."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df.to_csv(path, index=False, encoding="utf-8")
-    print(f"Saved {len(df)} rows to {path}")
+    _utils_log.info("Saved %d rows to %s", len(df), path)
 
 
 def load_checkpoint(path):
@@ -398,7 +433,7 @@ def load_checkpoint(path):
                 line = line.strip()
                 if line:
                     records.append(json.loads(line))
-        print(f"Loaded {len(records)} records from checkpoint {path}")
+        _utils_log.info("Loaded %d records from checkpoint %s", len(records), path)
     return records
 
 
@@ -507,8 +542,8 @@ def save_figure(fig, path_stem, no_pdf=False, dpi=150):
                 metadata=_meta, pil_kwargs={"optimize": False})
     if not no_pdf:
         fig.savefig(f"{path_stem}.pdf", dpi=max(dpi, 300), bbox_inches="tight")
-    print(f"Saved → {os.path.basename(path_stem)}.png" +
-          ("" if no_pdf else " + .pdf"))
+    _utils_log.info("Saved → %s.png%s", os.path.basename(path_stem),
+                     "" if no_pdf else " + .pdf")
 
 
 # --- Enrichment priority ---
