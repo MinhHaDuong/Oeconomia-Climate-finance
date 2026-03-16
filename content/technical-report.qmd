@@ -56,4 +56,8 @@ This document describes the computational pipeline used to produce the bibliomet
 
 ---
 
+{{< include _includes/agentic-workflow.md >}}
+
+---
+
 {{< include _includes/reproducibility.md >}}
