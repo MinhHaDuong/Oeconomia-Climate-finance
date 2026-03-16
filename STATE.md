@@ -30,7 +30,7 @@ Last updated: 2026-03-16
 
 ## Blockers
 
-- Table 1 pending: co-citation communities don't cleanly separate pre-2007 traditions
+None.
 
 ## Active PRs
 
