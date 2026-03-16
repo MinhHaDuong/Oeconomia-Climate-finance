@@ -28,7 +28,9 @@ import requests
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, OPENALEX_API_KEY,
                    save_csv, reconstruct_abstract, normalize_doi,
-                   retry_get, save_run_report, make_run_id)
+                   retry_get, save_run_report, make_run_id, get_logger)
+
+log = get_logger("enrich_abstracts")
 
 MIN_ABSTRACT_LEN = 20
 CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
@@ -90,12 +92,9 @@ def print_resume_preview(df):
     missing = df["abstract"].apply(is_missing).sum()
     oa_cache = _cache_size("openalex_abstracts")
     s2_cache = _cache_size("s2_abstracts")
-    print("── Resume preview ─────────────────────────────────────────")
-    print(f"  Total works:            {total}")
-    print(f"  Missing abstracts:      {missing} ({missing / total * 100:.1f}%)")
-    print(f"  OpenAlex cache entries: {oa_cache}")
-    print(f"  Semantic Scholar cache: {s2_cache}")
-    print("────────────────────────────────────────────────────────────\n")
+    log.info("Resume preview: %d works, %d missing (%.1f%%), "
+             "OA cache=%d, S2 cache=%d",
+             total, missing, missing / total * 100, oa_cache, s2_cache)
 
 
 # --- Step 1: Cross-source backfill ---
@@ -123,7 +122,8 @@ def step1_cross_source(df, counters):
                 doi_abs[d] = a
 
     filled = 0
-    for idx in missing:
+    n = len(missing)
+    for i, idx in enumerate(missing):
         doi = normalize_doi(df.at[idx, "doi"])
         if doi and doi in doi_abs:
             ab = clean_abstract(doi_abs[doi])
@@ -131,6 +131,8 @@ def step1_cross_source(df, counters):
                 df.at[idx, "abstract"] = ab
                 df.at[idx, "_missing"] = False
                 filled += 1
+        if (i + 1) % 2000 == 0:
+            log.info("Cross-source: %d/%d checked, %d filled", i + 1, n, filled)
     counters["step1_filled"] = filled
     return filled
 
@@ -158,7 +160,8 @@ def step2_openalex(df, counters, checkpoint_every=50,
 
     counters["step2_attempted"] = len(to_query)
     counters["step2_cache_hits"] = cache_hits
-    print(f"  OpenAlex: {len(to_query)} uncached IDs to query ({cache_hits} cache hits)")
+    log.info("OpenAlex: %d uncached IDs to query (%d cache hits)",
+             len(to_query), cache_hits)
 
     # Batch query (50 per request)
     batch_size = 50
@@ -194,7 +197,7 @@ def step2_openalex(df, counters, checkpoint_every=50,
             for sid in ids:
                 cache[sid] = results.get(sid, "")
         except Exception as e:
-            print(f"  Warning: batch {i} failed: {e}")
+            log.warning("Batch %d failed: %s", i, e)
             counters["step2_errors"] = counters.get("step2_errors", 0) + 1
             for sid in ids:
                 cache.setdefault(sid, "")
@@ -203,8 +206,9 @@ def step2_openalex(df, counters, checkpoint_every=50,
         if batches_done % checkpoint_every == 0:
             save_cache("openalex_abstracts", cache)
 
-        if (i // batch_size) % 20 == 0 and i > 0:
-            print(f"  OpenAlex: {i + len(batch)}/{len(to_query)}")
+        if batches_done % 10 == 0:
+            log.info("OpenAlex: %d/%d queried",
+                     min(i + batch_size, len(to_query)), len(to_query))
 
     save_cache("openalex_abstracts", cache)
 
@@ -239,7 +243,8 @@ def step3_istex(df, counters):
     raw_ids = set(os.listdir(RAW_DIR)) if os.path.isdir(RAW_DIR) else set()
 
     filled = 0
-    for idx in missing:
+    n = len(missing)
+    for i, idx in enumerate(missing):
         sid = str(df.at[idx, "source_id"])
         if sid not in raw_ids:
             continue
@@ -264,6 +269,9 @@ def step3_istex(df, counters):
                 df.at[idx, "abstract"] = ab
                 df.at[idx, "_missing"] = False
                 filled += 1
+
+        if (i + 1) % 500 == 0:
+            log.info("ISTEX: %d/%d checked, %d filled", i + 1, n, filled)
 
     counters["step3_filled"] = filled
     return filled
@@ -322,7 +330,8 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
 
     counters["step4_attempted"] = len(to_query)
     counters["step4_cache_hits"] = cache_hits
-    print(f"  Semantic Scholar: {len(to_query)} uncached DOIs to query ({cache_hits} cache hits)")
+    log.info("Semantic Scholar: %d uncached DOIs to query (%d cache hits)",
+             len(to_query), cache_hits)
 
     s2_counters = {}
     for i, (idx, doi) in enumerate(to_query):
@@ -357,15 +366,15 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
             else:
                 counters["step4_5xx"] = counters.get("step4_5xx", 0) + 1
             if i < 3:
-                print(f"  Warning: S2 {doi}: {e}")
+                log.warning("S2 %s: %s", doi, e)
             cache[doi] = ""
         except Exception as e:
             if i < 3:
-                print(f"  Warning: S2 {doi}: {e}")
+                log.warning("S2 %s: %s", doi, e)
             cache[doi] = ""
 
         if (i + 1) % checkpoint_every == 0:
-            print(f"  Semantic Scholar: {i + 1}/{len(to_query)}")
+            log.info("Semantic Scholar: %d/%d", i + 1, len(to_query))
             save_cache("s2_abstracts", cache)
 
     save_cache("s2_abstracts", cache)
@@ -441,7 +450,7 @@ def main():
 
     path = args.works_input
     df = pd.read_csv(path)
-    print(f"Loaded {len(df)} works from {path}")
+    log.info("Loaded %d works from %s", len(df), path)
     _log_event("start", works_count=len(df), works_input=path)
 
     # Compute working columns
@@ -460,7 +469,7 @@ def main():
     print_resume_preview(df)
 
     if args.dry_run:
-        print("Dry run — not modifying data.")
+        log.info("Dry run — not modifying data.")
         return
 
     steps = STEPS if args.step == 0 else {args.step: STEPS[args.step]}
@@ -474,7 +483,7 @@ def main():
     for step_num in sorted(steps):
         name, func = steps[step_num]
         before = int(df["_missing"].sum())
-        print(f"Step {step_num}: {name} ({before} still missing)")
+        log.info("Step %d: %s (%d still missing)", step_num, name, before)
         _log_event("step_start", step=step_num, name=name, missing_before=before)
 
         # Steps 2 and 4 accept checkpoint_every; others accept just counters
@@ -496,7 +505,7 @@ def main():
         step_results[f"step{step_num}_before"] = before
         step_results[f"step{step_num}_after"] = after
         step_results[f"step{step_num}_filled"] = filled
-        print(f"  → filled {filled}, remaining: {after}\n")
+        log.info("→ filled %d, remaining: %d", filled, after)
         _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
 
     # Save
@@ -506,10 +515,10 @@ def main():
 
     elapsed = time.time() - t0
 
-    print(f"Done. Abstracts: {len(df) - final_missing}/{len(df)} "
-          f"({(len(df) - final_missing) / len(df) * 100:.1f}%)")
-    print(f"Filled {total_missing_before - final_missing} abstracts total.")
-    print(f"Elapsed: {elapsed:.0f}s")
+    log.info("Done. Abstracts: %d/%d (%.1f%%). Filled %d total. Elapsed: %.0fs",
+             len(df) - final_missing, len(df),
+             (len(df) - final_missing) / len(df) * 100,
+             total_missing_before - final_missing, elapsed)
 
     # Structured run report
     counters.update({
@@ -520,7 +529,7 @@ def main():
     })
     counters.update(step_results)
     report_path = save_run_report(counters, run_id, "enrich_abstracts")
-    print(f"Run report: {report_path}")
+    log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
                total_filled=counters["total_filled"], report_path=report_path)
 
