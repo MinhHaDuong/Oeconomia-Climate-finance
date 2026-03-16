@@ -27,6 +27,8 @@ Interactive discussion with the user. Imagine specs, gather information, brainst
 Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet. Deliverable: a ticket with test spec.
 
 ### Doing
+Runs in a fresh context — the ticket is the only input. This prevents context window pollution from Dreaming/Planning conversations. Launch via `start-ticket` trigger.
+
 Autonomous execution using test-driven development. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for domain-specific test conventions. The inner cycle is:
 
 1. **Red**: write a failing test that defines the expected behavior.
