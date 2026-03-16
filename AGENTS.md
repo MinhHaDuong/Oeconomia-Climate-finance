@@ -12,7 +12,7 @@
 | `docs/writing-guidelines.md` | Prose style, language polish, citations | Editing manuscript text |
 | `docs/coding-guidelines.md` | Pipeline, scripts, conventions | Writing or running code |
 | `docs/oeconomia-style.md` | Journal house style | Final formatting |
-| `.env` | Machine-specific paths: `CLIMATE_FINANCE_DATA`, `CLAUDE_MEMORY_DIR` | Script execution |
+| `.env` | Project secrets + machine paths (gitignored) | Script execution, agent identity |
 | `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
 | `runbooks/` | Procedures fired by workflow triggers (see Triggers below) | Automated steps |
 
@@ -35,19 +35,24 @@ Autonomous execution using test-driven development. The cycle is:
 
 Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for test details per domain.
 
+If a test stays red after three approaches:
+1. Launch parallel expert agents exploring different directions.
+2. If all experts fail: is the test correct? (Maybe the spec is wrong — re-ticket with diagnosis.)
+3. If the spec is sound but no approach works: ask the author.
+
 ### Celebrating (autonomous)
-After the Doing phase completes, the `post-task` trigger runs automatically.
+The `post-task` trigger runs automatically. Celebrating is not a formality — it closes the energy cycle. The agent reflects on what was accomplished and learned, acknowledges contributions, and releases the context before the next dream begins.
 
 ## Triggers
 
 | Event | When | Runbook |
 |-------|------|---------|
 | on-start | Beginning of every conversation | `runbooks/on-start.md` |
+| start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
 | pre-commit | Before every commit | `runbooks/pre-commit.md` |
 | post-task | After completing a ticket | `runbooks/celebrate.md` |
 | new-ticket | Creating a GitHub issue (issues are handoff documents) | `runbooks/new-ticket.md` |
 | review-pr | Reviewing a pull request | `runbooks/review-pr.md` |
-| start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
 | memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
 
 ## Git discipline
@@ -80,15 +85,10 @@ When issue exploration leads to multiple action items, open one ticket for each.
 
 The wave ends with a global verification pass across all changes merged in this wave. If integration breaks, that's a new ticket for the next wave — not a reason to revert silently.
 
-## Communication with author
+## When to ask the author
+- You're stuck after three different approaches (including expert fan-out).
+- The task requires a judgment call outside your domain docs.
+- See `docs/writing-guidelines.md` for manuscript-specific guidance.
 
-### When to ask
-- Argument direction is genuinely ambiguous
-- Multiple good sources conflict
-- Author's position on controversial topic is unclear
-
-### When not to ask
-- Standard academic practices apply
-- You can research the answer
-- It's a matter of stylistic preference you can reasonably infer
-
+## Conversation scope
+One ticket per conversation. The agent stops when the ticket's exit criteria are met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.

@@ -18,6 +18,18 @@ The periodization is endogenous (embedding-based break detection), not imposed f
 
 ~28,400 works from OpenAlex + Semantic Scholar + ISTEX + bibCNRS + SciSpace + grey lit + teaching. Core subset: ~2,300 papers cited ≥ 50 times.
 
+## When to ask the author (manuscript-specific)
+
+### Ask when
+- Argument direction is genuinely ambiguous
+- Multiple good sources conflict
+- Author's position on controversial topic is unclear
+
+### Don't ask when
+- Standard academic practices apply
+- You can research the answer
+- It's a matter of stylistic preference you can reasonably infer
+
 ## Self-check questions
 
 Before producing any substantial text:
