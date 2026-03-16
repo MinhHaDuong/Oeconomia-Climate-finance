@@ -24,30 +24,20 @@ Every task passes through four phases. Identify and report the phase you're in o
 Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like.
 
 ### Planning
-Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Write tests first** (see TDD below). No production commits yet.
+Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet.
 
 ### Doing
-Autonomous execution. Red → green → refactor. Commit at each step. Stay on the branch, protect main.
-
-## Test-driven development
-
-Write the test before the code. The cycle is:
+Autonomous execution using test-driven development. The cycle is:
 
 1. **Red**: write a failing test that defines the expected behavior.
 2. **Green**: write the minimum code to make it pass.
 3. **Refactor**: clean up, then confirm tests still pass.
 
-Each step gets its own commit (the git log tells the story: intent → solution → polish).
+Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main.
 
-### For scripts (pipeline, analysis, figures)
-- Tests live in `tests/`. Run with `uv run pytest`.
-- A new script or changed behavior starts with a test in `tests/test_<module>.py`.
-- Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
+**For scripts** — tests live in `tests/`. Run with `uv run pytest`. A new script or changed behavior starts with a test in `tests/test_<module>.py`. Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
 
-### For manuscript (prose, figures, tables)
-- Verification commands are the "tests": blacklisted words, em-dash density, word count, `make manuscript` build clean.
-- Before editing prose, run the relevant checks. After editing, confirm they still pass.
-- `make clean && make all` is the integration test.
+**For manuscript** — verification commands are the "tests": blacklisted words, em-dash density, word count, `make manuscript` build clean. Before editing prose, run the relevant checks. After editing, confirm they still pass. `make clean && make all` is the integration test.
 
 ### Celebrating (autonomous)
 After the Doing phase completes, the `post-task` trigger runs automatically.

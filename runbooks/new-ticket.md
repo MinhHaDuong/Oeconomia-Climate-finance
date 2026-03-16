@@ -15,6 +15,9 @@ What problem or need this addresses. Why now.
 1. Concrete step
 2. Concrete step
 
+## Test
+- What test to write first (red step of TDD)
+
 ## Verification
 - [ ] How to confirm each action worked
 
