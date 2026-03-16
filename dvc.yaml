@@ -24,15 +24,17 @@ stages:
   # Catalog scripts query APIs (ISTEX, OpenAlex, Semantic Scholar) and merge
   # all per-source CSVs into a single unified catalog. No filtering here.
   #
-  # build_teaching_canon extracts syllabus readings into teaching_works.csv
-  # (no corpus matching needed). catalog_merge then merges all 7 sources,
-  # deduplicating by DOI/title and setting from_teaching=1 for teaching works.
+  # build_teaching_yaml converts scraped syllabi into structured YAML.
+  # build_teaching_canon extracts syllabus readings into teaching_works.csv.
+  # catalog_merge then merges all 7 sources, deduplicating by DOI/title
+  # and setting from_teaching=1 for teaching works.
   discover:
     cmd: >-
       uv run python scripts/catalog_istex.py --api &&
       uv run python scripts/catalog_openalex.py --resume &&
       uv run python scripts/catalog_semanticscholar.py --resume &&
       uv run python scripts/catalog_grey.py &&
+      uv run python scripts/build_teaching_yaml.py &&
       uv run python scripts/build_teaching_canon.py &&
       uv run python scripts/catalog_merge.py
     deps:
@@ -41,11 +43,12 @@ stages:
       - scripts/catalog_semanticscholar.py
       - scripts/catalog_grey.py
       - scripts/catalog_merge.py
+      - scripts/build_teaching_yaml.py
       - scripts/build_teaching_canon.py
       - scripts/utils.py
       - config/openalex_queries.yaml
       - config/grey_sources.yaml
-      - config/teaching_sources.yaml
+      - data/syllabi
       - data/catalogs/bibcnrs_works.csv
       # Hand-curated input (pre-placed, not produced by pipeline)
       - data/catalogs/scispsace_works.csv

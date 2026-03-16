@@ -1,0 +1,6 @@
+outs:
+- md5: 7080cbad94f345983c1ed505e23a2ba5.dir
+  size: 146430802
+  nfiles: 87
+  hash: md5
+  path: syllabi

@@ -41,7 +41,7 @@ OpenAlex indexes 100% of Crossref's DOI registry and adds abstracts, concepts, t
 - **bibCNRS** (hand-harvested): Title-field searches in French (`"finance climat"`), Chinese (`"气候金融"`), and Japanese (`"気候金融"`) on the bibCNRS portal (`bib.cnrs.fr`), which aggregates WoS, EconLit, and FRANCIS. Requires CNRS Janus institutional credentials; no public API exists. RIS exports are saved to `data/exports/` and parsed by the script. Harvested February 2026; 242 works.
 - **SciSpace** (hand-harvested): An AI-curated corpus produced by SciSpace's systematic review tool, exported as RIS and CSV files. The tool's proprietary discovery algorithm complements keyword-based search. Harvested January 2026; 663 works.
 - **Grey literature:** A curated YAML seed list (`config/grey_sources.yaml`, 16 key policy documents from OECD, UNFCCC, CPI) plus automated search of the World Bank Open Knowledge Repository API (capped at 200 results). Fully reproducible.
-- **Teaching canon:** Syllabus readings from 15 institutions (doctoral, masters, MBA, MOOC programs across 6 regions) are defined in `config/teaching_sources.yaml` and extracted into `teaching_works.csv` by `build_teaching_canon.py`. The merge pipeline deduplicates these against other sources and sets the `from_teaching` provenance flag.
+- **Teaching canon:** Syllabus readings scraped from ~130 courses are collected in `data/syllabi/reading_lists.csv` by `collect_syllabi.py`, converted to `data/teaching_sources.yaml` by `build_teaching_yaml.py`, and extracted into `teaching_works.csv` by `build_teaching_canon.py`. The merge pipeline deduplicates these against other sources and sets the `from_teaching` provenance flag.
 
 ### Merge and deduplication
 

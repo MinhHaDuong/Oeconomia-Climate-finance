@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Extract syllabus readings into teaching_works.csv for the merge pipeline.
 
-Reads:  config/teaching_sources.yaml
+Reads:  data/teaching_sources.yaml
 Writes: catalogs/teaching_works.csv   (all readings formatted for merge)
 
 The merge pipeline (catalog_merge.py) handles deduplication against other
@@ -19,9 +19,9 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, save_csv
+from utils import DATA_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, save_csv
 
-YAML_PATH = os.path.join(CONFIG_DIR, "teaching_sources.yaml")
+YAML_PATH = os.path.join(DATA_DIR, "teaching_sources.yaml")
 
 
 def load_teaching_sources():
