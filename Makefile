@@ -138,6 +138,9 @@ deploy-corpus:
 content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
 	uv run python $<
 
+content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
+	uv run python $<
+
 corpus-tables: content/tables/tab_corpus_sources.csv \
                content/tables/qc_citations_report.json \
                content/_includes/tab_citation_coverage.md
