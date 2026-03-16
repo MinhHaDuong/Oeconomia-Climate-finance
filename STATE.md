@@ -50,8 +50,3 @@ None.
 - #96: Document seed axis PCA decomposition in companion paper
 - #26: Human proofread of full manuscript
 
-## Next priorities
-
-1. Human proofread of full manuscript (#26)
-2. Fix teaching source pipeline (#135)
-3. Move ΔBIC details + cluster counts to companion paper (#96)
