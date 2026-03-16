@@ -89,7 +89,8 @@ def _infer_region(countries_str):
     return regions.pop()
 
 
-MIN_COURSES = 2  # Only keep readings appearing on ≥2 syllabi
+MIN_COURSES = 2  # DOI entries: keep if appearing on ≥2 syllabi
+MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (≥3 syllabi)
 OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
 MIN_SHARED_READINGS = 10  # Require ≥10 shared readings to consider dedup
 
@@ -158,9 +159,11 @@ def _dedup_course_names(df):
 def load_and_explode(csv_path):
     """Read CSV, filter, and explode semicolon-separated courses/institutions.
 
-    Selection criteria: has DOI AND appears on ≥ MIN_COURSES syllabi.
-    This filters out singleton appearances and title-only entries that
-    cannot be matched to the corpus.
+    Selection criteria:
+      - has DOI AND n_courses ≥ MIN_COURSES, OR
+      - no DOI AND n_courses ≥ MIN_COURSES_NO_DOI
+    Title-only entries need stronger convergence signal since they
+    cannot be matched to the corpus by DOI.
 
     Returns a list of dicts, each representing one (reading, course, institution)
     triple.
@@ -172,11 +175,14 @@ def load_and_explode(csv_path):
     # We detect these by reading overlap within each row's course list.
     df = _dedup_course_names(df)
 
-    # Filter: DOI present AND appears on multiple syllabi
+    # Filter: (DOI + n≥2) OR (no DOI + n≥3)
     has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
-    shared = df["n_courses"] >= MIN_COURSES
-    df = df[has_doi & shared]
-    print(f"  After filter (DOI + n_courses≥{MIN_COURSES}): {len(df)} readings")
+    keep = (has_doi & (df["n_courses"] >= MIN_COURSES)) | \
+           (~has_doi & (df["n_courses"] >= MIN_COURSES_NO_DOI))
+    df = df[keep]
+    n_doi = (has_doi & keep).sum()
+    n_nodoi = (~has_doi & keep).sum()
+    print(f"  After filter: {len(df)} readings ({n_doi} with DOI, {n_nodoi} title-only)")
 
     records = []
 
