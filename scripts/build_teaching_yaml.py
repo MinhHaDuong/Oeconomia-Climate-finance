@@ -90,6 +90,69 @@ def _infer_region(countries_str):
 
 
 MIN_COURSES = 2  # Only keep readings appearing on ≥2 syllabi
+OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
+MIN_SHARED_READINGS = 10  # Require ≥10 shared readings to consider dedup
+
+
+def _dedup_course_names(df):
+    """Merge near-duplicate course names and recompute n_courses.
+
+    Two courses are considered duplicates if they share >OVERLAP_THRESHOLD
+    of their readings (by row index). This catches co-organized MOOCs listed
+    under multiple institution names.
+    """
+    from collections import defaultdict
+
+    # Build course → set of row indices
+    course_rows = defaultdict(set)
+    for idx, row in df.iterrows():
+        for c in str(row.get("courses", "")).split(";"):
+            c = c.strip()
+            if c:
+                course_rows[c].add(idx)
+
+    # Find overlapping course pairs
+    courses = list(course_rows.keys())
+    merged = {}  # alias → canonical
+    for i, c1 in enumerate(courses):
+        if c1 in merged:
+            continue
+        for c2 in courses[i + 1:]:
+            if c2 in merged:
+                continue
+            s1, s2 = course_rows[c1], course_rows[c2]
+            if not s1 or not s2:
+                continue
+            n_shared = len(s1 & s2)
+            overlap = n_shared / min(len(s1), len(s2))
+            if n_shared >= MIN_SHARED_READINGS and overlap > OVERLAP_THRESHOLD:
+                canonical = c1 if len(c1) <= len(c2) else c2
+                alias = c2 if canonical == c1 else c1
+                merged[alias] = canonical
+
+    if not merged:
+        return df
+
+    n_merged = len(merged)
+    print(f"  Course dedup: merged {n_merged} duplicate course names")
+
+    # Apply merges and recompute n_courses
+    def apply_merge(courses_str):
+        parts = [c.strip() for c in str(courses_str).split(";")]
+        deduped = []
+        seen = set()
+        for c in parts:
+            canonical = merged.get(c, c)
+            if canonical and canonical not in seen:
+                deduped.append(canonical)
+                seen.add(canonical)
+        return " ; ".join(sorted(deduped))
+
+    df = df.copy()
+    df["courses"] = df["courses"].apply(apply_merge)
+    df["n_courses"] = df["courses"].apply(
+        lambda x: len([c for c in x.split(" ; ") if c.strip()]))
+    return df
 
 
 def load_and_explode(csv_path):
@@ -103,6 +166,11 @@ def load_and_explode(csv_path):
     triple.
     """
     df = pd.read_csv(csv_path)
+
+    # Recompute n_courses after deduplicating near-identical course names.
+    # Some courses appear under multiple institution names (co-organized MOOCs).
+    # We detect these by reading overlap within each row's course list.
+    df = _dedup_course_names(df)
 
     # Filter: DOI present AND appears on multiple syllabi
     has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
