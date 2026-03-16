@@ -15,6 +15,9 @@ What problem or need this addresses. Why now.
 1. Concrete step
 2. Concrete step
 
+## Test
+- What test to write first (red step of TDD)
+
 ## Verification
 - [ ] How to confirm each action worked
 
@@ -24,10 +27,6 @@ What problem or need this addresses. Why now.
 ## Exit criteria
 - Definition of done — when is this ticket complete?
 ```
-
-## Before starting work on a ticket
-
-Read the exit criteria. If unclear, clarify with the author before writing code.
 
 ## Command
 

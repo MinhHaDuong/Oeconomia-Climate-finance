@@ -24,30 +24,16 @@ Every task passes through four phases. Identify and report the phase you're in o
 Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like.
 
 ### Planning
-Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Write tests first** (see TDD below). No production commits yet.
+Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet.
 
 ### Doing
-Autonomous execution. Red → green → refactor. Commit at each step. Stay on the branch, protect main.
-
-## Test-driven development
-
-Write the test before the code. The cycle is:
+Autonomous execution using test-driven development. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for domain-specific test conventions. The cycle is:
 
 1. **Red**: write a failing test that defines the expected behavior.
 2. **Green**: write the minimum code to make it pass.
 3. **Refactor**: clean up, then confirm tests still pass.
 
-Each step gets its own commit (the git log tells the story: intent → solution → polish).
-
-### For scripts (pipeline, analysis, figures)
-- Tests live in `tests/`. Run with `uv run pytest`.
-- A new script or changed behavior starts with a test in `tests/test_<module>.py`.
-- Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
-
-### For manuscript (prose, figures, tables)
-- Verification commands are the "tests": blacklisted words, em-dash density, word count, `make manuscript` build clean.
-- Before editing prose, run the relevant checks. After editing, confirm they still pass.
-- `make clean && make all` is the integration test.
+Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
 
 ### Celebrating (autonomous)
 After the Doing phase completes, the `post-task` trigger runs automatically.
@@ -61,6 +47,7 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 | post-task | After completing a ticket | `runbooks/celebrate.md` |
 | new-ticket | Creating a GitHub issue | `runbooks/new-ticket.md` |
 | review-pr | Reviewing a pull request | `runbooks/review-pr.md` |
+| start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
 | memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
 
 ## Git discipline
@@ -69,7 +56,7 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `git config core.hooksPath hooks`.
-- **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). The token is in `.env` as `AGENT_GH_TOKEN` (gitignored, machine-specific).
+- **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). Credentials (`AGENT_GH_TOKEN`, `AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`) are project-specific secrets, deployed per-machine in `.env` (gitignored).
 - **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
 - **Merge commits** (`git merge --no-ff -m`): tactical-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
@@ -88,9 +75,7 @@ When working on multiple tickets:
 
 ## GitHub Issues as plans
 
-Issues are handoff documents. The `new-ticket` trigger defines the template.
-
-Before doing anything on a ticket, clarify the definition of done.
+Issues are handoff documents. The `new-ticket` trigger defines the template. The `start-ticket` trigger defines how to begin working on one.
 
 ## Memory policy
 
@@ -108,15 +93,3 @@ Policy and procedure: `runbooks/memory.md` (runs as a trigger).
 - You can research the answer
 - It's a matter of stylistic preference you can reasonably infer
 
-## Self-check questions
-
-Before producing any substantial text:
-1. Does this advance the core argument? (Climate finance as constructed economic object)
-2. Is the economist's role visible? (Not just "institutions" or "policymakers")
-3. Is this historically grounded? (Specific dates, documents, actors)
-4. Does this fit Œconomia's interdisciplinary scope? (HET + STS + policy studies)
-5. Will this interest both historians of economics AND climate policy scholars?
-
----
-
-**Remember:** This is not a policy paper or a technical report. It's intellectual history that uses climate finance as a case study for understanding how economists create governable objects through quantification.
