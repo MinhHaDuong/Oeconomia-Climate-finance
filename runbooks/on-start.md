@@ -13,6 +13,5 @@ Run at the start of every conversation, before the first response.
 3. If `STATE.md` is not dated today, refresh it:
    a. `gh pr list --state open` → update "Active PRs" section.
    b. `git log --oneline -5` → update "Recent" section.
-   c. Adjust "Next priorities" if context has changed.
-   d. Sweep stale memories (follow `runbooks/memory.md`).
-   e. Commit on `main`: `housekeeping: refresh STATE YYYY-MM-DD`
+   c. Sweep stale memories (follow `runbooks/memory.md`).
+   d. Commit on `main`: `housekeeping: refresh STATE YYYY-MM-DD`
