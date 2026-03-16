@@ -36,7 +36,11 @@ def load_cache():
     """Load {source_id: doi_or_empty} cache."""
     if not os.path.exists(CACHE_FILE):
         return {}
-    df = pd.read_csv(CACHE_FILE, dtype=str, keep_default_na=False)
+    try:
+        df = pd.read_csv(CACHE_FILE, dtype=str, keep_default_na=False)
+    except pd.errors.EmptyDataError:
+        log.warning("Cache file empty or corrupt: %s — starting fresh", CACHE_FILE)
+        return {}
     return dict(zip(df["source_id"], df["doi"]))
 
 

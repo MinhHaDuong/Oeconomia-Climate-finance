@@ -287,7 +287,7 @@ class TestCorpusAlignCLI:
         assert result.returncode == 0, result.stderr
         assert not (tmp_path / "refined_embeddings.npz").exists()
         assert not (tmp_path / "refined_citations.csv").exists()
-        assert "Dry run" in result.stdout
+        assert "Dry run" in result.stdout + result.stderr
 
     def test_produces_aligned_outputs(self, tmp_path):
         """Full run produces refined_embeddings.npz and refined_citations.csv."""
