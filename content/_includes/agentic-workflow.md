@@ -64,7 +64,7 @@ The agent operates under a dedicated GitHub account (`HDMX-coding-agent`) with i
 
 ### Quantitative portrait
 
-The git history provides a quantitative picture of the collaboration. A growing literature examines AI-assisted research workflows [see @bara2025ai on AI-augmented systematic reviews; @lu2025sciscigpt on LLM agents for science-of-science], but few projects report granular commit-level data. We offer ours as a case study:
+Statistics in this section are computed from the repository at commit `817061c` (2026-03-16). The git history provides a quantitative picture of the collaboration. A growing literature examines AI-assisted research workflows [see @bara2025ai on AI-augmented systematic reviews; @lu2025sciscigpt on LLM agents for science-of-science], but few projects report granular commit-level data. We offer ours as a case study:
 
 - **472 commits** over 27 days. Of these, 344 (73%) were by the human author, 95 (20%) by the primary AI agent (`HDMX-coding-agent`), and 10 by a secondary AI tool (`copilot-swe-agent[bot]`, used briefly for triage). A further 23 were merge commits.
 - **305 commits (64%) carry a `Co-Authored-By` trailer**, indicating collaborative work where the human directed and the agent implemented. Only 28 agent commits (6%) were fully autonomous (no human co-authorship trailer). The dominant mode was collaboration, not delegation.
@@ -80,7 +80,7 @@ The boundary is not rigid. The human sometimes writes code directly (especially 
 
 ### AGENTS.md as living specification
 
-`AGENTS.md` is the project's most-revised file (54 revisions). It began as a short prompt and grew into a comprehensive specification covering workflow phases, trigger-based runbooks, git discipline, memory management, and autonomous wave cycles. Each revision typically followed a failure: the agent did something unexpected, and the specification was tightened to prevent recurrence.
+`AGENTS.md` is the project's most-revised file (54 revisions). It began as a short prompt and grew into a detailed specification covering workflow phases, trigger-based runbooks, git discipline, memory management, and autonomous wave cycles. Each revision typically followed a failure: the agent did something unexpected, and the specification was tightened to prevent recurrence.
 
 This iterative refinement is itself a form of programming --- writing natural-language instructions that reliably produce desired behavior from an AI agent. The specification's evolution mirrors how codebases grow: from scripts to frameworks, from implicit conventions to explicit contracts.
 
@@ -88,7 +88,7 @@ This iterative refinement is itself a form of programming --- writing natural-la
 
 ### What worked
 
-**Test-driven development.** TDD was the single most effective practice. Tests served three functions: (1) specification --- the ticket's test defined what "done" means; (2) regression protection --- 298 tests caught breakage during refactoring; (3) confidence --- the human could merge agent PRs quickly because `make check` passed. The test suite grew from zero to 298 functions across 16 files in five days (March 12--16), a pace only possible because the agent could generate test scaffolding rapidly.
+**Test-driven development.** TDD was the single most effective practice. Tests served three functions: (1) specification --- the ticket's test defined what "done" means; (2) regression protection (298 tests caught breakage during refactoring); (3) confidence --- the human could merge agent PRs quickly because `make check` passed. The test suite grew from zero to 298 functions across 16 files in five days (March 12--16), a pace only possible because the agent could generate test scaffolding rapidly.
 
 **Worktree isolation.** Worktrees eliminated the "dirty working directory" problem that plagues long-running agent sessions. Each task got a clean checkout, and the agent never had to stash or context-switch. This was especially valuable when running parallel agent sessions on independent tickets.
 
