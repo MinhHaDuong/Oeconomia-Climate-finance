@@ -27,13 +27,13 @@ Interactive discussion with the user. Imagine specs, gather information, brainst
 Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet.
 
 ### Doing
-Autonomous execution using test-driven development. The cycle is:
+Autonomous execution using test-driven development. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for domain-specific test conventions. The cycle is:
 
 1. **Red**: write a failing test that defines the expected behavior.
 2. **Green**: write the minimum code to make it pass.
 3. **Refactor**: clean up, then confirm tests still pass.
 
-Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for test details per domain.
+Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
 
 ### Celebrating (autonomous)
 After the Doing phase completes, the `post-task` trigger runs automatically.
