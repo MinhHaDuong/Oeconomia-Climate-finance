@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Merge all source catalogs into a unified, deduplicated catalog.
 
-Reads all data/catalogs/*_works.csv files and produces:
+Reads the 6 declared per-source catalogs from data/catalogs/ and produces:
   data/catalogs/unified_works.csv
+
+Only these files are loaded (matching dvc.yaml catalog_merge deps):
+  bibcnrs, istex, openalex, grey, teaching, scispsace
 
 Deduplication: DOI-based (primary), then normalized title+year match (fallback).
 Priority for field values follows SOURCE_PRIORITY list.
@@ -11,15 +14,15 @@ Usage:
     python scripts/catalog_merge.py
 """
 
-import glob
 import os
 import sys
 
 import pandas as pd
+import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS, normalize_doi,
-                   normalize_title, save_csv)
+from utils import (BASE_DIR, CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS,
+                   normalize_doi, normalize_title, save_csv)
 
 SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
 
@@ -60,12 +63,24 @@ def merge_group(group):
     return result
 
 
+def catalog_files_from_dvc():
+    """Read catalog_merge deps from dvc.yaml — single source of truth."""
+    dvc_path = os.path.join(BASE_DIR, "dvc.yaml")
+    with open(dvc_path) as f:
+        dvc = yaml.safe_load(f)
+    deps = dvc["stages"]["catalog_merge"]["deps"]
+    return [d for d in deps if d.endswith("_works.csv")]
+
+
 def main():
-    # Find all source catalogs
-    pattern = os.path.join(CATALOGS_DIR, "*_works.csv")
-    files = sorted(glob.glob(pattern))
-    files = [f for f in files if "unified" not in os.path.basename(f)
-             and "refined" not in os.path.basename(f)]
+    # Load only the catalogs declared as deps in dvc.yaml
+    catalog_deps = catalog_files_from_dvc()
+    files = [os.path.join(BASE_DIR, d) for d in catalog_deps]
+    missing = [f for f in files if not os.path.exists(f)]
+    if missing:
+        for f in missing:
+            print(f"WARNING: missing catalog: {f}")
+        files = [f for f in files if os.path.exists(f)]
 
     if not files:
         print("No catalog files found in data/catalogs/")
