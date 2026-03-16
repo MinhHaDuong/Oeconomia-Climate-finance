@@ -18,6 +18,17 @@ The periodization is endogenous (embedding-based break detection), not imposed f
 
 ~28,400 works from OpenAlex + Semantic Scholar + ISTEX + bibCNRS + SciSpace + grey lit + teaching. Core subset: ~2,300 papers cited ≥ 50 times.
 
+## Self-check questions
+
+Before producing any substantial text:
+1. Does this advance the core argument? (Climate finance as constructed economic object)
+2. Is the economist's role visible? (Not just "institutions" or "policymakers")
+3. Is this historically grounded? (Specific dates, documents, actors)
+4. Does this fit Œconomia's interdisciplinary scope? (HET + STS + policy studies)
+5. Will this interest both historians of economics AND climate policy scholars?
+
+This is not a policy paper or a technical report. It's intellectual history that uses climate finance as a case study for understanding how economists create governable objects through quantification.
+
 ## Voice and style
 
 - Academic but accessible

@@ -35,9 +35,9 @@ Autonomous execution using test-driven development. The cycle is:
 
 Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main.
 
-**For scripts** — tests live in `tests/`. Run with `uv run pytest`. A new script or changed behavior starts with a test in `tests/test_<module>.py`. Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
+**For scripts** — tests live in `tests/`. A new script or changed behavior starts with a test in `tests/test_<module>.py`. Use `make check-fast` during development (unit tests, <30 s). Use `make check` before opening a PR (full suite including slow tests). Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
 
-**For manuscript** — verification commands are the "tests": blacklisted words, em-dash density, word count, `make manuscript` build clean. Before editing prose, run the relevant checks. After editing, confirm they still pass. `make clean && make all` is the integration test.
+**For manuscript** — verification commands are the "tests": blacklisted words, em-dash density, word count, `make manuscript` build clean. Before editing prose, run `make check-fast`. After editing, confirm it still passes. `make clean && make all` is the integration test — run before opening a PR.
 
 ### Celebrating (autonomous)
 After the Doing phase completes, the `post-task` trigger runs automatically.
@@ -98,15 +98,3 @@ Policy and procedure: `runbooks/memory.md` (runs as a trigger).
 - You can research the answer
 - It's a matter of stylistic preference you can reasonably infer
 
-## Self-check questions
-
-Before producing any substantial text:
-1. Does this advance the core argument? (Climate finance as constructed economic object)
-2. Is the economist's role visible? (Not just "institutions" or "policymakers")
-3. Is this historically grounded? (Specific dates, documents, actors)
-4. Does this fit Œconomia's interdisciplinary scope? (HET + STS + policy studies)
-5. Will this interest both historians of economics AND climate policy scholars?
-
----
-
-**Remember:** This is not a policy paper or a technical report. It's intellectual history that uses climate finance as a case study for understanding how economists create governable objects through quantification.
