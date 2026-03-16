@@ -15,7 +15,7 @@
 | Accountability | International Environmental Agreements Politics Law and Economics | 6 | 16 | 22 |
 | Accountability | Nature Communications | 8 | 26 | 34 |
 | Accountability | Climatic Change | 10 | 33 | 43 |
-| Accountability | Wiley Interdisciplinary Reviews Climate Change | 5 | 27 | 32 |
+| Accountability | WIREs Climate Change | 5 | 27 | 32 |
 | Accountability | Global Environmental Politics | 1 | 14 | 15 |
 
-: Publication venues of core works (cited $\geq$ 50) by pole assignment. Each work is assigned to the efficiency or accountability pole based on its position along the embedding axis (§3.4). "Lean" indicates the venue's overall orientation: journals where $>$60% of core papers fall on one side. {#tbl-venues}
+: Publication venues of core works (cited $\geq$ 50) by pole assignment. Each work is assigned to the efficiency or accountability pole based on its position along the embedding axis (§3.4). "Lean" indicates the venue's overall orientation: journals where a majority of core papers fall on one side. {#tbl-venues}

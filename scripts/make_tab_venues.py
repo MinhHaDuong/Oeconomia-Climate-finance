@@ -121,7 +121,7 @@ def main():
         "Each work is assigned to the efficiency or accountability pole based on "
         "its position along the embedding axis (§3.4). "
         "\"Lean\" indicates the venue's overall orientation: "
-        "journals where $>$60% of core papers fall on one side. "
+        "journals where a majority of core papers fall on one side. "
         "{#tbl-venues}"
     )
     lines.append("")
