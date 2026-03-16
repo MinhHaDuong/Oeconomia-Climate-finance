@@ -64,14 +64,21 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 - **Create PRs** for each ticket so the author can review changes before merging.
 
 ## Autonomous workflow
-When issue exploration lead to multiple action items, open one ticket for each. Then switch to orchestrator role: recursively launch agents to fix the ripe ones and think more about the others, in waves according to dependencies. When they return, switch to verification role to critically assess the work done.
-When working on multiple tickets:
-1. Launch each ticket in its own git worktree
-2. Independent tickets run in parallel
-3. Push each branch and create a PR with summary + test plan
-4. Launch a fresh-context review in a new worktree — follow `runbooks/review-pr.md`
-5. Clean up worktree branches after pushing named branches
-6. Always do a global verification pass after each wave of fixes.
+
+When issue exploration leads to multiple action items, open one ticket for each. Then work in waves, learning from each.
+
+### Wave cycle
+
+1. **Select** — pick ripe tickets (dependencies met, blockers cleared).
+2. **Launch** — each ticket in its own worktree, independent tickets in parallel.
+3. **Verify** — review each PR in a fresh-context worktree (`runbooks/review-pr.md`).
+4. **Learn** — for each result:
+   - **Success**: celebrate (`runbooks/celebrate.md`), save what worked as feedback memory.
+   - **Failure**: diagnose root cause, save lesson as feedback memory, re-ticket with the diagnosis.
+5. **Adapt** — read feedback memories before planning the next wave. Adjust approach based on what failed and what worked.
+6. **Clean up** — worktrees, branches, stale PRs. Then start the next wave.
+
+The wave ends with a global verification pass across all changes merged in this wave. If integration breaks, that's a new ticket for the next wave — not a reason to revert silently.
 
 ## Communication with author
 
