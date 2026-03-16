@@ -39,23 +39,23 @@ class TestBuildTeachingYaml:
         rows = [
             {"doi": "10.1234/test1", "title": "Test Paper",
              "authors": "Smith, Jones", "year": 2023, "journal_or_publisher": "",
-             "type": "article", "courses": "Climate Finance 101",
-             "institutions": "Test University", "countries": "France",
-             "n_courses": 1, "in_corpus": True},
-            {"doi": "", "title": "Climate Book", "authors": "Doe",
-             "year": 2020, "journal_or_publisher": "Publisher",
-             "type": "book", "courses": "Green Finance ; Sustainable Investing",
+             "type": "article", "courses": "Climate Finance 101 ; Advanced CF",
+             "institutions": "Test University ; Uni C", "countries": "France",
+             "n_courses": 2, "in_corpus": True},
+            {"doi": "10.1234/test2", "title": "Climate Paper",
+             "authors": "Doe", "year": 2020, "journal_or_publisher": "Publisher",
+             "type": "article", "courses": "Green Finance ; Sustainable Investing",
              "institutions": "Uni A ; Uni B", "countries": "France ; Germany",
              "n_courses": 2, "in_corpus": False},
         ]
         csv_path = self._make_csv(str(tmp_path), rows)
 
         records = load_and_explode(csv_path)
-        # 1 record for row 0, 2 records for row 1 (exploded)
-        assert len(records) == 3
+        # 2 records for row 0, 2 records for row 1 (exploded)
+        assert len(records) == 4
 
         sources = build_yaml_structure(records)
-        assert len(sources) == 3  # 3 unique (institution, course) pairs
+        assert len(sources) == 4  # 4 unique (institution, course) pairs
 
         # Verify YAML schema
         for src in sources:
@@ -74,19 +74,21 @@ class TestBuildTeachingYaml:
         rows = [
             {"doi": "10.1234/dup", "title": "Paper A", "authors": "",
              "year": 2023, "journal_or_publisher": "", "type": "article",
-             "courses": "Course X", "institutions": "Uni X", "countries": "",
-             "n_courses": 1, "in_corpus": False},
+             "courses": "Course X ; Course Y", "institutions": "Uni X ; Uni Y",
+             "countries": "", "n_courses": 2, "in_corpus": False},
             {"doi": "10.1234/dup", "title": "Paper A variant", "authors": "",
              "year": 2023, "journal_or_publisher": "", "type": "article",
-             "courses": "Course X", "institutions": "Uni X", "countries": "",
-             "n_courses": 1, "in_corpus": False},
+             "courses": "Course X ; Course Y", "institutions": "Uni X ; Uni Y",
+             "countries": "", "n_courses": 2, "in_corpus": False},
         ]
         csv_path = self._make_csv(str(tmp_path), rows)
 
         records = load_and_explode(csv_path)
         sources = build_yaml_structure(records)
-        assert len(sources) == 1
-        assert len(sources[0]["readings"]) == 1  # deduplicated
+        # 2 courses (Course X, Course Y), each with 1 reading (deduplicated)
+        assert len(sources) == 2
+        for s in sources:
+            assert len(s["readings"]) == 1  # deduplicated within each course
 
     def test_region_inference(self):
         """Country strings map to correct regions."""

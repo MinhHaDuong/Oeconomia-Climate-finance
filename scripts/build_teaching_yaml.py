@@ -89,13 +89,27 @@ def _infer_region(countries_str):
     return regions.pop()
 
 
+MIN_COURSES = 2  # Only keep readings appearing on ≥2 syllabi
+
+
 def load_and_explode(csv_path):
-    """Read CSV and explode semicolon-separated courses/institutions.
+    """Read CSV, filter, and explode semicolon-separated courses/institutions.
+
+    Selection criteria: has DOI AND appears on ≥ MIN_COURSES syllabi.
+    This filters out singleton appearances and title-only entries that
+    cannot be matched to the corpus.
 
     Returns a list of dicts, each representing one (reading, course, institution)
     triple.
     """
     df = pd.read_csv(csv_path)
+
+    # Filter: DOI present AND appears on multiple syllabi
+    has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
+    shared = df["n_courses"] >= MIN_COURSES
+    df = df[has_doi & shared]
+    print(f"  After filter (DOI + n_courses≥{MIN_COURSES}): {len(df)} readings")
+
     records = []
 
     for _, row in df.iterrows():
