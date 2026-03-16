@@ -34,7 +34,7 @@ class TestBuildTeachingYaml:
 
     def test_csv_to_yaml_roundtrip(self, tmp_path):
         """CSV readings are converted to YAML with correct schema."""
-        from build_teaching_yaml import load_and_explode, build_yaml_structure
+        from build_teaching_yaml import load_scraped, build_yaml_structure
 
         rows = [
             {"doi": "10.1234/test1", "title": "Test Paper",
@@ -50,7 +50,7 @@ class TestBuildTeachingYaml:
         ]
         csv_path = self._make_csv(str(tmp_path), rows)
 
-        records = load_and_explode(csv_path)
+        records = load_scraped(csv_path)
         # 2 records for row 0, 2 records for row 1 (exploded)
         assert len(records) == 4
 
@@ -69,7 +69,7 @@ class TestBuildTeachingYaml:
 
     def test_doi_dedup_within_course(self, tmp_path):
         """Duplicate DOIs within same course are deduplicated."""
-        from build_teaching_yaml import load_and_explode, build_yaml_structure
+        from build_teaching_yaml import load_scraped, build_yaml_structure
 
         rows = [
             {"doi": "10.1234/dup", "title": "Paper A", "authors": "",
@@ -83,7 +83,7 @@ class TestBuildTeachingYaml:
         ]
         csv_path = self._make_csv(str(tmp_path), rows)
 
-        records = load_and_explode(csv_path)
+        records = load_scraped(csv_path)
         sources = build_yaml_structure(records)
         # 2 courses (Course X, Course Y), each with 1 reading (deduplicated)
         assert len(sources) == 2

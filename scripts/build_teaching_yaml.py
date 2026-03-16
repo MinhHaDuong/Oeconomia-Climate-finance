@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Build teaching_sources.yaml from reading_lists.csv.
+"""Build teaching_sources.yaml from two independent collection efforts.
 
-Reads:  data/syllabi/reading_lists.csv
-Writes: data/teaching_sources.yaml
+Reads:
+  data/syllabi/reading_lists.csv    — automated web scraping (collect_syllabi.py)
+  data/syllabi/manual_catalog.yaml  — manually cataloged from syllabi PDFs
 
-This script bridges the syllabi scraper (collect_syllabi.py) and the
-teaching catalog builder (build_teaching_canon.py). It converts the flat
-CSV of scraped syllabus readings into the hierarchical YAML format that
-build_teaching_canon.py expects.
+Writes:
+  data/teaching_sources.yaml
 
-Each reading in the CSV may belong to multiple courses (semicolon-separated
-courses/institutions columns). The script explodes these into per-course
-groups and outputs one YAML entry per (institution, course) pair.
+The two sources are kept separate upstream (different collection methods,
+different provenance). This script merges them at the output stage, applies
+selection filters, and writes the unified YAML that build_teaching_canon.py
+expects.
+
+Selection criteria for scraped readings (reading_lists.csv):
+  - has DOI AND n_courses >= 2, OR
+  - no DOI AND n_courses >= 3
+Manual catalog readings pass through unfiltered (already curated).
+
+Deduplication: readings appearing in both sources are kept once (DOI match).
 
 Usage:
     python scripts/build_teaching_yaml.py
@@ -19,7 +26,6 @@ Usage:
 
 import math
 import os
-import re
 import sys
 from collections import defaultdict
 
@@ -30,7 +36,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import DATA_DIR
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
+INPUT_MANUAL = os.path.join(DATA_DIR, "syllabi", "manual_catalog.yaml")
 OUTPUT_YAML = os.path.join(DATA_DIR, "teaching_sources.yaml")
+
+MIN_COURSES = 2  # DOI entries: keep if appearing on >=2 syllabi
+MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (>=3 syllabi)
+OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
+MIN_SHARED_READINGS = 10  # Require >=10 shared readings to consider dedup
 
 
 def _clean(val):
@@ -89,22 +101,14 @@ def _infer_region(countries_str):
     return regions.pop()
 
 
-MIN_COURSES = 2  # DOI entries: keep if appearing on ≥2 syllabi
-MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (≥3 syllabi)
-OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
-MIN_SHARED_READINGS = 10  # Require ≥10 shared readings to consider dedup
-
-
 def _dedup_course_names(df):
     """Merge near-duplicate course names and recompute n_courses.
 
-    Two courses are considered duplicates if they share >OVERLAP_THRESHOLD
-    of their readings (by row index). This catches co-organized MOOCs listed
-    under multiple institution names.
+    Two courses are considered duplicates if they share >=MIN_SHARED_READINGS
+    AND >OVERLAP_THRESHOLD of the smaller course's readings. This catches
+    co-organized MOOCs listed under multiple institution names.
     """
-    from collections import defaultdict
-
-    # Build course → set of row indices
+    # Build course -> set of row indices
     course_rows = defaultdict(set)
     for idx, row in df.iterrows():
         for c in str(row.get("courses", "")).split(";"):
@@ -114,7 +118,7 @@ def _dedup_course_names(df):
 
     # Find overlapping course pairs
     courses = list(course_rows.keys())
-    merged = {}  # alias → canonical
+    merged = {}  # alias -> canonical
     for i, c1 in enumerate(courses):
         if c1 in merged:
             continue
@@ -134,10 +138,8 @@ def _dedup_course_names(df):
     if not merged:
         return df
 
-    n_merged = len(merged)
-    print(f"  Course dedup: merged {n_merged} duplicate course names")
+    print(f"  Course dedup: merged {len(merged)} duplicate course names")
 
-    # Apply merges and recompute n_courses
     def apply_merge(courses_str):
         parts = [c.strip() for c in str(courses_str).split(";")]
         deduped = []
@@ -156,42 +158,31 @@ def _dedup_course_names(df):
     return df
 
 
-def load_and_explode(csv_path):
-    """Read CSV, filter, and explode semicolon-separated courses/institutions.
+# --- Source 1: scraped readings ---
 
-    Selection criteria:
-      - has DOI AND n_courses ≥ MIN_COURSES, OR
-      - no DOI AND n_courses ≥ MIN_COURSES_NO_DOI
-    Title-only entries need stronger convergence signal since they
-    cannot be matched to the corpus by DOI.
+def load_scraped(csv_path):
+    """Load scraped readings, apply course dedup and selection filter.
 
-    Returns a list of dicts, each representing one (reading, course, institution)
-    triple.
+    Returns list of (institution, course, reading) record dicts.
     """
     df = pd.read_csv(csv_path)
-
-    # Recompute n_courses after deduplicating near-identical course names.
-    # Some courses appear under multiple institution names (co-organized MOOCs).
-    # We detect these by reading overlap within each row's course list.
     df = _dedup_course_names(df)
 
-    # Filter: (DOI + n≥2) OR (no DOI + n≥3)
+    # Filter: (DOI + n>=2) OR (no DOI + n>=3)
     has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
     keep = (has_doi & (df["n_courses"] >= MIN_COURSES)) | \
            (~has_doi & (df["n_courses"] >= MIN_COURSES_NO_DOI))
     df = df[keep]
-    n_doi = (has_doi & keep).sum()
-    n_nodoi = (~has_doi & keep).sum()
+    n_doi = has_doi[keep].sum()
+    n_nodoi = len(df) - n_doi
     print(f"  After filter: {len(df)} readings ({n_doi} with DOI, {n_nodoi} title-only)")
 
     records = []
-
     for _, row in df.iterrows():
         courses = [c.strip() for c in str(row.get("courses", "")).split(";")]
         institutions = [i.strip() for i in str(row.get("institutions", "")).split(";")]
         countries = _clean(row.get("countries", ""))
 
-        # Pad to same length (some entries have fewer institutions than courses)
         while len(institutions) < len(courses):
             institutions.append("")
 
@@ -206,10 +197,40 @@ def load_and_explode(csv_path):
                 "authors": _clean(row.get("authors", "")),
                 "year": _clean(row.get("year", "")),
                 "countries": countries,
+                "origin": "scraped",
             })
 
     return records
 
+
+# --- Source 2: manual catalog ---
+
+def load_manual(yaml_path):
+    """Load manually cataloged readings (already structured as YAML).
+
+    Returns list of record dicts in the same format as load_scraped.
+    """
+    with open(yaml_path, encoding="utf-8") as f:
+        sources = yaml.safe_load(f)
+
+    records = []
+    for src in sources:
+        for r in src.get("readings", []):
+            records.append({
+                "institution": src["institution"],
+                "course": src["course"],
+                "doi": _clean(r.get("doi", "")),
+                "title": _clean(r.get("title", "")),
+                "authors": _clean(r.get("authors", "")),
+                "year": str(r["year"]) if r.get("year") else "",
+                "countries": "",
+                "origin": "manual",
+            })
+
+    return records
+
+
+# --- Merge and output ---
 
 def build_yaml_structure(records):
     """Group records by (institution, course) and build YAML-ready structure."""
@@ -218,7 +239,7 @@ def build_yaml_structure(records):
     for r in records:
         key = (r["institution"], r["course"])
         groups[key]["readings"].append(r)
-        if r["countries"]:
+        if r.get("countries"):
             groups[key]["countries"] = r["countries"]
 
     sources = []
@@ -268,16 +289,42 @@ def build_yaml_structure(records):
 
 
 def main():
-    if not os.path.exists(INPUT_CSV):
-        print(f"ERROR: {INPUT_CSV} not found. Run collect_syllabi.py first.",
-              file=sys.stderr)
-        sys.exit(1)
+    # Source 1: scraped
+    scraped_records = []
+    if os.path.exists(INPUT_CSV):
+        print(f"Source 1 (scraped): {INPUT_CSV}")
+        scraped_records = load_scraped(INPUT_CSV)
+        print(f"  {len(scraped_records)} (reading, course) pairs")
+    else:
+        print(f"Source 1 (scraped): not found, skipping")
 
-    print(f"Reading {INPUT_CSV}...")
-    records = load_and_explode(INPUT_CSV)
-    print(f"  {len(records)} (reading, course) pairs extracted")
+    # Source 2: manual catalog
+    manual_records = []
+    if os.path.exists(INPUT_MANUAL):
+        print(f"Source 2 (manual):  {INPUT_MANUAL}")
+        manual_records = load_manual(INPUT_MANUAL)
+        print(f"  {len(manual_records)} (reading, course) pairs")
+    else:
+        print(f"Source 2 (manual):  not found, skipping")
 
-    sources = build_yaml_structure(records)
+    # Merge: manual records first, then scraped (dedup by DOI at output)
+    all_records = manual_records + scraped_records
+
+    # Deduplicate across sources: if a DOI appears in both manual and scraped,
+    # the manual version wins (it has richer metadata).
+    manual_dois = {r["doi"].lower() for r in manual_records if r["doi"]}
+    deduped_records = []
+    scraped_skipped = 0
+    for r in all_records:
+        if r["origin"] == "scraped" and r["doi"] and r["doi"].lower() in manual_dois:
+            scraped_skipped += 1
+            continue
+        deduped_records.append(r)
+
+    if scraped_skipped:
+        print(f"\n  Dedup: {scraped_skipped} scraped readings already in manual catalog")
+
+    sources = build_yaml_structure(deduped_records)
     total_readings = sum(len(s["readings"]) for s in sources)
     unique_dois = set()
     for s in sources:
