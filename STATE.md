@@ -54,5 +54,4 @@ None.
 
 1. Human proofread of full manuscript (#26)
 2. Fix teaching source pipeline (#135)
-3. Regen period detection curves + terms table for §2.5
-4. Move ΔBIC details + cluster counts to companion paper (#96)
+3. Move ΔBIC details + cluster counts to companion paper (#96)
