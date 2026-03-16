@@ -98,19 +98,12 @@ stages:
   enrich:
     cmd: >-
       uv run python scripts/qa_detect_type.py --apply &&
-      uv run python scripts/enrich_dois.py
-        --works-input data/catalogs/unified_works.csv
-        --works-output data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_abstracts.py
-        --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_citations_batch.py
-        --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_citations_openalex.py
-        --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/qc_citations.py
-        --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/analyze_embeddings.py
-        --works-input data/catalogs/enriched_works.csv
+      uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv --works-output data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/qc_citations.py --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
     deps:
       - scripts/qa_detect_type.py
       - scripts/enrich_dois.py
@@ -131,9 +124,7 @@ stages:
   # corpus_refine.py loads config/corpus_refine.yaml via refine_flags.py.
   extend:
     cmd: >-
-      uv run python scripts/corpus_refine.py --extend
-        --works-input data/catalogs/enriched_works.csv
-        --works-output data/catalogs/extended_works.csv
+      uv run python scripts/corpus_refine.py --extend --works-input data/catalogs/enriched_works.csv --works-output data/catalogs/extended_works.csv
     deps:
       - scripts/corpus_refine.py
       - scripts/refine_flags.py
@@ -148,9 +139,7 @@ stages:
   # Also loads config/corpus_refine.yaml for retention policy parameters.
   filter:
     cmd: >-
-      uv run python scripts/corpus_refine.py --filter
-        --works-input data/catalogs/extended_works.csv
-        --works-output data/catalogs/refined_works.csv
+      uv run python scripts/corpus_refine.py --filter --works-input data/catalogs/extended_works.csv --works-output data/catalogs/refined_works.csv
     deps:
       - scripts/corpus_refine.py
       - scripts/refine_flags.py
