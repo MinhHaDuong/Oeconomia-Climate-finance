@@ -1,12 +1,12 @@
 # Part III: Agentic Workflow
 
-This part documents the human--AI collaboration framework used to build the pipeline and write the manuscript. The project involved 475 commits over five months, with a single human author directing an AI coding agent (Claude, via Anthropic's Claude Code CLI). The workflow evolved from ad hoc prompting into a structured protocol, codified in a living specification (`AGENTS.md`, 53 revisions). We describe the framework, tooling, collaboration patterns, and lessons learned.
+This part documents the human--AI collaboration framework used to build the pipeline and write the manuscript. The project involved 472 commits over 27 days, with a single human author directing AI coding agents --- primarily Claude (via Anthropic's Claude Code CLI), with minor contributions from GitHub's copilot-swe-agent. The workflow evolved from ad hoc prompting into a structured protocol, codified in a living specification (`AGENTS.md`, 54 revisions). We describe the framework, tooling, collaboration patterns, and lessons learned.
 
 ## 12. Workflow Framework
 
 ### Dragon Dreaming for AI agents
 
-The project adopted Dragon Dreaming --- a participatory project management methodology --- as the organizing metaphor for human--AI collaboration. Every task passes through four phases:
+The project adopted Dragon Dreaming --- a participatory project management methodology originally designed for community projects [@villanueva2018dragon] --- as the organizing metaphor for human--AI collaboration. Its four-phase cycle (Dreaming, Planning, Doing, Celebrating) maps naturally onto the asymmetric capabilities of human--AI pairs: the human excels at vision and judgment (Dreaming, Planning), while the agent excels at disciplined execution (Doing). The explicit Celebrating phase, often absent from engineering methodologies like Scrum or Kanban, serves a specific function for AI agents: it forces reflection and memory consolidation before the context window is discarded. Every task passes through four phases:
 
 1. **Dreaming.** Interactive discussion between human and agent. The human surfaces motivations, explores what success looks like, and brainstorms freely. No code, no commits. The deliverable is a shared vision.
 
@@ -20,7 +20,7 @@ The key adaptation for AI agents is the *context boundary* between Planning and 
 
 ### GitHub Issues as handoff documents
 
-Each issue follows a template: problem statement, relevant files, acceptance criteria, and a first test. The test specification is mandatory --- it anchors the Doing phase's TDD cycle. Issues are the project's primary planning artifact: 158 were opened, 97.5% were closed.
+Each issue follows a template: problem statement, relevant files, acceptance criteria, and a first test. The test specification is mandatory --- it anchors the Doing phase's TDD cycle. Issues are the project's primary planning artifact: 89 were opened, 93% were closed.
 
 ### Escalation protocol
 
@@ -64,12 +64,13 @@ The agent operates under a dedicated GitHub account (`HDMX-coding-agent`) with i
 
 ### Quantitative portrait
 
-The git history provides a quantitative picture of the collaboration:
+The git history provides a quantitative picture of the collaboration. A growing literature examines AI-assisted research workflows [see @bara2025ai on AI-augmented systematic reviews; @lu2025sciscigpt on LLM agents for science-of-science], but few projects report granular commit-level data. We offer ours as a case study:
 
-- **475 commits**: 72.5% human-authored, 25.4% agent-authored, 2.1% co-authored.
-- **158 issues** opened, 97.5% closed. Issues served as the primary planning and handoff mechanism.
-- **60 pull requests** merged, with a median time-to-merge of 6.4 minutes. Fast merges reflect the tight feedback loop: the human reviews while the agent is still in context.
-- **298 tests** grown from zero in five days. The test suite was the agent's primary contribution during the pipeline stabilization phase.
+- **472 commits** over 27 days. Of these, 344 (73%) were by the human author, 95 (20%) by the primary AI agent (`HDMX-coding-agent`), and 10 by a secondary AI tool (`copilot-swe-agent[bot]`, used briefly for triage). A further 23 were merge commits.
+- **305 commits (64%) carry a `Co-Authored-By` trailer**, indicating collaborative work where the human directed and the agent implemented. Only 28 agent commits (6%) were fully autonomous (no human co-authorship trailer). The dominant mode was collaboration, not delegation.
+- **89 issues** opened, 93% closed. Issues served as the primary planning and handoff mechanism.
+- **77 pull requests** opened, 61 merged, with a median time-to-merge of approximately zero hours. Near-instant merges reflect the tight feedback loop: the human reviews while the agent is still in context.
+- **298 test functions** across 16 files, grown from zero in five days (March 12--16). The test suite was the agent's primary contribution during the pipeline stabilization phase.
 
 ### Division of labor
 
@@ -79,7 +80,7 @@ The boundary is not rigid. The human sometimes writes code directly (especially 
 
 ### AGENTS.md as living specification
 
-`AGENTS.md` is the project's most-revised file (53 revisions). It began as a short prompt and grew into a comprehensive specification covering workflow phases, trigger-based runbooks, git discipline, memory management, and autonomous wave cycles. Each revision typically followed a failure: the agent did something unexpected, and the specification was tightened to prevent recurrence.
+`AGENTS.md` is the project's most-revised file (54 revisions). It began as a short prompt and grew into a comprehensive specification covering workflow phases, trigger-based runbooks, git discipline, memory management, and autonomous wave cycles. Each revision typically followed a failure: the agent did something unexpected, and the specification was tightened to prevent recurrence.
 
 This iterative refinement is itself a form of programming --- writing natural-language instructions that reliably produce desired behavior from an AI agent. The specification's evolution mirrors how codebases grow: from scripts to frameworks, from implicit conventions to explicit contracts.
 
@@ -87,7 +88,7 @@ This iterative refinement is itself a form of programming --- writing natural-la
 
 ### What worked
 
-**Test-driven development.** TDD was the single most effective practice. Tests served three functions: (1) specification --- the ticket's test defined what "done" means; (2) regression protection --- 298 tests caught breakage during refactoring; (3) confidence --- the human could merge agent PRs quickly because `make check` passed. The test suite grew from zero to 298 in five days, a pace only possible because the agent could generate test scaffolding rapidly.
+**Test-driven development.** TDD was the single most effective practice. Tests served three functions: (1) specification --- the ticket's test defined what "done" means; (2) regression protection --- 298 tests caught breakage during refactoring; (3) confidence --- the human could merge agent PRs quickly because `make check` passed. The test suite grew from zero to 298 functions across 16 files in five days (March 12--16), a pace only possible because the agent could generate test scaffolding rapidly.
 
 **Worktree isolation.** Worktrees eliminated the "dirty working directory" problem that plagues long-running agent sessions. Each task got a clean checkout, and the agent never had to stash or context-switch. This was especially valuable when running parallel agent sessions on independent tickets.
 
