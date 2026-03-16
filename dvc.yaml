@@ -92,32 +92,58 @@ stages:
     outs:
       - data/catalogs/unified_works.csv
 
-  # Phase 1b: Enrich → enriched_works.csv + embeddings.npz + citations.csv
-  # DOI resolution, abstract retrieval, citation graph, sentence embeddings.
-  # Requires uv sync --group corpus (torch, sentence-transformers, etc.)
-  enrich:
+  # ── Phase 1b: Enrichment pipeline ──────────────────────────
+  # Split into independent DVC stages so each step is cached separately.
+  # A failure in a late step (e.g. embeddings) won't force re-running
+  # earlier steps (e.g. citations) on retry.
+
+  # Phase 1b.1: Resolve missing DOIs + fill missing abstracts → enriched_works.csv
+  # Grouped because both modify enriched_works.csv (DOIs first, then abstracts
+  # in-place). Splitting would cause a DVC rerun loop (in-place dep != cached out).
+  enrich_works:
     cmd: >-
-      uv run python scripts/qa_detect_type.py --apply &&
       uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv --works-output data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/qc_citations.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
+      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/enriched_works.csv
     deps:
-      - scripts/qa_detect_type.py
       - scripts/enrich_dois.py
       - scripts/enrich_abstracts.py
-      - scripts/enrich_citations_batch.py
-      - scripts/enrich_citations_openalex.py
-      - scripts/qc_citations.py
-      - scripts/analyze_embeddings.py
       - scripts/utils.py
       - data/catalogs/unified_works.csv
     outs:
       - data/catalogs/enriched_works.csv
-      - data/catalogs/embeddings.npz
+
+  # Phase 1b.3: Build citation graph (Crossref batch + OpenAlex referenced_works)
+  enrich_citations:
+    cmd: >-
+      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/enrich_citations_batch.py
+      - scripts/enrich_citations_openalex.py
+      - scripts/utils.py
+      - data/catalogs/enriched_works.csv
+    outs:
       - data/catalogs/citations.csv
+
+  # Phase 1b.4: Citation QC — verify against Crossref ground truth
+  qc_citations:
+    cmd: uv run python scripts/qc_citations.py --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/qc_citations.py
+      - scripts/utils.py
+      - data/catalogs/enriched_works.csv
+      - data/catalogs/citations.csv
+
+  # Phase 1b.5: Sentence embeddings (multilingual transformer + UMAP + clustering)
+  # Requires uv sync --group corpus (torch, sentence-transformers, etc.)
+  enrich_embeddings:
+    cmd: uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/analyze_embeddings.py
+      - scripts/utils.py
+      - data/catalogs/enriched_works.csv
+    outs:
+      - data/catalogs/embeddings.npz
 
   # Phase 1c: Extend → extended_works.csv
   # Adds diagnostic flags and protection columns; no rows removed.
