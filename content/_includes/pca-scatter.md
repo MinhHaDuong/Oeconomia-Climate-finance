@@ -1,4 +1,4 @@
-## 7. PCA Scatter Plots
+## 8. PCA Scatter Plots
 
 **Script:** `scripts/plot_fig45_pca_scatter.py`
 
@@ -6,7 +6,7 @@ This script visualizes how the field's thematic structure evolves over time by p
 
 ### Supervised mode (`--supervised`)
 
-Projects all papers onto the efficiency↔accountability seed axis (identical to Section 6's Method A axis). Produces a single-panel scatter plot:
+Projects all papers onto the efficiency↔accountability seed axis (identical to §7's Method A axis). Produces a single-panel scatter plot:
 - **X-axis:** publication year (with ±0.3 uniform jitter to reduce overplotting)
 - **Y-axis:** seed axis score (positive = efficiency, negative = accountability)
 - **Color:** three-period scheme (blue 1990–2006, orange 2007–2014, green 2015–2025)
@@ -30,9 +30,13 @@ On full corpus ({{< var corpus_with_embeddings >}} papers), 3 PCs qualify:
 
 On core ({{< var corpus_core >}} papers), no PC passes ΔBIC > 200. Unsupervised bimodality requires the full corpus's breadth to emerge.
 
-### Outputs
+### Figures
 
-- `fig_seed_axis_core.png` -- supervised axis, core papers (paper figure)
-- `fig_pca_scatter.png` -- unsupervised 3-panel, full corpus (appendix)
-- `tab_seed_axis_core.csv` -- seed axis metadata (variance, ΔBIC, pole terms)
+![Supervised seed axis (efficiency vs. accountability), core papers. Point size proportional to citation count.](figures/fig_seed_axis_core.png){#fig-seed-axis-core width=100%}
+
+![Unsupervised PCA scatter: three bimodal components (full corpus).](figures/fig_pca_scatter.png){#fig-pca-scatter width=100%}
+
+### Data outputs
+
+- `tab_seed_axis_core.csv` -- seed axis metadata (variance, DBIC, pole terms)
 - `tab_pca_components.csv` -- unsupervised PC metadata

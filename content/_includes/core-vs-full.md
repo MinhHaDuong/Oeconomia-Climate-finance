@@ -1,4 +1,4 @@
-## 9. Core vs. Full Corpus Analysis
+## 4. Core vs. Full Corpus Analysis
 
 The pipeline implements a two-level analytical design:
 

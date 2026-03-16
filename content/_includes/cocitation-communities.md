@@ -1,8 +1,10 @@
-## Co-citation Community Detection Across Time Windows
+## 10. Co-citation Community Detection Across Time Windows
 
 **Script:** `scripts/compare_communities_across_windows.py`
 
-This analysis traces the evolution of co-citation communities in the climate finance literature across four time windows, testing whether the three intellectual traditions posited by the manuscript (environmental economics, development economics, burden-sharing) are empirically detectable as distinct citation lineages.
+This analysis traces the evolution of co-citation communities in the climate finance literature across four time windows, testing whether the three intellectual traditions posited by the manuscript (environmental economics, development economics, burden-sharing) are empirically detectable as distinct citation lineages. @fig-traditions shows the pre-2007 co-citation network with the three traditions colored.
+
+![Pre-2007 co-citation network showing three intellectual traditions (manuscript Electronic Supplement figure).](figures/fig_traditions.png){#fig-traditions width=100%}
 
 ### Method
 
@@ -69,6 +71,10 @@ Only 27 of the pre-2007 top-250 references survive into the full-span top-250 (J
 To assess whether co-citation communities and embedding-based KMeans clusters (k=6, used in the alluvial analysis) capture the same or complementary structure, we traced which KMeans clusters the *citers* of each pre-2007 co-citation community belong to. Only 2 of 137 community nodes are themselves in the embedding corpus; the indirect mapping via citers yields 831 (citer, community) pairs.
 
 Cramer's V = 0.248 (chi-squared = 204.1, $p < 10^{-32}$, df = 20), indicating a weak-to-moderate but highly significant association. The two classification systems are not independent, but they capture complementary dimensions: co-citation communities trace intellectual lineage (shared foundational references), while embedding clusters capture topical similarity of abstracts. The strongest mapping is pre-2007 Community 3 (Smit, Adger --- adaptation) to KMeans cluster "Climate action and adaptation" (63% of citers).
+
+@fig-communities shows the full-span co-citation network with community coloring.
+
+![Co-citation network (full span, top 250 references), colored by Louvain community.](figures/fig_communities.png){#fig-communities width=100%}
 
 ### Interpretation
 
