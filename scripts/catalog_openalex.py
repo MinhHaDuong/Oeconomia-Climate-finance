@@ -38,9 +38,11 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO, OPENALEX_API_KEY,
-                   normalize_doi, reconstruct_abstract, polite_get,
+                   get_logger, normalize_doi, reconstruct_abstract, polite_get,
                    save_csv, pool_path, append_to_pool, load_pool_ids,
                    load_pool_records, POOL_DIR)
+
+log = get_logger("catalog_openalex")
 
 OA_API = "https://api.openalex.org/works"
 
@@ -289,8 +291,8 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
             append_to_pool(batch, pool_file)
             batch = []
 
-        print(f"  [{search_term}] {total_fetched}/{total} "
-              f"(new: {n_new}, budget: ${remaining})", end="\r")
+        log.info("[%s] %d/%s (new: %d, budget: $%s)",
+                 search_term, total_fetched, total, n_new, remaining)
 
         cursor = meta.get("next_cursor")
         if limit and total_fetched >= limit:
@@ -300,7 +302,6 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
     if batch:
         append_to_pool(batch, pool_file)
 
-    print()
     return n_new
 
 
@@ -337,9 +338,9 @@ def extract_from_pool(config):
             slug_to_tier[query_slug(term)] = tier_cfg
 
     # Load all pool records
-    print("Loading pool records...")
+    log.info("Loading pool records...")
     all_raw = load_pool_records("openalex")
-    print(f"  {len(all_raw)} raw records in pool")
+    log.info("%d raw records in pool", len(all_raw))
 
     # Deduplicate by OpenAlex ID
     seen_ids = set()
@@ -349,7 +350,7 @@ def extract_from_pool(config):
         if oa_id not in seen_ids:
             seen_ids.add(oa_id)
             unique_raw.append(r)
-    print(f"  {len(unique_raw)} unique after dedup")
+    log.info("%d unique after dedup", len(unique_raw))
 
     # Default: use the least restrictive tier (min_concept_groups=0)
     # Since we can't easily track which pool file a record came from
@@ -378,9 +379,9 @@ def extract_from_pool(config):
         refs = extract_references(r)
         all_refs.extend(refs)
 
-    print(f"  {len(records)} records after relevance filter "
-          f"({n_filtered} filtered)")
-    print(f"  {len(all_refs)} outgoing citation links extracted")
+    log.info("%d records after relevance filter (%d filtered)",
+             len(records), n_filtered)
+    log.info("%d outgoing citation links extracted", len(all_refs))
 
     # Save works CSV
     df = pd.DataFrame(records, columns=WORKS_COLUMNS)
@@ -427,9 +428,9 @@ def main():
         tiers = {args.tier: tiers[args.tier]}
 
     if args.extract_only:
-        print("=== Extract-only mode: building CSV from pool ===")
+        log.info("=== Extract-only mode: building CSV from pool ===")
         df = extract_from_pool(config)
-        print(f"\nDone. {len(df)} works in openalex_works.csv")
+        log.info("Done. %d works in openalex_works.csv", len(df))
         return
 
     # Load per-query sidecar dates for incremental runs
@@ -437,18 +438,18 @@ def main():
     global_from_date = args.from_date  # explicit --from-date overrides per-query
 
     if global_from_date:
-        print(f"Global date filter: from_created_date >= {global_from_date}")
+        log.info("Global date filter: from_created_date >= %s", global_from_date)
     elif query_dates:
         n_dated = sum(1 for k in query_dates if k != "_global")
         if "_global" in query_dates:
-            print(f"Sidecar: global last-run date {query_dates['_global']}")
+            log.info("Sidecar: global last-run date %s", query_dates['_global'])
         else:
-            print(f"Sidecar: {n_dated} queries with per-query dates")
+            log.info("Sidecar: %d queries with per-query dates", n_dated)
     else:
-        print("No sidecar found — full pagination for all queries")
+        log.info("No sidecar found -- full pagination for all queries")
 
     if not OPENALEX_API_KEY:
-        print("WARNING: No OPENALEX_API_KEY found — using free tier (lower budget)")
+        log.warning("No OPENALEX_API_KEY found -- using free tier (lower budget)")
 
     # Load existing pool IDs for resume
     existing_ids = set()
@@ -457,7 +458,7 @@ def main():
         existing_ids = {
             rid.replace("https://openalex.org/", "") for rid in raw_ids
         }
-        print(f"Pool contains {len(existing_ids)} existing OpenAlex IDs")
+        log.info("Pool contains %d existing OpenAlex IDs", len(existing_ids))
 
     # Capture budget at start of run
     budget_start = None
@@ -475,10 +476,10 @@ def main():
         terms = tier_cfg.get("terms", [])
         min_groups = tier_cfg.get("min_concept_groups", 0)
 
-        print(f"\n{'=' * 60}")
-        print(f"TIER {tier_num}: {desc}")
-        print(f"  {len(terms)} queries, min_concept_groups={min_groups}")
-        print(f"{'=' * 60}")
+        log.info("=" * 60)
+        log.info("TIER %s: %s", tier_num, desc)
+        log.info("%d queries, min_concept_groups=%d", len(terms), min_groups)
+        log.info("=" * 60)
 
         for term in terms:
             slug = query_slug(term)
@@ -498,7 +499,7 @@ def main():
             if args.dry_run:
                 count = dry_run_query(term, args.delay, from_date)
                 date_info = f" (since {from_date})" if from_date else ""
-                print(f"  \"{term}\": {count:,} results{date_info}")
+                log.info('"%s": %s results%s', term, f"{count:,}", date_info)
                 grand_total += count
                 continue
 
@@ -513,10 +514,10 @@ def main():
                 probe_resp = polite_get(OA_API, params=probe_params,
                                         delay=args.delay)
                 budget_start = capture_budget(probe_resp)
-                print(f"Budget at start: ${budget_start}")
+                log.info("Budget at start: $%s", budget_start)
 
             date_info = f" (since {from_date})" if from_date else ""
-            print(f"\nQuerying: \"{term}\"{date_info}")
+            log.info('Querying: "%s"%s', term, date_info)
             n_new = fetch_query(
                 term, args.delay, args.limit, existing_ids, pf,
                 from_date=from_date)
@@ -528,9 +529,9 @@ def main():
             save_query_dates(query_dates)
 
     if args.dry_run:
-        print(f"\n{'=' * 60}")
-        print(f"DRY RUN TOTAL: {grand_total:,} results across all queries")
-        print(f"(Actual unique count will be lower due to overlap)")
+        log.info("=" * 60)
+        log.info("DRY RUN TOTAL: %s results across all queries", f"{grand_total:,}")
+        log.info("(Actual unique count will be lower due to overlap)")
         return
 
     # Capture budget at end of run via a lightweight probe
@@ -544,19 +545,19 @@ def main():
     except Exception:
         budget_end = "?"
 
-    print(f"\n{'=' * 60}")
-    print(f"Download complete. {grand_total} new records added to pool.")
-    print(f"Queries: {queries_completed} completed, {queries_skipped} skipped")
-    print(f"Budget: ${budget_start} → ${budget_end}")
+    log.info("=" * 60)
+    log.info("Download complete. %d new records added to pool.", grand_total)
+    log.info("Queries: %d completed, %d skipped", queries_completed, queries_skipped)
+    log.info("Budget: $%s -> $%s", budget_start, budget_end)
 
     # Also write legacy sidecar for backwards compatibility
     write_last_run_date(date_str=today)
-    print(f"Sidecar updated: {queries_completed} queries dated {today}")
+    log.info("Sidecar updated: %d queries dated %s", queries_completed, today)
 
     if not args.pool_only:
-        print(f"\n=== Extracting CSV from pool ===")
+        log.info("=== Extracting CSV from pool ===")
         df = extract_from_pool(config)
-        print(f"\nDone. {len(df)} works in openalex_works.csv")
+        log.info("Done. %d works in openalex_works.csv", len(df))
 
 
 if __name__ == "__main__":

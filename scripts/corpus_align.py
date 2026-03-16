@@ -34,8 +34,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (
     CATALOGS_DIR, EMBEDDINGS_PATH, REFS_COLUMNS,
     REFINED_WORKS_PATH, REFINED_EMBEDDINGS_PATH, REFINED_CITATIONS_PATH,
-    normalize_doi, save_run_report, make_run_id,
+    get_logger, normalize_doi, save_run_report, make_run_id,
 )
+
+log = get_logger("corpus_align")
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 
@@ -78,8 +80,8 @@ def align_embeddings(refined_df, emb_path=None, dry_run=False):
         key_to_idx = {k: i for i, k in enumerate(key_arr)}
     else:
         # Fallback: no key array → cannot align, return zeros with warning
-        print("  WARNING: embeddings.npz has no 'keys' array; "
-              "cannot align — all refined_embeddings will be zero vectors.")
+        log.warning("embeddings.npz has no 'keys' array; "
+                    "cannot align -- all refined_embeddings will be zero vectors.")
         aligned = np.zeros((N, D), dtype=vectors_all.dtype)
         return aligned, 0, N
 
@@ -164,27 +166,27 @@ def main():
 
     # ── Load refined works ────────────────────────────────────────────────
     if not os.path.exists(args.refined_works):
-        print(f"ERROR: refined_works.csv not found at {args.refined_works}. "
-              "Run: make corpus-filter")
+        log.error("refined_works.csv not found at %s. Run: make corpus-filter",
+                  args.refined_works)
         sys.exit(1)
 
     refined_df = pd.read_csv(args.refined_works, dtype=str, keep_default_na=False)
     N = len(refined_df)
-    print(f"Loaded {N} rows from {args.refined_works}")
+    log.info("Loaded %d rows from %s", N, args.refined_works)
 
     refined_doi_set = set(
         normalize_doi(d) for d in refined_df["doi"]
         if normalize_doi(d) not in ("", "nan", "none")
     )
-    print(f"  Unique normalised DOIs: {len(refined_doi_set)}")
+    log.info("  Unique normalised DOIs: %d", len(refined_doi_set))
 
     # ── Align embeddings ─────────────────────────────────────────────────
-    print(f"\nAligning embeddings from {args.embeddings} ...")
+    log.info("Aligning embeddings from %s ...", args.embeddings)
     aligned_vectors, n_matched, n_zero = align_embeddings(
         refined_df, emb_path=args.embeddings, dry_run=args.dry_run
     )
-    print(f"  Shape: {aligned_vectors.shape}  "
-          f"(matched: {n_matched}, zero-fallback: {n_zero})")
+    log.info("  Shape: %s  (matched: %d, zero-fallback: %d)",
+             aligned_vectors.shape, n_matched, n_zero)
 
     # Invariant check
     assert aligned_vectors.shape[0] == N, (
@@ -195,27 +197,27 @@ def main():
     if not args.dry_run:
         os.makedirs(os.path.dirname(args.out_embeddings) or ".", exist_ok=True)
         np.savez_compressed(args.out_embeddings, vectors=aligned_vectors)
-        print(f"  Saved → {args.out_embeddings}")
+        log.info("  Saved -> %s", args.out_embeddings)
 
     # ── Align citations ──────────────────────────────────────────────────
-    print(f"\nFiltering citations from {args.citations} ...")
+    log.info("Filtering citations from %s ...", args.citations)
     filtered_cit, total_cit_in, n_cit_kept = align_citations(
         refined_doi_set, cit_path=args.citations, dry_run=args.dry_run
     )
-    print(f"  Total citation rows: {total_cit_in}")
-    print(f"  Kept (source_doi ∈ refined): {n_cit_kept}")
-    print(f"  Dropped: {total_cit_in - n_cit_kept}")
+    log.info("  Total citation rows: %d", total_cit_in)
+    log.info("  Kept (source_doi in refined): %d", n_cit_kept)
+    log.info("  Dropped: %d", total_cit_in - n_cit_kept)
 
     if not args.dry_run:
         os.makedirs(os.path.dirname(args.out_citations) or ".", exist_ok=True)
         filtered_cit.to_csv(args.out_citations, index=False)
-        print(f"  Saved → {args.out_citations}")
+        log.info("  Saved -> %s", args.out_citations)
 
     elapsed = time.time() - t0
-    print(f"\nDone in {elapsed:.1f}s")
+    log.info("Done in %.1fs", elapsed)
 
     if args.dry_run:
-        print("Dry run — no files written.")
+        log.info("Dry run -- no files written.")
         return
 
     counters = {
@@ -231,7 +233,7 @@ def main():
         "elapsed_seconds": round(elapsed, 1),
     }
     report_path = save_run_report(counters, run_id, "corpus_align")
-    print(f"Run report: {report_path}")
+    log.info("Run report: %s", report_path)
 
 
 if __name__ == "__main__":

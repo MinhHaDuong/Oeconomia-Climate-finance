@@ -15,7 +15,9 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR
+from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR, get_logger
+
+log = get_logger("compute_stats")
 
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 OUTPUT_PATH = os.path.join(BASE_DIR, "_variables.yml")
@@ -237,7 +239,7 @@ def write_yaml(v, path):
         lines.append(f'{key}: "{escaped}"')
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
-    print(f"Wrote {len(v)} variables to {path}")
+    log.info("Wrote %d variables to %s", len(v), path)
 
 
 # ── Main ─────────────────────────────────────────────────────
@@ -258,8 +260,7 @@ def main():
     # Summary
     missing = [k for k, val in v.items() if val == MISSING]
     if missing:
-        print(f"WARNING: {len(missing)} variables set to {MISSING}: {missing}",
-              file=sys.stderr)
+        log.warning("%d variables set to %s: %s", len(missing), MISSING, missing)
 
 
 if __name__ == "__main__":

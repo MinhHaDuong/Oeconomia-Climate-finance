@@ -22,7 +22,10 @@ import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, REFS_COLUMNS, MAILTO, normalize_doi,
-                   sort_dois_by_priority, retry_get, save_run_report, make_run_id)
+                   sort_dois_by_priority, retry_get, save_run_report, make_run_id,
+                   get_logger)
+
+log = get_logger("enrich_citations_batch")
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_batch_checkpoint.csv")
@@ -79,18 +82,14 @@ def fetch_batch(dois, delay=0.2, counters=None,
 
 def print_resume_preview(done_dois, all_dois, missing):
     """Print a startup summary showing checkpoint state and remaining workload."""
-    print("── Resume preview ─────────────────────────────────────────")
-    print(f"  Corpus DOIs total:      {len(all_dois)}")
-    print(f"  Already done:           {len(done_dois)}")
-    print(f"  Checkpoint present:     {os.path.exists(CHECKPOINT_PATH)}")
+    ckpt_rows = 0
     if os.path.exists(CHECKPOINT_PATH):
         try:
-            n = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
-            print(f"  Checkpoint rows:        {n}")
+            ckpt_rows = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
         except Exception:
             pass
-    print(f"  Remaining to fetch:     {len(missing)}")
-    print("────────────────────────────────────────────────────────────\n")
+    log.info("Resume: %d DOIs total, %d done, %d in checkpoint, %d remaining",
+             len(all_dois), len(done_dois), ckpt_rows, len(missing))
 
 
 def main():
@@ -149,8 +148,8 @@ def main():
         existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
         existing["source_doi"] = existing["source_doi"].apply(normalize_doi)
         done_dois = set(existing["source_doi"].dropna()) - {"", "nan", "none"}
-        print(f"Existing citations.csv: {len(existing)} rows, "
-              f"{len(done_dois)} unique source DOIs")
+        log.info("Existing citations.csv: %d rows, %d unique source DOIs",
+                 len(existing), len(done_dois))
     else:
         existing = pd.DataFrame(columns=REFS_COLUMNS)
         done_dois = set()
@@ -160,7 +159,8 @@ def main():
         ckpt = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
         ckpt_dois = set(ckpt["source_doi"].apply(normalize_doi)) - {"", "nan", "none"}
         done_dois |= ckpt_dois
-        print(f"Checkpoint: {len(ckpt)} rows, {len(ckpt_dois)} DOIs already fetched")
+        log.info("Checkpoint: %d rows, %d DOIs already fetched",
+                 len(ckpt), len(ckpt_dois))
     else:
         ckpt = pd.DataFrame(columns=REFS_COLUMNS)
 
@@ -182,7 +182,7 @@ def main():
                dois_to_fetch=len(missing))
 
     if not missing:
-        print("Nothing to fetch.")
+        log.info("Nothing to fetch.")
         return
 
     # Write checkpoint header once upfront
@@ -210,11 +210,11 @@ def main():
                 retry_jitter=args.retry_jitter,
             )
         except Exception as e:
-            print(f"  ERROR batch {batch_num}: {e}")
+            log.error("Batch %d: %s", batch_num, e)
             _log_event("batch_error", batch=batch_num, error=str(e))
             errors += 1
             if errors > 10:
-                print("Too many errors, stopping.")
+                log.error("Too many errors, stopping.")
                 break
             continue
 
@@ -247,12 +247,11 @@ def main():
         eta = (len(missing) - i - len(batch_dois)) / rate if rate > 0 else 0
 
         if batch_num % 10 == 0 or batch_num == n_batches:
-            print(f"  Batch {batch_num}/{n_batches}: "
-                  f"{total_found} DOIs found, {total_refs} refs, "
-                  f"{elapsed:.0f}s elapsed, ETA {eta:.0f}s")
+            log.info("Batch %d/%d: %d DOIs found, %d refs, ETA %.0fs",
+                     batch_num, n_batches, total_found, total_refs, eta)
 
     # Merge checkpoint into existing citations.csv
-    print(f"\nMerging checkpoint into citations.csv...")
+    log.info("Merging checkpoint into citations.csv...")
     if os.path.exists(CHECKPOINT_PATH):
         new_refs = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
         # Drop sentinel rows (all fields empty except source_doi)
@@ -266,20 +265,17 @@ def main():
         combined = pd.concat([existing, new_refs_real], ignore_index=True)
         combined.to_csv(CITATIONS_PATH, index=False)
         os.remove(CHECKPOINT_PATH)
-        print(f"  Old: {len(existing)} rows")
-        print(f"  New: {len(new_refs_real)} rows")
-        print(f"  Sentinels dropped: {is_sentinel.sum()}")
-        print(f"  Combined: {len(combined)} rows")
+        log.info("Merged: %d old + %d new (-%d sentinels) = %d rows",
+                 len(existing), len(new_refs_real),
+                 int(is_sentinel.sum()), len(combined))
     else:
-        print("  No new data to merge.")
+        log.info("No new data to merge.")
         new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
         combined = existing
 
     elapsed = time.time() - t0
-    print(f"\nDone in {elapsed:.0f}s")
-    print(f"  DOIs found in Crossref: {total_found}")
-    print(f"  Total new references: {total_refs}")
-    print(f"  Errors: {errors}")
+    log.info("Done in %.0fs: %d DOIs found, %d refs, %d errors",
+             elapsed, total_found, total_refs, errors)
 
     counters.update({
         "dois_total": len(all_dois),
@@ -292,7 +288,7 @@ def main():
         "elapsed_seconds": round(elapsed, 1),
     })
     report_path = save_run_report(counters, run_id, "enrich_citations_batch")
-    print(f"Run report: {report_path}")
+    log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
                refs_written=total_refs, report_path=report_path)
 

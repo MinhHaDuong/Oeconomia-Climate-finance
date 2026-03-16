@@ -16,7 +16,9 @@ from sklearn.mixture import GaussianMixture
 
 sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT, FILL
-from utils import BASE_DIR, save_figure
+from utils import BASE_DIR, get_logger, save_figure
+
+log = get_logger("plot_figS_kde")
 
 apply_style()
 
@@ -30,7 +32,7 @@ def main():
     path = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
     df = pd.read_csv(path)
     scores = df["axis_score"].dropna().values
-    print(f"Loaded {len(scores)} axis scores from {path}")
+    log.info("Loaded %d axis scores from %s", len(scores), path)
 
     # KDE
     x = np.linspace(scores.min() - 0.1, scores.max() + 0.1, 500)

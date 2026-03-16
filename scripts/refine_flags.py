@@ -18,7 +18,9 @@ import yaml
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, CONFIG_DIR, normalize_doi
+from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi
+
+log = get_logger("refine_flags")
 
 
 # ============================================================
@@ -424,10 +426,10 @@ def _reranker_streaming(df, config, *, already_flagged):
     p1_cached = len(priority1_indices) - len(p1_uncached)
     p2_cached = len(priority2_indices) - len(p2_uncached)
 
-    print(f"    Priority 1 (concept-group failures): {len(priority1_indices)} "
-          f"(cached: {p1_cached}, to score: {len(p1_uncached)})")
-    print(f"    Priority 2 (background scoring): {len(priority2_indices)} "
-          f"(cached: {p2_cached}, to score: {len(p2_uncached)})")
+    log.info("    Priority 1 (concept-group failures): %d (cached: %d, to score: %d)",
+             len(priority1_indices), p1_cached, len(p1_uncached))
+    log.info("    Priority 2 (background scoring): %d (cached: %d, to score: %d)",
+             len(priority2_indices), p2_cached, len(p2_uncached))
 
     # Yield cached results for Flag 6 candidates
     if p1_cached > 0:
@@ -452,13 +454,13 @@ def _reranker_streaming(df, config, *, already_flagged):
     if device == "cpu":
         n_cpu = os.cpu_count() or 4
         torch.set_num_threads(n_cpu)
-        print(f"    Loading reranker: {model_name} ({n_cpu} CPU threads)...")
+        log.info("    Loading reranker: %s (%d CPU threads)...", model_name, n_cpu)
     else:
         gpu_name = torch.cuda.get_device_name(0)
-        print(f"    Loading reranker: {model_name} (GPU: {gpu_name})...")
+        log.info("    Loading reranker: %s (GPU: %s)...", model_name, gpu_name)
     t0 = time.time()
     reranker = CrossEncoder(model_name, device=device)
-    print(f"    Model loaded in {time.time() - t0:.1f}s")
+    log.info("    Model loaded in %.1fs", time.time() - t0)
 
     # Score in batches, checkpointing after each
     max_batches = int(llm_cfg.get("reranker_max_batches", 0))  # 0 = unlimited
@@ -466,8 +468,8 @@ def _reranker_streaming(df, config, *, already_flagged):
     total_batches = (len(all_uncached) + batch_size - 1) // batch_size
     if max_batches > 0:
         effective_batches = min(max_batches, total_batches)
-        print(f"    Limited to {effective_batches}/{total_batches} batches "
-              f"({effective_batches * batch_size} papers)")
+        log.info("    Limited to %d/%d batches (%d papers)",
+                 effective_batches, total_batches, effective_batches * batch_size)
     for batch_start in range(0, len(all_uncached), batch_size):
         batch_idx = all_uncached[batch_start:batch_start + batch_size]
         current_batch = batch_start // batch_size + 1
@@ -502,10 +504,10 @@ def _reranker_streaming(df, config, *, already_flagged):
         # Progress reporting
         phase = "P1" if batch_start < p1_boundary else "P2"
         if current_batch < total_batches:
-            print(f"    [{phase}] batch {current_batch}/{total_batches}")
+            log.info("    [%s] batch %d/%d", phase, current_batch, total_batches)
 
         if max_batches > 0 and current_batch >= max_batches:
-            print(f"    Stopped after {max_batches} batches (reranker_max_batches)")
+            log.info("    Stopped after %d batches (reranker_max_batches)", max_batches)
             break
 
 
@@ -528,7 +530,7 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
 
     n_candidates = candidates_mask.sum()
     if n_candidates == 0:
-        print("  Flag 6: no candidates (all papers pass concept-group check)")
+        log.info("  Flag 6: no candidates (all papers pass concept-group check)")
         return
 
     if backend == "ollama":
@@ -540,7 +542,7 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
         model = llm_cfg["openrouter_model"]
         batch_size = llm_cfg.get("batch_size", 15)
         if not api_key:
-            print("    WARNING: no OPENROUTER_API_KEY, skipping LLM scoring")
+            log.warning("    no OPENROUTER_API_KEY, skipping LLM scoring")
             return
 
     title_max = llm_cfg.get("title_max_chars", 150)
@@ -555,8 +557,8 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
         if doi_norm.at[i] not in cache or doi_norm.at[i] == ""
     ]
     cached_count = n_candidates - len(uncached_indices)
-    print(f"    Candidates: {n_candidates} "
-          f"(cached: {cached_count}, to score: {len(uncached_indices)})")
+    log.info("    Candidates: %d (cached: %d, to score: %d)",
+             n_candidates, cached_count, len(uncached_indices))
 
     # Yield cached results first
     if cached_count > 0:
@@ -598,10 +600,10 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
                     cache[doi] = bool(scores[key])
             retries_left = max_errors
         except Exception as e:
-            print(f"    LLM batch error: {e}")
+            log.error("    LLM batch error: %s", e)
             retries_left -= 1
             if retries_left <= 0:
-                print("    Too many consecutive errors, stopping LLM scoring")
+                log.error("    Too many consecutive errors, stopping LLM scoring")
                 _save_llm_cache(cache, config)
                 break
 
@@ -615,8 +617,8 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
 
         remaining = len(uncached_indices) - (batch_num + len(batch_idx))
         if current_batch < total_batches and remaining > 0:
-            print(f"    batch {current_batch}/{total_batches} "
-                  f"({remaining} candidates remaining)")
+            log.info("    batch %d/%d (%d candidates remaining)",
+                     current_batch, total_batches, remaining)
 
         time.sleep(1.0 if backend == "openrouter" else 0.1)
 

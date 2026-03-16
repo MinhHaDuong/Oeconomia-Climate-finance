@@ -28,7 +28,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Add scripts dir to path for utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from utils import CATALOGS_DIR, load_refined_citations, normalize_doi
+from utils import CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
+
+log = get_logger("compare_communities_across_windows")
 
 # ============================================================
 # Parameters
@@ -49,18 +51,18 @@ RANDOM_STATE = 42
 # Step 1: Load data (once)
 # ============================================================
 
-print("=" * 80)
-print("COMPARING CO-CITATION COMMUNITIES ACROSS THREE TIME WINDOWS")
-print("=" * 80)
+log.info("=" * 80)
+log.info("COMPARING CO-CITATION COMMUNITIES ACROSS THREE TIME WINDOWS")
+log.info("=" * 80)
 
-print("\n--- Loading data ---")
+log.info("--- Loading data ---")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 works["cited_by_count"] = pd.to_numeric(
     works["cited_by_count"], errors="coerce"
 ).fillna(0)
-print(f"Total works in corpus: {len(works)}")
+log.info("Total works in corpus: %d", len(works))
 
 # Build DOI -> metadata lookup from works
 doi_meta = {}
@@ -75,7 +77,7 @@ for row in works.loc[valid].itertuples(index=False):
     }
 
 # Load citations
-print("Loading citations...")
+log.info("Loading citations...")
 cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
@@ -85,7 +87,7 @@ cit = cit[
     & cit["ref_doi"].notna()
     & ~cit["ref_doi"].isin(["", "nan", "none"])
 ]
-print(f"Citation pairs with valid DOIs: {len(cit)}")
+log.info("Citation pairs with valid DOIs: %d", len(cit))
 
 # Add ref metadata from citations for papers not already in works
 cit["ref_year_num"] = pd.to_numeric(cit["ref_year"], errors="coerce")
@@ -102,13 +104,13 @@ for row in cit.itertuples(index=False):
         }
 
 # Precompute source_doi -> [ref_doi] grouping (used for all windows)
-print("Grouping citations by source paper...")
+log.info("Grouping citations by source paper...")
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
-print(f"Unique source papers with citations: {len(source_groups)}")
+log.info("Unique source papers with citations: %d", len(source_groups))
 
 # Global ref counts (times cited across the entire corpus)
 ref_counts = cit.groupby("ref_doi").size().sort_values(ascending=False)
-print(f"Unique referenced DOIs: {len(ref_counts)}")
+log.info("Unique referenced DOIs: %d", len(ref_counts))
 
 
 # ============================================================
@@ -122,23 +124,23 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
     Returns: dict with partition, graph, ref_counts_in_window, community_dois, stats.
     """
     label = f"year <= {cutoff_year}"
-    print(f"\n{'=' * 80}")
-    print(f"WINDOW: {label} | Top {top_n} refs | min co-cit >= {min_cocit} | "
-          f"resolution={resolution}")
-    print("=" * 80)
+    log.info("=" * 80)
+    log.info("WINDOW: %s | Top %d refs | min co-cit >= %d | resolution=%s",
+             label, top_n, min_cocit, resolution)
+    log.info("=" * 80)
 
     # Identify all references with year <= cutoff
     pre_refs = set(
         cit[cit["ref_year_num"] <= cutoff_year]["ref_doi"]
     ) - {"", "nan", "none"}
-    print(f"  Unique refs with year <= {cutoff_year}: {len(pre_refs)}")
+    log.info("  Unique refs with year <= %d: %d", cutoff_year, len(pre_refs))
 
     # Count how often each such ref is cited (by ANY paper in corpus)
     pre_ref_counts = ref_counts[ref_counts.index.isin(pre_refs)]
-    print(f"  Refs cited >= 1 time: {len(pre_ref_counts)}")
-    print(f"  Refs cited >= 3 times: {(pre_ref_counts >= 3).sum()}")
-    print(f"  Refs cited >= 5 times: {(pre_ref_counts >= 5).sum()}")
-    print(f"  Refs cited >= 10 times: {(pre_ref_counts >= 10).sum()}")
+    log.info("  Refs cited >= 1 time: %d", len(pre_ref_counts))
+    log.info("  Refs cited >= 3 times: %d", (pre_ref_counts >= 3).sum())
+    log.info("  Refs cited >= 5 times: %d", (pre_ref_counts >= 5).sum())
+    log.info("  Refs cited >= 10 times: %d", (pre_ref_counts >= 10).sum())
 
     # Select top N
     actual_n = min(top_n, len(pre_ref_counts))
@@ -146,13 +148,13 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
     top_set = set(top_refs)
     ref_to_idx = {ref: i for i, ref in enumerate(top_refs)}
 
-    print(f"  Using top {actual_n} most-cited refs")
+    log.info("  Using top %d most-cited refs", actual_n)
     if actual_n > 0:
-        print(f"  Citation range in top set: "
-              f"{pre_ref_counts.iloc[0]} .. {pre_ref_counts.iloc[actual_n - 1]}")
+        log.info("  Citation range in top set: %s .. %s",
+                 pre_ref_counts.iloc[0], pre_ref_counts.iloc[actual_n - 1])
 
     # Build co-citation matrix
-    print("  Building co-citation matrix...")
+    log.info("  Building co-citation matrix...")
     cocit_matrix = lil_matrix((actual_n, actual_n), dtype=np.float64)
     for _source_doi, ref_list in source_groups.items():
         refs_in_top = [r for r in ref_list if r in top_set]
@@ -167,7 +169,7 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
 
     cocit_dense = cocit_matrix.toarray()
     n_pairs = np.count_nonzero(cocit_dense) // 2
-    print(f"  Non-zero co-citation pairs: {n_pairs}")
+    log.info("  Non-zero co-citation pairs: %d", n_pairs)
 
     # Build graph
     G = nx.Graph()
@@ -188,11 +190,11 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
 
     isolates = list(nx.isolates(G))
     G.remove_nodes_from(isolates)
-    print(f"  Network: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
-    print(f"  Removed {len(isolates)} isolates")
+    log.info("  Network: %d nodes, %d edges", G.number_of_nodes(), G.number_of_edges())
+    log.info("  Removed %d isolates", len(isolates))
 
     if G.number_of_nodes() == 0:
-        print("  WARNING: empty graph, no communities to detect.")
+        log.warning("  Empty graph, no communities to detect.")
         return {
             "partition": {},
             "graph": G,
@@ -213,8 +215,8 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
     for v in partition.values():
         sizes[v] += 1
     size_str = ", ".join(str(s) for s in sorted(sizes.values(), reverse=True))
-    print(f"  Louvain: {n_comm} communities (sizes: {size_str})")
-    print(f"  Modularity: {modularity:.4f}")
+    log.info("  Louvain: %d communities (sizes: %s)", n_comm, size_str)
+    log.info("  Modularity: %.4f", modularity)
 
     # Collect community DOI sets and characterize
     community_dois = defaultdict(set)
@@ -229,8 +231,8 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
         )
 
         # Top 5 papers
-        print(f"\n  Community {c} ({len(papers)} papers):")
-        print("    Top 5 papers:")
+        log.info("  Community %d (%d papers):", c, len(papers))
+        log.info("    Top 5 papers:")
         top_authors = []
         for d in papers_sorted[:5]:
             meta = doi_meta.get(d, {})
@@ -244,7 +246,7 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
             if title in ("nan", "None", ""):
                 title = f"[{d[:30]}]"
             rc = ref_counts.get(d, 0)
-            print(f"      [{rc:>3}x] {author} ({year_val}) {title}")
+            log.info("      [%3dx] %s (%s) %s", rc, author, year_val, title)
             surname = author.split(",")[0].split(";")[0].strip().split()[-1]
             if surname not in ("?", "nan", "None", ""):
                 top_authors.append(surname)
@@ -278,11 +280,11 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
                 top_idx = mean_tfidf.argsort()[::-1][:15]
                 terms = tfidf.get_feature_names_out()
                 tfidf_terms = [terms[i] for i in top_idx]
-                print(f"    TF-IDF ({len(texts)} texts): {', '.join(tfidf_terms[:10])}")
+                log.info("    TF-IDF (%d texts): %s", len(texts), ", ".join(tfidf_terms[:10]))
             except Exception as e:
-                print(f"    (TF-IDF failed: {e})")
+                log.warning("    (TF-IDF failed: %s)", e)
         else:
-            print(f"    (Only {len(texts)} texts -- skipping TF-IDF)")
+            log.info("    (Only %d texts -- skipping TF-IDF)", len(texts))
 
         # Build a short label from top 3 TF-IDF unigrams
         label_terms = [t for t in tfidf_terms if " " not in t][:3]
@@ -320,9 +322,9 @@ for w in WINDOWS:
 # Step 3: Jaccard similarity across windows
 # ============================================================
 
-print("\n" + "=" * 80)
-print("JACCARD SIMILARITY MATRICES BETWEEN COMMUNITY PAIRS")
-print("=" * 80)
+log.info("=" * 80)
+log.info("JACCARD SIMILARITY MATRICES BETWEEN COMMUNITY PAIRS")
+log.info("=" * 80)
 
 window_labels = [w["label"] for w in WINDOWS]
 
@@ -349,13 +351,13 @@ for i in range(len(window_labels)):
         comms1 = sorted(cd1.keys())
         comms2 = sorted(cd2.keys())
 
-        print(f"\n--- {w1} vs {w2} ---")
+        log.info("--- %s vs %s ---", w1, w2)
         # Header
         header = f"{'':>20s}"
         for c2 in comms2:
             header += f" | C{c2}({len(cd2[c2]):>3d})"
-        print(header)
-        print("-" * len(header))
+        log.info("%s", header)
+        log.info("%s", "-" * len(header))
 
         for c1 in comms1:
             row = f"C{c1}({len(cd1[c1]):>3d}) {cl1[c1][:12]:>12s}"
@@ -365,16 +367,16 @@ for i in range(len(window_labels)):
                     row += f" | {j_val:>8.3f}"
                 else:
                     row += f" | {'---':>8s}"
-            print(row)
+            log.info("%s", row)
 
 
 # ============================================================
 # Step 4: Align communities using greedy Jaccard matching
 # ============================================================
 
-print("\n" + "=" * 80)
-print("COMMUNITY ALIGNMENT ACROSS TIME WINDOWS")
-print("=" * 80)
+log.info("=" * 80)
+log.info("COMMUNITY ALIGNMENT ACROSS TIME WINDOWS")
+log.info("=" * 80)
 
 
 def build_jaccard_matrix(cd1, cd2):
@@ -459,8 +461,7 @@ cl_list = [results[w]["community_labels"] for w in window_labels]
 aligned_rows = greedy_alignment(cd_list, cl_list, window_labels)
 
 # Print the aligned table
-print(f"\n{'ALIGNED COMMUNITIES ACROSS TIME WINDOWS':^100}")
-print()
+log.info("%s", f"{'ALIGNED COMMUNITIES ACROSS TIME WINDOWS':^100}")
 
 # Column widths
 col_w = 32
@@ -470,8 +471,8 @@ sep = "-" * (6 + (col_w + 3) * len(window_labels))
 header = f"{'Row':>4s}"
 for w_idx, w in enumerate(WINDOWS):
     header += f" | {w['label'] + ' (<=' + str(w['cutoff']) + ')':^{col_w}s}"
-print(header)
-print(sep)
+log.info("%s", header)
+log.info("%s", sep)
 
 row_letter = ord('A')
 for aligned_row in aligned_rows:
@@ -506,19 +507,19 @@ for aligned_row in aligned_rows:
             cell2 = ""
         line1 += f" | {cell1:<{col_w}s}"
         line2 += f" | {cell2:<{col_w}s}"
-    print(line1)
-    print(line2)
+    log.info("%s", line1)
+    log.info("%s", line2)
     row_letter += 1
 
-print(sep)
+log.info("%s", sep)
 
 # ============================================================
 # Step 5: Summary of DOI flow across windows
 # ============================================================
 
-print("\n" + "=" * 80)
-print("DOI OVERLAP SUMMARY")
-print("=" * 80)
+log.info("=" * 80)
+log.info("DOI OVERLAP SUMMARY")
+log.info("=" * 80)
 
 for i in range(len(window_labels)):
     for j in range(i + 1, len(window_labels)):
@@ -532,27 +533,27 @@ for i in range(len(window_labels)):
         overlap = all_dois_1 & all_dois_2
         only_1 = all_dois_1 - all_dois_2
         only_2 = all_dois_2 - all_dois_1
-        print(f"\n  {w1} ({len(all_dois_1)} refs) vs {w2} ({len(all_dois_2)} refs):")
-        print(f"    Shared: {len(overlap)}, Only in {w1}: {len(only_1)}, "
-              f"Only in {w2}: {len(only_2)}")
-        print(f"    Jaccard (full sets): {jaccard(all_dois_1, all_dois_2):.3f}")
+        log.info("  %s (%d refs) vs %s (%d refs):", w1, len(all_dois_1), w2, len(all_dois_2))
+        log.info("    Shared: %d, Only in %s: %d, Only in %s: %d",
+                 len(overlap), w1, len(only_1), w2, len(only_2))
+        log.info("    Jaccard (full sets): %.3f", jaccard(all_dois_1, all_dois_2))
 
 # ============================================================
 # Final summary
 # ============================================================
 
-print("\n" + "=" * 80)
-print("PARAMETER SUMMARY")
-print("=" * 80)
-print(f"  Top N references per window: {TOP_N}")
-print(f"  Min co-citation for edge: {MIN_COCIT}")
-print(f"  Louvain resolution: {RESOLUTION}")
-print(f"  Random state: {RANDOM_STATE}")
+log.info("=" * 80)
+log.info("PARAMETER SUMMARY")
+log.info("=" * 80)
+log.info("  Top N references per window: %d", TOP_N)
+log.info("  Min co-citation for edge: %d", MIN_COCIT)
+log.info("  Louvain resolution: %s", RESOLUTION)
+log.info("  Random state: %d", RANDOM_STATE)
 for w in WINDOWS:
     r = results[w["label"]]
     s = r["stats"]
-    print(f"\n  {w['label']} (year <= {w['cutoff']}):")
-    print(f"    Network: {s['nodes']} nodes, {s['edges']} edges")
-    print(f"    Communities: {s['n_communities']}, Modularity: {s['modularity']:.4f}")
+    log.info("  %s (year <= %d):", w["label"], w["cutoff"])
+    log.info("    Network: %d nodes, %d edges", s["nodes"], s["edges"])
+    log.info("    Communities: %d, Modularity: %.4f", s["n_communities"], s["modularity"])
 
-print("\nDone.")
+log.info("Done.")

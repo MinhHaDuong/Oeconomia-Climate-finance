@@ -29,7 +29,9 @@ from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_embeddings, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings, save_figure
+
+log = get_logger("plot_fig45_pca_scatter")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -106,7 +108,7 @@ else:
 # Step 1: Load data + embeddings
 # ============================================================
 
-print("Loading data...")
+log.info("Loading data...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
@@ -118,7 +120,7 @@ embeddings = load_refined_embeddings()[(has_title & in_range).values]
 assert len(embeddings) == len(df), (
     f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
 )
-print(f"Loaded {len(df)} papers with embeddings ({embeddings.shape[1]}D)")
+log.info("Loaded %d papers with embeddings (%dD)", len(df), embeddings.shape[1])
 
 df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
 if args.core_only:
@@ -126,7 +128,7 @@ if args.core_only:
     core_indices = df.index[core_mask].values
     df = df.loc[core_mask].reset_index(drop=True)
     embeddings = embeddings[core_indices]
-    print(f"Core subset: {len(df)} papers (cited_by_count >= {CITE_THRESHOLD})")
+    log.info("Core subset: %d papers (cited_by_count >= %d)", len(df), CITE_THRESHOLD)
 
 df["year"] = df["year"].astype(int)
 df["abstract_lower"] = df["abstract"].str.lower()
@@ -143,7 +145,7 @@ axes_info = []
 
 if args.supervised:
     # --- Supervised: seed axis from pole paper centroids ---
-    print("\n--- Supervised mode: efficiency↔accountability seed axis ---")
+    log.info("--- Supervised mode: efficiency↔accountability seed axis ---")
 
     def count_pole_terms(text, terms):
         if pd.isna(text):
@@ -159,7 +161,7 @@ if args.supervised:
     eff_mask = df["eff_count"] >= 2
     acc_mask = df["acc_count"] >= 2
     n_eff, n_acc = eff_mask.sum(), acc_mask.sum()
-    print(f"Pole papers: {n_eff} efficiency, {n_acc} accountability")
+    log.info("Pole papers: %d efficiency, %d accountability", n_eff, n_acc)
 
     centroid_eff = embeddings[eff_mask].mean(axis=0)
     centroid_acc = embeddings[acc_mask].mean(axis=0)
@@ -171,14 +173,14 @@ if args.supervised:
     total_var = np.var(embeddings, axis=0).sum()
     axis_var = np.var(projections)
     explained_frac = axis_var / total_var
-    print(f"Seed axis explains {explained_frac:.1%} of total variance")
+    log.info("Seed axis explains %.1f%% of total variance", explained_frac * 100)
 
     # Bimodality test
     proj_col = projections.reshape(-1, 1)
     gmm1 = GaussianMixture(n_components=1, random_state=42).fit(proj_col)
     gmm2 = GaussianMixture(n_components=2, random_state=42).fit(proj_col)
     dbic = gmm1.bic(proj_col) - gmm2.bic(proj_col)
-    print(f"Seed axis ΔBIC = {dbic:.0f}")
+    log.info("Seed axis ΔBIC = %.0f", dbic)
 
     axes_info.append({
         "component": "seed",
@@ -196,16 +198,16 @@ if args.supervised:
 
 else:
     # --- Unsupervised: PCA + bimodality filtering ---
-    print(f"\nRunning PCA (n_components={N_COMPONENTS})...")
+    log.info("Running PCA (n_components=%d)...", N_COMPONENTS)
     pca = PCA(n_components=N_COMPONENTS, random_state=42)
     pca_scores = pca.fit_transform(embeddings)
 
-    print("Variance explained by first 10 PCs:")
+    log.info("Variance explained by first 10 PCs:")
     for i, v in enumerate(pca.explained_variance_ratio_):
-        print(f"  PC{i+1}: {v:.1%}")
-    print(f"  Total: {pca.explained_variance_ratio_.sum():.1%}")
+        log.info("  PC%d: %.1f%%", i + 1, v * 100)
+    log.info("  Total: %.1f%%", pca.explained_variance_ratio_.sum() * 100)
 
-    print(f"\nBimodality test (ΔBIC threshold = {DBIC_THRESHOLD}):")
+    log.info("Bimodality test (ΔBIC threshold = %d):", DBIC_THRESHOLD)
     for i in range(N_COMPONENTS):
         scores = pca_scores[:, i].reshape(-1, 1)
         gmm1 = GaussianMixture(n_components=1, random_state=42).fit(scores)
@@ -213,7 +215,7 @@ else:
         dbic = gmm1.bic(scores) - gmm2.bic(scores)
 
         tag = " ***" if dbic > DBIC_THRESHOLD else ""
-        print(f"  PC{i+1}: ΔBIC = {dbic:.0f}{tag}")
+        log.info("  PC%d: ΔBIC = %.0f%s", i + 1, dbic, tag)
 
         if dbic > DBIC_THRESHOLD:
             axes_info.append({
@@ -226,14 +228,14 @@ else:
             })
 
     if not axes_info:
-        print("\nNo PCs passed the bimodality threshold. Exiting.")
+        log.info("No PCs passed the bimodality threshold. Exiting.")
         raise SystemExit(0)
 
-    print(f"\n{len(axes_info)} qualifying PC(s): "
-          + ", ".join(f"PC{a['component']}" for a in axes_info))
+    log.info("%d qualifying PC(s): %s",
+             len(axes_info), ", ".join("PC%d" % a['component'] for a in axes_info))
 
     # TF-IDF term labels for unsupervised PCs
-    print("\nFitting TF-IDF for term labelling...")
+    log.info("Fitting TF-IDF for term labelling...")
     abstracts = df["abstract"].fillna("").tolist()
     tfidf_vec = TfidfVectorizer(
         max_features=10000, ngram_range=(1, 2),
@@ -266,8 +268,8 @@ else:
         ax_info["top_negative_terms"] = ", ".join(top_neg)
         ax_info["label"] = f"PC{ax_info['component']}"
 
-        print(f"  PC{ax_info['component']} (+): {', '.join(top_pos)}")
-        print(f"  PC{ax_info['component']} (-): {', '.join(top_neg)}")
+        log.info("  PC%d (+): %s", ax_info['component'], ', '.join(top_pos))
+        log.info("  PC%d (-): %s", ax_info['component'], ', '.join(top_neg))
 
 
 # ============================================================
@@ -389,6 +391,6 @@ for ax_info in axes_info:
     tab_rows.append(row)
 tab = pd.DataFrame(tab_rows)
 tab.to_csv(os.path.join(TABLES_DIR, TAB_FILE), index=False)
-print(f"\nSaved -> tables/{TAB_FILE}")
+log.info("Saved -> tables/%s", TAB_FILE)
 
-print("\nDone.")
+log.info("Done.")

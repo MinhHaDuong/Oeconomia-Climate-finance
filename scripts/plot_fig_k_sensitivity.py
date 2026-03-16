@@ -15,7 +15,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from plot_style import COP_EVENTS
-from utils import BASE_DIR, save_figure
+from utils import BASE_DIR, get_logger, save_figure
+
+log = get_logger("plot_fig_k_sensitivity")
 
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
@@ -58,4 +60,4 @@ ax.legend(fontsize=9, framealpha=0.9)
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, "fig_k_sensitivity"), no_pdf=args.no_pdf)
 plt.close()
-print("Saved fig_k_sensitivity.png")
+log.info("Saved fig_k_sensitivity.png")

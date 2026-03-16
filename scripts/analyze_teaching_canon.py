@@ -26,7 +26,9 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, DATA_DIR
+from utils import BASE_DIR, DATA_DIR, get_logger
+
+log = get_logger("analyze_teaching_canon")
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
 INPUT_MANUAL = os.path.join(DATA_DIR, "syllabi", "manual_catalog.yaml")
@@ -129,12 +131,11 @@ def main():
     os.makedirs(os.path.dirname(OUTPUT_TABLE), exist_ok=True)
     table.to_csv(OUTPUT_TABLE, index=False)
 
-    print(f"Works in corpus taught at {MIN_INSTITUTIONS}+ institutions: {len(table)}")
-    print(f"Wrote {OUTPUT_TABLE}")
-    print()
+    log.info("Works in corpus taught at %d+ institutions: %d", MIN_INSTITUTIONS, len(table))
+    log.info("Wrote %s", OUTPUT_TABLE)
     for _, r in table.iterrows():
         auth = r["first_author"].split(",")[0].split()[-1] if r["first_author"] else "?"
-        print(f"  {r['n_institutions']}  {auth} ({r['year']}) {r['title'][:65]}")
+        log.info("  %d  %s (%s) %s", r['n_institutions'], auth, r['year'], r['title'][:65])
 
 
 if __name__ == "__main__":

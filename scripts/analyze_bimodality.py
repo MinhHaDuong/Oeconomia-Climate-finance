@@ -29,7 +29,10 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_embeddings, save_figure
+from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings,
+                   save_figure)
+
+log = get_logger("analyze_bimodality")
 
 parser = argparse.ArgumentParser(description="Bimodality analysis (Fig 5)")
 parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
@@ -71,7 +74,7 @@ PERIOD_COLORS = {"1990–2006": "#8da0cb", "2007–2014": "#fc8d62", "2015–202
 
 
 # --- Load data + embeddings ---
-print("Loading data...")
+log.info("Loading data...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
@@ -81,7 +84,7 @@ df = works[has_title & in_range].copy().reset_index(drop=True)
 
 embeddings = load_refined_embeddings()[(has_title & in_range).values]
 assert len(embeddings) == len(df), f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
-print(f"Loaded {len(df)} papers with embeddings ({embeddings.shape[1]}D)")
+log.info("Loaded %d papers with embeddings (%dD)", len(df), embeddings.shape[1])
 
 # Core filtering: keep only highly-cited papers
 CITE_THRESHOLD = 50
@@ -91,7 +94,7 @@ if args.core_only:
     core_indices = df.index[core_mask].values
     df = df.loc[core_mask].reset_index(drop=True)
     embeddings = embeddings[core_indices]
-    print(f"Core-only mode: {len(df)} papers (cited_by_count >= {CITE_THRESHOLD})")
+    log.info("Core-only mode: %d papers (cited_by_count >= %d)", len(df), CITE_THRESHOLD)
     assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
 
 # Output naming: use "_core" suffix for figures and "b" prefix for tables in core mode
@@ -135,7 +138,7 @@ acc_mask = df["acc_count"] >= 2
 n_eff = eff_mask.sum()
 n_acc = acc_mask.sum()
 n_both = (eff_mask & acc_mask).sum()
-print(f"\nPole papers: {n_eff} efficiency, {n_acc} accountability, {n_both} both")
+log.info("Pole papers: %d efficiency, %d accountability, %d both", n_eff, n_acc, n_both)
 
 
 # ============================================================
@@ -154,7 +157,7 @@ projections = embeddings @ axis
 total_var = np.var(embeddings, axis=0).sum()
 axis_var = np.var(projections)
 explained_frac = axis_var / total_var
-print(f"Axis explains {explained_frac:.1%} of total embedding variance")
+log.info("Axis explains %.1f%% of total embedding variance", explained_frac * 100)
 
 
 # ============================================================
@@ -179,26 +182,26 @@ bic1 = gmm1.bic(scores.reshape(-1, 1))
 bic2 = gmm2.bic(scores.reshape(-1, 1))
 delta_bic = bic1 - bic2  # positive = 2-component is better
 
-print(f"\nGMM BIC: 1-component={bic1:.0f}, 2-component={bic2:.0f}, ΔBIC={delta_bic:.0f}")
+log.info("GMM BIC: 1-component=%.0f, 2-component=%.0f, dBIC=%.0f", bic1, bic2, delta_bic)
 if delta_bic > 10:
-    print("  → Strong evidence for bimodality (ΔBIC > 10)")
+    log.info("-> Strong evidence for bimodality (dBIC > 10)")
 elif delta_bic > 0:
-    print("  → Weak evidence for bimodality")
+    log.info("-> Weak evidence for bimodality")
 else:
-    print("  → Unimodal (1-component preferred)")
+    log.info("-> Unimodal (1-component preferred)")
 
 # Dip test (optional)
 dip_pvalue = None
 try:
     import diptest
     dip_stat, dip_pvalue = diptest.diptest(scores)
-    print(f"Hartigan's dip test: statistic={dip_stat:.4f}, p={dip_pvalue:.4f}")
+    log.info("Hartigan's dip test: statistic=%.4f, p=%.4f", dip_stat, dip_pvalue)
     if dip_pvalue < 0.05:
-        print("  → Reject unimodality (p < 0.05)")
+        log.info("-> Reject unimodality (p < 0.05)")
     else:
-        print("  → Cannot reject unimodality")
+        log.info("-> Cannot reject unimodality")
 except ImportError:
-    print("diptest package not available, skipping Hartigan's dip test")
+    log.info("diptest package not available, skipping Hartigan's dip test")
 
 # Per-period bimodality
 period_stats = []
@@ -223,8 +226,8 @@ for period_label, (y_start, y_end) in PERIODS.items():
 
     period_stats.append({"period": period_label, "n": len(pscores),
                          "delta_bic": dbic, "dip_p": dp})
-    print(f"  {period_label} (n={len(pscores)}): ΔBIC={dbic:.0f}" +
-          (f", dip p={dp:.4f}" if dp is not None else ""))
+    log.info("%s (n=%d): dBIC=%.0f%s", period_label, len(pscores), dbic,
+             (", dip p=%.4f" % dp) if dp is not None else "")
 
 
 # ============================================================
@@ -276,7 +279,7 @@ fig.suptitle(
 )
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, FIG5A), no_pdf=args.no_pdf)
-print(f"  ({FIG5A})")
+log.info("(%s)", FIG5A)
 plt.close()
 
 
@@ -284,7 +287,7 @@ plt.close()
 # Step 6: TF-IDF axis (Method B — lexical validation)
 # ============================================================
 
-print("\n=== Method B: TF-IDF lexical axis ===")
+log.info("=== Method B: TF-IDF lexical axis ===")
 
 # Fit TF-IDF on all abstracts
 abstracts = df["abstract"].fillna("").tolist()
@@ -295,7 +298,7 @@ tfidf = TfidfVectorizer(
     stop_words="english",
 )
 X_tfidf = tfidf.fit_transform(abstracts)
-print(f"TF-IDF matrix: {X_tfidf.shape}")
+log.info("TF-IDF matrix: %s", X_tfidf.shape)
 
 # Compute mean TF-IDF for each pole
 eff_tfidf = X_tfidf[eff_mask.values].mean(axis=0).A1
@@ -314,7 +317,7 @@ lex_vals = df["lex_score"].values
 lg1 = GaussianMixture(n_components=1, random_state=42).fit(lex_vals.reshape(-1, 1))
 lg2 = GaussianMixture(n_components=2, random_state=42).fit(lex_vals.reshape(-1, 1))
 lex_dbic = lg1.bic(lex_vals.reshape(-1, 1)) - lg2.bic(lex_vals.reshape(-1, 1))
-print(f"Lexical ΔBIC: {lex_dbic:.0f}")
+log.info("Lexical dBIC: %.0f", lex_dbic)
 
 # Lexical figure
 fig, axes = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
@@ -344,19 +347,19 @@ fig.suptitle(
 )
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, FIG5B), no_pdf=args.no_pdf)
-print(f"  ({FIG5B})")
+log.info("(%s)", FIG5B)
 plt.close()
 
 # Agreement check
 corr = np.corrcoef(df["axis_score"].values, df["lex_score"].values)[0, 1]
-print(f"Correlation between embedding and TF-IDF axis scores: r={corr:.3f}")
+log.info("Correlation between embedding and TF-IDF axis scores: r=%.3f", corr)
 
 
 # ============================================================
 # Step 6b: Unsupervised main-axis detection (TF-IDF SVD)
 # ============================================================
 
-print("\n=== Unsupervised axis detection (TF-IDF SVD) ===")
+log.info("=== Unsupervised axis detection (TF-IDF SVD) ===")
 
 n_components = min(5, max(2, X_tfidf.shape[1] - 1))
 svd = TruncatedSVD(n_components=n_components, random_state=42)
@@ -405,9 +408,9 @@ for comp_idx in range(n_components):
         best_dbic = comp_dbic
 
 main_axis_label = f"PC{best_idx + 1}"
-print(
-    f"Main unsupervised component aligned with efficiency↔accountability axis: "
-    f"{main_axis_label} (r={best_corr:.3f}, ΔBIC={best_dbic:.0f})"
+log.info(
+    "Main unsupervised component aligned with efficiency<->accountability axis: "
+    "%s (r=%.3f, dBIC=%.0f)", main_axis_label, best_corr, best_dbic
 )
 
 
@@ -417,7 +420,7 @@ print(
 
 from sklearn.decomposition import PCA
 
-print("\n=== Unsupervised axis detection (Embedding PCA) ===")
+log.info("=== Unsupervised axis detection (Embedding PCA) ===")
 
 n_emb_components = 10
 pca = PCA(n_components=n_emb_components, random_state=42)
@@ -449,8 +452,8 @@ for comp_idx in range(n_emb_components):
         "delta_bic": comp_dbic,
     })
 
-    print(f"  emb_PC{comp_idx + 1}: var={pca_explained[comp_idx]:.3f}, "
-          f"r={comp_corr:+.3f}, ΔBIC={comp_dbic:.0f}")
+    log.info("emb_PC%d: var=%.3f, r=%+.3f, dBIC=%.0f",
+             comp_idx + 1, pca_explained[comp_idx], comp_corr, comp_dbic)
 
     if comp_abs_corr > emb_best_abs_corr:
         emb_best_abs_corr = comp_abs_corr
@@ -459,20 +462,21 @@ for comp_idx in range(n_emb_components):
         emb_best_dbic = comp_dbic
 
 emb_main_label = f"emb_PC{emb_best_idx + 1}"
-print(
-    f"\nBest embedding PCA component aligned with seed axis: "
-    f"{emb_main_label} (r={emb_best_corr:+.3f}, explains {pca_explained[emb_best_idx]:.1%} "
-    f"of embedding variance, ΔBIC={emb_best_dbic:.0f})"
+log.info(
+    "Best embedding PCA component aligned with seed axis: "
+    "%s (r=%+.3f, explains %.1f%% of embedding variance, dBIC=%.0f)",
+    emb_main_label, emb_best_corr, pca_explained[emb_best_idx] * 100, emb_best_dbic
 )
-print(f"Seed axis explains {explained_frac:.1%} of embedding variance (for comparison)")
-print(f"Top 10 embedding PCs explain {pca_explained.sum():.1%} total")
+log.info("Seed axis explains %.1f%% of embedding variance (for comparison)",
+         explained_frac * 100)
+log.info("Top 10 embedding PCs explain %.1f%% total", pca_explained.sum() * 100)
 
 
 # ============================================================
 # Step 7: Keyword co-occurrence scatter (Method C)
 # ============================================================
 
-print("\n=== Method C: Keyword co-occurrence ===")
+log.info("=== Method C: Keyword co-occurrence ===")
 
 fig, ax = plt.subplots(figsize=(7, 6))
 
@@ -505,7 +509,7 @@ ax_histx.tick_params(labelbottom=False)
 ax_histy.tick_params(labelleft=False)
 
 save_figure(fig, os.path.join(FIGURES_DIR, FIG5C), no_pdf=args.no_pdf)
-print(f"  ({FIG5C})")
+log.info("(%s)", FIG5C)
 plt.close()
 
 
@@ -513,7 +517,7 @@ plt.close()
 # Step 7b: Embedding PCA — axis detection
 # ============================================================
 
-print("\n=== Embedding PCA: axis detection ===")
+log.info("=== Embedding PCA: axis detection ===")
 
 n_emb_components = 5
 pca = PCA(n_components=n_emb_components, random_state=42)
@@ -548,9 +552,9 @@ for comp_idx in range(n_emb_components):
     pos_terms = "; ".join(feature_names[j] for j in top_pos_idx)
     neg_terms = "; ".join(feature_names[j] for j in top_neg_idx)
 
-    print(f"  PC{comp_idx+1}: var={var_explained:.3f}, cos(seed axis)={cos_sim:.3f}")
-    print(f"    + {pos_terms}")
-    print(f"    - {neg_terms}")
+    log.info("PC%d: var=%.3f, cos(seed axis)=%.3f", comp_idx + 1, var_explained, cos_sim)
+    log.info("  + %s", pos_terms)
+    log.info("  - %s", neg_terms)
 
     axis_rows.append({
         "component": f"emb_PC{comp_idx+1}",
@@ -571,7 +575,7 @@ axis_rows.append({
 
 axis_detection = pd.DataFrame(axis_rows)
 axis_detection.to_csv(os.path.join(TABLES_DIR, TAB5_AXIS), index=False)
-print(f"Saved → tables/{TAB5_AXIS}")
+log.info("Saved -> tables/%s", TAB5_AXIS)
 
 
 # ============================================================
@@ -628,13 +632,13 @@ for ps in period_stats:
 
 tab5 = pd.DataFrame(summary_rows)
 tab5.to_csv(os.path.join(TABLES_DIR, TAB5_BIM), index=False)
-print(f"\nSaved → tables/{TAB5_BIM}")
+log.info("Saved -> tables/%s", TAB5_BIM)
 
 # Combine TF-IDF SVD and embedding PCA rows
 all_axis_rows = component_rows + emb_component_rows
 axis_tab = pd.DataFrame(all_axis_rows).sort_values("component")
 axis_tab.to_csv(os.path.join(TABLES_DIR, "tab_axis_detection.csv"), index=False)
-print("Saved → tables/tab_axis_detection.csv")
+log.info("Saved -> tables/tab_axis_detection.csv")
 
 # Per-paper scores
 pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",
@@ -644,6 +648,6 @@ pole_papers["pole_assignment"] = np.where(
     np.where(df["axis_score"] < 0, "accountability", "neutral")
 )
 pole_papers.to_csv(os.path.join(TABLES_DIR, TAB5_POLE), index=False)
-print(f"Saved → tables/{TAB5_POLE} ({len(pole_papers)} papers)")
+log.info("Saved -> tables/%s (%d papers)", TAB5_POLE, len(pole_papers))
 
-print("\nDone.")
+log.info("Done.")

@@ -18,7 +18,9 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, save_csv)
+from utils import (CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv)
+
+log = get_logger("catalog_scopus")
 
 SCOPUS_SEARCH_URL = "https://api.elsevier.com/content/search/scopus"
 
@@ -30,16 +32,14 @@ def main():
 
     api_key = os.environ.get("SCOPUS_API_KEY", "")
     if not api_key:
-        print("""Scopus API key not found. To use this script:
-
-1. Register at https://dev.elsevier.com/
-2. Create an API key (free for CNRS institutional users)
-3. Set environment variable:
-       export SCOPUS_API_KEY="your-key-here"
-4. Ensure you are on your institutional network (or VPN)
-5. Re-run this script
-
-Skipping Scopus catalog (this is optional).""")
+        log.warning("Scopus API key not found. To use this script:\n"
+                    "1. Register at https://dev.elsevier.com/\n"
+                    "2. Create an API key (free for CNRS institutional users)\n"
+                    "3. Set environment variable:\n"
+                    "       export SCOPUS_API_KEY=\"your-key-here\"\n"
+                    "4. Ensure you are on your institutional network (or VPN)\n"
+                    "5. Re-run this script\n\n"
+                    "Skipping Scopus catalog (this is optional).")
         return
 
     query = 'TITLE-ABS-KEY("climate finance" OR "finance climat" OR "finance climatique")'
@@ -62,10 +62,10 @@ Skipping Scopus catalog (this is optional).""")
         resp = requests.get(SCOPUS_SEARCH_URL, params=params, headers=headers,
                             timeout=30)
         if resp.status_code == 401:
-            print("ERROR: Authentication failed. Check your API key and network.")
+            log.error("Authentication failed. Check your API key and network.")
             return
         if resp.status_code == 429:
-            print("Rate limited. Waiting 60s...")
+            log.warning("Rate limited. Waiting 60s...")
             time.sleep(60)
             continue
         resp.raise_for_status()
@@ -73,7 +73,7 @@ Skipping Scopus catalog (this is optional).""")
         data = resp.json().get("search-results", {})
         if total is None:
             total = int(data.get("opensearch:totalResults", 0))
-            print(f"Total results: {total}")
+            log.info("Total results: %d", total)
 
         entries = data.get("entry", [])
         if not entries:
@@ -100,7 +100,7 @@ Skipping Scopus catalog (this is optional).""")
             })
 
         start += count
-        print(f"  Fetched {start}/{total}")
+        log.info("  Fetched %d/%d", start, total)
 
         if args.limit and start >= args.limit:
             break
@@ -110,13 +110,13 @@ Skipping Scopus catalog (this is optional).""")
         time.sleep(0.5)
 
     if not records:
-        print("No records found.")
+        log.info("No records found.")
         return
 
     df = pd.DataFrame(records, columns=WORKS_COLUMNS)
     save_csv(df, os.path.join(CATALOGS_DIR, "scopus_works.csv"))
 
-    print(f"\nSummary: {len(df)} works")
+    log.info("Summary: %d works", len(df))
 
 
 if __name__ == "__main__":

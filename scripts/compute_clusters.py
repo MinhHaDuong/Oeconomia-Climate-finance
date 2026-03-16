@@ -27,7 +27,9 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import adjusted_rand_score
 
-from utils import BASE_DIR, CATALOGS_DIR, load_analysis_config, load_analysis_corpus, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_analysis_config, load_analysis_corpus, normalize_doi
+
+log = get_logger("compute_clusters")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -53,7 +55,7 @@ LABEL_FILE = "cluster_labels_core.json" if args.core_only else "cluster_labels.j
 # ============================================================
 
 df, embeddings = load_analysis_corpus(core_only=args.core_only)
-print(f"Loaded {len(df)} works, embeddings shape: {embeddings.shape}")
+log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
 
 
 # ============================================================
@@ -63,14 +65,14 @@ print(f"Loaded {len(df)} works, embeddings shape: {embeddings.shape}")
 K_DEFAULT = 6
 CITE_THRESHOLD = 50
 
-print(f"\nFitting global KMeans (k={K_DEFAULT}) on full corpus...")
+log.info("Fitting global KMeans (k=%d) on full corpus...", K_DEFAULT)
 kmeans = KMeans(n_clusters=K_DEFAULT, random_state=42, n_init=20)
 df["cluster"] = kmeans.fit_predict(embeddings)
 
-print("\nCluster sizes:")
+log.info("Cluster sizes:")
 for c in range(K_DEFAULT):
     n = (df["cluster"] == c).sum()
-    print(f"  Cluster {c}: {n}")
+    log.info("  Cluster %d: %d", c, n)
 
 
 # ============================================================
@@ -79,28 +81,28 @@ for c in range(K_DEFAULT):
 
 cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
 if os.path.exists(cocit_path):
-    print("\n=== KMeans / Louvain alignment check ===")
+    log.info("=== KMeans / Louvain alignment check ===")
     cocit = pd.read_csv(cocit_path)
     df["doi_norm"] = df["doi"].apply(normalize_doi)
     cocit["doi_norm"] = cocit["doi"].apply(normalize_doi)
 
     merged = df.merge(cocit[["doi_norm", "community"]], on="doi_norm", how="inner")
     n_overlap = len(merged)
-    print(f"Papers in both KMeans and Louvain: n = {n_overlap}")
+    log.info("Papers in both KMeans and Louvain: n = %d", n_overlap)
 
     if n_overlap >= 10:
         ari = adjusted_rand_score(merged["cluster"], merged["community"])
-        print(f"Adjusted Rand Index: {ari:.3f}")
+        log.info("Adjusted Rand Index: %.3f", ari)
         if ari < 0.2:
-            print("  → Weak alignment: semantic and citation communities capture different dimensions.")
+            log.info("  -> Weak alignment: semantic and citation communities capture different dimensions.")
         elif ari < 0.5:
-            print("  → Moderate alignment: broad correspondence with notable divergences.")
+            log.info("  -> Moderate alignment: broad correspondence with notable divergences.")
         else:
-            print("  → Strong alignment: embedding-based and citation-based structure converge.")
+            log.info("  -> Strong alignment: embedding-based and citation-based structure converge.")
     else:
-        print(f"  Too few overlapping papers ({n_overlap}) for meaningful ARI.")
+        log.info("  Too few overlapping papers (%d) for meaningful ARI.", n_overlap)
 else:
-    print("\nWARNING: communities.csv not found, skipping ARI alignment check.")
+    log.warning("communities.csv not found, skipping ARI alignment check.")
 
 
 # ============================================================
@@ -122,8 +124,8 @@ for i in range(len(boundaries) - 1):
         hi = 2025
     period_labels.append(f"{lo}–{hi}")
 
-print(f"\nPeriod boundaries: {all_breaks} (manuscript three-act structure)")
-print(f"Period labels: {period_labels}")
+log.info("Period boundaries: %s (manuscript three-act structure)", all_breaks)
+log.info("Period labels: %s", period_labels)
 
 
 def assign_period(year):
@@ -145,9 +147,8 @@ df["period"] = df["year"].apply(assign_period)
 alluvial_data = pd.crosstab(df["period"], df["cluster"])
 alluvial_data = alluvial_data.reindex(period_labels)
 alluvial_data.to_csv(os.path.join(TABLES_DIR, TAB_AL))
-print(f"\nSaved alluvial table → tables/{TAB_AL}")
-print("\nPeriod × Cluster distribution:")
-print(alluvial_data)
+log.info("Saved alluvial table -> tables/%s", TAB_AL)
+log.info("Period x Cluster distribution:\n%s", alluvial_data)
 
 if not args.core_only:
     core_mask_full = df["cited_by_count"] >= CITE_THRESHOLD
@@ -158,7 +159,7 @@ if not args.core_only:
         if c not in core_crosstab.columns:
             core_crosstab[c] = 0
     core_crosstab.to_csv(os.path.join(TABLES_DIR, "tab_core_shares.csv"))
-    print("Saved core shares table → tables/tab_core_shares.csv")
+    log.info("Saved core shares table -> tables/tab_core_shares.csv")
 
 
 # ============================================================
@@ -336,12 +337,12 @@ for c in range(K_DEFAULT):
 
     cluster_labels[c] = " / ".join(scored) if scored else f"Cluster {c}"
 
-print("\nCluster labels:")
+log.info("Cluster labels:")
 for c, label in cluster_labels.items():
-    print(f"  {c}: {label}")
+    log.info("  %s: %s", c, label)
 
 with open(os.path.join(TABLES_DIR, LABEL_FILE), "w") as f:
     json.dump({str(k): v for k, v in cluster_labels.items()}, f)
-print(f"Saved cluster labels → tables/{LABEL_FILE}")
+log.info("Saved cluster labels -> tables/%s", LABEL_FILE)
 
-print("\nDone.")
+log.info("Done.")

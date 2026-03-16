@@ -22,7 +22,9 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from utils import BASE_DIR, CATALOGS_DIR, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_figure
+
+log = get_logger("plot_fig_alluvial")
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
@@ -259,7 +261,7 @@ ax.axis("off")
 
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, FIG_AL), no_pdf=args.no_pdf)
-print(f"  ({FIG_AL})")
+log.info("  (%s)", FIG_AL)
 plt.close()
 
 
@@ -315,7 +317,7 @@ try:
     _df["period"] = _df["year"].apply(_assign_period)
     _have_paper_data = True
 except Exception as _e:
-    print(f"  (skipping interactive HTML: {_e})")
+    log.info("  (skipping interactive HTML: %s)", _e)
     _have_paper_data = False
 
 if _have_paper_data:
@@ -481,6 +483,6 @@ document.querySelectorAll('.cell').forEach(el => {{
     html_path = os.path.join(FIGURES_DIR, f"{FIG_AL}.html")
     with open(html_path, "w") as f:
         f.write(html_content)
-    print(f"Saved interactive version → figures/{FIG_AL}.html")
+    log.info("Saved interactive version -> figures/%s.html", FIG_AL)
 
-print("\nDone.")
+log.info("Done.")

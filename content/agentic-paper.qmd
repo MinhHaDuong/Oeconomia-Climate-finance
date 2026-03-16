@@ -1,0 +1,356 @@
+---
+title: "Dragon Dreaming with Code Agents: A Case Study of Human-AI Collaboration in Bibliometric Research"
+author: "Minh Ha-Duong"
+date: "2026-03-16"
+bibliography: bibliography/main.bib
+format:
+  pdf:
+    pdf-engine: xelatex
+---
+
+<!-- Target: Scientometrics (Springer), AI4SCIM special issue -->
+<!-- Also suitable: JDIS "AI for Science of Science" or HAI 2026 -->
+<!-- Status: first draft -->
+
+## Abstract
+
+We report on a 27-day experiment (February 18 -- March 16, 2026) using Claude Code, an AI coding agent, to build a bibliometric analysis pipeline for a history-of-science paper on climate finance. The pipeline ingests records from five academic databases, enriches metadata via API orchestration, computes sentence-transformer embeddings, detects structural breaks, and produces publication-ready figures and tables --- approximately 25,400 lines of Python, 800 lines of Quarto, 1,100 lines of YAML, and 4,300 lines of Markdown across 472 git commits.
+
+Quantitative analysis of the git history reveals that 64% of commits carried a Co-Authored-By trailer, indicating that most work was collaborative rather than purely human or purely autonomous. The human researcher authored 73% of commits (344), the primary AI agent 20% (95), a secondary coding agent contributed 7% (32), and GitHub Copilot produced 2% (10). The project generated 89 GitHub issues (93% closed) and 77 pull requests (61 merged, median merge time near zero). A test suite grew from zero to 298 tests across 16 files in five days during a concurrent refactoring wave.
+
+We describe the workflow methodology --- Dragon Dreaming adapted for AI agents --- in which every task passes through four phases (Dreaming, Planning, Doing, Celebrating) with GitHub issues serving as handoff documents between conversation contexts. We document what worked (worktree isolation, test-driven development, DVC pipeline contracts, escalation protocols), what did not (monolithic pipeline stages, insufficient observability, absent budget alerts), and what we observed about the conditions under which AI coding agents can serve as productive research collaborators. The workflow specification itself, encoded in a living document called `AGENTS.md`, underwent 54 revisions over the project's duration.
+
+## 1. Introduction
+
+The use of artificial intelligence in academic research is accelerating. Large language models write code, summarize papers, and draft manuscripts. Coding agents --- systems that autonomously plan, execute, and iterate on programming tasks --- have moved from research prototypes to commercially available tools [@cognition2024devin; @yang2024sweagent]. Yet the literature on AI-assisted research is dominated by two genres: tool descriptions ("here is what our system can do") and benchmark evaluations ("here is how well it performs on standardized tasks"). What remains scarce are detailed reports of using AI agents as collaborators on real research projects, with quantitative evidence about the collaboration dynamics. Recent work has begun to address this gap: Shinn et al. [-@shinn2023reflexion] introduced verbal reinforcement learning for language agents, and the emerging "agentic engineering" discourse treats agent-assisted software development as a first-class research topic.^[See the ICSE AGENT 2026 workshop: <https://conf.researchr.org/home/icse-2026/agent-2026>.] Bara and Vasilica [-@bara2025aibibliometric] proposed an AI-augmented bibliometric framework that shares our concern with automation of scholarly workflows.
+
+This gap matters because the practical challenges of working with AI agents differ substantially from what benchmarks measure. A benchmark evaluates whether an agent can resolve a single, well-defined issue. A real research project requires the agent to maintain coherence across a growing codebase over weeks, handle ambiguous requirements that evolve through discussion, recover from failures without losing progress, and coordinate with a human collaborator whose attention is intermittent and whose preferences are discovered iteratively. These challenges are organizational and methodological, not narrowly technical.
+
+This paper fills that gap. We report on a 27-day experiment in which a senior researcher used Claude Code, Anthropic's command-line AI agent, to build a bibliometric analysis pipeline for a history-of-science paper. The project produced a corpus of approximately 47,000 academic works on climate finance, drawn from OpenAlex, ISTEX, Semantic Scholar, grey literature repositories, and a hand-curated teaching canon. The pipeline computes sentence-transformer embeddings, detects structural breaks in the literature's semantic evolution, identifies intellectual polarization, and generates publication-ready figures and tables.
+
+The experiment was not designed as a controlled study. It was a real research project with real deadlines: the resulting history paper targets the journal *Oeconomia*, and the pipeline was built to serve that paper's empirical needs. What makes it a useful case study is that every interaction between researcher and agent left a trace. The project was managed through git with conventional commits, GitHub issues as task specifications, pull requests for code review, and DVC (Data Version Control) for data pipeline management. These traces allow us to reconstruct the collaboration quantitatively: who did what, when, how long each feedback loop took, and where the process broke down.
+
+Our contribution is threefold. First, we describe a structured methodology --- Dragon Dreaming adapted for AI agents --- that addresses the fundamental challenge of maintaining context and coherence across dozens of agent conversations. The methodology treats context management as a first-class concern: every conversation starts fresh, every task has explicit handoff documents, and cross-conversation learning is mediated by persistent files rather than ephemeral memory. Second, we provide a quantitative characterization of human-AI collaboration based on 472 commits, 89 issues, and 77 pull requests. The data reveals that 64% of commits were co-authored, indicating a predominantly collaborative rather than delegative pattern. Third, we report honestly on failure modes: the budget overruns, the debugging sessions, the cases where the agent's autonomy was counterproductive (pursuing an approach for too long without human feedback), and the cases where it was insufficient (requiring constant guidance that negated the productivity gains).
+
+A methodological note on evidence: the data analyzed in this paper comes entirely from the project's git repository and GitHub issue tracker. We did not instrument the agent or the researcher; the traces are byproducts of the workflow rather than experimental measurements. This means our analysis has the strengths of ecological validity (this is how the project actually ran) and the weaknesses of observational data (we cannot isolate causal effects or compare with a control condition). We present the data descriptively, not as evidence for the superiority of any particular approach. Section 5.7 discusses the limitations of this N=1 design explicitly.
+
+The rest of this paper is organized as follows. Section 2 reviews related work on AI-augmented bibliometrics, LLM coding agents, and human-AI collaboration frameworks. Section 3 describes the Dragon Dreaming methodology as adapted for AI agents. Section 4 provides a brief overview of the climate finance pipeline that served as the application domain. Section 5 presents a quantitative analysis of the collaboration, including an explicit limitations subsection. Section 6 draws lessons. Section 7 discusses implications for research methodology, and Section 8 concludes.
+
+## 2. Related Work
+
+### 2.1 AI-augmented bibliometrics
+
+The application of AI methods to bibliometric analysis has a growing literature. Traditional bibliometrics relies on citation analysis, co-word analysis, and topic modeling [@chen2006citespace; @blondel2008fast]. Recent work has explored using large language models for literature review automation [@lu2024aiscientist], systematic review screening, and metadata extraction. Bara and Vasilica [-@bara2025aibibliometric] proposed an AI-augmented bibliometric framework combining LLM-driven topic extraction with network analysis. Tools like Elicit, Semantic Scholar's TLDR, and Connected Papers use AI to help researchers navigate the literature.
+
+These applications position AI as an end-user tool: the researcher interacts with an AI-powered interface to accomplish bibliometric tasks. Our work occupies a different niche. We do not propose a new AI tool for bibliometrics. Rather, we report on using an existing AI coding agent to *build* bibliometric tools --- the agent writes Python scripts, manages API calls, generates figures, and maintains a reproducible pipeline. The AI operates at the level of software engineering, not at the level of bibliometric methodology. The bibliometric methods themselves (sentence-transformer embeddings, Jensen-Shannon divergence for structural break detection, Gaussian mixture models for polarization) were chosen by the human researcher; the agent implemented them.
+
+### 2.2 LLM coding agents
+
+The past two years have seen rapid development of LLM-based coding agents. Systems like Devin [@cognition2024devin], SWE-Agent [@yang2024sweagent], and OpenHands [@wang2024openhands] can navigate codebases, write tests, fix bugs, and submit pull requests. AFLOW [@zhang2024aflow] explored automated workflow optimization for multi-step LLM tasks. Benchmarks such as SWE-bench [@jimenez2024swebench] evaluate agents on real GitHub issues from open-source projects. Shinn et al. [-@shinn2023reflexion] introduced Reflexion, a framework where language agents improve through verbal self-reflection rather than weight updates, demonstrating that explicit reasoning traces can substitute for gradient-based learning --- an insight that resonates with our externalized memory approach. Claude Code, the system used in our case study, is a command-line agent that operates directly in the developer's terminal, reading and writing files, running commands, and interacting with git and GitHub.
+
+These systems are typically evaluated on isolated tasks: resolve this issue, pass this test. Our case study differs in two respects. First, the agent worked on a sustained project over 27 days, not isolated tasks. The challenge was not just writing correct code but maintaining coherence across a growing codebase with over 25,000 lines of code, 298 tests, and a six-stage data pipeline. Second, the human researcher was actively involved --- not as a passive evaluator but as a collaborator who dreamed, planned, reviewed, and redirected. The question is not "can the agent solve this?" but "what does productive human-AI collaboration look like over weeks?"
+
+Recent work on AI-assisted software engineering has begun to address sustained collaboration. Liu et al. [-@liu2024swesurvey] survey LLM-based agents for software engineering, identifying planning, memory, and tool use as key capabilities. The emerging "agentic engineering" discourse, exemplified by the ICSE AGENT 2026 workshop,^[<https://conf.researchr.org/home/icse-2026/agent-2026>] treats agent-assisted software development as a research area in its own right. Our case study provides empirical evidence on how these capabilities play out in practice: planning is handled by the human (Dreaming/Planning phases), memory is externalized to files (`AGENTS.md`, `MEMORY.md`), and tool use is mediated by the terminal environment.
+
+### 2.3 Reproducibility in computational science
+
+Reproducibility is a persistent concern in computational research [@peng2011reproducible; @stodden2014implementing]. Tools like DVC [@iterative2024dvc], Snakemake [@molder2021snakemake], and CWL [@amstutz2016cwl] address pipeline reproducibility by making data transformations explicit and re-runnable. Our project uses DVC for data versioning and Make for build orchestration, with a strict contract between pipeline phases: Phase 1 (corpus building) produces exactly three files that Phase 2 (analysis) consumes, validated by acceptance tests.
+
+The AI agent's role in reproducibility is ambiguous. On one hand, every decision is recorded in git: issues document rationales, commits explain choices, PRs preserve review discussions. The Makefile enforces deterministic builds (`PYTHONHASHSEED=0`, `SOURCE_DATE_EPOCH=0`). On the other hand, the agent's reasoning traces --- the conversation transcripts where alternatives were considered and discarded --- are not part of the repository. The handoff documents (issues) capture *what* was decided, but not the full deliberation that led there.
+
+### 2.4 Human-AI collaboration frameworks
+
+The HCI literature has explored frameworks for human-AI collaboration, including mixed-initiative interaction [@horvitz1999principles], appropriate reliance [@lee2004trust], and complementary strengths [@bansal2021complementary]. The concept of "appropriate autonomy" --- giving the AI enough independence to be useful without so much that it becomes uncontrollable --- is a recurring theme. Our Dragon Dreaming methodology can be read as one operationalization of this concept, where autonomy is modulated by phase: high human involvement in Dreaming and Planning, high agent autonomy in Doing, and structured reflection in Celebrating.
+
+The guardrail approach to AI safety [@rebedea2023nemo] offers another lens: rather than trusting the agent to self-regulate, the workflow imposes structural constraints. Pre-commit hooks prevent commits to main, enforce file locks, and check for secrets. PR review is mandatory. Tests must pass before merge. These are not suggestions --- they are enforced by tooling.
+
+Dragon Dreaming itself originates in community development practice [@croft2014dragondreaming], where it serves as a framework for collaborative project management. Its four phases --- Dreaming, Planning, Doing, Celebrating --- map naturally onto research workflows, but to our knowledge this is the first application to human-AI collaboration in academic settings. The adaptation is not trivial: in the original framework, all participants share a persistent context (they are humans who remember previous meetings). In the AI-adapted version, context must be explicitly serialized and deserialized at each phase transition.
+
+## 3. Methodology: Dragon Dreaming for AI Agents
+
+### 3.1 The four phases
+
+Our workflow adapts the Dragon Dreaming framework [@croft2014dragondreaming] to structure human-AI collaboration around a central constraint: each agent conversation has a finite context window, and context that accumulates during exploration pollutes the execution phase. The four phases address this by creating explicit handoff points.
+
+**Dreaming** is an interactive discussion between the human researcher and the agent. The goal is to imagine what success looks like, gather information, brainstorm freely, and surface hidden assumptions. No code is written and no commits are made. The deliverable is a shared vision. In practice, Dreaming conversations often involved the researcher describing a desired figure or analysis, the agent exploring what data was available, and both discovering that the initial idea needed refinement. For example, early conversations about visualizing intellectual traditions in climate finance moved from z-score plots (rejected as too technical for the target audience) to hand-curated tables (rejected as not empirically grounded) to co-citation network analysis (adopted).
+
+**Planning** translates the shared vision into a concrete specification. The researcher and agent explore alternatives, design strategies, and prototype approaches. The key artifact is a GitHub issue --- a ticket --- written with enough context that an agent in a fresh conversation can execute it without any prior knowledge. Each ticket includes: context (what problem, why now), relevant files, concrete actions, the first test to write, verification criteria, invariants that must not break, and exit criteria. The insistence on specifying the first test at Planning time ensures that the Doing phase begins with a clear, falsifiable definition of success.
+
+**Doing** runs in a fresh context. The ticket is the only input. This is the critical design decision: by starting a new conversation, we prevent context window pollution from Dreaming and Planning explorations. The agent reads the ticket, creates a git worktree and branch (named `t{N}-short-description`, where N is the issue number), writes the first test (which must fail --- the "Red" step of test-driven development), writes the minimum code to make it pass ("Green"), refactors, and iterates. Each Red/Green/Refactor step gets its own commit, and commit messages explain *why* this change and not another --- alternatives considered, design choices made. When the work is complete, the agent opens a pull request.
+
+The worktree pattern deserves emphasis. Rather than switching branches with `git checkout` (which would disturb in-progress work), each ticket runs in its own worktree --- a separate directory with its own working tree linked to the same repository. This means multiple tickets can be in progress simultaneously without interfering. A post-checkout hook automatically symlinks the `.env` file from the main worktree, ensuring scripts have access to data paths and API keys. When a ticket is complete and merged, the worktree is deleted.
+
+**Celebrating** runs after task completion. The agent reflects on what worked and what did not, updates project state files (`STATE.md`, `ROADMAP.md`), writes persistent memories for future conversations, merges the branch to main, and cleans up. Celebrating is not a formality --- it closes the energy cycle and produces the cross-conversation learning that makes the next task more effective.
+
+### 3.2 GitHub issues as handoff documents
+
+The choice to use GitHub issues as the primary handoff mechanism deserves emphasis. In a traditional research group, a supervisor gives a research assistant verbal instructions, supplemented by shared understanding built over months. An AI agent has no such shared understanding; each conversation starts from zero. The issue template we developed (Context, Relevant files, Actions, Test, Verification, Invariants, Exit criteria) is essentially a protocol for encoding enough context that a stateless executor can produce useful work.
+
+This also enables parallel execution. Independent tickets can be launched in separate worktrees, each running in its own agent conversation. The project used this pattern in what we call "wave cycles": select ripe tickets (dependencies met), launch them in parallel, verify each PR, learn from results, adapt the plan, clean up, and start the next wave.
+
+### 3.3 Escalation protocol
+
+When the agent gets stuck during the Doing phase, it follows a five-level escalation protocol:
+
+1. **Fix direct** --- the review feedback is straightforward.
+2. **Alternative approach** --- rethink the solution from a different angle.
+3. **Parallel expert agents** --- fan out multiple approaches simultaneously.
+4. **Re-ticket with diagnosis** --- the problem is mis-specified; write a new ticket incorporating what was learned.
+5. **Stop and ask the author** --- the task requires human judgment.
+
+Each escalation step produces a feedback memory recording what failed and why. The agent stops if it finds itself repeating the same approach. In practice, most tasks resolved at levels 1--2. Level 4 (re-ticketing) was used for tasks where the initial specification turned out to be wrong --- for example, when a DVC stage was specified to produce a single output file but actually needed to produce three co-dependent files.
+
+### 3.4 Memory and cross-conversation context
+
+A 27-day project spanning dozens of conversations cannot rely on in-context memory alone. The project maintained several persistent memory mechanisms:
+
+- **`AGENTS.md`**: the living workflow specification, revised 54 times. This file encoded not just rules but lessons --- when a failure mode was identified, the response was often to update `AGENTS.md` to prevent recurrence.
+- **`MEMORY.md`**: a structured file of persistent memories, organized by topic (corpus terminology, naming quirks, workflow preferences, machine-specific configuration). Entries have time-to-live values; stale entries are swept during Celebrating.
+- **`STATE.md`**: a snapshot of current project state --- manuscript word count, corpus status, active blockers.
+- **`ROADMAP.md`**: milestones and deliverables, with checkboxes marking completion.
+- **Git history**: the ultimate long-term memory. Commit messages explain *why* a change was made (alternatives considered, design choices), not just *what* changed. Merge commits include tactical detail: architecture decisions, cross-file impacts, and residual technical debt. The git log, read via `git log --merges`, provides a high-level narrative of the project's evolution.
+- **Feedback memories**: saved at each escalation step when the agent gets stuck. These record what was tried and why it failed, creating a growing base of project-specific debugging knowledge. For example, after multiple failed attempts to get background bash tasks to inherit API keys, a feedback memory was saved noting that `~/.bashrc` is not sourced by non-interactive SSH sessions and that keys must be exported explicitly.
+
+The memory system includes explicit governance rules. List-type sections have hard caps (e.g., a maximum of 5 feedback entries, 3 corpus statistics). When a cap is reached, the least-recently-confirmed entry is evicted. Entries describing transient state have time-to-live (TTL) values: corpus statistics expire after 30 days, "X needed" blockers after 14 days, machine configuration after 90 days. A staleness sweep runs during each Celebrating phase, checking whether entries reference files that no longer exist, describe states resolved by closed PRs, or have exceeded their TTL.
+
+### 3.5 Trigger system
+
+The workflow is organized around seven triggers --- events that activate specific runbook procedures:
+
+- **on-start**: beginning of every conversation (read project state, set agent identity).
+- **start-ticket**: beginning work on an issue (create worktree, read ticket, write first test).
+- **pre-commit**: before every commit (check for stale references, update technical documentation).
+- **post-task**: after completing a ticket (celebrate, update state, clean up).
+- **new-ticket**: creating an issue (ensure handoff document quality).
+- **review-pr**: reviewing a pull request (multi-perspective agent review).
+- **memory-write**: writing persistent memory (enforce TTL, list caps, staleness criteria).
+
+Each trigger is implemented as a markdown runbook in the `runbooks/` directory. The agent reads and follows the runbook when the trigger fires. This is not automated tooling --- it is a protocol that the agent is instructed to follow, and compliance depends on the instruction-following capability of the underlying language model.
+
+The trigger system creates a rhythm to the collaboration. A typical agent session begins with `on-start` (read project state, check for blockers), transitions to `start-ticket` (read the issue, create a worktree, write the first test), proceeds through the Doing cycle (with `pre-commit` firing before each commit), and ends with `post-task` (celebrate, update state, clean up). This sequence is documented but not enforced programmatically --- it relies on the agent's adherence to `AGENTS.md`. The pre-commit *hook*, by contrast, is enforced by git: it blocks commits to main, rejects files over 500KB, and checks for conflict markers and secrets.
+
+### 3.6 The AGENTS.md evolution
+
+The workflow specification `AGENTS.md` began on day 1 as a short orientation document: where to find files, how to run the build. By day 27, it had grown to 103 lines covering phases, triggers, git discipline, autonomous workflow, wave cycles, and escalation protocols. Its 54 revisions trace the project's learning curve.
+
+Early modifications added basic guardrails (do not commit to main, use branches). Middle-phase modifications introduced sophisticated patterns (wave cycles for parallel work, multi-perspective PR review, memory governance with TTL and list caps). Late modifications refined edge cases (proportional PR review depth, integration review when all sub-issues close, worktree hygiene verification). The file's evolution mirrors the broader pattern of the collaboration: initial underspecification led to problems, which were resolved by making the specification more explicit, which in turn enabled more autonomous agent behavior.
+
+## 4. The Climate Finance Pipeline
+
+### 4.1 Research goal
+
+The pipeline serves a history-of-science paper titled "Counting Climate Finance: How an Economic Object Was Made (1990--2025)," targeting the journal *Oeconomia*. The paper traces how economists and institutions co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable. The pipeline's job is to build and analyze a corpus of academic literature on climate finance, identifying structural breaks in the field's evolution and intellectual polarization between efficiency-oriented and accountability-oriented traditions.
+
+### 4.2 Pipeline architecture
+
+The pipeline is organized as a six-stage DVC DAG (directed acyclic graph), with a strict contract between corpus building (Phase 1) and analysis (Phase 2):
+
+1. **Discover** (`catalog_*` stages): query five sources --- OpenAlex, ISTEX, bibCNRS, grey literature, teaching canon --- and merge into `unified_works.csv`. The discover stage was split into independent per-source DVC stages to enable parallel execution and granular caching.
+2. **Enrich** (`enrich` stage): resolve DOIs, retrieve abstracts, build a citation graph (775,000+ edges from Crossref and OpenAlex), and compute sentence-transformer embeddings.
+3. **Extend** (`extend` stage): add diagnostic flags and protection columns to each work without removing any rows, producing `extended_works.csv`.
+4. **Filter** (`filter` stage): apply a keep/remove policy based on the flags, producing `refined_works.csv` and an audit trail (`corpus_audit.csv`).
+5. **Align** (`align` stage): produce row-aligned contract artifacts (`refined_embeddings.npz`, `refined_citations.csv`) that Phase 2 scripts consume.
+6. **Analyze** (Phase 2, managed by Make): compute structural breaks, clusters, bimodality tests, and generate figures and tables.
+
+The Phase 1 to Phase 2 contract consists of exactly three files: `refined_works.csv` (the filtered corpus), `refined_embeddings.npz` (sentence-transformer vectors, row-aligned with the CSV), and `refined_citations.csv` (citation edges restricted to corpus DOIs). Phase 2 scripts read only these files. This contract is enforced by a gate in the Makefile (`check-corpus` verifies all three files exist) and validated by acceptance tests that check row alignment, column schemas, and data quality metrics.
+
+The pipeline's reproducibility is ensured through multiple mechanisms. The Makefile sets `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` for deterministic builds. DVC tracks file hashes and skips stages whose inputs are unchanged. The `config/` directory contains YAML parameter files (`corpus_refine.yaml`, `openalex_queries.yaml`, `grey_sources.yaml`) that separate configuration from code. A self-contained archive can be produced with `make archive-manuscript`, packaging all git-tracked code plus the three contract files into a tarball that reviewers can rebuild independently.
+
+### 4.3 Why this project needed an agent
+
+Several characteristics of this project made it well-suited to agent collaboration:
+
+- **API orchestration**: five data sources with different APIs, rate limits, pagination schemes, and data formats. OpenAlex uses a REST API with cursor-based pagination and a premium key; ISTEX provides a bulk download endpoint; Crossref offers reference metadata per DOI; Semantic Scholar has strict rate limits (1 request/second even with a key). The agent handled the tedious work of writing and debugging API clients with retry logic, resumable checkpointing, and budget-aware incremental fetching.
+- **Data wrangling at scale**: merging, deduplicating, and enriching approximately 47,000 records required numerous data transformation scripts. Early versions used Python loops over DataFrames (`iterrows()`), which the agent replaced with vectorized pandas operations after performance profiling revealed 20-minute runtimes for what should be 10-second operations.
+- **Iterative refinement**: the corpus went through many rounds of filtering and quality checking, each requiring new scripts and tests. The source column normalization (from pipe-separated strings to boolean `from_*` columns) and the flag column refactoring (removing derived lists in favor of boolean columns as source of truth) were each multi-file changes that benefited from test-driven development.
+- **Multi-output pipeline**: the project produces four Quarto documents (manuscript, technical report, data paper, companion paper) sharing fragments via `{{< include >}}` directives from `content/_includes/`. Managing this complexity --- ensuring that a change to a shared fragment renders correctly in all four documents --- benefited from an agent that could trace dependencies across files.
+- **Two-machine workflow**: corpus building runs on a GPU server (padme, NVIDIA A4000), while manuscript editing happens on a laptop (doudou). DVC mediates between the two, but the agent needed to handle machine-specific paths, environment variables, and the absence of interactive terminals on the remote machine (`nohup` for long runs, explicit environment variable export for background tasks).
+
+## 5. Quantitative Analysis of Collaboration
+
+All git statistics reported in this paper are computed from the repository state at commit `817061c` (2026-03-16).
+
+### 5.1 Division of labor
+
+Analysis of the 472 commits over 27 days reveals a predominantly collaborative pattern. The most striking finding is that 305 commits (64%) carried a `Co-Authored-By` git trailer, indicating that the majority of work involved both human and agent contributions within the same session. Only 105 commits were solo human work (no co-authorship trailer), and only 28 were fully autonomous agent commits.
+
+By git author field, the breakdown is:
+
+| Author | Commits | Percentage |
+|--------|---------|------------|
+| Minh Ha-Duong (3 identity variants) | 344 | 73% |
+| HDMX-coding-agent (Claude Code) | 95 | 20% |
+| Claude | 32 | 7% |
+| copilot-swe-agent[bot] (GitHub Copilot) | 10 | 2% |
+
+However, the author field understates collaboration. A commit attributed to the human researcher often incorporated agent-generated code within the same conversation, and vice versa. The `Co-Authored-By` trailer provides a more accurate picture: most work was joint.
+
+The human researcher concentrated on activities requiring judgment, domain knowledge, and taste: dreaming (what questions to ask), planning (what approaches to try), manuscript writing (prose, argumentation, framing), design decisions (what figures to produce, what to emphasize), and quality control (reviewing PRs, catching errors the agent missed). The researcher also handled all bibliographic work and theoretical framing.
+
+The agents concentrated on activities requiring persistence, precision, and volume: API client implementation (with retry logic, rate limiting, and resumable checkpoints), data wrangling scripts (merging five source catalogs, deduplication, schema normalization), test writing (298 tests across 16 files), figure generation code (matplotlib with journal-specific style constraints), pipeline configuration (DVC stages, Makefile targets), and PR reviews (multi-perspective evaluation against exit criteria). The agents also performed housekeeping tasks: updating documentation, cleaning up worktrees, maintaining DVC lock files, and sweeping stale memory entries. Note that three agent identities contributed: Claude Code (the primary agent, 95 commits), Claude (a secondary identity, 32 commits), and GitHub Copilot's SWE agent (10 commits via automated PRs).
+
+### 5.2 Commit patterns and temporal dynamics
+
+The agent's commits followed conventional commit format (`type: description`), using prefixes like `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, and `chore:`. Human commits were more narrative: "housekeeping: update dvc.lock after discover stages completed," "fix: flatten dvc.yaml multi-line cmds (YAML >- preserves indented newlines)." This difference in commit style, though minor, made it easy to distinguish authorship even without looking at the git author field.
+
+The temporal pattern of commits reveals the project's rhythm. Early days (Feb 18--22) were dominated by human commits as the researcher set up the repository structure, wrote the initial manuscript draft, and explored the problem space. Agent commits accelerated in the second week as the pipeline architecture stabilized and tickets could be written with sufficient specificity. The densest period of agent activity coincided with the test infrastructure wave (Mar 12--16), when the agent was tasked with systematically adding tests to existing code --- a task well-suited to autonomous execution because the expected behavior was already embodied in working scripts.
+
+The project also ran across two machines: a development laptop ("doudou") and a GPU server ("padme") used for computationally intensive corpus operations. DVC provided the synchronization mechanism, with `dvc push` / `dvc pull` bridging the two environments. The agent learned machine-specific configuration (paths, available GPUs, Python environment) through persistent memory entries.
+
+### 5.3 Pull request lifecycle
+
+The project generated 77 pull requests, of which 61 were merged, 12 were closed without merging, and 4 remained open at the end of the study period. The median merge time was near zero --- most PRs were merged immediately upon review, reflecting a tight feedback loop. This is far faster than typical academic collaboration cycles, where feedback might take days or weeks.
+
+The high merge rate (79%) reflects the ticket-based workflow: because each PR addressed a well-specified issue with explicit acceptance criteria, most PRs met expectations on first submission. The 12 closed-without-merge PRs were superseded by alternative approaches (the agent tried one solution, it was rejected during review, and a different approach was taken) or closed as unnecessary after the problem was re-scoped.
+
+The PR review process itself evolved over the project. Initially, the researcher reviewed all PRs manually. Later, the workflow introduced multi-perspective agent review (the `review-pr` runbook), where up to four agent perspectives --- Correctness, Consistency, Scope, and Red Team --- evaluated each PR independently. The synthesis step merged findings, preserved dissent between perspectives, and produced a single review. This automated review did not replace human judgment but filtered the obvious issues, allowing the researcher to focus review effort on substantive questions.
+
+The 89 GitHub issues (83 closed, 93% closure rate) tell a complementary story. Issues were treated as disposable work units rather than permanent records. When investigation of one issue revealed sub-problems, these were split into child issues under a tracking parent, following a convention documented in the `new-ticket` runbook. This fractal decomposition pattern --- one problem becomes several tickets, each independently executable --- was central to enabling agent autonomy.
+
+### 5.4 Test evolution
+
+The test suite grew from zero to 298 tests across 16 files. Notably, most of this growth occurred in a five-day period (March 12--16) during a refactoring wave. We call this pattern *concurrent TDD during refactoring*: the pipeline had been built iteratively over the preceding weeks with ad hoc testing, and the formal test suite was constructed concurrently with a major refactoring effort (splitting monolithic DVC stages, normalizing data schemas, adding pipeline contracts). Tests and refactored code were developed together, each informing the other.
+
+This pattern --- systematic testing arriving alongside restructuring rather than preceding initial development --- is not orthodox TDD but is common in research software development, where requirements are discovered through exploration rather than specified upfront. The Dragon Dreaming methodology accommodated this by treating the test infrastructure itself as a ticket: the Planning phase specified what tests were needed, and the Doing phase implemented them in tandem with the refactoring.
+
+The tests themselves span multiple levels. Unit tests verify individual functions (e.g., that the deduplication logic in `catalog_merge.py` correctly handles works appearing in multiple sources). Integration tests verify pipeline contracts (e.g., that `refined_works.csv` contains the expected columns and that row counts match between `refined_works.csv` and `refined_embeddings.npz`). Acceptance tests verify the corpus as a whole (44 checks run by `make corpus-validate`, covering completeness, consistency, and quality metrics like citation coverage). The agent wrote the majority of unit and integration tests; the researcher specified acceptance tests that encoded domain knowledge about what a valid corpus looks like.
+
+The project also includes a prose linter (`make lint-prose`) that checks the manuscript for AI-tell words, excessive em-dash usage, and "contrast farming" patterns (`not X, but Y`). This meta-testing --- testing the output of the research itself, not just the code --- emerged from a specific concern: that AI-assisted writing might introduce stylistic signatures detectable by reviewers.
+
+### 5.5 AGENTS.md as living specification
+
+The file `AGENTS.md` was revised 54 times over 27 days --- roughly twice per day. It began as a short set of guidelines and grew into a detailed workflow specification covering phases, triggers, git discipline, autonomous workflow, escalation protocols, and memory management.
+
+Each modification to `AGENTS.md` was a response to a specific problem. When the agent committed directly to main (causing merge conflicts with parallel work), a pre-commit hook was added and documented. When context window pollution degraded agent performance, the "fresh context" rule for the Doing phase was added. When worktrees were left behind after tasks, a cleanup checklist was added to the Celebrating phase. The file's revision history is a record of workflow learning.
+
+### 5.6 Failure modes
+
+Several failure modes were encountered:
+
+- **Rate limits and API budgets**: the OpenAlex Premium API costs \$2/day. Early in the project, aggressive API calls exhausted the daily budget, halting corpus enrichment. The response was to add incremental fetching with `--from-date` filtering and sidecar files tracking what had already been fetched.
+- **YAML folding bugs**: DVC stage commands written with YAML `>-` folding preserved indented newlines, causing silent failures. This was caught by a test (`test_dvc_no_newlines`) and fixed by flattening multi-line commands.
+- **Glob pattern bugs**: file matching patterns that worked on small test sets failed on the full corpus, producing silent data loss. These were caught by acceptance tests.
+- **Monolithic DVC stages**: the initial `enrich` stage ran seven scripts sequentially. If one failed, the entire stage had to be re-run. The response was to split stages (completed for `discover`, planned for `enrich`).
+- **Log flushing**: long-running scripts on the remote machine (`padme`) did not flush output logs in real time, making it impossible to monitor progress. The fix was to set `PYTHONUNBUFFERED=1` in the Makefile.
+- **Context window exhaustion**: long conversations with the agent degraded performance as the context window filled with stale information. The "one ticket per conversation" rule was introduced to mitigate this.
+- **Proportionality misjudgment**: early in the project, the agent created full PRs with multi-perspective reviews for trivial changes (a typo fix, a comment update). This wasted time and created noise in the issue tracker. The workflow was updated with a proportionality rule: trivial changes could be merged locally without a PR. This feedback was recorded as a persistent memory entry.
+- **SciSpace typo preservation**: one data source file was named `scispsace_works.csv` (a typo of "SciSpace"). Rather than rename and break all references, the typo was preserved and documented in `MEMORY.md`. This illustrates a recurring pattern: the agent preferred correctness, the researcher preferred pragmatism, and the resolution was documented for future conversations.
+
+### 5.7 Limitations
+
+This study has several limitations that constrain the generalizability of its findings.
+
+**N=1 design.** The data comes from a single project, with a single human researcher and a single primary agent (Claude Code). We cannot separate effects of the methodology from effects of the specific researcher's expertise, the agent's particular capabilities, or the domain's suitability. A different researcher, a different agent, or a different research domain might yield very different collaboration patterns.
+
+**Selection bias.** The project was chosen for this report precisely because the collaboration was productive enough to complete. Projects where agent collaboration failed early --- producing no usable pipeline, no test suite, no publication --- would not generate a case study. This survivorship bias means our findings likely overstate the success rate of human-agent research collaboration in general.
+
+**Survivorship bias in PR metrics.** The 79% PR merge rate and near-zero median merge time reflect only PRs that were opened. They do not capture agent work that was abandoned before reaching the PR stage, conversations that produced no usable output, or approaches that were tried and discarded without formal tracking. The actual ratio of productive to unproductive agent time is unknown.
+
+**Observational data.** As noted in Section 1, the traces analyzed here are byproducts of the workflow, not experimental measurements. We cannot isolate the causal contribution of any single workflow element (e.g., the Dragon Dreaming phases, the ticket format, the worktree pattern). What we observed may reflect the researcher's existing software engineering habits as much as the methodology's merits.
+
+**Incomplete cost accounting.** We did not systematically track Anthropic API token costs, researcher time per task, or the opportunity cost of workflow overhead (writing tickets, reviewing PRs, maintaining `AGENTS.md`). Without these, we cannot assess whether the collaboration was cost-effective compared to alternatives.
+
+**Bibliometric domain bias.** Bibliometric research involves heavy data processing, well-defined APIs, and clear quantitative outputs --- tasks where coding agents excel. Our findings likely do not transfer to research domains centered on close reading, archival work, or ethnographic fieldwork, where the agent would have fewer opportunities to contribute.
+
+## 6. Lessons Learned
+
+### 6.1 What worked
+
+**Worktree isolation.** Using git worktrees for each ticket prevented the common problem of half-finished work blocking other tasks. Each ticket had its own branch in its own directory, and multiple tickets could run in parallel. When a ticket was abandoned or reworked, its worktree could be deleted without affecting anything else.
+
+**Test-driven development.** Requiring a failing test before writing code (the "Red" step) had two benefits: it forced precise specification of expected behavior, and it created a safety net for later refactoring. The 298-test suite caught regressions that would have been invisible otherwise --- for example, a change to the deduplication logic in `catalog_merge.py` that silently dropped 200 works.
+
+**Tickets as context boundaries.** The principle of "one ticket per conversation" was the single most important workflow decision. It prevented scope creep (the agent trying to fix everything it noticed), preserved context quality (each conversation started fresh with only the relevant information), and created a clear record of what was attempted and why.
+
+**DVC pipeline contracts.** The strict Phase 1 / Phase 2 contract (three specific files, validated by acceptance tests) meant that Phase 2 scripts never needed to know how the corpus was built. This allowed radical restructuring of Phase 1 (splitting stages, changing API strategies, adding sources) without touching Phase 2 code.
+
+**Multi-perspective PR review.** The review runbook specified four agent perspectives (Correctness, Consistency, Scope, Red Team), each evaluating the PR independently. This occasionally caught issues that a single-perspective review would miss, particularly scope creep (the Scope agent) and pre-existing code smells exposed by the change (the Consistency agent). The review protocol also included a code-quality escalation policy distinguishing between bugs introduced by the PR (must fix), pre-existing issues touched by the PR (file a follow-up ticket), and pre-existing issues merely noticed during review (delegate to an investigation agent). This prevented reviews from becoming unbounded.
+
+**Conventional commits and prose linting.** The combination of structured commit messages and automated prose linting (`make lint-prose`) created a quality floor. The prose linter checked for "AI-tell" words (delve, nuanced, multifaceted, pivotal, tapestry, etc.) that would signal machine-generated text to reviewers. This was enforced in the `check` target, meaning no PR could merge if the manuscript contained blacklisted words.
+
+### 6.2 What did not work
+
+**Monolithic DVC stages.** The initial design bundled seven enrichment scripts into a single DVC stage. Any failure required re-running all seven. Splitting stages was planned but only completed for the `discover` phase before submission. The lesson: pipeline stages should be as granular as their failure modes.
+
+**Insufficient observability.** Long-running scripts on the remote machine lacked real-time progress indicators. The `nohup` + log file pattern meant errors were discovered only after the full run completed (or failed). Adding `PYTHONUNBUFFERED=1` helped, but a proper progress dashboard would have been better.
+
+**No budget alerts.** The \$2/day OpenAlex API budget was exceeded multiple times before incremental fetching was implemented. A simple budget tracker that counted API calls and estimated remaining quota would have prevented wasted runs.
+
+**Memory fragility.** The `MEMORY.md` system worked for slow-changing facts (machine configuration, naming conventions) but struggled with fast-moving state. By the time a memory entry about corpus statistics was read in a new conversation, the statistics had often changed. The mitigation (TTL values, staleness sweeps) helped but added overhead.
+
+### 6.3 The Goldilocks zone of agent autonomy
+
+The most persistent tension in the project was calibrating agent autonomy. Too little autonomy turned the agent into an interactive code completion tool --- the researcher had to specify every step, defeating the purpose. Too much autonomy led to wasted cycles: the agent would pursue an approach for dozens of commits before the researcher reviewed the PR and redirected.
+
+The Goldilocks zone varied by task type. For well-specified tasks with clear acceptance criteria (API clients, data transformations, test writing), high autonomy worked well --- the agent could proceed through the full Red/Green/Refactor cycle independently. For tasks requiring judgment (figure design, analysis methodology, manuscript organization), low autonomy was necessary --- the Dreaming phase was essential, and the agent's Doing phase needed frequent human checkpoints.
+
+The near-zero median PR merge time suggests that the feedback loop was tight enough to prevent major divergence. But this metric hides the long tail: some PRs were open for hours or days before the researcher had time to review them, and by then the agent's context was long gone.
+
+### 6.4 Cost as research infrastructure
+
+The project's AI costs included Anthropic API usage for the coding agent and the \$2/day OpenAlex Premium API key. While we did not track Anthropic token costs systematically (a limitation of this case study), the costs were nontrivial --- comparable to hiring a research assistant for the same period, though the availability was 24/7 and the iteration speed was much higher.
+
+The more interesting cost dimension is the researcher's time. The Dragon Dreaming workflow front-loads human effort in Dreaming and Planning, then leverages agent autonomy in Doing. Whether this trade-off is favorable depends on the ratio of planning time to execution time --- and on whether the researcher can do other work while the agent executes.
+
+## 7. Discussion
+
+### 7.1 Implications for research methodology
+
+In this case study, we observed that the AI coding agent was most useful when three conditions were met: (1) the project involves substantial software engineering (not just analysis), (2) the tasks can be decomposed into independent, well-specified units, and (3) there is a tight feedback loop between researcher and agent.
+
+Bibliometric research, with its API-heavy data collection, complex data transformations, and iterative analysis pipelines, is particularly well-suited. The agent handled the "plumbing" (API clients, data format conversions, test infrastructure) while the researcher focused on the "thinking" --- what questions to ask, what methods to use, how to interpret results.
+
+### 7.2 Reproducibility implications
+
+Every decision in this project is recorded in git: every issue documents a rationale, every commit explains a choice, every PR preserves the review discussion. This is a higher level of documentation than most research projects achieve, and it was produced as a byproduct of the workflow rather than as an additional documentation effort.
+
+However, the agent's *reasoning* is not fully captured. The issues record what was decided, but the conversation transcripts that led to those decisions are ephemeral (they exist in the agent platform's logs but are not part of the repository). Future work could explore archiving conversation transcripts as part of the research record.
+
+### 7.3 Risks
+
+**Over-reliance.** The researcher may lose deep understanding of the codebase as the agent writes more of it. In this project, the researcher maintained understanding through PR review, but this requires discipline --- it is tempting to merge without careful reading when the tests pass.
+
+**Complexity creep.** The agent tends to produce well-structured code, but also *more* code. The 25,000+ lines in this project include infrastructure (tests, documentation, configuration) that a solo researcher might not have written. Whether this infrastructure is valuable or merely complex depends on whether the project continues beyond the initial paper.
+
+**Loss of serendipity.** The ticket-based workflow is efficient but channeled. The researcher dreams, the agent executes. There is less room for the kind of accidental discovery that happens when a researcher personally struggles with data --- noticing an unexpected pattern while debugging a script, for instance.
+
+### 7.4 Comparison with traditional research assistance
+
+A human research assistant would bring domain knowledge, the ability to read papers and synthesize arguments, and social judgment (knowing when to ask for clarification). The AI agent brings speed, availability, precision in mechanical tasks, and the ability to hold a large codebase in memory. The agent cannot attend a seminar, read a book, or have a hallway conversation --- activities that are central to academic knowledge production.
+
+The Dragon Dreaming workflow attempts to compensate for the agent's limitations by concentrating human judgment in the Dreaming and Planning phases, where domain knowledge and social understanding matter most. The agent's strengths are leveraged in the Doing phase, where speed and precision matter most. This complementary structure is the key insight of the methodology.
+
+There is also a pedagogical dimension. A human research assistant learns over time, accumulating tacit knowledge that transfers to future projects. The AI agent's "learning" is encoded in `AGENTS.md` and `MEMORY.md` --- explicit, transferable, but brittle. When the project ends, the agent retains nothing. The institutional knowledge lives entirely in the repository. This may be a feature for reproducibility (everything is documented) but a liability for the research group's intellectual capital.
+
+### 7.5 Generalizability
+
+The workflow described here was developed for a single project. How well does it transfer? We hypothesize that the methodology's core principles --- fresh contexts per task, issues as handoff documents, escalation protocols, persistent memory with TTL --- are domain-independent. The specific trigger system and runbook contents are likely project-specific. Testing this hypothesis requires applying the methodology to other projects, which we plan as future work.
+
+The choice of bibliometric research as the application domain may have inflated the apparent productivity gains. Bibliometrics involves heavy data processing, well-defined APIs, and clear quantitative outputs --- precisely the kinds of tasks where coding agents excel. A project centered on close reading, archival research, or ethnographic fieldwork would offer the agent far fewer opportunities to contribute.
+
+### 7.6 Ethical considerations
+
+The use of AI agents in academic research raises questions about authorship, credit, and transparency. In this project, the agent is not listed as an author --- it is a tool, like a statistical software package. However, the agent's contributions go beyond what is typically expected of a tool: it made design decisions (within the parameters set by the researcher), wrote substantial code, and produced text (commit messages, PR descriptions, documentation). We address this by documenting the agent's role explicitly, both in the repository (every agent commit is identifiable by author field) and in this paper.
+
+The question of whether AI-assisted research should be disclosed to journals is evolving. We advocate for full transparency: the manuscript produced by the pipeline includes no AI-generated prose (the prose linter enforces this), but the pipeline itself was substantially AI-built. Readers and reviewers should know this, both because it affects their assessment of the work and because it contributes to the broader understanding of how research is produced.
+
+There is also a labor displacement dimension. The agent performed tasks that might otherwise have been done by a graduate research assistant. The implications of this substitution --- for training, for employment, for the development of junior researchers' skills --- are beyond the scope of this paper but deserve attention from the community.
+
+## 8. Conclusion
+
+We have reported on a 27-day experiment using AI coding agents as research collaborators for bibliometric analysis. The quantitative evidence from 472 commits, 89 issues, and 77 pull requests reveals a predominantly collaborative pattern: 64% of commits carried co-authorship trailers, indicating that most work was joint rather than delegated. The resulting pipeline --- six DVC stages, 298 tests, over 25,000 lines of code --- produces a corpus of 47,000 works on climate finance with structural break detection, intellectual polarization analysis, and publication-ready figures.
+
+The Dragon Dreaming methodology, adapted for AI agents, provided a structured framework for this collaboration. Its key adaptations are: (1) using GitHub issues as handoff documents to bridge conversation contexts, (2) enforcing "one ticket per conversation" to prevent context pollution, (3) requiring test specifications at planning time to enable autonomous execution, and (4) structuring reflection (Celebrating) as a mandatory phase that produces cross-conversation learning.
+
+The methodology is not without limitations (see Section 5.7 for a detailed discussion). It requires substantial upfront investment in workflow specification (the 54 revisions to `AGENTS.md`). It works best for tasks that can be decomposed into independent units. And it does not address the deeper question of whether AI-assisted research produces the same kind of understanding as traditional research --- whether the researcher who delegates data wrangling to an agent develops the same intuitions as one who struggles with the data personally.
+
+Three findings may be of broader interest. First, the primary bottleneck in human-AI research collaboration is not the agent's coding ability but the quality of task specification. Writing a good ticket --- one that a stateless agent can execute without clarification --- is a skill that requires practice and iteration. Second, persistent memory across conversations is essential but fragile: the 54 revisions to `AGENTS.md` represent an ongoing negotiation between the project's evolving needs and the agent's fixed protocol. Third, the tight feedback loop enabled by the PR workflow (near-zero median merge time) is qualitatively different from traditional research assistant supervision; it resembles pair programming more than delegation.
+
+Future work will apply this methodology to other projects to test its generalizability. We plan a systematic comparison across three bibliometric projects (climate finance, digital humanities, and innovation studies) to identify which aspects of the workflow are domain-specific and which transfer. We also plan to develop better tooling for conversation archiving, budget tracking, and progress monitoring --- the observability gaps identified in Section 6.
+
+The full project repository, including all 472 commits, 89 issues, and the complete `AGENTS.md` revision history, will be archived on Zenodo upon publication. We hope it serves as a resource for researchers interested in human-AI collaboration methodology --- not as a template to copy, but as raw material for understanding how one such collaboration actually unfolded, with all its false starts and course corrections intact.
+
+## References
+
+::: {#refs}
+:::

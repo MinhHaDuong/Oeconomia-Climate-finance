@@ -32,7 +32,9 @@ from refine_flags import (
     flag_semantic_outlier,
     flag_title_blacklist,
 )
-from utils import CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, save_csv
+from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv
+
+log = get_logger("corpus_refine")
 
 # --- Paths ---
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
@@ -137,7 +139,7 @@ def verify_blacklist(df, config):
     noise_title = config["noise_title"]
     safe_title = config["safe_title"]
 
-    print("\n=== C1: Blacklist validation ===")
+    log.info("=== C1: Blacklist validation ===")
     all_ok = True
     for noise_term in noise_title:
         matches = df[df["title"].str.lower().str.contains(noise_term, na=False)]
@@ -148,24 +150,24 @@ def verify_blacklist(df, config):
             lambda t: _has_safe_words(str(t), safe_title))]
 
         if len(truly_missed) > 0:
-            print(f"  WARNING: '{noise_term}' -- {len(truly_missed)} missed:")
+            log.warning("  '%s' -- %d missed:", noise_term, len(truly_missed))
             for _, row in truly_missed.head(3).iterrows():
-                print(f"    - {row['title'][:80]}")
+                log.warning("    - %s", row["title"][:80])
             all_ok = False
         else:
             n_safe = len(unflagged)
             safe_note = f" ({n_safe} kept because of safe words)" if n_safe else ""
-            print(f"  '{noise_term}': {len(matches)} total, "
-                  f"{len(flagged)} flagged{safe_note}")
+            log.info("  '%s': %d total, %d flagged%s",
+                     noise_term, len(matches), len(flagged), safe_note)
 
     if all_ok:
-        print("  All blacklist terms properly caught.")
+        log.info("  All blacklist terms properly caught.")
     return all_ok
 
 
 def print_summary(df):
     """Print flagging summary."""
-    print("\n=== Flagging summary ===")
+    log.info("=== Flagging summary ===")
 
     flag_cols_present = [c for c in FLAG_COLUMNS if c in df.columns]
     is_flagged = df[flag_cols_present].fillna(False).any(axis=1)
@@ -173,29 +175,27 @@ def print_summary(df):
     protected_flagged = flagged[flagged["protected"]]
     removable = flagged[~flagged["protected"]]
 
-    print(f"  Total papers: {len(df)}")
-    print(f"  Flagged: {len(flagged)}")
-    print(f"  Protected: {df['protected'].sum()}")
-    print(f"  Protected + flagged (kept): {len(protected_flagged)}")
-    print(f"  Removal candidates: {len(removable)}")
+    log.info("  Total papers: %d", len(df))
+    log.info("  Flagged: %d", len(flagged))
+    log.info("  Protected: %d", df["protected"].sum())
+    log.info("  Protected + flagged (kept): %d", len(protected_flagged))
+    log.info("  Removal candidates: %d", len(removable))
 
-    # Per flag type — count directly from boolean columns
-    print(f"\n  Flag breakdown:")
+    log.info("  Flag breakdown:")
     for col in flag_cols_present:
         count = df[col].fillna(False).sum()
         if count > 0:
-            print(f"    {col}: {count}")
+            log.info("    %s: %d", col, count)
 
-    # Sample removals per flag type
-    print(f"\n  Sample removal candidates (10 per flag type):")
+    log.info("  Sample removal candidates (10 per flag type):")
     for col in flag_cols_present:
         type_removable = removable[removable[col].fillna(False)]
         if len(type_removable) > 0:
-            print(f"\n  --- {col} ({len(type_removable)} removable) ---")
+            log.info("  --- %s (%d removable) ---", col, len(type_removable))
             for _, row in type_removable.head(10).iterrows():
                 yr = row.get("year", "?")
                 cites = row.get("cited_by_count", 0)
-                print(f"    [{yr}] (cit:{cites}) {str(row['title'])[:80]}")
+                log.info("    [%s] (cit:%s) %s", yr, cites, str(row["title"])[:80])
 
 
 # ============================================================
@@ -218,9 +218,9 @@ def apply_filter(df, output_path=None, audit_path=None):
 
     n_remove = mask_remove.sum()
     n_keep = len(df) - n_remove
-    print(f"\n=== Applying filter ===")
-    print(f"  Removing: {n_remove}")
-    print(f"  Keeping: {n_keep}")
+    log.info("=== Applying filter ===")
+    log.info("  Removing: %d", n_remove)
+    log.info("  Keeping: %d", n_keep)
 
     # Save refined corpus
     keep_df = df[df["action"] == "keep"].drop(
@@ -248,8 +248,8 @@ def apply_filter(df, output_path=None, audit_path=None):
                         keep_df["from_grey"].fillna(0).astype(bool)
             keep_df.loc[mask_fake, "doi"] = ""
             keep_df.loc[mask_fake, "doi_norm"] = ""
-            print(f"  Cleared {mask_fake.sum()} fake placeholder DOIs "
-                  f"({len(shared_grey_dois)} shared grey-lit DOIs)")
+            log.info("  Cleared %d fake placeholder DOIs (%d shared grey-lit DOIs)",
+                     mask_fake.sum(), len(shared_grey_dois))
 
     # Step 2: deduplicate on normalized DOI, keeping the record with the highest
     # cited_by_count (OpenAlex sometimes indexes the same paper under two IDs).
@@ -272,8 +272,8 @@ def apply_filter(df, output_path=None, audit_path=None):
             columns=["_cite_sort"])
         n_dropped = n_before - len(keep_df)
         if n_dropped:
-            print(f"  Dropped {n_dropped} duplicate-DOI records "
-                  f"(kept highest cited_by_count per DOI)")
+            log.info("  Dropped %d duplicate-DOI records (kept highest cited_by_count per DOI)",
+                     n_dropped)
 
     keep_df = keep_df.drop(columns=["doi_norm"], errors="ignore")
 
@@ -285,10 +285,10 @@ def apply_filter(df, output_path=None, audit_path=None):
     if deduped_source_ids and "source_id" in df.columns:
         audit_df.loc[df["source_id"].isin(deduped_source_ids), "action"] = "deduped"
     audit_df.to_csv(audit_path, index=False)
-    print(f"  Saved audit -> {audit_path}")
+    log.info("  Saved audit -> %s", audit_path)
 
     save_csv(keep_df, output_path)
-    print(f"  Saved refined corpus -> {output_path} ({len(keep_df)} papers)")
+    log.info("  Saved refined corpus -> %s (%d papers)", output_path, len(keep_df))
 
     return keep_df
 
@@ -308,8 +308,8 @@ def save_extended(df, output_path):
     out_df = df.drop(columns=["flags"], errors="ignore")
     save_csv(out_df, output_path)
     n_would_remove = (df["action"] == "would_remove").sum()
-    print(f"  Saved extended corpus -> {output_path} "
-          f"({len(df)} rows, {n_would_remove} would-remove candidates)")
+    log.info("  Saved extended corpus -> %s (%d rows, %d would-remove candidates)",
+             output_path, len(df), n_would_remove)
 
 
 def save_dry_run_audit(df):
@@ -324,7 +324,7 @@ def save_dry_run_audit(df):
     audit_df.loc[is_flagged & ~df["protected"], "action"] = "would_remove"
     audit_path = os.path.join(CATALOGS_DIR, "corpus_audit.csv")
     audit_df.to_csv(audit_path, index=False)
-    print(f"  Saved dry-run audit -> {audit_path}")
+    log.info("  Saved dry-run audit -> %s", audit_path)
 
 
 # ============================================================
@@ -334,7 +334,7 @@ def save_dry_run_audit(df):
 def load_input_works(works_path):
     """Load works CSV and normalise DOIs."""
     df = pd.read_csv(works_path)
-    print(f"  Loaded: {len(df)} rows from {works_path}")
+    log.info("  Loaded: %d rows from %s", len(df), works_path)
     df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
     return df
 
@@ -347,7 +347,7 @@ def load_citations(cheap=False):
         lambda x: normalize_doi(x) if pd.notna(x) else "")
     citations_df["ref_doi"] = citations_df["ref_doi"].apply(
         lambda x: normalize_doi(x) if pd.notna(x) else "")
-    print(f"  Citations: {len(citations_df)}")
+    log.info("  Citations: %d", len(citations_df))
     return citations_df
 
 
@@ -363,9 +363,9 @@ def load_embeddings(df, cheap=False):
     cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
     embeddings = cache["vectors"] if "vectors" in cache.files else cache
     if len(embeddings) != len(emb_df):
-        print(f"  WARNING: embedding size mismatch ({len(embeddings)} vs {len(emb_df)}), skipping.")
+        log.warning("  Embedding size mismatch (%d vs %d), skipping.", len(embeddings), len(emb_df))
         return None, None, False
-    print(f"  Embeddings: {len(embeddings)}")
+    log.info("  Embeddings: %d", len(embeddings))
     return embeddings, emb_df, True
 
 
@@ -374,42 +374,42 @@ def run_flagging(df, args, config, citations_df, embeddings, emb_df, has_embeddi
     cheap = getattr(args, "cheap", False)
 
     if cheap:
-        print("\n=== CHEAP MODE: flags 1-3 only ===")
+        log.info("=== CHEAP MODE: flags 1-3 only ===")
 
-    print("\n=== Phase A: Flagging papers ===")
+    log.info("=== Phase A: Flagging papers ===")
     df["missing_metadata"] = flag_missing_metadata(df, config)
-    print(f"  Flag 1 (missing metadata): {df['missing_metadata'].sum()}")
+    log.info("  Flag 1 (missing metadata): %d", df["missing_metadata"].sum())
 
     df["no_abstract_irrelevant"] = flag_no_abstract(df, config)
-    print(f"  Flag 2 (no abstract + irrelevant title): {df['no_abstract_irrelevant'].sum()}")
+    log.info("  Flag 2 (no abstract + irrelevant title): %d", df["no_abstract_irrelevant"].sum())
 
     df["title_blacklist"] = flag_title_blacklist(df, config)
-    print(f"  Flag 3 (title blacklist): {df['title_blacklist'].sum()}")
+    log.info("  Flag 3 (title blacklist): %d", df["title_blacklist"].sum())
 
     if getattr(args, "skip_citation_flag", False):
-        print("  Flag 4: skipped (--skip-citation-flag)")
+        log.info("  Flag 4: skipped (--skip-citation-flag)")
     else:
         try:
             df["citation_isolated_old"] = flag_citation_isolated(
                 df, config, citations_df=citations_df)
-            print(f"  Flag 4 (citation isolated + old): {df['citation_isolated_old'].sum()}")
+            log.info("  Flag 4 (citation isolated + old): %d", df["citation_isolated_old"].sum())
         except ValueError as e:
-            print(f"  Flag 4 skipped: {e}")
+            log.warning("  Flag 4 skipped: %s", e)
 
     if has_embeddings:
         try:
             df["semantic_outlier"], df["semantic_outlier_dist"] = flag_semantic_outlier(
                 df, config, embeddings=embeddings, emb_df=emb_df)
-            print(f"  Flag 5 (semantic outlier): {df['semantic_outlier'].sum()}")
+            log.info("  Flag 5 (semantic outlier): %d", df["semantic_outlier"].sum())
         except ValueError as e:
-            print(f"  Flag 5 skipped: {e}")
+            log.warning("  Flag 5 skipped: %s", e)
             has_embeddings = False
     else:
-        print("  Flag 5: skipped (no embeddings)")
+        log.info("  Flag 5: skipped (no embeddings)")
 
     skip_llm = getattr(args, "skip_llm", False)
     if not skip_llm:
-        print("  Computing LLM relevance scores...")
+        log.info("  Computing LLM relevance scores...")
         prior_flags = [c for c in FLAG_COLUMNS[:5] if c in df.columns]
         already_flagged = df[prior_flags].any(axis=1) if prior_flags else pd.Series(False, index=df.index)
         for i, (batch_idx, partial) in enumerate(flag_llm_irrelevant_streaming(
@@ -417,25 +417,25 @@ def run_flagging(df, args, config, citations_df, embeddings, emb_df, has_embeddi
             df.loc[partial.index, "llm_irrelevant"] = partial
         if "llm_irrelevant" in df.columns:
             n_llm = df["llm_irrelevant"].fillna(False).sum()
-            print(f"  Flag 6 (LLM irrelevant): {n_llm}")
+            log.info("  Flag 6 (LLM irrelevant): %d", n_llm)
         else:
-            print("  Flag 6: no candidates scored")
+            log.info("  Flag 6: no candidates scored")
     else:
-        print("  Flag 6: skipped (--skip-llm)")
+        log.info("  Flag 6: skipped (--skip-llm)")
 
-    print("\n=== Phase B: Protecting key papers ===")
+    log.info("=== Phase B: Protecting key papers ===")
     df["protected"], df["protect_reason"] = compute_protection(
         df, config, citations_df=citations_df)
-    print(f"  Protected papers: {df['protected'].sum()}")
+    log.info("  Protected papers: %d", df["protected"].sum())
 
-    print("\n=== Phase C: Verification ===")
+    log.info("=== Phase C: Verification ===")
     verify_blacklist(df, config)
 
     if not skip_llm:
-        print("\n=== C2: LLM audit ===")
-        print("  (Use scripts/qa_refine_audit.py for full audit)")
+        log.info("=== C2: LLM audit ===")
+        log.info("  (Use scripts/qa_refine_audit.py for full audit)")
     else:
-        print("\n=== C2: LLM audit SKIPPED (--skip-llm) ===")
+        log.info("=== C2: LLM audit SKIPPED (--skip-llm) ===")
 
     print_summary(df)
     return df, has_embeddings
@@ -500,19 +500,19 @@ def main():
 
     # ── Filter mode: read existing extended artifact, apply policy ─────────
     if args.filter:
-        print(f"=== FILTER MODE: {works_input} → {works_output} ===")
+        log.info("=== FILTER MODE: %s → %s ===", works_input, works_output)
         df = pd.read_csv(works_input)
-        print(f"  Loaded: {len(df)} rows from {works_input}")
+        log.info("  Loaded: %d rows from %s", len(df), works_input)
         audit_path = os.path.join(os.path.dirname(works_output), "corpus_audit.csv")
         apply_filter(df, output_path=works_output, audit_path=audit_path)
         return
 
     # ── Extend / apply modes: run flagging pipeline ────────────────────────
     mode_label = "EXTEND" if args.extend else ("APPLY" if args.apply else "DRY RUN")
-    print(f"=== {mode_label} MODE: {works_input} → {works_output} ===")
+    log.info("=== %s MODE: %s → %s ===", mode_label, works_input, works_output)
 
     config = _load_config()
-    print("Loading data...")
+    log.info("Loading data...")
     df = load_input_works(works_input)
     citations_df = load_citations(cheap=getattr(args, "cheap", False))
     embeddings, emb_df, has_embeddings = load_embeddings(
@@ -528,7 +528,7 @@ def main():
         audit_path = os.path.join(os.path.dirname(works_output), "corpus_audit.csv")
         apply_filter(df, output_path=works_output, audit_path=audit_path)
     else:
-        print("\n=== DRY RUN: use --extend / --filter / --apply to write output ===")
+        log.info("=== DRY RUN: use --extend / --filter / --apply to write output ===")
         save_dry_run_audit(df)
 
 

@@ -60,7 +60,8 @@ The `post-task` trigger runs automatically. Celebrating is not a formality — i
 | pre-commit | Before every commit | `runbooks/pre-commit.md` |
 | post-task | After completing a ticket | `runbooks/celebrate.md` |
 | new-ticket | Creating a GitHub issue (issues are handoff documents) | `runbooks/new-ticket.md` |
-| review-pr | Reviewing a pull request | `runbooks/review-pr.md` |
+| review-pr | Reviewing a pull request (code) | `runbooks/review-pr.md` |
+| review-pr-prose | Reviewing a pull request (prose/manuscript) | `runbooks/review-pr-prose.md` |
 | memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
 
 ## Git discipline

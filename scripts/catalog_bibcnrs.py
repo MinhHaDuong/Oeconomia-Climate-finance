@@ -23,8 +23,10 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, EXPORTS_DIR, WORKS_COLUMNS, normalize_doi,
-                   save_csv)
+from utils import (CATALOGS_DIR, EXPORTS_DIR, WORKS_COLUMNS, get_logger,
+                   normalize_doi, save_csv)
+
+log = get_logger("catalog_bibcnrs")
 
 INSTRUCTIONS = """No bibCNRS export found in data/exports/.
 
@@ -138,19 +140,19 @@ def main():
         all_files = list(all_ris | all_bib)
 
     if not all_files:
-        print(INSTRUCTIONS)
+        log.info(INSTRUCTIONS)
         return
 
     all_records = []
     for path in all_files:
-        print(f"Parsing: {os.path.basename(path)}")
+        log.info("Parsing: %s", os.path.basename(path))
         if path.endswith(".ris"):
             all_records.extend(parse_ris(path))
         elif path.endswith(".bib"):
             all_records.extend(parse_bibtex(path))
 
     if not all_records:
-        print("No records extracted.")
+        log.info("No records extracted.")
         return
 
     df = pd.DataFrame(all_records, columns=WORKS_COLUMNS)
@@ -161,10 +163,10 @@ def main():
     df = df.drop_duplicates(subset="_norm_title", keep="first")
     df = df.drop(columns="_norm_title")
     if before > len(df):
-        print(f"Deduplicated: {before} -> {len(df)} ({before - len(df)} duplicates removed)")
+        log.info("Deduplicated: %d -> %d (%d duplicates removed)", before, len(df), before - len(df))
 
     save_csv(df, os.path.join(CATALOGS_DIR, "bibcnrs_works.csv"))
-    print(f"\nSummary: {len(df)} works")
+    log.info("Summary: %d works", len(df))
 
 
 if __name__ == "__main__":
