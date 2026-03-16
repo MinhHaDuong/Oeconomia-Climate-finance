@@ -49,9 +49,9 @@ Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragm
 The pipeline has three phases with a strict contract between them:
 
 **Phase 1 — Corpus building** (slow, API-dependent, run rarely).
-Phase 1 modifies `$CLIMATE_FINANCE_DATA`. Run only when explicitly requested.
+Phase 1 modifies `data/`. Run only when explicitly requested.
 - Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
-- Four steps with intermediate artifacts in `$CLIMATE_FINANCE_DATA/catalogs/`:
+- Four steps with intermediate artifacts in `data//catalogs/`:
   1. **corpus-discover**: merge sources → `unified_works.csv`
   2. **corpus-enrich**: enrich DOIs/abstracts/citations on `unified_works.csv` → `enriched_works.csv`
   3. **corpus-extend**: flag all works (no rows removed) → `extended_works.csv`
@@ -63,11 +63,20 @@ Phase 1 modifies `$CLIMATE_FINANCE_DATA`. Run only when explicitly requested.
 
 **Phase 2 — Analysis & figures** (fast, deterministic, run often):
 - Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`
-- Reads ONLY Phase 1 outputs; produces `content/figures/` and `content/tables/`
+- Reads ONLY Phase 1 outputs; produces `content/figures/`, `content/tables/`, `content/_includes/`, `_variables.yml`
+- Phase 2 → Phase 3 **contract**: all Phase 2 outputs are **git-tracked** so Phase 3 can build without rerunning Phase 2. After a corpus regen, commit updated figures/tables before rendering.
 - Run with: `make figures`
 
 **Phase 3 — Render** (Quarto → PDF/DOCX):
+- Reads ONLY git-tracked Phase 2 outputs. Build artifacts go to `output/` (gitignored).
 - Run with: `make manuscript` or `make papers`
+
+**Versioning policy:**
+| Phase | Artifacts | Versioned by |
+|-------|-----------|-------------|
+| 1 | `data/catalogs/` | DVC |
+| 2 | `content/figures/`, `content/tables/`, `content/_includes/`, `_variables.yml` | git |
+| 3 | `output/` | not tracked (gitignored) |
 
 ## Script reference
 
