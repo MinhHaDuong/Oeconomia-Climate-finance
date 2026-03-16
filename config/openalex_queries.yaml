@@ -113,7 +113,7 @@ tiers:
       - "loss and damage finance"
       - "just transition finance"
       - "just energy transition partnership"
-      - "JETP"
+      - "JETP"  # IMPROVEMENT: ambiguous acronym (72K hits incl. physics journal); drop or move to Tier 3 with concept-group filter
       # Markets and instruments
       - "climate bonds"
       - "green bonds climate"
