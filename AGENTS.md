@@ -45,7 +45,7 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 | on-start | Beginning of every conversation | `runbooks/on-start.md` |
 | pre-commit | Before every commit | `runbooks/pre-commit.md` |
 | post-task | After completing a ticket | `runbooks/celebrate.md` |
-| new-ticket | Creating a GitHub issue | `runbooks/new-ticket.md` |
+| new-ticket | Creating a GitHub issue (issues are handoff documents) | `runbooks/new-ticket.md` |
 | review-pr | Reviewing a pull request | `runbooks/review-pr.md` |
 | start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
 | memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
@@ -72,14 +72,6 @@ When working on multiple tickets:
 4. Launch a fresh-context review in a new worktree — follow `runbooks/review-pr.md`
 5. Clean up worktree branches after pushing named branches
 6. Always do a global verification pass after each wave of fixes.
-
-## GitHub Issues as plans
-
-Issues are handoff documents. The `new-ticket` trigger defines the template. The `start-ticket` trigger defines how to begin working on one.
-
-## Memory policy
-
-Policy and procedure: `runbooks/memory.md` (runs as a trigger).
 
 ## Communication with author
 
