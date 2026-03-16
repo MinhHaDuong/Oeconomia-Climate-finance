@@ -4,12 +4,13 @@ Exercises each Phase 1 script in sequence with tiny synthetic data:
   catalog_merge → enrich_dois → corpus_refine --extend → --filter → corpus_align
 
 Runs in < 10 seconds, no network calls.
-Would have caught: YAML newline bug, glob loading wrong files, missing from_* columns.
+Would have caught: glob loading wrong files, missing from_* columns.
 """
 
 import os
 import subprocess
 import sys
+from contextlib import contextmanager
 
 import numpy as np
 import pandas as pd
@@ -19,12 +20,40 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(REPO_ROOT, "scripts")
 sys.path.insert(0, SCRIPTS_DIR)
 
-from utils import WORKS_COLUMNS, FROM_COLS, SOURCE_NAMES, normalize_doi
+from utils import WORKS_COLUMNS, FROM_COLS, normalize_doi
 
 
 # ============================================================
 # Fixture helpers
 # ============================================================
+
+@contextmanager
+def _patched_merge_dirs(workspace):
+    """Temporarily redirect catalog_merge and utils paths to a test workspace.
+
+    Patches BASE_DIR and CATALOGS_DIR on both catalog_merge and utils modules,
+    restoring originals on exit (even if the test raises).
+    """
+    import catalog_merge as cm
+    import utils
+    catalogs_dir = str(workspace / "data" / "catalogs")
+    orig = (cm.BASE_DIR, cm.CATALOGS_DIR, utils.BASE_DIR, utils.CATALOGS_DIR)
+    cm.BASE_DIR = str(workspace)
+    cm.CATALOGS_DIR = catalogs_dir
+    utils.BASE_DIR = str(workspace)
+    utils.CATALOGS_DIR = catalogs_dir
+    try:
+        yield catalogs_dir
+    finally:
+        cm.BASE_DIR, cm.CATALOGS_DIR, utils.BASE_DIR, utils.CATALOGS_DIR = orig
+
+
+def _run_merge(workspace):
+    """Run catalog_merge.main() with paths redirected to workspace."""
+    import catalog_merge as cm
+    with _patched_merge_dirs(workspace):
+        cm.main()
+
 
 def _make_source_csv(path, source_name, rows):
     """Write a source catalog CSV with WORKS_COLUMNS + from_* columns."""
@@ -79,8 +108,6 @@ def pipeline_workspace(tmp_path):
     data_dir = tmp_path / "data"
     catalogs_dir = data_dir / "catalogs"
     catalogs_dir.mkdir(parents=True)
-    config_dir = tmp_path / "config"
-    config_dir.mkdir()
 
     # --- Source catalogs ---
     # OpenAlex: 4 works (1 shares DOI with istex for dedup testing)
@@ -148,24 +175,10 @@ def pipeline_workspace(tmp_path):
     ]
     _make_dvc_yaml(str(tmp_path), source_files)
 
-    # --- Config for corpus_refine (minimal) ---
-    import yaml
-    config = {
-        "noise_title": ["deep learning", "neural network", "blockchain"],
-        "noise_title_exact": ["index", "references"],
-        "safe_title": ["climate", "carbon", "emission", "energy", "finance"],
-        "concept_groups": {
-            "climate": ["climate", "emission", "carbon", "adaptation", "mitigation"],
-            "finance": ["finance", "fund", "investment", "market", "bond", "tax"],
-        },
-        "min_concept_groups": 2,
-        "citation_isolation": {"max_year": 2019},
-        "semantic_outlier": {"sigma": 2},
-        "llm_relevance": {"backend": "reranker", "reranker_threshold": 0.002},
-        "protection": {"min_cited_by": 50, "min_source_count": 2},
-    }
-    with open(config_dir / "corpus_refine.yaml", "w") as f:
-        yaml.safe_dump(config, f)
+    # Note: corpus_refine subprocess reads config from the repo's config/ dir,
+    # not from this workspace. Tests depend on the repo's production config
+    # (which blacklists "deep learning", etc.). This is intentional — the smoke
+    # test validates the real pipeline, not a synthetic config.
 
     return tmp_path
 
@@ -180,26 +193,7 @@ class TestCatalogMerge:
         ws = pipeline_workspace
         catalogs_dir = ws / "data" / "catalogs"
 
-        # Monkeypatch BASE_DIR so catalog_merge reads our dvc.yaml and writes
-        # to our catalogs dir.
-        import catalog_merge as cm
-        import utils
-        orig_base = cm.BASE_DIR
-        orig_catalogs = cm.CATALOGS_DIR
-        orig_utils_base = utils.BASE_DIR
-        orig_utils_catalogs = utils.CATALOGS_DIR
-
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            utils.BASE_DIR = str(ws)
-            utils.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_catalogs
-            utils.BASE_DIR = orig_utils_base
-            utils.CATALOGS_DIR = orig_utils_catalogs
+        _run_merge(ws)
 
         unified_path = catalogs_dir / "unified_works.csv"
         assert unified_path.exists(), "catalog_merge did not produce unified_works.csv"
@@ -256,24 +250,7 @@ class TestCatalogMerge:
         decoy.to_csv(catalogs_dir / "enriched_works.csv", index=False)
         decoy.to_csv(catalogs_dir / "extended_works.csv", index=False)
 
-        import catalog_merge as cm
-        import utils
-        orig_base = cm.BASE_DIR
-        orig_catalogs = cm.CATALOGS_DIR
-        orig_utils_base = utils.BASE_DIR
-        orig_utils_catalogs = utils.CATALOGS_DIR
-
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            utils.BASE_DIR = str(ws)
-            utils.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_catalogs
-            utils.BASE_DIR = orig_utils_base
-            utils.CATALOGS_DIR = orig_utils_catalogs
+        _run_merge(ws)
 
         df = pd.read_csv(catalogs_dir / "unified_works.csv", dtype=str,
                          keep_default_na=False)
@@ -331,6 +308,18 @@ class TestEnrichDois:
         for flag in ["--works-input", "--works-output", "--dry-run", "--limit"]:
             assert flag in result.stdout, f"enrich_dois should accept {flag}"
 
+    def test_load_cache_handles_empty_file(self, tmp_path):
+        """load_cache() returns {} when cache file is empty (DVC stub)."""
+        import enrich_dois
+        orig_cache = enrich_dois.CACHE_FILE
+        try:
+            empty_file = tmp_path / "doi_resolved.csv"
+            empty_file.write_text("")
+            enrich_dois.CACHE_FILE = str(empty_file)
+            assert enrich_dois.load_cache() == {}
+        finally:
+            enrich_dois.CACHE_FILE = orig_cache
+
 
 # ============================================================
 # Stage 3: corpus_refine --extend
@@ -342,22 +331,7 @@ class TestCorpusRefineExtend:
         ws = pipeline_workspace
         catalogs_dir = ws / "data" / "catalogs"
 
-        # Build unified first
-        import catalog_merge as cm
-        import utils as u
-        orig_base, orig_cat = cm.BASE_DIR, cm.CATALOGS_DIR
-        orig_ub, orig_uc = u.BASE_DIR, u.CATALOGS_DIR
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            u.BASE_DIR = str(ws)
-            u.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_cat
-            u.BASE_DIR = orig_ub
-            u.CATALOGS_DIR = orig_uc
+        _run_merge(ws)
 
         unified_path = catalogs_dir / "unified_works.csv"
         extended_path = catalogs_dir / "extended_works.csv"
@@ -393,21 +367,7 @@ class TestCorpusRefineExtend:
         ws = pipeline_workspace
         catalogs_dir = ws / "data" / "catalogs"
 
-        import catalog_merge as cm
-        import utils as u
-        orig_base, orig_cat = cm.BASE_DIR, cm.CATALOGS_DIR
-        orig_ub, orig_uc = u.BASE_DIR, u.CATALOGS_DIR
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            u.BASE_DIR = str(ws)
-            u.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_cat
-            u.BASE_DIR = orig_ub
-            u.CATALOGS_DIR = orig_uc
+        _run_merge(ws)
 
         unified_path = catalogs_dir / "unified_works.csv"
         extended_path = catalogs_dir / "extended_works.csv"
@@ -436,22 +396,7 @@ class TestCorpusRefineFilter:
         ws = pipeline_workspace
         catalogs_dir = ws / "data" / "catalogs"
 
-        # Run merge + extend first
-        import catalog_merge as cm
-        import utils as u
-        orig_base, orig_cat = cm.BASE_DIR, cm.CATALOGS_DIR
-        orig_ub, orig_uc = u.BASE_DIR, u.CATALOGS_DIR
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            u.BASE_DIR = str(ws)
-            u.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_cat
-            u.BASE_DIR = orig_ub
-            u.CATALOGS_DIR = orig_uc
+        _run_merge(ws)
 
         unified_path = catalogs_dir / "unified_works.csv"
         extended_path = catalogs_dir / "extended_works.csv"
@@ -517,22 +462,7 @@ class TestCorpusAlign:
         ws = pipeline_workspace
         catalogs_dir = ws / "data" / "catalogs"
 
-        # Run full pipeline up to refined_works.csv
-        import catalog_merge as cm
-        import utils as u
-        orig_base, orig_cat = cm.BASE_DIR, cm.CATALOGS_DIR
-        orig_ub, orig_uc = u.BASE_DIR, u.CATALOGS_DIR
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            u.BASE_DIR = str(ws)
-            u.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_cat
-            u.BASE_DIR = orig_ub
-            u.CATALOGS_DIR = orig_uc
+        _run_merge(ws)
 
         unified_path = catalogs_dir / "unified_works.csv"
         extended_path = catalogs_dir / "extended_works.csv"
@@ -634,21 +564,7 @@ class TestFullPipeline:
         catalogs_dir = ws / "data" / "catalogs"
 
         # Stage 1: merge
-        import catalog_merge as cm
-        import utils as u
-        orig_base, orig_cat = cm.BASE_DIR, cm.CATALOGS_DIR
-        orig_ub, orig_uc = u.BASE_DIR, u.CATALOGS_DIR
-        try:
-            cm.BASE_DIR = str(ws)
-            cm.CATALOGS_DIR = str(catalogs_dir)
-            u.BASE_DIR = str(ws)
-            u.CATALOGS_DIR = str(catalogs_dir)
-            cm.main()
-        finally:
-            cm.BASE_DIR = orig_base
-            cm.CATALOGS_DIR = orig_cat
-            u.BASE_DIR = orig_ub
-            u.CATALOGS_DIR = orig_uc
+        _run_merge(ws)
 
         unified = pd.read_csv(catalogs_dir / "unified_works.csv")
         assert len(unified) >= 4, "Merge should produce at least 4 works"
