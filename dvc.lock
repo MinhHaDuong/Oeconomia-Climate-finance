@@ -236,3 +236,24 @@ stages:
       hash: md5
       md5: 8272d6a661bd257aaaca88464e0573e4
       size: 37995048
+  catalog_bibcnrs:
+    cmd: uv run python scripts/catalog_bibcnrs.py
+    deps:
+    - path: data/exports
+      hash: md5
+      md5: e4ee27a6fea54a81bf590ee04a1c12ae.dir
+      size: 154608
+      nfiles: 5
+    - path: scripts/catalog_bibcnrs.py
+      hash: md5
+      md5: 15cc8789c18924d3fbb02fd936045cd0
+      size: 6152
+    - path: scripts/utils.py
+      hash: md5
+      md5: 44f58019945703d49871b73cd96b0c6d
+      size: 20438
+    outs:
+    - path: data/catalogs/bibcnrs_works.csv
+      hash: md5
+      md5: f9ec6a6dd2ae8cb4fc297eca1c24dcfa
+      size: 53677
