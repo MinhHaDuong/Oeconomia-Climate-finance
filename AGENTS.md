@@ -18,27 +18,35 @@
 
 ## Dragon Dreaming workflow
 
-Every task passes through four phases. Identify and report the phase you're in on startup.
+Every task passes through four phases. Announce transitions inline: `[Phase → Phase] reason`.
 
 ### Dreaming
-Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like.
+Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like. Deliverable: a shared vision.
 
 ### Planning
-Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet.
+Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet. Deliverable: a ticket with test spec.
 
 ### Doing
-Autonomous execution using test-driven development. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for domain-specific test conventions. The cycle is:
+Runs in a fresh context — the ticket is the only input. This prevents context window pollution from Dreaming/Planning conversations. Launch via `start-ticket` trigger.
+
+Autonomous execution using test-driven development. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for domain-specific test conventions. The inner cycle is:
 
 1. **Red**: write a failing test that defines the expected behavior.
 2. **Green**: write the minimum code to make it pass.
 3. **Refactor**: clean up, then confirm tests still pass.
+4. **PR**: push branch, open PR, review (`runbooks/review-pr.md`).
+5. **Iterate**: if review finds issues, fix and re-review.
 
-Each step gets its own commit (the git log tells the story: intent → solution → polish). Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
+Each Red/Green/Refactor step gets its own commit. Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
 
-If a test stays red after three approaches:
-1. Launch parallel expert agents exploring different directions.
-2. If all experts fail: is the test correct? (Maybe the spec is wrong — re-ticket with diagnosis.)
-3. If the spec is sound but no approach works: ask the author.
+When stuck, escalate progressively:
+1. Fix direct — review feedback is straightforward.
+2. Alternative approach — rethink the solution.
+3. Parallel expert agents — fan-out different directions.
+4. Re-ticket with diagnosis — the problem is mis-specified.
+5. Stop — ask the author.
+
+Save a feedback memory at each escalation (what failed, why). Stop if repeating yourself. Deliverable: a merged PR.
 
 ### Celebrating (autonomous)
 The `post-task` trigger runs automatically. Celebrating is not a formality — it closes the energy cycle. The agent reflects on what was accomplished and learned, acknowledges contributions, and releases the context before the next dream begins.
