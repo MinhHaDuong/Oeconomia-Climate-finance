@@ -250,10 +250,140 @@ stages:
       size: 6152
     - path: scripts/utils.py
       hash: md5
-      md5: 44f58019945703d49871b73cd96b0c6d
-      size: 20438
+      md5: e1ae905eb982296cad2c99acd3c834d7
+      size: 20647
     outs:
     - path: data/catalogs/bibcnrs_works.csv
       hash: md5
       md5: f9ec6a6dd2ae8cb4fc297eca1c24dcfa
       size: 53677
+  catalog_teaching:
+    cmd: uv run python scripts/build_teaching_yaml.py && uv run python 
+      scripts/build_teaching_canon.py
+    deps:
+    - path: data/syllabi
+      hash: md5
+      md5: 772e7f23804efa03bf305a5a263a2309.dir
+      size: 146430644
+      nfiles: 87
+    - path: scripts/build_teaching_canon.py
+      hash: md5
+      md5: 5491ca459f2b6efcbf6cd89dfc20524a
+      size: 3510
+    - path: scripts/build_teaching_yaml.py
+      hash: md5
+      md5: 216fc16cd4f35429cf5b1d3d77920691
+      size: 11552
+    - path: scripts/utils.py
+      hash: md5
+      md5: e1ae905eb982296cad2c99acd3c834d7
+      size: 20647
+    outs:
+    - path: data/catalogs/teaching_works.csv
+      hash: md5
+      md5: 31bb49a1978359742efd0bc583a7c9ca
+      size: 2258
+  catalog_istex:
+    cmd: uv run python scripts/catalog_istex.py --api
+    deps:
+    - path: scripts/catalog_istex.py
+      hash: md5
+      md5: fa970dc29fca83ba5228ea098d3dcc84
+      size: 7722
+    - path: scripts/utils.py
+      hash: md5
+      md5: e1ae905eb982296cad2c99acd3c834d7
+      size: 20647
+    outs:
+    - path: data/catalogs/istex_refs.csv
+      hash: md5
+      md5: acd5c773e7fa50c2be8580ccd656e01a
+      size: 16157853
+    - path: data/catalogs/istex_works.csv
+      hash: md5
+      md5: 83364b9a568967c61997aeb25bd33e0c
+      size: 1658486
+  catalog_openalex:
+    cmd: uv run python scripts/catalog_openalex.py --resume
+    deps:
+    - path: config/openalex_queries.yaml
+      hash: md5
+      md5: 4af44e7be58bd50103e5c8caf7bf65fe
+      size: 4690
+    - path: scripts/catalog_openalex.py
+      hash: md5
+      md5: 5ec581ff2430a408c0a4732d9617d42b
+      size: 19226
+    - path: scripts/utils.py
+      hash: md5
+      md5: e1ae905eb982296cad2c99acd3c834d7
+      size: 20647
+    outs:
+    - path: data/catalogs/openalex_citations.csv
+      hash: md5
+      md5: 2caa24e9ba37668dfa5a02a8d10b48d0
+      size: 57628888
+    - path: data/catalogs/openalex_works.csv
+      hash: md5
+      md5: 43d8bbbd8b50e8b1c83d88530bf3cbe4
+      size: 89046542
+  catalog_grey:
+    cmd: uv run python scripts/catalog_grey.py
+    deps:
+    - path: config/grey_sources.yaml
+      hash: md5
+      md5: 393a35715ea920e54fd25500987a9642
+      size: 3086
+    - path: scripts/catalog_grey.py
+      hash: md5
+      md5: f424528ace5727d862260966ae76ca44
+      size: 5940
+    - path: scripts/utils.py
+      hash: md5
+      md5: e1ae905eb982296cad2c99acd3c834d7
+      size: 20647
+    outs:
+    - path: data/catalogs/grey_works.csv
+      hash: md5
+      md5: 7e3b11b80a29c61fc95e5db93ba6de79
+      size: 419669
+  catalog_merge:
+    cmd: uv run python scripts/catalog_merge.py
+    deps:
+    - path: data/catalogs/bibcnrs_works.csv
+      hash: md5
+      md5: f9ec6a6dd2ae8cb4fc297eca1c24dcfa
+      size: 53677
+    - path: data/catalogs/grey_works.csv
+      hash: md5
+      md5: 7e3b11b80a29c61fc95e5db93ba6de79
+      size: 419669
+    - path: data/catalogs/istex_works.csv
+      hash: md5
+      md5: 83364b9a568967c61997aeb25bd33e0c
+      size: 1658486
+    - path: data/catalogs/openalex_works.csv
+      hash: md5
+      md5: 43d8bbbd8b50e8b1c83d88530bf3cbe4
+      size: 89046542
+    - path: data/catalogs/scispsace_works.csv
+      hash: md5
+      md5: 21be3cfd3e0947eb03385134f1826e14
+      size: 1060524
+    - path: data/catalogs/teaching_works.csv
+      hash: md5
+      md5: 31bb49a1978359742efd0bc583a7c9ca
+      size: 2258
+    - path: scripts/catalog_merge.py
+      hash: md5
+      md5: efcce392121d1eb7105fd31d8056ad65
+      size: 6551
+    - path: scripts/utils.py
+      hash: md5
+      md5: e1ae905eb982296cad2c99acd3c834d7
+      size: 20647
+    outs:
+    - path: data/catalogs/unified_works.csv
+      hash: md5
+      md5: a130760141573067ab3f362419297a9c
+      size: 91762497
