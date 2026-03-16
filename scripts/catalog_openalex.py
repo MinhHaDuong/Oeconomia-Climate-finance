@@ -411,6 +411,9 @@ def main():
     if from_date:
         print(f"Date filter active: from_created_date >= {from_date}")
 
+    if not OPENALEX_API_KEY:
+        print("WARNING: No OPENALEX_API_KEY found — using free tier (lower budget)")
+
     # Load existing pool IDs for resume
     existing_ids = set()
     if args.resume:
@@ -454,6 +457,8 @@ def main():
                     "filter": build_filter(term, from_date),
                     "per_page": 1, "mailto": MAILTO,
                 }
+                if OPENALEX_API_KEY:
+                    probe_params["api_key"] = OPENALEX_API_KEY
                 probe_resp = polite_get(OA_API, params=probe_params,
                                         delay=args.delay)
                 budget_start = capture_budget(probe_resp)
@@ -475,6 +480,8 @@ def main():
     try:
         end_params = {"filter": 'default.search:"climate finance"',
                       "per_page": 1, "mailto": MAILTO}
+        if OPENALEX_API_KEY:
+            end_params["api_key"] = OPENALEX_API_KEY
         end_resp = polite_get(OA_API, params=end_params, delay=args.delay)
         budget_end = capture_budget(end_resp)
     except Exception:

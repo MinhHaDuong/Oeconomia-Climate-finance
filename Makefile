@@ -113,7 +113,7 @@ corpus:
 
 # Individual stage aliases.
 corpus-discover:
-	uv run dvc repro discover
+	uv run dvc repro catalog_merge
 
 corpus-enrich:
 	uv run dvc repro enrich

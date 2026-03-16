@@ -9,10 +9,14 @@ import time
 
 import pandas as pd
 import requests
+from dotenv import load_dotenv
 
 # --- Paths ---
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Load .env from repo root (secrets like API keys live here, gitignored).
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 
 # Data lives in <repo>/data/ (managed by DVC).

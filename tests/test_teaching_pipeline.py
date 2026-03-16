@@ -126,28 +126,26 @@ class TestBuildTeachingCanonPath:
 class TestDvcYamlIntegration:
     """Verify dvc.yaml references the correct paths."""
 
-    def test_discover_stage_deps_include_syllabi(self):
-        """The discover stage should depend on data/syllabi, not config/teaching_sources.yaml."""
+    def test_catalog_teaching_stage_deps_include_syllabi(self):
+        """The catalog_teaching stage should depend on data/syllabi."""
         dvc_path = os.path.join(BASE_DIR, "dvc.yaml")
         with open(dvc_path) as f:
             dvc = yaml.safe_load(f)
 
-        discover = dvc["stages"]["discover"]
-        deps = discover["deps"]
+        teaching = dvc["stages"]["catalog_teaching"]
+        deps = teaching["deps"]
 
-        assert "data/syllabi" in deps, "discover should depend on data/syllabi"
-        assert "config/teaching_sources.yaml" not in deps, \
-            "discover should NOT depend on config/teaching_sources.yaml"
+        assert "data/syllabi" in deps, "catalog_teaching should depend on data/syllabi"
         assert "scripts/build_teaching_yaml.py" in deps, \
-            "discover should depend on build_teaching_yaml.py"
+            "catalog_teaching should depend on build_teaching_yaml.py"
 
-    def test_discover_stage_runs_build_teaching_yaml(self):
-        """The discover stage command should run build_teaching_yaml.py before build_teaching_canon.py."""
+    def test_catalog_teaching_stage_runs_build_teaching_yaml(self):
+        """The catalog_teaching stage command should run build_teaching_yaml.py before build_teaching_canon.py."""
         dvc_path = os.path.join(BASE_DIR, "dvc.yaml")
         with open(dvc_path) as f:
             dvc = yaml.safe_load(f)
 
-        cmd = dvc["stages"]["discover"]["cmd"]
+        cmd = dvc["stages"]["catalog_teaching"]["cmd"]
         assert "build_teaching_yaml.py" in cmd
         assert "build_teaching_canon.py" in cmd
         # yaml must come before canon
