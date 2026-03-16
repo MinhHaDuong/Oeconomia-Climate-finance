@@ -23,7 +23,9 @@ from scipy.sparse import lil_matrix
 # Add scripts dir to path for local imports
 sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import apply_style, DARK, MED, LIGHT, FIGWIDTH, DPI
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_citations, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
+
+log = get_logger("plot_fig_traditions")
 
 apply_style()
 
@@ -69,14 +71,14 @@ TRADITION_EDGE_COLORS = {
 # Load data
 # ============================================================
 
-print("Loading citations...")
+log.info("Loading citations...")
 cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"]    = cit["ref_doi"].apply(normalize_doi)
 cit = cit[(cit["source_doi"] != "") & (cit["ref_doi"] != "")]
 cit = cit[~cit["source_doi"].isin(["nan", "none"])]
 cit = cit[~cit["ref_doi"].isin(["nan", "none"])]
-print(f"  Citation pairs: {len(cit)}")
+log.info("  Citation pairs: %d", len(cit))
 
 # Load works for metadata
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
@@ -115,18 +117,19 @@ pre_dois = (
 
 ref_counts_all = cit.groupby("ref_doi").size()
 ref_counts = ref_counts_all.loc[ref_counts_all.index.isin(pre_dois)].sort_values(ascending=False)
-print(f"  Pre-{CUTOFF_YEAR} refs: {len(ref_counts)} (cited >= 1)")
+log.info("  Pre-%d refs: %d (cited >= 1)", CUTOFF_YEAR, len(ref_counts))
 
 top_refs = ref_counts.head(TOP_N).index.tolist()
 top_set  = set(top_refs)
 ref_to_idx = {r: i for i, r in enumerate(top_refs)}
-print(f"  Using top {TOP_N}; citation range: {ref_counts.iloc[0]} .. {ref_counts.iloc[TOP_N - 1]}")
+log.info("  Using top %d; citation range: %d .. %d",
+         TOP_N, ref_counts.iloc[0], ref_counts.iloc[TOP_N - 1])
 
 # ============================================================
 # Build co-citation matrix (only papers published pre-2007)
 # ============================================================
 
-print("Building co-citation matrix...")
+log.info("Building co-citation matrix...")
 # Use ALL source papers (any year) — we filter only the *referenced* papers by year.
 # This counts how often pre-2007 foundational works are cited together, regardless
 # of when the citing paper was published.
@@ -145,7 +148,7 @@ for _, ref_list in source_groups.items():
             cocit[b, a] += 1
 
 cocit_dense = cocit.toarray()
-print(f"  Non-zero co-citation pairs: {np.count_nonzero(cocit_dense) // 2}")
+log.info("  Non-zero co-citation pairs: %d", np.count_nonzero(cocit_dense) // 2)
 
 # ============================================================
 # Build network and detect communities
@@ -179,13 +182,13 @@ for i in range(TOP_N):
 
 isolates = list(nx.isolates(G))
 G.remove_nodes_from(isolates)
-print(f"\nNetwork: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
-print(f"  Removed {len(isolates)} isolates")
+log.info("Network: %d nodes, %d edges", G.number_of_nodes(), G.number_of_edges())
+log.info("  Removed %d isolates", len(isolates))
 
 partition = community_louvain.best_partition(G, weight="weight", random_state=RANDOM_STATE)
 n_comm = len(set(partition.values()))
 modularity = community_louvain.modularity(partition, G, weight="weight")
-print(f"  Louvain: {n_comm} communities, modularity={modularity:.4f}")
+log.info("  Louvain: %d communities, modularity=%.4f", n_comm, modularity)
 
 # ============================================================
 # Identify which community maps to which tradition
@@ -232,18 +235,18 @@ for c in comm_to_nodes:
     if c not in comm_to_tradition:
         comm_to_tradition[c] = "other"
 
-print("\nTradition assignments:")
+log.info("Tradition assignments:")
 for trad, c in trad_to_comm.items():
     nodes = comm_to_nodes[c]
     top3  = sorted(nodes, key=lambda d: -ref_counts.get(d, 0))[:3]
     names = [G.nodes[d]["label"] for d in top3]
-    print(f"  {trad:10s} → community {c} (n={len(nodes)}): {', '.join(names)}")
+    log.info("  %10s -> community %d (n=%d): %s", trad, c, len(nodes), ", ".join(names))
 
 # ============================================================
 # Compute layout
 # ============================================================
 
-print("\nComputing layout...")
+log.info("Computing layout...")
 pos = nx.spring_layout(G, weight="weight", k=2.5, iterations=200, seed=RANDOM_STATE)
 
 # ============================================================
@@ -354,6 +357,6 @@ out_png = os.path.join(FIGURES_DIR, "fig_traditions.png")
 out_pdf = os.path.join(FIGURES_DIR, "fig_traditions.pdf")
 fig.savefig(out_pdf, bbox_inches="tight")
 fig.savefig(out_png, dpi=DPI, bbox_inches="tight")
-print(f"\nSaved → {out_png}")
-print(f"Saved → {out_pdf}")
+log.info("Saved -> %s", out_png)
+log.info("Saved -> %s", out_pdf)
 plt.close()

@@ -21,7 +21,9 @@ import pandas as pd
 from sklearn.mixture import GaussianMixture
 
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_embeddings, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings, save_figure
+
+log = get_logger("plot_fig_seed_axis")
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Seed-axis violin plot (Fig seed)")
@@ -77,7 +79,7 @@ ACCOUNTABILITY_TERMS = {
 # Step 1: Load data + embeddings (same filter as analyze_bimodality.py)
 # ============================================================
 
-print("Loading data...")
+log.info("Loading data...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
@@ -89,7 +91,7 @@ embeddings = load_refined_embeddings()[(has_title & in_range).values]
 assert len(embeddings) == len(df), (
     f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
 )
-print(f"Loaded {len(df)} papers with embeddings ({embeddings.shape[1]}D)")
+log.info("Loaded %d papers with embeddings (%dD)", len(df), embeddings.shape[1])
 
 # Core filtering
 df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
@@ -97,7 +99,7 @@ core_mask = df["cited_by_count"] >= CITE_THRESHOLD
 core_indices = df.index[core_mask].values
 df = df.loc[core_mask].reset_index(drop=True)
 embeddings = embeddings[core_indices]
-print(f"Core subset: {len(df)} papers (cited_by_count >= {CITE_THRESHOLD})")
+log.info("Core subset: %d papers (cited_by_count >= %d)", len(df), CITE_THRESHOLD)
 
 df["year"] = df["year"].astype(int)
 df["abstract_lower"] = df["abstract"].str.lower()
@@ -122,7 +124,7 @@ df["acc_count"] = df["abstract_lower"].apply(
 eff_mask = df["eff_count"] >= 2
 acc_mask = df["acc_count"] >= 2
 n_eff, n_acc = eff_mask.sum(), acc_mask.sum()
-print(f"Pole papers: {n_eff} efficiency, {n_acc} accountability")
+log.info("Pole papers: %d efficiency, %d accountability", n_eff, n_acc)
 
 centroid_eff = embeddings[eff_mask].mean(axis=0)
 centroid_acc = embeddings[acc_mask].mean(axis=0)
@@ -166,8 +168,8 @@ for period_label, (y_start, y_end) in PERIODS.items():
         "bimodal_dbic": round(dbic, 1) if not np.isnan(dbic) else None,
     })
 
-    print(f"  {period_label}: n={n}, median={median_val:.3f}, "
-          f"mean={mean_val:.3f}, DBIC={dbic:.0f}")
+    log.info("  %s: n=%d, median=%.3f, mean=%.3f, DBIC=%.0f",
+             period_label, n, median_val, mean_val, dbic)
 
 
 # ============================================================
@@ -246,6 +248,6 @@ plt.close()
 
 tab = pd.DataFrame(stats_rows)
 tab.to_csv(os.path.join(TABLES_DIR, "tab_seed_axis_core.csv"), index=False)
-print(f"\nSaved -> tables/tab_seed_axis_core.csv")
+log.info("Saved -> tables/tab_seed_axis_core.csv")
 
-print("\nDone.")
+log.info("Done.")

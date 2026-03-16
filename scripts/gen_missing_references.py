@@ -24,6 +24,11 @@ import sys
 
 import bibtexparser
 
+sys.path.insert(0, os.path.dirname(__file__))
+from utils import get_logger
+
+log = get_logger("gen_missing_references")
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -181,7 +186,7 @@ def main() -> None:
         bib_db = bibtexparser.load(f)
 
     pdf_stems = load_existing_pdfs(ARTICLES_DIR)
-    print(f"Found {len(pdf_stems)} PDFs in {ARTICLES_DIR}")
+    log.info("Found %d PDFs in %s", len(pdf_stems), ARTICLES_DIR)
 
     doi_lines: list[str] = []
     url_lines: list[str] = []
@@ -226,15 +231,15 @@ def main() -> None:
         f.write("\n".join(lines) + "\n")
 
     n_missing = len(doi_lines) + len(url_lines) + len(isbn_lines) + len(no_id_lines)
-    print(f"Written {n_missing} missing entries to {OUTPUT_PATH}")
+    log.info("Written %d missing entries to %s", n_missing, OUTPUT_PATH)
     if doi_lines:
-        print(f"  {len(doi_lines)} with DOI")
+        log.info("  %d with DOI", len(doi_lines))
     if url_lines:
-        print(f"  {len(url_lines)} with URL")
+        log.info("  %d with URL", len(url_lines))
     if isbn_lines:
-        print(f"  {len(isbn_lines)} with ISBN")
+        log.info("  %d with ISBN", len(isbn_lines))
     if no_id_lines:
-        print(f"  {len(no_id_lines)} with no identifier")
+        log.info("  %d with no identifier", len(no_id_lines))
 
 
 if __name__ == "__main__":

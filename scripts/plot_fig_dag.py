@@ -14,6 +14,9 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import FIGWIDTH, DPI, DARK, MED, LIGHT, FILL, RCPARAMS
+from utils import get_logger
+
+log = get_logger("plot_fig_dag")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -146,7 +149,7 @@ def draw_dag(deps):
     out_path = os.path.join(BASE_DIR, "content", "figures", "fig_dag.png")
     fig.savefig(out_path, dpi=DPI, bbox_inches="tight",
                 facecolor="white", pad_inches=0.1)
-    print(f"Saved {out_path}")
+    log.info("Saved %s", out_path)
     plt.close(fig)
 
 

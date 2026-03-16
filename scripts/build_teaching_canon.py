@@ -19,7 +19,9 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import DATA_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, save_csv
+from utils import DATA_DIR, CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv
+
+log = get_logger("build_teaching_canon")
 
 YAML_PATH = os.path.join(DATA_DIR, "teaching_sources.yaml")
 
@@ -43,7 +45,7 @@ def load_teaching_sources():
             reading["_meta"] = meta
             readings.append(reading)
 
-    print(f"Loaded {len(readings)} readings from {len(sources)} institutions")
+    log.info("Loaded %d readings from %d institutions", len(readings), len(sources))
     return readings, sources
 
 
@@ -89,10 +91,10 @@ def build_teaching_works(readings):
 
 
 def main():
-    print("Extracting teaching sources...")
+    log.info("Extracting teaching sources...")
     readings, sources = load_teaching_sources()
 
-    print("\nBuilding teaching_works.csv...")
+    log.info("Building teaching_works.csv...")
     works_df = build_teaching_works(readings)
 
     works_path = os.path.join(CATALOGS_DIR, "teaching_works.csv")
@@ -100,14 +102,14 @@ def main():
 
     n_with_doi = (works_df["doi"].str.strip() != "").sum()
     n_title_only = len(works_df) - n_with_doi
-    print(f"\n{'='*60}")
-    print(f"TEACHING WORKS SUMMARY")
-    print(f"{'='*60}")
-    print(f"  Institutions surveyed: {len(sources)}")
-    print(f"  Total readings: {len(readings)}")
-    print(f"  Unique works extracted: {len(works_df)}")
-    print(f"    With DOI: {n_with_doi}")
-    print(f"    Title-only: {n_title_only}")
+    log.info("=" * 60)
+    log.info("TEACHING WORKS SUMMARY")
+    log.info("=" * 60)
+    log.info("  Institutions surveyed: %d", len(sources))
+    log.info("  Total readings: %d", len(readings))
+    log.info("  Unique works extracted: %d", len(works_df))
+    log.info("    With DOI: %d", n_with_doi)
+    log.info("    Title-only: %d", n_title_only)
 
 
 if __name__ == "__main__":

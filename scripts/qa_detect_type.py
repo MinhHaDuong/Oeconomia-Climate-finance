@@ -24,7 +24,9 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, save_csv, BASE_DIR
+from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR
+
+log = get_logger("qa_detect_type")
 
 # Publishers that are NOT journals (often stored in journal field)
 PUBLISHERS_NOT_JOURNALS = {
@@ -161,22 +163,22 @@ def main():
 
     path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     df = pd.read_csv(path)
-    print(f"Loaded {len(df)} works")
+    log.info("Loaded %d works", len(df))
 
     # Classify
-    print("Classifying document types...")
+    log.info("Classifying document types...")
     df["doc_type"] = df.apply(classify_type, axis=1)
 
     # Summary
-    print(f"\n=== Document type distribution ===")
-    print(df["doc_type"].value_counts())
+    log.info("=== Document type distribution ===")
+    log.info("\n%s", df["doc_type"].value_counts())
 
     # By source
     PRIMARY_SOURCES = [
         "openalex", "openalex_historical", "istex", "bibcnrs",
         "scispsace", "grey", "teaching",
     ]
-    print(f"\n=== Document type by source ===")
+    log.info("=== Document type by source ===")
     for src in PRIMARY_SOURCES:
         from_col = f"from_{src}"
         mask = df[from_col] == 1 if from_col in df.columns else df["source"].str.contains(src, na=False)
@@ -186,16 +188,16 @@ def main():
         dist = sub["doc_type"].value_counts()
         n_article = dist.get("article", 0)
         pct = n_article / len(sub) * 100
-        print(f"\n{src} (N={len(sub)}):")
-        print(f"  {dist.to_dict()}")
-        print(f"  → %article: {pct:.0f}%")
+        log.info("%s (N=%d):", src, len(sub))
+        log.info("  %s", dist.to_dict())
+        log.info("  -> %%article: %.0f%%", pct)
 
     # Flag misleading journal entries
     is_publisher = df["journal"].str.lower().str.strip().isin(PUBLISHERS_NOT_JOURNALS)
     n_misleading = is_publisher.sum()
-    print(f"\n=== Misleading journal field (publisher name, not journal): {n_misleading} ===")
+    log.info("=== Misleading journal field (publisher name, not journal): %d ===", n_misleading)
     if n_misleading > 0:
-        print(df[is_publisher][["title", "journal", "doc_type"]].head(10).to_string(max_colwidth=60))
+        log.info("\n%s", df[is_publisher][["title", "journal", "doc_type"]].head(10).to_string(max_colwidth=60))
 
     # Save report
     report = df[["title", "journal", "source", "doc_type"]].copy()
@@ -209,9 +211,9 @@ def main():
         publisher_mask = full_df["journal"].str.lower().str.strip().isin(PUBLISHERS_NOT_JOURNALS)
         full_df.loc[publisher_mask, "journal"] = ""
         full_df.to_csv(path, index=False)
-        print(f"\nUpdated {path} with doc_type column and cleaned journal field")
+        log.info("Updated %s with doc_type column and cleaned journal field", path)
     else:
-        print(f"\nDry run. Use --apply to write changes.")
+        log.info("Dry run. Use --apply to write changes.")
 
 
 if __name__ == "__main__":

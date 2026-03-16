@@ -25,7 +25,10 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, load_refined_citations, normalize_doi, save_csv
+from utils import (CATALOGS_DIR, get_logger, load_refined_citations,
+                   normalize_doi, save_csv)
+
+log = get_logger("build_het_core")
 
 # ── CONFIG ──────────────────────────────────────────────────────────────
 
@@ -249,9 +252,9 @@ def robust_minmax(values):
 # ── PIPELINE ────────────────────────────────────────────────────────────
 
 def main():
-    print("=" * 60)
-    print("BUILDING HET CLIMATE FINANCE CORE")
-    print("=" * 60)
+    log.info("=" * 60)
+    log.info("BUILDING HET CLIMATE FINANCE CORE")
+    log.info("=" * 60)
 
     # Load corpus
     corpus_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
@@ -259,7 +262,7 @@ def main():
     df["cited_by_count_num"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
     df["year_num"] = pd.to_numeric(df["year"], errors="coerce").fillna(2020)
     df["doi_norm"] = df["doi"].apply(normalize_doi)
-    print(f"\nCorpus: {len(df)} papers")
+    log.info("Corpus: %d papers", len(df))
 
     # Identify teaching works via from_teaching column (bypass theme gate)
     from_teaching = pd.to_numeric(df.get("from_teaching", 0), errors="coerce").fillna(0) == 1
@@ -267,7 +270,7 @@ def main():
 
     # ── Step 1: Theme gate ──────────────────────────────────────────
 
-    print("\n── Step 1: Theme gate ──")
+    log.info("-- Step 1: Theme gate --")
     blobs = df.apply(text_blob, axis=1)
     theme_mask = blobs.apply(matches_theme)
     # Teaching canon papers bypass theme gate (definitionally climate finance)
@@ -275,11 +278,12 @@ def main():
     combined_mask = theme_mask | canon_mask
     s1 = df[combined_mask].copy()
     n_canon_only = (canon_mask & ~theme_mask).sum()
-    print(f"  Passed theme gate: {len(s1)} / {len(df)} ({n_canon_only} via teaching canon bypass)")
+    log.info("Passed theme gate: %d / %d (%d via teaching canon bypass)",
+             len(s1), len(df), n_canon_only)
 
     # ── Step 2: Discipline + org filter ─────────────────────────────
 
-    print("\n── Step 2: Discipline + org filter ──")
+    log.info("-- Step 2: Discipline + org filter --")
     s1["_is_report"] = s1.apply(is_institutional_report, axis=1)
     s1["_field_score"] = s1.apply(field_score, axis=1)
     s1["_in_canon"] = s1["doi_norm"].isin(teaching_dois) & (s1["doi_norm"] != "")
@@ -291,13 +295,13 @@ def main():
     n_allow = (s1["_field_score"] == "allow").sum()
     n_exclude = (s1["_field_score"] == "exclude").sum()
     n_unknown = (s1["_field_score"] == "unknown").sum()
-    print(f"  Institutional reports: {n_reports}")
-    print(f"  Field allow: {n_allow}, exclude: {n_exclude}, unknown: {n_unknown}")
-    print(f"  Passed discipline filter: {len(s2)}")
+    log.info("Institutional reports: %d", n_reports)
+    log.info("Field allow: %d, exclude: %d, unknown: %d", n_allow, n_exclude, n_unknown)
+    log.info("Passed discipline filter: %d", len(s2))
 
     # ── Step 3: Citation centrality ─────────────────────────────────
 
-    print("\n── Step 3: Citation centrality (PageRank) ──")
+    log.info("-- Step 3: Citation centrality (PageRank) --")
     s2_dois = set(s2["doi_norm"]) - {""}
 
     try:
@@ -311,7 +315,7 @@ def main():
             cit["source_doi_norm"].isin(s2_dois)
             & cit["ref_doi_norm"].isin(s2_dois)
         ]
-        print(f"  Citation edges within S2: {len(edges)}")
+        log.info("Citation edges within S2: %d", len(edges))
 
         G = nx.DiGraph()
         G.add_nodes_from(s2_dois)
@@ -319,18 +323,18 @@ def main():
             G.add_edge(row["source_doi_norm"], row["ref_doi_norm"])
 
         n_with_edges = sum(1 for n in G.nodes() if G.degree(n) > 0)
-        print(f"  Nodes with edges: {n_with_edges} / {len(s2_dois)}")
+        log.info("Nodes with edges: %d / %d", n_with_edges, len(s2_dois))
 
         pr = nx.pagerank(G, alpha=0.85)
     except FileNotFoundError:
-        print("  No refined_citations.csv found — centrality = 0 for all")
+        log.warning("No refined_citations.csv found -- centrality = 0 for all")
         pr = {}
 
     s2["pagerank"] = s2["doi_norm"].map(pr).fillna(0.0)
 
     # ── Step 4: Score and rank ──────────────────────────────────────
 
-    print("\n── Step 4: Score and rank ──")
+    log.info("-- Step 4: Score and rank --")
     s2["cit_per_year"] = s2["cited_by_count_num"] / np.maximum(
         1, CURRENT_YEAR - s2["year_num"]
     )
@@ -340,7 +344,7 @@ def main():
         s2.get("from_teaching", 0), errors="coerce"
     ).fillna(0)
     n_teaching = (s2_from_teaching == 1).sum()
-    print(f"  Teaching works in S2: {n_teaching}")
+    log.info("Teaching works in S2: %d", n_teaching)
     s2["teaching_count"] = s2_from_teaching
 
     # Normalize signals
@@ -355,11 +359,11 @@ def main():
     )
 
     s2 = s2.sort_values("score", ascending=False).reset_index(drop=True)
-    print(f"  Score range: {s2['score'].min():.4f} – {s2['score'].max():.4f}")
+    log.info("Score range: %.4f - %.4f", s2['score'].min(), s2['score'].max())
 
     # ── Step 5: Select with quotas ──────────────────────────────────
 
-    print(f"\n── Step 5: Select top {TARGET_N} with quotas ──")
+    log.info("-- Step 5: Select top %d with quotas --", TARGET_N)
     s2["_non_english"] = s2.apply(is_non_english, axis=1)
     s2["_global_south"] = s2.apply(is_global_south, axis=1)
 
@@ -384,7 +388,7 @@ def main():
             cnt_non_eng += 1
         if row["_global_south"]:
             cnt_gs += 1
-    print(f"  Teaching canon guaranteed: {len(selected_idx)}")
+    log.info("Teaching canon guaranteed: %d", len(selected_idx))
 
     selected_set = set(selected_idx)
 
@@ -435,14 +439,14 @@ def main():
     final_non_eng = selected["_non_english"].sum()
     final_gs = selected["_global_south"].sum()
 
-    print(f"  Selected: {len(selected)}")
-    print(f"  Institutional reports: {final_reports} ({100*final_reports/len(selected):.1f}%)")
-    print(f"  Non-English: {final_non_eng} ({100*final_non_eng/len(selected):.1f}%)")
-    print(f"  Global South: {final_gs} ({100*final_gs/len(selected):.1f}%)")
+    log.info("Selected: %d", len(selected))
+    log.info("Institutional reports: %d (%.1f%%)", final_reports, 100 * final_reports / len(selected))
+    log.info("Non-English: %d (%.1f%%)", final_non_eng, 100 * final_non_eng / len(selected))
+    log.info("Global South: %d (%.1f%%)", final_gs, 100 * final_gs / len(selected))
 
     # ── Step 6: Output ──────────────────────────────────────────────
 
-    print(f"\n── Step 6: Output ──")
+    log.info("-- Step 6: Output --")
 
     out_cols = [
         "doi", "title", "first_author", "all_authors", "year", "journal",
@@ -460,33 +464,33 @@ def main():
     save_csv(out, het_path)
 
     # Print funnel
-    print(f"\n{'='*60}")
-    print("PIPELINE FUNNEL")
-    print(f"{'='*60}")
-    print(f"  Corpus:          {len(df):>6}")
-    print(f"  S1 (theme):      {len(s1):>6}")
-    print(f"  S2 (discipline): {len(s2):>6}")
-    print(f"  Selected:        {len(selected):>6}")
+    log.info("=" * 60)
+    log.info("PIPELINE FUNNEL")
+    log.info("=" * 60)
+    log.info("Corpus:          %6d", len(df))
+    log.info("S1 (theme):      %6d", len(s1))
+    log.info("S2 (discipline): %6d", len(s2))
+    log.info("Selected:        %6d", len(selected))
 
     # Top 20
-    print(f"\n  Top 20 by score:")
+    log.info("Top 20 by score:")
     for i, (_, row) in enumerate(selected.head(20).iterrows()):
         title = str(row["title"])[:55]
         author = str(row["first_author"])[:15]
         yr = str(row["year"])[:4]
         sc = row["score"]
         rep = " [R]" if row["_is_report"] else ""
-        print(f"  {i+1:>3}. {author} ({yr}) {title}  [{sc:.3f}]{rep}")
+        log.info("%3d. %s (%s) %s  [%.3f]%s", i + 1, author, yr, title, sc, rep)
 
     # Year distribution
-    print(f"\n  Year distribution of selected:")
+    log.info("Year distribution of selected:")
     year_bins = pd.cut(
         pd.to_numeric(selected["year"], errors="coerce"),
         bins=[1990, 2000, 2005, 2010, 2015, 2020, 2026],
         labels=["1990-99", "2000-04", "2005-09", "2010-14", "2015-19", "2020-25"],
     )
     for label, count in year_bins.value_counts().sort_index().items():
-        print(f"    {label}: {count}")
+        log.info("  %s: %d", label, count)
 
 
 if __name__ == "__main__":

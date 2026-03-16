@@ -33,7 +33,9 @@ import pandas as pd
 import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import DATA_DIR
+from utils import DATA_DIR, get_logger
+
+log = get_logger("build_teaching_yaml")
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
 INPUT_MANUAL = os.path.join(DATA_DIR, "syllabi", "manual_catalog.yaml")
@@ -138,7 +140,7 @@ def _dedup_course_names(df):
     if not merged:
         return df
 
-    print(f"  Course dedup: merged {len(merged)} duplicate course names")
+    log.info("  Course dedup: merged %d duplicate course names", len(merged))
 
     def apply_merge(courses_str):
         parts = [c.strip() for c in str(courses_str).split(";")]
@@ -175,7 +177,8 @@ def load_scraped(csv_path):
     df = df[keep]
     n_doi = has_doi[keep].sum()
     n_nodoi = len(df) - n_doi
-    print(f"  After filter: {len(df)} readings ({n_doi} with DOI, {n_nodoi} title-only)")
+    log.info("  After filter: %d readings (%d with DOI, %d title-only)",
+             len(df), n_doi, n_nodoi)
 
     records = []
     for _, row in df.iterrows():
@@ -292,20 +295,20 @@ def main():
     # Source 1: scraped
     scraped_records = []
     if os.path.exists(INPUT_CSV):
-        print(f"Source 1 (scraped): {INPUT_CSV}")
+        log.info("Source 1 (scraped): %s", INPUT_CSV)
         scraped_records = load_scraped(INPUT_CSV)
-        print(f"  {len(scraped_records)} (reading, course) pairs")
+        log.info("  %d (reading, course) pairs", len(scraped_records))
     else:
-        print(f"Source 1 (scraped): not found, skipping")
+        log.info("Source 1 (scraped): not found, skipping")
 
     # Source 2: manual catalog
     manual_records = []
     if os.path.exists(INPUT_MANUAL):
-        print(f"Source 2 (manual):  {INPUT_MANUAL}")
+        log.info("Source 2 (manual):  %s", INPUT_MANUAL)
         manual_records = load_manual(INPUT_MANUAL)
-        print(f"  {len(manual_records)} (reading, course) pairs")
+        log.info("  %d (reading, course) pairs", len(manual_records))
     else:
-        print(f"Source 2 (manual):  not found, skipping")
+        log.info("Source 2 (manual):  not found, skipping")
 
     # Merge: manual records first, then scraped (dedup by DOI at output)
     all_records = manual_records + scraped_records
@@ -322,7 +325,7 @@ def main():
         deduped_records.append(r)
 
     if scraped_skipped:
-        print(f"\n  Dedup: {scraped_skipped} scraped readings already in manual catalog")
+        log.info("  Dedup: %d scraped readings already in manual catalog", scraped_skipped)
 
     sources = build_yaml_structure(deduped_records)
     total_readings = sum(len(s["readings"]) for s in sources)
@@ -338,10 +341,10 @@ def main():
         yaml.dump(sources, f, allow_unicode=True, default_flow_style=False,
                   sort_keys=False, width=120)
 
-    print(f"\nWrote {OUTPUT_YAML}")
-    print(f"  {len(sources)} courses")
-    print(f"  {total_readings} readings (across all courses)")
-    print(f"  {len(unique_dois)} unique DOIs")
+    log.info("Wrote %s", OUTPUT_YAML)
+    log.info("  %d courses", len(sources))
+    log.info("  %d readings (across all courses)", total_readings)
+    log.info("  %d unique DOIs", len(unique_dois))
 
 
 if __name__ == "__main__":

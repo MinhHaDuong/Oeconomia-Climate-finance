@@ -23,7 +23,9 @@ from scipy.spatial.distance import cosine as cosine_dist
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 
-from utils import BASE_DIR, load_analysis_corpus
+from utils import BASE_DIR, get_logger, load_analysis_corpus
+
+log = get_logger("compute_breakpoints")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -55,7 +57,7 @@ if args.censor_gap > 0:
 # ============================================================
 
 df, embeddings = load_analysis_corpus(core_only=args.core_only)
-print(f"Loaded {len(df)} works, embeddings shape: {embeddings.shape}")
+log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
 
 K_DEFAULT = 6
 N_MIN = 20 if args.core_only else 30
@@ -124,8 +126,9 @@ def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, 
 
 WINDOW_SIZES = [2, 3, 4]
 
-print("\n=== Structural break detection ===")
-print(f"Window sizes: {WINDOW_SIZES}, start year: 2005, n_min: {N_MIN}, censor_gap: {args.censor_gap}")
+log.info("=== Structural break detection ===")
+log.info("Window sizes: %s, start year: 2005, n_min: %d, censor_gap: %d",
+         WINDOW_SIZES, N_MIN, args.censor_gap)
 
 div_results = compute_divergence_series(
     df, embeddings, K_DEFAULT, WINDOW_SIZES, start_year=2005, end_year=2023,
@@ -150,7 +153,7 @@ for metric in ["js", "cos"]:
             bp_df[f"z_{col}"] = np.nan
 
 bp_df.to_csv(os.path.join(TABLES_DIR, TAB_BP), index=False)
-print(f"\nSaved divergence table → tables/{TAB_BP}")
+log.info("Saved divergence table -> tables/%s", TAB_BP)
 
 
 # ============================================================
@@ -249,18 +252,18 @@ robust_list.sort(key=lambda x: -x["combined_z"])
 
 robust_df = pd.DataFrame(robust_list)
 robust_df.to_csv(os.path.join(TABLES_DIR, TAB_BP_ROBUST), index=False)
-print(f"\nSaved robustness table → tables/{TAB_BP_ROBUST}")
+log.info("Saved robustness table -> tables/%s", TAB_BP_ROBUST)
 
-print("\n=== Robust breakpoints ===")
+log.info("=== Robust breakpoints ===")
 for bp in robust_list[:5]:
-    print(f"  {bp['year']}: JS z={bp['js_mean_z']}, cos z={bp['cos_mean_z']}, "
-          f"support={bp['support']}")
+    log.info("  %d: JS z=%s, cos z=%s, support=%s",
+             bp['year'], bp['js_mean_z'], bp['cos_mean_z'], bp['support'])
 
 detected_breaks = sorted([bp["year"] for bp in robust_list[:3]])
-print(f"\nDetected robust breakpoints: {detected_breaks}")
+log.info("Detected robust breakpoints: %s", detected_breaks)
 
 # Step 4: Volume confound check
-print("\n=== Volume confound check ===")
+log.info("=== Volume confound check ===")
 yearly_counts = df.groupby("year").size()
 growth_rate = yearly_counts.pct_change().dropna()
 
@@ -275,7 +278,7 @@ for metric in ["js", "cos"]:
                 growth_rate.loc[common_years],
             )
             flag = " *** CONFOUNDED" if abs(r) > 0.5 else ""
-            print(f"  {col} vs volume growth: r={r:.3f}, p={p:.3f}{flag}")
+            log.info("  %s vs volume growth: r=%.3f, p=%.3f%s", col, r, p, flag)
 
 
 # ============================================================
@@ -283,12 +286,12 @@ for metric in ["js", "cos"]:
 # ============================================================
 
 if args.robustness and not args.core_only:
-    print("\n=== Robustness: k-sensitivity (k=4,5,6,7) ===")
+    log.info("=== Robustness: k-sensitivity (k=4,5,6,7) ===")
     k_values = [4, 5, 6, 7]
     k_results = {}
 
     for k in k_values:
-        print(f"  Running k={k}...")
+        log.info("  Running k=%d...", k)
         res = compute_divergence_series(
             df, embeddings, k, [3], start_year=2005, end_year=2023,
             censor_gap=args.censor_gap
@@ -300,7 +303,7 @@ if args.robustness and not args.core_only:
         k_data[f"js_k{k}"] = [k_results[k].get(y, np.nan) for y in years]
     k_df = pd.DataFrame(k_data)
     k_df.to_csv(os.path.join(TABLES_DIR, "tab_k_sensitivity.csv"), index=False)
-    print("Saved k-sensitivity table → tables/tab_k_sensitivity.csv")
-    print("Run plot_fig_k_sensitivity.py to generate the figure.")
+    log.info("Saved k-sensitivity table -> tables/tab_k_sensitivity.csv")
+    log.info("Run plot_fig_k_sensitivity.py to generate the figure.")
 
-print("\nDone.")
+log.info("Done.")

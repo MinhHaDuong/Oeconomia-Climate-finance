@@ -20,7 +20,9 @@ import pandas as pd
 import seaborn as sns
 
 from plot_style import COP_EVENTS
-from utils import BASE_DIR, save_figure
+from utils import BASE_DIR, get_logger, save_figure
+
+log = get_logger("plot_fig_breakpoints")
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
@@ -119,7 +121,7 @@ ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
 
 plt.tight_layout()
 save_figure(fig, os.path.join(FIGURES_DIR, FIG_BP), no_pdf=args.no_pdf)
-print(f"  ({FIG_BP})")
+log.info("  (%s)", FIG_BP)
 plt.close()
 
-print("\nDone.")
+log.info("Done.")

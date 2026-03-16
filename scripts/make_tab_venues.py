@@ -16,7 +16,9 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR  # noqa: E402
+from utils import BASE_DIR, CATALOGS_DIR, get_logger  # noqa: E402
+
+log = get_logger("make_tab_venues")
 
 POLE_PAPERS = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
 OUTPUT = os.path.join(BASE_DIR, "content", "_includes", "tab_venues.md")
@@ -131,7 +133,7 @@ def main():
     with open(OUTPUT, "w") as f:
         f.write("\n".join(lines) + "\n")
 
-    print(f"Wrote {len(selected)} venues to {OUTPUT}")
+    log.info("Wrote %d venues to %s", len(selected), OUTPUT)
 
 
 if __name__ == "__main__":

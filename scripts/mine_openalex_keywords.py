@@ -18,7 +18,9 @@ from collections import Counter
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, normalize_doi, polite_get, MAILTO
+from utils import CATALOGS_DIR, get_logger, normalize_doi, polite_get, MAILTO
+
+log = get_logger("mine_openalex_keywords")
 
 OA_API = "https://api.openalex.org/works"
 
@@ -44,10 +46,9 @@ def fetch_openalex_metadata(dois, batch_size=50):
         resp = polite_get(OA_API, params=params, delay=0.15)
         data = resp.json()
         results.extend(data.get("results", []))
-        print(f"  Fetched {min(i + batch_size, total)}/{total} DOIs "
-              f"({len(results)} found)", end="\r")
+        log.info("  Fetched %d/%d DOIs (%d found)",
+                 min(i + batch_size, total), total, len(results))
 
-    print()
     return results
 
 
@@ -98,52 +99,52 @@ def main():
     # Load corpus
     refined_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     df = pd.read_csv(refined_path)
-    print(f"Loaded {len(df)} refined works")
+    log.info("Loaded %d refined works", len(df))
 
     # Filter core papers
     core = df[df["cited_by_count"] >= args.min_citations].copy()
-    print(f"Core papers (cited_by_count >= {args.min_citations}): {len(core)}")
+    log.info("Core papers (cited_by_count >= %d): %d", args.min_citations, len(core))
 
     # Get DOIs
     core_dois = core["doi"].dropna().unique().tolist()
     core_dois = [d for d in core_dois if d.strip()]
-    print(f"Core papers with DOIs: {len(core_dois)}")
+    log.info("Core papers with DOIs: %d", len(core_dois))
 
     # Fetch from OpenAlex
-    print("Fetching metadata from OpenAlex...")
+    log.info("Fetching metadata from OpenAlex...")
     results = fetch_openalex_metadata(core_dois)
-    print(f"Got metadata for {len(results)} papers")
+    log.info("Got metadata for %d papers", len(results))
 
     # Extract and rank
     keywords = extract_keywords(results)
     concepts = extract_concepts(results)
     topics = extract_topics(results)
 
-    print("\n" + "=" * 70)
-    print("TOP 60 KEYWORDS (from OpenAlex keyword field)")
-    print("=" * 70)
+    log.info("=" * 70)
+    log.info("TOP 60 KEYWORDS (from OpenAlex keyword field)")
+    log.info("=" * 70)
     for term, count in keywords.most_common(60):
         pct = 100 * count / len(results) if results else 0
-        print(f"  {count:4d} ({pct:5.1f}%)  {term}")
+        log.info("  %4d (%5.1f%%)  %s", count, pct, term)
 
-    print("\n" + "=" * 70)
-    print("TOP 40 CONCEPTS (L0-L2)")
-    print("=" * 70)
+    log.info("=" * 70)
+    log.info("TOP 40 CONCEPTS (L0-L2)")
+    log.info("=" * 70)
     for term, count in concepts.most_common(40):
         pct = 100 * count / len(results) if results else 0
-        print(f"  {count:4d} ({pct:5.1f}%)  {term}")
+        log.info("  %4d (%5.1f%%)  %s", count, pct, term)
 
-    print("\n" + "=" * 70)
-    print("TOP 40 TOPICS")
-    print("=" * 70)
+    log.info("=" * 70)
+    log.info("TOP 40 TOPICS")
+    log.info("=" * 70)
     for term, count in topics.most_common(40):
         pct = 100 * count / len(results) if results else 0
-        print(f"  {count:4d} ({pct:5.1f}%)  {term}")
+        log.info("  %4d (%5.1f%%)  %s", count, pct, term)
 
     # Summary for query design
-    print("\n" + "=" * 70)
-    print("POTENTIAL QUERY TERMS NOT IN CURRENT TIERS")
-    print("=" * 70)
+    log.info("=" * 70)
+    log.info("POTENTIAL QUERY TERMS NOT IN CURRENT TIERS")
+    log.info("=" * 70)
     current_terms = {
         "climate finance", "carbon finance", "green climate fund",
         "adaptation fund", "clean development mechanism",
@@ -155,7 +156,7 @@ def main():
     for term, count in keywords.most_common(100):
         t_lower = term.lower()
         if count >= 5 and not any(ct in t_lower for ct in current_terms):
-            print(f"  {count:4d}  {term}")
+            log.info("  %4d  %s", count, term)
 
 
 if __name__ == "__main__":

@@ -15,7 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, save_figure
+from utils import BASE_DIR, get_logger, save_figure
+
+log = get_logger("plot_fig_lexical_tfidf")
 
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
@@ -38,7 +40,7 @@ def _plot_break_year(tdf, break_year, n_show=20, xlim=None, no_pdf=False):
     sig_99 = tdf["sig_99"].iloc[0]
     window_after = 3  # matches compute_lexical.py WINDOW_AFTER
 
-    print(f"  Permutation thresholds: p<0.05={sig_95:.4f}, p<0.01={sig_99:.4f}")
+    log.info("  Permutation thresholds: p<0.05=%.4f, p<0.01=%.4f", sig_95, sig_99)
 
     # Filter to clean terms only
     clean = tdf[tdf["clean"]].copy()
@@ -96,7 +98,7 @@ def _plot_break_year(tdf, break_year, n_show=20, xlim=None, no_pdf=False):
     plt.tight_layout()
     fname = f"fig_lexical_tfidf_{break_year}"
     save_figure(fig, os.path.join(FIGURES_DIR, fname), no_pdf=no_pdf)
-    print(f"    Saved {fname}.png (A={n_before}, B={n_after})")
+    log.info("    Saved %s.png (A=%d, B=%d)", fname, n_before, n_after)
     plt.close()
 
 
@@ -110,7 +112,7 @@ except FileNotFoundError:
     ) from None
 
 break_years = sorted(tfidf_all["break_year"].unique())
-print(f"Loaded {len(tfidf_all)} rows for break years: {break_years}")
+log.info("Loaded %d rows for break years: %s", len(tfidf_all), break_years)
 
 # Compute shared x-axis range across all break years
 global_max = 0
@@ -120,12 +122,12 @@ for yr in break_years:
     if len(clean_diffs) > 0:
         global_max = max(global_max, clean_diffs.max())
 shared_xlim = (-global_max * 1.15, global_max * 1.15)
-print(f"Shared x-axis range: [{shared_xlim[0]:.4f}, {shared_xlim[1]:.4f}]")
+log.info("Shared x-axis range: [%.4f, %.4f]", shared_xlim[0], shared_xlim[1])
 
 # Generate figures
 for yr in break_years:
     subset = tfidf_all[tfidf_all["break_year"] == yr]
-    print(f"\nBreak year {yr}:")
+    log.info("Break year %d:", yr)
     _plot_break_year(subset, yr, xlim=shared_xlim, no_pdf=args.no_pdf)
 
-print("\nDone.")
+log.info("Done.")

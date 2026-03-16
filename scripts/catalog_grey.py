@@ -18,7 +18,9 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, CONFIG_DIR, WORKS_COLUMNS,
-                   normalize_doi, polite_get, save_csv)
+                   get_logger, normalize_doi, polite_get, save_csv)
+
+log = get_logger("catalog_grey")
 
 # Try to import yaml; fall back to a simple parser if not installed
 try:
@@ -35,13 +37,13 @@ WB_SEARCH_URL = "https://openknowledge.worldbank.org/server/api/discover/search/
 def load_seed():
     """Load curated grey literature entries from YAML."""
     if not os.path.exists(SEED_FILE):
-        print(f"No seed file at {SEED_FILE} (optional). "
-              "Create one to add known grey literature.")
+        log.info("No seed file at %s (optional). "
+                 "Create one to add known grey literature.", SEED_FILE)
         return []
 
     if not HAS_YAML:
-        print("PyYAML not installed. Install with: pip install pyyaml")
-        print("Skipping seed file.")
+        log.warning("PyYAML not installed. Install with: pip install pyyaml")
+        log.warning("Skipping seed file.")
         return []
 
     with open(SEED_FILE, encoding="utf-8") as f:
@@ -65,7 +67,7 @@ def load_seed():
             "cited_by_count": "",
             "affiliations": e.get("source_org", ""),
         })
-    print(f"Loaded {len(records)} entries from seed file")
+    log.info("Loaded %d entries from seed file", len(records))
     return records
 
 
@@ -76,7 +78,7 @@ def query_worldbank():
     page_size = 20
     total = None
 
-    print("Querying World Bank OKR...")
+    log.info("Querying World Bank OKR...")
     while True:
         params = {
             "query": "climate finance",
@@ -88,7 +90,7 @@ def query_worldbank():
             resp = polite_get(WB_SEARCH_URL, params=params, delay=0.5)
             data = resp.json()
         except Exception as e:
-            print(f"  World Bank API error: {e}")
+            log.error("  World Bank API error: %s", e)
             break
 
         embedded = data.get("_embedded", {})
@@ -98,7 +100,7 @@ def query_worldbank():
         if total is None:
             total = data.get("_embedded", {}).get("searchResult", {}).get(
                 "totalElements", "?")
-            print(f"  Total results: {total}")
+            log.info("  Total results: %s", total)
 
         if not objects:
             break
@@ -145,14 +147,14 @@ def query_worldbank():
 
         page += 1
         fetched = page * page_size
-        print(f"  Fetched {fetched}...")
+        log.info("  Fetched %d...", fetched)
 
         # Limit to first 200 results from World Bank
         if fetched >= 200:
-            print("  Reached 200-item cap for World Bank results.")
+            log.info("  Reached 200-item cap for World Bank results.")
             break
 
-    print(f"  Got {len(records)} World Bank records")
+    log.info("  Got %d World Bank records", len(records))
     return records
 
 
@@ -162,7 +164,7 @@ def main():
     all_records.extend(query_worldbank())
 
     if not all_records:
-        print("No grey literature records found.")
+        log.info("No grey literature records found.")
         return
 
     df = pd.DataFrame(all_records, columns=WORKS_COLUMNS)
@@ -173,7 +175,7 @@ def main():
     df = df.drop(columns="_norm_title")
 
     save_csv(df, os.path.join(CATALOGS_DIR, "grey_works.csv"))
-    print(f"\nSummary: {len(df)} grey literature works")
+    log.info("Summary: %d grey literature works", len(df))
 
 
 if __name__ == "__main__":

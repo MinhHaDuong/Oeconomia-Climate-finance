@@ -24,8 +24,10 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, WORKS_COLUMNS, REFS_COLUMNS,
-                   normalize_doi, polite_get, save_csv,
+                   get_logger, normalize_doi, polite_get, save_csv,
                    pool_path, append_to_pool, load_pool_records)
+
+log = get_logger("catalog_istex")
 
 ISTEX_API = "https://api.istex.fr/document/"
 ISTEX_QUERY = '"climate finance" OR "finance climat" OR "finance climatique"'
@@ -148,7 +150,7 @@ def fetch_istex_api():
     resp = polite_get(ISTEX_API, params=params, delay=0.5)
     data = resp.json()
     total = data.get("total", 0)
-    print(f"ISTEX API: {total} results for query")
+    log.info("ISTEX API: %d results for query", total)
 
     while True:
         params = {
@@ -167,20 +169,20 @@ def fetch_istex_api():
         append_to_pool(hits, pf)
         all_records.extend(hits)
         offset += len(hits)
-        print(f"  Fetched {offset}/{total}", end="\r")
+        log.info("  Fetched %d/%d", offset, total)
 
         if offset >= total:
             break
 
-    print(f"\n  {len(all_records)} records saved to pool")
+    log.info("  %d records saved to pool", len(all_records))
     return all_records
 
 
 def extract_from_pool():
     """Build CSV from pool records."""
-    print("Loading ISTEX pool records...")
+    log.info("Loading ISTEX pool records...")
     all_raw = load_pool_records("istex")
-    print(f"  {len(all_raw)} raw records in pool")
+    log.info("  %d raw records in pool", len(all_raw))
 
     # Deduplicate by ISTEX ID
     seen = set()
@@ -190,7 +192,7 @@ def extract_from_pool():
         if rid not in seen:
             seen.add(rid)
             unique.append(r)
-    print(f"  {len(unique)} unique after dedup")
+    log.info("  %d unique after dedup", len(unique))
     return unique
 
 
@@ -201,7 +203,7 @@ def load_local_json():
     pattern = os.path.join(RAW_DIR, "*", "*.json")
     json_files = sorted(glob.glob(pattern))
     json_files = [f for f in json_files if not f.endswith("manifest.json")]
-    print(f"Found {len(json_files)} local ISTEX JSON files")
+    log.info("Found %d local ISTEX JSON files", len(json_files))
 
     records = []
     for jf in json_files:
@@ -238,7 +240,7 @@ def main():
         works.append(work)
         all_refs.extend(refs)
         if (i + 1) % 100 == 0:
-            print(f"  Processed {i + 1}/{len(raw_records)}...")
+            log.info("  Processed %d/%d...", i + 1, len(raw_records))
 
     works_df = pd.DataFrame(works, columns=WORKS_COLUMNS)
     refs_df = pd.DataFrame(all_refs, columns=REFS_COLUMNS)
@@ -247,12 +249,12 @@ def main():
     if len(refs_df) > 0:
         save_csv(refs_df, os.path.join(CATALOGS_DIR, "istex_refs.csv"))
 
-    print(f"\nSummary:")
-    print(f"  Works: {len(works_df)}")
-    print(f"  References: {len(refs_df)}")
+    log.info("Summary:")
+    log.info("  Works: %d", len(works_df))
+    log.info("  References: %d", len(refs_df))
     if len(refs_df) > 0:
-        print(f"  Refs with DOI: {(refs_df['ref_doi'] != '').sum()}")
-    print(f"  Year range: {works_df['year'].min()} - {works_df['year'].max()}")
+        log.info("  Refs with DOI: %d", (refs_df['ref_doi'] != '').sum())
+    log.info("  Year range: %s - %s", works_df['year'].min(), works_df['year'].max())
 
 
 if __name__ == "__main__":

@@ -34,9 +34,11 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS,
-                   normalize_doi, save_csv,
+                   get_logger, normalize_doi, save_csv,
                    pool_path, append_to_pool, load_pool_ids,
                    load_pool_records)
+
+log = get_logger("catalog_semanticscholar")
 
 S2_API = "https://api.semanticscholar.org/graph/v1/paper/search"
 
@@ -85,7 +87,7 @@ def s2_get(url, params, delay=1.0, max_retries=5):
         resp = requests.get(url, params=params, headers=headers, timeout=30)
         if resp.status_code == 429:
             wait = int(resp.headers.get("Retry-After", 3 * (attempt + 1)))
-            print(f"  Rate limited. Waiting {wait}s...")
+            log.warning("  Rate limited. Waiting %ds...", wait)
             time.sleep(wait)
             continue
         resp.raise_for_status()
@@ -172,8 +174,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
             append_to_pool(batch, pool_file)
             batch = []
 
-        print(f"  [{search_term}] {offset}/{total} "
-              f"(new: {n_new})", end="\r")
+        log.info("  [%s] %d/%d (new: %d)", search_term, offset, total, n_new)
 
         # S2 caps at ~10K offset
         if offset >= total or offset >= 9999:
@@ -184,7 +185,6 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
     if batch:
         append_to_pool(batch, pool_file)
 
-    print()
     return n_new
 
 
@@ -204,9 +204,9 @@ def extract_from_pool(config):
         k: set(v) for k, v in config.get("concept_groups", {}).items()
     }
 
-    print("Loading pool records...")
+    log.info("Loading pool records...")
     all_raw = load_pool_records("semanticscholar")
-    print(f"  {len(all_raw)} raw records in pool")
+    log.info("  %d raw records in pool", len(all_raw))
 
     seen_ids = set()
     unique_raw = []
@@ -215,14 +215,14 @@ def extract_from_pool(config):
         if s2_id not in seen_ids:
             seen_ids.add(s2_id)
             unique_raw.append(r)
-    print(f"  {len(unique_raw)} unique after dedup")
+    log.info("  %d unique after dedup", len(unique_raw))
 
     records = []
     for r in unique_raw:
         rec = build_record(r)
         records.append(rec)
 
-    print(f"  {len(records)} records extracted")
+    log.info("  %d records extracted", len(records))
 
     df = pd.DataFrame(records, columns=WORKS_COLUMNS)
     save_csv(df, os.path.join(CATALOGS_DIR, "semanticscholar_works.csv"))
@@ -257,15 +257,15 @@ def main():
         tiers = {args.tier: tiers[args.tier]}
 
     if args.extract_only:
-        print("=== Extract-only mode: building CSV from pool ===")
+        log.info("=== Extract-only mode: building CSV from pool ===")
         df = extract_from_pool(config)
-        print(f"\nDone. {len(df)} works in semanticscholar_works.csv")
+        log.info("Done. %d works in semanticscholar_works.csv", len(df))
         return
 
     existing_ids = set()
     if args.resume:
         existing_ids = load_pool_ids("semanticscholar", id_field="paperId")
-        print(f"Pool contains {len(existing_ids)} existing S2 IDs")
+        log.info("Pool contains %d existing S2 IDs", len(existing_ids))
 
     grand_total = 0
     for tier_num in sorted(tiers.keys()):
@@ -273,10 +273,10 @@ def main():
         desc = tier_cfg.get("description", f"Tier {tier_num}")
         terms = tier_cfg.get("terms", [])
 
-        print(f"\n{'=' * 60}")
-        print(f"TIER {tier_num}: {desc}")
-        print(f"  {len(terms)} queries")
-        print(f"{'=' * 60}")
+        log.info("=" * 60)
+        log.info("TIER %d: %s", tier_num, desc)
+        log.info("  %d queries", len(terms))
+        log.info("=" * 60)
 
         for term in terms:
             slug = query_slug(term)
@@ -284,26 +284,26 @@ def main():
 
             if args.dry_run:
                 count = dry_run_query(term, args.delay)
-                print(f"  \"{term}\": {count:,} results")
+                log.info("  \"%s\": %s results", term, f"{count:,}")
                 grand_total += count
                 continue
 
-            print(f"\nQuerying: \"{term}\"")
+            log.info("Querying: \"%s\"", term)
             n_new = fetch_query(
                 term, args.delay, args.limit, existing_ids, pf)
             grand_total += n_new
 
     if args.dry_run:
-        print(f"\n{'=' * 60}")
-        print(f"DRY RUN TOTAL: {grand_total:,} results across all queries")
+        log.info("=" * 60)
+        log.info("DRY RUN TOTAL: %s results across all queries", f"{grand_total:,}")
         return
 
-    print(f"\nDownload complete. {grand_total} new records added to pool.")
+    log.info("Download complete. %d new records added to pool.", grand_total)
 
     if not args.pool_only:
-        print(f"\n=== Extracting CSV from pool ===")
+        log.info("=== Extracting CSV from pool ===")
         df = extract_from_pool(config)
-        print(f"\nDone. {len(df)} works in semanticscholar_works.csv")
+        log.info("Done. %d works in semanticscholar_works.csv", len(df))
 
 
 if __name__ == "__main__":

@@ -15,7 +15,9 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, BASE_DIR, normalize_doi
+from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi
+
+log = get_logger("export_citation_coverage")
 
 REFINED_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
@@ -73,8 +75,8 @@ def main():
     with open(OUTPUT_PATH, "w") as f:
         f.write(content)
 
-    print(f"Wrote {OUTPUT_PATH}")
-    print(content)
+    log.info("Wrote %s", OUTPUT_PATH)
+    log.info("\n%s", content)
 
 
 if __name__ == "__main__":

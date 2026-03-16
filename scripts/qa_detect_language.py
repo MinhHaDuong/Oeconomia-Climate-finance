@@ -21,7 +21,9 @@ import pandas as pd
 from langdetect import detect, LangDetectException
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, save_csv, BASE_DIR
+from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR
+
+log = get_logger("qa_detect_language")
 
 # Normalize ISO 639 codes to 2-letter lowercase
 LANG_NORMALIZE = {
@@ -104,11 +106,11 @@ def main():
 
     path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     df = pd.read_csv(path)
-    print(f"Loaded {len(df)} works")
+    log.info("Loaded %d works", len(df))
 
     if args.sample > 0:
         df = df.sample(min(args.sample, len(df)), random_state=42).copy()
-        print(f"Sampling {len(df)} records")
+        log.info("Sampling %d records", len(df))
 
     # Normalize existing language codes
     df["lang_original"] = df["language"].copy()
@@ -120,12 +122,12 @@ def main():
     df.loc[short_abstract, "detect_text"] = df.loc[short_abstract, "title"].fillna("")
 
     # Detect language
-    print("Detecting languages...")
+    log.info("Detecting languages...")
     total = len(df)
     detected = []
     for i, text in enumerate(df["detect_text"]):
         if i % 2000 == 0 and i > 0:
-            print(f"  {i}/{total}...")
+            log.info("  %d/%d...", i, total)
         detected.append(detect_language(text))
     df["lang_detected"] = detected
 
@@ -149,29 +151,29 @@ def main():
     df.loc[confident_detect, "lang_final"] = df.loc[confident_detect, "lang_detected"]
 
     # Summary
-    print(f"\n=== Language detection summary ===")
-    print(f"Total records:       {total}")
-    print(f"Original NaN/empty:  {was_null.sum()}")
-    print(f"  → filled by detection:  {filled.sum()}")
-    print(f"  → still unknown:        {(was_null & ~has_detection).sum()}")
-    print(f"Normalized ≠ detected (confident): {confident_detect.sum()}")
-    print(f"Normalized ≠ detected (low-conf):  {(mismatch & ~confident_detect).sum()}")
+    log.info("=== Language detection summary ===")
+    log.info("Total records:       %d", total)
+    log.info("Original NaN/empty:  %d", was_null.sum())
+    log.info("  -> filled by detection:  %d", filled.sum())
+    log.info("  -> still unknown:        %d", (was_null & ~has_detection).sum())
+    log.info("Normalized != detected (confident): %d", confident_detect.sum())
+    log.info("Normalized != detected (low-conf):  %d", (mismatch & ~confident_detect).sum())
 
     # Show language distribution before/after
-    print(f"\n=== Language distribution: before ===")
+    log.info("=== Language distribution: before ===")
     before = df["lang_normalized"].fillna("(unknown)")
-    print(before.value_counts().head(15))
-    print(f"\n=== Language distribution: after ===")
+    log.info("\n%s", before.value_counts().head(15).to_string())
+    log.info("=== Language distribution: after ===")
     after = df["lang_final"].fillna("(unknown)")
-    print(after.value_counts().head(15))
+    log.info("\n%s", after.value_counts().head(15).to_string())
 
     # Show some interesting mismatches
     if mismatch.any():
-        print(f"\n=== Sample mismatches (original → detected) ===")
+        log.info("=== Sample mismatches (original -> detected) ===")
         sample_mm = df[mismatch].head(10)
         for _, row in sample_mm.iterrows():
             title = str(row["title"])[:80]
-            print(f"  {row['lang_normalized']} → {row['lang_detected']}: {title}")
+            log.info("  %s -> %s: %s", row['lang_normalized'], row['lang_detected'], title)
 
     # Save report
     report = df[["lang_original", "lang_normalized", "lang_detected", "lang_final"]].copy()
@@ -190,9 +192,9 @@ def main():
         else:
             full_df["language"] = df["lang_final"]
         full_df.to_csv(path, index=False)
-        print(f"\nUpdated {path}")
+        log.info("Updated %s", path)
     else:
-        print(f"\nDry run. Use --apply to write changes.")
+        log.info("Dry run. Use --apply to write changes.")
 
 
 if __name__ == "__main__":
