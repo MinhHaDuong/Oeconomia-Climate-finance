@@ -63,7 +63,7 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 - **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`.
 - **Create PRs** for each ticket so the author can review changes before merging.
 
-### Autonomous workflow
+## Autonomous workflow
 When issue exploration lead to multiple action items, open one ticket for each. Then switch to orchestrator role: recursively launch agents to fix the ripe ones and think more about the others, in waves according to dependencies. When they return, switch to verification role to critically assess the work done.
 When working on multiple tickets:
 1. Launch each ticket in its own git worktree
