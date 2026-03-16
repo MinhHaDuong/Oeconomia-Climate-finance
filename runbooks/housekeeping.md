@@ -12,7 +12,12 @@ See `runbooks/celebrate.md`.
 
 ## At conversation start (time-based)
 
-- Read `STATE.md` and `ROADMAP.md` — if not from today, refresh from current data.
+1. Read `STATE.md` and `ROADMAP.md`.
+2. If `STATE.md` is not dated today, refresh it:
+   a. `gh pr list --state open` → update "Active PRs" section.
+   b. `git log --oneline -5` → update "Recent" section.
+   c. Adjust "Next priorities" if context has changed.
+   d. Commit on `main`: `housekeeping: refresh STATE YYYY-MM-DD`
 
 ## Monthly: stale memory sweep
 
