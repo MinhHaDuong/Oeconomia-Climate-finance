@@ -1,6 +1,24 @@
-# Memory — persistent memory policy
+# Memory — persistent memory trigger
 
-Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md` (auto-loaded by some agents; others should read it at conversation start).
+Run when writing, updating, or sweeping persistent memory.
+
+Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
+
+## When this trigger runs
+
+- During `runbooks/celebrate.md` (step 5)
+- During `runbooks/on-start.md` (step 3d)
+- After a user correction (save feedback immediately)
+- After discovering a project quirk
+
+## Procedure
+
+1. Check the entry against the policy below:
+   - Is it something to remember? (not derivable from code/git/docs)
+   - Does it fit within list caps?
+   - Does it have a TTL?
+2. For sweeps: scan every entry against staleness criteria below.
+3. For `project_*.md` files: delete if the state described is complete or superseded; remove MEMORY.md pointer.
 
 ## What to remember
 
@@ -13,12 +31,6 @@ Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md` (auto-loaded by some a
 - Anything derivable from code, git history, or other docs
 - Ephemeral task state (use STATE.md or git commits instead)
 - Content already in README, ROADMAP, STATE, or guidelines docs
-
-## When to update
-
-- **Celebrating phase**: always review and update memories
-- **After user correction**: save feedback immediately
-- **After discovering a quirk**: save so future sessions don't rediscover it
 
 ## List size limits
 
@@ -44,7 +56,7 @@ Entries describing **transient state** expire. After the TTL, either confirm and
 
 Entries with **no TTL** (stable until explicitly contradicted): workflow preferences, feedback, naming conventions, architectural decisions.
 
-## Staleness criteria (for celebrate.md step 5)
+## Staleness criteria
 
 An entry is stale if any of the following are true:
 - It references a file that no longer exists

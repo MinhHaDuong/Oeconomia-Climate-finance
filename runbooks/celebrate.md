@@ -8,7 +8,7 @@ Run this sequence after completing a task. Do not skip steps.
 2. **Update STATE.md**: refresh stats, remove resolved blockers, adjust priorities.
 3. **Update ROADMAP.md**: check off completed items, note new ones that emerged.
 4. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
-5. **Update persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons, then run a stale memory sweep (see `runbooks/memory.md` staleness criteria). For each stale entry: delete it, or archive it with a `[resolved YYYY-MM-DD]` tag if the history matters.
+5. **Update persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons, then run a stale memory sweep (follow `runbooks/memory.md`). For each stale entry: delete it, or archive it with a `[resolved YYYY-MM-DD]` tag if the history matters.
 6. **Commit** the updates on the current branch (before merging).
 7. **Merge to main**: `git checkout main && git merge --no-ff -m "..." <branch>`.
 8. **Push** and **clean up**: delete local and remote branch.
