@@ -59,7 +59,7 @@ After the Doing phase completes, the `post-task` trigger runs automatically.
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `git config core.hooksPath hooks`.
-- **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). The token is in `.env` as `AGENT_GH_TOKEN` (gitignored, machine-specific).
+- **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). Credentials (`AGENT_GH_TOKEN`, `AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`) are project-specific secrets, deployed per-machine in `.env` (gitignored).
 - **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
 - **Merge commits** (`git merge --no-ff -m`): tactical-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
