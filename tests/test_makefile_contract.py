@@ -96,6 +96,31 @@ class TestNoCheapPrefilter:
 # Contract output variables
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# DVC YAML cmd sanity
+# ---------------------------------------------------------------------------
+
+class TestDvcYamlCmds:
+    """Each stage cmd must be a valid single-line shell command (no embedded newlines)."""
+
+    def test_no_newlines_in_cmds(self):
+        """YAML >- with extra-indented lines preserves newlines, breaking shell commands."""
+        dvc_path = os.path.join(os.path.dirname(__file__), "..", "dvc.yaml")
+        with open(dvc_path) as f:
+            dvc = yaml.safe_load(f)
+        for name, spec in dvc["stages"].items():
+            cmd = spec.get("cmd", "")
+            assert "\n" not in cmd, (
+                f"Stage '{name}' cmd contains newlines — "
+                f"YAML >- preserves them for extra-indented lines. "
+                f"Put each command on one line."
+            )
+
+
+# ---------------------------------------------------------------------------
+# Contract output variables
+# ---------------------------------------------------------------------------
+
 class TestContractVariables:
     def test_unified_variable_declared(self):
         """Makefile must declare UNIFIED path variable."""
