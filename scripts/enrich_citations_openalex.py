@@ -26,8 +26,9 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, MAILTO, REFS_COLUMNS, normalize_doi,
-                   sort_dois_by_priority, retry_get, save_run_report, make_run_id)
+from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, REFS_COLUMNS,
+                   normalize_doi, sort_dois_by_priority, retry_get,
+                   save_run_report, make_run_id)
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
@@ -44,6 +45,8 @@ def openalex_get(params, delay=0.15, counters=None,
     if counters is None:
         counters = {}
     params.setdefault("mailto", MAILTO)
+    if OPENALEX_API_KEY:
+        params.setdefault("api_key", OPENALEX_API_KEY)
     resp = retry_get(
         OA_BASE,
         params=params,

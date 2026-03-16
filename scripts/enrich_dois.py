@@ -21,8 +21,8 @@ from difflib import SequenceMatcher
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, MAILTO, normalize_doi, normalize_title,
-                   polite_get, save_csv)
+from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
+                   normalize_title, polite_get, save_csv)
 
 CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "doi_resolved.csv")
@@ -64,6 +64,8 @@ def search_doi(title, year=None):
         "per_page": 5,
         "mailto": MAILTO,
     }
+    if OPENALEX_API_KEY:
+        params["api_key"] = OPENALEX_API_KEY
     try:
         year_int = int(float(year)) if year and pd.notna(year) else None
     except (ValueError, TypeError):
