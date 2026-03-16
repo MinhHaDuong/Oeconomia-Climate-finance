@@ -141,8 +141,21 @@ def resolve_openalex_ids(oa_ids, counters=None,
 
 def print_resume_preview(done_dois, all_dois, missing):
     """Print a startup summary of done-set/checkpoint state and remaining workload."""
-    log.info("Resume: %d DOIs total, %d done, %d remaining",
-             len(all_dois), len(done_dois), len(missing))
+    done_file_rows = 0
+    if os.path.exists(DONE_PATH):
+        try:
+            done_file_rows = sum(1 for line in open(DONE_PATH) if line.strip())
+        except Exception:
+            pass
+    ckpt_rows = 0
+    if os.path.exists(CHECKPOINT_PATH):
+        try:
+            ckpt_rows = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
+        except Exception:
+            pass
+    log.info("Resume: %d DOIs total, %d done (file: %d), checkpoint: %d rows, "
+             "%d remaining",
+             len(all_dois), len(done_dois), done_file_rows, ckpt_rows, len(missing))
 
 
 def main():

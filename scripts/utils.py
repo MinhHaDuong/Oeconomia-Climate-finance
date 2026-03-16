@@ -30,6 +30,7 @@ def get_logger(name=None):
     root = logging.getLogger("pipeline")
     if not root.handlers:
         root.setLevel(logging.DEBUG)
+        root.propagate = False  # prevent duplicates if DVC configures root logger
         handler = logging.StreamHandler()       # stderr, auto-flushes
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
