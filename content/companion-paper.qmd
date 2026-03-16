@@ -147,7 +147,11 @@ The corpus was designed for breadth ({{< var corpus_sources >}} sources, five la
 - Per-period: unimodal during crystallization (ΔBIC = -12), strongly bimodal post-2015 (ΔBIC = 864)
 -->
 
-[TO WRITE: Present bimodality results. The divide is real, cross-validated across methods, and temporally structured (emerges after crystallization).]
+The seed-axis projection (§4.4, Method A) detects a statistically significant bimodal structure along the efficiency--accountability axis. The two-component Gaussian mixture model is strongly preferred over a single component (ΔBIC = {{< var bim_dbic_embedding >}} on embeddings), indicating that the corpus distributes into two distinct concentrations rather than a single mass. An independent lexical validation using TF-IDF representations (Method B) yields an even stronger signal (ΔBIC = {{< var bim_dbic_tfidf >}}). The two representations correlate at *r* = {{< var bim_corr >}}, confirming that both capture the same underlying structure rather than artifacts of their respective feature spaces.
+
+The temporal decomposition reveals that this bimodal structure is not a permanent feature of the field. During the crystallization period (2007--2014), the distribution along the seed axis is unimodal (ΔBIC = {{< var bim_dbic_2007_2014 >}}, n = {{< var bim_n_2007_2014 >}}): efficiency-oriented and accountability-oriented work coexisted without sharp separation. Bimodality emerges in the established-field period (ΔBIC = {{< var bim_dbic_post2015 >}}, n = {{< var bim_n_post2015 >}}), when the two orientations crystallized into distinct communities with limited overlap. The pre-2007 period shows intermediate values (ΔBIC = {{< var bim_dbic_pre2007 >}}, n = {{< var bim_n_pre2007 >}}). This temporal pattern is substantively interpretable: the polarization sharpened as the field grew and the $100 billion accounting disputes intensified.
+
+The core subset (cited $\geq$ {{< var corpus_core_threshold >}}, ~{{< var corpus_core >}} papers) shows attenuated but still significant bimodality on embeddings (ΔBIC = {{< var bim_core_dbic_embedding >}}) and strong bimodality on TF-IDF (ΔBIC = {{< var bim_core_dbic_tfidf >}}). The asymmetry is informative: influential papers use more distinctive vocabulary---terms like "additionality" or "de-risking" that strongly predict pole assignment---but occupy a narrower region of embedding space because they tend to engage with multiple strands of the literature. The lexical signal persists where the embedding signal attenuates, suggesting that the two methods are complementary rather than redundant.
 
 ### 5.4 The divide as PC2, not PC1
 
@@ -178,7 +182,17 @@ The corpus was designed for breadth ({{< var corpus_sources >}} sources, five la
 Bottom line: the main divide is robust across supervised/unsupervised, lexical/embedding representations;
 auxiliary axes capture period (Kyoto/CDM → green finance), sectoral domain, and policy-instrument differences. -->
 
-[TO WRITE: Present PCA results showing that the efficiency-accountability divide is a secondary, not primary, axis of variation.]
+The bimodality results establish that the efficiency--accountability divide is real and cross-validated. But is it the field's primary axis of variation, or a secondary structure? PCA on the embedding space answers this question.
+
+PC1 (5.5% of variance) separates adaptation and vulnerability research from CDM and engineering literature. Its correlation with the seed axis is negligible (*r* = 0.01). The field's dominant axis of variation is topical, not political: it distinguishes *what* papers study, not *how* they frame the policy problem.
+
+The seed axis loads most strongly on PC2 (*r* = −0.75, {{< var pca_emb_pc2_var_pct >}}% of variance) and secondarily on PC4 (*r* = 0.50, {{< var pca_emb_pc4_var_pct >}}% of variance). No single unsupervised component recovers it. The efficiency--accountability divide cuts diagonally across the embedding space, crosscutting the field's topical structure rather than aligning with any one thematic dimension. On the full corpus, the seed axis explains {{< var bim_var_pct >}}% of total embedding variance---real but modest compared to the topical axes.
+
+This diagonal loading has a methodological implication. Unsupervised PCA alone would not have identified the efficiency--accountability divide as a coherent structure: the signal is distributed across components that individually describe different thematic contrasts (green finance vs. carbon markets on PC2; CDM mechanisms vs. contemporary governance on PC4). The supervised seed-axis projection aggregates this distributed signal into a single interpretable dimension. Supervised and unsupervised approaches are thus complementary: PCA maps the field's thematic structure; the seed axis tests whether a theoretically motivated divide is present within that structure.
+
+A further asymmetry between the full corpus and the core reinforces this point. On the full corpus, three PCs exhibit unsupervised bimodality (ΔBIC > 200): PC2 (ΔBIC = {{< var pca_emb_pc2_dbic >}}), plus PC3 and PC4. On the core (~{{< var corpus_core >}} papers), no PC passes the ΔBIC > 200 threshold. The supervised seed axis, however, remains bimodal in core (ΔBIC = {{< var bim_core_dbic_embedding >}}). Unsupervised bimodality detection requires the full corpus's breadth; the supervised approach finds structure that is present but too subtle to emerge from a smaller, more coherent population.
+
+**Note on earlier reported values.** A previous version of this analysis, conducted on a smaller corpus, reported that the seed axis explained 4.2% of embedding variance with a Pearson correlation of *r* = 0.918 against the leading PC. The 4.2% reflected a different corpus (before the current multi-source unification); the *r* = 0.918 was a misread of the cumulative *R*² across 10 PCs (0.914), not a single-component correlation. On the current refined corpus ({{< var corpus_total >}} works), the corrected values are {{< var bim_var_pct >}}% explained variance and *r* = −0.75 (PC2). The qualitative conclusion is unchanged: the divide is secondary but persistent.
 
 ### 5.5 Core vs. full corpus comparison
 
