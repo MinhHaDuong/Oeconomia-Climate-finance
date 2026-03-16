@@ -16,7 +16,9 @@ import bibtexparser
 import pandas as pd
 from rapidfuzz import fuzz
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
+
+log = get_logger("verify_bibliography")
 
 # --- Paths ---
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
@@ -246,70 +248,74 @@ def reverse_check(bib_entries, corpus, cited_threshold=500):
 
 
 def main():
-    print("=" * 70)
-    print("Bibliography-Corpus Verification")
-    print("=" * 70)
+    log.info("=" * 70)
+    log.info("Bibliography-Corpus Verification")
+    log.info("=" * 70)
 
     # Parse bibliography
     bib_entries = parse_bib(BIB_PATH)
-    print(f"\nBibliography: {len(bib_entries)} entries from {BIB_PATH}")
+    log.info("Bibliography: %d entries from %s", len(bib_entries), BIB_PATH)
 
     # Load corpus
     corpus = pd.read_csv(CORPUS_PATH, low_memory=False)
-    print(f"Corpus: {len(corpus):,} rows from {CORPUS_PATH}")
+    log.info("Corpus: %s rows from %s", f"{len(corpus):,}", CORPUS_PATH)
 
     # Match
-    print("\nMatching...")
+    log.info("Matching...")
     results = match_entries(bib_entries, corpus)
 
     # Save
     df = pd.DataFrame(results)
     df.to_csv(OUTPUT_PATH, index=False, encoding="utf-8")
-    print(f"\nSaved {len(df)} rows to {OUTPUT_PATH}")
+    log.info("Saved %d rows to %s", len(df), OUTPUT_PATH)
 
     # Summary
     doi_matches = [r for r in results if r["match_type"] == "doi"]
     fuzzy_matches = [r for r in results if r["match_type"] == "fuzzy"]
     unmatched = [r for r in results if r["match_type"] == "none"]
 
-    print(f"\n--- Match Summary ---")
-    print(f"  DOI matches:   {len(doi_matches)}")
-    print(f"  Fuzzy matches: {len(fuzzy_matches)}")
-    print(f"  Unmatched:     {len(unmatched)}")
+    log.info("--- Match Summary ---")
+    log.info("  DOI matches:   %d", len(doi_matches))
+    log.info("  Fuzzy matches: %d", len(fuzzy_matches))
+    log.info("  Unmatched:     %d", len(unmatched))
 
     if doi_matches:
-        print(f"\n  DOI-matched entries:")
+        log.info("  DOI-matched entries:")
         for r in sorted(doi_matches, key=lambda x: x["bib_key"]):
             cited = _safe_cited(r["corpus_cited_by"])
-            cited_str = f" (cited_by={cited})" if cited else ""
-            print(f"    {r['bib_key']}{cited_str}")
+            cited_str = " (cited_by=%s)" % cited if cited else ""
+            log.info("    %s%s", r['bib_key'], cited_str)
 
     if fuzzy_matches:
-        print(f"\n  Fuzzy-matched entries:")
+        log.info("  Fuzzy-matched entries:")
         for r in sorted(fuzzy_matches, key=lambda x: x["bib_key"]):
             cited = _safe_cited(r["corpus_cited_by"])
-            cited_str = f" (cited_by={cited})" if cited else ""
-            print(f"    {r['bib_key']}{cited_str}")
+            cited_str = " (cited_by=%s)" % cited if cited else ""
+            log.info("    %s%s", r['bib_key'], cited_str)
 
     if unmatched:
-        print(f"\n  Unmatched entries (expected for books/grey lit):")
+        log.info("  Unmatched entries (expected for books/grey lit):")
         for r in sorted(unmatched, key=lambda x: x["bib_key"]):
-            print(f"    {r['bib_key']} [{r['bib_type']}] — {r['bib_title'][:80]}")
+            log.info("    %s [%s] -- %s", r['bib_key'], r['bib_type'],
+                     r['bib_title'][:80])
 
     # Reverse check
-    print(f"\n--- Reverse Check: highly-cited corpus papers (cited_by > 500) ---")
-    print(f"    by bibliography authors NOT in the bibliography")
+    log.info("--- Reverse Check: highly-cited corpus papers (cited_by > 500) ---")
+    log.info("    by bibliography authors NOT in the bibliography")
     missing_papers = reverse_check(bib_entries, corpus, cited_threshold=500)
     if missing_papers:
         for p in sorted(missing_papers, key=lambda x: -float(x["corpus_cited_by"])):
-            print(f"    [{int(float(p['corpus_cited_by']))}] {p['corpus_first_author']} "
-                  f"({int(float(p['corpus_year']))}) — {p['corpus_title'][:70]}")
-            print(f"         matching bib author: {p['matching_bib_name']}, "
-                  f"doi: {p['corpus_doi']}")
+            log.info("    [%d] %s (%d) -- %s",
+                     int(float(p['corpus_cited_by'])),
+                     p['corpus_first_author'],
+                     int(float(p['corpus_year'])),
+                     p['corpus_title'][:70])
+            log.info("         matching bib author: %s, doi: %s",
+                     p['matching_bib_name'], p['corpus_doi'])
     else:
-        print("    (none found)")
+        log.info("    (none found)")
 
-    print(f"\nDone.")
+    log.info("Done.")
 
 
 if __name__ == "__main__":

@@ -21,7 +21,9 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR, save_csv
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_csv
+
+log = get_logger("summarize_core_venues")
 
 
 def parse_args():
@@ -213,14 +215,14 @@ def main():
         .sort_values("n_core_works", ascending=False)
     )
 
-    print("Done.")
-    print(f"  Input rows: {len(df):,}")
-    print("  Venue type coverage:")
+    log.info("Done.")
+    log.info("  Input rows: %s", f"{len(df):,}")
+    log.info("  Venue type coverage:")
     for _, row in coverage.iterrows():
-        print(f"    - {row['venue_type']}: {int(row['n_core_works'])}")
-    print("  Institution coverage:")
+        log.info("    - %s: %d", row['venue_type'], int(row['n_core_works']))
+    log.info("  Institution coverage:")
     for _, row in inst_tbl.iterrows():
-        print(f"    - {row['institution_group']}: {int(row['n_core_works'])}")
+        log.info("    - %s: %d", row['institution_group'], int(row['n_core_works']))
 
 
 if __name__ == "__main__":

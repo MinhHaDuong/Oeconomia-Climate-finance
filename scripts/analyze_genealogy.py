@@ -22,7 +22,9 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_citations, normalize_doi, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi, save_figure
+
+log = get_logger("analyze_genealogy")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -60,7 +62,7 @@ args = parser.parse_args()
 # Step 1: Load data
 # ============================================================
 
-print("Loading data...")
+log.info("Loading data...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
@@ -80,7 +82,7 @@ for _, row in works.iterrows():
         }
 
 # Load citations
-print("Loading citations...")
+log.info("Loading citations...")
 cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
@@ -109,11 +111,11 @@ for _, row in cit.iterrows():
         }
 
 # Load KMeans semantic clusters (needed for CDM cluster identification)
-print("Loading semantic clusters...")
+log.info("Loading semantic clusters...")
 sem_df = pd.read_csv(os.path.join(CATALOGS_DIR, "semantic_clusters.csv"))
 sem_df["doi_norm"] = sem_df["doi"].apply(normalize_doi)
 doi_to_cluster = dict(zip(sem_df["doi_norm"], sem_df["semantic_cluster"]))
-print(f"Semantic clusters loaded: {len(sem_df)} papers")
+log.info("Semantic clusters loaded: %d papers", len(sem_df))
 
 
 # ============================================================
@@ -121,7 +123,7 @@ print(f"Semantic clusters loaded: {len(sem_df)} papers")
 # ============================================================
 
 CITE_THRESHOLD = 50
-print(f"\nSelecting backbone (cited_by_count >= {CITE_THRESHOLD})...")
+log.info("Selecting backbone (cited_by_count >= %d)...", CITE_THRESHOLD)
 
 has_abs = works["abstract"].notna() & (works["abstract"].str.len() > 50)
 high_cited = works[has_abs & (works["cited_by_count"] >= CITE_THRESHOLD)]
@@ -132,7 +134,7 @@ backbone_dois = {d for d in backbone_dois
                  if d in doi_meta and doi_meta[d]["year"] is not None
                  and 1985 <= (doi_meta[d]["year"] or 0) <= 2025}
 
-print(f"Backbone papers (with valid year): {len(backbone_dois)}")
+log.info("Backbone papers (with valid year): %d", len(backbone_dois))
 
 
 # ============================================================
@@ -151,14 +153,14 @@ BAND_NAMES = {0: "CDM / Kyoto heritage", 1: "Accountability pole", 2: "Efficienc
 BAND_COLORS_RGB = {0: "#F4A261", 1: "#457B9D", 2: "#E63946"}
 
 if use_bimodal:
-    print("Loading bimodality axis scores from tab_pole_papers.csv...")
+    log.info("Loading bimodality axis scores from tab_pole_papers.csv...")
     pole_df = pd.read_csv(pole_path)
     pole_df["doi_norm"] = pole_df["doi"].apply(normalize_doi)
     doi_to_score = dict(zip(pole_df["doi_norm"], pole_df["axis_score"]))
-    print(f"  Pole scores for {len(doi_to_score)} papers")
+    log.info("  Pole scores for %d papers", len(doi_to_score))
 else:
-    print("WARNING: tab_pole_papers.csv not found. Run analyze_bimodality.py first.")
-    print("Falling back to 6-cluster KMeans lineages.")
+    log.warning("tab_pole_papers.csv not found. Run analyze_bimodality.py first.")
+    log.warning("Falling back to 6-cluster KMeans lineages.")
     doi_to_score = {}
 
 n_communities = 3
@@ -185,16 +187,16 @@ COMMUNITY_NAMES = BAND_NAMES
 
 backbone_dois = {d for d in backbone_dois if d in lineage}
 band_counts = {b: sum(1 for d in backbone_dois if lineage[d] == b) for b in range(n_communities)}
-print(f"Final backbone: {len(backbone_dois)} papers")
+log.info("Final backbone: %d papers", len(backbone_dois))
 for b, name in BAND_NAMES.items():
-    print(f"  Band {b} ({name}): {band_counts.get(b, 0)} papers")
+    log.info("  Band %d (%s): %d papers", b, name, band_counts.get(b, 0))
 
 
 # ============================================================
 # Step 4: Build citation DAG (internal links only)
 # ============================================================
 
-print("\nBuilding citation DAG...")
+log.info("Building citation DAG...")
 edges = []
 for _, row in cit.iterrows():
     s = row["source_doi"]
@@ -205,14 +207,14 @@ for _, row in cit.iterrows():
 
 # Deduplicate
 edges = list(set(edges))
-print(f"Internal citation edges: {len(edges)}")
+log.info("Internal citation edges: %d", len(edges))
 
 
 # ============================================================
 # Step 5: Layout computation
 # ============================================================
 
-print("\nComputing layout...")
+log.info("Computing layout...")
 
 # X = year (normalized to 0-1)
 year_min = min(doi_meta[d]["year"] for d in backbone_dois)
@@ -680,7 +682,7 @@ document.querySelectorAll('.node').forEach(el => {{
 html_path = os.path.join(FIGURES_DIR, "fig_genealogy.html")
 with open(html_path, "w") as f:
     f.write(html_content)
-print(f"Saved interactive version → figures/fig_genealogy.html")
+log.info("Saved interactive version -> figures/fig_genealogy.html")
 
 
 # ============================================================
@@ -703,7 +705,7 @@ for d in backbone_dois:
 
 lineage_df = pd.DataFrame(rows).sort_values(["lineage", "cited_by_count"], ascending=[True, False])
 lineage_df.to_csv(os.path.join(TABLES_DIR, "tab_lineages.csv"), index=False)
-print(f"Saved lineage table → tables/tab_lineages.csv ({len(lineage_df)} papers)")
+log.info("Saved lineage table -> tables/tab_lineages.csv (%d papers)", len(lineage_df))
 
 
 # ============================================================
@@ -711,7 +713,7 @@ print(f"Saved lineage table → tables/tab_lineages.csv ({len(lineage_df)} paper
 # ============================================================
 
 if args.robustness:
-    print("\n=== Robustness: Louvain resolution sensitivity ===")
+    log.info("=== Robustness: Louvain resolution sensitivity ===")
     import community as community_louvain
     import networkx as nx
     from sklearn.metrics import adjusted_rand_score
@@ -763,7 +765,7 @@ if args.robustness:
                                                      resolution=gamma, random_state=42)
             partitions[gamma] = part
             n_c = len(set(part.values()))
-            print(f"  γ={gamma}: {n_c} communities")
+            log.info("  gamma=%.1f: %d communities", gamma, n_c)
 
         # Build sensitivity table
         common_nodes = list(G.nodes())
@@ -776,19 +778,19 @@ if args.robustness:
 
         sens_df = pd.DataFrame(sens_rows)
         sens_df.to_csv(os.path.join(TABLES_DIR, "tab_louvain_sensitivity.csv"), index=False)
-        print(f"Saved Louvain sensitivity → tables/tab_louvain_sensitivity.csv")
+        log.info("Saved Louvain sensitivity -> tables/tab_louvain_sensitivity.csv")
 
         # ARI between resolution levels
-        print("\n  Pairwise ARI:")
+        log.info("  Pairwise ARI:")
         for i, g1 in enumerate(resolutions):
             for g2 in resolutions[i + 1:]:
                 labels1 = [partitions[g1][n] for n in common_nodes]
                 labels2 = [partitions[g2][n] for n in common_nodes]
                 ari = adjusted_rand_score(labels1, labels2)
-                print(f"    γ={g1} vs γ={g2}: ARI={ari:.3f}")
+                log.info("    gamma=%.1f vs gamma=%.1f: ARI=%.3f", g1, g2, ari)
 
     except TypeError:
-        print("  WARNING: community_louvain.best_partition does not support 'resolution' parameter.")
-        print("  Skipping R3 sensitivity analysis.")
+        log.warning("community_louvain.best_partition does not support 'resolution' parameter.")
+        log.warning("Skipping R3 sensitivity analysis.")
 
-print("\nDone.")
+log.info("Done.")

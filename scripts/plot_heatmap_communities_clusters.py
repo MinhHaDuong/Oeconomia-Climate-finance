@@ -25,9 +25,11 @@ from scipy.sparse import lil_matrix
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
-from utils import (BASE_DIR, CATALOGS_DIR, load_cluster_labels,
+from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_cluster_labels,
                    load_refined_citations, load_refined_embeddings,
                    normalize_doi, save_figure)
+
+log = get_logger("plot_heatmap_communities_clusters")
 
 apply_style()
 import matplotlib.pyplot as plt
@@ -64,11 +66,11 @@ CLUSTER_SHORT = load_cluster_labels()
 # Step 1: Load data and run KMeans
 # ============================================================
 
-print("=" * 70)
-print("HEATMAP: CO-CITATION COMMUNITIES vs KMEANS CLUSTERS")
-print("=" * 70)
+log.info("=" * 70)
+log.info("HEATMAP: CO-CITATION COMMUNITIES vs KMEANS CLUSTERS")
+log.info("=" * 70)
 
-print("\n--- Step 1: Load data and run KMeans ---")
+log.info("--- Step 1: Load data and run KMeans ---")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
@@ -76,7 +78,7 @@ works["year"] = pd.to_numeric(works["year"], errors="coerce")
 has_abstract = works["abstract"].notna() & (works["abstract"].str.len() > 50)
 in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
 df = works[has_abstract & in_range].copy().reset_index(drop=True)
-print(f"Works with abstracts (1990-2025): {len(df)}")
+log.info("Works with abstracts (1990-2025): %d", len(df))
 
 embeddings = load_refined_embeddings()
 if len(embeddings) != len(df):
@@ -84,7 +86,7 @@ if len(embeddings) != len(df):
         f"Embedding cache size mismatch ({len(embeddings)} vs {len(df)}). "
         "Re-run analyze_embeddings.py first."
     )
-print(f"Embedding shape: {embeddings.shape}")
+log.info("Embedding shape: %s", embeddings.shape)
 
 # KMeans k=6, same parameters as analyze_alluvial.py
 kmeans = KMeans(n_clusters=K_CLUSTERS, random_state=42, n_init=20)
@@ -98,13 +100,13 @@ for _, row in df.iterrows():
     if d and d not in ("", "nan", "none"):
         doi_to_cluster[d] = row["cluster"]
 
-print(f"Papers with KMeans cluster assignments: {len(doi_to_cluster)}")
+log.info("Papers with KMeans cluster assignments: %d", len(doi_to_cluster))
 
 # ============================================================
 # Step 2: Load citations (once)
 # ============================================================
 
-print("\n--- Step 2: Load citations ---")
+log.info("--- Step 2: Load citations ---")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 
 cit = load_refined_citations()
@@ -117,13 +119,13 @@ cit = cit[
     & ~cit["ref_doi"].isin(["", "nan", "none"])
 ]
 cit["ref_year_num"] = pd.to_numeric(cit["ref_year"], errors="coerce")
-print(f"Citation pairs with valid DOIs: {len(cit)}")
+log.info("Citation pairs with valid DOIs: %d", len(cit))
 
 # Precompute groupings
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 ref_counts = cit.groupby("ref_doi").size().sort_values(ascending=False)
-print(f"Unique source papers: {len(source_groups)}")
-print(f"Unique referenced DOIs: {len(ref_counts)}")
+log.info("Unique source papers: %d", len(source_groups))
+log.info("Unique referenced DOIs: %d", len(ref_counts))
 
 
 # ============================================================
@@ -132,7 +134,7 @@ print(f"Unique referenced DOIs: {len(ref_counts)}")
 
 def detect_communities(cutoff_year):
     """Build co-citation network and detect Louvain communities for one window."""
-    print(f"\n  Window: year <= {cutoff_year}")
+    log.info("  Window: year <= %d", cutoff_year)
 
     # Refs with year <= cutoff
     pre_refs = set(
@@ -145,8 +147,8 @@ def detect_communities(cutoff_year):
     top_refs = pre_ref_counts.head(actual_n).index.tolist()
     top_set = set(top_refs)
     ref_to_idx = {ref: i for i, ref in enumerate(top_refs)}
-    print(f"    Top {actual_n} refs, citation range: "
-          f"{pre_ref_counts.iloc[0]}..{pre_ref_counts.iloc[actual_n-1]}")
+    log.info("    Top %d refs, citation range: %s..%s",
+             actual_n, pre_ref_counts.iloc[0], pre_ref_counts.iloc[actual_n - 1])
 
     # Build co-citation matrix
     cocit_matrix = lil_matrix((actual_n, actual_n), dtype=np.float64)
@@ -175,8 +177,8 @@ def detect_communities(cutoff_year):
 
     isolates = list(nx.isolates(G))
     G.remove_nodes_from(isolates)
-    print(f"    Network: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges "
-          f"({len(isolates)} isolates removed)")
+    log.info("    Network: %d nodes, %d edges (%d isolates removed)",
+             G.number_of_nodes(), G.number_of_edges(), len(isolates))
 
     if G.number_of_nodes() == 0:
         return {}
@@ -185,12 +187,12 @@ def detect_communities(cutoff_year):
         G, weight="weight", resolution=RESOLUTION, random_state=RANDOM_STATE
     )
     n_comm = len(set(partition.values()))
-    print(f"    Louvain: {n_comm} communities")
+    log.info("    Louvain: %d communities", n_comm)
 
     return partition
 
 
-print("\n--- Step 3: Detect communities for each window ---")
+log.info("--- Step 3: Detect communities for each window ---")
 window_partitions = {}
 for w in WINDOWS:
     window_partitions[w["label"]] = detect_communities(w["cutoff"])
@@ -200,7 +202,7 @@ for w in WINDOWS:
 # Step 4: Build heatmaps (indirect mapping)
 # ============================================================
 
-print("\n--- Step 4: Build heatmaps ---")
+log.info("--- Step 4: Build heatmaps ---")
 
 # Precompute: for each ref_doi that is in any community, which source_dois cite it?
 # Build ref_doi -> list of source_dois (only those with cluster assignments)
@@ -210,7 +212,7 @@ for _, row in cit.iterrows():
     src = row["source_doi"]
     if src in doi_to_cluster:
         ref_to_citers[ref].add(src)
-print(f"Refs cited by at least one clustered paper: {len(ref_to_citers)}")
+log.info("Refs cited by at least one clustered paper: %d", len(ref_to_citers))
 
 
 def build_heatmap_data(partition):
@@ -263,15 +265,15 @@ for w in WINDOWS:
         "n_communities": len(set(window_partitions[label].values())) if window_partitions[label] else 0,
     }
     if matrix is not None:
-        print(f"  {label}: {matrix.shape[1]} communities, "
-              f"max cell = {matrix.max()}, total citers = {matrix.sum()}")
+        log.info("  %s: %d communities, max cell = %d, total citers = %d",
+                 label, matrix.shape[1], matrix.max(), matrix.sum())
 
 
 # ============================================================
 # Step 5: Plot 2x2 heatmap figure
 # ============================================================
 
-print("\n--- Step 5: Plotting ---")
+log.info("--- Step 5: Plotting ---")
 
 fig, axes = plt.subplots(2, 2, figsize=(10, 8))
 fig.suptitle("Co-citation communities vs KMeans clusters", fontsize=11,
@@ -343,4 +345,4 @@ out_stem = os.path.join(FIGURES_DIR, "heatmap_communities_clusters")
 save_figure(fig, out_stem, no_pdf=args.no_pdf, dpi=DPI)
 plt.close(fig)
 
-print("\nDone.")
+log.info("Done.")

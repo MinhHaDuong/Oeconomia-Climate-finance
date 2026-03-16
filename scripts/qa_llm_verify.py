@@ -27,7 +27,9 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, save_csv, BASE_DIR
+from utils import CATALOGS_DIR, save_csv, BASE_DIR, get_logger
+
+log = get_logger("qa_llm_verify")
 
 DEFAULT_MODEL = "google/gemini-2.5-flash"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -104,12 +106,12 @@ def main():
 
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
-        print("ERROR: OPENROUTER_API_KEY not set")
+        log.error("OPENROUTER_API_KEY not set")
         sys.exit(1)
 
     path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     df = pd.read_csv(path)
-    print(f"Loaded {len(df)} works")
+    log.info("Loaded %d works", len(df))
 
     # Stratified sample: oversample rare sources for better coverage
     PRIMARY_SOURCES = [
@@ -132,7 +134,7 @@ def main():
     if total_alloc < args.sample:
         allocations["openalex"] += args.sample - total_alloc
 
-    print(f"\nSample allocation: {allocations}")
+    log.info("Sample allocation: %s", allocations)
 
     sampled = []
     for src, n in allocations.items():
@@ -141,14 +143,14 @@ def main():
         if n_actual > 0:
             sampled.append(pool.sample(n_actual, random_state=42))
     sample_df = pd.concat(sampled).drop_duplicates(subset="doi").head(args.sample)
-    print(f"Sampled {len(sample_df)} records for verification")
+    log.info("Sampled %d records for verification", len(sample_df))
 
     # Run LLM verification
     results = []
     errors = 0
     for i, (idx, row) in enumerate(sample_df.iterrows()):
         if i % 10 == 0:
-            print(f"  Verifying {i+1}/{len(sample_df)}...")
+            log.info("  Verifying %d/%d...", i + 1, len(sample_df))
         prompt = build_prompt(row)
         try:
             verdict = call_llm(prompt, api_key, args.model)
@@ -160,67 +162,69 @@ def main():
             results.append(verdict)
         except Exception as e:
             errors += 1
-            print(f"  Error on record {idx}: {e}")
+            log.error("  Error on record %s: %s", idx, e)
             if errors > 10:
-                print("  Too many errors, stopping.")
+                log.error("  Too many errors, stopping.")
                 break
         # Rate limiting
         time.sleep(0.3)
 
     if not results:
-        print("No results. Check API key and model.")
+        log.error("No results. Check API key and model.")
         sys.exit(1)
 
     rdf = pd.DataFrame(results)
-    print(f"\nVerified {len(rdf)} records ({errors} errors)")
+    log.info("Verified %d records (%d errors)", len(rdf), errors)
 
     # Compute error rates
-    print(f"\n{'='*60}")
-    print("QA VERIFICATION RESULTS")
-    print(f"{'='*60}")
+    log.info("=" * 60)
+    log.info("QA VERIFICATION RESULTS")
+    log.info("=" * 60)
 
     # Language accuracy
     lang_correct = rdf["language_correct"].apply(
         lambda x: x is True or str(x).lower() == "true"
     )
     lang_err = 1.0 - lang_correct.mean()
-    print(f"\nLanguage tag accuracy: {lang_correct.mean()*100:.1f}% "
-          f"(error rate: {lang_err*100:.1f}%)")
+    log.info("Language tag accuracy: %.1f%% (error rate: %.1f%%)",
+             lang_correct.mean() * 100, lang_err * 100)
     if not lang_correct.all():
         wrong_lang = rdf[~lang_correct]
-        print("  Mismatches:")
+        log.info("  Mismatches:")
         for _, r in wrong_lang.head(10).iterrows():
-            print(f"    {r.get('_language_tag','?')} → {r.get('language_should_be','?')}: "
-                  f"{r.get('_title','')[:60]}")
+            log.info("    %s -> %s: %s",
+                     r.get('_language_tag', '?'),
+                     r.get('language_should_be', '?'),
+                     r.get('_title', '')[:60])
 
     # DOI validity
     doi_valid = rdf["doi_looks_valid"].apply(
         lambda x: x is True or str(x).lower() in ("true", "na")
     )
     doi_err = 1.0 - doi_valid.mean()
-    print(f"\nDOI validity: {doi_valid.mean()*100:.1f}% "
-          f"(error rate: {doi_err*100:.1f}%)")
+    log.info("DOI validity: %.1f%% (error rate: %.1f%%)",
+             doi_valid.mean() * 100, doi_err * 100)
 
     # Reference availability
     refs_expected = rdf["refs_expected"].apply(
         lambda x: str(x).lower() if pd.notna(x) else "uncertain"
     )
-    print(f"\nReference availability (LLM expectation):")
-    print(f"  {refs_expected.value_counts().to_dict()}")
+    log.info("Reference availability (LLM expectation):")
+    log.info("  %s", refs_expected.value_counts().to_dict())
 
     # Document type distribution
-    print(f"\nDocument types (LLM classification):")
-    print(f"  {rdf['doc_type'].value_counts().to_dict()}")
+    log.info("Document types (LLM classification):")
+    log.info("  %s", rdf['doc_type'].value_counts().to_dict())
 
     # Climate finance relevance
     relevance = rdf["is_climate_finance"].apply(
         lambda x: str(x).lower() if pd.notna(x) else "unknown"
     )
-    print(f"\nClimate finance relevance:")
-    print(f"  {relevance.value_counts().to_dict()}")
+    log.info("Climate finance relevance:")
+    log.info("  %s", relevance.value_counts().to_dict())
 
     # Per-source breakdown
-    print(f"\n=== Per-source error rates ===")
+    log.info("=== Per-source error rates ===")
     for src in PRIMARY_SOURCES:
         mask = rdf["_source"] == src
         sub = rdf[mask]
@@ -235,8 +239,8 @@ def main():
         rel = sub["is_climate_finance"].apply(
             lambda x: str(x).lower() in ("true", "borderline")
         ).mean()
-        print(f"  {src:<22} N={len(sub):>3}  lang={lc*100:.0f}%  "
-              f"doi={dv*100:.0f}%  relevant={rel*100:.0f}%")
+        log.info("  %-22s N=%3d  lang=%.0f%%  doi=%.0f%%  relevant=%.0f%%",
+                 src, len(sub), lc * 100, dv * 100, rel * 100)
 
     # Confidence intervals (Wilson score for binomial)
     n = len(rdf)
@@ -247,12 +251,13 @@ def main():
         denom = 1 + z**2 / n
         center = (p + z**2 / (2 * n)) / denom
         margin = z * sqrt((p * (1 - p) + z**2 / (4 * n)) / n) / denom
-        print(f"\n{name}: {p*100:.1f}% [{(center-margin)*100:.1f}%, {(center+margin)*100:.1f}%] (95% CI)")
+        log.info("%s: %.1f%% [%.1f%%, %.1f%%] (95%% CI)",
+                 name, p * 100, (center - margin) * 100, (center + margin) * 100)
 
     # Save results
     out_path = os.path.join(BASE_DIR, "content", "tables", "qa_llm_verification.csv")
     save_csv(rdf, out_path)
-    print(f"\nSaved detailed results to {out_path}")
+    log.info("Saved detailed results to %s", out_path)
 
 
 if __name__ == "__main__":

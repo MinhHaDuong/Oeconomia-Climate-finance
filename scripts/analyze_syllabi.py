@@ -20,7 +20,9 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from build_teaching_yaml import _dedup_course_names
-from utils import BASE_DIR, DATA_DIR
+from utils import BASE_DIR, DATA_DIR, get_logger
+
+log = get_logger("analyze_syllabi")
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
 OUTPUT_TABLE = os.path.join(BASE_DIR, "content", "tables", "tab_syllabi_breakdown.csv")
@@ -64,7 +66,7 @@ def build_breakdown(df):
 
 def main():
     df = pd.read_csv(INPUT_CSV)
-    print(f"Loaded {len(df)} readings from {INPUT_CSV}")
+    log.info("Loaded %d readings from %s", len(df), INPUT_CSV)
 
     # Apply course dedup before counting (same logic as build_teaching_yaml.py)
     df = _dedup_course_names(df)
@@ -73,27 +75,26 @@ def main():
 
     os.makedirs(os.path.dirname(OUTPUT_TABLE), exist_ok=True)
     table.to_csv(OUTPUT_TABLE, index=False)
-    print(f"\nWrote {OUTPUT_TABLE}")
+    log.info("Wrote %s", OUTPUT_TABLE)
 
     # Print summary
     n_courses = df["courses"].str.split(";").apply(
         lambda x: len([c for c in x if c.strip()]) if isinstance(x, list) else 0
     )
-    print(f"\n{'='*65}")
-    print(f"SYLLABI READING LIST ANALYSIS")
-    print(f"{'='*65}")
-    print(f"  Total unique readings: {len(df)}")
-    print(f"  With DOI: {df['doi'].notna().sum()}")
-    print(f"  Without DOI: {df['doi'].isna().sum()}")
-    print(f"  In corpus: {(df['in_corpus'] == True).sum()}")
-    print(f"\nBreakdown table:")
-    print(table.to_string(index=False))
+    log.info("=" * 65)
+    log.info("SYLLABI READING LIST ANALYSIS")
+    log.info("=" * 65)
+    log.info("  Total unique readings: %d", len(df))
+    log.info("  With DOI: %d", df['doi'].notna().sum())
+    log.info("  Without DOI: %d", df['doi'].isna().sum())
+    log.info("  In corpus: %d", (df['in_corpus'] == True).sum())
+    log.info("Breakdown table:\n%s", table.to_string(index=False))
 
     # Selection summary
     has_doi = df["doi"].notna()
     n2 = df["n_courses"] >= 2
     selected = has_doi & n2
-    print(f"\nSelection (DOI + n_courses≥2): {selected.sum()} readings")
+    log.info("Selection (DOI + n_courses>=2): %d readings", selected.sum())
 
 
 if __name__ == "__main__":

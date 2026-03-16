@@ -22,7 +22,9 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (BASE_DIR, CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS,
-                   normalize_doi, normalize_title, save_csv)
+                   get_logger, normalize_doi, normalize_title, save_csv)
+
+log = get_logger("catalog_merge")
 
 SOURCE_PRIORITY = ["openalex", "semanticscholar", "scopus", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
 
@@ -92,30 +94,30 @@ def main():
     missing = [f for f in files if not os.path.exists(f)]
     if missing:
         for f in missing:
-            print(f"WARNING: missing catalog: {f}")
+            log.warning("missing catalog: %s", f)
         files = [f for f in files if os.path.exists(f)]
 
     if not files:
-        print("No catalog files found in data/catalogs/")
+        log.error("No catalog files found in data/catalogs/")
         return
 
-    print("Loading catalogs:")
+    log.info("Loading catalogs:")
     frames = []
     for f in files:
         name = os.path.basename(f).replace("_works.csv", "")
         try:
             df = pd.read_csv(f, encoding="utf-8", dtype=str, keep_default_na=False)
-            print(f"  {name}: {len(df)} rows")
+            log.info("  %s: %d rows", name, len(df))
             frames.append(df)
         except Exception as e:
-            print(f"  {name}: ERROR - {e}")
+            log.error("  %s: ERROR - %s", name, e)
 
     if not frames:
-        print("No data loaded.")
+        log.error("No data loaded.")
         return
 
     combined = pd.concat(frames, ignore_index=True)
-    print(f"\nTotal records before dedup: {len(combined)}")
+    log.info("Total records before dedup: %d", len(combined))
 
     # Normalize DOIs
     combined["_doi_norm"] = combined["doi"].apply(normalize_doi)
@@ -128,12 +130,12 @@ def main():
     # Pass 1: DOI-based dedup (vectorized)
     has_doi = combined[combined["_doi_norm"] != ""]
     no_doi = combined[combined["_doi_norm"] == ""]
-    print(f"  With DOI: {len(has_doi)}, without DOI: {len(no_doi)}")
+    log.info("  With DOI: %d, without DOI: %d", len(has_doi), len(no_doi))
 
     parts = []
     if len(has_doi) > 0:
         parts.append(_dedup_vectorized(has_doi, "_doi_norm"))
-        print(f"  After DOI dedup: {len(parts[-1])}")
+        log.info("  After DOI dedup: %d", len(parts[-1]))
 
     # Pass 2: title+year dedup for records without DOI (vectorized)
     if len(no_doi) > 0:
@@ -146,7 +148,7 @@ def main():
             # Composite key for groupby
             no_doi["_title_year"] = no_doi["_title_norm"] + "|" + no_doi["_year"]
             parts.append(_dedup_vectorized(no_doi, "_title_year"))
-            print(f"  After title dedup: {len(parts[-1])}")
+            log.info("  After title dedup: %d", len(parts[-1]))
 
     result = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
@@ -171,15 +173,15 @@ def main():
 
     save_csv(result, os.path.join(CATALOGS_DIR, "unified_works.csv"))
 
-    print(f"\nSummary:")
-    print(f"  Unified works: {len(result)}")
-    print(f"  Multi-source works: {(result['source_count'] > 1).sum()}")
-    print(f"  Source distribution:")
+    log.info("Summary:")
+    log.info("  Unified works: %d", len(result))
+    log.info("  Multi-source works: %d", (result['source_count'] > 1).sum())
+    log.info("  Source distribution:")
     for col in FROM_COLS:
         src_name = col.replace("from_", "")
         count = (result[col] == 1).sum()
         if count:
-            print(f"    {src_name}: {count}")
+            log.info("    %s: %d", src_name, count)
 
 
 if __name__ == "__main__":

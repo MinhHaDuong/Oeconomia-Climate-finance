@@ -17,7 +17,9 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, save_csv, BASE_DIR, RAW_DIR, MAILTO
+from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR, RAW_DIR, MAILTO
+
+log = get_logger("export_corpus_table")
 
 CORE_THRESHOLD = 50
 
@@ -63,18 +65,18 @@ def fetch_oa_status(df):
     # Only OpenAlex works have queryable source_ids
     oa_mask = df["from_openalex"] == 1
     oa_ids = df.loc[oa_mask, "source_id"].dropna().unique().tolist()
-    print(f"OpenAlex works to check for OA: {len(oa_ids)}")
+    log.info("OpenAlex works to check for OA: %d", len(oa_ids))
 
     # Load cache
     cached = {}
     if os.path.exists(OA_CACHE):
         cache_df = pd.read_csv(OA_CACHE)
         cached = dict(zip(cache_df["source_id"], cache_df["is_oa"]))
-        print(f"  Loaded {len(cached)} cached OA statuses")
+        log.info("  Loaded %d cached OA statuses", len(cached))
 
     # Find uncached IDs
     uncached = [sid for sid in oa_ids if sid not in cached]
-    print(f"  Uncached: {len(uncached)}")
+    log.info("  Uncached: %d", len(uncached))
 
     # Batch query OpenAlex (50 IDs per request)
     batch_size = 50
@@ -97,12 +99,12 @@ def fetch_oa_status(df):
                 is_oa = r.get("open_access", {}).get("is_oa", False)
                 cached[sid] = bool(is_oa)
         except Exception as e:
-            print(f"  Warning: batch {i}-{i+batch_size} failed: {e}")
+            log.warning("  batch %d-%d failed: %s", i, i + batch_size, e)
             # Mark batch as unknown (False)
             for sid in batch:
                 cached.setdefault(sid, False)
         if (i // batch_size) % 20 == 0 and i > 0:
-            print(f"  Fetched OA status for {i + len(batch)}/{len(uncached)}")
+            log.info("  Fetched OA status for %d/%d", i + len(batch), len(uncached))
         time.sleep(0.15)
 
     # Save updated cache
@@ -110,7 +112,7 @@ def fetch_oa_status(df):
         {"source_id": k, "is_oa": v} for k, v in cached.items()
     ])
     cache_out.to_csv(OA_CACHE, index=False)
-    print(f"  Saved {len(cache_out)} OA statuses to cache")
+    log.info("  Saved %d OA statuses to cache", len(cache_out))
 
     # Map back to df
     df["is_oa"] = df["source_id"].map(cached).fillna(False).astype(bool)
@@ -127,7 +129,7 @@ def detect_local_fulltext(df):
         & df["source_id"].isin(raw_ids)
     )
     n = df["has_fulltext"].sum()
-    print(f"Local fulltext: {n} works (ISTEX downloads in {RAW_DIR})")
+    log.info("Local fulltext: %d works (ISTEX downloads in %s)", n, RAW_DIR)
     return df
 
 
@@ -148,12 +150,12 @@ def main():
     abs_s = df["abstract"].fillna("").astype(str).str.strip()
     df["has_abstract"] = (abs_s.str.len() > 10) & (abs_s != "nan")
 
-    print(f"Loaded {len(df)} refined works from {path}")
+    log.info("Loaded %d refined works from %s", len(df), path)
 
     # Load unified corpus (before filtering) for raw counts
     unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
     unified = pd.read_csv(unified_path, usecols=["source"])
-    print(f"Loaded {len(unified)} unified works from {unified_path}")
+    log.info("Loaded %d unified works from %s", len(unified), unified_path)
 
     # Load citations for reference coverage
     cit_path = os.path.join(CATALOGS_DIR, "citations.csv")
@@ -162,7 +164,7 @@ def main():
         "", "nan", "none",
     }
     df["has_refs"] = df["doi_lower"].isin(source_dois)
-    print(f"Loaded {len(cit)} citation rows")
+    log.info("Loaded %d citation rows", len(cit))
 
     # Open Access status from OpenAlex API
     df = fetch_oa_status(df)
@@ -221,24 +223,21 @@ def main():
     out_path = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.csv")
     save_csv(summary, out_path)
 
-    # Print markdown table
-    print()
-    print(
-        "| Source | Query | Raw | Refined | non-EN "
-        "| %Journal | %DOI | %Refs | %Abstract | %OA | %FullText |"
-    )
-    print("|:-------|:------|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    # Log markdown table
+    log.info("| Source | Query | Raw | Refined | non-EN "
+             "| %%Journal | %%DOI | %%Refs | %%Abstract | %%OA | %%FullText |")
+    log.info("|:-------|:------|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     for _, row in summary.iterrows():
         non_en = int(row.get("non-EN", 0)) if pd.notna(row.get("non-EN")) else 0
-        print(
-            f"| {row['Source']} | {row['Query']} "
-            f"| {int(row['Raw']):,} | {int(row['Refined']):,} | {non_en:,} "
-            f"| {row.get('%Journal', '')} | {row.get('%DOI', '')} "
-            f"| {row.get('%Refs', '')} "
-            f"| {row.get('%Abstract', '')} | {row.get('%OA', '')} "
-            f"| {row.get('%FullText', '')} |"
+        log.info(
+            "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |",
+            row['Source'], row['Query'],
+            f"{int(row['Raw']):,}", f"{int(row['Refined']):,}", f"{non_en:,}",
+            row.get('%Journal', ''), row.get('%DOI', ''),
+            row.get('%Refs', ''),
+            row.get('%Abstract', ''), row.get('%OA', ''),
+            row.get('%FullText', ''),
         )
-    print()
 
 
 if __name__ == "__main__":

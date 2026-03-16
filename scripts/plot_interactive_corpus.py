@@ -25,7 +25,9 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
+
+log = get_logger("plot_interactive_corpus")
 
 # --- Args ---
 parser = argparse.ArgumentParser(
@@ -66,7 +68,7 @@ CLUSTER_COLORS = [
 
 
 # ── 1. Load refined works ──────────────────────────────────────────────
-print("Loading refined_works.csv ...")
+log.info("Loading refined_works.csv ...")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 works["cited_by_count"] = pd.to_numeric(works["cited_by_count"], errors="coerce")
@@ -88,7 +90,7 @@ if tab5_path is None:
         "Run analyze_bimodality.py first."
     )
 
-print(f"Loading axis scores from {tab5_path} ...")
+log.info("Loading axis scores from %s ...", tab5_path)
 tab5 = pd.read_csv(tab5_path)
 tab5["doi_norm"] = tab5["doi"].apply(normalize_doi)
 
@@ -99,11 +101,11 @@ works = works.merge(
     how="left",
 )
 n_with_score = works["axis_score"].notna().sum()
-print(f"  Axis scores joined: {n_with_score:,} / {len(works):,}")
+log.info("  Axis scores joined: %s / %s", f"{n_with_score:,}", f"{len(works):,}")
 
 
 # ── 3. Load semantic clusters ─────────────────────────────────────────
-print("Loading semantic clusters ...")
+log.info("Loading semantic clusters ...")
 clusters = pd.read_csv(CLUSTERS_PATH)
 clusters["doi_norm"] = clusters["doi"].apply(normalize_doi)
 
@@ -114,14 +116,14 @@ works = works.merge(
     how="left",
 )
 n_clustered = works["semantic_cluster"].notna().sum()
-print(f"  Clusters joined: {n_clustered:,} / {len(works):,}")
+log.info("  Clusters joined: %s / %s", f"{n_clustered:,}", f"{len(works):,}")
 
 # Load cluster labels
 cluster_labels = {}
 if os.path.exists(CLUSTER_LABELS_PATH):
     with open(CLUSTER_LABELS_PATH) as f:
         cluster_labels = json.load(f)
-    print(f"  Loaded {len(cluster_labels)} cluster labels")
+    log.info("  Loaded %d cluster labels", len(cluster_labels))
 
 
 # ── 4. Filter to core papers with axis scores ─────────────────────────
@@ -130,11 +132,11 @@ core = works[
     & works["axis_score"].notna()
     & works["year"].notna()
 ].copy()
-print(f"Core papers with axis scores: {len(core):,}")
+log.info("Core papers with axis scores: %s", f"{len(core):,}")
 
 
 # ── 5. Parse bibliography DOIs for highlighting ───────────────────────
-print("Parsing bibliography DOIs ...")
+log.info("Parsing bibliography DOIs ...")
 bib_dois = set()
 
 # Use bibtexparser if available, fall back to regex
@@ -146,19 +148,19 @@ try:
         doi = entry.get("doi", "")
         if doi:
             bib_dois.add(normalize_doi(doi))
-    print(f"  bibtexparser: {len(bib_dois)} DOIs from {len(bib.entries)} entries")
+    log.info("  bibtexparser: %d DOIs from %d entries", len(bib_dois), len(bib.entries))
 except ImportError:
     # Fallback: regex extraction
     with open(BIB_PATH) as f:
         bib_text = f.read()
     for m in re.finditer(r'doi\s*=\s*\{([^}]+)\}', bib_text, re.IGNORECASE):
         bib_dois.add(normalize_doi(m.group(1)))
-    print(f"  regex fallback: {len(bib_dois)} DOIs extracted")
+    log.info("  regex fallback: %d DOIs extracted", len(bib_dois))
 
 # Mark cited-in-manuscript papers
 core["in_bib"] = core["doi_norm"].isin(bib_dois)
 n_bib = core["in_bib"].sum()
-print(f"  Core papers cited in manuscript: {n_bib}")
+log.info("  Core papers cited in manuscript: %d", n_bib)
 
 
 # ── 6. Identify ISTEX papers ──────────────────────────────────────────
@@ -178,7 +180,7 @@ def make_istex_url(row):
 
 core["istex_url"] = core.apply(make_istex_url, axis=1)
 n_istex = (core["istex_url"] != "").sum()
-print(f"  Core ISTEX papers with PDF link: {n_istex}")
+log.info("  Core ISTEX papers with PDF link: %d", n_istex)
 
 
 # ── 7. Prepare plot data ──────────────────────────────────────────────
@@ -207,7 +209,7 @@ core["journal_short"] = core["journal"].fillna("").apply(
 
 
 # ── 8. Build Plotly figure ─────────────────────────────────────────────
-print("Building interactive figure ...")
+log.info("Building interactive figure ...")
 
 fig = go.Figure()
 
@@ -439,9 +441,9 @@ with open(output_path, "w", encoding="utf-8") as f:
     f.write(html_str)
 
 file_size_mb = os.path.getsize(output_path) / (1024 * 1024)
-print(f"\nSaved: {output_path}")
-print(f"  File size: {file_size_mb:.2f} MB")
-print(f"  Core papers plotted: {len(core):,}")
-print(f"  Bib-highlighted: {n_bib}")
-print(f"  Clusters: {len(cluster_ids)}")
-print("Done.")
+log.info("Saved: %s", output_path)
+log.info("  File size: %.2f MB", file_size_mb)
+log.info("  Core papers plotted: %s", f"{len(core):,}")
+log.info("  Bib-highlighted: %d", n_bib)
+log.info("  Clusters: %d", len(cluster_ids))
+log.info("Done.")

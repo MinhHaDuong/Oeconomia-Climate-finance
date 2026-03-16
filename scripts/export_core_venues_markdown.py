@@ -22,7 +22,9 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from summarize_core_venues import canonical_venue, venue_type
-from utils import BASE_DIR, CATALOGS_DIR
+from utils import BASE_DIR, CATALOGS_DIR, get_logger
+
+log = get_logger("export_core_venues_markdown")
 
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
@@ -127,9 +129,9 @@ def main():
     with open(args.out, "w", encoding="utf-8") as handle:
         handle.write(content)
 
-    print(f"Saved manuscript table: {args.out}")
+    log.info("Saved manuscript table: %s", args.out)
     for venue, count, vtype in table_rows:
-        print(f"  {venue}: {count} ({vtype})")
+        log.info("  %s: %d (%s)", venue, count, vtype)
 
 
 if __name__ == "__main__":

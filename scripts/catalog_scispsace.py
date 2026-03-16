@@ -20,7 +20,9 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, normalize_doi, save_csv
+from utils import BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv
+
+log = get_logger("catalog_scispsace")
 
 SCISPSACE_DIR = os.path.join(BASE_DIR, "AI tech reports")
 SCISPSACE1_DIR = os.path.join(SCISPSACE_DIR, "SciSpace 1")
@@ -85,7 +87,7 @@ def parse_scispsace_csv(path):
     try:
         df = pd.read_csv(path, encoding="utf-8", dtype=str, keep_default_na=False)
     except Exception as e:
-        print(f"  Error reading {os.path.basename(path)}: {e}")
+        log.error("  Error reading %s: %s", os.path.basename(path), e)
         return []
 
     records = []
@@ -131,9 +133,9 @@ def main():
     # 1. Parse SciSpace 2 RIS file(s)
     ris_files = glob.glob(os.path.join(SCISPSACE2_DIR, "*.ris"))
     for path in ris_files:
-        print(f"Parsing RIS: {os.path.basename(path)}")
+        log.info("Parsing RIS: %s", os.path.basename(path))
         recs = parse_ris(path)
-        print(f"  {len(recs)} records")
+        log.info("  %d records", len(recs))
         all_records.extend(recs)
 
     # 2. Parse SciSpace 1 key CSVs
@@ -143,31 +145,31 @@ def main():
     ]
     for path in csv_files:
         if os.path.exists(path):
-            print(f"Parsing CSV: {os.path.basename(path)}")
+            log.info("Parsing CSV: %s", os.path.basename(path))
             recs = parse_scispsace_csv(path)
-            print(f"  {len(recs)} records")
+            log.info("  %d records", len(recs))
             all_records.extend(recs)
 
     if not all_records:
-        print("No SciSpace records found.")
+        log.info("No SciSpace records found.")
         return
 
     df = pd.DataFrame(all_records, columns=WORKS_COLUMNS)
-    print(f"\nTotal raw records: {len(df)}")
+    log.info("Total raw records: %d", len(df))
 
     # Deduplicate by normalized title
     before = len(df)
     df["_norm_title"] = df["title"].str.lower().str.strip()
     df = df.drop_duplicates(subset="_norm_title", keep="first")
     df = df.drop(columns="_norm_title")
-    print(f"After dedup: {len(df)} ({before - len(df)} duplicates removed)")
+    log.info("After dedup: %d (%d duplicates removed)", len(df), before - len(df))
 
     # Stats
     with_doi = (df["doi"] != "").sum()
-    print(f"With DOI: {with_doi}, without DOI: {len(df) - with_doi}")
+    log.info("With DOI: %d, without DOI: %d", with_doi, len(df) - with_doi)
 
     save_csv(df, os.path.join(CATALOGS_DIR, "scispsace_works.csv"))
-    print(f"\nSaved {len(df)} works to scispsace_works.csv")
+    log.info("Saved %d works to scispsace_works.csv", len(df))
 
 
 if __name__ == "__main__":

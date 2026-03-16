@@ -31,8 +31,10 @@ from datetime import datetime, timezone
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (BASE_DIR, DATA_DIR, MAILTO, normalize_title,
+from utils import (BASE_DIR, DATA_DIR, MAILTO, get_logger, normalize_title,
                    polite_get, save_csv)
+
+log = get_logger("collect_syllabi")
 
 # --- Paths ---
 SYLLABI_DIR = os.path.join(DATA_DIR, "syllabi")
@@ -200,7 +202,7 @@ def llm_call(prompt, api_key, model="google/gemma-2-27b-it", max_tokens=2000):
             result = json.loads(resp.read())
         return result["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        print(f"  LLM error: {e}")
+        log.error("LLM error: %s", e)
         return None
 
 
@@ -241,8 +243,8 @@ def stage_search(limit=0):
     done_queries = {r.get("query", "") for r in existing}
     seen_urls = {r["url"] for r in existing}
 
-    print(f"Search: {len(existing)} results already collected, "
-          f"{len(done_queries)} queries done")
+    log.info("Search: %d results already collected, %d queries done",
+             len(existing), len(done_queries))
 
     # Add seed URLs first
     new_seeds = []
@@ -261,7 +263,7 @@ def stage_search(limit=0):
 
     if new_seeds:
         append_jsonl(new_seeds, SEARCH_PATH)
-        print(f"  Added {len(new_seeds)} seed URLs")
+        log.info("Added %d seed URLs", len(new_seeds))
 
     # DuckDuckGo searches
     ddgs = DDGS()
@@ -274,14 +276,14 @@ def stage_search(limit=0):
             continue
 
         if limit and queries_run >= limit:
-            print(f"  Reached query limit ({limit}), stopping.")
+            log.info("Reached query limit (%d), stopping.", limit)
             break
 
-        print(f"  Searching: {query} [{lang}]")
+        log.info("Searching: %s [%s]", query, lang)
         try:
             results = ddgs.text(query, max_results=30)
         except Exception as e:
-            print(f"    Error: {e}")
+            log.error("Search error for %s: %s", query, e)
             # Mark query as done to avoid retrying on resume
             append_jsonl([{
                 "url": "", "title": f"ERROR: {e}", "snippet": "",
@@ -310,7 +312,7 @@ def stage_search(limit=0):
 
         if new_records:
             append_jsonl(new_records, SEARCH_PATH)
-            print(f"    Found {len(new_records)} new URLs")
+            log.info("Found %d new URLs", len(new_records))
         else:
             # Write a marker so we don't re-run this query
             append_jsonl([{
@@ -326,8 +328,8 @@ def stage_search(limit=0):
     # Summary
     all_results = load_jsonl(SEARCH_PATH)
     valid = [r for r in all_results if r["url"] and r["source_tier"] not in ("search_error", "search_empty")]
-    print(f"\nSearch complete: {len(valid)} candidate URLs from "
-          f"{len({r['query'] for r in all_results})} queries")
+    log.info("Search complete: %d candidate URLs from %d queries",
+             len(valid), len({r['query'] for r in all_results}))
 
 
 # ============================================================
@@ -350,11 +352,11 @@ def stage_fetch():
     done_urls = {r["url"] for r in fetched}
 
     pending = [r for r in urls_to_fetch if r["url"] not in done_urls]
-    print(f"Fetch: {len(done_urls)} already done, {len(pending)} pending")
+    log.info("Fetch: %d already done, %d pending", len(done_urls), len(pending))
 
     for i, rec in enumerate(pending):
         url = rec["url"]
-        print(f"  [{i+1}/{len(pending)}] {url[:80]}")
+        log.info("[%d/%d] %s", i + 1, len(pending), url[:80])
 
         page_rec = {
             "url": url,
@@ -393,7 +395,7 @@ def stage_fetch():
                     page_rec["content_type"] = "application/pdf"
                 except Exception as e:
                     page_rec["error"] = f"PDF parse error: {e}"
-                    print(f"    PDF parse error: {e}")
+                    log.warning("PDF parse error: %s", e)
 
             else:
                 # HTML
@@ -407,7 +409,7 @@ def stage_fetch():
 
         except Exception as e:
             page_rec["error"] = str(e)
-            print(f"    Error: {e}")
+            log.error("Fetch error for %s: %s", url, e)
 
         append_jsonl([page_rec], PAGES_PATH)
         time.sleep(0.3)
@@ -415,7 +417,7 @@ def stage_fetch():
     # Summary
     all_pages = load_jsonl(PAGES_PATH)
     ok = [p for p in all_pages if p["text"] and not p["error"]]
-    print(f"\nFetch complete: {len(ok)}/{len(all_pages)} pages with text")
+    log.info("Fetch complete: %d/%d pages with text", len(ok), len(all_pages))
 
 
 # ============================================================
@@ -438,7 +440,7 @@ def stage_classify():
     """LLM classifies fetched pages as syllabi or not."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     if not api_key:
-        print("ERROR: OPENROUTER_API_KEY not set. Export it or add to ~/.bashrc")
+        log.error("OPENROUTER_API_KEY not set. Export it or add to ~/.bashrc")
         sys.exit(1)
 
     pages = load_jsonl(PAGES_PATH)
@@ -448,12 +450,12 @@ def stage_classify():
     done_urls = {r["url"] for r in classified}
 
     pending = [p for p in pages_with_text if p["url"] not in done_urls]
-    print(f"Classify: {len(done_urls)} already done, {len(pending)} pending")
+    log.info("Classify: %d already done, %d pending", len(done_urls), len(pending))
 
     for i, page in enumerate(pending):
         url = page["url"]
         text_snippet = page["text"][:2000]
-        print(f"  [{i+1}/{len(pending)}] {url[:80]}")
+        log.info("[%d/%d] %s", i + 1, len(pending), url[:80])
 
         prompt = CLASSIFY_PROMPT.format(text=text_snippet)
         response = llm_call(prompt, api_key)
@@ -480,7 +482,7 @@ def stage_classify():
 
         status = "SYLLABUS" if rec["is_syllabus"] else "skip"
         reading = "+refs" if rec["has_reading_list"] else ""
-        print(f"    → {status}{reading} | {rec['institution']} | {rec['course_name']}")
+        log.info("-> %s%s | %s | %s", status, reading, rec['institution'], rec['course_name'])
 
         append_jsonl([rec], CLASSIFIED_PATH)
         time.sleep(0.5)
@@ -489,15 +491,15 @@ def stage_classify():
     all_classified = load_jsonl(CLASSIFIED_PATH)
     syllabi = [c for c in all_classified if c["is_syllabus"]]
     with_refs = [c for c in syllabi if c["has_reading_list"]]
-    print(f"\nClassify complete: {len(syllabi)} syllabi identified, "
-          f"{len(with_refs)} with reading lists")
+    log.info("Classify complete: %d syllabi identified, %d with reading lists",
+             len(syllabi), len(with_refs))
 
     if syllabi:
         countries = {}
         for s in syllabi:
             c = s.get("country", "unknown") or "unknown"
             countries[c] = countries.get(c, 0) + 1
-        print("  Countries: " + ", ".join(
+        log.info("Countries: %s", ", ".join(
             f"{c}: {n}" for c, n in sorted(countries.items(), key=lambda x: -x[1])))
 
 
@@ -522,7 +524,7 @@ def stage_extract():
     """LLM extracts bibliographic references from confirmed syllabi."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     if not api_key:
-        print("ERROR: OPENROUTER_API_KEY not set.")
+        log.error("OPENROUTER_API_KEY not set.")
         sys.exit(1)
 
     classified = load_jsonl(CLASSIFIED_PATH)
@@ -536,7 +538,7 @@ def stage_extract():
     done_urls = {r["url"] for r in extracted}
 
     pending = [s for s in syllabi if s["url"] not in done_urls]
-    print(f"Extract: {len(done_urls)} already done, {len(pending)} pending")
+    log.info("Extract: %d already done, %d pending", len(done_urls), len(pending))
 
     total_refs = 0
     for i, syllabus in enumerate(pending):
@@ -544,13 +546,13 @@ def stage_extract():
         page = page_by_url.get(url, {})
         text = page.get("text", "")
         if not text:
-            print(f"  [{i+1}/{len(pending)}] {url[:60]} — no text, skipping")
+            log.info("[%d/%d] %s -- no text, skipping", i + 1, len(pending), url[:60])
             append_jsonl([{"url": url, "references": [], "error": "no_text"}],
                          REFERENCES_PATH)
             continue
 
-        print(f"  [{i+1}/{len(pending)}] {syllabus['course_name']} "
-              f"({syllabus['institution']})")
+        log.info("[%d/%d] %s (%s)", i + 1, len(pending),
+                 syllabus['course_name'], syllabus['institution'])
 
         # For long texts, chunk and extract from each chunk
         chunk_size = 8000
@@ -592,13 +594,13 @@ def stage_extract():
         }
         append_jsonl([rec], REFERENCES_PATH)
         total_refs += len(unique_refs)
-        print(f"    → {len(unique_refs)} references extracted")
+        log.info("-> %d references extracted", len(unique_refs))
 
     # Summary
     all_extracted = load_jsonl(REFERENCES_PATH)
     total = sum(r.get("n_refs", 0) for r in all_extracted)
-    print(f"\nExtract complete: {total} total references from "
-          f"{len(all_extracted)} syllabi")
+    log.info("Extract complete: %d total references from %d syllabi",
+             total, len(all_extracted))
 
 
 # ============================================================
@@ -636,7 +638,7 @@ def crossref_lookup(title, authors=""):
                 if overlap > 0.7:
                     return item.get("DOI", "")
     except Exception as e:
-        print(f"    CrossRef error: {e}")
+        log.warning("CrossRef error: %s", e)
     return ""
 
 
@@ -680,7 +682,7 @@ def _dedup_courses(grouped, course_col, overlap_threshold=0.8,
                 canonical = c1 if len(c1) <= len(c2) else c2
                 alias = c2 if canonical == c1 else c1
                 merged[alias] = canonical
-                print(f"  Course dedup: '{alias[:50]}' → '{canonical[:50]}'")
+                log.info("Course dedup: '%s' -> '%s'", alias[:50], canonical[:50])
 
     if not merged:
         grouped["n_courses"] = grouped[course_col].apply(
@@ -704,7 +706,7 @@ def _dedup_courses(grouped, course_col, overlap_threshold=0.8,
         lambda x: len(set(x.split(" ; "))) if x else 0)
 
     n_merged = len(merged)
-    print(f"  Merged {n_merged} duplicate course names")
+    log.info("Merged %d duplicate course names", n_merged)
     return grouped
 
 
@@ -730,10 +732,10 @@ def stage_normalize():
                 "country": rec.get("country", ""),
             })
 
-    print(f"Normalize: {len(flat)} raw references from {len(extracted)} syllabi")
+    log.info("Normalize: %d raw references from %d syllabi", len(flat), len(extracted))
 
     if not flat:
-        print("  No references to normalize.")
+        log.info("No references to normalize.")
         return
 
     df = pd.DataFrame(flat)
@@ -741,7 +743,7 @@ def stage_normalize():
 
     # CrossRef DOI lookup for references without DOIs
     no_doi = df[df["doi"] == ""]
-    print(f"  {len(no_doi)} references without DOIs, looking up on CrossRef...")
+    log.info("%d references without DOIs, looking up on CrossRef...", len(no_doi))
 
     lookup_count = 0
     for idx in no_doi.index:
@@ -754,14 +756,14 @@ def stage_normalize():
         if doi:
             df.at[idx, "doi"] = doi.lower()
             lookup_count += 1
-            print(f"    Found DOI: {doi} ← {title[:60]}")
+            log.info("Found DOI: %s <- %s", doi, title[:60])
 
         # Progress
         if (idx + 1) % 50 == 0:
-            print(f"    ... {idx + 1}/{len(no_doi)} looked up, "
-                  f"{lookup_count} DOIs found")
+            log.info("... %d/%d looked up, %d DOIs found",
+                     idx + 1, len(no_doi), lookup_count)
 
-    print(f"  CrossRef: found {lookup_count} DOIs")
+    log.info("CrossRef: found %d DOIs", lookup_count)
 
     # Deduplicate: group by DOI (if available) or normalized title
     df["dedup_key"] = df.apply(
@@ -808,18 +810,18 @@ def stage_normalize():
             axis=1,
         )
         n_in = grouped["in_corpus"].sum()
-        print(f"  {n_in}/{len(grouped)} references found in existing corpus")
+        log.info("%d/%d references found in existing corpus", n_in, len(grouped))
     else:
         grouped["in_corpus"] = False
 
     save_csv(grouped, OUTPUT_CSV)
 
-    print(f"\nNormalize complete:")
-    print(f"  Unique references: {len(grouped)}")
-    print(f"  With DOI: {(grouped['doi'] != '').sum()}")
-    print(f"  Most assigned (top 10):")
+    log.info("Normalize complete:")
+    log.info("Unique references: %d", len(grouped))
+    log.info("With DOI: %d", (grouped['doi'] != '').sum())
+    log.info("Most assigned (top 10):")
     for _, row in grouped.head(10).iterrows():
-        print(f"    [{row['n_courses']} courses] {row['title'][:70]}")
+        log.info("[%d courses] %s", row['n_courses'], row['title'][:70])
 
 
 # ============================================================

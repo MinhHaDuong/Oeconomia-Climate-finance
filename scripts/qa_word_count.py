@@ -15,10 +15,16 @@ Usage:
 If no path is given, defaults to output/content/manuscript.pdf.
 """
 
+import os
 import re
 import sys
 
 import pdfplumber
+
+sys.path.insert(0, os.path.dirname(__file__))
+from utils import get_logger
+
+log = get_logger("qa_word_count")
 
 
 DEFAULT_PDF = "output/content/manuscript.pdf"
@@ -180,8 +186,8 @@ def main():
     try:
         pdf = pdfplumber.open(pdf_path)
     except FileNotFoundError:
-        print(f"Error: {pdf_path} not found.", file=sys.stderr)
-        print("Build it first with: make manuscript", file=sys.stderr)
+        log.error("Error: %s not found.", pdf_path)
+        log.error("Build it first with: make manuscript")
         sys.exit(1)
 
     pages_text = []
@@ -194,53 +200,48 @@ def main():
     total = count_words(full_text)
 
     # --- Word counts ---
-    print(f"PDF: {pdf_path}")
-    print(f"Pages: {len(pages_text)}")
-    print(f"Total words: {total:,}")
-    print()
+    log.info("PDF: %s", pdf_path)
+    log.info("Pages: %d", len(pages_text))
+    log.info("Total words: %s", f"{total:,}")
 
     # Per-section breakdown
     sections = extract_sections(pages_text)
     if len(sections) > 1:
-        print(f"{'Section':<50} {'Words':>7}")
-        print("-" * 58)
+        log.info("%-50s %7s", "Section", "Words")
+        log.info("-" * 58)
         for heading, wc in sections:
             label = heading[:48] if len(heading) > 48 else heading
-            print(f"{label:<50} {wc:>7,}")
-        print("-" * 58)
-        print(f"{'Total':<50} {total:>7,}")
-    print()
+            log.info("%-50s %7s", label, f"{wc:,}")
+        log.info("-" * 58)
+        log.info("%-50s %7s", "Total", f"{total:,}")
 
     # Per-page word counts
-    print(f"{'Page':<6} {'Words':>7}")
-    print("-" * 14)
+    log.info("%-6s %7s", "Page", "Words")
+    log.info("-" * 14)
     for i, text in enumerate(pages_text, 1):
-        print(f"{i:<6} {count_words(text):>7,}")
-    print()
+        log.info("%-6d %7s", i, f"{count_words(text):,}")
 
     # --- Editorial checks ---
-    print("=" * 58)
-    print("EDITORIAL CHECKS (Oeconomia style)")
-    print("=" * 58)
+    log.info("=" * 58)
+    log.info("EDITORIAL CHECKS (Oeconomia style)")
+    log.info("=" * 58)
 
     warnings = check_structure(full_text)
     if warnings:
         for w in warnings:
-            print(f"  {w}")
+            log.warning("%s", w)
     else:
-        print("  All structural checks passed.")
-    print()
+        log.info("All structural checks passed.")
 
     # --- AI-tell checks ---
-    print("AI-TELL CHECKS")
-    print("-" * 58)
+    log.info("AI-TELL CHECKS")
+    log.info("-" * 58)
     findings = check_ai_tells(full_text)
     if findings:
         for f in findings:
-            print(f)
+            log.warning("%s", f)
     else:
-        print("  No AI tells detected.")
-    print()
+        log.info("No AI tells detected.")
 
     # Exit code: non-zero if blacklisted words/phrases found
     has_blacklisted = any("BLACKLISTED" in f for f in findings)

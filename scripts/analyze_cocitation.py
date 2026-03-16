@@ -22,7 +22,9 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
-from utils import BASE_DIR, CATALOGS_DIR, load_refined_citations, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
+
+log = get_logger("analyze_cocitation")
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
@@ -31,7 +33,7 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 # --- Load data ---
-print("Loading citations...")
+log.info("Loading citations...")
 cit = load_refined_citations()
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
@@ -40,7 +42,7 @@ cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 cit = cit[(cit["source_doi"] != "") & (cit["ref_doi"] != "")]
 cit = cit[~cit["source_doi"].isin(["nan", "none"])]
 cit = cit[~cit["ref_doi"].isin(["nan", "none"])]
-print(f"Citation pairs with DOIs: {len(cit)}")
+log.info("Citation pairs with DOIs: %d", len(cit))
 
 # Load unified works for metadata lookups
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
@@ -71,14 +73,14 @@ for _, row in cit.iterrows():
 # ============================================================
 
 ref_counts = cit.groupby("ref_doi").size().sort_values(ascending=False)
-print(f"\nUnique cited DOIs: {len(ref_counts)}")
-print(f"Top 10 most cited:")
+log.info("Unique cited DOIs: %d", len(ref_counts))
+log.info("Top 10 most cited:")
 for doi, count in ref_counts.head(10).items():
     meta = doi_to_meta.get(doi, {})
     author = meta.get("first_author", "?")
     year = meta.get("year", "?")
     title = str(meta.get("title", "") or "")[:60]
-    print(f"  {count:4d}x  {author} ({year}) {title}  [{doi}]")
+    log.info("  %4dx  %s (%s) %s  [%s]", count, author, year, title, doi)
 
 # Take top N most-cited references for co-citation analysis
 TOP_N = 200
@@ -86,7 +88,7 @@ top_refs = ref_counts.head(TOP_N).index.tolist()
 top_set = set(top_refs)
 ref_to_idx = {ref: i for i, ref in enumerate(top_refs)}
 
-print(f"\nUsing top {TOP_N} most-cited references for co-citation matrix")
+log.info("Using top %d most-cited references for co-citation matrix", TOP_N)
 
 
 # ============================================================
@@ -94,7 +96,7 @@ print(f"\nUsing top {TOP_N} most-cited references for co-citation matrix")
 # ============================================================
 
 # Group references by source paper
-print("Building co-citation matrix...")
+log.info("Building co-citation matrix...")
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 
 # Count co-citation pairs
@@ -114,7 +116,7 @@ for source_doi, ref_list in source_groups.items():
             cocit_matrix[b, a] += 1
 
 cocit_dense = cocit_matrix.toarray()
-print(f"Non-zero co-citation pairs: {np.count_nonzero(cocit_dense) // 2}")
+log.info("Non-zero co-citation pairs: %d", np.count_nonzero(cocit_dense) // 2)
 
 
 # ============================================================
@@ -143,11 +145,12 @@ for i in range(TOP_N):
 # Remove isolated nodes
 isolates = list(nx.isolates(G))
 G.remove_nodes_from(isolates)
-print(f"\nNetwork: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
-print(f"Removed {len(isolates)} isolated nodes (co-cited < {MIN_COCIT} times with any other top ref)")
+log.info("Network: %d nodes, %d edges", G.number_of_nodes(), G.number_of_edges())
+log.info("Removed %d isolated nodes (co-cited < %d times with any other top ref)",
+         len(isolates), MIN_COCIT)
 
 if G.number_of_nodes() < 5:
-    print("WARNING: Too few connected nodes. Try lowering MIN_COCIT.")
+    log.warning("Too few connected nodes. Try lowering MIN_COCIT.")
     MIN_COCIT = 2
     # Rebuild with lower threshold
     G2 = nx.Graph()
@@ -167,12 +170,13 @@ if G.number_of_nodes() < 5:
     isolates2 = list(nx.isolates(G2))
     G2.remove_nodes_from(isolates2)
     G = G2
-    print(f"Rebuilt with MIN_COCIT={MIN_COCIT}: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
+    log.info("Rebuilt with MIN_COCIT=%d: %d nodes, %d edges",
+             MIN_COCIT, G.number_of_nodes(), G.number_of_edges())
 
 # Louvain community detection
 partition = community_louvain.best_partition(G, weight="weight", random_state=42)
 n_communities = len(set(partition.values()))
-print(f"Communities detected: {n_communities}")
+log.info("Communities detected: %d", n_communities)
 
 # Assign community to nodes
 nx.set_node_attributes(G, partition, "community")
@@ -198,7 +202,7 @@ for doi, comm in partition.items():
 
 comm_df = pd.DataFrame(community_data).sort_values(["community", "citations"], ascending=[True, False])
 comm_df.to_csv(os.path.join(CATALOGS_DIR, "communities.csv"), index=False)
-print(f"\nSaved community assignments → data/catalogs/communities.csv")
+log.info("Saved community assignments -> data/catalogs/communities.csv")
 
 # Summary table: top 5 works per community
 summary_rows = []
@@ -216,15 +220,15 @@ for c in sorted(comm_df["community"].unique()):
 
 summary_df = pd.DataFrame(summary_rows)
 summary_df.to_csv(os.path.join(TABLES_DIR, "tab_community_summary.csv"), index=False)
-print(f"Saved community summary → tables/tab_community_summary.csv")
+log.info("Saved community summary -> tables/tab_community_summary.csv")
 
-print("\n=== Community profiles ===")
+log.info("=== Community profiles ===")
 for c in sorted(comm_df["community"].unique()):
     members = comm_df[comm_df["community"] == c]
-    print(f"\nCommunity {c} ({len(members)} works):")
+    log.info("Community %d (%d works):", c, len(members))
     for _, row in members.head(5).iterrows():
         title_short = str(row["title"] or "")[:60]
-        print(f"  [{row['citations']:3d}] {row['label']:30s} {title_short}")
+        log.info("  [%3d] %-30s %s", row['citations'], row['label'], title_short)
 
 
 # ============================================================
@@ -240,7 +244,7 @@ citations_arr = np.array([G.nodes[n]["citations"] for n in G.nodes()])
 node_sizes = 50 + 300 * np.sqrt(citations_arr / citations_arr.max())
 
 # Layout
-print("\nComputing layout...")
+log.info("Computing layout...")
 pos = nx.spring_layout(G, weight="weight", k=1.5, iterations=100, seed=42)
 
 # Edge widths proportional to co-citation weight
@@ -293,5 +297,5 @@ ax.axis("off")
 plt.tight_layout()
 fig.savefig(os.path.join(FIGURES_DIR, "fig_communities.pdf"), dpi=300, bbox_inches="tight")
 fig.savefig(os.path.join(FIGURES_DIR, "fig_communities.png"), dpi=150, bbox_inches="tight")
-print(f"\nSaved communities figure → figures/fig_communities.pdf")
+log.info("Saved communities figure -> figures/fig_communities.pdf")
 plt.close()

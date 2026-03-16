@@ -25,7 +25,9 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from refine_flags import _load_config, flag_missing_metadata, flag_no_abstract, flag_title_blacklist
-from utils import CATALOGS_DIR, normalize_doi
+from utils import CATALOGS_DIR, get_logger, normalize_doi
+
+log = get_logger("calibrate_reranker")
 
 # Paths
 REFINED_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
@@ -44,19 +46,19 @@ def load_data():
     path = ENRICHED_PATH if os.path.exists(ENRICHED_PATH) else REFINED_PATH
     df = pd.read_csv(path)
     df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
-    print(f"Loaded {len(df)} works from {os.path.basename(path)}")
+    log.info("Loaded %d works from %s", len(df), os.path.basename(path))
 
     # Teaching works via from_teaching column
     from_teaching = pd.to_numeric(df.get("from_teaching", 0), errors="coerce").fillna(0) == 1
     teaching_dois = set(df.loc[from_teaching, "doi_norm"]) - {""}
-    print(f"Teaching works (from_teaching=1): {len(teaching_dois)} DOIs")
+    log.info("Teaching works (from_teaching=1): %d DOIs", len(teaching_dois))
 
     # Citation target DOIs (papers cited by others in corpus)
     cited_dois = set()
     if os.path.exists(CITATIONS_PATH):
         cit = pd.read_csv(CITATIONS_PATH, usecols=["ref_doi"], dtype=str)
         cited_dois = {normalize_doi(d) for d in cit["ref_doi"].dropna() if normalize_doi(d)}
-        print(f"Cited-in-corpus DOIs: {len(cited_dois)}")
+        log.info("Cited-in-corpus DOIs: %d", len(cited_dois))
 
     # LLM cache (for comparison, not ground truth)
     llm_cache = {}
@@ -64,7 +66,7 @@ def load_data():
         cache_df = pd.read_csv(LLM_CACHE_PATH, dtype=str, keep_default_na=False)
         for _, row in cache_df.iterrows():
             llm_cache[row["doi"]] = row["relevant"].lower() == "true"
-        print(f"LLM cache: {len(llm_cache)} entries")
+        log.info("LLM cache: %d entries", len(llm_cache))
 
     return df, teaching_dois, cited_dois, llm_cache
 
@@ -95,8 +97,9 @@ def build_weak_labels(df, config, teaching_dois, cited_dois):
     # Exclude overlap
     negative = negative & ~positive
 
-    print(f"\nWeak labels: {positive.sum()} positive, {negative.sum()} negative, "
-          f"{len(df) - positive.sum() - negative.sum()} unlabeled")
+    log.info("Weak labels: %d positive, %d negative, %d unlabeled",
+             positive.sum(), negative.sum(),
+             len(df) - positive.sum() - negative.sum())
 
     return positive, negative
 
@@ -169,7 +172,7 @@ def generate_queries():
     )
 
     queries = sorted(queries)
-    print(f"Generated {len(queries)} candidate queries")
+    log.info("Generated %d candidate queries", len(queries))
     return queries
 
 
@@ -214,14 +217,14 @@ def calibrate(args):
         abstract = str(row["abstract"] if pd.notna(row.get("abstract")) else "")[:abstract_max]
         texts.append(f"{title}. {abstract}" if abstract else title)
 
-    print(f"\nCalibration sample: {len(cal_df)} papers "
-          f"({labels.sum()} positive, {(~labels).sum()} negative)")
+    log.info("Calibration sample: %d papers (%d positive, %d negative)",
+             len(cal_df), labels.sum(), (~labels).sum())
 
     queries = generate_queries()
     if args.queries_only:
-        print("\n=== Generated queries ===")
+        log.info("=== Generated queries ===")
         for i, q in enumerate(queries, 1):
-            print(f"  {i:3d}. {q}")
+            log.info("  %3d. %s", i, q)
         return
 
     # Load model — auto-detect GPU
@@ -235,13 +238,13 @@ def calibrate(args):
     if device == "cpu":
         n_cpu = os.cpu_count() or 4
         torch.set_num_threads(n_cpu)
-        print(f"\nLoading reranker: {model_name} ({n_cpu} CPU threads)...")
+        log.info("Loading reranker: %s (%d CPU threads)...", model_name, n_cpu)
     else:
         gpu_name = torch.cuda.get_device_name(0)
-        print(f"\nLoading reranker: {model_name} (GPU: {gpu_name})...")
+        log.info("Loading reranker: %s (GPU: %s)...", model_name, gpu_name)
     t0 = time.time()
     reranker = CrossEncoder(model_name, device=device)
-    print(f"  Model loaded in {time.time() - t0:.1f}s")
+    log.info("  Model loaded in %.1fs", time.time() - t0)
 
     # Subsample for query search: keep it small for CPU speed
     # Target: ~100 pos + ~100 neg = 200 papers (manageable with 220 queries)
@@ -255,11 +258,11 @@ def calibrate(args):
     sample_idx = np.sort(np.concatenate([pos_sample, neg_sample]))
     sample_texts = [texts[i] for i in sample_idx]
     sample_labels = labels[sample_idx]
-    print(f"  Query search sample: {len(sample_idx)} papers "
-          f"({sample_labels.sum()} pos, {(~sample_labels).sum()} neg)")
+    log.info("  Query search sample: %d papers (%d pos, %d neg)",
+             len(sample_idx), sample_labels.sum(), (~sample_labels).sum())
 
     # Phase D: Search for best query
-    print(f"\n=== Query search ({len(queries)} candidates) ===")
+    log.info("=== Query search (%d candidates) ===", len(queries))
     results = []
     t0 = time.time()
     for i, query in enumerate(queries):
@@ -270,41 +273,39 @@ def calibrate(args):
             elapsed = time.time() - t0
             rate = (i + 1) / elapsed
             eta = (len(queries) - i - 1) / rate
-            print(f"  {i+1}/{len(queries)} queries scored "
-                  f"({elapsed:.0f}s elapsed, ~{eta:.0f}s remaining)")
+            log.info("  %d/%d queries scored (%.0fs elapsed, ~%.0fs remaining)",
+                     i + 1, len(queries), elapsed, eta)
 
     results.sort(key=lambda x: -x[0])
     elapsed = time.time() - t0
-    print(f"\n  Done in {elapsed:.0f}s ({len(queries)/elapsed:.1f} queries/s)")
+    log.info("  Done in %.0fs (%.1f queries/s)", elapsed, len(queries) / elapsed)
 
-    print(f"\n=== Top 10 queries by AUC ===")
+    log.info("=== Top 10 queries by AUC ===")
     for rank, (auc, query, _) in enumerate(results[:10], 1):
-        print(f"  {rank:2d}. AUC={auc:.4f}  {query[:80]}")
+        log.info("  %2d. AUC=%.4f  %s", rank, auc, query[:80])
 
-    print(f"\n=== Bottom 5 queries ===")
+    log.info("=== Bottom 5 queries ===")
     for auc, query, _ in results[-5:]:
-        print(f"      AUC={auc:.4f}  {query[:80]}")
+        log.info("      AUC=%.4f  %s", auc, query[:80])
 
     # Use the best query, score ALL calibration papers
     best_auc, best_query, _ = results[0]
-    print(f"\n=== Best query (AUC={best_auc:.4f}) ===")
-    print(f"  {best_query}")
+    log.info("=== Best query (AUC=%.4f) ===", best_auc)
+    log.info("  %s", best_query)
 
-    print(f"\nScoring full calibration set with best query...")
+    log.info("Scoring full calibration set with best query...")
     all_scores = score_papers(reranker, best_query, texts)
 
     # Score distribution analysis
     pos_scores = all_scores[labels]
     neg_scores = all_scores[~labels]
-    print(f"\n=== Score distributions ===")
-    print(f"  Positive: mean={pos_scores.mean():.3f}, "
-          f"median={np.median(pos_scores):.3f}, "
-          f"std={pos_scores.std():.3f}, "
-          f"[{pos_scores.min():.3f}, {pos_scores.max():.3f}]")
-    print(f"  Negative: mean={neg_scores.mean():.3f}, "
-          f"median={np.median(neg_scores):.3f}, "
-          f"std={neg_scores.std():.3f}, "
-          f"[{neg_scores.min():.3f}, {neg_scores.max():.3f}]")
+    log.info("=== Score distributions ===")
+    log.info("  Positive: mean=%.3f, median=%.3f, std=%.3f, [%.3f, %.3f]",
+             pos_scores.mean(), np.median(pos_scores), pos_scores.std(),
+             pos_scores.min(), pos_scores.max())
+    log.info("  Negative: mean=%.3f, median=%.3f, std=%.3f, [%.3f, %.3f]",
+             neg_scores.mean(), np.median(neg_scores), neg_scores.std(),
+             neg_scores.min(), neg_scores.max())
 
     # Find optimal threshold (Youden's J)
     thresholds = np.linspace(all_scores.min(), all_scores.max(), 200)
@@ -328,10 +329,10 @@ def calibrate(args):
     recall = tp / max(tp + fn, 1)
     f1 = 2 * precision * recall / max(precision + recall, 1e-10)
 
-    print(f"\n=== Optimal threshold (Youden's J = {best_j:.3f}) ===")
-    print(f"  Threshold: {best_thresh:.4f}")
-    print(f"  Precision: {precision:.3f}  Recall: {recall:.3f}  F1: {f1:.3f}")
-    print(f"  TP={tp}  FN={fn}  FP={fp}  TN={tn}")
+    log.info("=== Optimal threshold (Youden's J = %.3f) ===", best_j)
+    log.info("  Threshold: %.4f", best_thresh)
+    log.info("  Precision: %.3f  Recall: %.3f  F1: %.3f", precision, recall, f1)
+    log.info("  TP=%d  FN=%d  FP=%d  TN=%d", tp, fn, fp, tn)
 
     # Compare with LLM cache
     if llm_cache:
@@ -347,9 +348,9 @@ def calibrate(args):
                     disagree += 1
         total = agree + disagree
         if total > 0:
-            print(f"\n=== LLM cache comparison ===")
-            print(f"  Overlap: {total} papers")
-            print(f"  Agreement: {agree}/{total} ({100*agree/total:.1f}%)")
+            log.info("=== LLM cache comparison ===")
+            log.info("  Overlap: %d papers", total)
+            log.info("  Agreement: %d/%d (%.1f%%)", agree, total, 100 * agree / total)
 
     # Save calibration results
     out_path = os.path.join(CATALOGS_DIR, "reranker_calibration.csv")
@@ -357,15 +358,15 @@ def calibrate(args):
     cal_df["weak_label"] = labels
     cal_df[["doi", "title", "year", "cited_by_count", "source_count",
             "reranker_score", "weak_label"]].to_csv(out_path, index=False)
-    print(f"\nSaved calibration data -> {out_path}")
+    log.info("Saved calibration data -> %s", out_path)
 
     # Save recommended config
-    print(f"\n=== Recommended config for corpus_refine.yaml ===")
-    print(f"  reranker_model: {model_name}")
-    print(f"  reranker_query: >")
-    print(f"    {best_query}")
-    print(f"  reranker_threshold: {best_thresh:.4f}")
-    print(f"  reranker_batch_size: 64")
+    log.info("=== Recommended config for corpus_refine.yaml ===")
+    log.info("  reranker_model: %s", model_name)
+    log.info("  reranker_query: >")
+    log.info("    %s", best_query)
+    log.info("  reranker_threshold: %.4f", best_thresh)
+    log.info("  reranker_batch_size: 64")
 
     # HITL export
     if args.hitl:
@@ -387,11 +388,11 @@ def export_hitl(cal_df, scores, threshold, n_samples=100):
 
     out_path = os.path.join(CATALOGS_DIR, "reranker_hitl_review.csv")
     hitl_df.to_csv(out_path, index=False)
-    print(f"\n=== HITL export ===")
-    print(f"  Exported {len(hitl_df)} boundary cases -> {out_path}")
-    print(f"  Score range: [{scores[boundary_idx].min():.4f}, "
-          f"{scores[boundary_idx].max():.4f}]")
-    print(f"  Fill the 'human_label' column with True/False and re-run.")
+    log.info("=== HITL export ===")
+    log.info("  Exported %d boundary cases -> %s", len(hitl_df), out_path)
+    log.info("  Score range: [%.4f, %.4f]",
+             scores[boundary_idx].min(), scores[boundary_idx].max())
+    log.info("  Fill the 'human_label' column with True/False and re-run.")
 
 
 def main():
