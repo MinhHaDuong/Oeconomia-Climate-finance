@@ -76,7 +76,7 @@ Boolean `from_*` columns (one per source) track which databases contributed to e
 
 ### Pipeline summary
 
-The corpus building pipeline is managed by DVC (Data Version Control; see @fig-dag in the Appendix for the full DAG). The five discovery stages run independently; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain. The five steps correspond to Makefile targets (`corpus-discover`, `corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
+The corpus building pipeline is managed by DVC (Data Version Control; see @fig-dag in §12). The five discovery stages run independently; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain. The five steps correspond to Makefile targets (`corpus-discover`, `corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
 
 ```
   7 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
