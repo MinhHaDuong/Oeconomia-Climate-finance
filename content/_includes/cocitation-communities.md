@@ -8,7 +8,7 @@ This analysis traces the evolution of co-citation communities in the climate fin
 
 ### Method
 
-For each of four cutoff years (2006, 2014, 2019, 2025), the pipeline:
+For each of four cutoff years (2006, 2014, 2019, 2024), the pipeline:
 
 1. Identifies all references with publication year $\leq$ cutoff that are cited at least once in the corpus.
 2. Selects the top 250 most-cited such references.
@@ -26,7 +26,7 @@ The key design choice is that co-citation links are computed using *all* citing 
 | Pre-2007 | $\leq 2006$ | 169 | 1,056 | 18 | 0.18 |
 | Pre-2015 | $\leq 2014$ | 232 | 2,918 | 10 | 0.14 |
 | Pre-2020 | $\leq 2019$ | 247 | 3,568 | 5 | 0.30 |
-| Full | $\leq 2025$ | 250 | 4,298 | 6 | 0.45 |
+| Full | $\leq 2024$ | 250 | 4,298 | 6 | 0.45 |
 
 As the reference pool expands, the network densifies (more edges per node) and community structure first dissolves (modularity dips to 0.14 at pre-2015) then re-crystallizes into a stable, high-modularity configuration (0.45 at full span).
 

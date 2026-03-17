@@ -253,7 +253,7 @@ ax.set_ylim(-0.06, 1.0)
 total = int(alluvial_data.values.sum())
 core_label = f"core papers cited ≥ {CITE_THRESHOLD}, " if args.core_only else ""
 ax.set_title(
-    f"Thematic recomposition of scholarship around climate finance, 1990–2025\n"
+    f"Thematic recomposition of scholarship around climate finance, 1990–2024\n"
     f"({core_label}N = {total:,} publications; band width = number of publications per thematic cluster)",
     fontsize=7, pad=8,
 )
@@ -276,14 +276,17 @@ import sys
 
 # Check if we can reconstruct paper data for tooltips
 try:
-    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_refined_embeddings as _load_embeddings
+    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_refined_embeddings as _load_embeddings, load_analysis_config as _load_cfg
     import pandas as _pd
     from sklearn.cluster import KMeans as _KMeans
 
+    _alluvial_cfg = _load_cfg()
+    _alluvial_ymin = _alluvial_cfg["periodization"]["year_min"]
+    _alluvial_ymax = _alluvial_cfg["periodization"]["year_max"]
     _works = _pd.read_csv(os.path.join(_CATALOGS_DIR, "refined_works.csv"))
     _works["year"] = _pd.to_numeric(_works["year"], errors="coerce")
     _has_title = _works["title"].notna() & (_works["title"].str.len() > 0)
-    _in_range = (_works["year"] >= 1990) & (_works["year"] <= 2025)
+    _in_range = (_works["year"] >= _alluvial_ymin) & (_works["year"] <= _alluvial_ymax)
     _df = _works[_has_title & _in_range].copy().reset_index(drop=True)
     _embeddings = _load_embeddings()
 
@@ -347,7 +350,7 @@ if _have_paper_data:
     # Title
     total = int(alluvial_data.values.sum())
     svg_parts.append(f'<text x="{svg_w//2}" y="28" text-anchor="middle" font-size="16" font-weight="bold">'
-                     f'Thematic recomposition of scholarship around climate finance, 1990–2025</text>')
+                     f'Thematic recomposition of scholarship around climate finance, 1990–2024</text>')
     svg_parts.append(f'<text x="{svg_w//2}" y="50" text-anchor="middle" font-size="13" fill="#666">'
                      f'(N = {total:,} publications; hover over a cell to see top-cited papers)</text>')
 

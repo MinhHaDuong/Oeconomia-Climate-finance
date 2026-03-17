@@ -333,6 +333,8 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
     log.info("Semantic Scholar: %d uncached DOIs to query (%d cache hits)",
              len(to_query), cache_hits)
 
+    # S2 is slow (3s/request) — log every 10 regardless of checkpoint_every
+    s2_log_every = min(checkpoint_every, 10)
     s2_counters = {}
     for i, (idx, doi) in enumerate(to_query):
         try:
@@ -373,8 +375,12 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
                 log.warning("S2 %s: %s", doi, e)
             cache[doi] = ""
 
+        if (i + 1) % s2_log_every == 0:
+            filled_so_far = counters.get("step4_success", 0)
+            log.info("Semantic Scholar: %d/%d queried (filled: %d)",
+                     i + 1, len(to_query), filled_so_far)
+            sys.stdout.flush()
         if (i + 1) % checkpoint_every == 0:
-            log.info("Semantic Scholar: %d/%d", i + 1, len(to_query))
             save_cache("s2_abstracts", cache)
 
     save_cache("s2_abstracts", cache)

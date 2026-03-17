@@ -139,7 +139,7 @@ Early modifications added basic guardrails (do not commit to main, use branches)
 
 ### 4.1 Research goal
 
-The pipeline serves a history-of-science paper titled "Counting Climate Finance: How an Economic Object Was Made (1990--2025)," targeting the journal *Oeconomia*. The paper traces how economists and institutions co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable. The pipeline's job is to build and analyze a corpus of academic literature on climate finance, identifying structural breaks in the field's evolution and intellectual polarization between efficiency-oriented and accountability-oriented traditions.
+The pipeline serves a history-of-science paper titled "Counting Climate Finance: How an Economic Object Was Made (1990--2024)," targeting the journal *Oeconomia*. The paper traces how economists and institutions co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable. The pipeline's job is to build and analyze a corpus of academic literature on climate finance, identifying structural breaks in the field's evolution and intellectual polarization between efficiency-oriented and accountability-oriented traditions.
 
 ### 4.2 Pipeline architecture
 

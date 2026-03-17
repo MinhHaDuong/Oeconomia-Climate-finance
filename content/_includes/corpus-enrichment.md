@@ -35,7 +35,7 @@ Quality control (`qc_citations.py`) validates DOI formats, removes self-citation
 
 ### Embedding generation
 
-The script `analyze_embeddings.py` computes 384-dimensional sentence embeddings using a multilingual MiniLM model (`paraphrase-multilingual-MiniLM-L12-v2`) on title + abstract text. Only papers with abstracts of at least 50 characters (published 1990–2025) are embedded.
+The script `analyze_embeddings.py` computes 384-dimensional sentence embeddings using a multilingual MiniLM model (`paraphrase-multilingual-MiniLM-L12-v2`) on title + abstract text. Only papers with abstracts of at least 50 characters (published 1990–2024) are embedded.
 
 Outputs:
 

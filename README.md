@@ -1,10 +1,10 @@
 # Climate Finance History — Œconomia Article Project
 
-**Title:** Counting Climate Finance: How an Economic Object Was Made (1990–2025)
+**Title:** Counting Climate Finance: How an Economic Object Was Made (1990–2024)
 
 ## Vision
 
-This project analyzes the history of climate finance as an economic object, examining how economists and institutions (OECD DAC, UNFCCC, multilateral development banks) co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable between 1990–2025.
+This project analyzes the history of climate finance as an economic object, examining how economists and institutions (OECD DAC, UNFCCC, multilateral development banks) co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable between 1990–2024.
 
 It is intellectual history that uses climate finance as a case study for understanding how economists create governable objects through quantification.
 

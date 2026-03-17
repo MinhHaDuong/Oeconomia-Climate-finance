@@ -95,7 +95,7 @@ The core subset contains only highly-cited papers — the *influential* works th
 |------|-----------|---------------|------------|---------|
 | 2023 | 3.50 | 3.65 | 7.15 | both |
 
-No break is detected in the 2005–2020 range. The only robust signal is at **2023**, driven by extremely high z-scores on both metrics. This is a **boundary artifact**: recent papers (2022–2025) have not yet accumulated enough citations to enter the core subset, creating a composition discontinuity at the edge of the observation window.
+No break is detected in the 2005–2020 range. The only robust signal is at **2023**, driven by extremely high z-scores on both metrics. This is a **boundary artifact**: recent papers (2022–2024) have not yet accumulated enough citations to enter the core subset, creating a composition discontinuity at the edge of the observation window.
 
 #### Censored gap *k* = 1
 
