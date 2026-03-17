@@ -121,9 +121,15 @@ def main():
                         help="Base for exponential backoff in seconds (default: 2.0)")
     parser.add_argument("--retry-jitter", type=float, default=1.0,
                         help="Max random jitter added to backoff (default: 1.0)")
+    parser.add_argument("--citations-input", default=CITATIONS_PATH,
+                        help="Path to existing citations CSV (default: auto)")
     parser.add_argument("--log-jsonl", default=None,
                         help="Path to write JSONL event log (optional)")
     args = parser.parse_args()
+
+    citations_path = args.citations_input
+    checkpoint_path = os.path.join(os.path.dirname(citations_path),
+                                   ".citations_batch_checkpoint.csv")
 
     run_id = args.run_id or make_run_id()
     t0 = time.time()
@@ -140,12 +146,12 @@ def main():
             _f.write(_json.dumps(record) + "\n")
 
     # If explicitly starting fresh, discard any stale unmerged checkpoint.
-    if not args.resume and os.path.exists(CHECKPOINT_PATH):
-        os.remove(CHECKPOINT_PATH)
+    if not args.resume and os.path.exists(checkpoint_path):
+        os.remove(checkpoint_path)
 
     # Load existing citations to find already-fetched DOIs
-    if os.path.exists(CITATIONS_PATH):
-        existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
+    if os.path.exists(citations_path):
+        existing = pd.read_csv(citations_path, low_memory=False)
         existing["source_doi"] = existing["source_doi"].apply(normalize_doi)
         done_dois = set(existing["source_doi"].dropna()) - {"", "nan", "none"}
         log.info("Existing citations.csv: %d rows, %d unique source DOIs",
@@ -155,8 +161,8 @@ def main():
         done_dois = set()
 
     # Also count DOIs from checkpoint (partial run)
-    if args.resume and os.path.exists(CHECKPOINT_PATH):
-        ckpt = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
+    if args.resume and os.path.exists(checkpoint_path):
+        ckpt = pd.read_csv(checkpoint_path, low_memory=False)
         ckpt_dois = set(ckpt["source_doi"].apply(normalize_doi)) - {"", "nan", "none"}
         done_dois |= ckpt_dois
         log.info("Checkpoint: %d rows, %d DOIs already fetched",
@@ -186,8 +192,8 @@ def main():
         return
 
     # Write checkpoint header once upfront
-    if not os.path.exists(CHECKPOINT_PATH) or os.path.getsize(CHECKPOINT_PATH) == 0:
-        pd.DataFrame(columns=REFS_COLUMNS).to_csv(CHECKPOINT_PATH, index=False)
+    if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) == 0:
+        pd.DataFrame(columns=REFS_COLUMNS).to_csv(checkpoint_path, index=False)
 
     # Process in batches
     total_refs = 0
@@ -224,7 +230,7 @@ def main():
         # Append refs to checkpoint (header already written)
         if refs:
             batch_df = pd.DataFrame(refs, columns=REFS_COLUMNS)
-            batch_df.to_csv(CHECKPOINT_PATH, mode="a", header=False,
+            batch_df.to_csv(checkpoint_path, mode="a", header=False,
                             index=False)
 
         # Record DOIs found but with no refs (so we skip on resume)
@@ -234,7 +240,7 @@ def main():
                 "ref_title": "", "ref_first_author": "", "ref_year": "",
                 "ref_journal": "", "ref_raw": "",
             }])
-            sentinel.to_csv(CHECKPOINT_PATH, mode="a", header=False,
+            sentinel.to_csv(checkpoint_path, mode="a", header=False,
                             index=False)
 
         checkpoint_flushes += 1
@@ -252,8 +258,8 @@ def main():
 
     # Merge checkpoint into existing citations.csv
     log.info("Merging checkpoint into citations.csv...")
-    if os.path.exists(CHECKPOINT_PATH):
-        new_refs = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
+    if os.path.exists(checkpoint_path):
+        new_refs = pd.read_csv(checkpoint_path, low_memory=False)
         # Drop sentinel rows (all fields empty except source_doi)
         is_sentinel = (
             (new_refs["ref_doi"].isna() | (new_refs["ref_doi"] == ""))
@@ -263,8 +269,8 @@ def main():
         )
         new_refs_real = new_refs[~is_sentinel]
         combined = pd.concat([existing, new_refs_real], ignore_index=True)
-        combined.to_csv(CITATIONS_PATH, index=False)
-        os.remove(CHECKPOINT_PATH)
+        combined.to_csv(citations_path, index=False)
+        os.remove(checkpoint_path)
         log.info("Merged: %d old + %d new (-%d sentinels) = %d rows",
                  len(existing), len(new_refs_real),
                  int(is_sentinel.sum()), len(combined))

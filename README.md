@@ -91,20 +91,18 @@ The DVC cache directory should be outside Nextcloud-synced or snapshotted direct
 Example paths: `/home/user/data/projets/Oeconomia-Climate-finance/dvc-cache` (doudou),
 `/data/projets/dvc-cache/oeconomia` (padme).
 
-### Two-machine workflow (doudou ↔ padme)
+### Two-machine workflow (padme → doudou)
 
-DVC push/pull is **bidirectional**: whoever runs the pipeline pushes, everyone
-else pulls. The remote (`padme:/data/projets/dvc/...`) is a content-addressed
-store — no conflicts as long as `.dvc` pointers stay in sync via git.
+**Padme is the data authority.** The corpus pipeline runs on padme (GPU,
+fast network to APIs). Doudou only pulls data — never pushes.
 
 ```bash
-# Run the corpus pipeline (on any machine — typically padme for GPU):
+# On padme — run the corpus pipeline and push:
 make corpus                              # runs dvc repro (slow, API calls)
 uv run dvc push                          # upload results to shared store
-git add dvc.lock data/catalogs/.gitignore
-git commit -m "Corpus update" && git push
+git add dvc.lock && git commit -m "data: update dvc.lock" && git push
 
-# On the other machine — sync and use:
+# On doudou — sync and use:
 git pull                                 # get updated .dvc pointers
 uv run dvc pull                          # download the new data
 make figures && make manuscript          # Phase 2 + 3 (no DVC needed)
