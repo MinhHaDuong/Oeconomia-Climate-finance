@@ -1,6 +1,0 @@
-outs:
-- md5: a9ea6054a162bc6313076ceed69acdaa.dir
-  size: 2639939
-  nfiles: 4
-  hash: md5
-  path: enrich_cache
