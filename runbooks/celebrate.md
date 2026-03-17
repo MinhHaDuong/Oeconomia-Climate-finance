@@ -2,7 +2,7 @@
 
 Run this sequence after completing a task. Do not skip steps.
 
-## Steps
+## `[Doing → Celebrating]`
 
 1. **Reflect**: what worked, what didn't, what was surprising.
 2. **Update STATE.md**: refresh stats, remove resolved blockers.
@@ -10,6 +10,9 @@ Run this sequence after completing a task. Do not skip steps.
 4. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
 5. **Update persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons, then run a stale memory sweep (follow `runbooks/memory.md`). For each stale entry: delete it, or archive it with a `[resolved YYYY-MM-DD]` tag if the history matters.
 6. **Commit** the updates on the current branch (before merging).
+
+## Close and clean up
+
 7. **Merge to main**: `git checkout main && git merge --no-ff -m "..." <branch>`.
 8. **Push** and **clean up**: delete local and remote branch.
 9. **Close** the GitHub issue if one exists.

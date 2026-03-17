@@ -51,6 +51,14 @@ Save a feedback memory at each escalation (what failed, why). Stop if repeating 
 ### Celebrating (autonomous)
 The `post-task` trigger runs automatically. Celebrating is not a formality — it closes the energy cycle. The agent reflects on what was accomplished and learned, acknowledges contributions, and releases the context before the next dream begins.
 
+### Phase state
+
+The agent must always know and declare its current DD phase.
+
+- **At conversation start**: `on-start.md` infers the initial phase from context and announces it (e.g., `[→ Dreaming]`).
+- **At each transition**: announce explicitly with `[Phase → Phase] reason` before proceeding. Runbooks include these markers at the appropriate steps.
+- **No implicit transitions**: if no announcement was made, the phase hasn't changed. When in doubt, state the current phase.
+
 ## Triggers
 
 | Event | When | Runbook |
