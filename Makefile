@@ -352,10 +352,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) $(REFINED)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) $(REFINED)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
 	quarto render $< --to docx
 
 output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
