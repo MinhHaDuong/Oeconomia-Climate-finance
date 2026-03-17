@@ -16,6 +16,8 @@ Last updated: 2026-03-17
 - OpenAlex Premium API key configured ($2/day budget)
 - `--from-date` incremental filtering added (sidecar auto-detection)
 - `python-dotenv` loads `.env` secrets automatically
+- All HTTP callers use unified retry_get (5 retries, backoff+jitter, 429+5xx)
+- Budget guard: catalog_openalex stops gracefully when daily budget exhausted
 
 ## Figures & tables
 
@@ -37,5 +39,4 @@ None.
 
 ## Open tickets
 
-- #171: Bug — OpenAlex requests crash on transient 429 despite valid API key
 - #26: Human proofread of full manuscript

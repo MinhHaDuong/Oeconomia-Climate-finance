@@ -47,3 +47,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since โ€
 - OpenAlex --from-date incremental filtering (#153): budget-aware, sidecar auto-detect
 - Venue table replaces fig-seed (#150, #151): @tbl-venues in ยง3.4 body
 - Companion paper complete draft (#149): all sections filled
+- Retry robustness + budget guard (#171): unified retry_get, API key fix, budget-aware fetch
