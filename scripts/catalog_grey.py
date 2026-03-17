@@ -35,8 +35,8 @@ SEED_FILE = os.path.join(CONFIG_DIR, "grey_sources.yaml")
 WB_SEARCH_URL = "https://openknowledge.worldbank.org/server/api/discover/search/objects"
 
 
-def load_seed():
-    """Load curated grey literature entries from YAML."""
+def load_seed(year_min=None, year_max=None):
+    """Load curated grey literature entries from YAML, filtered by year bounds."""
     if not os.path.exists(SEED_FILE):
         log.info("No seed file at %s (optional). "
                  "Create one to add known grey literature.", SEED_FILE)
@@ -51,7 +51,17 @@ def load_seed():
         entries = yaml.safe_load(f)
 
     records = []
+    skipped = 0
     for e in (entries or []):
+        year_str = str(e.get("year", ""))
+        year_num = int(year_str[:4]) if year_str[:4].isdigit() else None
+        if year_num is not None:
+            if year_min and year_num < year_min:
+                skipped += 1
+                continue
+            if year_max and year_num > year_max:
+                skipped += 1
+                continue
         records.append({
             "source": "grey",
             "source_id": e.get("doi", e.get("url", "")),
@@ -59,7 +69,7 @@ def load_seed():
             "title": e.get("title", ""),
             "first_author": e.get("author", ""),
             "all_authors": e.get("author", ""),
-            "year": str(e.get("year", "")),
+            "year": year_str,
             "journal": e.get("source_org", ""),
             "abstract": e.get("abstract", ""),
             "language": e.get("language", "en"),
@@ -68,12 +78,13 @@ def load_seed():
             "cited_by_count": "",
             "affiliations": e.get("source_org", ""),
         })
-    log.info("Loaded %d entries from seed file", len(records))
+    log.info("Loaded %d entries from seed file (skipped %d outside %s–%s)",
+             len(records), skipped, year_min, year_max)
     return records
 
 
-def query_worldbank():
-    """Search World Bank Open Knowledge Repository."""
+def query_worldbank(year_min=None, year_max=None):
+    """Search World Bank Open Knowledge Repository, filtering by year bounds."""
     records = []
     page = 0
     page_size = 20
@@ -128,6 +139,13 @@ def query_worldbank():
                     else:
                         metadata[key] = val
 
+            year_str = (metadata.get("dc.date.issued", "") or "")[:4]
+            year_num = int(year_str) if year_str.isdigit() else None
+            if year_num is not None:
+                if year_min and year_num < year_min:
+                    continue
+                if year_max and year_num > year_max:
+                    continue
             records.append({
                 "source": "grey",
                 "source_id": item.get("uuid", ""),
@@ -136,7 +154,7 @@ def query_worldbank():
                 "first_author": metadata.get("dc.contributor.author",
                                              "").split(" ; ")[0],
                 "all_authors": metadata.get("dc.contributor.author", ""),
-                "year": (metadata.get("dc.date.issued", "") or "")[:4],
+                "year": year_str,
                 "journal": "World Bank",
                 "abstract": metadata.get("dc.description.abstract", ""),
                 "language": metadata.get("dc.language.iso", ""),
@@ -166,28 +184,14 @@ def main():
     log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
 
     all_records = []
-    all_records.extend(load_seed())
-    all_records.extend(query_worldbank())
+    all_records.extend(load_seed(year_min=year_min, year_max=year_max))
+    all_records.extend(query_worldbank(year_min=year_min, year_max=year_max))
 
     if not all_records:
         log.info("No grey literature records found.")
         return
 
     df = pd.DataFrame(all_records, columns=WORKS_COLUMNS)
-
-    # Apply year bounds — extract numeric year and filter
-    df["_year_num"] = pd.to_numeric(
-        df["year"].astype(str).str[:4], errors="coerce"
-    )
-    n_before = len(df)
-    df = df[df["_year_num"].isna() | (
-        (df["_year_num"] >= year_min) & (df["_year_num"] <= year_max)
-    )].copy()
-    df = df.drop(columns="_year_num")
-    n_filtered = n_before - len(df)
-    if n_filtered:
-        log.info("Year filter removed %d records outside %d–%d",
-                 n_filtered, year_min, year_max)
 
     # Deduplicate by title (rough)
     df["_norm_title"] = df["title"].str.lower().str.strip()
