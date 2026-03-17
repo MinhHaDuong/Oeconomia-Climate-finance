@@ -18,7 +18,8 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, CONFIG_DIR, WORKS_COLUMNS,
-                   get_logger, normalize_doi, polite_get, save_csv)
+                   get_logger, normalize_doi, polite_get, save_csv,
+                   load_collect_config)
 
 log = get_logger("catalog_grey")
 
@@ -159,6 +160,11 @@ def query_worldbank():
 
 
 def main():
+    collect_cfg = load_collect_config()
+    year_min = collect_cfg["year_min"]
+    year_max = collect_cfg["year_max"]
+    log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
+
     all_records = []
     all_records.extend(load_seed())
     all_records.extend(query_worldbank())
@@ -168,6 +174,20 @@ def main():
         return
 
     df = pd.DataFrame(all_records, columns=WORKS_COLUMNS)
+
+    # Apply year bounds — extract numeric year and filter
+    df["_year_num"] = pd.to_numeric(
+        df["year"].astype(str).str[:4], errors="coerce"
+    )
+    n_before = len(df)
+    df = df[df["_year_num"].isna() | (
+        (df["_year_num"] >= year_min) & (df["_year_num"] <= year_max)
+    )].copy()
+    df = df.drop(columns="_year_num")
+    n_filtered = n_before - len(df)
+    if n_filtered:
+        log.info("Year filter removed %d records outside %d–%d",
+                 n_filtered, year_min, year_max)
 
     # Deduplicate by title (rough)
     df["_norm_title"] = df["title"].str.lower().str.strip()

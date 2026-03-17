@@ -25,12 +25,13 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, WORKS_COLUMNS, REFS_COLUMNS,
                    get_logger, normalize_doi, polite_get, save_csv,
-                   pool_path, append_to_pool, load_pool_records)
+                   pool_path, append_to_pool, load_pool_records,
+                   load_collect_config)
 
 log = get_logger("catalog_istex")
 
 ISTEX_API = "https://api.istex.fr/document/"
-ISTEX_QUERY = '"climate finance" OR "finance climat" OR "finance climatique"'
+_BASE_QUERY = '"climate finance" OR "finance climat" OR "finance climatique"'
 ISTEX_OUTPUT = "id,doi,title,author,publicationDate,host,abstract,language,keywords,categories,refBibs"
 PAGE_SIZE = 100
 
@@ -134,15 +135,27 @@ def build_record(d):
 
 # --- API mode ---
 
-def fetch_istex_api():
+def build_istex_query(year_min=None, year_max=None):
+    """Build ISTEX query string with optional year bounds.
+
+    ISTEX uses publicationDate field with bracket syntax: [YYYY TO YYYY].
+    """
+    q = _BASE_QUERY
+    if year_min is not None and year_max is not None:
+        q += f" AND publicationDate:[{year_min} TO {year_max}]"
+    return q
+
+
+def fetch_istex_api(year_min=None, year_max=None):
     """Fetch all results from ISTEX search API, store in pool."""
     pf = pool_path("istex", "climate_finance")
     all_records = []
     offset = 0
+    query = build_istex_query(year_min, year_max)
 
     # First request to get total
     params = {
-        "q": ISTEX_QUERY,
+        "q": query,
         "size": PAGE_SIZE,
         "output": ISTEX_OUTPUT,
         "from": offset,
@@ -150,11 +163,12 @@ def fetch_istex_api():
     resp = polite_get(ISTEX_API, params=params, delay=0.5)
     data = resp.json()
     total = data.get("total", 0)
-    log.info("ISTEX API: %d results for query", total)
+    log.info("ISTEX API: %d results for query (years: %s–%s)",
+             total, year_min or "?", year_max or "?")
 
     while True:
         params = {
-            "q": ISTEX_QUERY,
+            "q": query,
             "size": PAGE_SIZE,
             "output": ISTEX_OUTPUT,
             "from": offset,
@@ -226,12 +240,17 @@ def main():
                         help="Build CSV from existing pool, don't download")
     args = parser.parse_args()
 
+    collect_cfg = load_collect_config()
+    year_min = collect_cfg["year_min"]
+    year_max = collect_cfg["year_max"]
+    log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
+
     if args.local:
         raw_records = load_local_json()
     elif args.extract_only:
         raw_records = extract_from_pool()
     else:
-        raw_records = fetch_istex_api()
+        raw_records = fetch_istex_api(year_min=year_min, year_max=year_max)
 
     works = []
     all_refs = []

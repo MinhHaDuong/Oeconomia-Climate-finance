@@ -29,6 +29,7 @@ stages:
     deps:
       - scripts/catalog_istex.py
       - scripts/utils.py
+      - config/corpus_collect.yaml
     outs:
       - data/catalogs/istex_works.csv
       - data/catalogs/istex_refs.csv
@@ -39,6 +40,7 @@ stages:
       - scripts/catalog_openalex.py
       - scripts/utils.py
       - config/openalex_queries.yaml
+      - config/corpus_collect.yaml
     outs:
       - data/catalogs/openalex_works.csv
       - data/catalogs/openalex_citations.csv
@@ -59,6 +61,7 @@ stages:
       - scripts/catalog_grey.py
       - scripts/utils.py
       - config/grey_sources.yaml
+      - config/corpus_collect.yaml
     outs:
       - data/catalogs/grey_works.csv
 

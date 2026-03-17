@@ -1,0 +1,10 @@
+# Collection parameters for the corpus discovery phase.
+#
+# Year bounds limit what NEW records API queries can add to the pool.
+# The pool is append-only: changing these values does not delete existing records.
+#
+# Query terms (what to search for) are defined separately in
+# config/openalex_queries.yaml — that file is too large to inline here.
+
+year_min: 1990
+year_max: 2024

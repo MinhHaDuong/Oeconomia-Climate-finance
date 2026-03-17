@@ -385,6 +385,32 @@ def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=5
     return df, embeddings
 
 
+def load_collect_config():
+    """Load config/corpus_collect.yaml (Phase 1 collection parameters).
+
+    Returns dict with keys: year_min, year_max.
+    Raises FileNotFoundError if the config is missing.
+    """
+    import yaml
+
+    path = os.path.join(CONFIG_DIR, "corpus_collect.yaml")
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"corpus_collect.yaml not found at {path}. "
+            "This file defines year bounds for API queries."
+        )
+    with open(path) as f:
+        cfg = yaml.safe_load(f)
+    if not isinstance(cfg.get("year_min"), int) or not isinstance(cfg.get("year_max"), int):
+        raise ValueError("year_min and year_max must be integers in corpus_collect.yaml")
+    if cfg["year_min"] > cfg["year_max"]:
+        raise ValueError(
+            f"year_min ({cfg['year_min']}) > year_max ({cfg['year_max']}) "
+            "in corpus_collect.yaml"
+        )
+    return cfg
+
+
 def load_analysis_config():
     """Load config/analysis.yaml (Phase 2 analysis parameters).
 
