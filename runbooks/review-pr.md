@@ -38,6 +38,7 @@ Not every PR needs every agent. Scale to risk:
 
 | PR size / risk | Agents to launch |
 |---|---|
+| Trivial + user present | **Skip PR entirely** — branch → commit → `git merge --no-ff -m` → push main |
 | Trivial (typo, comment, config) | Correctness only |
 | Standard (single-file logic, prose edits) | Correctness + Consistency |
 | Substantial (multi-file, new feature, pipeline change) | All four core agents + Documentation propagation |

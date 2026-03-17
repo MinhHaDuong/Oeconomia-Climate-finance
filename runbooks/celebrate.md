@@ -29,6 +29,7 @@ Run this sequence after completing a task. Do not skip steps.
       5. If all criteria met: close the tracking issue with a summary comment.
 11. **Verify hygiene** — no stale artifacts left behind:
     - `git worktree list` → only main (or active work)
+    - `git branch -a` → no stale remote branches from merged PRs
     - `gh issue list` → no orphan issues from completed work
     - `gh pr list` → no stale PRs from merged/superseded branches
 12. **Offer** to work on AGENTS.md if the workflow can be improved.
