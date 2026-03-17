@@ -84,6 +84,10 @@ REFS_COLUMNS = [
 MAILTO = "minh.ha-duong@cnrs.fr"
 OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")
 
+# Retry budgets — single source of truth for polite_get and retry_get defaults
+POLITE_MAX_RETRIES = 3   # catalog scrapers (quick, many URLs)
+RETRY_MAX_RETRIES = 5    # enrichment fetchers (heavy, fewer URLs)
+
 
 # --- Helpers ---
 
@@ -126,17 +130,19 @@ def normalize_title(title):
     return t
 
 
-def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
+def polite_get(url, params=None, headers=None, delay=0.2,
+               max_retries=POLITE_MAX_RETRIES):
     """HTTP GET with polite delay, exponential backoff+jitter, retry on 429/5xx.
 
     Delegates to retry_get. All callers (OpenAlex, ISTEX, World Bank, syllabi)
-    get 3 retries with 5xx handling.
+    get POLITE_MAX_RETRIES retries with 5xx handling.
     """
     return retry_get(url, params=params, headers=headers, delay=delay,
                      max_retries=max_retries, timeout=30)
 
 
-def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
+def retry_get(url, params=None, headers=None, delay=0.2,
+              max_retries=RETRY_MAX_RETRIES,
               timeout=60, counters=None, backoff_base=2.0, jitter_max=1.0):
     """HTTP GET with bounded exponential backoff+jitter and optional counter tracking.
 

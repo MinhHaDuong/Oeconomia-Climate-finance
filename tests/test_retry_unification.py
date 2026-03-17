@@ -18,13 +18,13 @@ sys.path.insert(0, SCRIPTS_DIR)
 class TestPoliteGetRobustness:
     """polite_get should survive transient 429s with exponential backoff."""
 
-    def test_polite_get_survives_two_consecutive_429s(self, requests_mock):
-        """polite_get should survive 2 consecutive 429s then succeed (3 retries)."""
-        from utils import polite_get
+    def test_polite_get_survives_max_minus_one_429s(self, requests_mock):
+        """polite_get should survive POLITE_MAX_RETRIES-1 consecutive 429s."""
+        from utils import polite_get, POLITE_MAX_RETRIES
 
         responses = [
             {"status_code": 429, "headers": {"Retry-After": "0"}}
-            for _ in range(2)
+            for _ in range(POLITE_MAX_RETRIES - 1)
         ] + [{"json": {"ok": True}}]
         requests_mock.get("https://example.com/test", responses)
 
