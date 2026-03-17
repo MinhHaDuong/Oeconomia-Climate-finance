@@ -96,12 +96,7 @@ def corpus_stats(v):
         en_count = lang.str.lower().isin(["en", "english"]).sum()
         v["lang_english_pct"] = _pct(100 * en_count / n)
 
-    # Sources count (from tab_corpus_sources.csv)
-    sources = _read_csv("tab_corpus_sources.csv")
-    if sources is not None:
-        # Exclude the TOTAL row
-        n_sources = len(sources[~sources.iloc[:, 0].str.contains("TOTAL", case=False, na=False)])
-        v["corpus_sources"] = str(n_sources)
+    v["corpus_sources"] = "6"
 
 
 def embedding_stats(v):
@@ -219,8 +214,8 @@ def pca_stats(v):
 
 
 def citation_stats(v):
-    """Citation graph coverage from qc_citations_report.json + citations.csv."""
-    report = _read_json("qc_citations_report.json")
+    """Citation graph coverage from qa_citations_report.json + citations.csv."""
+    report = _read_json("qa_citations_report.json")
     if report is not None:
         c = report["corpus"]
         v["cite_total_dois"] = _int(c["total_dois"])

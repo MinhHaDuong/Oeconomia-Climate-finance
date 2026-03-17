@@ -6,18 +6,16 @@ Produces:
 
 Shows for each source: query description, records before/after refinement,
 non-English share, journal-article share, DOI coverage, reference coverage,
-abstract availability, Open Access status, and local fulltext availability.
+and abstract availability.
 """
 
 import os
 import sys
-import time
 
 import pandas as pd
-import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR, RAW_DIR, MAILTO
+from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR
 
 log = get_logger("export_corpus_table")
 
@@ -53,85 +51,6 @@ SOURCE_META = {
 
 PRIMARY_SOURCES = list(SOURCE_META.keys())
 
-OA_CACHE = os.path.join(CATALOGS_DIR, "oa_status_cache.csv")
-
-
-def fetch_oa_status(df):
-    """Fetch Open Access status from OpenAlex for works with OA source_ids.
-
-    Uses batch filter endpoint (50 IDs per request) to minimise API calls.
-    Caches results to avoid re-fetching across runs.
-    """
-    # Only OpenAlex works have queryable source_ids
-    oa_mask = df["from_openalex"] == 1
-    oa_ids = df.loc[oa_mask, "source_id"].dropna().unique().tolist()
-    log.info("OpenAlex works to check for OA: %d", len(oa_ids))
-
-    # Load cache
-    cached = {}
-    if os.path.exists(OA_CACHE):
-        cache_df = pd.read_csv(OA_CACHE)
-        cached = dict(zip(cache_df["source_id"], cache_df["is_oa"]))
-        log.info("  Loaded %d cached OA statuses", len(cached))
-
-    # Find uncached IDs
-    uncached = [sid for sid in oa_ids if sid not in cached]
-    log.info("  Uncached: %d", len(uncached))
-
-    # Batch query OpenAlex (50 IDs per request)
-    batch_size = 50
-    for i in range(0, len(uncached), batch_size):
-        batch = uncached[i:i + batch_size]
-        id_filter = "|".join(batch)
-        params = {
-            "filter": f"openalex_id:{id_filter}",
-            "select": "id,open_access",
-            "per_page": batch_size,
-            "mailto": MAILTO,
-        }
-        try:
-            resp = requests.get(
-                "https://api.openalex.org/works", params=params, timeout=30,
-            )
-            resp.raise_for_status()
-            for r in resp.json().get("results", []):
-                sid = r["id"].replace("https://openalex.org/", "")
-                is_oa = r.get("open_access", {}).get("is_oa", False)
-                cached[sid] = bool(is_oa)
-        except Exception as e:
-            log.warning("  batch %d-%d failed: %s", i, i + batch_size, e)
-            # Mark batch as unknown (False)
-            for sid in batch:
-                cached.setdefault(sid, False)
-        if (i // batch_size) % 20 == 0 and i > 0:
-            log.info("  Fetched OA status for %d/%d", i + len(batch), len(uncached))
-        time.sleep(0.15)
-
-    # Save updated cache
-    cache_out = pd.DataFrame([
-        {"source_id": k, "is_oa": v} for k, v in cached.items()
-    ])
-    cache_out.to_csv(OA_CACHE, index=False)
-    log.info("  Saved %d OA statuses to cache", len(cache_out))
-
-    # Map back to df
-    df["is_oa"] = df["source_id"].map(cached).fillna(False).astype(bool)
-    return df
-
-
-def detect_local_fulltext(df):
-    """Check which ISTEX records have fulltext downloaded locally."""
-    raw_ids = set()
-    if os.path.isdir(RAW_DIR):
-        raw_ids = set(os.listdir(RAW_DIR))
-    df["has_fulltext"] = (
-        (df["from_istex"] == 1)
-        & df["source_id"].isin(raw_ids)
-    )
-    n = df["has_fulltext"].sum()
-    log.info("Local fulltext: %d works (ISTEX downloads in %s)", n, RAW_DIR)
-    return df
-
 
 def main():
     # Load refined corpus (after filtering)
@@ -166,12 +85,6 @@ def main():
     df["has_refs"] = df["doi_lower"].isin(source_dois)
     log.info("Loaded %d citation rows", len(cit))
 
-    # Open Access status from OpenAlex API
-    df = fetch_oa_status(df)
-
-    # Local fulltext (ISTEX downloads)
-    df = detect_local_fulltext(df)
-
     # Compute per-source statistics
     rows = []
     for src in PRIMARY_SOURCES:
@@ -198,8 +111,6 @@ def main():
             "%DOI": f"{sub['has_doi'].mean() * 100:.0f}%",
             "%Refs": f"{sub['has_refs'].mean() * 100:.0f}%",
             "%Abstract": f"{sub['has_abstract'].mean() * 100:.0f}%",
-            "%OA": f"{sub['is_oa'].mean() * 100:.0f}%",
-            "%FullText": f"{sub['has_fulltext'].mean() * 100:.0f}%",
         })
 
     # Totals row (deduplicated)
@@ -213,8 +124,6 @@ def main():
         "%DOI": f"{df['has_doi'].mean() * 100:.0f}%",
         "%Refs": f"{df['has_refs'].mean() * 100:.0f}%",
         "%Abstract": f"{df['has_abstract'].mean() * 100:.0f}%",
-        "%OA": f"{df['is_oa'].mean() * 100:.0f}%",
-        "%FullText": f"{df['has_fulltext'].mean() * 100:.0f}%",
     })
 
     summary = pd.DataFrame(rows)
@@ -225,18 +134,17 @@ def main():
 
     # Log markdown table
     log.info("| Source | Query | Raw | Refined | non-EN "
-             "| %%Journal | %%DOI | %%Refs | %%Abstract | %%OA | %%FullText |")
-    log.info("|:-------|:------|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+             "| %%Journal | %%DOI | %%Refs | %%Abstract |")
+    log.info("|:-------|:------|---:|---:|---:|---:|---:|---:|---:|")
     for _, row in summary.iterrows():
         non_en = int(row.get("non-EN", 0)) if pd.notna(row.get("non-EN")) else 0
         log.info(
-            "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |",
+            "| %s | %s | %s | %s | %s | %s | %s | %s | %s |",
             row['Source'], row['Query'],
             f"{int(row['Raw']):,}", f"{int(row['Refined']):,}", f"{non_en:,}",
             row.get('%Journal', ''), row.get('%DOI', ''),
             row.get('%Refs', ''),
-            row.get('%Abstract', ''), row.get('%OA', ''),
-            row.get('%FullText', ''),
+            row.get('%Abstract', ''),
         )
 
 

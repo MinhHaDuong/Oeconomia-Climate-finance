@@ -39,7 +39,33 @@ export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
 # ── Quarto ───────────────────────────────────────────────
-INCLUDES    := $(wildcard content/_includes/*.md)
+# ── Per-document include sets ────────────────────────────
+MANUSCRIPT_INCLUDES := content/_includes/tab_venues.md
+
+TECHREP_INCLUDES := content/_includes/corpus-construction.md \
+		content/_includes/corpus-enrichment.md \
+		content/_includes/corpus-refinement.md \
+		content/_includes/core-vs-full.md \
+		content/_includes/structural-breaks.md \
+		content/_includes/alluvial-diagram.md \
+		content/_includes/bimodality-analysis.md \
+		content/_includes/pca-scatter.md \
+		content/_includes/citation-genealogy.md \
+		content/_includes/cocitation-communities.md \
+		content/_includes/citation-quality.md \
+		content/_includes/reproducibility.md
+
+DATAPAPER_INCLUDES := content/_includes/corpus-construction.md \
+		content/_includes/corpus-refinement.md \
+		content/_includes/embedding-generation.md \
+		content/_includes/reproducibility.md
+
+COMPANION_INCLUDES := content/_includes/embedding-generation.md \
+		content/_includes/structural-breaks.md \
+		content/_includes/alluvial-diagram.md \
+		content/_includes/bimodality-analysis.md \
+		content/_includes/pca-scatter.md \
+		content/_includes/core-vs-full.md
 
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
@@ -117,7 +143,7 @@ corpus-discover:
 	uv run dvc repro catalog_merge
 
 corpus-enrich:
-	uv run dvc repro enrich_works enrich_citations qc_citations enrich_embeddings
+	uv run dvc repro enrich_works enrich_citations qa_citations enrich_embeddings
 
 corpus-extend:
 	uv run dvc repro extend
@@ -135,19 +161,10 @@ corpus-align:
 deploy-corpus:
 	uv run dvc push
 
-# ── Corpus reporting & validation ─────────────────────────
-content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
+# ── Corpus diagnostics (Phase 1 — reads enrichment caches) ──
+content/tables/qc_citations_report.json: scripts/qa_citations.py scripts/utils.py \
+		$(DATA_DIR)/citations.csv
 	uv run python $<
-
-content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
-	uv run python $<
-
-corpus-tables: content/tables/tab_corpus_sources.csv \
-               content/tables/qc_citations_report.json \
-               content/_includes/tab_citation_coverage.md
-
-corpus-validate: $(REFINED)
-	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
 
 # ═══════════════════════════════════════════════════════════
 # PHASE 2 — Analysis & Figures (fast, deterministic, run often)
@@ -165,26 +182,33 @@ check-corpus:
 	done; \
 	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
 
-# ── Statistics (computed from pipeline outputs) ──────────
-STATS := _variables.yml
+corpus-validate: $(REFINED)
+	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
+
+# ── Corpus reporting (Phase 2 — reads only refined data) ──
+content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
+	uv run python $<
 
 content/tables/tab_corpus_sources.csv: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/tables/qc_citations_report.json: scripts/qc_citations.py scripts/utils.py \
-		$(DATA_DIR)/citations.csv
-	uv run python $<
+corpus-tables: content/tables/tab_corpus_sources.csv \
+               content/_includes/tab_citation_coverage.md
+
+# ── Statistics (computed from pipeline outputs) ──────────
+STATS := _variables.yml
 
 $(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
-		content/tables/tab_axis_detection.csv content/tables/tab_corpus_sources.csv \
-		content/tables/qc_citations_report.json
+		content/tables/tab_axis_detection.csv
 	uv run python $<
 
 stats: $(STATS)
 
 # ── Tables (generated, included by Quarto) ──────────────
-MANUSCRIPT_TABLES := content/tables/tab_core_venues_top10.md
 
 # Core subset → venues table
 $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
@@ -331,19 +355,19 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) $(STATS)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) $(STATS)
 	quarto render $< --to docx
 
-output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB) $(STATS)
+output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB) $(STATS)
+output/content/data-paper.pdf: content/data-paper.qmd $(DATAPAPER_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB) $(STATS)
+output/content/companion-paper.pdf: content/companion-paper.qmd $(COMPANION_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
 # ── Manuscript archive (Oeconomia reviewers) ──────────────

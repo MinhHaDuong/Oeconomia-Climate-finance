@@ -85,7 +85,7 @@ Phase 1 modifies `data/`. Run only when explicitly requested.
 # Citation enrichment (run in order; both are resumable)
 uv run python scripts/enrich_citations_batch.py                  # Crossref references (do first)
 uv run python scripts/enrich_citations_openalex.py               # OpenAlex referenced_works (fills gap)
-uv run python scripts/qc_citations.py                            # Verify citation quality (30-sample)
+uv run python scripts/qa_citations.py                            # Verify citation quality (30-sample)
 # Or simply: make citations  (runs all three in order)
 
 # Figures — alluvial pipeline (split into focused scripts as of #73)

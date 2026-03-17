@@ -114,7 +114,7 @@ def refine_config():
 
 
 QC_CITATIONS_REPORT_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "content", "tables", "qc_citations_report.json"
+    os.path.dirname(__file__), "..", "content", "tables", "qa_citations_report.json"
 )
 
 
@@ -766,22 +766,22 @@ class TestBlacklistValidation:
 # ═══════════════════════════════════════════════════════════
 
 class TestCitationQuality:
-    """Check qc_citations_report.json if available (warns if missing/stale)."""
+    """Check qa_citations_report.json if available (warns if missing/stale)."""
 
     def test_citation_report_exists(self):
-        """Warn (don't fail) if qc_citations_report.json is missing."""
+        """Warn (don't fail) if qa_citations_report.json is missing."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
             import warnings
             warnings.warn(
-                f"qc_citations_report.json not found at {QC_CITATIONS_REPORT_PATH}. "
-                "Run: uv run python scripts/qc_citations.py to generate it."
+                f"qa_citations_report.json not found at {QC_CITATIONS_REPORT_PATH}. "
+                "Run: uv run python scripts/qa_citations.py to generate it."
             )
-            pytest.skip("qc_citations_report.json not found (needs live API calls)")
+            pytest.skip("qa_citations_report.json not found (needs live API calls)")
 
     def test_citation_report_freshness(self, refined):
         """Warn if report is stale (DOI count mismatch or > 30 days old)."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
-            pytest.skip("qc_citations_report.json not found")
+            pytest.skip("qa_citations_report.json not found")
         import json
         import time
         with open(QC_CITATIONS_REPORT_PATH) as f:
@@ -793,8 +793,8 @@ class TestCitationQuality:
         if age_days > 30:
             import warnings
             warnings.warn(
-                f"qc_citations_report.json is {age_days:.0f} days old. "
-                "Consider re-running: uv run python scripts/qc_citations.py"
+                f"qa_citations_report.json is {age_days:.0f} days old. "
+                "Consider re-running: uv run python scripts/qa_citations.py"
             )
 
         # Check DOI count matches current corpus
@@ -804,13 +804,13 @@ class TestCitationQuality:
             import warnings
             warnings.warn(
                 f"Report covers {report_dois:,} DOIs but refined has {current_dois:,}. "
-                "Re-run: uv run python scripts/qc_citations.py"
+                "Re-run: uv run python scripts/qa_citations.py"
             )
 
     def test_citation_precision_recall(self):
         """If report exists, recall must be >= 0.95 and sample size >= 20."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
-            pytest.skip("qc_citations_report.json not found")
+            pytest.skip("qa_citations_report.json not found")
         import json
         with open(QC_CITATIONS_REPORT_PATH) as f:
             report = json.load(f)
@@ -822,8 +822,8 @@ class TestCitationQuality:
 
         assert sample_size >= 20, \
             f"QC sample size = {sample_size} (expected >= 20)" + _diagnosis(
-                "qc_citations.py ran with too small a sample",
-                "Re-run with larger sample: uv run python scripts/qc_citations.py",
+                "qa_citations.py ran with too small a sample",
+                "Re-run with larger sample: uv run python scripts/qa_citations.py",
                 "~10 min",
                 "Quality metrics not statistically meaningful",
             )
