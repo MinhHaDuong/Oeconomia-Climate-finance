@@ -368,41 +368,50 @@ output/content/companion-paper.pdf: content/companion-paper.qmd $(COMPANION_INCL
 	quarto render $< --to pdf
 
 # ── Manuscript archive (Oeconomia reviewers) ──────────────
-# Minimal self-contained package: git-tracked code + Phase 2 contract data.
+# Minimal self-contained package: only what `make manuscript` needs.
 # Reviewers verify with:
-#   tar xzf archive.tar.gz && cd ... && uv sync && make figures && make manuscript
+#   tar xzf archive.tar.gz && cd ... && uv sync && make figures-manuscript && make manuscript
 #
-# Uses git archive for code (auto-tracks new scripts, no manual list)
-# plus the 3 DVC-managed contract files dereferenced from symlinks.
+# Explicit allowlist — every file justified by the dependency chain:
+#   refined_works.csv + refined_embeddings.npz  (Phase 1 contract data)
+#   → scripts (figures + tables)
+#   → content (manuscript + includes + bibliography)
+#   → Quarto render → PDF
 SHELL            := /bin/bash
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
-MANU_DATA        := refined_works.csv refined_embeddings.npz refined_citations.csv
 
 archive-manuscript: check-corpus
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
-	mkdir -p $(MANU_TMP)/data/catalogs
-	@# All git-tracked code (scripts, config, content, Makefile, etc.)
-	git archive HEAD | tar -x -C $(MANU_TMP)
-	@# Phase 2 contract data (dereference DVC symlinks)
-	$(foreach f,$(MANU_DATA),cp -L $(DATA_DIR)/$(f) $(MANU_TMP)/data/catalogs/;)
-	@# Generated figures + tables (if they exist)
-	@if ls content/figures/*.png >/dev/null 2>&1; then \
-		mkdir -p $(MANU_TMP)/content/figures; \
-		cp content/figures/*.png $(MANU_TMP)/content/figures/; \
-	fi
-	@if ls content/tables/* >/dev/null 2>&1; then \
-		mkdir -p $(MANU_TMP)/content/tables; \
-		cp -r content/tables/* $(MANU_TMP)/content/tables/; \
-	fi
-	@# .env template
+	@# Create directory structure
+	mkdir -p $(MANU_TMP)/data/catalogs \
+	         $(MANU_TMP)/scripts \
+	         $(MANU_TMP)/content/bibliography \
+	         $(MANU_TMP)/content/_includes
+	@# Phase 1 contract data (dereference DVC symlinks)
+	cp -L $(DATA_DIR)/refined_works.csv     $(MANU_TMP)/data/catalogs/
+	cp -L $(DATA_DIR)/refined_embeddings.npz $(MANU_TMP)/data/catalogs/
+	@# Scripts needed to build figures + tables
+	cp scripts/utils.py                     $(MANU_TMP)/scripts/
+	cp scripts/plot_style.py                $(MANU_TMP)/scripts/
+	cp scripts/plot_fig1_bars.py            $(MANU_TMP)/scripts/
+	cp scripts/plot_fig2_composition.py     $(MANU_TMP)/scripts/
+	cp scripts/compute_clusters.py          $(MANU_TMP)/scripts/
+	cp scripts/build_het_core.py            $(MANU_TMP)/scripts/
+	cp scripts/export_core_venues_markdown.py $(MANU_TMP)/scripts/
+	cp scripts/summarize_core_venues.py     $(MANU_TMP)/scripts/
+	@# Manuscript content
+	cp content/manuscript.qmd               $(MANU_TMP)/content/
+	cp content/author-footnote.tex          $(MANU_TMP)/content/
+	cp content/_includes/tab_venues.md      $(MANU_TMP)/content/_includes/
+	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
+	cp content/bibliography/oeconomia.csl   $(MANU_TMP)/content/bibliography/
+	@# Build infrastructure
+	cp Makefile _quarto.yml pyproject.toml uv.lock $(MANU_TMP)/
 	echo 'CLIMATE_FINANCE_DATA=data' > $(MANU_TMP)/.env
-	@# Remove items reviewers don't need
-	rm -rf $(MANU_TMP)/.dvc $(MANU_TMP)/attic $(MANU_TMP)/.claude
 	@echo "=== Creating tarball ==="
 	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp \
-		--exclude='__pycache__' --exclude='.venv' \
 		$(MANU_ARCHIVE)
 	@echo "=== Manuscript archive ==="
 	@du -h $(MANU_ARCHIVE).tar.gz
