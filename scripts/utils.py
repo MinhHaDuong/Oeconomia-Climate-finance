@@ -402,6 +402,70 @@ def load_analysis_config():
         return yaml.safe_load(f)
 
 
+def load_analysis_periods(config_dir=None):
+    """Derive period tuples and labels from config/analysis.yaml.
+
+    Returns (periods, labels) where:
+      periods = [(1990, 2006), (2007, 2014), (2015, 2024)]
+      labels  = ["1990\u20132006", "2007\u20132014", "2015\u20132024"]
+
+    If config_dir is given, reads analysis.yaml (and optionally
+    corpus_collect.yaml) from that directory instead of CONFIG_DIR.
+
+    Emits a UserWarning if the analysis year range exceeds the collection
+    range defined in corpus_collect.yaml. Skips the check gracefully if
+    corpus_collect.yaml does not exist.
+    """
+    import warnings
+    import yaml
+
+    cdir = config_dir or CONFIG_DIR
+    analysis_path = os.path.join(cdir, "analysis.yaml")
+    with open(analysis_path) as f:
+        cfg = yaml.safe_load(f)
+
+    p = cfg["periodization"]
+    year_min = p["year_min"]
+    year_max = p["year_max"]
+    breaks = p["breaks"]
+
+    # Build period tuples: [year_min, break-1], [break, next_break-1], ..., [last_break, year_max]
+    boundaries = [year_min] + breaks + [year_max + 1]
+    periods = []
+    labels = []
+    for i in range(len(boundaries) - 1):
+        start = boundaries[i]
+        end = boundaries[i + 1] - 1
+        periods.append((start, end))
+        labels.append(f"{start}\u2013{end}")
+
+    # Check against collection range if corpus_collect.yaml exists
+    collect_path = os.path.join(cdir, "corpus_collect.yaml")
+    if os.path.exists(collect_path):
+        with open(collect_path) as f:
+            collect_cfg = yaml.safe_load(f)
+        c_min = collect_cfg.get("year_min")
+        c_max = collect_cfg.get("year_max")
+        msgs = []
+        if c_min is not None and year_min < c_min:
+            msgs.append(
+                f"analysis year_min ({year_min}) < collection year_min ({c_min})"
+            )
+        if c_max is not None and year_max > c_max:
+            msgs.append(
+                f"analysis year_max ({year_max}) > collection year_max ({c_max})"
+            )
+        if msgs:
+            warnings.warn(
+                "Analysis range exceeds collection range: "
+                + "; ".join(msgs),
+                UserWarning,
+                stacklevel=2,
+            )
+
+    return periods, labels
+
+
 def save_csv(df, path):
     """Save DataFrame to CSV with UTF-8 encoding."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
