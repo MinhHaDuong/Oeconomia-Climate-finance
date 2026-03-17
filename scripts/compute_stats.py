@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR, get_logger
+from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR, get_logger, load_analysis_periods
 
 log = get_logger("compute_stats")
 
@@ -116,6 +116,28 @@ def embedding_stats(v):
     v["emb_dimensions"] = str(vectors.shape[1])
 
 
+def _bimodality_period_keys():
+    """Build (csv_label, var_key) pairs from config for bimodality lookups.
+
+    csv_label: matches the 'method' column written by analyze_bimodality.py
+               (e.g. "embedding_1990–2006")
+    var_key:   Quarto variable suffix (e.g. "pre2007", "2007_2014", "post2015")
+    """
+    _period_tuples, _period_labels = load_analysis_periods()
+    pairs = []
+    for i, label in enumerate(_period_labels):
+        csv_label = f"embedding_{label}"
+        lo, hi = _period_tuples[i]
+        if i == 0:
+            key = f"pre{hi + 1}"
+        elif i == len(_period_labels) - 1:
+            key = f"post{lo}"
+        else:
+            key = f"{lo}_{hi}"
+        pairs.append((csv_label, key))
+    return pairs
+
+
 def bimodality_stats(v):
     """Bimodality results from tab_bimodality.csv and tab_bimodality_core.csv."""
     df = _read_csv("tab_bimodality.csv")
@@ -141,9 +163,7 @@ def bimodality_stats(v):
         v["bim_dbic_tfidf"] = _signed_int(tfidf.iloc[0]["delta_bic"])
 
     # Per-period rows
-    for label, key in [("embedding_1990\u20132006", "pre2007"),
-                       ("embedding_2007\u20132014", "2007_2014"),
-                       ("embedding_2015\u20132024", "post2015")]:
+    for label, key in _bimodality_period_keys():
         period = df[df["method"] == label]
         if not period.empty:
             row = period.iloc[0]
@@ -165,9 +185,7 @@ def bimodality_stats(v):
         v["bim_core_dbic_tfidf"] = _signed_int(tfidf_core.iloc[0]["delta_bic"])
 
     # Core per-period
-    for label, key in [("embedding_1990\u20132006", "pre2007"),
-                       ("embedding_2007\u20132014", "2007_2014"),
-                       ("embedding_2015\u20132024", "post2015")]:
+    for label, key in _bimodality_period_keys():
         period = core[core["method"] == label]
         if not period.empty:
             v[f"bim_core_dbic_{key}"] = _signed_int(period.iloc[0]["delta_bic"])

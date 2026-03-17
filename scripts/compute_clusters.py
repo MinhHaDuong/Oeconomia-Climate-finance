@@ -110,12 +110,12 @@ else:
 # ============================================================
 
 # Period boundaries: from --breaks CLI or config/analysis.yaml
+cfg = load_analysis_config()
+_p_cfg = cfg["periodization"]
 if args.breaks:
     all_breaks = [int(y.strip()) for y in args.breaks.split(",")]
 else:
-    cfg = load_analysis_config()
-    all_breaks = cfg["periodization"]["breaks"]
-_p_cfg = cfg["periodization"]
+    all_breaks = _p_cfg["breaks"]
 boundaries = [_p_cfg["year_min"]] + all_breaks + [_p_cfg["year_max"] + 1]
 period_labels = []
 for i in range(len(boundaries) - 1):
