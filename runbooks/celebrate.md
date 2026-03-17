@@ -2,31 +2,31 @@
 
 Run this sequence after completing a task. Do not skip steps.
 
-## Close Doing
-
-1. **Commit** pending updates on the current branch (before merging).
-2. **Merge to main**: `git checkout main && git merge --no-ff -m "..." <branch>`.
-3. **Push** and **clean up**: delete local and remote branch.
-4. **Close** the GitHub issue if one exists.
-5. **Check for tracking issue** (integration review): if the closed issue has a parent, check whether all sibling sub-issues are now closed:
-   ```bash
-   gh issue view <PARENT> --json subIssues
-   ```
-   - If any sibling is still open: do nothing — tracking issue stays open.
-   - If all siblings are now closed, run integration review on the tracking issue:
-     1. Re-read all child PR diffs: for each child, find the PR with `gh pr list --search "closes:#<child>"`, then read it with `gh pr diff <PR#>`.
-     2. Run tests: `make check`
-     3. Check the tracking issue's exit criteria — are they all met?
-     4. If gaps remain: open new sub-issues on the tracking issue, leave it open.
-     5. If all criteria met: close the tracking issue with a summary comment.
-
 ## `[Doing → Celebrating]`
 
-6. **Reflect**: what worked, what didn't, what was surprising.
-7. **Update STATE.md**: refresh stats, remove resolved blockers.
-8. **Update ROADMAP.md**: check off completed items, note new ones that emerged.
-9. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
-10. **Update persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons, then run a stale memory sweep (follow `runbooks/memory.md`). For each stale entry: delete it, or archive it with a `[resolved YYYY-MM-DD]` tag if the history matters.
+1. **Reflect**: what worked, what didn't, what was surprising.
+2. **Update STATE.md**: refresh stats, remove resolved blockers.
+3. **Update ROADMAP.md**: check off completed items, note new ones that emerged.
+4. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
+5. **Update persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons, then run a stale memory sweep (follow `runbooks/memory.md`). For each stale entry: delete it, or archive it with a `[resolved YYYY-MM-DD]` tag if the history matters.
+6. **Commit** the updates on the current branch (before merging).
+
+## Close and clean up
+
+7. **Merge to main**: `git checkout main && git merge --no-ff -m "..." <branch>`.
+8. **Push** and **clean up**: delete local and remote branch.
+9. **Close** the GitHub issue if one exists.
+10. **Check for tracking issue** (integration review): if the closed issue has a parent, check whether all sibling sub-issues are now closed:
+    ```bash
+    gh issue view <PARENT> --json subIssues
+    ```
+    - If any sibling is still open: do nothing — tracking issue stays open.
+    - If all siblings are now closed, run integration review on the tracking issue:
+      1. Re-read all child PR diffs: for each child, find the PR with `gh pr list --search "closes:#<child>"`, then read it with `gh pr diff <PR#>`.
+      2. Run tests: `make check`
+      3. Check the tracking issue's exit criteria — are they all met?
+      4. If gaps remain: open new sub-issues on the tracking issue, leave it open.
+      5. If all criteria met: close the tracking issue with a summary comment.
 11. **Verify hygiene** — no stale artifacts left behind:
     - `git worktree list` → only main (or active work)
     - `gh issue list` → no orphan issues from completed work
