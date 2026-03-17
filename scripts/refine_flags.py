@@ -11,6 +11,9 @@ import os
 import re
 import time
 
+# Suppress HuggingFace download/progress bars for clean nohup logs
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
 import numpy as np
 import pandas as pd
 import yaml

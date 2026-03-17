@@ -18,6 +18,9 @@ import argparse
 import os
 import warnings
 
+# Suppress HuggingFace download/progress bars for clean nohup logs
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
 import numpy as np
 import pandas as pd
 
@@ -154,7 +157,7 @@ def main():
         new_vecs = model.encode(
             new_texts,
             batch_size=256,
-            show_progress_bar=True,
+            show_progress_bar=False,
             normalize_embeddings=True,
         )
     else:
