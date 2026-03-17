@@ -126,11 +126,11 @@ def normalize_title(title):
     return t
 
 
-def polite_get(url, params=None, headers=None, delay=0.2, max_retries=5):
+def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
     """HTTP GET with polite delay, exponential backoff+jitter, retry on 429/5xx.
 
     Delegates to retry_get. All callers (OpenAlex, ISTEX, World Bank, syllabi)
-    now get 5 retries and 5xx handling — previously 3 retries, 429-only.
+    get 3 retries with 5xx handling.
     """
     return retry_get(url, params=params, headers=headers, delay=delay,
                      max_retries=max_retries, timeout=30)
@@ -194,6 +194,11 @@ def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
         if resp.status_code == 429:
             counters["rate_limited"] = counters.get("rate_limited", 0) + 1
             counters["retries"] = counters.get("retries", 0) + 1
+            if attempt == max_retries - 1:
+                # Return the 429 response instead of raising — lets callers
+                # inspect budget headers and degrade gracefully.
+                _utils_log.warning("Rate limited (429) after %d attempts, returning response.", max_retries)
+                return resp
             retry_after = min(int(resp.headers.get("Retry-After", backoff_base ** (attempt + 1))), 120)
             jitter = random.uniform(0, min(jitter_max * 2, 2))
             wait = retry_after + jitter
