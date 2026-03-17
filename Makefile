@@ -85,7 +85,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -175,6 +175,14 @@ content/tables/qc_citations_report.json: scripts/qa_citations.py scripts/utils.p
 check-corpus:
 	@ok=true; \
 	for f in "$(REFINED)" "$(REFINED_EMB)" "$(REFINED_CIT)"; do \
+		test -f "$$f" || { echo "MISSING: $$f"; ok=false; }; \
+	done; \
+	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
+
+# Lighter gate for manuscript-only builds (no citations needed).
+check-manuscript-data:
+	@ok=true; \
+	for f in "$(REFINED)" "$(REFINED_EMB)"; do \
 		test -f "$$f" || { echo "MISSING: $$f"; ok=false; }; \
 	done; \
 	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
@@ -338,7 +346,7 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 lexical-figures: content/tables/tab_lexical_tfidf.csv
 	uv run python scripts/plot_fig_lexical_tfidf.py --no-pdf
 
-figures-manuscript: check-corpus $(MANUSCRIPT_FIGS)
+figures-manuscript: check-manuscript-data $(MANUSCRIPT_FIGS)
 figures-datapaper:  check-corpus $(DATAPAPER_FIGS)
 figures-companion:  check-corpus $(COMPANION_FIGS)
 figures-techrep:    check-corpus $(TECHREP_FIGS)
@@ -381,14 +389,17 @@ SHELL            := /bin/bash
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
 
-archive-manuscript: check-corpus
+archive-manuscript: check-manuscript-data
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
 	@# Create directory structure
 	mkdir -p $(MANU_TMP)/data/catalogs \
 	         $(MANU_TMP)/scripts \
+	         $(MANU_TMP)/config \
 	         $(MANU_TMP)/content/bibliography \
-	         $(MANU_TMP)/content/_includes
+	         $(MANU_TMP)/content/_includes \
+	         $(MANU_TMP)/content/figures \
+	         $(MANU_TMP)/content/tables
 	@# Phase 1 contract data (dereference DVC symlinks)
 	cp -L $(DATA_DIR)/refined_works.csv     $(MANU_TMP)/data/catalogs/
 	cp -L $(DATA_DIR)/refined_embeddings.npz $(MANU_TMP)/data/catalogs/
@@ -401,14 +412,17 @@ archive-manuscript: check-corpus
 	cp scripts/build_het_core.py            $(MANU_TMP)/scripts/
 	cp scripts/export_core_venues_markdown.py $(MANU_TMP)/scripts/
 	cp scripts/summarize_core_venues.py     $(MANU_TMP)/scripts/
+	cp scripts/make_tab_venues.py           $(MANU_TMP)/scripts/
 	@# Manuscript content
 	cp content/manuscript.qmd               $(MANU_TMP)/content/
 	cp content/author-footnote.tex          $(MANU_TMP)/content/
 	cp content/_includes/tab_venues.md      $(MANU_TMP)/content/_includes/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
 	cp content/bibliography/oeconomia.csl   $(MANU_TMP)/content/bibliography/
-	@# Build infrastructure
-	cp Makefile _quarto.yml pyproject.toml uv.lock $(MANU_TMP)/
+	@# Config + build infrastructure
+	cp config/analysis.yaml             $(MANU_TMP)/config/
+	cp Makefile.repro                   $(MANU_TMP)/Makefile
+	cp _quarto.yml pyproject.toml uv.lock $(MANU_TMP)/
 	echo 'CLIMATE_FINANCE_DATA=data' > $(MANU_TMP)/.env
 	@echo "=== Creating tarball ==="
 	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp \
