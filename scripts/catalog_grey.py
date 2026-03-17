@@ -33,6 +33,7 @@ except ImportError:
 SEED_FILE = os.path.join(CONFIG_DIR, "grey_sources.yaml")
 
 WB_SEARCH_URL = "https://openknowledge.worldbank.org/server/api/discover/search/objects"
+WB_MAX_RESULTS = 500  # safety cap — if hit, query needs splitting
 
 
 def load_seed(year_min=None, year_max=None):
@@ -96,10 +97,20 @@ def query_worldbank(wb_query, year_min=None, year_max=None):
     page_size = 20
     total = None
 
+    # Append server-side year filtering (DSpace 7 / Solr syntax)
+    query = wb_query
+    if year_min and year_max:
+        query += f" AND dc.date.issued:[{year_min} TO {year_max}]"
+    elif year_min:
+        query += f" AND dc.date.issued:[{year_min} TO *]"
+    elif year_max:
+        query += f" AND dc.date.issued:[* TO {year_max}]"
+
     log.info("Querying World Bank OKR...")
+    log.info("  Query: %s", query)
     while True:
         params = {
-            "query": wb_query,
+            "query": query,
             "size": page_size,
             "page": page,
             "dsoType": "item",
@@ -146,6 +157,8 @@ def query_worldbank(wb_query, year_min=None, year_max=None):
                         metadata[key] = val
 
             year_str = (metadata.get("dc.date.issued", "") or "")[:4]
+            # Client-side year filter as safety net (server-side may not
+            # support dc.date.issued range syntax on all DSpace instances)
             year_num = int(year_str) if year_str.isdigit() else None
             if year_num is not None:
                 if year_min and year_num < year_min:
@@ -174,11 +187,18 @@ def query_worldbank(wb_query, year_min=None, year_max=None):
         fetched = page * page_size
         log.info("  Fetched %d...", fetched)
 
-        # Limit to first 200 results from World Bank
-        if fetched >= 200:
-            log.info("  Reached 200-item cap for World Bank results.")
+        if fetched >= WB_MAX_RESULTS:
+            log.warning("  Reached %d-item safety cap. "
+                        "Query may need splitting to avoid truncation.",
+                        WB_MAX_RESULTS)
             break
 
+    # Log whether we fetched everything
+    if isinstance(total, int) and total > len(records):
+        log.warning("  World Bank: fetched %d of %d total results — "
+                    "some records were truncated. "
+                    "Consider splitting the query by decade.",
+                    len(records), total)
     log.info("  Got %d World Bank records", len(records))
     return records
 
