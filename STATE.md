@@ -4,10 +4,12 @@ Last updated: 2026-03-17
 
 ## Manuscript
 
-- ~9,400 words (target ~9,000), 61 bib entries
+- ~8,860 words (target ~9,000), 61 bib entries
 - 2 figures (bars, composition) + 2 tables (traditions, venues), no supplement
 - Structural break language purged; computational claims now descriptive
-- `\newpage` before each section; fig-composition moved to §2.5
+- `\newpage` before each section and each table; fig-composition in §2.5
+- No Introduction heading (Oeconomia style); EU Structural Funds compressed
+- `corpus_total_approx: "30,000"` as YAML front matter variable (no Python kernel)
 
 ## Corpus
 
@@ -31,9 +33,10 @@ Last updated: 2026-03-17
 
 ## Build system
 
-- `make manuscript` is now Phase 3 pure: only `compute_stats.py` + `quarto render`
+- `make manuscript` is Phase 3 pure: only `quarto render` (no Python, no stats, no API)
 - Per-document include sets (no wildcard); surgical figure/table deps
-- No API calls, no Phase 1 caches required during render
+- No data files, no API calls, no Phase 1 caches required during render
+- Manuscript deps: .qmd + 2 figures + tab_venues.md + bibliography
 
 ## Blockers
 
