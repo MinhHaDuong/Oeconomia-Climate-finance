@@ -397,7 +397,7 @@ def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=5
 def load_collect_config():
     """Load config/corpus_collect.yaml (Phase 1 collection parameters).
 
-    Returns dict with keys: year_min, year_max.
+    Returns dict with keys: year_min, year_max, queries.
     Raises FileNotFoundError if the config is missing.
     """
     import yaml

@@ -83,8 +83,14 @@ def load_seed(year_min=None, year_max=None):
     return records
 
 
-def query_worldbank(year_min=None, year_max=None):
-    """Search World Bank Open Knowledge Repository, filtering by year bounds."""
+def query_worldbank(wb_query, year_min=None, year_max=None):
+    """Search World Bank Open Knowledge Repository.
+
+    Args:
+        wb_query:  Search query string (from config/corpus_collect.yaml).
+        year_min:  Optional minimum publication year (inclusive).
+        year_max:  Optional maximum publication year (inclusive).
+    """
     records = []
     page = 0
     page_size = 20
@@ -93,7 +99,7 @@ def query_worldbank(year_min=None, year_max=None):
     log.info("Querying World Bank OKR...")
     while True:
         params = {
-            "query": "climate finance",
+            "query": wb_query,
             "size": page_size,
             "page": page,
             "dsoType": "item",
@@ -183,9 +189,12 @@ def main():
     year_max = collect_cfg["year_max"]
     log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
 
+    wb_query = collect_cfg["queries"]["worldbank"]
+
     all_records = []
     all_records.extend(load_seed(year_min=year_min, year_max=year_max))
-    all_records.extend(query_worldbank(year_min=year_min, year_max=year_max))
+    all_records.extend(query_worldbank(wb_query, year_min=year_min,
+                                       year_max=year_max))
 
     if not all_records:
         log.info("No grey literature records found.")

@@ -49,9 +49,10 @@ def main():
         return
 
     # Scopus date range: PUBYEAR AFT/BEF are exclusive, so AFT 1989 means >=1990
+    base_query = collect_cfg["queries"]["scopus"]
     query = (
-        'TITLE-ABS-KEY("climate finance" OR "finance climat" OR "finance climatique")'
-        f' AND PUBYEAR AFT {year_min - 1} AND PUBYEAR BEF {year_max + 1}'
+        base_query
+        + f' AND PUBYEAR AFT {year_min - 1} AND PUBYEAR BEF {year_max + 1}'
     )
     headers = {
         "X-ELS-APIKey": api_key,

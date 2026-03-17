@@ -3,8 +3,16 @@
 # Year bounds limit what NEW records API queries can add to the pool.
 # The pool is append-only: changing these values does not delete existing records.
 #
-# Query terms (what to search for) are defined separately in
-# config/openalex_queries.yaml — that file is too large to inline here.
+# OpenAlex queries are defined separately in config/openalex_queries.yaml
+# (too large to inline here — multiple concept/keyword/title queries).
 
 year_min: 1990
 year_max: 2024
+
+# Query strings for non-OpenAlex sources.
+# Each value is the base query for the corresponding API.
+# Year bounds are applied programmatically by each script.
+queries:
+  istex: '"climate finance" OR "finance climat" OR "finance climatique"'
+  scopus: 'TITLE-ABS-KEY("climate finance" OR "finance climat" OR "finance climatique")'
+  worldbank: "climate finance"
