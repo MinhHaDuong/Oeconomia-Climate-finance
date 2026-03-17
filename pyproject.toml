@@ -21,7 +21,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Torch accelerator extras — mutually exclusive.
+# Torch accelerator extras — mutually exclusive. Always specify one with --group corpus,
+# otherwise sentence-transformers pulls a generic torch from PyPI (~2.5 GB, uncontrolled).
 # doudou (no GPU):  uv sync --group corpus --extra cpu
 # padme (A4000):    uv sync --group corpus --extra cu130
 cpu = ["torch>=2.10.0"]

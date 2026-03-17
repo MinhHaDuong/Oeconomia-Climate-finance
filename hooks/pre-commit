@@ -25,7 +25,7 @@ fi
 # 4. No large files (>500KB), except lockfiles
 large=""
 for file in $(git diff --cached --name-only --diff-filter=d); do
-    case "$file" in uv.lock|*.lock) continue ;; esac
+    case "$file" in uv.lock) continue ;; esac
     size=$(wc -c < "$file" 2>/dev/null || echo 0)
     if [ "$size" -gt 512000 ]; then
         large="$large  $file ($(( size / 1024 ))KB)\n"

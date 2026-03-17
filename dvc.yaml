@@ -138,7 +138,7 @@ stages:
       - data/catalogs/citations.csv
 
   # Phase 1b.5: Sentence embeddings (multilingual transformer + UMAP + clustering)
-  # Requires uv sync --group corpus (torch, sentence-transformers, etc.)
+  # Requires uv sync --group corpus --extra cpu (or --extra cu130 on GPU)
   enrich_embeddings:
     cmd: uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
     deps:
