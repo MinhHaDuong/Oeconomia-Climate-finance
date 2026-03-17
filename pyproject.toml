@@ -20,14 +20,21 @@ dependencies = [
     "python-dotenv>=1.2.2",
 ]
 
+[project.optional-dependencies]
+# Torch accelerator extras — mutually exclusive. Always specify one with --group corpus,
+# otherwise sentence-transformers pulls a generic torch from PyPI (~2.5 GB, uncontrolled).
+# doudou (no GPU):  uv sync --group corpus --extra cpu
+# padme (A4000):    uv sync --group corpus --extra cu130
+cpu = ["torch>=2.10.0"]
+cu130 = ["torch>=2.10.0"]
+
 [dependency-groups]
 # Phase 1 corpus building: DVC + heavy ML/NLP deps.
-# Install with: uv sync --group corpus
+# Install with: uv sync --group corpus --extra cpu   (or --extra cu130 on GPU machines)
 # Phase 2/3 users (figures, manuscript) do NOT need this group.
 corpus = [
     "dvc>=3.67.0",
     "dvc-ssh>=4.2.2",
-    "torch",
     "sentence-transformers",
     "umap-learn",
     "hdbscan",
@@ -44,11 +51,23 @@ markers = [
     "slow: marks tests that require network access or external data (deselect with '-m \"not slow\"')",
 ]
 
+[tool.uv]
+conflicts = [
+    [{ extra = "cpu" }, { extra = "cu130" }],
+]
+
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
 [tool.uv.sources]
-torch = { index = "pytorch-cpu" }
-torchvision = { index = "pytorch-cpu" }
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
