@@ -27,6 +27,10 @@ The search strategy uses a four-tier query taxonomy reflecting the evolving voca
 
 **Tier 4 — Disciplinary context** (3-of-4 concept-group filter): Very broad terms (`"environmental economics climate"`, `"ecological economics climate"`) requiring 3-of-4 concept groups for inclusion.
 
+### Temporal scope
+
+All API queries are bounded to publication years 1990–2024, configured in `config/corpus_collect.yaml`. This ensures reproducibility: runs at different dates return the same year window. The pool is append-only — changing year bounds limits what new queries add but does not delete existing records.
+
 ### Data architecture
 
 Raw API responses are stored in an append-only pool (`pool/openalex/`, `pool/semanticscholar/`, `pool/istex/`) as gzipped JSONL files — one file per query term. This preserves the complete API response for future re-extraction without re-downloading. Extracted records are derived reproducibly into `*_works.csv` catalog files. Citation links from OpenAlex's `referenced_works` field are extracted directly during the catalog build, reducing dependence on Crossref for citation enrichment.
