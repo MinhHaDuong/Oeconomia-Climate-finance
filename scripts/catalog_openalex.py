@@ -81,7 +81,7 @@ def build_filter(search_term, from_date=None, year_min=None, year_max=None):
     if year_min is not None and year_max is not None:
         # OpenAlex publication_year filter: >N means strictly greater,
         # so >1989 gives >=1990; <2025 gives <=2024.
-        f += f",publication_year:>{year_min - 1},<{year_max + 1}"
+        f += f",publication_year:>{year_min - 1},publication_year:<{year_max + 1}"
     return f
 
 
