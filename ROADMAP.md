@@ -24,7 +24,8 @@ Climate finance crystallized as an economic object by ~2009. Everything since â€
 
 ## Post-submission improvements
 
-- [ ] Split enrich stage into independent DVC stages (same pattern as discover split)
+- [x] Split embeddings encoding (Phase 1) from UMAP+clustering (Phase 2) (#189)
+- [ ] Split remaining enrich stages into independent DVC stages
 - [ ] Re-enable Semantic Scholar with API key
 - [ ] JETP query: add concept filter to exclude physics journal noise
 
@@ -48,3 +49,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since â€
 - Venue table replaces fig-seed (#150, #151): @tbl-venues in Â§3.4 body
 - Companion paper complete draft (#149): all sections filled
 - Retry robustness + budget guard (#171): unified retry_get, API key fix, budget-aware fetch
+- Split embeddings (#189): enrich_embeddings.py (Phase 1 encoding) + analyze_embeddings.py (Phase 2 UMAP+clustering)

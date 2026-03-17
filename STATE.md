@@ -41,4 +41,4 @@ None.
 ## Open tickets
 
 - #26: Human proofread of full manuscript
-- #187: closed (CPU/GPU torch harmony)
+- #189: closed (split embeddings encoding/analysis)
