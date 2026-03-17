@@ -1,6 +1,6 @@
 # New ticket — create a GitHub issue
 
-Issues are handoff documents. A new agent will only have the context provided.
+Issues are handoff documents. A new agent will only have the context provided. Creating a ticket is a `[Dreaming → Planning]` transition.
 
 ## Required sections
 
