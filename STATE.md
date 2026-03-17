@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-16
+Last updated: 2026-03-17
 
 ## Manuscript
 
@@ -37,4 +37,6 @@ None.
 
 ## Open tickets
 
+- #171: Bug — OpenAlex requests crash on transient 429 despite valid API key
+- #158: Third paper — AI-assisted research methodology (agentic workflow)
 - #26: Human proofread of full manuscript
