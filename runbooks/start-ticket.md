@@ -13,4 +13,4 @@ When this trigger runs, the agent is about to start implementing a ticket.
 4. Read the files listed in **Relevant files**.
 5. Write the first test from the **Test** section of the ticket.
 6. Run `make check-fast` — confirm the test fails (Red).
-7. Begin the Doing phase: Red → Green → Refactor.
+7. `[Planning → Doing]` — announce the transition, then begin: Red → Green → Refactor.
