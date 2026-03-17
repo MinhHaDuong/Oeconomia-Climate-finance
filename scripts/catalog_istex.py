@@ -31,7 +31,6 @@ from utils import (CATALOGS_DIR, RAW_DIR, WORKS_COLUMNS, REFS_COLUMNS,
 log = get_logger("catalog_istex")
 
 ISTEX_API = "https://api.istex.fr/document/"
-_BASE_QUERY = '"climate finance" OR "finance climat" OR "finance climatique"'
 ISTEX_OUTPUT = "id,doi,title,author,publicationDate,host,abstract,language,keywords,categories,refBibs"
 PAGE_SIZE = 100
 
@@ -138,9 +137,11 @@ def build_record(d):
 def build_istex_query(year_min=None, year_max=None):
     """Build ISTEX query string with optional year bounds.
 
+    Base query is read from config/corpus_collect.yaml (queries.istex).
     ISTEX uses publicationDate field with bracket syntax: [YYYY TO YYYY].
     """
-    q = _BASE_QUERY
+    cfg = load_collect_config()
+    q = cfg["queries"]["istex"]
     if year_min is not None and year_max is not None:
         q += f" AND publicationDate:[{year_min} TO {year_max}]"
     return q
