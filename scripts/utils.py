@@ -126,30 +126,13 @@ def normalize_title(title):
     return t
 
 
-def polite_get(url, params=None, headers=None, delay=0.2, max_retries=3):
-    """HTTP GET with polite pool, delay, and retry on 429."""
-    if params is None:
-        params = {}
-    if "mailto" not in params and "mailto" not in url:
-        params["mailto"] = MAILTO
-    if headers is None:
-        headers = {}
-    headers.setdefault("User-Agent", f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})")
+def polite_get(url, params=None, headers=None, delay=0.2, max_retries=5):
+    """HTTP GET with polite pool, exponential backoff+jitter, and retry on 429/5xx.
 
-    for attempt in range(max_retries):
-        time.sleep(delay)
-        resp = requests.get(url, params=params, headers=headers, timeout=30)
-        if resp.status_code == 429:
-            retry_after = min(
-                int(resp.headers.get("Retry-After", 2 ** (attempt + 1))),
-                60,  # cap at 60s regardless of header
-            )
-            _utils_log.warning("Rate limited. Waiting %ds...", retry_after)
-            time.sleep(retry_after)
-            continue
-        resp.raise_for_status()
-        return resp
-    raise RuntimeError(f"Failed after {max_retries} retries: {url}")
+    Thin wrapper around retry_get for backward compatibility.
+    """
+    return retry_get(url, params=params, headers=headers, delay=delay,
+                     max_retries=max_retries, timeout=30)
 
 
 def retry_get(url, params=None, headers=None, delay=0.2, max_retries=5,
