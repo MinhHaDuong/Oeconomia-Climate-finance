@@ -262,7 +262,8 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
     Args:
         from_date: Optional YYYY-MM-DD to restrict to recently-created works.
 
-    Returns n_new count.
+    Returns (n_new, out_of_budget) — count of new records and whether
+    the API budget was exhausted during pagination.
     """
     cursor = "*"
     total_fetched = 0
