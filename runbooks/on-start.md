@@ -13,8 +13,7 @@ Run at the start of every conversation, before the first response.
 3. If `STATE.md` is not dated today, refresh it:
    a. `gh pr list --state open` → update "Active PRs" section.
    b. `git log --oneline -5` → update "Recent" section.
-   c. Sweep stale memories (follow `runbooks/memory.md`).
-   d. Commit on `main`: `housekeeping: refresh STATE YYYY-MM-DD`
+   c. Commit on `main`: `housekeeping: refresh STATE YYYY-MM-DD`
 4. Infer and announce the initial DD phase:
    - Active feature branch + open PR → `[→ Doing]` (resuming implementation).
    - Ticket reference but no branch yet → `[→ Planning]` (preparing to start).
