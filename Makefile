@@ -85,7 +85,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus corpus corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -114,29 +114,26 @@ all: manuscript papers
 # Phase 1 data is managed by DVC (see dvc.yaml for the pipeline DAG).
 # DVC tracks file hashes: it skips stages whose inputs are unchanged.
 #
-# Typical workflow (any machine):
-#   git pull                     # get latest .dvc pointers + dvc.yaml
-#   uv run dvc pull              # download data matching those pointers
-#   make figures && make manuscript   # Phase 2 + 3 (no DVC needed)
+# Padme is the data authority. Run the pipeline on padme, pull on doudou.
 #
-# After a pipeline run (usually on padme with GPU):
-#   make corpus                  # runs dvc repro (API calls, slow)
-#   uv run dvc push              # upload new artifacts to shared store
-#   git add dvc.lock data/catalogs/.gitignore
-#   git commit && git push       # share the new pointers
+# On padme (pipeline run):
+#   make corpus                      # dvc repro + push + commit lock
 #
-# On any other machine afterward:
-#   git pull && uv run dvc pull  # sync data from the shared store
-#
-# DVC push/pull is bidirectional: whoever runs the pipeline pushes,
-# everyone else pulls. The remote (padme:/data/projets/dvc/...) is a
-# content-addressed store — no conflicts as long as .dvc pointers
-# in git stay in sync.
+# On doudou (sync only):
+#   make corpus-sync                 # git pull + dvc pull
+#   make figures && make manuscript  # Phase 2 + 3 (no DVC needed)
 
-# Full pipeline — delegates to DVC for dependency tracking and caching.
+# Full pipeline — run on padme only (GPU, API access).
 corpus:
+	@[ "$$(hostname)" = "padme" ] || { echo "error: make corpus runs on padme only. Use 'make corpus-sync' on $$(hostname)."; exit 1; }
 	@uv run dvc version >/dev/null 2>&1 || { echo "error: dvc not found. Install with: uv tool install 'dvc[ssh]'"; exit 1; }
 	uv run dvc repro; ret=$$?; uv run dvc push; exit $$ret
+
+# Sync data from padme — run on doudou (never pushes).
+corpus-sync:
+	@[ "$$(hostname)" != "padme" ] || { echo "error: use 'make corpus' on padme, not corpus-sync."; exit 1; }
+	git pull
+	uv run dvc pull --force
 
 # Individual stage aliases.
 corpus-discover:
