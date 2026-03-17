@@ -24,6 +24,8 @@ format:
             \fancyfoot[C]{\thepage}
             \renewcommand{\headrulewidth}{0pt}
           }
+          \usepackage{lineno}
+          \linenumbers
           \usepackage{etoolbox}
           \renewcommand{\CSLBlock}[1]{\newline\noindent #1}
       - file: author-footnote.tex
