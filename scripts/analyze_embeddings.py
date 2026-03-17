@@ -24,7 +24,7 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, get_logger, load_analysis_config
+from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, get_logger, load_analysis_config, work_key
 
 log = get_logger("analyze_embeddings")
 
@@ -34,16 +34,6 @@ FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
 CLUSTERS_PATH = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
-
-
-def work_key(row):
-    """Stable key for a work: DOI preferred, then source_id, then title hash."""
-    if pd.notna(row["doi"]):
-        return str(row["doi"])
-    if pd.notna(row["source_id"]):
-        return str(row["source_id"])
-    import hashlib
-    return "title:" + hashlib.md5(str(row["title"]).encode()).hexdigest()
 
 
 def main():
@@ -98,6 +88,12 @@ def main():
             embeddings[i] = key_to_vec[key]
             n_matched += 1
     log.info("Matched %d / %d works to embeddings", n_matched, len(df))
+    n_unmatched = len(df) - n_matched
+    if n_unmatched > 0:
+        match_pct = 100 * n_matched / len(df)
+        log.warning("%d works have no embedding (%.1f%% match rate) — "
+                    "zero vectors will distort UMAP/clustering. "
+                    "Re-run enrich_embeddings.py if this is unexpected.", n_unmatched, match_pct)
 
     # ============================================================
     # Step 1: UMAP dimensionality reduction
@@ -128,9 +124,8 @@ def main():
     log.info("Semantic clusters: %d", n_clusters)
 
     # Cluster sizes
-    for c in sorted(df["semantic_cluster"].unique()):
-        label = f"Cluster {c}" if c >= 0 else "Noise"
-        log.info("  %s: %d", label, (df['semantic_cluster'] == c).sum())
+    for c in range(n_clusters):
+        log.info("  Cluster %d: %d", c, (df['semantic_cluster'] == c).sum())
 
     # ============================================================
     # Step 3: Characterize clusters

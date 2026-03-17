@@ -20,7 +20,7 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 import numpy as np
 import pandas as pd
 
-from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, load_analysis_config
+from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, load_analysis_config, work_key
 
 log = get_logger("enrich_embeddings")
 
@@ -40,16 +40,6 @@ def build_text(row):
     if pd.notna(keywords):
         parts.append(str(keywords).replace(";", ", "))
     return ". ".join(parts)
-
-
-def work_key(row):
-    """Stable key for a work: DOI preferred, then source_id, then title hash."""
-    if pd.notna(row["doi"]):
-        return str(row["doi"])
-    if pd.notna(row["source_id"]):
-        return str(row["source_id"])
-    import hashlib
-    return "title:" + hashlib.md5(str(row["title"]).encode()).hexdigest()
 
 
 def text_hash(text):
