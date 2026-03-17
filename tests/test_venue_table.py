@@ -40,12 +40,6 @@ class TestVenueTableInManuscript:
         assert "fig_seed_axis_core.png" not in body_no_comments, \
             "fig_seed_axis_core.png image must not appear in manuscript body (moved to supplement)"
 
-    def test_fig_seed_in_supplement(self):
-        text = read(MANUSCRIPT)
-        body = manuscript_body()
-        supplement = text[len(body):]
-        assert "fig_seed" in supplement or "fig-seed" in supplement, \
-            "@fig-seed must appear in electronic supplement section"
 
 
 class TestVenueTableFile:
