@@ -15,7 +15,22 @@ A review means spinning multiple agents in parallel, each with a distinct perspe
 | **Scope** | Over-engineering, unrelated changes, feature creep | Does this change *only* what the ticket asks? |
 | **Red team** | Adversarial inputs, broken invariants, failure modes | How can this break? |
 
-Add more perspectives when warranted (e.g., **Security** for auth changes, **Performance** for data pipeline changes, **Historiography** for manuscript claims).
+Add more perspectives when warranted (e.g., **Security** for auth changes, **Performance** for data pipeline changes, **Historiography** for manuscript claims, **Documentation propagation** for pipeline or methodology changes — see below).
+
+### Documentation propagation agent
+
+Triggered for substantial+ PRs that touch pipeline code, configuration, or methodology. This agent asks: **"What docs, configs, and downstream reports reference the changed behavior — are they still accurate?"**
+
+Checklist:
+1. **Trace references** — search for mentions of changed functions, parameters, file names, or concepts in:
+   - `content/technical-report.qmd` (pipeline methodology for replicators)
+   - `content/manuscript.qmd` and its `_includes/` (claims for Oeconomia readers)
+   - `content/_variables.yml` (computed values cited in prose)
+   - `docs/` (coding/writing guidelines, style guides)
+   - `README.md`, `STATE.md`, `ROADMAP.md`
+   - Configuration files (`corpus_collect.yaml`, `dvc.yaml`, `Makefile`)
+2. **Flag stale references** — any doc that describes the old behavior is a finding.
+3. **Verdict**: request-changes if a downstream doc would mislead a reader; comment if the staleness is cosmetic.
 
 ### Proportional depth
 
@@ -25,8 +40,8 @@ Not every PR needs every agent. Scale to risk:
 |---|---|
 | Trivial (typo, comment, config) | Correctness only |
 | Standard (single-file logic, prose edits) | Correctness + Consistency |
-| Substantial (multi-file, new feature, pipeline change) | All four core agents |
-| High-risk (schema change, methodology change) | All four + domain-specific agents |
+| Substantial (multi-file, new feature, pipeline change) | All four core agents + Documentation propagation |
+| High-risk (schema change, methodology change) | All four + Documentation propagation + domain-specific agents |
 
 ## Each agent runs
 
