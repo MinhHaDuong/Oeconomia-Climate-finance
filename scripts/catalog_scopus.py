@@ -18,7 +18,8 @@ import pandas as pd
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import (CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv)
+from utils import (CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv,
+                   load_collect_config)
 
 log = get_logger("catalog_scopus")
 
@@ -29,6 +30,11 @@ def main():
     parser = argparse.ArgumentParser(description="Query Scopus for climate finance")
     parser.add_argument("--limit", type=int, default=0, help="Max records (0=all)")
     args = parser.parse_args()
+
+    collect_cfg = load_collect_config()
+    year_min = collect_cfg["year_min"]
+    year_max = collect_cfg["year_max"]
+    log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
 
     api_key = os.environ.get("SCOPUS_API_KEY", "")
     if not api_key:
@@ -42,7 +48,11 @@ def main():
                     "Skipping Scopus catalog (this is optional).")
         return
 
-    query = 'TITLE-ABS-KEY("climate finance" OR "finance climat" OR "finance climatique")'
+    # Scopus date range: PUBYEAR AFT/BEF are exclusive, so AFT 1989 means >=1990
+    query = (
+        'TITLE-ABS-KEY("climate finance" OR "finance climat" OR "finance climatique")'
+        f' AND PUBYEAR AFT {year_min - 1} AND PUBYEAR BEF {year_max + 1}'
+    )
     headers = {
         "X-ELS-APIKey": api_key,
         "Accept": "application/json",

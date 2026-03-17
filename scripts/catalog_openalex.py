@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO, OPENALEX_API_KEY,
                    get_logger, normalize_doi, reconstruct_abstract, polite_get,
                    save_csv, pool_path, append_to_pool, load_pool_ids,
-                   load_pool_records, POOL_DIR)
+                   load_pool_records, POOL_DIR, load_collect_config)
 
 log = get_logger("catalog_openalex")
 
@@ -62,13 +62,15 @@ OA_SELECT = ",".join([
 ])
 
 
-def build_filter(search_term, from_date=None):
+def build_filter(search_term, from_date=None, year_min=None, year_max=None):
     """Build the OpenAlex filter parameter string.
 
     Args:
         search_term: The search query text.
         from_date:   Optional YYYY-MM-DD string to limit to works created
                      on or after this date (OpenAlex from_created_date filter).
+        year_min:    Optional minimum publication year (inclusive).
+        year_max:    Optional maximum publication year (inclusive).
 
     Returns:
         Filter string for the OpenAlex API ``filter`` parameter.
@@ -76,6 +78,10 @@ def build_filter(search_term, from_date=None):
     f = f'default.search:"{search_term}"'
     if from_date:
         f += f",from_created_date:{from_date}"
+    if year_min is not None and year_max is not None:
+        # OpenAlex publication_year filter: >N means strictly greater,
+        # so >1989 gives >=1990; <2025 gives <=2024.
+        f += f",publication_year:>{year_min - 1},<{year_max + 1}"
     return f
 
 
@@ -256,11 +262,13 @@ def query_slug(term):
 # --- Download phase ---
 
 def fetch_query(search_term, delay, limit, existing_ids, pool_file,
-                from_date=None):
+                from_date=None, year_min=None, year_max=None):
     """Fetch all works matching a search term, append raw JSON to pool.
 
     Args:
         from_date: Optional YYYY-MM-DD to restrict to recently-created works.
+        year_min:  Optional minimum publication year (inclusive).
+        year_max:  Optional maximum publication year (inclusive).
 
     Returns (n_new, out_of_budget) — count of new records and whether
     the API budget was exhausted during pagination.
@@ -272,7 +280,8 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
 
     while cursor:
         params = {
-            "filter": build_filter(search_term, from_date),
+            "filter": build_filter(search_term, from_date,
+                                   year_min=year_min, year_max=year_max),
             "select": OA_SELECT,
             "per_page": 200,
             "cursor": cursor,
@@ -320,10 +329,11 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
     return n_new, budget_exhausted(remaining)
 
 
-def dry_run_query(search_term, delay, from_date=None):
+def dry_run_query(search_term, delay, from_date=None, year_min=None, year_max=None):
     """Check how many results a query would return without fetching."""
     params = {
-        "filter": build_filter(search_term, from_date),
+        "filter": build_filter(search_term, from_date,
+                               year_min=year_min, year_max=year_max),
         "per_page": 1,
         "mailto": MAILTO,
     }
@@ -436,6 +446,10 @@ def main():
     args = parser.parse_args()
 
     config = load_query_config()
+    collect_cfg = load_collect_config()
+    year_min = collect_cfg["year_min"]
+    year_max = collect_cfg["year_max"]
+    log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
     tiers = config.get("tiers", {})
 
     # Filter to requested tier
@@ -515,7 +529,8 @@ def main():
                 from_date = None
 
             if args.dry_run:
-                count = dry_run_query(term, args.delay, from_date)
+                count = dry_run_query(term, args.delay, from_date,
+                                      year_min=year_min, year_max=year_max)
                 date_info = f" (since {from_date})" if from_date else ""
                 log.info('"%s": %s results%s', term, f"{count:,}", date_info)
                 grand_total += count
@@ -524,7 +539,8 @@ def main():
             # Probe budget before first real query
             if budget_start is None:
                 probe_params = {
-                    "filter": build_filter(term, from_date),
+                    "filter": build_filter(term, from_date,
+                                           year_min=year_min, year_max=year_max),
                     "per_page": 1, "mailto": MAILTO,
                 }
                 if OPENALEX_API_KEY:
@@ -542,7 +558,7 @@ def main():
             log.info('Querying: "%s"%s', term, date_info)
             n_new, out_of_budget = fetch_query(
                 term, args.delay, args.limit, existing_ids, pf,
-                from_date=from_date)
+                from_date=from_date, year_min=year_min, year_max=year_max)
             grand_total += n_new
             queries_completed += 1
 
