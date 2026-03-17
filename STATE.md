@@ -10,6 +10,7 @@ Last updated: 2026-03-17
 
 ## Corpus
 
+- Torch installs CPU or CUDA via `--extra cpu` / `--extra cu130` (uv extras with conflicts)
 - Corpus regen in progress on padme (nohup)
 - DVC pipeline split into per-source stages (catalog_istex, catalog_openalex, etc.)
 - Semantic Scholar skipped for pre-submission (rate-limited, minor source)
@@ -40,3 +41,4 @@ None.
 ## Open tickets
 
 - #26: Human proofread of full manuscript
+- #187: closed (CPU/GPU torch harmony)
