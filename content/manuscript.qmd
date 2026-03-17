@@ -26,10 +26,12 @@ format:
             \renewcommand{\headrulewidth}{0pt}
           }
           \usepackage{lineno}
-          \linenumbers
           \usepackage{etoolbox}
           \renewcommand{\CSLBlock}[1]{\newline\noindent #1}
       - file: author-footnote.tex
+    include-before-body:
+      - text: |
+          \linenumbers
 ---
 
 <!-- Phase 2→3 contract: this manuscript consumes
