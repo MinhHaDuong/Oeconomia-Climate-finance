@@ -234,6 +234,8 @@ The growth was asymmetric. Publications near the efficiency pole---leverage, ble
 
 The tension between the two poles is constitutive: they sustain each other because they share the same categories even as they contest their interpretation. OECD reports frame climate finance as a tool for "mobilising" and "leveraging" private capital; Oxfam's assessments define their purpose as "holding donors to account" for the adequacy and quality of pledges. The tension is productive rather than pathological. If either pole prevailed---if climate finance became purely a financial engineering problem or purely a justice claim---it would lose its capacity to sustain both technocratic management and political accountability simultaneously. The two-pole structure detected in our corpus is the trace of this constitutive tension in the structure of scholarship itself.
 
+\newpage
+
 {{< include _includes/tab_venues.md >}}
 
 \newpage
