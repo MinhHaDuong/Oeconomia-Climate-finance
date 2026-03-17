@@ -220,3 +220,82 @@ class TestDvcDependency:
             dvc = yaml.safe_load(f)
         deps = dvc["stages"]["catalog_grey"]["deps"]
         assert "config/corpus_collect.yaml" in deps
+
+
+# ---------------------------------------------------------------------------
+# query_worldbank() list handling and UUID deduplication (#184)
+# ---------------------------------------------------------------------------
+
+class TestQueryWorldbankDedup:
+    """Test that query_worldbank deduplicates by UUID across multiple queries."""
+
+    def test_list_dedup_removes_overlapping_uuids(self):
+        """Records with the same UUID from different queries are deduplicated."""
+        from unittest.mock import patch
+
+        sys.path.insert(0, os.path.join(ROOT_DIR, "scripts"))
+        from catalog_grey import query_worldbank
+
+        fake_results = {
+            "q1": [
+                {"source_id": "aaa", "title": "Paper A"},
+                {"source_id": "bbb", "title": "Paper B"},
+            ],
+            "q2": [
+                {"source_id": "bbb", "title": "Paper B duplicate"},
+                {"source_id": "ccc", "title": "Paper C"},
+            ],
+        }
+        call_order = iter(["q1", "q2"])
+
+        def mock_single(wb_query, year_min=None, year_max=None):
+            key = next(call_order)
+            return fake_results[key]
+
+        with patch("catalog_grey._query_worldbank_single", side_effect=mock_single):
+            results = query_worldbank(["q1", "q2"])
+
+        ids = [r["source_id"] for r in results]
+        assert ids == ["aaa", "bbb", "ccc"], "Should dedup bbb across queries"
+
+    def test_empty_source_id_not_collapsed(self):
+        """Records with empty source_id are never deduplicated against each other."""
+        from unittest.mock import patch
+
+        sys.path.insert(0, os.path.join(ROOT_DIR, "scripts"))
+        from catalog_grey import query_worldbank
+
+        fake_results = {
+            "q1": [
+                {"source_id": "", "title": "No-UUID paper 1"},
+                {"source_id": "aaa", "title": "Paper A"},
+            ],
+            "q2": [
+                {"source_id": "", "title": "No-UUID paper 2"},
+            ],
+        }
+        call_order = iter(["q1", "q2"])
+
+        def mock_single(wb_query, year_min=None, year_max=None):
+            key = next(call_order)
+            return fake_results[key]
+
+        with patch("catalog_grey._query_worldbank_single", side_effect=mock_single):
+            results = query_worldbank(["q1", "q2"])
+
+        assert len(results) == 3, "Empty source_id records should not be collapsed"
+
+    def test_string_input_backward_compatible(self):
+        """A single string query still works (backward compatibility)."""
+        from unittest.mock import patch
+
+        sys.path.insert(0, os.path.join(ROOT_DIR, "scripts"))
+        from catalog_grey import query_worldbank
+
+        def mock_single(wb_query, year_min=None, year_max=None):
+            return [{"source_id": "aaa", "title": "Paper A"}]
+
+        with patch("catalog_grey._query_worldbank_single", side_effect=mock_single):
+            results = query_worldbank("single query")
+
+        assert len(results) == 1
