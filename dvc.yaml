@@ -137,12 +137,12 @@ stages:
       - data/catalogs/enriched_works.csv
       - data/catalogs/citations.csv
 
-  # Phase 1b.5: Sentence embeddings (multilingual transformer + UMAP + clustering)
+  # Phase 1b.5: Sentence embeddings (encoding only — no UMAP/clustering)
   # Requires uv sync --group corpus --extra cpu (or --extra cu130 on GPU)
   enrich_embeddings:
-    cmd: uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
+    cmd: uv run python scripts/enrich_embeddings.py --works-input data/catalogs/enriched_works.csv
     deps:
-      - scripts/analyze_embeddings.py
+      - scripts/enrich_embeddings.py
       - scripts/utils.py
       - data/catalogs/enriched_works.csv
     outs:
@@ -194,4 +194,17 @@ stages:
     outs:
       - data/catalogs/refined_embeddings.npz
       - data/catalogs/refined_citations.csv
+
+  # Phase 2: Semantic landscape analysis (UMAP + KMeans clustering)
+  # Loads pre-computed embeddings.npz, produces UMAP projections and clusters.
+  # Not in the Phase 1 critical path — can run independently after embeddings exist.
+  analyze_embeddings:
+    cmd: uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/analyze_embeddings.py
+      - scripts/utils.py
+      - data/catalogs/enriched_works.csv
+      - data/catalogs/embeddings.npz
+    outs:
+      - data/catalogs/semantic_clusters.csv
 
