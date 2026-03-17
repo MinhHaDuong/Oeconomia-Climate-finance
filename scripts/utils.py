@@ -299,6 +299,21 @@ REFINED_EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "refined_embeddings.npz")
 REFINED_CITATIONS_PATH = os.path.join(CATALOGS_DIR, "refined_citations.csv")
 
 
+def work_key(row):
+    """Stable key for a work: DOI preferred, then source_id, then title hash.
+
+    Used by both enrich_embeddings.py and analyze_embeddings.py to align
+    works with their embedding vectors. Must be identical across scripts.
+    """
+    import hashlib
+
+    if pd.notna(row["doi"]):
+        return str(row["doi"])
+    if pd.notna(row["source_id"]):
+        return str(row["source_id"])
+    return "title:" + hashlib.md5(str(row["title"]).encode()).hexdigest()
+
+
 def load_embeddings():
     """Load embedding vectors from the .npz cache.
 

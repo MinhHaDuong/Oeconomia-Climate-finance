@@ -35,12 +35,12 @@ Quality control (`qc_citations.py`) validates DOI formats, removes self-citation
 
 ### Embedding generation
 
-The script `analyze_embeddings.py` computes 384-dimensional sentence embeddings using a multilingual MiniLM model (`paraphrase-multilingual-MiniLM-L12-v2`) on title + abstract text. Only papers with abstracts of at least 50 characters (published 1990–2024) are embedded.
+The script `enrich_embeddings.py` (Phase 1) computes 384-dimensional sentence embeddings using a multilingual MiniLM model (`paraphrase-multilingual-MiniLM-L12-v2`) on title + abstract text. Only papers with abstracts of at least 50 characters (published 1990–2024) are embedded. UMAP projection and KMeans clustering are performed separately in `analyze_embeddings.py` (Phase 2).
 
 Outputs:
 
-- `embeddings.npz`: Compressed embedding cache (vectors, DOI keys, model metadata).
-- `semantic_clusters.csv`: Cluster assignments from HDBSCAN, with UMAP coordinates for visualization.
+- `embeddings.npz`: Compressed embedding cache (vectors, DOI keys, model metadata) — Phase 1.
+- `semantic_clusters.csv`: KMeans cluster assignments with UMAP coordinates — Phase 2 (`analyze_embeddings.py`).
 
 Embeddings are needed for semantic outlier detection (flag 5 in §3) and for the alluvial and bimodality analyses. @fig-semantic shows the resulting 2D UMAP projection colored by KMeans cluster; @fig-semantic-period shows the same projection by publication period; @fig-semantic-lang shows it by language ({{< var lang_english_pct >}}% English).
 

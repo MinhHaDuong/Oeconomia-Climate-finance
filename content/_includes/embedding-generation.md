@@ -1,6 +1,6 @@
 ## 3. Embedding Generation
 
-**Script:** `scripts/analyze_embeddings.py`
+**Scripts:** `scripts/enrich_embeddings.py` (Phase 1: encoding), `scripts/analyze_embeddings.py` (Phase 2: UMAP + clustering)
 
 **Model:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers library). This is a 12-layer multilingual BERT producing 384-dimensional vectors, chosen for its ability to place texts in English, French, Chinese, Japanese, and German into a shared semantic space.
 
@@ -13,7 +13,8 @@
 
 **Output:** `embeddings.npz` -- a compressed NumPy archive containing the embedding vectors (N x 384), DOI/source_id keys for each row, model name, and text field specification. The keyed cache enables incremental updates: only works absent from the cache are encoded. A change in model name or text fields triggers a full recompute.
 
-**Additional outputs:**
+**Phase 2 analysis** (`analyze_embeddings.py`, separate DVC stage):
+
 - UMAP projection (n_components=2, n_neighbors=15, min_dist=0.05, cosine metric, random_state=42)
 - KMeans clustering (k=6, n_init=20, random_state=42) on UMAP coordinates
 - Cluster assignments saved to `semantic_clusters.csv`

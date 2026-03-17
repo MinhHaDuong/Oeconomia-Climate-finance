@@ -1,5 +1,0 @@
-outs:
-- md5: 798830173dab5ed574775d9dffe5aea7
-  size: 5749539
-  hash: md5
-  path: semantic_clusters.csv
