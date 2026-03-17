@@ -127,9 +127,10 @@ def normalize_title(title):
 
 
 def polite_get(url, params=None, headers=None, delay=0.2, max_retries=5):
-    """HTTP GET with polite pool, exponential backoff+jitter, and retry on 429/5xx.
+    """HTTP GET with polite delay, exponential backoff+jitter, retry on 429/5xx.
 
-    Thin wrapper around retry_get for backward compatibility.
+    Delegates to retry_get. All callers (OpenAlex, ISTEX, World Bank, syllabi)
+    now get 5 retries and 5xx handling — previously 3 retries, 429-only.
     """
     return retry_get(url, params=params, headers=headers, delay=delay,
                      max_retries=max_retries, timeout=30)
