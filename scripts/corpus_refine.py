@@ -342,6 +342,7 @@ def load_input_works(works_path):
 def load_citations(cheap=False):
     if cheap or not os.path.exists(CITATIONS_PATH):
         return None
+    log.info("  Loading citations from %s...", CITATIONS_PATH)
     citations_df = pd.read_csv(CITATIONS_PATH)
     citations_df["source_doi"] = citations_df["source_doi"].apply(
         lambda x: normalize_doi(x) if pd.notna(x) else "")

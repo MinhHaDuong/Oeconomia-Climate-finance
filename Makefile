@@ -110,7 +110,7 @@ all: manuscript papers
 # Full pipeline — delegates to DVC for dependency tracking and caching.
 corpus:
 	@uv run dvc version >/dev/null 2>&1 || { echo "error: dvc not found. Install with: uv tool install 'dvc[ssh]'"; exit 1; }
-	uv run dvc repro
+	uv run dvc repro; ret=$$?; uv run dvc push; exit $$ret
 
 # Individual stage aliases.
 corpus-discover:

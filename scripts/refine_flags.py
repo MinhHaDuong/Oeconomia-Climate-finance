@@ -390,12 +390,10 @@ def _reranker_streaming(df, config, *, already_flagged):
     """
     try:
         import torch  # noqa: F401
-        from sentence_transformers import CrossEncoder
-    except ImportError as exc:
-        raise RuntimeError(
-            "Flag 6 requires torch and sentence-transformers — "
-            "run on padme or install the corpus extras group"
-        ) from exc
+        from sentence_transformers import CrossEncoder  # noqa: F401
+    except ImportError:
+        log.warning("Flag 6 skipped: torch/sentence-transformers not installed")
+        return
 
     llm_cfg = config["llm_relevance"]
     candidates_mask, doi_norm = _identify_candidates(df, config, already_flagged)
