@@ -18,7 +18,7 @@ from collections import Counter
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, get_logger, normalize_doi, polite_get, MAILTO
+from utils import CATALOGS_DIR, get_logger, normalize_doi, polite_get, MAILTO, OPENALEX_API_KEY
 
 log = get_logger("mine_openalex_keywords")
 
@@ -43,6 +43,8 @@ def fetch_openalex_metadata(dois, batch_size=50):
             "per_page": 200,
             "mailto": MAILTO,
         }
+        if OPENALEX_API_KEY:
+            params["api_key"] = OPENALEX_API_KEY
         resp = polite_get(OA_API, params=params, delay=0.15)
         data = resp.json()
         results.extend(data.get("results", []))
