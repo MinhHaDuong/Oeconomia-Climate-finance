@@ -4,9 +4,10 @@ Last updated: 2026-03-17
 
 ## Manuscript
 
-- ~9,600 words (target ~9,000), 61 bib entries
-- 2 figures (emergence, composition) + 3 tables (traditions, poles, venues) + 1 supplement figure (seed axis)
-- Variable dependencies reduced to 1 (`corpus_total_approx`)
+- ~9,400 words (target ~9,000), 61 bib entries
+- 2 figures (bars, composition) + 2 tables (traditions, venues), no supplement
+- Structural break language purged; computational claims now descriptive
+- `\newpage` before each section; fig-composition moved to §2.5
 
 ## Corpus
 
@@ -23,12 +24,16 @@ Last updated: 2026-03-17
 ## Figures & tables
 
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992
-- Fig 2 (composition): relocated to §3.4 (thematic decomposition argument)
-- Fig S1 (traditions): co-citation network, color, Electronic Supplement
-- Fig S2 (seed axis): efficiency–accountability scatter, Electronic Supplement
-- Table 1 (traditions): caption updated; §1.5 cites co-citation evidence (Q=0.68)
-- Table 2 (venues): 17 journals by pole lean, replaces @fig-seed in body
+- Fig 2 (composition): relocated to §2.5 (one figure per section)
+- Table 1 (traditions): inline pipe table, Pandoc float (no raw LaTeX)
+- Table 2 (venues): 15 journals by pole lean, via `{{< include tab_venues.md >}}`
 - Table (poles): efficiency vs accountability terms — in companion paper
+
+## Build system
+
+- `make manuscript` is now Phase 3 pure: only `compute_stats.py` + `quarto render`
+- Per-document include sets (no wildcard); surgical figure/table deps
+- No API calls, no Phase 1 caches required during render
 
 ## Blockers
 
@@ -41,4 +46,3 @@ None.
 ## Open tickets
 
 - #26: Human proofread of full manuscript
-- #189: closed (split embeddings encoding/analysis)

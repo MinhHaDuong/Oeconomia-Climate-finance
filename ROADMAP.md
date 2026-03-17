@@ -50,3 +50,4 @@ Climate finance crystallized as an economic object by ~2009. Everything since â€
 - Companion paper complete draft (#149): all sections filled
 - Retry robustness + budget guard (#171): unified retry_get, API key fix, budget-aware fetch
 - Split embeddings (#189): enrich_embeddings.py (Phase 1 encoding) + analyze_embeddings.py (Phase 2 UMAP+clustering)
+- Phase separation + manuscript cleanup (#189b): surgical Makefile deps, no API calls in Phase 3, structural break purge, layout fixes
