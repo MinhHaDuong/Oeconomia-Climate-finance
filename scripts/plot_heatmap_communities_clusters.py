@@ -52,7 +52,7 @@ WINDOWS = [
     {"label": "Pre-2007", "cutoff": 2006},
     {"label": "Pre-2015", "cutoff": 2014},
     {"label": "Pre-2020", "cutoff": 2019},
-    {"label": "Full",     "cutoff": 2025},
+    {"label": "Full",     "cutoff": 2024},
 ]
 TOP_N = 250
 MIN_COCIT = 3

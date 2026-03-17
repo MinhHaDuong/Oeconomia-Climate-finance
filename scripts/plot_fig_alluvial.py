@@ -253,7 +253,7 @@ ax.set_ylim(-0.06, 1.0)
 total = int(alluvial_data.values.sum())
 core_label = f"core papers cited ≥ {CITE_THRESHOLD}, " if args.core_only else ""
 ax.set_title(
-    f"Thematic recomposition of scholarship around climate finance, 1990–2025\n"
+    f"Thematic recomposition of scholarship around climate finance, 1990–2024\n"
     f"({core_label}N = {total:,} publications; band width = number of publications per thematic cluster)",
     fontsize=7, pad=8,
 )
@@ -350,7 +350,7 @@ if _have_paper_data:
     # Title
     total = int(alluvial_data.values.sum())
     svg_parts.append(f'<text x="{svg_w//2}" y="28" text-anchor="middle" font-size="16" font-weight="bold">'
-                     f'Thematic recomposition of scholarship around climate finance, 1990–2025</text>')
+                     f'Thematic recomposition of scholarship around climate finance, 1990–2024</text>')
     svg_parts.append(f'<text x="{svg_w//2}" y="50" text-anchor="middle" font-size="13" fill="#666">'
                      f'(N = {total:,} publications; hover over a cell to see top-cited papers)</text>')
 

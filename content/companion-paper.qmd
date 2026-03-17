@@ -1,5 +1,5 @@
 ---
-title: "Detecting Structural Breaks and Polarization in Academic Literature Using Semantic Embeddings: A Framework Applied to Climate Finance (1990--2025)"
+title: "Detecting Structural Breaks and Polarization in Academic Literature Using Semantic Embeddings: A Framework Applied to Climate Finance (1990--2024)"
 author: "Minh Ha-Duong"
 date: "2026-03-05"
 bibliography: bibliography/main.bib
@@ -34,7 +34,7 @@ We address both questions with a unified framework built on multilingual sentenc
 - **Censored-gap variant** that tests whether detected breaks survive the removal of transitional years
 - **Supervised seed-axis projection** with Gaussian mixture modelling, testing for bimodal community structure along theoretically motivated axes
 
-We validate the framework on the case of climate finance scholarship (1990--2025), a field whose evolution is well-documented and whose institutional history provides external benchmarks against which endogenous periodization can be assessed.
+We validate the framework on the case of climate finance scholarship (1990--2024), a field whose evolution is well-documented and whose institutional history provides external benchmarks against which endogenous periodization can be assessed.
 
 <!-- Roadmap -->
 
@@ -93,7 +93,7 @@ All three studies periodize the field exogenously, by reference to policy milest
 
 <!-- ~500 words. Cross-reference the data descriptor. -->
 
-The analysis uses a multilingual corpus of {{< var corpus_total >}} works on climate finance (1990--2025), assembled from {{< var corpus_sources >}} bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< var corpus_core >}} constitute a "core" subset (cited $\geq$ {{< var corpus_core_threshold >}} times) representing the field's intellectual backbone. Sentence-transformer embeddings ({{< var emb_dimensions >}} dimensions) are available for all works with titles and publication years in range.
+The analysis uses a multilingual corpus of {{< var corpus_total >}} works on climate finance (1990--2024), assembled from {{< var corpus_sources >}} bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< var corpus_core >}} constitute a "core" subset (cited $\geq$ {{< var corpus_core_threshold >}} times) representing the field's intellectual backbone. Sentence-transformer embeddings ({{< var emb_dimensions >}} dimensions) are available for all works with titles and publication years in range.
 
 The corpus was designed for breadth ({{< var corpus_sources >}} sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). The multilingual embedding model (`paraphrase-multilingual-MiniLM-L12-v2`) places works in English, French, Chinese, Japanese, and German into a shared semantic space.
 
@@ -104,7 +104,7 @@ The corpus was designed for breadth ({{< var corpus_sources >}} sources, five la
 | Core subset (cited $\geq$ {{< var corpus_core_threshold >}}) | {{< var corpus_core >}} |
 | Embedding dimensions | {{< var emb_dimensions >}} |
 | Languages | English ({{< var lang_english_pct >}}%), Portuguese, Spanish, French, Chinese, Japanese, German |
-| Time span | 1990--2025 |
+| Time span | 1990--2024 |
 
 : Corpus summary. See the companion data descriptor for construction, deduplication, and validation details. {#tbl-corpus}
 
@@ -189,7 +189,7 @@ The core subset (cited $\geq$ {{< var corpus_core_threshold >}}, ~{{< var corpus
 
 1. Seeded embedding axis (efficiency ↔ accountability): opposition between market-calculative
    expertise (mobilization/leverage) and public-accounting expertise (additionality/equity/commensuration).
-   Strong global bimodality (ΔBIC=1264), strongest in 2015–2025.
+   Strong global bimodality (ΔBIC=1264), strongest in 2015–2024.
 
 2. Seeded lexical axis: confirms the divide is visible in language-level categories, not only
    in embedding geometry (ΔBIC=8961, r≈0.683 with embedding axis).
@@ -296,7 +296,7 @@ Future work:
 
 We have presented a framework for detecting structural breaks and polarization in scientific literatures using sentence-transformer embeddings. The framework combines four components: (1) sliding-window divergence with dual metrics (Jensen-Shannon on cluster proportions, cosine on embedding centroids) for endogenous break detection; (2) a censored-gap variant that filters gradual transitions from genuine discontinuities; (3) supervised seed-axis projection with Gaussian mixture bimodality testing for polarization detection; and (4) a two-level design (full corpus vs. citation-defined core) that disentangles volume-driven from structure-driven change.
 
-Applied to climate finance scholarship (1990--2025, {{< var corpus_total >}} works), the framework yields four findings. First, the field crystallized around 2009 (Copenhagen), not 2015 (Paris): the censored-gap analysis converges on a single dominant break at 2009, while Paris and Glasgow produce no comparable discontinuity. Second, the core literature shows no structural break at all --- the conceptual categories were established early and persisted. Third, the efficiency--accountability divide is real, cross-validated across embedding and lexical methods (ΔBIC = {{< var bim_dbic_embedding >}} and {{< var bim_dbic_tfidf >}} respectively, correlation *r* = {{< var bim_corr >}}), and temporally structured: unimodal during crystallization, bimodal after 2015. Fourth, this divide is PC2, not PC1 --- a secondary but persistent axis that cuts diagonally across the field's topical structure.
+Applied to climate finance scholarship (1990--2024, {{< var corpus_total >}} works), the framework yields four findings. First, the field crystallized around 2009 (Copenhagen), not 2015 (Paris): the censored-gap analysis converges on a single dominant break at 2009, while Paris and Glasgow produce no comparable discontinuity. Second, the core literature shows no structural break at all --- the conceptual categories were established early and persisted. Third, the efficiency--accountability divide is real, cross-validated across embedding and lexical methods (ΔBIC = {{< var bim_dbic_embedding >}} and {{< var bim_dbic_tfidf >}} respectively, correlation *r* = {{< var bim_corr >}}), and temporally structured: unimodal during crystallization, bimodal after 2015. Fourth, this divide is PC2, not PC1 --- a secondary but persistent axis that cuts diagonally across the field's topical structure.
 
 These findings validate the framework against a field with well-documented institutional history. The endogenously detected break (2009) aligns with the Copenhagen moment that historians identify as pivotal; the absence of breaks at Paris and Glasgow contradicts the policy-event periodization common in existing bibliometric studies [@care_weber2023; @shang_jin2023]. The framework thus adds empirical content to qualitative periodization.
 

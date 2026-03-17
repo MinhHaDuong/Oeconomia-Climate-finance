@@ -407,7 +407,7 @@ log.info("Cross-referencing method:\n"
          "  - Co-citation communities: Louvain on co-citation network of top-%d\n"
          "    most-cited pre-2007 references (gamma=0.5, %d communities)\n"
          "  - KMeans clusters: k=6 on sentence embeddings of %d papers\n"
-         "    with abstracts (1990-2025)\n"
+         "    with abstracts (%d-%d)\n"
          "\n"
          "Direct overlap: %d/%d community papers have embeddings (most\n"
          "foundational references lack abstracts in the corpus).\n"
@@ -422,7 +422,7 @@ log.info("Cross-referencing method:\n"
          "  semantic content align: that community is an intellectual ancestor of that cluster.\n"
          "- If a community is cited across many clusters, it represents a cross-cutting\n"
          "  intellectual foundation (e.g., general econometric methods).",
-         TOP_N, n_comm, len(df), len(matched), n_total,
+         TOP_N, n_comm, len(df), _year_min, _year_max, len(matched), n_total,
          n_unique_citers, len(citer_unique))
 
 log.info("Done.")

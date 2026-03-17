@@ -4,7 +4,7 @@
 
 **Model:** `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers library). This is a 12-layer multilingual BERT producing 384-dimensional vectors, chosen for its ability to place texts in English, French, Chinese, Japanese, and German into a shared semantic space.
 
-**Input selection:** Papers from `refined_works.csv` with a non-empty title and a publication year between 1990 and 2025. For each work, the embedded text concatenates title, abstract (if longer than 20 characters), and keywords (if available).
+**Input selection:** Papers from `refined_works.csv` with a non-empty title and a publication year between 1990 and 2024. For each work, the embedded text concatenates title, abstract (if longer than 20 characters), and keywords (if available).
 
 **Encoding parameters:**
 - Batch size: 256

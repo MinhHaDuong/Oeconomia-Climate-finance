@@ -115,14 +115,13 @@ if args.breaks:
 else:
     cfg = load_analysis_config()
     all_breaks = cfg["periodization"]["breaks"]
-boundaries = [1990] + all_breaks + [2026]
+_p_cfg = cfg["periodization"]
+boundaries = [_p_cfg["year_min"]] + all_breaks + [_p_cfg["year_max"] + 1]
 period_labels = []
 for i in range(len(boundaries) - 1):
     lo = boundaries[i]
     hi = boundaries[i + 1] - 1
-    if i == len(boundaries) - 2:
-        hi = 2025
-    period_labels.append(f"{lo}–{hi}")
+    period_labels.append(f"{lo}\u2013{hi}")
 
 log.info("Period boundaries: %s (manuscript three-act structure)", all_breaks)
 log.info("Period labels: %s", period_labels)

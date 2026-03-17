@@ -143,7 +143,7 @@ def bimodality_stats(v):
     # Per-period rows
     for label, key in [("embedding_1990\u20132006", "pre2007"),
                        ("embedding_2007\u20132014", "2007_2014"),
-                       ("embedding_2015\u20132025", "post2015")]:
+                       ("embedding_2015\u20132024", "post2015")]:
         period = df[df["method"] == label]
         if not period.empty:
             row = period.iloc[0]
@@ -167,7 +167,7 @@ def bimodality_stats(v):
     # Core per-period
     for label, key in [("embedding_1990\u20132006", "pre2007"),
                        ("embedding_2007\u20132014", "2007_2014"),
-                       ("embedding_2015\u20132025", "post2015")]:
+                       ("embedding_2015\u20132024", "post2015")]:
         period = core[core["method"] == label]
         if not period.empty:
             v[f"bim_core_dbic_{key}"] = _signed_int(period.iloc[0]["delta_bic"])

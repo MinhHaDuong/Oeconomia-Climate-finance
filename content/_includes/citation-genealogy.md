@@ -4,7 +4,7 @@
 
 ### Backbone selection
 
-Papers from `refined_works.csv` with an abstract longer than 50 characters, a valid year in 1985--2025, and cited_by_count >= 50 form the backbone. Result: approximately 1,128 backbone papers.
+Papers from `refined_works.csv` with an abstract longer than 50 characters, a valid year in 1985--2024, and cited_by_count >= 50 form the backbone. Result: approximately 1,128 backbone papers.
 
 ### Three-band lineage assignment
 

@@ -4,7 +4,7 @@
 
 ### Period assignment
 
-Papers are assigned to three periods matching the manuscript's three-act structure: 1990--2006, 2007--2014, 2015--2025. Period boundaries are set at [1990, 2007, 2015, 2026).
+Papers are assigned to three periods matching the manuscript's three-act structure: 1990--2006, 2007--2014, 2015--2024. Period boundaries are set at [1990, 2007, 2015, 2025).
 
 ### Cluster labeling
 
