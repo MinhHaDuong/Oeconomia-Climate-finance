@@ -209,7 +209,6 @@ $(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
 stats: $(STATS)
 
 # ── Tables (generated, included by Quarto) ──────────────
-MANUSCRIPT_TABLES := content/tables/tab_core_venues_top10.md
 
 # Core subset → venues table
 $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
@@ -356,10 +355,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(MANUSCRIPT_INCLUDES) $(STATS)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) $(STATS)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(MANUSCRIPT_INCLUDES) $(STATS)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) $(STATS)
 	quarto render $< --to docx
 
 output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
