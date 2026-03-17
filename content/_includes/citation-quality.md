@@ -2,7 +2,7 @@
 
 **Scripts:** `scripts/enrich_citations_batch.py` (Crossref), `scripts/enrich_citations_openalex.py` (OpenAlex), `scripts/qa_citations.py` (verification)
 
-**Data:** `content/tables/qc_citations_report.json`
+**Data:** `content/tables/qa_citations_report.json`
 
 ### Coverage
 
