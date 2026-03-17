@@ -141,6 +141,16 @@ def capture_budget(resp):
     return resp.headers.get("X-RateLimit-Remaining-USD", "?")
 
 
+def budget_exhausted(remaining):
+    """Return True if the API budget is known to be zero or negative."""
+    if remaining == "?":
+        return False
+    try:
+        return float(remaining) <= 0
+    except (ValueError, TypeError):
+        return False
+
+
 def load_query_config():
     """Load tiered query configuration from YAML."""
     yaml_path = os.path.join(CONFIG_DIR, "openalex_queries.yaml")
@@ -294,6 +304,10 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
         log.info("[%s] %d/%s (new: %d, budget: $%s)",
                  search_term, total_fetched, total, n_new, remaining)
 
+        if budget_exhausted(remaining):
+            log.warning("API budget exhausted ($%s remaining), stopping.", remaining)
+            break
+
         cursor = meta.get("next_cursor")
         if limit and total_fetched >= limit:
             break
@@ -302,7 +316,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
     if batch:
         append_to_pool(batch, pool_file)
 
-    return n_new
+    return n_new, budget_exhausted(remaining)
 
 
 def dry_run_query(search_term, delay, from_date=None):
@@ -469,8 +483,11 @@ def main():
     grand_total = 0
     queries_completed = 0
     queries_skipped = 0
+    stop_no_budget = False
 
     for tier_num in sorted(tiers.keys()):
+        if stop_no_budget:
+            break
         tier_cfg = tiers[tier_num]
         desc = tier_cfg.get("description", f"Tier {tier_num}")
         terms = tier_cfg.get("terms", [])
@@ -515,10 +532,14 @@ def main():
                                         delay=args.delay)
                 budget_start = capture_budget(probe_resp)
                 log.info("Budget at start: $%s", budget_start)
+                if budget_exhausted(budget_start):
+                    log.warning("Budget already exhausted at start — aborting.")
+                    stop_no_budget = True
+                    break
 
             date_info = f" (since {from_date})" if from_date else ""
             log.info('Querying: "%s"%s', term, date_info)
-            n_new = fetch_query(
+            n_new, out_of_budget = fetch_query(
                 term, args.delay, args.limit, existing_ids, pf,
                 from_date=from_date)
             grand_total += n_new
@@ -527,6 +548,11 @@ def main():
             # Record per-query completion date
             query_dates[slug] = today
             save_query_dates(query_dates)
+
+            if out_of_budget:
+                log.warning("Budget exhausted — skipping remaining queries.")
+                stop_no_budget = True
+                break
 
     if args.dry_run:
         log.info("=" * 60)
