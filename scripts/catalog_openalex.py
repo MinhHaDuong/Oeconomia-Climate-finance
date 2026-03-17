@@ -290,6 +290,12 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
         if OPENALEX_API_KEY:
             params["api_key"] = OPENALEX_API_KEY
         resp = polite_get(OA_API, params=params, delay=delay)
+
+        if resp.status_code == 429:
+            remaining = capture_budget(resp)
+            log.warning("Rate limited during pagination, stopping query.")
+            break
+
         data = resp.json()
 
         remaining = capture_budget(resp)
@@ -548,6 +554,9 @@ def main():
                 probe_resp = polite_get(OA_API, params=probe_params,
                                         delay=args.delay)
                 budget_start = capture_budget(probe_resp)
+                if probe_resp.status_code == 429:
+                    log.warning("Rate limited on budget probe — budget exhausted.")
+                    budget_start = "0"
                 log.info("Budget at start: $%s", budget_start)
                 if budget_exhausted(budget_start):
                     log.warning("Budget already exhausted at start — aborting.")
