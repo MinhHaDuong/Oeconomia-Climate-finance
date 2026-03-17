@@ -128,20 +128,20 @@ class TestEnrichCitationsOpenAlexCLI:
 
 
 # ---------------------------------------------------------------------------
-# qc_citations.py
+# qa_citations.py
 # ---------------------------------------------------------------------------
 
 class TestQcCitationsCLI:
     def test_accepts_works_input(self):
-        output = parse_script_args("qc_citations.py")
+        output = parse_script_args("qa_citations.py")
         assert "--works-input" in output, \
-            "qc_citations.py must accept --works-input"
+            "qa_citations.py must accept --works-input"
 
     def test_works_input_default_is_defined(self):
-        output = parse_script_args("qc_citations.py")
+        output = parse_script_args("qa_citations.py")
         assert "unified_works.csv" in output or "enriched_works.csv" in output \
                or "refined_works.csv" in output, \
-            "qc_citations.py --works-input must have a default path"
+            "qa_citations.py --works-input must have a default path"
 
 
 # ---------------------------------------------------------------------------

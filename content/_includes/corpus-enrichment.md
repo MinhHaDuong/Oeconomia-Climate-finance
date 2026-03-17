@@ -31,7 +31,7 @@ Citation links are assembled from three sources:
 - **OpenAlex** (`enrich_citations_openalex.py`): Fills gaps using OpenAlex's `referenced_works` field. Also incorporates citation links extracted during the OpenAlex catalog build (`openalex_citations.csv`).
 - **ISTEX** (`catalog_istex.py`): Reference lists (`refBibs`) are extracted during discovery and stored in `istex_refs.csv`.
 
-Quality control (`qc_citations.py`) validates DOI formats, removes self-citations, and reports coverage statistics. The merged `citations.csv` is needed for citation isolation detection (flag 4 in §3).
+Quality control (`qa_citations.py`) validates DOI formats, removes self-citations, and reports coverage statistics. The merged `citations.csv` is needed for citation isolation detection (flag 4 in §3).
 
 ### Embedding generation
 

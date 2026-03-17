@@ -8,7 +8,7 @@ Also profiles the never-fetched DOIs to quantify the structural coverage ceiling
 Saves results to content/tables/qc_citations_report.json
 
 Usage:
-    uv run python scripts/qc_citations.py [--sample-n 30] [--seed 42]
+    uv run python scripts/qa_citations.py [--sample-n 30] [--seed 42]
 """
 
 import argparse
@@ -24,7 +24,7 @@ import requests
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, MAILTO, normalize_doi, get_logger
 
-log = get_logger("qc_citations")
+log = get_logger("qa_citations")
 
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 OUTPUT_PATH = os.path.join(

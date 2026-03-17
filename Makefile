@@ -117,7 +117,7 @@ corpus-discover:
 	uv run dvc repro catalog_merge
 
 corpus-enrich:
-	uv run dvc repro enrich_works enrich_citations qc_citations enrich_embeddings
+	uv run dvc repro enrich_works enrich_citations qa_citations enrich_embeddings
 
 corpus-extend:
 	uv run dvc repro extend
@@ -135,19 +135,10 @@ corpus-align:
 deploy-corpus:
 	uv run dvc push
 
-# ── Corpus reporting & validation ─────────────────────────
-content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
+# ── Corpus diagnostics (Phase 1 — reads enrichment caches) ──
+content/tables/qc_citations_report.json: scripts/qa_citations.py scripts/utils.py \
+		$(DATA_DIR)/citations.csv
 	uv run python $<
-
-content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
-	uv run python $<
-
-corpus-tables: content/tables/tab_corpus_sources.csv \
-               content/tables/qc_citations_report.json \
-               content/_includes/tab_citation_coverage.md
-
-corpus-validate: $(REFINED)
-	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
 
 # ═══════════════════════════════════════════════════════════
 # PHASE 2 — Analysis & Figures (fast, deterministic, run often)
@@ -165,20 +156,28 @@ check-corpus:
 	done; \
 	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
 
-# ── Statistics (computed from pipeline outputs) ──────────
-STATS := _variables.yml
+corpus-validate: $(REFINED)
+	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
+
+# ── Corpus reporting (Phase 2 — reads only refined data) ──
+content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
+	uv run python $<
 
 content/tables/tab_corpus_sources.csv: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/tables/qc_citations_report.json: scripts/qc_citations.py scripts/utils.py \
-		$(DATA_DIR)/citations.csv
-	uv run python $<
+corpus-tables: content/tables/tab_corpus_sources.csv \
+               content/_includes/tab_citation_coverage.md
+
+# ── Statistics (computed from pipeline outputs) ──────────
+STATS := _variables.yml
 
 $(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
-		content/tables/tab_axis_detection.csv content/tables/tab_corpus_sources.csv \
-		content/tables/qc_citations_report.json
+		content/tables/tab_axis_detection.csv content/tables/tab_corpus_sources.csv
 	uv run python $<
 
 stats: $(STATS)

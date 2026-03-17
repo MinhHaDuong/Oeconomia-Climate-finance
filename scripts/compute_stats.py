@@ -219,8 +219,8 @@ def pca_stats(v):
 
 
 def citation_stats(v):
-    """Citation graph coverage from qc_citations_report.json + citations.csv."""
-    report = _read_json("qc_citations_report.json")
+    """Citation graph coverage from qa_citations_report.json + citations.csv."""
+    report = _read_json("qa_citations_report.json")
     if report is not None:
         c = report["corpus"]
         v["cite_total_dois"] = _int(c["total_dois"])

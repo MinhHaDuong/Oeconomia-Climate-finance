@@ -129,10 +129,10 @@ stages:
       - data/catalogs/citations.csv
 
   # Phase 1b.4: Citation QC — verify against Crossref ground truth
-  qc_citations:
-    cmd: uv run python scripts/qc_citations.py --works-input data/catalogs/enriched_works.csv
+  qa_citations:
+    cmd: uv run python scripts/qa_citations.py --works-input data/catalogs/enriched_works.csv
     deps:
-      - scripts/qc_citations.py
+      - scripts/qa_citations.py
       - scripts/utils.py
       - data/catalogs/enriched_works.csv
       - data/catalogs/citations.csv
