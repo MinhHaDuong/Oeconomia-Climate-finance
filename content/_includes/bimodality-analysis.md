@@ -21,8 +21,8 @@ This analysis tests whether the corpus is structured around two opposed intellec
 ### Bimodality testing
 
 - **Gaussian Mixture Model (GMM):** BIC comparison between 1-component and 2-component models. Result: BIC_1 = {{< var bim_bic1 >}}, BIC_2 = {{< var bim_bic2 >}}, **ΔBIC = {{< var bim_dbic_embedding >}}** (strong evidence for bimodality; ΔBIC > 10 is conventionally significant).
-- **KDE visualization:** Kernel density estimate with bandwidth 0.15, split by period (1990--2006, 2007--2014, 2015--2025). GMM component overlays shown as dashed grey lines. @fig-kde shows the overall KDE of embedding scores.
-- **Per-period bimodality:** ΔBIC = {{< var bim_dbic_pre2007 >}} (1990--2006, n={{< var bim_n_pre2007 >}}), ΔBIC = {{< var bim_dbic_2007_2014 >}} (2007--2014, n={{< var bim_n_2007_2014 >}}; unimodal), ΔBIC = {{< var bim_dbic_post2015 >}} (2015--2025, n={{< var bim_n_post2015 >}}; strong bimodality). The bimodal structure emerges most clearly in the established-field period.
+- **KDE visualization:** Kernel density estimate with bandwidth 0.15, split by period (1990--2006, 2007--2014, 2015--2024). GMM component overlays shown as dashed grey lines. @fig-kde shows the overall KDE of embedding scores.
+- **Per-period bimodality:** ΔBIC = {{< var bim_dbic_pre2007 >}} (1990--2006, n={{< var bim_n_pre2007 >}}), ΔBIC = {{< var bim_dbic_2007_2014 >}} (2007--2014, n={{< var bim_n_2007_2014 >}}; unimodal), ΔBIC = {{< var bim_dbic_post2015 >}} (2015--2024, n={{< var bim_n_post2015 >}}; strong bimodality). The bimodal structure emerges most clearly in the established-field period.
 
 ![KDE of embedding axis scores with GMM component overlay.](figures/fig_kde.png){#fig-kde width=100%}
 

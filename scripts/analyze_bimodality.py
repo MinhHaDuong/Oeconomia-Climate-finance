@@ -30,7 +30,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
 
 from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings,
-                   save_figure)
+                   save_figure, load_analysis_config, load_analysis_periods)
 
 log = get_logger("analyze_bimodality")
 
@@ -64,22 +64,23 @@ ACCOUNTABILITY_TERMS = {
     "grant equivalent", "overreporting", "climate debt",
 }
 
-# Three-act periods
-PERIODS = {
-    "1990–2006": (1990, 2006),
-    "2007–2014": (2007, 2014),
-    "2015–2025": (2015, 2025),
-}
-PERIOD_COLORS = {"1990–2006": "#8da0cb", "2007–2014": "#fc8d62", "2015–2025": "#66c2a5"}
+# Three-act periods (from config)
+_period_tuples, _period_labels = load_analysis_periods()
+PERIODS = dict(zip(_period_labels, _period_tuples))
+PERIOD_COLORS = dict(zip(_period_labels, ["#8da0cb", "#fc8d62", "#66c2a5"]))
 
 
 # --- Load data + embeddings ---
 log.info("Loading data...")
+_cfg = load_analysis_config()
+_year_min = _cfg["periodization"]["year_min"]
+_year_max = _cfg["periodization"]["year_max"]
+
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
 has_title = works["title"].notna() & (works["title"].str.len() > 0)
-in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
 df = works[has_title & in_range].copy().reset_index(drop=True)
 
 embeddings = load_refined_embeddings()[(has_title & in_range).values]

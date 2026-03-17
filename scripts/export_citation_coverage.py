@@ -15,7 +15,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi
+from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi, load_analysis_periods
 
 log = get_logger("export_citation_coverage")
 
@@ -24,11 +24,8 @@ CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 OUTPUT_PATH = os.path.join(BASE_DIR, "content", "_includes", "tab_citation_coverage.md")
 
 CORE_THRESHOLD = 50
-PERIODS = [
-    ("1990–2006", 1990, 2006),
-    ("2007–2014", 2007, 2014),
-    ("2015–2025", 2015, 2025),
-]
+_period_tuples, _period_labels = load_analysis_periods()
+PERIODS = [(label, start, end) for label, (start, end) in zip(_period_labels, _period_tuples)]
 
 
 def main():

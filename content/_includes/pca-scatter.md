@@ -9,7 +9,7 @@ This script visualizes how the field's thematic structure evolves over time by p
 Projects all papers onto the efficiency↔accountability seed axis (identical to §7's Method A axis). Produces a single-panel scatter plot:
 - **X-axis:** publication year (with ±0.3 uniform jitter to reduce overplotting)
 - **Y-axis:** seed axis score (positive = efficiency, negative = accountability)
-- **Color:** three-period scheme (blue 1990–2006, orange 2007–2014, green 2015–2025)
+- **Color:** three-period scheme (blue 1990–2006, orange 2007–2014, green 2015–2024)
 - **Point size:** proportional to sqrt(cited_by_count / 50)
 - **Black line:** yearly median score (smoother)
 - **Vertical dashes:** COP events (Rio, Kyoto, Copenhagen, Paris, Glasgow, Baku)

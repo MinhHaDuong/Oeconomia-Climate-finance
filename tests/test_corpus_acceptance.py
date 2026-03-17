@@ -31,6 +31,7 @@ from utils import (
     REFINED_EMBEDDINGS_PATH,
     WORKS_COLUMNS,
     normalize_doi,
+    load_analysis_config,
 )
 
 
@@ -52,8 +53,12 @@ CORE_MAX = 5_000
 FLAG_RATE_MAX = 0.30   # at most 30% of enriched corpus should be flagged
 PROTECTION_MIN = 5_000 # at least this many papers protected
 ENGLISH_PCT_MIN = 75.0
-YEAR_MIN = 1960  # foundational works predate "climate finance"
-YEAR_MAX = 2026
+# Year bounds derived from config: corpus may include works older than
+# the analysis range (foundational works) and up to 2 years beyond year_max
+# (collection lag).
+_ANALYSIS_CFG = load_analysis_config()
+YEAR_MIN = _ANALYSIS_CFG["periodization"]["year_min"] - 30  # foundational works predate "climate finance"
+YEAR_MAX = _ANALYSIS_CFG["periodization"]["year_max"] + 2   # collection may include recent years
 REQUIRED_COLUMNS = [
     "source", "source_id", "doi", "title", "year",
     "cited_by_count", "abstract",

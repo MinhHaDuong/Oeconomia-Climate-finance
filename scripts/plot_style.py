@@ -4,9 +4,15 @@ All in-paper figures import this module for consistent grayscale styling,
 serif fonts, and period annotations calibrated for 12.7 cm (5 inch) width.
 """
 
+import os
+import sys
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+sys.path.insert(0, os.path.dirname(__file__))
+from utils import load_analysis_periods
 
 # --- Dimensions ---
 FIGWIDTH = 120 / 25.4  # 120 mm = 4.724 inches
@@ -19,15 +25,17 @@ LIGHT = "#BBBBBB"
 FILL = "#DDDDDD"
 WHITE = "#FFFFFF"
 
-# --- Periods ---
+# --- Periods (derived from config/analysis.yaml) ---
+_PERIOD_NAMES = ["Before", "Crystallisation", "Disputes"]
+_period_tuples, _period_labels = load_analysis_periods()
 PERIODS = [
-    ("Before", 1990, 2006),
-    ("Crystallisation", 2007, 2014),
-    ("Disputes", 2015, 2025),
+    (name, start, end)
+    for name, (start, end) in zip(_PERIOD_NAMES, _period_tuples)
 ]
 
-# Period break years (boundaries between acts). Derived from PERIODS above.
-PERIOD_BREAKS = [2007, 2015]
+# Period break years (boundaries between acts). Derived from config.
+from utils import load_analysis_config as _load_analysis_config
+PERIOD_BREAKS = _load_analysis_config()["periodization"]["breaks"]
 
 INCOMPLETE_FROM = 2022  # OpenAlex indexing incomplete from this year
 

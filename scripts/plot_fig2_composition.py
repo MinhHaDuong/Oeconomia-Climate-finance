@@ -3,7 +3,7 @@
 
 Six-panel grouped horizontal bar chart showing how each thematic cluster's
 share evolves from Before (1990-2006) through Crystallisation (2007-2014)
-to Disputes (2015-2025).
+to Disputes (2015-2024).
 
 Inputs:
   - content/tables/tab_alluvial.csv  (period × cluster counts)

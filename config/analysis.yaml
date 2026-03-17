@@ -3,6 +3,8 @@
 # Phase 1 (corpus building) parameters live in corpus_refine.yaml and friends.
 
 periodization:
+  year_min: 1990
+  year_max: 2024
   breaks: [2007, 2015]  # Year boundaries between acts (I→II, II→III)
 
 clustering:
