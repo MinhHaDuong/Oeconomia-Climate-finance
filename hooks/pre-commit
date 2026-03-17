@@ -22,7 +22,7 @@ if [ -n "$secrets" ]; then
     exit 1
 fi
 
-# 4. No large files (>500KB), except lockfiles
+# 4. No large files (>500KB), except uv.lock (grows with CUDA wheel metadata)
 large=""
 for file in $(git diff --cached --name-only --diff-filter=d); do
     case "$file" in uv.lock) continue ;; esac
