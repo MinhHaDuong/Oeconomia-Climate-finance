@@ -119,24 +119,26 @@ class TestOpenAlexYearFilter:
 # ---------------------------------------------------------------------------
 
 class TestIstexYearFilter:
+    _BASE = '"climate finance" OR "finance climat"'
+
     def test_build_istex_query_includes_year(self):
         from catalog_istex import build_istex_query
-        q = build_istex_query(year_min=1990, year_max=2024)
+        q = build_istex_query(self._BASE, year_min=1990, year_max=2024)
         assert "publicationDate:[1990 TO 2024]" in q
 
     def test_build_istex_query_no_year_when_none(self):
         from catalog_istex import build_istex_query
-        q = build_istex_query()
+        q = build_istex_query(self._BASE)
         assert "publicationDate" not in q
 
     def test_build_istex_query_uses_config_query(self):
-        """#176: build_istex_query reads base query from config."""
+        """#176: build_istex_query includes the base query string."""
         from catalog_istex import build_istex_query
         from utils import load_collect_config
         cfg = load_collect_config()
-        q = build_istex_query()
-        # The base query from config should appear in the built query
-        assert cfg["queries"]["istex"] in q
+        base = cfg["queries"]["istex"]
+        q = build_istex_query(base)
+        assert base in q
 
 
 # ---------------------------------------------------------------------------

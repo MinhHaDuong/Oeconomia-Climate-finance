@@ -134,25 +134,28 @@ def build_record(d):
 
 # --- API mode ---
 
-def build_istex_query(year_min=None, year_max=None):
+def build_istex_query(base_query, year_min=None, year_max=None):
     """Build ISTEX query string with optional year bounds.
 
-    Base query is read from config/corpus_collect.yaml (queries.istex).
+    Args:
+        base_query: The base search query (from config/corpus_collect.yaml).
+        year_min:   Optional minimum publication year (inclusive).
+        year_max:   Optional maximum publication year (inclusive).
+
     ISTEX uses publicationDate field with bracket syntax: [YYYY TO YYYY].
     """
-    cfg = load_collect_config()
-    q = cfg["queries"]["istex"]
+    q = base_query
     if year_min is not None and year_max is not None:
         q += f" AND publicationDate:[{year_min} TO {year_max}]"
     return q
 
 
-def fetch_istex_api(year_min=None, year_max=None):
+def fetch_istex_api(base_query, year_min=None, year_max=None):
     """Fetch all results from ISTEX search API, store in pool."""
     pf = pool_path("istex", "climate_finance")
     all_records = []
     offset = 0
-    query = build_istex_query(year_min, year_max)
+    query = build_istex_query(base_query, year_min, year_max)
 
     # First request to get total
     params = {
@@ -244,6 +247,7 @@ def main():
     collect_cfg = load_collect_config()
     year_min = collect_cfg["year_min"]
     year_max = collect_cfg["year_max"]
+    base_query = collect_cfg["queries"]["istex"]
     log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
 
     if args.local:
@@ -251,7 +255,8 @@ def main():
     elif args.extract_only:
         raw_records = extract_from_pool()
     else:
-        raw_records = fetch_istex_api(year_min=year_min, year_max=year_max)
+        raw_records = fetch_istex_api(base_query, year_min=year_min,
+                                      year_max=year_max)
 
     works = []
     all_refs = []
