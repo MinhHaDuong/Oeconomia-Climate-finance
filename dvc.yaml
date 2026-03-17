@@ -114,8 +114,6 @@ stages:
       - data/catalogs/unified_works.csv
     outs:
       - data/catalogs/enriched_works.csv
-      - data/catalogs/enrich_cache:
-          persist: true
 
   # Phase 1b.3: Build citation graph (Crossref batch + OpenAlex referenced_works)
   enrich_citations:
@@ -128,8 +126,7 @@ stages:
       - scripts/utils.py
       - data/catalogs/enriched_works.csv
     outs:
-      - data/catalogs/citations.csv:
-          persist: true
+      - data/catalogs/citations.csv
 
   # Phase 1b.4: Citation QC — verify against Crossref ground truth
   qc_citations:
@@ -165,8 +162,6 @@ stages:
       - data/catalogs/enriched_works.csv
     outs:
       - data/catalogs/extended_works.csv
-      - data/catalogs/llm_relevance_cache.csv:
-          persist: true
 
   # Phase 1d: Filter → refined_works.csv + corpus_audit.csv
   # Applies keep/remove policy based on flags set in extend stage.
