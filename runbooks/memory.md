@@ -18,7 +18,8 @@ Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
    - Does it fit within list caps?
    - Does it have a TTL?
 2. For sweeps: scan every entry against staleness criteria below.
-3. For `project_*.md` files: delete if the state described is complete or superseded; remove MEMORY.md pointer.
+3. **Cross-reference against runbooks**: for each feedback memory, check if the rule is already covered by a runbook or guideline doc. If covered, delete the memory. If the rule is worth codifying but missing, add it to the appropriate runbook and then delete the memory. Memories are for what runbooks can't capture; runbooks are the durable home for process rules.
+4. For `project_*.md` files: delete if the state described is complete or superseded; remove MEMORY.md pointer.
 
 ## What to remember
 
@@ -30,7 +31,7 @@ Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
 
 - Anything derivable from code, git history, or other docs
 - Ephemeral task state (use STATE.md or git commits instead)
-- Content already in README, ROADMAP, STATE, or guidelines docs
+- Content already in README, ROADMAP, STATE, runbooks, or guidelines docs
 
 ## List size limits
 
