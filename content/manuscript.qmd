@@ -25,7 +25,6 @@ format:
             \renewcommand{\headrulewidth}{0pt}
           }
           \usepackage{etoolbox}
-          \usepackage{float}
           \renewcommand{\CSLBlock}[1]{\newline\noindent #1}
       - file: author-footnote.tex
 ---
@@ -115,8 +114,6 @@ Co-citation analysis confirms that these three traditions operated without meani
 
 The corpus also reveals a gap between intellectual-history narrative and citation practice. The burden-sharing tradition described in §1.3 is anchored in our narrative by @negishi1960, whose welfare weights informed integrated assessment models by @nordhaus1992 and others. Yet Negishi (1960) does not appear among the top-250 pre-2007 references in the corpus: climate finance scholars did not cite the welfare-weights framework directly. Nordhaus, Barrett, Tol, and Fankhauser do appear, but they are cited for cost-benefit analysis and environmental agreement design, not for the burden-sharing calculus as such. The specific question "how should costs be distributed?"---operationalised through Negishi weights and equity criteria---left no distinct co-citation footprint. What the algorithm detects as the third pre-2007 community is instead anchored by @north1990, @dimaggio1983, and @finnemore1998---the institutionalist and constructivist literature that framed the UNFCCC as a site of norm diffusion rather than welfare optimisation. The burden-sharing *question* persisted, but the analytical framework through which climate finance scholars addressed it shifted from welfare economics to institutional analysis.
 
-\begin{table}[H]
-
 | Tradition and core question | Intellectual-history anchors | Co-citation anchors (pre-2007) | Contribution to climate finance |
 |:------------|:------------|:------------|:------------------------------|
 | **Environmental economics** — What price for carbon? | @nordhaus1992; @manne_richels1992; @stern2007; @weitzman2007 | @weitzman1974; @barrett1994; @carraro1993 | Cost--benefit logic, optimal abatement paths, shadow prices of carbon — but no concept of North--South financial *flows* |
@@ -124,8 +121,6 @@ The corpus also reveals a gap between intellectual-history narrative and citatio
 | **International governance** — Through what institutions, by what norms? | @negishi1960; UNFCCC Art. 4.3 (1992); Kyoto Protocol (1997) | @north1990; @dimaggio1983; @finnemore1998 | Differentiated responsibilities, norm diffusion, "new and additional" resources — governance framing displaced the welfare-theoretic calculus |
 
 : Three intellectual traditions preceding climate finance (pre-2007). *Intellectual-history anchors* are works foregrounded in §1.1–1.3; *co-citation anchors* are the most-connected papers in the algorithmically detected community. {#tbl-traditions}
-
-\end{table}
 
 \newpage
 
