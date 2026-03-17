@@ -32,7 +32,7 @@ from refine_flags import (
     flag_semantic_outlier,
     flag_title_blacklist,
 )
-from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv
+from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv, load_analysis_config
 
 log = get_logger("corpus_refine")
 
@@ -358,7 +358,8 @@ def load_embeddings(df, cheap=False):
     emb_df = df.copy()
     emb_df = emb_df[emb_df["abstract"].notna() & (emb_df["abstract"].str.len() > 50)]
     emb_df["year_num"] = pd.to_numeric(emb_df["year"], errors="coerce")
-    emb_df = emb_df[(emb_df["year_num"] >= 1990) & (emb_df["year_num"] <= 2025)]
+    _cfg = load_analysis_config()
+    emb_df = emb_df[(emb_df["year_num"] >= _cfg["periodization"]["year_min"]) & (emb_df["year_num"] <= _cfg["periodization"]["year_max"])]
     emb_df = emb_df.reset_index(drop=True)
     cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
     embeddings = cache["vectors"] if "vectors" in cache.files else cache

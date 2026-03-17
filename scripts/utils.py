@@ -343,18 +343,22 @@ def load_refined_citations():
 def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=50):
     """Load refined_works.csv with standard filtering + optional embeddings.
 
-    Applies: year coercion, title-present filter, year in [1990, 2025],
-    optional core filtering (cited_by_count >= cite_threshold).
+    Applies: year coercion, title-present filter, year in [year_min, year_max]
+    (from config/analysis.yaml), optional core filtering (cited_by_count >= cite_threshold).
 
     Returns (df, embeddings) where embeddings is None if with_embeddings=False.
     """
     import numpy as np
 
+    cfg = load_analysis_config()
+    year_min = cfg["periodization"]["year_min"]
+    year_max = cfg["periodization"]["year_max"]
+
     works = pd.read_csv(REFINED_WORKS_PATH)
     works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
-    in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+    in_range = (works["year"] >= year_min) & (works["year"] <= year_max)
     keep_mask = (has_title & in_range).values
     df = works[keep_mask].copy().reset_index(drop=True)
 

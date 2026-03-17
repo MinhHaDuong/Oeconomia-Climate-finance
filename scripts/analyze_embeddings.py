@@ -24,7 +24,7 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, get_logger
+from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, get_logger, load_analysis_config
 
 log = get_logger("analyze_embeddings")
 
@@ -93,11 +93,14 @@ def main():
     log.info("Loading works from %s...", args.works_input)
     works = pd.read_csv(args.works_input)
 
-    # Filter: must have a title, year in range
+    # Filter: must have a title, year in range (from config)
+    _cfg = load_analysis_config()
+    _year_min = _cfg["periodization"]["year_min"]
+    _year_max = _cfg["periodization"]["year_max"]
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
-    in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+    in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
     df = works[has_title & in_range].copy().reset_index(drop=True)
-    log.info("Works with titles (1990-2025): %d", len(df))
+    log.info("Works with titles (%d-%d): %d", _year_min, _year_max, len(df))
 
     # Build keys, text, and text hashes
     df["_key"] = df.apply(work_key, axis=1)

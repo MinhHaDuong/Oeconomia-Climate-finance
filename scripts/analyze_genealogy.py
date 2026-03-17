@@ -22,7 +22,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi, save_figure
+from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations,
+                   normalize_doi, save_figure, load_analysis_periods, load_analysis_config)
 
 log = get_logger("analyze_genealogy")
 
@@ -44,9 +45,10 @@ COP_EVENTS = {
     2024: "Baku",
 }
 
-# Periods (three-act structure from breakpoint detection)
-PERIOD_BOUNDS = [1990, 2007, 2015, 2026]
-PERIOD_LABELS = ["1990–2006", "2007–2014", "2015–2025"]
+# Periods (three-act structure from config/analysis.yaml)
+_period_tuples, PERIOD_LABELS = load_analysis_periods()
+_cfg = load_analysis_config()
+PERIOD_BOUNDS = [_cfg["periodization"]["year_min"]] + _cfg["periodization"]["breaks"] + [_cfg["periodization"]["year_max"] + 1]
 PERIOD_COLORS = ["#f0f0f0", "#e8e8e8", "#f0f0f0", "#e8e8e8"]
 
 # --- Args ---
@@ -132,7 +134,7 @@ backbone_dois = set(high_cited["doi_norm"])
 # Filter to papers with valid year
 backbone_dois = {d for d in backbone_dois
                  if d in doi_meta and doi_meta[d]["year"] is not None
-                 and 1985 <= (doi_meta[d]["year"] or 0) <= 2025}
+                 and 1985 <= (doi_meta[d]["year"] or 0) <= _cfg["periodization"]["year_max"]}
 
 log.info("Backbone papers (with valid year): %d", len(backbone_dois))
 

@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
 from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_cluster_labels,
                    load_refined_citations, load_refined_embeddings,
-                   normalize_doi, save_figure)
+                   normalize_doi, save_figure, load_analysis_config)
 
 log = get_logger("plot_heatmap_communities_clusters")
 
@@ -75,10 +75,13 @@ works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
 # Filter: must have abstract, year in range (matches embedding generation)
+_cfg = load_analysis_config()
+_year_min = _cfg["periodization"]["year_min"]
+_year_max = _cfg["periodization"]["year_max"]
 has_abstract = works["abstract"].notna() & (works["abstract"].str.len() > 50)
-in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
 df = works[has_abstract & in_range].copy().reset_index(drop=True)
-log.info("Works with abstracts (1990-2025): %d", len(df))
+log.info("Works with abstracts (%d-%d): %d", _year_min, _year_max, len(df))
 
 embeddings = load_refined_embeddings()
 if len(embeddings) != len(df):

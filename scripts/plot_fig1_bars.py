@@ -1,4 +1,4 @@
-"""Fig 1 (bars): Corpus documents per year, 2000-2025.
+"""Fig 1 (bars): Corpus documents per year, 2000-2024.
 
 Stacked bar chart showing total corpus size and the subset mentioning
 "climate finance" in title or abstract. For Oeconomia submission.

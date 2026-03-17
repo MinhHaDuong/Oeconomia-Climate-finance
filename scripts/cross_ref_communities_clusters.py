@@ -23,7 +23,8 @@ from sklearn.cluster import KMeans
 # Add scripts dir to path for utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils import (CATALOGS_DIR, get_logger, load_cluster_labels,
-                   load_refined_citations, load_refined_embeddings, normalize_doi)
+                   load_refined_citations, load_refined_embeddings, normalize_doi,
+                   load_analysis_config)
 
 log = get_logger("cross_ref_communities_clusters")
 
@@ -42,10 +43,13 @@ works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
 # Filter: must have abstract, year in range (matches embedding generation)
+_cfg = load_analysis_config()
+_year_min = _cfg["periodization"]["year_min"]
+_year_max = _cfg["periodization"]["year_max"]
 has_abstract = works["abstract"].notna() & (works["abstract"].str.len() > 50)
-in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
 df = works[has_abstract & in_range].copy().reset_index(drop=True)
-log.info("Works with abstracts (1990-2025): %d", len(df))
+log.info("Works with abstracts (%d-%d): %d", _year_min, _year_max, len(df))
 
 embeddings = load_refined_embeddings()
 if len(embeddings) != len(df):

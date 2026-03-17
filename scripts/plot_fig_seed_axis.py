@@ -21,7 +21,8 @@ import pandas as pd
 from sklearn.mixture import GaussianMixture
 
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings, save_figure
+from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings,
+                   save_figure, load_analysis_config, load_analysis_periods)
 
 log = get_logger("plot_fig_seed_axis")
 
@@ -41,24 +42,16 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 # --- Constants ---
 CITE_THRESHOLD = 50
 
-PERIODS = {
-    "1990\u20132006": (1990, 2006),
-    "2007\u20132014": (2007, 2014),
-    "2015\u20132023": (2015, 2023),
-}
+# Periods from config (fixes 2023 inconsistency)
+_period_tuples, _period_labels = load_analysis_periods()
+PERIODS = dict(zip(_period_labels, _period_tuples))
 
-PERIOD_SUBTITLES = {
-    "1990\u20132006": "",
-    "2007\u20132014": "(Bali)",
-    "2015\u20132023": "(Paris)",
-}
+_SUBTITLES = ["", "(Bali)", "(Paris)"]
+PERIOD_SUBTITLES = dict(zip(_period_labels, _SUBTITLES))
 
 # Grayscale fills: light to dark
-PERIOD_FILLS = {
-    "1990\u20132006": "#CCCCCC",
-    "2007\u20132014": "#999999",
-    "2015\u20132023": "#666666",
-}
+_FILLS = ["#CCCCCC", "#999999", "#666666"]
+PERIOD_FILLS = dict(zip(_period_labels, _FILLS))
 
 # Pole vocabularies (same as analyze_bimodality.py / plot_fig45_pca_scatter.py)
 EFFICIENCY_TERMS = {
@@ -80,11 +73,15 @@ ACCOUNTABILITY_TERMS = {
 # ============================================================
 
 log.info("Loading data...")
+_cfg = load_analysis_config()
+_year_min = _cfg["periodization"]["year_min"]
+_year_max = _cfg["periodization"]["year_max"]
+
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
 has_title = works["title"].notna() & (works["title"].str.len() > 0)
-in_range = (works["year"] >= 1990) & (works["year"] <= 2025)
+in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
 df = works[has_title & in_range].copy().reset_index(drop=True)
 
 embeddings = load_refined_embeddings()[(has_title & in_range).values]

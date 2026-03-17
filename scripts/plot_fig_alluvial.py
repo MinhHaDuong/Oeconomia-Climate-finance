@@ -276,14 +276,17 @@ import sys
 
 # Check if we can reconstruct paper data for tooltips
 try:
-    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_refined_embeddings as _load_embeddings
+    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_refined_embeddings as _load_embeddings, load_analysis_config as _load_cfg
     import pandas as _pd
     from sklearn.cluster import KMeans as _KMeans
 
+    _alluvial_cfg = _load_cfg()
+    _alluvial_ymin = _alluvial_cfg["periodization"]["year_min"]
+    _alluvial_ymax = _alluvial_cfg["periodization"]["year_max"]
     _works = _pd.read_csv(os.path.join(_CATALOGS_DIR, "refined_works.csv"))
     _works["year"] = _pd.to_numeric(_works["year"], errors="coerce")
     _has_title = _works["title"].notna() & (_works["title"].str.len() > 0)
-    _in_range = (_works["year"] >= 1990) & (_works["year"] <= 2025)
+    _in_range = (_works["year"] >= _alluvial_ymin) & (_works["year"] <= _alluvial_ymax)
     _df = _works[_has_title & _in_range].copy().reset_index(drop=True)
     _embeddings = _load_embeddings()
 
