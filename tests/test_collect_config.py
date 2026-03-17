@@ -2,10 +2,10 @@
 
 Covers:
 - config/corpus_collect.yaml loads correctly with year_min < year_max
-- load_collect_config() helper in utils.py
-- catalog_openalex.py build_filter() includes year bounds from config
-- catalog_istex.py query includes year bounds
-- catalog_scopus.py query includes year bounds
+- load_collect_config() helper in utils.py (including validation)
+- catalog_openalex.py build_filter() includes year bounds
+- catalog_istex.py build_istex_query() includes year bounds
+- catalog_scopus.py query includes year bounds (indirectly via config)
 - dvc.yaml declares config/corpus_collect.yaml as dependency for catalog stages
 """
 
@@ -81,6 +81,22 @@ class TestOpenAlexYearFilter:
         from catalog_openalex import build_filter
         f = build_filter("climate finance")
         assert "publication_year" not in f
+
+
+# ---------------------------------------------------------------------------
+# ISTEX build_istex_query includes year bounds
+# ---------------------------------------------------------------------------
+
+class TestIstexYearFilter:
+    def test_build_istex_query_includes_year(self):
+        from catalog_istex import build_istex_query
+        q = build_istex_query(year_min=1990, year_max=2024)
+        assert "publicationDate:[1990 TO 2024]" in q
+
+    def test_build_istex_query_no_year_when_none(self):
+        from catalog_istex import build_istex_query
+        q = build_istex_query()
+        assert "publicationDate" not in q
 
 
 # ---------------------------------------------------------------------------

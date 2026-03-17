@@ -400,7 +400,15 @@ def load_collect_config():
             "This file defines year bounds for API queries."
         )
     with open(path) as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    if not isinstance(cfg.get("year_min"), int) or not isinstance(cfg.get("year_max"), int):
+        raise ValueError("year_min and year_max must be integers in corpus_collect.yaml")
+    if cfg["year_min"] > cfg["year_max"]:
+        raise ValueError(
+            f"year_min ({cfg['year_min']}) > year_max ({cfg['year_max']}) "
+            "in corpus_collect.yaml"
+        )
+    return cfg
 
 
 def load_analysis_config():
