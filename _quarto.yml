@@ -7,9 +7,6 @@ project:
     - content/data-paper.qmd
     - content/companion-paper.qmd
 
-metadata-files:
-  - _variables.yml
-
 bibliography: content/bibliography/main.bib
 
 format:

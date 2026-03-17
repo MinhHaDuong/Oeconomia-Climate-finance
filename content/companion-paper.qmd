@@ -2,6 +2,7 @@
 title: "Detecting Structural Breaks and Polarization in Academic Literature Using Semantic Embeddings: A Framework Applied to Climate Finance (1990--2024)"
 author: "Minh Ha-Duong"
 date: "2026-03-05"
+metadata-files: [../_variables.yml]
 bibliography: bibliography/main.bib
 format:
   pdf:
