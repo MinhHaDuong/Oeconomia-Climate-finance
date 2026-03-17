@@ -21,7 +21,7 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 
 - **Always use `uv sync`** to install dependencies. Never use `pip` or `uv pip`.
 - All dependencies are declared in `pyproject.toml` at project root.
-- torch is pinned to CPU-only builds via `[tool.uv.sources]` (no NVIDIA/CUDA).
+- torch is installed via mutually exclusive extras: `--extra cpu` (doudou) or `--extra cu130` (padme, CUDA 13.0). Scripts auto-detect GPU via `torch.cuda.is_available()`.
 - To add a dependency: edit `pyproject.toml`, then run `uv sync`.
 
 ## Data location

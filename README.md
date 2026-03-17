@@ -81,7 +81,8 @@ data is stored in the DVC remote on padme.
 
 ```bash
 uv sync                                 # Phase 2/3 deps only
-uv sync --group corpus                  # add Phase 1 deps (DVC, torch, etc.)
+uv sync --group corpus --extra cpu       # add Phase 1 deps (CPU torch)
+uv sync --group corpus --extra cu130     # ...or CUDA 13 torch on GPU machines
 uv run dvc cache dir /path/to/dvc-cache  # store blobs outside sync/backup dirs
 uv run dvc pull                          # download data (~1.3 GB) from padme
 ```
@@ -114,7 +115,8 @@ make figures && make manuscript          # Phase 2 + 3 (no DVC needed)
 | Group | Install command | Who needs it |
 |-------|----------------|--------------|
 | (default) | `uv sync` | Phase 2 (figures) and Phase 3 (manuscript) users |
-| corpus | `uv sync --group corpus` | Phase 1 (corpus building): adds DVC, torch, sentence-transformers |
+| corpus + cpu | `uv sync --group corpus --extra cpu` | Phase 1 on doudou (no GPU) |
+| corpus + cu130 | `uv sync --group corpus --extra cu130` | Phase 1 on padme (CUDA 13.0 GPU) |
 
 ### DVC on padme (the remote host)
 
