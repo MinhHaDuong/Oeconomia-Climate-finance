@@ -39,7 +39,33 @@ export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
 # ── Quarto ───────────────────────────────────────────────
-INCLUDES    := $(wildcard content/_includes/*.md)
+# ── Per-document include sets ────────────────────────────
+MANUSCRIPT_INCLUDES := content/_includes/tab_venues.md
+
+TECHREP_INCLUDES := content/_includes/corpus-construction.md \
+		content/_includes/corpus-enrichment.md \
+		content/_includes/corpus-refinement.md \
+		content/_includes/core-vs-full.md \
+		content/_includes/structural-breaks.md \
+		content/_includes/alluvial-diagram.md \
+		content/_includes/bimodality-analysis.md \
+		content/_includes/pca-scatter.md \
+		content/_includes/citation-genealogy.md \
+		content/_includes/cocitation-communities.md \
+		content/_includes/citation-quality.md \
+		content/_includes/reproducibility.md
+
+DATAPAPER_INCLUDES := content/_includes/corpus-construction.md \
+		content/_includes/corpus-refinement.md \
+		content/_includes/embedding-generation.md \
+		content/_includes/reproducibility.md
+
+COMPANION_INCLUDES := content/_includes/embedding-generation.md \
+		content/_includes/structural-breaks.md \
+		content/_includes/alluvial-diagram.md \
+		content/_includes/bimodality-analysis.md \
+		content/_includes/pca-scatter.md \
+		content/_includes/core-vs-full.md
 
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
@@ -330,19 +356,19 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(MANUSCRIPT_INCLUDES) $(STATS)
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(INCLUDES) $(STATS)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_TABLES) $(MANUSCRIPT_INCLUDES) $(STATS)
 	quarto render $< --to docx
 
-output/content/technical-report.pdf: content/technical-report.qmd $(INCLUDES) $(BIB) $(STATS)
+output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/data-paper.pdf: content/data-paper.qmd $(INCLUDES) $(BIB) $(STATS)
+output/content/data-paper.pdf: content/data-paper.qmd $(DATAPAPER_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/companion-paper.pdf: content/companion-paper.qmd $(INCLUDES) $(BIB) $(STATS)
+output/content/companion-paper.pdf: content/companion-paper.qmd $(COMPANION_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
 # ── Manuscript archive (Oeconomia reviewers) ──────────────
