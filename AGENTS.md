@@ -67,6 +67,7 @@ The agent must always know and declare its current DD phase.
 | start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
 | pre-commit | Before every commit | `runbooks/pre-commit.md` |
 | post-task | After completing a ticket | `runbooks/celebrate.md` |
+| end-session | User ends a work session | `runbooks/celebrate-day.md` |
 | new-ticket | Creating a GitHub issue (issues are handoff documents) | `runbooks/new-ticket.md` |
 | review-pr | Reviewing a pull request (code) | `runbooks/review-pr.md` |
 | review-pr-prose | Reviewing a pull request (prose/manuscript) | `runbooks/review-pr-prose.md` |
