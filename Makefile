@@ -203,7 +203,7 @@ STATS := _variables.yml
 
 $(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
-		content/tables/tab_axis_detection.csv content/tables/tab_corpus_sources.csv
+		content/tables/tab_axis_detection.csv
 	uv run python $<
 
 stats: $(STATS)
