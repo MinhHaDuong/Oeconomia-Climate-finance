@@ -5,7 +5,7 @@ Randomly samples source DOIs from citations.csv, re-fetches from Crossref,
 and computes precision/recall at the reference-DOI level.
 Also profiles the never-fetched DOIs to quantify the structural coverage ceiling.
 
-Saves results to content/tables/qc_citations_report.json
+Saves results to content/tables/qa_citations_report.json
 
 Usage:
     uv run python scripts/qa_citations.py [--sample-n 30] [--seed 42]
@@ -28,7 +28,7 @@ log = get_logger("qa_citations")
 
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 OUTPUT_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "content", "tables", "qc_citations_report.json"
+    os.path.dirname(__file__), "..", "content", "tables", "qa_citations_report.json"
 )
 
 
