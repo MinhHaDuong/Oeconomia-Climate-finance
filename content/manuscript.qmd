@@ -38,7 +38,7 @@ format:
 ```{python}
 #| echo: false
 import pandas as pd
-_n = len(pd.read_csv("data/catalogs/refined_works.csv"))
+_n = len(pd.read_csv("../data/catalogs/refined_works.csv"))
 corpus_total_approx = f"{round(_n, -3):,}"
 ```
 
