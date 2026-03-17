@@ -84,14 +84,40 @@ def load_seed(year_min=None, year_max=None):
     return records
 
 
-def query_worldbank(wb_query, year_min=None, year_max=None):
+def query_worldbank(wb_queries, year_min=None, year_max=None):
     """Search World Bank Open Knowledge Repository.
 
     Args:
-        wb_query:  Search query string (from config/corpus_collect.yaml).
-        year_min:  Optional minimum publication year (inclusive).
-        year_max:  Optional maximum publication year (inclusive).
+        wb_queries: Search query string or list of strings
+                    (from config/corpus_collect.yaml).
+        year_min:   Optional minimum publication year (inclusive).
+        year_max:   Optional maximum publication year (inclusive).
     """
+    if isinstance(wb_queries, str):
+        wb_queries = [wb_queries]
+
+    all_records = []
+    seen_ids = set()
+
+    for wb_query in wb_queries:
+        records = _query_worldbank_single(wb_query, year_min, year_max)
+        new = 0
+        for r in records:
+            if r["source_id"] and r["source_id"] in seen_ids:
+                continue
+            seen_ids.add(r["source_id"])
+            all_records.append(r)
+            new += 1
+        log.info("  Query %r: %d results, %d new (after dedup)",
+                 wb_query, len(records), new)
+
+    log.info("  World Bank total: %d unique records from %d queries",
+             len(all_records), len(wb_queries))
+    return all_records
+
+
+def _query_worldbank_single(wb_query, year_min=None, year_max=None):
+    """Run a single World Bank query. Called by query_worldbank()."""
     records = []
     page = 0
     page_size = 20
@@ -209,11 +235,11 @@ def main():
     year_max = collect_cfg["year_max"]
     log.info("Year bounds from corpus_collect.yaml: %d–%d", year_min, year_max)
 
-    wb_query = collect_cfg["queries"]["worldbank"]
+    wb_queries = collect_cfg["queries"]["worldbank"]
 
     all_records = []
     all_records.extend(load_seed(year_min=year_min, year_max=year_max))
-    all_records.extend(query_worldbank(wb_query, year_min=year_min,
+    all_records.extend(query_worldbank(wb_queries, year_min=year_min,
                                        year_max=year_max))
 
     if not all_records:

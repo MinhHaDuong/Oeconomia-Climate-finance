@@ -68,8 +68,15 @@ class TestCorpusCollectConfig:
         queries = cfg["queries"]
         for key in ("istex", "scopus", "worldbank"):
             assert key in queries, f"queries.{key} missing"
-            assert isinstance(queries[key], str), f"queries.{key} must be a string"
-            assert len(queries[key].strip()) > 0, f"queries.{key} must be non-empty"
+            val = queries[key]
+            assert isinstance(val, (str, list)), (
+                f"queries.{key} must be a string or list")
+            if isinstance(val, str):
+                assert len(val.strip()) > 0, f"queries.{key} must be non-empty"
+            else:
+                assert len(val) > 0, f"queries.{key} must be non-empty"
+                assert all(isinstance(q, str) for q in val), (
+                    f"queries.{key} list items must be strings")
 
     def test_queries_contain_climate_finance(self):
         """#176: all queries search for climate finance."""
@@ -77,7 +84,10 @@ class TestCorpusCollectConfig:
         with open(path) as f:
             cfg = yaml.safe_load(f)
         for key in ("istex", "scopus", "worldbank"):
-            assert "climate finance" in cfg["queries"][key].lower(), (
+            val = cfg["queries"][key]
+            # For lists, at least the first query must mention climate finance
+            text = val[0].lower() if isinstance(val, list) else val.lower()
+            assert "climate finance" in text, (
                 f"queries.{key} should mention climate finance"
             )
 
