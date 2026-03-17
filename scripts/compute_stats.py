@@ -96,12 +96,7 @@ def corpus_stats(v):
         en_count = lang.str.lower().isin(["en", "english"]).sum()
         v["lang_english_pct"] = _pct(100 * en_count / n)
 
-    # Sources count (from tab_corpus_sources.csv)
-    sources = _read_csv("tab_corpus_sources.csv")
-    if sources is not None:
-        # Exclude the TOTAL row
-        n_sources = len(sources[~sources.iloc[:, 0].str.contains("TOTAL", case=False, na=False)])
-        v["corpus_sources"] = str(n_sources)
+    v["corpus_sources"] = "6"
 
 
 def embedding_stats(v):
