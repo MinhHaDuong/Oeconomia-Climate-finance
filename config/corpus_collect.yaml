@@ -15,4 +15,7 @@ year_max: 2024
 queries:
   istex: '"climate finance" OR "finance climat" OR "finance climatique"'
   scopus: 'TITLE-ABS-KEY("climate finance" OR "finance climat" OR "finance climatique")'
-  worldbank: '"climate finance"'
+  worldbank:
+    - '"climate finance"'
+    - '"climate change policy" AND finance'
+    - '"financial mechanisms" AND climate'
