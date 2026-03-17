@@ -34,8 +34,9 @@ Autonomous execution using test-driven development. See `docs/coding-guidelines.
 1. **Red**: write a failing test that defines the expected behavior.
 2. **Green**: write the minimum code to make it pass.
 3. **Refactor**: clean up, then confirm tests still pass.
-4. **PR**: push branch, open PR, review (`runbooks/review-pr.md`).
-5. **Iterate**: if review finds issues, fix and re-review.
+4. **PR**: push branch, open PR (include context, it is a handoff point).
+5. **Review**: See `runbooks/review-pr.md`.
+6. **Iterate**: if review finds issues, fix them all then re-review. Also fix nits, create no debt. Spin an agent to explore seemingly unrelated issues and decide between fix now or open ticket.
 
 Each Red/Green/Refactor step gets its own commit. Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
 
