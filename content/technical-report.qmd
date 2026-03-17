@@ -3,6 +3,7 @@ title: "Reproducibility Note: Corpus Construction and Bibliometric Analysis"
 subtitle: "Companion to 'Inventing Climate Finance' (submitted to *Oeconomia*)"
 author: "Minh Ha-Duong"
 date: "2026-03-16"
+metadata-files: [../_variables.yml]
 bibliography: bibliography/main.bib
 format:
   pdf:

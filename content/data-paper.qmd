@@ -2,6 +2,7 @@
 title: "A Multilingual Corpus of Climate Finance Literature, 1990--2024: Construction, Validation, and Semantic Embeddings"
 author: "Minh Ha-Duong"
 date: "2026-03-05"
+metadata-files: [../_variables.yml]
 bibliography: bibliography/main.bib
 format:
   pdf:
