@@ -236,7 +236,7 @@ def apply_filter(df, output_path=None, audit_path=None):
     # Step 1: clear placeholder DOIs shared by grey-literature records — these are
     # fake DOIs assigned to multiple distinct grey-lit documents and should not be
     # used as identifiers.
-    deduped_source_ids = set()
+    deduped_indices = set()
     if "doi_norm" in keep_df.columns and "from_grey" in keep_df.columns:
         grey_doi_counts = keep_df.loc[
             keep_df["from_grey"].fillna(0).astype(bool) & (keep_df["doi_norm"].fillna("") != ""),
@@ -266,7 +266,7 @@ def apply_filter(df, output_path=None, audit_path=None):
             "_cite_sort", ascending=False
         )
         deduped_mask = with_doi_df.duplicated(subset=["doi_norm"], keep="first")
-        deduped_source_ids = set(with_doi_df.loc[deduped_mask, "source_id"].dropna())
+        deduped_indices = set(with_doi_df.loc[deduped_mask].index)
         with_doi_df = with_doi_df[~deduped_mask]
         keep_df = pd.concat([with_doi_df, no_doi_df], ignore_index=True).drop(
             columns=["_cite_sort"])
@@ -282,8 +282,8 @@ def apply_filter(df, output_path=None, audit_path=None):
     audit_df = df[["doi", "title", "year", "cited_by_count", "source_count",
                     "protected", "protect_reason", "action"]].copy()
     audit_df["flags"] = _serialize_flags_pipe(df, flag_cols_present)
-    if deduped_source_ids and "source_id" in df.columns:
-        audit_df.loc[df["source_id"].isin(deduped_source_ids), "action"] = "deduped"
+    if deduped_indices:
+        audit_df.loc[audit_df.index.isin(deduped_indices), "action"] = "deduped"
     audit_df.to_csv(audit_path, index=False)
     log.info("  Saved audit -> %s", audit_path)
 
