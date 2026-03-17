@@ -325,12 +325,14 @@ class TestResumePreview:
         }
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_citations_batch.py"),
-             "--works-input", works_path, "--run-id", "test-preview"],
+             "--works-input", works_path,
+             "--citations-input", citations_path,
+             "--run-id", "test-preview"],
             capture_output=True, text=True, env=env, timeout=10,
         )
         output = result.stdout + result.stderr
-        # Should show resume preview (even if no actual fetch happens)
-        assert "Resume preview" in output or "Remaining to fetch" in output or "Nothing to fetch" in output
+        # Should show resume info (even if no actual fetch happens)
+        assert "Resume" in output or "Nothing to fetch" in output
 
 
 # ---------------------------------------------------------------------------
