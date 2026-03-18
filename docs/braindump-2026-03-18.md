@@ -52,6 +52,15 @@ Parked ideas for post-submission.
   - Tests whether other agents handle the harness as well as Claude
   - Can also use replays to refine the harness itself (as minimax team did)
 
+## Polars (Rust pandas replacement)
+
+- Evaluate replacing pandas with Polars in Phase 2 scripts
+- Already had `iterrows()` performance issues on 20K+ DataFrames
+- Polars: lazy evaluation, Rust-backed, 5–20x faster on large frames
+- By Ritchie Vink / pola-rs (not Astral — different Rust-for-Python project)
+- Risk: matplotlib integration less mature, learning curve
+- Good candidate for a post-submission rewrite if data paper needs heavier computation
+
 ## Open questions (to resolve post-submission)
 
 - Phase 2 repro package: pointer to phase 1 (DOI) or bundled snapshot?
