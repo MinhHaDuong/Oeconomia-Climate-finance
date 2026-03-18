@@ -2,11 +2,12 @@
 
 Run at the start of every conversation, before the first response.
 
-1. Load `.env` and set agent identity:
+1. Load `.env`, set agent identity, and activate hooks:
    ```bash
    set -a && source .env && set +a
    git config user.name  "$AGENT_GIT_NAME"
    git config user.email "$AGENT_GIT_EMAIL"
+   git config core.hooksPath hooks
    export GH_TOKEN="$AGENT_GH_TOKEN"
    ```
 2. Read `STATE.md` and `ROADMAP.md`.
