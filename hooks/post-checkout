@@ -9,3 +9,8 @@ if [ ! -e .env ]; then
         echo "Linked .env from main worktree"
     fi
 fi
+
+# Populate DVC-managed data from local cache
+if [ -f dvc.lock ]; then
+    uv run dvc checkout 2>/dev/null || true
+fi
