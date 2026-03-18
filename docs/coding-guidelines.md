@@ -64,7 +64,7 @@ Phase 1 modifies `data/`. Run only when explicitly requested.
 
 **Phase 2 — Analysis & figures** (fast, deterministic, run often):
 - Scripts: `analyze_*`, `plot_*`, `compute_*`, `export_*`, `summarize_*`, `build_het_core.py`
-- Reads ONLY Phase 1 outputs; produces `content/figures/`, `content/tables/`, `content/_includes/`, `_variables.yml`
+- Reads ONLY Phase 1 outputs; produces `content/figures/`, `content/tables/`, `content/_includes/`, `content/*-vars.yml`
 - Phase 2 → Phase 3 **contract**: all Phase 2 outputs are **git-tracked** so Phase 3 can build without rerunning Phase 2. After a corpus regen, commit updated figures/tables before rendering.
 - Run with: `make figures`
 
@@ -76,7 +76,7 @@ Phase 1 modifies `data/`. Run only when explicitly requested.
 | Phase | Artifacts | Versioned by |
 |-------|-----------|-------------|
 | 1 | `data/catalogs/` | DVC |
-| 2 | `content/figures/`, `content/tables/`, `content/_includes/`, `_variables.yml` | git |
+| 2 | `content/figures/`, `content/tables/`, `content/_includes/`, `content/*-vars.yml` | gitignored (like figures) |
 | 3 | `output/` | not tracked (gitignored) |
 
 ## Script reference

@@ -25,7 +25,7 @@ Checklist:
 1. **Trace references** — search for mentions of changed functions, parameters, file names, or concepts in:
    - `content/technical-report.qmd` (pipeline methodology for replicators)
    - `content/manuscript.qmd` and its `_includes/` (claims for Oeconomia readers)
-   - `content/_variables.yml` (computed values cited in prose)
+   - `content/*-vars.yml` (per-document computed values cited in prose)
    - `docs/` (coding/writing guidelines, style guides)
    - `README.md`, `STATE.md`, `ROADMAP.md`
    - Configuration files (`corpus_collect.yaml`, `dvc.yaml`, `Makefile`)

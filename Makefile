@@ -437,6 +437,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
 	cp content/figures/fig_composition.png  $(MANU_TMP)/content/figures/
 	@# Manuscript content
 	cp content/manuscript.qmd               $(MANU_TMP)/content/
+	cp content/manuscript-vars.yml          $(MANU_TMP)/content/
 	cp content/author-footnote.tex          $(MANU_TMP)/content/
 	cp content/_includes/tab_venues.md      $(MANU_TMP)/content/_includes/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
@@ -478,7 +479,8 @@ archive-datapaper: check-corpus
 		mkdir -p $(DPAPER_TMP)/content/tables; \
 		cp -r content/tables/* $(DPAPER_TMP)/content/tables/; \
 	fi
-	@# Per-document vars files are already in content/ (copied above)
+	@# Copy per-document vars files (gitignored, like figures/tables)
+	cp content/*-vars.yml $(DPAPER_TMP)/content/ 2>/dev/null || true
 	@# .env template
 	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/.env
 	@# Remove items that should not ship

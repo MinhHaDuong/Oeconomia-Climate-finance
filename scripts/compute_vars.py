@@ -2,7 +2,7 @@
 
 Reads pipeline outputs (CSVs, NPZ, JSON) and produces one YAML file per
 Quarto document, each containing only the variables that document uses.
-Quarto injects them via {{< var key >}} shortcodes.
+Quarto injects them via {{< meta key >}} shortcodes.
 
 Usage:
     uv run python scripts/compute_vars.py
@@ -22,30 +22,24 @@ log = get_logger("compute_vars")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 CONTENT_DIR = os.path.join(BASE_DIR, "content")
 
-# Which variables each document uses (from grep of {{< var ... >}} shortcodes).
+# Which variables each document uses (direct + {{< include >}}'d files).
 # Each document gets a sibling -vars.yml containing only its variables.
 DOC_VARS = {
     "manuscript": [
+        # direct only (tab_venues.md has no vars)
         "corpus_total_approx",
     ],
     "technical-report": [
-        "corpus_sources",
-        "corpus_total",
-    ],
-    "data-paper": [
-        "corpus_core",
-        "corpus_core_threshold",
-        "corpus_multi_source",
-        "corpus_multi_source_pct",
-        "corpus_sources",
-        "corpus_total",
-        "corpus_with_embeddings",
-        "emb_dimensions",
-        "lang_english_pct",
-    ],
-    "companion-paper": [
+        # direct: corpus_sources, corpus_total
+        # includes: bimodality-analysis, citation-quality, core-vs-full,
+        #   corpus-construction, corpus-enrichment, corpus-refinement,
+        #   pca-scatter, structural-breaks, alluvial-diagram
+        "bim_bic1",
+        "bim_bic2",
         "bim_core_dbic_embedding",
         "bim_core_dbic_tfidf",
+        "bim_core_n_accountability",
+        "bim_core_n_efficiency",
         "bim_corr",
         "bim_dbic_2007_2014",
         "bim_dbic_embedding",
@@ -53,6 +47,67 @@ DOC_VARS = {
         "bim_dbic_pre2007",
         "bim_dbic_tfidf",
         "bim_n_2007_2014",
+        "bim_n_accountability",
+        "bim_n_efficiency",
+        "bim_n_overlap",
+        "bim_n_post2015",
+        "bim_n_pre2007",
+        "bim_var_pct",
+        "cite_coverage_pct",
+        "cite_crossref_rows",
+        "cite_doi_ref_pct",
+        "cite_doi_ref_rows",
+        "cite_fetched_dois",
+        "cite_never_fetched",
+        "cite_total_dois",
+        "cite_total_rows",
+        "corpus_core",
+        "corpus_core_threshold",
+        "corpus_sources",
+        "corpus_total",
+        "corpus_with_embeddings",
+        "lang_english_pct",
+        "pca_emb_pc2_cosine",
+        "pca_emb_pc2_dbic",
+        "pca_emb_pc2_var_pct",
+        "pca_emb_pc4_cosine",
+        "pca_emb_pc4_dbic",
+        "pca_emb_pc4_var_pct",
+    ],
+    "data-paper": [
+        # direct + includes: corpus-construction, corpus-refinement,
+        #   embedding-generation
+        "corpus_core",
+        "corpus_core_threshold",
+        "corpus_multi_source",
+        "corpus_multi_source_pct",
+        "corpus_sources",
+        "corpus_total",
+        "corpus_total_approx",
+        "corpus_with_embeddings",
+        "emb_dimensions",
+        "lang_english_pct",
+    ],
+    "companion-paper": [
+        # direct + includes: bimodality-analysis, core-vs-full,
+        #   embedding-generation, pca-scatter, structural-breaks,
+        #   alluvial-diagram
+        "bim_bic1",
+        "bim_bic2",
+        "bim_core_dbic_embedding",
+        "bim_core_dbic_tfidf",
+        "bim_core_n_accountability",
+        "bim_core_n_efficiency",
+        "bim_corr",
+        "bim_dbic_2007_2014",
+        "bim_dbic_embedding",
+        "bim_dbic_post2015",
+        "bim_dbic_pre2007",
+        "bim_dbic_tfidf",
+        "bim_n_2007_2014",
+        "bim_n_accountability",
+        "bim_n_efficiency",
+        "bim_n_overlap",
         "bim_n_post2015",
         "bim_n_pre2007",
         "bim_var_pct",
@@ -60,11 +115,16 @@ DOC_VARS = {
         "corpus_core_threshold",
         "corpus_sources",
         "corpus_total",
+        "corpus_total_approx",
+        "corpus_with_embeddings",
         "emb_dimensions",
         "lang_english_pct",
         "pca_emb_pc1_var_pct",
+        "pca_emb_pc2_cosine",
         "pca_emb_pc2_dbic",
         "pca_emb_pc2_var_pct",
+        "pca_emb_pc4_cosine",
+        "pca_emb_pc4_dbic",
         "pca_emb_pc4_var_pct",
     ],
 }

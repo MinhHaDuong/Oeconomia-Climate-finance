@@ -9,7 +9,7 @@ keywords:
   - international organisations
 date: "2026-03-04"
 date-format: "MMMM D, YYYY"
-metadata-files: [../content/manuscript-vars.yml]
+metadata-files: [manuscript-vars.yml]
 bibliography: bibliography/main.bib
 csl: bibliography/oeconomia.csl
 reference-section-title: Bibliography
