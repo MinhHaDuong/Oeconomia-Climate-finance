@@ -1,10 +1,86 @@
 # Submission Plan
 
-## 1. Cover Letter to Oeconomia
+## 0. Release Procedure
+
+### Pre-flight
+1. `make archive-analysis archive-manuscript` — build both tarballs
+2. Extract each in `/tmp`, run `make && make verify` (analysis: `uv sync` first)
+3. `mkdir -p release && cp climate-finance-analysis.tar.gz climate-finance-manuscript.tar.gz release/`
+
+### Zenodo deposit
+4. Go to zenodo.org → New Upload
+5. Upload both files from `release/`
+6. Fill metadata:
+   - **Title**: Reproducibility archives for: Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity
+   - **Authors**: Minh Ha-Duong (CIRED, CNRS)
+   - **License**: CC-BY-NC-4.0
+   - **Type**: Dataset
+   - **Keywords**: climate finance, quantification, accounting categories, international organisations, reproducibility
+   - **Description**: Two reproducibility archives for a history of economic thought study of climate finance, submitted to Œconomia. Both archives have been tested on two independent machines and ship pinned dependency lockfiles for exact reproduction. (1) `climate-finance-analysis.tar.gz` — analysis scripts, input data (refined corpus of ~30,000 works), and expected output checksums. Extract, run `uv sync && make && make verify`. (2) `climate-finance-manuscript.tar.gz` — Quarto manuscript sources with pre-built figures. Extract, run `make && make verify`.
+   - **Related identifiers**: `https://github.com/MinhHaDuong/Oeconomia-Climate-finance` (is supplemented by this upload)
+7. **Reserve DOI** — click the button, note it (e.g., `10.5281/zenodo.XXXXXXX`)
+8. **Publish** the Zenodo deposit — makes DOI live
+
+### Manuscript update
+9. Add Zenodo DOI to "Data and code availability" paragraph in `content/manuscript.qmd`:
+
+   > **Data and code availability.** The corpus (~30,000 works), analysis scripts, and reproducible pipeline are archived at [Zenodo DOI]. Source code is maintained at https://github.com/MinhHaDuong/Oeconomia-Climate-finance.
+
+10. Rebuild manuscript PDF → `cp content/manuscript.pdf release/`
+
+### HAL deposit
+11. Deposit manuscript PDF + both tarballs on HAL (CIRED, UMR 8568 affiliation)
+
+### Git
+12. Tag repo `v1.0-submission` and push tag
+
+---
+
+## 1. Oeconomia Submission Requirements
+
+**Platform**: https://oeconomia-hmp.fr/index.php/oeconomia/about/submissions (OJS-based; create account, upload manuscript)
+
+**Format**: Word preferred (for HTML open-access publishing). PDF accepted for review. If accepted from LaTeX/Quarto, provide source files + images.
+
+**Double-blind review**: manuscript must be fully anonymized:
+- No author name or affiliation anywhere
+- No acknowledgments or funding mentions
+- Keep self-citations in bibliography (removing them reveals identity)
+
+**Required metadata** (entered on OJS platform):
+- Abstract in English AND French ✓ (already in manuscript)
+- Keywords in English AND French ✓ (already in manuscript)
+- Up to 3 JEL codes — suggest: B2 (History of Economic Thought since 1925), Q54 (Climate), F35 (Foreign Aid)
+
+**Reference style**: Chicago author-date with full first names. The project already uses `oeconomia.csl`.
+
+**Figures**: submit as separate files (not embedded), PNG or JPG, minimum 1500px wide at 300 dpi.
+
+**Layout**: double-spaced or wide margins.
+
+**Section numbering**: 1., 1.1., 1.2. — maximum two heading levels recommended.
+
+**Copyright**: authors retain copyright. Published CC BY-NC, open access, no embargo.
+
+**Review timeline**: target decision within three months, minimum two external referees.
+
+**AI policy**: none stated (COPE-based ethics code). Proactive disclosure recommended — see §1b below.
+
+### Submission checklist
+- [ ] Anonymize PDF (strip author, affiliation, acknowledgments, author-footnote.tex)
+- [ ] Add JEL codes to OJS metadata
+- [ ] Export figures as separate PNG files (fig_bars.png, fig_composition.png) at ≥1500px/300dpi
+- [ ] Upload: anonymized PDF + separate figure files
+- [ ] Attach cover letter (§1a) as supplementary file
+- [ ] Attach AI disclosure (§1b) as supplementary file
+
+---
+
+## 1a. Cover Letter to Oeconomia
 
 **To:** Francesco Sergi, Managing Editor, Oeconomia
 **From:** Minh Ha-Duong, CIRED/CNRS
-**Re:** Varia submission — "Counting Climate Finance. How Economists Made a Governable Object (1990–2025)"
+**Re:** Varia submission — "Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity"
 
 ---
 
@@ -14,11 +90,15 @@ Following your encouraging response of February 16, 2026 to my extended abstract
 
 The paper traces how economists working in international organisations — particularly at the OECD Development Assistance Committee — constructed climate finance as a distinct economic object between 1990 and 2025. It argues that they did not discover a pre-existing reality but built the accounting categories (Rio markers, mobilised-private-finance methodologies, concessionality thresholds) through which climate-related financial flows were rendered measurable and governable. Drawing on the sociology of quantification (Desrosières, Porter), performativity (Callon, MacKenzie), and economization (Çalışkan and Callon), the paper situates this construction within the broader history of climate economics.
 
-The historical argument is grounded in a computational analysis of approximately 27,500 works (1990–2025) from six bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
+The historical argument is grounded in a computational analysis of approximately 30,000 works (1990–2025) from six bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
 
-The manuscript is approximately 9,600 words with 61 bibliographic references, 3 figures, and 2 tables. A full replication archive (data, code, and technical report) is available at [Zenodo DOI] and the technical report documenting the data pipeline is deposited as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/MinhHaDuong/Oeconomia-Climate-finance.
+The manuscript is approximately 9,500 words (33 pages) with 48 bibliographic references, 2 figures, and 2 tables.
 
 The paper is not under consideration elsewhere. A version of the abstract has been accepted for presentation at the ESHET-HES Joint Conference (Nice, May 2026).
+
+**Replication archive.** The computational claims in the manuscript are supported by a full replication archive deposited at [Zenodo DOI], redacted from the manuscript for blind review. The archive contains two tested packages: one reproducing the figures and tables from the corpus data (`uv sync && make && make verify`), and one reproducing the manuscript PDF from pre-built figures (`make && make verify`). Reviewers are welcome to access the archive; I leave it to your discretion whether to share the DOI during review.
+
+**Note on the bibliography.** The replication archives ship a corrected version of the Oeconomia CSL citation style file that includes ISBN/ISSN fields in the rendered bibliography. The submitted manuscript uses this corrected version.
 
 I would be happy to provide any additional information needed for the evaluation process.
 
@@ -31,45 +111,7 @@ minh.ha-duong@cnrs.fr
 
 ---
 
-## 1b. DOI Strategy — Citable Companions
-
-The manuscript currently cites a GitHub repository. Before submission, three companion objects need DOIs so the manuscript can reference stable, peer-legible records.
-
-| Object | Where | DOI type | What it contains | Cite in manuscript as |
-|--------|-------|----------|------------------|-----------------------|
-| **Replication archive** | Zenodo | Dataset DOI | Code, data (refined_works.csv, embeddings.npz, etc.), figures, pyproject.toml, uv.lock — built by `make archive-manuscript` | "Data and code availability" paragraph |
-| **Technical report** | HAL | Working paper | Full pipeline documentation (10 sections): corpus construction, embeddings, break detection, bimodality, reproducibility | Cited in-text where computational methods are described |
-| **Manuscript preprint** (optional) | HAL or SocArXiv | Preprint DOI | The paper itself | Not cited in manuscript, but useful for conference slides and visibility |
-
-### Workflow
-
-1. **Tag the repo** `v1.0-submission` and push tag
-2. **Create Zenodo archive:**
-   - Link GitHub repo to Zenodo (one-time setup via zenodo.org/account/settings/github/)
-   - Zenodo auto-creates a release archive from the tag
-   - Or: upload `climate-finance-manuscript.tar.gz` (from `make archive-manuscript`) manually to Zenodo
-   - Fill metadata: title, author, license (CC-BY-NC to match Oeconomia), description
-   - Get DOI (e.g., `10.5281/zenodo.XXXXXXX`)
-3. **Upload technical report to HAL:**
-   - Build PDF: `quarto render technical-report.qmd --to pdf`
-   - Deposit on HAL as "Document de travail" / working paper
-   - Affiliation: CIRED (UMR 8568)
-   - Get HAL ID (e.g., `hal-XXXXXXXX`)
-4. **Update manuscript** `Data and code availability` paragraph:
-
-   > **Data and code availability.** The corpus (27,494 works), analysis scripts, and reproducible pipeline are archived at [Zenodo DOI]. The technical report documenting data collection, processing, and analysis procedures is available as a CIRED working paper [HAL ID]. Source code is maintained at https://github.com/MinhHaDuong/Oeconomia-Climate-finance.
-
-5. **Update bibliography** — add `technical-report` as a `@techreport` entry in `main.bib` so it can be cited in-text (e.g., in the corpus method paragraph of the introduction)
-
-### Why this matters
-- Reviewers and editors can verify computational claims without navigating GitHub
-- Zenodo DOI is a permanent record even if the GitHub repo changes
-- HAL deposit satisfies CNRS open-science requirements
-- The technical report is the "minimum credible home" for the breakpoint analysis evidence that the manuscript cites but cannot fully present (PLAN.md §4)
-
----
-
-## 1c. Use of AI Disclosure
+## 1b. Use of AI Disclosure
 
 Oeconomia's ethics code (COPE-based) has no specific AI policy yet. But proactive disclosure is both ethically correct and strategically wise — if a reviewer detects AI traces and you didn't disclose, credibility is destroyed. If you disclosed upfront, the same traces are a non-issue.
 
