@@ -1,7 +1,7 @@
 """Bimodality CSV outputs must use bounded precision for cross-machine reproducibility.
 
 Float columns should carry only scientifically meaningful digits, not 15+ digits
-of platform-dependent BLAS noise. Ticket: #203
+of platform-dependent BLAS noise. Tickets: #203, #205
 """
 
 import os
@@ -56,12 +56,26 @@ class TestBimodalityPrecision:
         assert dp <= 4, f"explained_variance has {dp} decimal places, expected <= 4"
 
     def test_axis_detection_precision(self):
+        """All float columns in tab_axis_detection.csv must have bounded precision.
+
+        The script writes this file twice: once for embedding PCA (columns
+        variance_explained, cosine_with_seed_axis) and once for the combined
+        TF-IDF SVD + embedding PCA table (columns explained_variance_ratio,
+        corr_with_embedding_axis, etc.). In non-core mode the second write
+        overwrites the first, but both must round to avoid cross-machine jitter.
+        """
         path = os.path.join(TABLES_DIR, "tab_axis_detection.csv")
         if not os.path.exists(path):
             pytest.skip("tab_axis_detection.csv not built")
         df = pd.read_csv(path)
+        # Combined table columns (TF-IDF SVD + embedding PCA)
         for col in ["explained_variance_ratio", "corr_with_embedding_axis",
                      "abs_corr_with_embedding_axis"]:
+            if col in df.columns:
+                dp = _max_decimal_places(df[col])
+                assert dp <= 4, f"{col} has {dp} decimal places, expected <= 4"
+        # Embedding PCA table columns (written first, may survive in core mode)
+        for col in ["variance_explained", "cosine_with_seed_axis"]:
             if col in df.columns:
                 dp = _max_decimal_places(df[col])
                 assert dp <= 4, f"{col} has {dp} decimal places, expected <= 4"
