@@ -1,8 +1,9 @@
 """Tests for #210 — expected output checksums in analysis archive.
 
-Verifies the Makefile archive-analysis recipe:
-1. Generates an expected_outputs.md5 checksum file in the staging dir
-2. The checksum file covers all expected output paths
+Verifies the Makefile:
+1. Declares ANALYSIS_OUTPUTS covering all expected output paths
+2. Uses ANALYSIS_OUTPUTS as prerequisites of archive-analysis
+3. Generates expected_outputs.md5 in the archive staging dir
 """
 
 import os
@@ -24,31 +25,50 @@ EXPECTED_OUTPUTS = [
 ]
 
 
-def _archive_recipe():
-    """Extract the archive-analysis recipe body from the Makefile."""
+def _read_makefile():
     with open(MAKEFILE) as f:
-        mk = f.read()
-    m = re.search(
-        r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-        mk,
-        re.MULTILINE,
-    )
-    assert m, "archive-analysis target not found in Makefile"
-    return m.group(1)
+        return f.read()
+
+
+class TestAnalysisOutputsVariable:
+    """ANALYSIS_OUTPUTS must list every output reviewers need to verify."""
+
+    def test_variable_declared(self):
+        mk = _read_makefile()
+        assert re.search(r"^ANALYSIS_OUTPUTS\s*:?=", mk, re.MULTILINE), \
+            "ANALYSIS_OUTPUTS variable not declared"
+
+    def test_variable_covers_all_outputs(self):
+        mk = _read_makefile()
+        for path in EXPECTED_OUTPUTS:
+            assert path in mk, (
+                f"ANALYSIS_OUTPUTS must include {path}"
+            )
 
 
 class TestArchiveChecksums:
+    """archive-analysis must depend on outputs and generate checksums."""
+
+    def test_archive_depends_on_outputs(self):
+        """archive-analysis prerequisites must include $(ANALYSIS_OUTPUTS)."""
+        mk = _read_makefile()
+        m = re.search(r"^archive-analysis\s*:(.*?)$", mk, re.MULTILINE)
+        assert m, "archive-analysis target not found"
+        deps = m.group(1)
+        assert "ANALYSIS_OUTPUTS" in deps, (
+            "archive-analysis must depend on $(ANALYSIS_OUTPUTS)"
+        )
+
     def test_recipe_generates_checksum_file(self):
         """archive-analysis must create expected_outputs.md5."""
-        recipe = _archive_recipe()
+        mk = _read_makefile()
+        m = re.search(
+            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
+            mk,
+            re.MULTILINE,
+        )
+        assert m, "archive-analysis recipe not found"
+        recipe = m.group(1)
         assert "expected_outputs.md5" in recipe, (
             "archive-analysis recipe must generate expected_outputs.md5"
         )
-
-    def test_checksum_file_covers_all_outputs(self):
-        """Every expected output path must appear in the md5sum command."""
-        recipe = _archive_recipe()
-        for path in EXPECTED_OUTPUTS:
-            assert path in recipe, (
-                f"archive-analysis recipe must checksum {path}"
-            )
