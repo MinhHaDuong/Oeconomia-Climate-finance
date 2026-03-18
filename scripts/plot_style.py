@@ -1,7 +1,7 @@
 """Shared style for Oeconomia submission figures.
 
 All in-paper figures import this module for consistent grayscale styling,
-serif fonts, and period annotations calibrated for 13 cm (5.12 inch) width.
+serif fonts, and period annotations calibrated for 13.5 cm (5.3 inch) width.
 """
 
 import os
@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import load_analysis_periods
 
 # --- Dimensions ---
-FIGWIDTH = 130 / 25.4  # 130 mm = 5.118 inches (>= 1500 px at 300 dpi)
+FIGWIDTH = 135 / 25.4  # 135 mm = 5.315 inches (>= 1500 px at 300 dpi after tight crop)
 DPI = 300
 
 # --- Grayscale palette ---
