@@ -632,18 +632,33 @@ for ps in period_stats:
     })
 
 tab5 = pd.DataFrame(summary_rows)
+# Round floats to meaningful precision (cross-machine BLAS noise is ~10th digit)
+for col in ["bic_1comp", "bic_2comp", "delta_bic"]:
+    if col in tab5.columns:
+        tab5[col] = pd.to_numeric(tab5[col], errors="coerce").round(0).astype("Int64")
+for col in ["explained_variance", "embedding_lexical_corr", "dip_pvalue"]:
+    if col in tab5.columns:
+        tab5[col] = pd.to_numeric(tab5[col], errors="coerce").round(4)
 tab5.to_csv(os.path.join(TABLES_DIR, TAB5_BIM), index=False)
 log.info("Saved -> tables/%s", TAB5_BIM)
 
 # Combine TF-IDF SVD and embedding PCA rows
 all_axis_rows = component_rows + emb_component_rows
 axis_tab = pd.DataFrame(all_axis_rows).sort_values("component")
+for col in ["explained_variance_ratio", "corr_with_embedding_axis",
+            "abs_corr_with_embedding_axis"]:
+    if col in axis_tab.columns:
+        axis_tab[col] = axis_tab[col].round(4)
+if "delta_bic" in axis_tab.columns:
+    axis_tab["delta_bic"] = axis_tab["delta_bic"].round(0).astype("Int64")
 axis_tab.to_csv(os.path.join(TABLES_DIR, "tab_axis_detection.csv"), index=False)
 log.info("Saved -> tables/tab_axis_detection.csv")
 
 # Per-paper scores
 pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",
                    "eff_count", "acc_count"]].copy()
+pole_papers["axis_score"] = pole_papers["axis_score"].round(4)
+pole_papers["lex_score"] = pole_papers["lex_score"].round(4)
 pole_papers["pole_assignment"] = np.where(
     df["axis_score"] > 0, "efficiency",
     np.where(df["axis_score"] < 0, "accountability", "neutral")
