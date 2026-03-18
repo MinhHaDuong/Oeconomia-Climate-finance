@@ -85,7 +85,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-manuscript archive-datapaper
+.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -375,58 +375,76 @@ output/content/data-paper.pdf: content/data-paper.qmd $(DATAPAPER_INCLUDES) $(BI
 output/content/companion-paper.pdf: content/companion-paper.qmd $(COMPANION_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-# ── Manuscript archive (Oeconomia reviewers) ──────────────
-# Minimal self-contained package: only what `make manuscript` needs.
-# Reviewers verify with:
-#   tar xzf archive.tar.gz && cd ... && uv sync && make figures-manuscript && make manuscript
-#
-# Explicit allowlist — every file justified by the dependency chain:
-#   refined_works.csv + refined_embeddings.npz  (Phase 1 contract data)
-#   → scripts (figures + tables)
-#   → content (manuscript + includes + bibliography)
-#   → Quarto render → PDF
+# ── Phase 2 archive (analysis reproducibility) ────────────
+# Data + scripts: reviewers verify figures/tables are reproducible.
+#   tar xzf archive.tar.gz && cd ... && uv sync && make
 SHELL            := /bin/bash
+ANALYSIS_ARCHIVE := climate-finance-analysis
+ANALYSIS_TMP     := /tmp/$(ANALYSIS_ARCHIVE)
+
+archive-analysis: check-manuscript-data
+	@echo "=== Building analysis archive ==="
+	rm -rf $(ANALYSIS_TMP)
+	mkdir -p $(ANALYSIS_TMP)/data/catalogs \
+	         $(ANALYSIS_TMP)/scripts \
+	         $(ANALYSIS_TMP)/config \
+	         $(ANALYSIS_TMP)/content/figures \
+	         $(ANALYSIS_TMP)/content/tables \
+	         $(ANALYSIS_TMP)/content/_includes
+	@# Phase 1 contract data (dereference DVC symlinks)
+	cp -L $(DATA_DIR)/refined_works.csv     $(ANALYSIS_TMP)/data/catalogs/
+	cp -L $(DATA_DIR)/refined_embeddings.npz $(ANALYSIS_TMP)/data/catalogs/
+	@# Scripts needed to build figures + tables
+	cp scripts/utils.py                     $(ANALYSIS_TMP)/scripts/
+	cp scripts/plot_style.py                $(ANALYSIS_TMP)/scripts/
+	cp scripts/plot_fig1_bars.py            $(ANALYSIS_TMP)/scripts/
+	cp scripts/plot_fig2_composition.py     $(ANALYSIS_TMP)/scripts/
+	cp scripts/compute_clusters.py          $(ANALYSIS_TMP)/scripts/
+	cp scripts/build_het_core.py            $(ANALYSIS_TMP)/scripts/
+	cp scripts/export_core_venues_markdown.py $(ANALYSIS_TMP)/scripts/
+	cp scripts/summarize_core_venues.py     $(ANALYSIS_TMP)/scripts/
+	cp scripts/make_tab_venues.py           $(ANALYSIS_TMP)/scripts/
+	cp scripts/analyze_bimodality.py        $(ANALYSIS_TMP)/scripts/
+	@# Config + build infrastructure
+	cp config/analysis.yaml             $(ANALYSIS_TMP)/config/
+	cp Makefile.analysis-manuscript                $(ANALYSIS_TMP)/Makefile
+	cp pyproject.toml uv.lock           $(ANALYSIS_TMP)/
+	echo 'CLIMATE_FINANCE_DATA=data' > $(ANALYSIS_TMP)/.env
+	@echo "=== Creating tarball ==="
+	tar czf $(ANALYSIS_ARCHIVE).tar.gz -C /tmp $(ANALYSIS_ARCHIVE)
+	@echo "=== Analysis archive ==="
+	@du -h $(ANALYSIS_ARCHIVE).tar.gz
+	@echo "Files: $$(tar tzf $(ANALYSIS_ARCHIVE).tar.gz | wc -l)"
+	rm -rf $(ANALYSIS_TMP)
+	@echo "Done: $(ANALYSIS_ARCHIVE).tar.gz"
+
+# ── Phase 3 archive (manuscript reproducibility) ──────────
+# Pre-built figures + content: reviewers verify PDF renders.
+# No Python needed — only Quarto + XeLaTeX.
+#   tar xzf archive.tar.gz && cd ... && make
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
 
-archive-manuscript: check-manuscript-data
+archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
-	@# Create directory structure
-	mkdir -p $(MANU_TMP)/data/catalogs \
-	         $(MANU_TMP)/scripts \
-	         $(MANU_TMP)/config \
-	         $(MANU_TMP)/content/bibliography \
+	mkdir -p $(MANU_TMP)/content/bibliography \
 	         $(MANU_TMP)/content/_includes \
-	         $(MANU_TMP)/content/figures \
-	         $(MANU_TMP)/content/tables
-	@# Phase 1 contract data (dereference DVC symlinks)
-	cp -L $(DATA_DIR)/refined_works.csv     $(MANU_TMP)/data/catalogs/
-	cp -L $(DATA_DIR)/refined_embeddings.npz $(MANU_TMP)/data/catalogs/
-	@# Scripts needed to build figures + tables
-	cp scripts/utils.py                     $(MANU_TMP)/scripts/
-	cp scripts/plot_style.py                $(MANU_TMP)/scripts/
-	cp scripts/plot_fig1_bars.py            $(MANU_TMP)/scripts/
-	cp scripts/plot_fig2_composition.py     $(MANU_TMP)/scripts/
-	cp scripts/compute_clusters.py          $(MANU_TMP)/scripts/
-	cp scripts/build_het_core.py            $(MANU_TMP)/scripts/
-	cp scripts/export_core_venues_markdown.py $(MANU_TMP)/scripts/
-	cp scripts/summarize_core_venues.py     $(MANU_TMP)/scripts/
-	cp scripts/make_tab_venues.py           $(MANU_TMP)/scripts/
+	         $(MANU_TMP)/content/figures
+	@# Pre-built figures (validated, not regenerated)
+	cp content/figures/fig_bars.png         $(MANU_TMP)/content/figures/
+	cp content/figures/fig_composition.png  $(MANU_TMP)/content/figures/
 	@# Manuscript content
 	cp content/manuscript.qmd               $(MANU_TMP)/content/
 	cp content/author-footnote.tex          $(MANU_TMP)/content/
 	cp content/_includes/tab_venues.md      $(MANU_TMP)/content/_includes/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
 	cp content/bibliography/oeconomia.csl   $(MANU_TMP)/content/bibliography/
-	@# Config + build infrastructure
-	cp config/analysis.yaml             $(MANU_TMP)/config/
-	cp Makefile.repro                   $(MANU_TMP)/Makefile
-	cp _quarto.yml pyproject.toml uv.lock $(MANU_TMP)/
-	echo 'CLIMATE_FINANCE_DATA=data' > $(MANU_TMP)/.env
+	@# Build infrastructure (no Python needed)
+	cp Makefile.manuscript              $(MANU_TMP)/Makefile
+	cp _quarto.yml                      $(MANU_TMP)/
 	@echo "=== Creating tarball ==="
-	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp \
-		$(MANU_ARCHIVE)
+	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp $(MANU_ARCHIVE)
 	@echo "=== Manuscript archive ==="
 	@du -h $(MANU_ARCHIVE).tar.gz
 	@echo "Files: $$(tar tzf $(MANU_ARCHIVE).tar.gz | wc -l)"
