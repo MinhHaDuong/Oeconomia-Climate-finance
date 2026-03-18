@@ -33,9 +33,9 @@ Last updated: 2026-03-18
 ## Build system
 
 - `make manuscript` is Phase 3 pure: only `quarto render` (no Python, no stats, no API)
-- Per-document include sets (no wildcard); surgical figure/table deps
+- Project-wide include deps on render targets (Quarto resolves includes across all `_quarto.yml` files); surgical figure deps per document
 - No data files, no API calls, no Phase 1 caches required during render
-- Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + content/tables/tab_venues.md + bibliography
+- Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + all project includes + bibliography
 - All Phase 2 generated tables (including .md) in gitignored `content/tables/`; `content/_includes/` is hand-written only
 
 ## Blockers

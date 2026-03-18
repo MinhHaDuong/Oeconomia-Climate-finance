@@ -53,7 +53,8 @@ TECHREP_INCLUDES := content/_includes/corpus-construction.md \
 		content/_includes/citation-genealogy.md \
 		content/_includes/cocitation-communities.md \
 		content/_includes/citation-quality.md \
-		content/_includes/reproducibility.md
+		content/_includes/reproducibility.md \
+		content/tables/tab_citation_coverage.md
 
 DATAPAPER_INCLUDES := content/_includes/corpus-construction.md \
 		content/_includes/corpus-refinement.md \
@@ -66,6 +67,11 @@ COMPANION_INCLUDES := content/_includes/embedding-generation.md \
 		content/_includes/bimodality-analysis.md \
 		content/_includes/pca-scatter.md \
 		content/_includes/core-vs-full.md
+
+# Quarto resolves includes across ALL project files (_quarto.yml render list),
+# even when rendering a single document. Every render target needs the full set.
+PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
+		$(DATAPAPER_INCLUDES) $(COMPANION_INCLUDES)
 
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
@@ -362,19 +368,19 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to docx
 
-output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
+output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/data-paper.pdf: content/data-paper.qmd $(DATAPAPER_INCLUDES) $(BIB) $(STATS)
+output/content/data-paper.pdf: content/data-paper.qmd $(PROJECT_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
-output/content/companion-paper.pdf: content/companion-paper.qmd $(COMPANION_INCLUDES) $(BIB) $(STATS)
+output/content/companion-paper.pdf: content/companion-paper.qmd $(PROJECT_INCLUDES) $(BIB) $(STATS)
 	quarto render $< --to pdf
 
 # ── Phase 2 archive (analysis reproducibility) ────────────

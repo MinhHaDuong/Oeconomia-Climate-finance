@@ -193,3 +193,43 @@ class TestFailFastChecks:
         dep_paths = [str(d) for d in deps]
         assert any("extended_works.csv" in p for p in dep_paths), \
             "dvc.yaml filter stage must list extended_works.csv in deps"
+
+
+# ---------------------------------------------------------------------------
+# Quarto project-wide include resolution (#217)
+# ---------------------------------------------------------------------------
+
+class TestProjectWideIncludes:
+    """Quarto resolves includes across ALL project files, even when rendering
+    a single document. Every render target must depend on all includes."""
+
+    def test_citation_coverage_in_techrep_includes(self):
+        """tab_citation_coverage.md is included transitively via citation-quality.md."""
+        mk = read_makefile()
+        m = re.search(r"^TECHREP_INCLUDES\s*:=\s*(.*?)(?=\n\S|\n\n)", mk,
+                       re.MULTILINE | re.DOTALL)
+        assert m, "TECHREP_INCLUDES not found"
+        assert "tab_citation_coverage.md" in m.group(1), \
+            "TECHREP_INCLUDES must list tab_citation_coverage.md (transitive dep of citation-quality.md)"
+
+    def test_project_includes_variable_exists(self):
+        """A PROJECT_INCLUDES variable must aggregate all per-document include sets."""
+        mk = read_makefile()
+        assert re.search(r"^PROJECT_INCLUDES\s*:?=", mk, re.MULTILINE), \
+            "PROJECT_INCLUDES variable not declared"
+
+    def test_manuscript_pdf_depends_on_project_includes(self):
+        """manuscript.pdf must depend on PROJECT_INCLUDES, not just MANUSCRIPT_INCLUDES."""
+        mk = read_makefile()
+        m = re.search(r"^output/content/manuscript\.pdf\s*:(.*?)$", mk, re.MULTILINE)
+        assert m, "manuscript.pdf target not found"
+        assert "PROJECT_INCLUDES" in m.group(1), \
+            "manuscript.pdf must depend on $(PROJECT_INCLUDES)"
+
+    def test_techrep_pdf_depends_on_project_includes(self):
+        """technical-report.pdf must depend on PROJECT_INCLUDES."""
+        mk = read_makefile()
+        m = re.search(r"^output/content/technical-report\.pdf\s*:(.*?)$", mk, re.MULTILINE)
+        assert m, "technical-report.pdf target not found"
+        assert "PROJECT_INCLUDES" in m.group(1), \
+            "technical-report.pdf must depend on $(PROJECT_INCLUDES)"
