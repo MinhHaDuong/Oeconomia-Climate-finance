@@ -16,6 +16,6 @@ manuscript: output/content/manuscript.pdf
 
 output/content/manuscript.pdf: content/manuscript.qmd content/manuscript-vars.yml \
 		content/figures/fig_bars.png content/figures/fig_composition.png \
-		content/_includes/tab_venues.md \
+		content/tables/tab_venues.md \
 		content/bibliography/main.bib content/bibliography/oeconomia.csl
 	quarto render $< --to pdf

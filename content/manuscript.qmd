@@ -33,7 +33,7 @@ format:
 <!-- Phase 2→3 contract: this manuscript consumes
      - figures/fig_bars.png            (@fig-bars)
      - figures/fig_composition.png     (@fig-composition)
-     - _includes/tab_venues.md         (@tbl-venues)
+     - tables/tab_venues.md             (@tbl-venues)
      Any change to these outputs requires rebuilding the manuscript. -->
 
 **Résumé.** Comment la « finance climat » est-elle devenue un objet économique à part entière ? Cet article retrace l'histoire intellectuelle de sa construction entre 1990 et 2024, en montrant que les économistes n'ont pas découvert une réalité préexistante mais ont fabriqué les catégories comptables — marqueurs de Rio, méthodologies de finance privée mobilisée, seuils de concessionalité — à travers lesquelles les flux financiers liés au climat ont été rendus mesurables et gouvernables. Une analyse computationnelle d'environ {{< meta corpus_total_approx >}} travaux corrobore une périodisation en trois actes : une préhistoire où le concept n'existait pas encore (1990–2006), une cristallisation déclenchée par l'engagement de Copenhague (2007–2014), et une période de disputes menées dans les catégories établies lors de la cristallisation (2015–2024). Une tension récurrente entre pôle d'efficacité et pôle de redevabilité traverse le champ. La finance climat est devenue gouvernable non pas malgré mais grâce à l'ambiguïté délibérée de ses catégories comptables — une ambiguïté qui n'était pas un défaut à corriger mais une ressource politique exploitée par toutes les parties.
@@ -230,7 +230,7 @@ The tension between the two poles is constitutive: they sustain each other becau
 
 \newpage
 
-{{< include _includes/tab_venues.md >}}
+{{< include tables/tab_venues.md >}}
 
 \newpage
 
