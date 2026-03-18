@@ -1,12 +1,17 @@
 ---
 title: "Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity"
 subtitle: "*Inventer la finance climat. Des coûts incrémentaux à l'ambiguïté stratégique*"
-author: "Minh Ha-Duong"
+author: "[Anonymous]"
 keywords:
   - climate finance
   - quantification
   - accounting categories
   - international organisations
+jel:
+  - B20
+  - Q54
+  - F35
+  - Q56
 date: "2026-03-04"
 date-format: "MMMM D, YYYY"
 metadata-files: [manuscript-vars.yml]
@@ -27,7 +32,7 @@ format:
           }
           \usepackage{etoolbox}
           \renewcommand{\CSLBlock}[1]{\newline\noindent #1}
-      - file: author-footnote.tex
+      # - file: author-footnote.tex  # uncomment after review
 ---
 
 <!-- Phase 2→3 contract: this manuscript consumes
@@ -43,6 +48,8 @@ format:
 **Mots-clés :** finance climat, quantification, catégories comptables, organisations internationales
 
 **Keywords:** climate finance, quantification, accounting categories, international organisations
+
+**JEL codes:** B20, Q54, F35, Q56
 
 \newpage
 
@@ -246,6 +253,6 @@ The economists who built the measurement infrastructure did not simply fail to d
 
 Several limitations point to further research. Our multilingual corpus remains dominated by English; the intellectual history of climate finance as seen from recipient countries is largely unwritten---and the developed/developing binary itself, frozen in 1992 and never updated despite dramatic shifts in the global economy, remains one of the most consequential yet least examined constructions in climate finance governance. Our account of economists as institutional architects rests on published outputs rather than archival records or interviews; claims about individual motivations remain conjectural until primary-source research is undertaken. Our corpus covers academic and institutional publications; the role of professional financial media (*The Economist*, *Financial Times*, Bloomberg) in popularising and framing climate finance categories falls outside its scope. The trajectory from Article 4.3 to the NCQG itself deserves a dedicated legal-institutional history drawing on negotiation records and committee minutes. Whether the next generation of economists will return to the precision that Article 4.3 offered, or whether the productive ambiguity will prove durable, remains the open question of climate finance governance.
 
-**Data and code availability.** The corpus, analysis scripts, and reproducible pipeline used in this study are available at <https://github.com/minh-haDuong/Oeconomia-Climate-finance>.
+**Data and code availability.** The corpus, analysis scripts, and reproducible pipeline used in this study are available at [repository URL removed for review].
 
 
