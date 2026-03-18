@@ -655,8 +655,8 @@ for col in ["explained_variance_ratio", "corr_with_embedding_axis",
         axis_tab[col] = axis_tab[col].round(4)
 if "delta_bic" in axis_tab.columns:
     axis_tab["delta_bic"] = axis_tab["delta_bic"].round(0).astype("Int64")
-axis_tab.to_csv(os.path.join(TABLES_DIR, "tab_axis_detection.csv"), index=False)
-log.info("Saved -> tables/tab_axis_detection.csv")
+axis_tab.to_csv(os.path.join(TABLES_DIR, TAB5_AXIS), index=False)
+log.info("Saved -> tables/%s", TAB5_AXIS)
 
 # Per-paper scores
 pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",
