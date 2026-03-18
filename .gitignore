@@ -27,7 +27,7 @@ data/catalogs/.citations_batch_checkpoint.csv
 # Generated figures, tables, and stats (regenerate with: make figures / make stats)
 content/figures/
 content/tables/
-_variables.yml
+content/*-vars.yml
 
 # Python / uv
 .venv/

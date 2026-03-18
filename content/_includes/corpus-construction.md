@@ -2,7 +2,7 @@
 
 ### Sources
 
-The corpus assembles academic and grey literature from {{< var corpus_sources >}} sources. Four are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
+The corpus assembles academic and grey literature from {{< meta corpus_sources >}} sources. Four are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
 
 | Source | Script | Automation | Coverage |
 |---|---|---|---|

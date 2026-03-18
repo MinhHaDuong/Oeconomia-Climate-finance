@@ -168,7 +168,7 @@ content/tables/qa_citations_report.json: scripts/qa_citations.py scripts/utils.p
 # ═══════════════════════════════════════════════════════════
 # Inputs: Phase 1 outputs only (refined_works.csv, refined_embeddings.npz, refined_citations.csv).
 # het_mostcited_50.csv is produced within Phase 2 by build_het_core.py.
-# Outputs: content/figures/*.png, content/tables/*.csv, _variables.yml
+# Outputs: content/figures/*.png, content/tables/*.csv, content/*-vars.yml
 
 # Gate for Phase 2: verify all three contract files exist.
 # If any is missing, suggest dvc pull (data not synced) or make corpus (not built).
@@ -204,9 +204,10 @@ corpus-tables: content/tables/tab_corpus_sources.csv \
                content/_includes/tab_citation_coverage.md
 
 # ── Statistics (computed from pipeline outputs) ──────────
-STATS := _variables.yml
+STATS := content/manuscript-vars.yml content/technical-report-vars.yml \
+         content/data-paper-vars.yml content/companion-paper-vars.yml
 
-$(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
+$(STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
 		content/tables/tab_axis_detection.csv
 	uv run python $<
@@ -477,8 +478,7 @@ archive-datapaper: check-corpus
 		mkdir -p $(DPAPER_TMP)/content/tables; \
 		cp -r content/tables/* $(DPAPER_TMP)/content/tables/; \
 	fi
-	@# Copy _variables.yml if it exists
-	cp _variables.yml $(DPAPER_TMP)/ 2>/dev/null || true
+	@# Per-document vars files are already in content/ (copied above)
 	@# .env template
 	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/.env
 	@# Remove items that should not ship

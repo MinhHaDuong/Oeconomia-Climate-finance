@@ -2,7 +2,7 @@
 title: "A Multilingual Corpus of Climate Finance Literature, 1990--2024: Construction, Validation, and Semantic Embeddings"
 author: "Minh Ha-Duong"
 date: "2026-03-05"
-metadata-files: [../_variables.yml]
+metadata-files: [data-paper-vars.yml]
 bibliography: bibliography/main.bib
 format:
   pdf:
@@ -13,19 +13,19 @@ format:
 
 Climate finance---the financial flows directed at mitigating and adapting to climate change---has become one of the most politically salient objects in international economic governance. The \$100 billion annual commitment made at Copenhagen in 2009, and the \$300 billion New Collective Quantified Goal agreed at Baku in 2024, are contested not only in their adequacy but in their very definition: what counts as climate finance depends on accounting conventions that are themselves the subject of ongoing dispute [@roberts_weikmans2017; @michaelowa2007].
 
-Recent bibliometric and scientometric work has begun to map the climate finance literature, but existing datasets are either narrowly scoped (single database, English only) or lack the curation needed for reproducible analysis. This data descriptor presents a multilingual, deduplicated, and validated corpus of {{< var corpus_total >}} works on climate finance published between 1990 and 2024, assembled from {{< var corpus_sources >}} bibliographic sources spanning academic publications, institutional grey literature, and curated teaching materials. The corpus is accompanied by {{< var emb_dimensions >}}-dimensional sentence-transformer embeddings for all works with titles and publication years in the 1990--2024 range (the embedding cache contains {{< var corpus_with_embeddings >}} vectors, including pre-filtering records; the refined corpus itself has {{< var corpus_total >}} works), enabling semantic analysis without requiring users to re-run the embedding pipeline.
+Recent bibliometric and scientometric work has begun to map the climate finance literature, but existing datasets are either narrowly scoped (single database, English only) or lack the curation needed for reproducible analysis. This data descriptor presents a multilingual, deduplicated, and validated corpus of {{< meta corpus_total >}} works on climate finance published between 1990 and 2024, assembled from {{< meta corpus_sources >}} bibliographic sources spanning academic publications, institutional grey literature, and curated teaching materials. The corpus is accompanied by {{< meta emb_dimensions >}}-dimensional sentence-transformer embeddings for all works with titles and publication years in the 1990--2024 range (the embedding cache contains {{< meta corpus_with_embeddings >}} vectors, including pre-filtering records; the refined corpus itself has {{< meta corpus_total >}} works), enabling semantic analysis without requiring users to re-run the embedding pipeline.
 
 The dataset was constructed to support the historical analysis presented in @haduong2026 [submitted to *Oeconomia*], but its scope and curation make it suitable for a wide range of research applications: topic modelling, structural break detection, citation network analysis, bibliometric mapping of the climate finance field, and cross-lingual studies of how climate finance is discussed in different linguistic traditions.
 
-The corpus is multilingual by design. While English-language works dominate ({{< var lang_english_pct >}}%), the search strategy explicitly targeted French (*finance climat*, *finance climatique*), Chinese (气候融资, 气候金融), Japanese (気候金融, グリーンファイナンス), and German-language literature through ISTEX, bibCNRS, and multilingual OpenAlex queries. This deliberate multilingual scope, though it yields a modest non-English share, provides a foundation for cross-linguistic studies that monolingual corpora cannot support.
+The corpus is multilingual by design. While English-language works dominate ({{< meta lang_english_pct >}}%), the search strategy explicitly targeted French (*finance climat*, *finance climatique*), Chinese (气候融资, 气候金融), Japanese (気候金融, グリーンファイナンス), and German-language literature through ISTEX, bibCNRS, and multilingual OpenAlex queries. This deliberate multilingual scope, though it yields a modest non-English share, provides a foundation for cross-linguistic studies that monolingual corpora cannot support.
 
 Key statistics:
 
-- **{{< var corpus_total >}}** refined works after deduplication and quality filtering
-- **{{< var corpus_with_embeddings >}}** vectors in the embedding cache ({{< var emb_dimensions >}} dimensions; includes pre-filtering records --- the refined corpus has {{< var corpus_total >}} works)
-- **{{< var corpus_core >}}** core works (cited $\geq$ {{< var corpus_core_threshold >}} times), forming the field's intellectual backbone
-- **{{< var corpus_sources >}} sources**: OpenAlex, Semantic Scholar, ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI)
-- **Languages**: English ({{< var lang_english_pct >}}%), Portuguese, Spanish, French, Chinese, Japanese, German, and others
+- **{{< meta corpus_total >}}** refined works after deduplication and quality filtering
+- **{{< meta corpus_with_embeddings >}}** vectors in the embedding cache ({{< meta emb_dimensions >}} dimensions; includes pre-filtering records --- the refined corpus has {{< meta corpus_total >}} works)
+- **{{< meta corpus_core >}}** core works (cited $\geq$ {{< meta corpus_core_threshold >}} times), forming the field's intellectual backbone
+- **{{< meta corpus_sources >}} sources**: OpenAlex, Semantic Scholar, ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI)
+- **Languages**: English ({{< meta lang_english_pct >}}%), Portuguese, Spanish, French, Chinese, Japanese, German, and others
 - **Full audit trail**: every inclusion/exclusion decision recorded in `corpus_audit.csv`
 
 ## Methods
@@ -75,7 +75,7 @@ The primary corpus file. Each row represents one deduplicated work.
 | `is_protected` | boolean | Whether the work was protected from removal |
 | `flag_reason` | string | Reason for flagging (if applicable) |
 
-**Size:** {{< var corpus_total >}} rows.
+**Size:** {{< meta corpus_total >}} rows.
 
 ### embeddings.npz
 
@@ -129,7 +129,7 @@ The merge pipeline reduces raw records through two passes:
 1. **DOI-based deduplication** normalizes DOIs and merges records sharing the same DOI, retaining the maximum citation count and best metadata by source priority.
 2. **Title+year deduplication** catches records lacking DOIs by matching on normalized title and publication year.
 
-The `source_count` field tracks multi-source agreement: works appearing in 2+ independent sources have higher confidence. Of the {{< var corpus_total >}} refined works, {{< var corpus_multi_source >}} ({{< var corpus_multi_source_pct >}}%) appear in multiple sources.
+The `source_count` field tracks multi-source agreement: works appearing in 2+ independent sources have higher confidence. Of the {{< meta corpus_total >}} refined works, {{< meta corpus_multi_source >}} ({{< meta corpus_multi_source_pct >}}%) appear in multiple sources.
 
 ### LLM audit
 
@@ -142,7 +142,7 @@ Both error rates are reported in the refinement script's output and in `corpus_a
 
 ### Coverage analysis
 
-The {{< var corpus_sources >}}-source design provides complementary coverage:
+The {{< meta corpus_sources >}}-source design provides complementary coverage:
 
 - **OpenAlex** provides the broadest English-language academic coverage via tiered keyword queries
 - **Semantic Scholar** complements OpenAlex with arXiv preprints, dissertations, and working papers

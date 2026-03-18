@@ -1,4 +1,4 @@
-: Characteristic vocabulary of the two poles identified by Gaussian mixture analysis. Terms from paper abstracts, ranked by discriminating power (how strongly their presence predicts pole assignment). The two-component model is strongly preferred over unimodality (ΔBIC = {{< var bim_dbic_embedding >}} on embeddings; ΔBIC = {{< var bim_dbic_tfidf >}} on TF-IDF; embedding--lexical correlation *r* = {{< var bim_corr >}}). {#tbl-poles}
+: Characteristic vocabulary of the two poles identified by Gaussian mixture analysis. Terms from paper abstracts, ranked by discriminating power (how strongly their presence predicts pole assignment). The two-component model is strongly preferred over unimodality (ΔBIC = {{< meta bim_dbic_embedding >}} on embeddings; ΔBIC = {{< meta bim_dbic_tfidf >}} on TF-IDF; embedding--lexical correlation *r* = {{< meta bim_corr >}}). {#tbl-poles}
 
 | Accountability pole | Efficiency pole |
 |:---|:---|

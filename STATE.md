@@ -9,7 +9,7 @@ Last updated: 2026-03-17
 - Structural break language purged; computational claims now descriptive
 - `\newpage` before each section and each table; fig-composition in §2.5
 - No Introduction heading (Oeconomia style); EU Structural Funds compressed
-- `corpus_total_approx: "30,000"` as YAML front matter variable (no Python kernel)
+- Per-document vars files (`content/*-vars.yml`) via `{{< meta >}}` shortcode
 
 ## Corpus
 
@@ -36,7 +36,7 @@ Last updated: 2026-03-17
 - `make manuscript` is Phase 3 pure: only `quarto render` (no Python, no stats, no API)
 - Per-document include sets (no wildcard); surgical figure/table deps
 - No data files, no API calls, no Phase 1 caches required during render
-- Manuscript deps: .qmd + 2 figures + tab_venues.md + bibliography
+- Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + tab_venues.md + bibliography
 
 ## Blockers
 

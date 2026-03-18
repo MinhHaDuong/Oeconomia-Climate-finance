@@ -29,7 +29,7 @@ Labels and paper counts are saved to `cluster_labels.json` and `tab_alluvial.csv
 
 ![Alluvial diagram: thematic flows across three periods (full corpus).](figures/fig_alluvial.png){#fig-alluvial width=100%}
 
-![Alluvial diagram: thematic flows across three periods (core subset, cited_by_count >= {{< var corpus_core_threshold >}}).](figures/fig_alluvial_core.png){#fig-alluvial-core width=100%}
+![Alluvial diagram: thematic flows across three periods (core subset, cited_by_count >= {{< meta corpus_core_threshold >}}).](figures/fig_alluvial_core.png){#fig-alluvial-core width=100%}
 
 ### Core share annotations
 

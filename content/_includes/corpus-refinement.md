@@ -74,7 +74,7 @@ Enrichment steps can reintroduce duplicates from source JSONs that the merge ste
 
 An audit trail (`corpus_audit.csv`) records the decision for every paper: `keep`, `remove` (flagged), or `deduped` (dropped by deduplication).
 
-**Result:** The refined corpus contains {{< var corpus_total >}} papers in `refined_works.csv`.
+**Result:** The refined corpus contains {{< meta corpus_total >}} papers in `refined_works.csv`.
 
 ### Venue-cleaning decisions
 

@@ -46,7 +46,7 @@ Because the corpus grows rapidly over time, divergence peaks could be driven by 
 
 ![Breakpoints summary (manuscript figure variant).](figures/fig_breaks.png){#fig-breaks width=80%}
 
-### Results: full corpus (N = {{< var corpus_with_embeddings >}})
+### Results: full corpus (N = {{< meta corpus_with_embeddings >}})
 
 #### Baseline (*k* = 0)
 
@@ -85,7 +85,7 @@ With a 2-year gap, only one breakpoint survives:
 
 The sole surviving break at **2009** (Copenhagen COP) confirms that the late-2000s semantic shift is the dominant structural feature of the corpus. The 2013 JS break disappears, suggesting it reflects a more gradual thematic redistribution that does not survive the removal of adjacent years. The 2009 result aligns with the thesis that climate finance crystallized as a distinct economic object around the Copenhagen moment.
 
-### Results: core subset (N = {{< var corpus_core >}}, cited_by_count ≥ {{< var corpus_core_threshold >}})
+### Results: core subset (N = {{< meta corpus_core >}}, cited_by_count ≥ {{< meta corpus_core_threshold >}})
 
 The core subset contains only highly-cited papers — the *influential* works that define the field's intellectual structure.
 
@@ -123,7 +123,7 @@ The censored-gap analysis reinforces the main breakpoint at **2009** (Copenhagen
 
 | Corpus | *k* = 0 | *k* = 1 | *k* = 2 |
 |--------|---------|---------|---------|
-| Full ({{< var corpus_with_embeddings >}}) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
-| Core ({{< var corpus_core >}}) | 2023* | 2023* | 2023* |
+| Full ({{< meta corpus_with_embeddings >}}) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
+| Core ({{< meta corpus_core >}}) | 2023* | 2023* | 2023* |
 
 \* Boundary artifact only.
