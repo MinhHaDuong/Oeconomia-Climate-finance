@@ -372,9 +372,6 @@ def main():
     pca_stats(v)
     citation_stats(v)
 
-    # Static constants (single source of truth)
-    v["emb_model"] = "paraphrase-multilingual-MiniLM-L12-v2"
-
     # Write per-document vars files
     for doc_name, keys in DOC_VARS.items():
         doc_v = {k: v[k] for k in keys if k in v}

@@ -207,6 +207,7 @@ corpus-tables: content/tables/tab_corpus_sources.csv \
 STATS := content/manuscript-vars.yml content/technical-report-vars.yml \
          content/data-paper-vars.yml content/companion-paper-vars.yml
 
+# Grouped target (&:) — one invocation writes all 4 files. Requires GNU Make >= 4.3.
 $(STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
 		content/tables/tab_axis_detection.csv
@@ -361,10 +362,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to docx
 
 output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
@@ -426,7 +427,7 @@ archive-analysis: check-manuscript-data
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
 
-archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
+archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
 	mkdir -p $(MANU_TMP)/content/bibliography \
