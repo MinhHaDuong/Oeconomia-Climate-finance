@@ -444,7 +444,7 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
 
-archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
+archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml output/content/manuscript.pdf
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
 	mkdir -p $(MANU_TMP)/content/bibliography \
@@ -460,9 +460,15 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 	cp content/tables/tab_venues.md         $(MANU_TMP)/content/tables/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
 	cp content/bibliography/oeconomia.csl   $(MANU_TMP)/content/bibliography/
+	@# Pre-built output PDF (for reviewer comparison)
+	cp output/content/manuscript.pdf    $(MANU_TMP)/content/
 	@# Build infrastructure (no Python needed)
 	cp Makefile.manuscript              $(MANU_TMP)/Makefile
 	cp _quarto.yml                      $(MANU_TMP)/
+	@# Checksums of inputs + output — reviewers verify with: cd archive && md5sum -c checksums.md5
+	cd $(MANU_TMP) && md5sum content/figures/*.png content/tables/*.md \
+	    content/bibliography/main.bib content/manuscript.qmd \
+	    content/manuscript-vars.yml content/manuscript.pdf > checksums.md5
 	@echo "=== Creating tarball ==="
 	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp $(MANU_ARCHIVE)
 	@echo "=== Manuscript archive ==="
