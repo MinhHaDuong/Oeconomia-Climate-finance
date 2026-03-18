@@ -4,22 +4,12 @@
 
 Climate finance crystallized as an economic object by ~2009. Everything since — including the fierce $100bn accounting disputes and the $300bn NCQG — has been fought within the categories established at that moment. This paper traces how economists and institutions co-produced those categories.
 
-## Current milestone: Revision
+## Current milestone: Under review
 
-- [x] Fix teaching source pipeline (#135)
-- [ ] Human proofread of full manuscript (#26)
-- [ ] Final word count trim (~9,600 → ~9,000)
-- [ ] Final `make clean && make all` + visual check
-- [ ] Move draft to `release/` for submission
+Submitted to Oeconomia (Varia) on 2026-03-18. Waiting for referee reports (~3 months).
 
-## Next milestone: Submission packaging
-
-- [x] Analysis archive ships output checksums (#210)
-- [ ] Tag repo `v1.0-submission` + push tag
-- [ ] Archive on Zenodo (via GitHub integration) → get DOI
-- [ ] Upload technical report to HAL as working paper → get HAL ID
-- [ ] Add "Data and code availability" paragraph to manuscript
-- [ ] Draft cover letter pointing reviewers to HAL + Zenodo
+- [ ] Prepare ESHET-HES conference slides (Nice, May 26–29, 2026)
+- [ ] Continue Tier 1 reading plan (defence against reviewer questions)
 - [ ] Companion methods paper (Scientometrics/QSS): parked for post-acceptance
 
 ## Post-submission improvements
@@ -31,6 +21,8 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 
 ## Completed
 
+- **Submission packaging (2026-03-18)**: Zenodo (DOI 10.5281/zenodo.19097045), HAL (hal-05558422v1), git tag v1.0-submission, cover letter + AI disclosure, figures ≥1500px
+- **Revision**: proofread, word count trim (9,600→8,860), final build + visual check, release/
 - Foundations: figures, bibliography audit, empirical findings
 - Drafting: all sections (intro, §1–§4, conclusion)
 - Œconomia house style, AI-tell sweep, code audit, PDF+ODT build clean
