@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-17
+Last updated: 2026-03-18
 
 ## Manuscript
 
@@ -37,6 +37,7 @@ Last updated: 2026-03-17
 - Per-document include sets (no wildcard); surgical figure/table deps
 - No data files, no API calls, no Phase 1 caches required during render
 - Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + content/tables/tab_venues.md + bibliography
+- All Phase 2 generated tables (including .md) in gitignored `content/tables/`; `content/_includes/` is hand-written only
 
 ## Blockers
 
@@ -49,3 +50,4 @@ None.
 ## Open tickets
 
 - #26: Human proofread of full manuscript
+- #213: Add export_citation_coverage.py to archive-analysis recipe
