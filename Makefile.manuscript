@@ -1,0 +1,21 @@
+# Phase 3 reproducibility — "Inventing Climate Finance" (Œconomia)
+#
+# Verifies: PDF renders from pre-built figures and content.
+# No Python, no data, no scripts required.
+#
+# Prerequisites: Quarto ≥ 1.4, XeLaTeX
+# Usage:
+#   make         # render manuscript PDF
+
+export SOURCE_DATE_EPOCH := 0
+
+.DEFAULT_GOAL := manuscript
+.PHONY: manuscript
+
+manuscript: output/content/manuscript.pdf
+
+output/content/manuscript.pdf: content/manuscript.qmd \
+		content/figures/fig_bars.png content/figures/fig_composition.png \
+		content/_includes/tab_venues.md \
+		content/bibliography/main.bib content/bibliography/oeconomia.csl
+	quarto render $< --to pdf

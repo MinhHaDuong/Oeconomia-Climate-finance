@@ -1,0 +1,43 @@
+# Phase 2 reproducibility — "Inventing Climate Finance" (Œconomia)
+#
+# Verifies: figures and tables are reproducible from Phase 1 data.
+#
+# Prerequisites: uv (https://docs.astral.sh/uv/)
+# Usage:
+#   uv sync      # install Python dependencies
+#   make         # rebuild all figures and tables from data
+
+export PYTHONHASHSEED := 0
+export SOURCE_DATE_EPOCH := 0
+
+DATA    := data/catalogs
+REFINED := $(DATA)/refined_works.csv
+
+.DEFAULT_GOAL := figures
+.PHONY: figures
+
+figures: content/figures/fig_bars.png content/figures/fig_composition.png \
+         content/_includes/tab_venues.md
+
+# ── Figures ─────────────────────────────────────────────────
+content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
+		content/tables/tab_alluvial.csv
+	uv run python $< --no-pdf
+
+# ── Intermediate tables ────────────────────────────────────
+content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
+content/tables/tab_core_shares.csv &: scripts/compute_clusters.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+$(DATA)/het_mostcited_50.csv: scripts/build_het_core.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) \
+		content/tables/tab_pole_papers.csv
+	uv run python $<
+
+content/tables/tab_pole_papers.csv &: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf

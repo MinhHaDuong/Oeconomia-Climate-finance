@@ -31,8 +31,6 @@
 /reranker_calibration.csv
 /reranker_hitl_review.csv
 /semantic_clusters.csv
-/cluster_labels.json
-/cluster_labels_core.json
 /openalex_baselines.json
 /openalex_econ_yearly.csv
 /abstract_cache
