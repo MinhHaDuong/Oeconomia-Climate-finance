@@ -383,8 +383,17 @@ output/content/companion-paper.pdf: content/companion-paper.qmd $(COMPANION_INCL
 SHELL            := /bin/bash
 ANALYSIS_ARCHIVE := climate-finance-analysis
 ANALYSIS_TMP     := /tmp/$(ANALYSIS_ARCHIVE)
+ANALYSIS_OUTPUTS := content/figures/fig_bars.png \
+                    content/figures/fig_composition.png \
+                    content/_includes/tab_venues.md \
+                    content/tables/tab_alluvial.csv \
+                    content/tables/tab_core_shares.csv \
+                    content/tables/tab_bimodality.csv \
+                    content/tables/tab_axis_detection.csv \
+                    content/tables/tab_pole_papers.csv \
+                    content/tables/cluster_labels.json
 
-archive-analysis: check-manuscript-data
+archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	@echo "=== Building analysis archive ==="
 	rm -rf $(ANALYSIS_TMP)
 	mkdir -p $(ANALYSIS_TMP)/data/catalogs \
@@ -412,6 +421,8 @@ archive-analysis: check-manuscript-data
 	cp Makefile.analysis-manuscript                $(ANALYSIS_TMP)/Makefile
 	cp pyproject.toml uv.lock           $(ANALYSIS_TMP)/
 	echo 'CLIMATE_FINANCE_DATA=data' > $(ANALYSIS_TMP)/.env
+	@# Expected output checksums — reviewers verify with: md5sum -c expected_outputs.md5
+	md5sum $(ANALYSIS_OUTPUTS) > $(ANALYSIS_TMP)/expected_outputs.md5
 	@echo "=== Creating tarball ==="
 	tar czf $(ANALYSIS_ARCHIVE).tar.gz -C /tmp $(ANALYSIS_ARCHIVE)
 	@echo "=== Analysis archive ==="
