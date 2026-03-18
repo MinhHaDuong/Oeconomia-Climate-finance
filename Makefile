@@ -427,7 +427,9 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	cp Makefile.analysis-manuscript                $(ANALYSIS_TMP)/Makefile
 	cp pyproject.toml uv.lock           $(ANALYSIS_TMP)/
 	echo 'CLIMATE_FINANCE_DATA=data' > $(ANALYSIS_TMP)/.env
-	@# Expected output checksums — reviewers verify with: md5sum -c expected_outputs.md5
+	@# README for reviewers
+	cp README-analysis.md $(ANALYSIS_TMP)/README.md
+	@# Expected output checksums — reviewers verify with: make && make verify
 	md5sum $(ANALYSIS_OUTPUTS) > $(ANALYSIS_TMP)/expected_outputs.md5
 	@echo "=== Creating tarball ==="
 	tar czf $(ANALYSIS_ARCHIVE).tar.gz -C /tmp $(ANALYSIS_ARCHIVE)
@@ -460,15 +462,19 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 	cp content/tables/tab_venues.md         $(MANU_TMP)/content/tables/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
 	cp content/bibliography/oeconomia.csl   $(MANU_TMP)/content/bibliography/
-	@# Pre-built output PDF (for reviewer comparison)
-	cp output/content/manuscript.pdf    $(MANU_TMP)/content/
+	@# Pre-built output PDF (at root, away from Quarto's clean scope)
+	cp output/content/manuscript.pdf    $(MANU_TMP)/expected-manuscript.pdf
 	@# Build infrastructure (no Python needed)
 	cp Makefile.manuscript              $(MANU_TMP)/Makefile
 	cp _quarto.yml                      $(MANU_TMP)/
-	@# Checksums of inputs + output — reviewers verify with: cd archive && md5sum -c checksums.md5
+	@# README for reviewers
+	cp README-manuscript.md $(MANU_TMP)/README.md
+	@# Record toolchain versions used to build the shipped PDF
+	printf 'Quarto %s\n%s\n' "$$(quarto --version)" "$$(xdvipdfmx --version 2>&1 | head -1)" > $(MANU_TMP)/TOOLCHAIN.txt
+	@# Input checksums — reviewers verify with: make && make verify
 	cd $(MANU_TMP) && md5sum content/figures/*.png content/tables/*.md \
 	    content/bibliography/main.bib content/manuscript.qmd \
-	    content/manuscript-vars.yml content/manuscript.pdf > checksums.md5
+	    content/manuscript-vars.yml > checksums.md5
 	@echo "=== Creating tarball ==="
 	tar czf $(MANU_ARCHIVE).tar.gz -C /tmp $(MANU_ARCHIVE)
 	@echo "=== Manuscript archive ==="

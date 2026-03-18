@@ -22,5 +22,18 @@ output/content/manuscript.pdf: content/manuscript.qmd content/manuscript-vars.ym
 	quarto render $< --to pdf
 
 # ── Verification ──────────────────────────────────────────
+# Inputs: checksum must match (deterministic).
+# Output: compare rebuilt PDF against the shipped reference copy.
+#   PDF binaries may differ across toolchain versions (xdvipdfmx embeds
+#   its version; different TeX Live releases produce different output).
+#   A mismatch is a warning, not a failure — inputs are the real contract.
 verify: manuscript
 	md5sum -c checksums.md5
+	@if diff -q expected-manuscript.pdf output/content/manuscript.pdf >/dev/null 2>&1; then \
+		echo "VERIFY: all inputs match, rebuilt PDF identical to shipped PDF"; \
+	else \
+		echo "VERIFY: all inputs match"; \
+		echo "WARNING: rebuilt PDF differs from shipped PDF (expected with different toolchain versions)"; \
+		echo "  Shipped:  $$(pdfinfo expected-manuscript.pdf 2>/dev/null | grep Producer || echo 'pdfinfo not available')"; \
+		echo "  Rebuilt:  $$(pdfinfo output/content/manuscript.pdf 2>/dev/null | grep Producer || echo 'pdfinfo not available')"; \
+	fi
