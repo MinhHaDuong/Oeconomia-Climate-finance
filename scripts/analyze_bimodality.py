@@ -575,6 +575,10 @@ axis_rows.append({
 })
 
 axis_detection = pd.DataFrame(axis_rows)
+# Round floats to meaningful precision (cross-machine BLAS noise is ~10th digit)
+for col in ["variance_explained", "cosine_with_seed_axis"]:
+    if col in axis_detection.columns:
+        axis_detection[col] = axis_detection[col].round(4)
 axis_detection.to_csv(os.path.join(TABLES_DIR, TAB5_AXIS), index=False)
 log.info("Saved -> tables/%s", TAB5_AXIS)
 
