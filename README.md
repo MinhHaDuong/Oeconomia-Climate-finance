@@ -150,6 +150,14 @@ make manuscript       # build PDF (requires figures)
 | `docs/coding-guidelines.md` | Pipeline phases, script reference, conventions |
 | `docs/oeconomia-style.md` | Journal house style |
 
+## Release
+
+Submitted to Œconomia on 2026-03-18.
+
+- **Zenodo**: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) — reproducibility archives (analysis + manuscript)
+- **HAL**: [hal-05558422v1](https://hal.science/hal-05558422v1) — preprint
+- **Git tag**: `v1.0-submission`
+
 ## Contact
 
 minh.ha-duong@cnrs.fr

@@ -2,9 +2,16 @@
 
 Last updated: 2026-03-18
 
+## Status: SUBMITTED
+
+Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
+- Zenodo: https://doi.org/10.5281/zenodo.19097045
+- HAL: hal-05558422v1
+- Git tag: v1.0-submission
+
 ## Manuscript
 
-- ~8,860 words (target ~9,000), 61 bib entries
+- ~8,860 words, 61 bib entries — submitted as anonymized PDF
 - 2 figures (bars, composition) + 2 tables (traditions, venues), no supplement
 - Structural break language purged; computational claims now descriptive
 - `\newpage` before each section and each table; fig-composition in §2.5
@@ -24,7 +31,7 @@ Last updated: 2026-03-18
 
 ## Figures & tables
 
-- Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992
+- Fig 1 (bars): self-explaining legend, grayscale, 135mm, starts 1992
 - Fig 2 (composition): relocated to §2.5 (one figure per section)
 - Table 1 (traditions): inline pipe table, Pandoc float (no raw LaTeX)
 - Table 2 (venues): 15 journals by pole lean, via `{{< include tables/tab_venues.md >}}`
@@ -46,7 +53,11 @@ None.
 
 None.
 
+## Next actions
+
+- Prepare ESHET-HES conference slides (Nice, May 26–29)
+- Continue reading plan (Tier 1 books)
+
 ## Open tickets
 
-- #26: Human proofread of full manuscript
 - #213: Add export_citation_coverage.py to archive-analysis recipe
