@@ -15,7 +15,7 @@ MAKEFILE = os.path.join(os.path.dirname(__file__), "..", "Makefile")
 EXPECTED_OUTPUTS = [
     "content/figures/fig_bars.png",
     "content/figures/fig_composition.png",
-    "content/_includes/tab_venues.md",
+    "content/tables/tab_venues.md",
     "content/tables/tab_alluvial.csv",
     "content/tables/tab_core_shares.csv",
     "content/tables/tab_bimodality.csv",
@@ -44,6 +44,39 @@ class TestAnalysisOutputsVariable:
             assert path in mk, (
                 f"ANALYSIS_OUTPUTS must include {path}"
             )
+
+
+    def test_no_includes_in_outputs(self):
+        """ANALYSIS_OUTPUTS must not reference content/_includes/ (Phase 2 outputs live in content/tables/)."""
+        mk = _read_makefile()
+        m = re.search(
+            r"^ANALYSIS_OUTPUTS\s*:?=(.*?)(?=\n\S|\Z)",
+            mk,
+            re.MULTILINE | re.DOTALL,
+        )
+        assert m, "ANALYSIS_OUTPUTS variable not found"
+        value = m.group(1)
+        assert "_includes/" not in value, (
+            "ANALYSIS_OUTPUTS must not reference content/_includes/ — "
+            "generated tables live in content/tables/"
+        )
+
+
+class TestArchiveScripts:
+    """archive-analysis must copy all scripts needed to reproduce outputs."""
+
+    def test_export_citation_coverage_copied(self):
+        mk = _read_makefile()
+        m = re.search(
+            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
+            mk,
+            re.MULTILINE,
+        )
+        assert m, "archive-analysis recipe not found"
+        recipe = m.group(1)
+        assert "export_citation_coverage.py" in recipe, (
+            "archive-analysis must copy export_citation_coverage.py"
+        )
 
 
 class TestArchiveChecksums:
