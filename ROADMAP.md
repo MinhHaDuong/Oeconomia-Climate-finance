@@ -15,6 +15,7 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 
 ## Next milestone: Submission packaging
 
+- [x] Analysis archive ships output checksums (#210)
 - [ ] Tag repo `v1.0-submission` + push tag
 - [ ] Archive on Zenodo (via GitHub integration) → get DOI
 - [ ] Upload technical report to HAL as working paper → get HAL ID
