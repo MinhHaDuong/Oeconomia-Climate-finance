@@ -10,6 +10,7 @@ Usage:
 
 import json
 import os
+import sys
 import warnings
 
 import numpy as np
@@ -373,13 +374,20 @@ def main():
     citation_stats(v)
 
     # Write per-document vars files
+    all_missing = []
     for doc_name, keys in DOC_VARS.items():
         doc_v = {k: v[k] for k in keys if k in v}
         missing = [k for k in keys if k not in v]
         if missing:
             log.warning("%s: %d variables missing: %s", doc_name, len(missing), missing)
+            all_missing.extend(f"{doc_name}:{k}" for k in missing)
         path = os.path.join(CONTENT_DIR, f"{doc_name}-vars.yml")
         write_yaml(doc_v, path)
+
+    if all_missing:
+        log.error("Aborting: %d variables could not be computed. "
+                  "Rendering would produce ?meta:X placeholders.", len(all_missing))
+        sys.exit(1)
 
 
 if __name__ == "__main__":
