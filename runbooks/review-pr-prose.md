@@ -69,7 +69,7 @@ After all agents return:
 4. **Run quality checks**:
    - `make lint-prose` (blacklisted words, AI tells)
    - `make manuscript` or `make papers` (if prose changed)
-5. **Check consistency**: are claims in the text consistent with data in `_variables.yml`, figures, and tables?
+5. **Check consistency**: are claims in the text consistent with data in `content/*-vars.yml`, figures, and tables?
 6. **Post a single review** via `gh pr review <number>`, attributing each finding to its perspective.
 
 ## Proportional depth

@@ -168,7 +168,7 @@ content/tables/qa_citations_report.json: scripts/qa_citations.py scripts/utils.p
 # ═══════════════════════════════════════════════════════════
 # Inputs: Phase 1 outputs only (refined_works.csv, refined_embeddings.npz, refined_citations.csv).
 # het_mostcited_50.csv is produced within Phase 2 by build_het_core.py.
-# Outputs: content/figures/*.png, content/tables/*.csv, _variables.yml
+# Outputs: content/figures/*.png, content/tables/*.csv, content/*-vars.yml
 
 # Gate for Phase 2: verify all three contract files exist.
 # If any is missing, suggest dvc pull (data not synced) or make corpus (not built).
@@ -204,9 +204,11 @@ corpus-tables: content/tables/tab_corpus_sources.csv \
                content/_includes/tab_citation_coverage.md
 
 # ── Statistics (computed from pipeline outputs) ──────────
-STATS := _variables.yml
+STATS := content/manuscript-vars.yml content/technical-report-vars.yml \
+         content/data-paper-vars.yml content/companion-paper-vars.yml
 
-$(STATS): scripts/compute_stats.py scripts/utils.py $(REFINED) \
+# Grouped target (&:) — one invocation writes all 4 files. Requires GNU Make >= 4.3.
+$(STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
 		content/tables/tab_axis_detection.csv
 	uv run python $<
@@ -360,10 +362,10 @@ manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
+output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to pdf
 
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
+output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to docx
 
 output/content/technical-report.pdf: content/technical-report.qmd $(TECHREP_INCLUDES) $(BIB) $(STATS)
@@ -425,7 +427,7 @@ archive-analysis: check-manuscript-data
 MANU_ARCHIVE     := climate-finance-manuscript
 MANU_TMP         := /tmp/$(MANU_ARCHIVE)
 
-archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
+archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
 	mkdir -p $(MANU_TMP)/content/bibliography \
@@ -436,6 +438,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES)
 	cp content/figures/fig_composition.png  $(MANU_TMP)/content/figures/
 	@# Manuscript content
 	cp content/manuscript.qmd               $(MANU_TMP)/content/
+	cp content/manuscript-vars.yml          $(MANU_TMP)/content/
 	cp content/author-footnote.tex          $(MANU_TMP)/content/
 	cp content/_includes/tab_venues.md      $(MANU_TMP)/content/_includes/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
@@ -477,8 +480,8 @@ archive-datapaper: check-corpus
 		mkdir -p $(DPAPER_TMP)/content/tables; \
 		cp -r content/tables/* $(DPAPER_TMP)/content/tables/; \
 	fi
-	@# Copy _variables.yml if it exists
-	cp _variables.yml $(DPAPER_TMP)/ 2>/dev/null || true
+	@# Copy per-document vars files (gitignored, like figures/tables)
+	cp content/*-vars.yml $(DPAPER_TMP)/content/ 2>/dev/null || true
 	@# .env template
 	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/.env
 	@# Remove items that should not ship

@@ -9,7 +9,7 @@
 **Encoding parameters:**
 - Batch size: 256
 - Normalization: L2-normalized embeddings
-- Runtime: approximately 16 minutes on CPU for a full corpus (~{{< var corpus_total_approx >}} works); incremental runs encode only new additions
+- Runtime: approximately 16 minutes on CPU for a full corpus (~{{< meta corpus_total_approx >}} works); incremental runs encode only new additions
 
 **Output:** `embeddings.npz` -- a compressed NumPy archive containing the embedding vectors (N x 384), DOI/source_id keys for each row, model name, and text field specification. The keyed cache enables incremental updates: only works absent from the cache are encoded. A change in model name or text fields triggers a full recompute.
 

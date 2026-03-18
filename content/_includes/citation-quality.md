@@ -6,21 +6,21 @@
 
 ### Coverage
 
-The citation graph was built by querying Crossref and OpenAlex for every DOI in `refined_works.csv`. Of {{< var cite_total_dois >}} unique corpus DOIs, {{< var cite_fetched_dois >}} ({{< var cite_coverage_pct >}}%) appear as source papers in `citations.csv`, contributing {{< var cite_total_rows >}} reference rows of which {{< var cite_doi_ref_rows >}} ({{< var cite_doi_ref_pct >}}%) carry a resolved reference DOI. OpenAlex complemented the {{< var cite_crossref_rows >}} rows from Crossref.
+The citation graph was built by querying Crossref and OpenAlex for every DOI in `refined_works.csv`. Of {{< meta cite_total_dois >}} unique corpus DOIs, {{< meta cite_fetched_dois >}} ({{< meta cite_coverage_pct >}}%) appear as source papers in `citations.csv`, contributing {{< meta cite_total_rows >}} reference rows of which {{< meta cite_doi_ref_rows >}} ({{< meta cite_doi_ref_pct >}}%) carry a resolved reference DOI. OpenAlex complemented the {{< meta cite_crossref_rows >}} rows from Crossref.
 
 | Metric | Value |
 |--------|-------|
-| Corpus DOIs | {{< var cite_total_dois >}} |
-| DOIs with citation data | {{< var cite_fetched_dois >}} ({{< var cite_coverage_pct >}}%) |
-| Total reference rows | {{< var cite_total_rows >}} |
-| Rows with resolved ref DOI | {{< var cite_doi_ref_rows >}} ({{< var cite_doi_ref_pct >}}%) |
-| Crossref-sourced rows | {{< var cite_crossref_rows >}} |
+| Corpus DOIs | {{< meta cite_total_dois >}} |
+| DOIs with citation data | {{< meta cite_fetched_dois >}} ({{< meta cite_coverage_pct >}}%) |
+| Total reference rows | {{< meta cite_total_rows >}} |
+| Rows with resolved ref DOI | {{< meta cite_doi_ref_rows >}} ({{< meta cite_doi_ref_pct >}}%) |
+| Crossref-sourced rows | {{< meta cite_crossref_rows >}} |
 
 Coverage varies by period:
 
 {{< include _includes/tab_citation_coverage.md >}}
 
-The remaining {{< var cite_never_fetched >}} never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
+The remaining {{< meta cite_never_fetched >}} never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
 
 ### Quality verification
 
