@@ -260,7 +260,7 @@ def make_run_id():
     return time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
 
 
-_CLUSTER_LABELS_PATH = os.path.join(CATALOGS_DIR, "cluster_labels.json")
+_CLUSTER_LABELS_PATH = os.path.join(BASE_DIR, "content", "tables", "cluster_labels.json")
 
 
 def load_cluster_labels(n_clusters=6):
@@ -278,7 +278,7 @@ def load_cluster_labels(n_clusters=6):
 
     warnings.warn(
         f"cluster_labels.json not found at {_CLUSTER_LABELS_PATH}. "
-        "Run: uv run python scripts/analyze_alluvial.py",
+        "Run: uv run python scripts/compute_clusters.py",
         stacklevel=2,
     )
     return {i: f"Cluster {i}" for i in range(n_clusters)}
