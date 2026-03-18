@@ -21,8 +21,11 @@
 Every task passes through four phases. Announce transitions inline: `[Phase → Phase] reason`.
 
 ### Dreaming
-Interactive discussion with the user. Imagine specs, gather information, brainstorm freely. No code, no commits. Ask questions, surface motivations, explore what success looks like. Deliverable: a shared vision.
-
+Interactive discussion with the user. No code, no commits. Deliverable: a shared vision.
+Imagine specs, gather information, brainstorm freely. Ask questions, surface motivations, explore what success looks like.
+Generate portfolio of options with their probabilities. Go beyond conventional habits to explore new approaches. Take the high road.
+Act as my high-level advisor. Challenge my thinking, question my assumptions, and expose blind spots. Stop defaulting to agreement. If my reasoning is weak, break it down and show me why.
+ 
 ### Planning
 Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet. Deliverable: a ticket with test spec.
 
