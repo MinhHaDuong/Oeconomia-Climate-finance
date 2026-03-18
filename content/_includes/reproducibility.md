@@ -54,9 +54,9 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 
 ### Cross-machine reproducibility
 
-Figures that do not involve KMeans clustering (fig_bars, fig_genealogy, fig_seed_axis_core) are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
+Figures and tables are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
 
-Figures that depend on KMeans (fig_breakpoints, fig_composition, fig_bimodality, and their core variants) may differ across machines. This is because scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. The resulting cluster assignments can differ at the margin, producing visually similar but not byte-identical figures. Substantive results (breakpoint years, ΔBIC values, period boundaries) are robust to these differences.
+scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MKL, Apple Accelerate), and floating-point summation order in distance computations is not guaranteed across implementations. To absorb this jitter, all CSV outputs are rounded to bounded precision: BIC values to integers, correlations and variance ratios to 4 decimal places, per-paper axis scores to 4 decimal places. At this precision, outputs are identical across tested platforms (Intel MKL on x86, OpenBLAS on x86 with NVIDIA GPU).
 
 ### Non-reproducible steps
 
