@@ -28,7 +28,7 @@ Last updated: 2026-03-17
 - Fig 1 (bars): self-explaining legend, grayscale, 120mm, starts 1992
 - Fig 2 (composition): relocated to §2.5 (one figure per section)
 - Table 1 (traditions): inline pipe table, Pandoc float (no raw LaTeX)
-- Table 2 (venues): 15 journals by pole lean, via `{{< include tab_venues.md >}}`
+- Table 2 (venues): 15 journals by pole lean, via `{{< include tables/tab_venues.md >}}`
 - Table (poles): efficiency vs accountability terms — in companion paper
 
 ## Build system
@@ -36,7 +36,7 @@ Last updated: 2026-03-17
 - `make manuscript` is Phase 3 pure: only `quarto render` (no Python, no stats, no API)
 - Per-document include sets (no wildcard); surgical figure/table deps
 - No data files, no API calls, no Phase 1 caches required during render
-- Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + tab_venues.md + bibliography
+- Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + content/tables/tab_venues.md + bibliography
 
 ## Blockers
 

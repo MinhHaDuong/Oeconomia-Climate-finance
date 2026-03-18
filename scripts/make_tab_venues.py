@@ -2,7 +2,7 @@
 """Generate venue table for the Oeconomia manuscript.
 
 Shows distinctive journals per pole (efficiency vs accountability)
-among core works (cited >= 50). Output: content/_includes/tab_venues.md
+among core works (cited >= 50). Output: content/tables/tab_venues.md
 
 Usage:
     uv run python scripts/make_tab_venues.py [--min-papers 10] [--core-threshold 50]
@@ -21,7 +21,7 @@ from utils import BASE_DIR, CATALOGS_DIR, get_logger  # noqa: E402
 log = get_logger("make_tab_venues")
 
 POLE_PAPERS = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
-OUTPUT = os.path.join(BASE_DIR, "content", "_includes", "tab_venues.md")
+OUTPUT = os.path.join(BASE_DIR, "content", "tables", "tab_venues.md")
 
 
 def main():

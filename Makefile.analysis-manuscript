@@ -17,7 +17,7 @@ REFINED := $(DATA)/refined_works.csv
 .PHONY: figures
 
 figures: content/figures/fig_bars.png content/figures/fig_composition.png \
-         content/_includes/tab_venues.md
+         content/tables/tab_venues.md
 
 # ── Figures ─────────────────────────────────────────────────
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
@@ -35,7 +35,7 @@ content/tables/tab_core_shares.csv &: scripts/compute_clusters.py scripts/utils.
 $(DATA)/het_mostcited_50.csv: scripts/build_het_core.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) \
+content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) \
 		content/tables/tab_pole_papers.csv
 	uv run python $<
 

@@ -40,7 +40,7 @@ export SOURCE_DATE_EPOCH := 0
 
 # ── Quarto ───────────────────────────────────────────────
 # ── Per-document include sets ────────────────────────────
-MANUSCRIPT_INCLUDES := content/_includes/tab_venues.md
+MANUSCRIPT_INCLUDES := content/tables/tab_venues.md
 
 TECHREP_INCLUDES := content/_includes/corpus-construction.md \
 		content/_includes/corpus-enrichment.md \
@@ -191,17 +191,17 @@ corpus-validate: $(REFINED)
 	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
 
 # ── Corpus reporting (Phase 2 — reads only refined data) ──
-content/_includes/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
+content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/_includes/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
+content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $<
 
 content/tables/tab_corpus_sources.csv: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
 	uv run python $<
 
 corpus-tables: content/tables/tab_corpus_sources.csv \
-               content/_includes/tab_citation_coverage.md
+               content/tables/tab_citation_coverage.md
 
 # ── Statistics (computed from pipeline outputs) ──────────
 STATS := content/manuscript-vars.yml content/technical-report-vars.yml \
@@ -400,8 +400,7 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	         $(ANALYSIS_TMP)/scripts \
 	         $(ANALYSIS_TMP)/config \
 	         $(ANALYSIS_TMP)/content/figures \
-	         $(ANALYSIS_TMP)/content/tables \
-	         $(ANALYSIS_TMP)/content/_includes
+	         $(ANALYSIS_TMP)/content/tables
 	@# Phase 1 contract data (dereference DVC symlinks)
 	cp -L $(DATA_DIR)/refined_works.csv     $(ANALYSIS_TMP)/data/catalogs/
 	cp -L $(DATA_DIR)/refined_embeddings.npz $(ANALYSIS_TMP)/data/catalogs/
@@ -442,7 +441,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 	@echo "=== Building manuscript archive ==="
 	rm -rf $(MANU_TMP)
 	mkdir -p $(MANU_TMP)/content/bibliography \
-	         $(MANU_TMP)/content/_includes \
+	         $(MANU_TMP)/content/tables \
 	         $(MANU_TMP)/content/figures
 	@# Pre-built figures (validated, not regenerated)
 	cp content/figures/fig_bars.png         $(MANU_TMP)/content/figures/
@@ -451,7 +450,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 	cp content/manuscript.qmd               $(MANU_TMP)/content/
 	cp content/manuscript-vars.yml          $(MANU_TMP)/content/
 	cp content/author-footnote.tex          $(MANU_TMP)/content/
-	cp content/_includes/tab_venues.md      $(MANU_TMP)/content/_includes/
+	cp content/tables/tab_venues.md         $(MANU_TMP)/content/tables/
 	cp content/bibliography/main.bib        $(MANU_TMP)/content/bibliography/
 	cp content/bibliography/oeconomia.csl   $(MANU_TMP)/content/bibliography/
 	@# Build infrastructure (no Python needed)
