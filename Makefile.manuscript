@@ -6,11 +6,12 @@
 # Prerequisites: Quarto ≥ 1.4, XeLaTeX
 # Usage:
 #   make         # render manuscript PDF
+#   make verify  # check inputs and output match expected checksums
 
 export SOURCE_DATE_EPOCH := 0
 
 .DEFAULT_GOAL := manuscript
-.PHONY: manuscript
+.PHONY: manuscript verify
 
 manuscript: output/content/manuscript.pdf
 
@@ -19,3 +20,7 @@ output/content/manuscript.pdf: content/manuscript.qmd content/manuscript-vars.ym
 		content/tables/tab_venues.md \
 		content/bibliography/main.bib content/bibliography/oeconomia.csl
 	quarto render $< --to pdf
+
+# ── Verification ──────────────────────────────────────────
+verify: manuscript
+	md5sum -c checksums.md5

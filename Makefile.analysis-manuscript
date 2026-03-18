@@ -6,6 +6,7 @@
 # Usage:
 #   uv sync      # install Python dependencies
 #   make         # rebuild all figures and tables from data
+#   make verify  # check outputs match expected checksums
 
 export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
@@ -14,7 +15,7 @@ DATA    := data/catalogs
 REFINED := $(DATA)/refined_works.csv
 
 .DEFAULT_GOAL := figures
-.PHONY: figures
+.PHONY: figures verify
 
 figures: content/figures/fig_bars.png content/figures/fig_composition.png \
          content/tables/tab_venues.md
@@ -41,3 +42,7 @@ content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFI
 
 content/tables/tab_pole_papers.csv &: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
+
+# ── Verification ──────────────────────────────────────────
+verify: figures
+	md5sum -c expected_outputs.md5
