@@ -385,7 +385,7 @@ ANALYSIS_ARCHIVE := climate-finance-analysis
 ANALYSIS_TMP     := /tmp/$(ANALYSIS_ARCHIVE)
 ANALYSIS_OUTPUTS := content/figures/fig_bars.png \
                     content/figures/fig_composition.png \
-                    content/_includes/tab_venues.md \
+                    content/tables/tab_venues.md \
                     content/tables/tab_alluvial.csv \
                     content/tables/tab_core_shares.csv \
                     content/tables/tab_bimodality.csv \
@@ -414,6 +414,7 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	cp scripts/export_core_venues_markdown.py $(ANALYSIS_TMP)/scripts/
 	cp scripts/summarize_core_venues.py     $(ANALYSIS_TMP)/scripts/
 	cp scripts/make_tab_venues.py           $(ANALYSIS_TMP)/scripts/
+	cp scripts/export_citation_coverage.py  $(ANALYSIS_TMP)/scripts/
 	cp scripts/analyze_bimodality.py        $(ANALYSIS_TMP)/scripts/
 	@# Config + build infrastructure
 	cp config/analysis.yaml             $(ANALYSIS_TMP)/config/
