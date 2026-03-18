@@ -85,7 +85,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -527,6 +527,11 @@ lint-prose:
 	@count=$$(grep -cP 'not .{3,60}, but ' content/manuscript.qmd || true); \
 	echo "  Found: $$count"; [ "$$count" -le 3 ] || exit 1
 	@echo "LINT-PROSE: PASS"
+
+# ── Setup (run once after cloning) ───────────────────────
+setup:
+	git config core.hooksPath hooks
+	@echo "Hooks activated (hooks/pre-commit, hooks/post-checkout)"
 
 # ── Housekeeping ─────────────────────────────────────────
 clean:
