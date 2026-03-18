@@ -233,3 +233,35 @@ class TestProjectWideIncludes:
         assert m, "technical-report.pdf target not found"
         assert "PROJECT_INCLUDES" in m.group(1), \
             "technical-report.pdf must depend on $(PROJECT_INCLUDES)"
+
+
+# ---------------------------------------------------------------------------
+# Manuscript archive checksums (#219)
+# ---------------------------------------------------------------------------
+
+class TestManuscriptArchiveChecksums:
+    """Manuscript archive must ship checksums for inputs and output PDF."""
+
+    def test_archive_manuscript_generates_checksums(self):
+        """archive-manuscript recipe must produce a checksums file."""
+        mk = read_makefile()
+        m = re.search(
+            r"^archive-manuscript\s*:.*?\n((?:\t.*\n?)*)",
+            mk, re.MULTILINE,
+        )
+        assert m, "archive-manuscript target not found"
+        recipe = m.group(1)
+        assert "md5sum" in recipe, \
+            "archive-manuscript must run md5sum to generate checksums"
+
+    def test_archive_manuscript_includes_pdf(self):
+        """archive-manuscript recipe must copy the built PDF into the archive."""
+        mk = read_makefile()
+        m = re.search(
+            r"^archive-manuscript\s*:.*?\n((?:\t.*\n?)*)",
+            mk, re.MULTILINE,
+        )
+        assert m, "archive-manuscript target not found"
+        recipe = m.group(1)
+        assert "manuscript.pdf" in recipe, \
+            "archive-manuscript must include the built manuscript.pdf"
