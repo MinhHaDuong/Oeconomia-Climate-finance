@@ -14,7 +14,6 @@ Last updated: 2026-03-18
 ## Corpus
 
 - Torch installs CPU or CUDA via `--extra cpu` / `--extra cu130` (uv extras with conflicts)
-- Corpus regen in progress on padme (nohup)
 - DVC pipeline split into per-source stages (catalog_istex, catalog_openalex, etc.)
 - Semantic Scholar skipped for pre-submission (rate-limited, minor source)
 - OpenAlex Premium API key configured ($2/day budget)
@@ -41,7 +40,7 @@ Last updated: 2026-03-18
 
 ## Blockers
 
-- Corpus regen must complete before figures/tables/variables can update
+None.
 
 ## Active PRs
 

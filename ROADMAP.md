@@ -7,7 +7,6 @@ Climate finance crystallized as an economic object by ~2009. Everything since �
 ## Current milestone: Revision
 
 - [x] Fix teaching source pipeline (#135)
-- [ ] Corpus regen on padme (in progress) → figures, tables, variables update
 - [ ] Human proofread of full manuscript (#26)
 - [ ] Final word count trim (~9,600 → ~9,000)
 - [ ] Final `make clean && make all` + visual check
