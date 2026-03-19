@@ -4,14 +4,10 @@ All in-paper figures import this module for consistent grayscale styling,
 serif fonts, and period annotations calibrated for 13.5 cm (5.3 inch) width.
 """
 
-import os
-import sys
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import load_analysis_periods
 
 # --- Dimensions ---
