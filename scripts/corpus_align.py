@@ -30,7 +30,6 @@ import time
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (
     CATALOGS_DIR, EMBEDDINGS_PATH, REFS_COLUMNS,
     REFINED_WORKS_PATH, REFINED_EMBEDDINGS_PATH, REFINED_CITATIONS_PATH,

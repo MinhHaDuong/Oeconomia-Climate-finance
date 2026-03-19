@@ -15,12 +15,10 @@ Usage:
 """
 
 import os
-import sys
 
 import pandas as pd
 import yaml
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (BASE_DIR, CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS,
                    get_logger, normalize_doi, normalize_title, save_csv)
 

@@ -18,13 +18,11 @@ Usage:
 
 import os
 import re
-import sys
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, get_logger, load_refined_citations,
                    normalize_doi, save_csv)
 

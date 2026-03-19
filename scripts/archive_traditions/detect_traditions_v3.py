@@ -22,6 +22,9 @@ import os
 import sys
 from collections import Counter
 
+# archive_traditions/ is a subdirectory of scripts/ — need parent on path to import utils
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import SpectralClustering
@@ -29,11 +32,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.pairwise import cosine_distances
 
-# Add scripts dir to path for utils import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_REPO = os.path.dirname(SCRIPT_DIR)
-sys.path.insert(0, os.path.join(MAIN_REPO, "..", "..", "..", "..", "scripts"))
-sys.path.insert(0, SCRIPT_DIR)
 
 from utils import CATALOGS_DIR, normalize_doi, normalize_title
 

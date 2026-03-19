@@ -15,12 +15,10 @@ Usage:
 
 import argparse
 import os
-import sys
 from difflib import SequenceMatcher
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
                    normalize_title, polite_get, save_csv, get_logger)
 

@@ -35,14 +35,22 @@ MAKEFILE = os.path.join(REPO, "Makefile")
 # ---------------------------------------------------------------------------
 
 def _all_scripts():
-    """Return sorted list of .py files in scripts/."""
-    return sorted(
-        f for f in os.listdir(SCRIPTS_DIR)
-        if f.endswith(".py") and not f.startswith("__")
-    )
+    """Return sorted list of .py files in scripts/ and its subdirectories.
+
+    Returns paths relative to SCRIPTS_DIR (e.g. "utils.py",
+    "archive_traditions/detect_traditions_v1.py").
+    """
+    result = []
+    for dirpath, _dirnames, filenames in os.walk(SCRIPTS_DIR):
+        for f in filenames:
+            if f.endswith(".py") and not f.startswith("__"):
+                rel = os.path.relpath(os.path.join(dirpath, f), SCRIPTS_DIR)
+                result.append(rel)
+    return sorted(result)
 
 
 def _read_script(name):
+    """Read a script by its path relative to SCRIPTS_DIR."""
     path = os.path.join(SCRIPTS_DIR, name)
     with open(path) as f:
         return f.read()
@@ -66,6 +74,18 @@ def _scripts_with_main_guard():
 # These are exempt from argparse and sys.path checks.
 LIBRARY_SCRIPTS = {"utils.py", "plot_style.py", "refine_flags.py"}
 
+# Subdirectory scripts that legitimately need sys.path.insert to reach
+# the parent scripts/ directory for utils imports.
+_SYSPATH_EXEMPT = {
+    os.path.join("archive_traditions", f)
+    for f in (
+        "detect_traditions_v2.py",
+        "detect_traditions_v3.py",
+        "detect_traditions_pre2015.py",
+        "detect_traditions_pre2020.py",
+    )
+}
+
 _RUFF_AVAILABLE = subprocess.run(
     ["uv", "run", "ruff", "--version"], capture_output=True
 ).returncode == 0
@@ -79,13 +99,16 @@ class TestNoSysPathHacks:
     """scripts/ must not contain sys.path.insert() calls.
 
     The project should use pyproject.toml packaging instead.
-    Currently 44/63 scripts violate this — each is a separate ticket.
+    Subdirectory scripts that genuinely need sys.path to reach the parent
+    scripts/ directory are listed in _SYSPATH_EXEMPT.
     """
 
     def test_no_sys_path_insert(self):
-        """No script may use sys.path.insert()."""
+        """No script may use sys.path.insert() unless in _SYSPATH_EXEMPT."""
         violators = []
         for name in _all_scripts():
+            if name in _SYSPATH_EXEMPT:
+                continue
             source = _read_script(name)
             if "sys.path.insert" in source or "sys.path.append" in source:
                 violators.append(name)

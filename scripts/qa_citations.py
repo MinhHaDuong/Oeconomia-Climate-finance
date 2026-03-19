@@ -14,14 +14,12 @@ Usage:
 import argparse
 import json
 import os
-import sys
 import time
 
 import numpy as np
 import pandas as pd
 import requests
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, MAILTO, normalize_doi, get_logger
 
 log = get_logger("qa_citations")

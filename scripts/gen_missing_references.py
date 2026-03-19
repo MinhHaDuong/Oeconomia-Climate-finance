@@ -20,11 +20,9 @@ Run with:
 
 import os
 import re
-import sys
 
 import bibtexparser
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import get_logger
 
 log = get_logger("gen_missing_references")

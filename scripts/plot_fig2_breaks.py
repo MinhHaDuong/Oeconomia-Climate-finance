@@ -16,12 +16,10 @@ Usage:
 
 import argparse
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT, FILL
 from utils import BASE_DIR, save_figure
 

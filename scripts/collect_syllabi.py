@@ -30,7 +30,6 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (BASE_DIR, DATA_DIR, MAILTO, get_logger, normalize_title,
                    polite_get, save_csv)
 

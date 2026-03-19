@@ -26,13 +26,11 @@ Usage:
 import argparse
 import os
 import re
-import sys
 import time
 
 import pandas as pd
 import yaml
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS,
                    get_logger, normalize_doi, save_csv,
                    pool_path, append_to_pool, load_pool_ids,

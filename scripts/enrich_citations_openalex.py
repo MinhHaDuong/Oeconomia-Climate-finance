@@ -19,13 +19,11 @@ Usage:
 import argparse
 import json
 import os
-import sys
 import time
 
 import pandas as pd
 import requests
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, REFS_COLUMNS,
                    normalize_doi, sort_dois_by_priority, retry_get,
                    save_run_report, make_run_id, get_logger)

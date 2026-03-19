@@ -12,7 +12,6 @@ Usage:
 """
 
 import os
-import sys
 from collections import defaultdict
 
 import numpy as np
@@ -20,8 +19,6 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.cluster import KMeans
 
-# Add scripts dir to path for utils
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils import (CATALOGS_DIR, get_logger, load_cluster_labels,
                    load_refined_citations, load_refined_embeddings, normalize_doi,
                    load_analysis_config)

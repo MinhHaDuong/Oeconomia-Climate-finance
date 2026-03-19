@@ -5,14 +5,12 @@ showing stage dependencies. Output: content/figures/fig_dag.png
 """
 
 import os
-import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import yaml
 
-sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import FIGWIDTH, DPI, DARK, MED, LIGHT, FILL, RCPARAMS
 from utils import get_logger
 

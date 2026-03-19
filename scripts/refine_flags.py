@@ -18,9 +18,6 @@ import numpy as np
 import pandas as pd
 import yaml
 
-import sys
-
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi
 
 log = get_logger("refine_flags")

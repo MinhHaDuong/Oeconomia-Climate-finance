@@ -16,12 +16,10 @@ Usage:
 
 import argparse
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from refine_flags import (
     _load_config,
     compute_protection,

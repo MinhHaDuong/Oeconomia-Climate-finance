@@ -10,13 +10,11 @@ Usage:
 
 import argparse
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
-from utils import BASE_DIR, CATALOGS_DIR, get_logger  # noqa: E402
+from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
 log = get_logger("make_tab_venues")
 

@@ -7,13 +7,11 @@ Stacked bar chart showing total corpus size and the subset mentioning
 import argparse
 import os
 import re
-import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import (
     apply_style, FIGWIDTH, DPI, MED, LIGHT, DARK, FILL,
     INCOMPLETE_FROM, PERIODS, add_period_bands, add_period_lines,

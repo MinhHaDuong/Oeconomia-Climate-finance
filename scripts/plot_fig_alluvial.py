@@ -272,7 +272,6 @@ plt.close()
 # We need the original df to get top-cited papers per cell.
 # Load it from refined_works.csv and reconstruct period/cluster assignments
 # using the same logic as compute_alluvial.py.
-import sys
 
 # Check if we can reconstruct paper data for tooltips
 try:

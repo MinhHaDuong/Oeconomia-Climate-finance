@@ -10,11 +10,9 @@ and abstract availability.
 """
 
 import os
-import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR
 
 log = get_logger("export_corpus_table")

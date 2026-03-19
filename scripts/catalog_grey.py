@@ -12,11 +12,9 @@ Usage:
 """
 
 import os
-import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, CONFIG_DIR, WORKS_COLUMNS,
                    get_logger, normalize_doi, polite_get, save_csv,
                    load_collect_config)
