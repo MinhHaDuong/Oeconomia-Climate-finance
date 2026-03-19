@@ -99,7 +99,8 @@ class TestNoSysPathHacks:
     """scripts/ must not contain sys.path.insert() calls.
 
     The project should use pyproject.toml packaging instead.
-    Currently 44/63 scripts violate this — each is a separate ticket.
+    Subdirectory scripts that genuinely need sys.path to reach the parent
+    scripts/ directory are listed in _SYSPATH_EXEMPT.
     """
 
     def test_no_sys_path_insert(self):
