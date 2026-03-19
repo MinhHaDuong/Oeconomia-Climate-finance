@@ -96,7 +96,31 @@ A 50-line analysis script that runs once doesn't need the same armor as a librar
 
 This fits the harness philosophy: guardrails that help, not bureaucracy that slows.
 
-### 5. Sweep disk for reusable guidelines from past projects
+### 5. Script hygiene defaults
+
+Patterns the harness should encourage for any research pipeline:
+
+**One output, one script:**
+- 1 figure = 1 script file. 1 table = 1 script file.
+- A script that produces 3 figures should be 3 scripts. Easier to rerun, easier to debug, easier to parallelize in Make.
+
+**Unix-style I/O:**
+- Default to stdin/stdout. Add optional `-i` / `-o` args for explicit paths.
+- This makes scripts composable (`cat data.csv | uv run python scripts/filter.py | uv run python scripts/plot.py -o fig.png`) and testable (pipe in fixture data, capture output).
+- Hardcoded input/output filenames are a last resort, not a default.
+
+**Log, not print:**
+- All diagnostic output goes through `logging` to stderr. Never bare `print()`.
+- stdout is for data. stderr is for humans. Mixing them breaks pipes.
+
+**Every entry point gets argparse:**
+- If `__name__ == "__main__"` exists, it gets an argument parser. No exceptions.
+- Even if there are no required args today, the parser is the place to add `--dry-run`, `--verbose`, `--output` tomorrow without refactoring.
+
+**No `sys.path` hacks:**
+- Make the scripts importable through proper packaging (`pyproject.toml`), not `sys.path.insert(0, ...)` in every file.
+
+### 6. Sweep disk for reusable guidelines from past projects
 
 Harvest conventions already written in other repos on this machine. Known candidates:
 
@@ -110,4 +134,4 @@ Action: scan `~/` for `AGENTS.md`, `CLAUDE.md`, `coding-guidelines`, `.editorcon
 
 ## Arc
 
-These five ideas form a coherent sequence: extract the methodology (1), validate it intellectually (2), operationalize it (3), add sensible defaults for code quality (4+5).
+These six ideas form a coherent sequence: extract the methodology (1), validate it intellectually (2), operationalize it (3), add sensible defaults for code quality (4+5+6).
