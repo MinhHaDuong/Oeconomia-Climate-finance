@@ -58,6 +58,30 @@ A background agent that watches `gh issue list`, picks ripe tickets (dependencie
 
 Depends on idea #1 being solid first. But it's the natural next step: the harness already describes the wave cycle, this adds the cron.
 
+### 4. Type assertion guidelines — light touch
+
+The harness should include guidance on type assertions / type hints. Tone: light and helpful, not obnoxious. Not a type-everything-or-else mandate. More like:
+
+- Use type hints where they **clarify intent** (function signatures, data structures, return types).
+- Skip them where they add noise (obvious local variables, one-liners).
+- Prefer `assert isinstance(x, Foo)` over `cast(Foo, x)` — it's a runtime check that doubles as documentation.
+- `TYPE_CHECKING` imports are fine for avoiding circular deps, but don't build a cathedral of Protocol classes for a 200-line script.
+- The goal is **reader comprehension**, not mypy score. If a type annotation makes the code harder to read, delete it.
+
+This fits the harness philosophy: guardrails that help, not bureaucracy that slows.
+
+### 5. Sweep disk for reusable guidelines from past projects
+
+Harvest conventions already written in other repos on this machine. Known candidates:
+
+- **UTF-8 everywhere**: encoding declarations, file I/O defaults, CSV readers. Likely already codified somewhere.
+- **Logging conventions**: the Oeconomia `get_logger()` pattern is mature — extract as template.
+- **EditorConfig / pyproject.toml** conventions: line length, indent style, trailing whitespace.
+- **Git hooks**: other projects may have pre-commit configs worth merging.
+- **.env patterns**: secret management, machine-specific paths.
+
+Action: scan `~/` for `AGENTS.md`, `CLAUDE.md`, `coding-guidelines`, `.editorconfig`, `pyproject.toml` coding sections, and any style/convention docs. Deduplicate and fold the best into the harness as default templates.
+
 ## Arc
 
-These three ideas form a coherent sequence: extract the methodology (1), validate it intellectually (2), then operationalize it (3).
+These five ideas form a coherent sequence: extract the methodology (1), validate it intellectually (2), operationalize it (3), add sensible defaults for code quality (4+5).
