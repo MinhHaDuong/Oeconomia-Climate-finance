@@ -20,7 +20,7 @@ import pandas as pd
 import seaborn as sns
 
 from plot_style import COP_EVENTS
-from utils import BASE_DIR, get_logger, save_figure
+from utils import BASE_DIR, get_logger, save_figure, load_analysis_config
 
 log = get_logger("plot_fig_breakpoints")
 
@@ -30,7 +30,8 @@ TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
 WINDOW_SIZES = [2, 3, 4]
-CITE_THRESHOLD = 50
+_cfg = load_analysis_config()
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Render structural break detection figure")

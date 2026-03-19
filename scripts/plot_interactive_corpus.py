@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi, load_analysis_config
 
 log = get_logger("plot_interactive_corpus")
 
@@ -53,7 +53,8 @@ TAB5_CANDIDATES = [
     os.path.join(CATALOGS_DIR, "tab_pole_papers.csv"),
 ]
 
-CITE_THRESHOLD = 50
+_cfg = load_analysis_config()
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 JITTER_HALF = 0.3  # +/- years for x-axis jitter
 
 # Qualitative color palette (Plotly's Set2-like)
