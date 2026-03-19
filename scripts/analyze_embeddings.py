@@ -36,6 +36,114 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 CLUSTERS_PATH = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
 
 
+def _generate_figures(df, n_clusters, plt, sns):
+    """Generate semantic landscape figures (cluster, language, period)."""
+    sns.set_style("whitegrid")
+
+    # --- Figure: Colored by semantic cluster ---
+    fig, ax = plt.subplots(figsize=(12, 9))
+    palette = plt.cm.Set2(np.linspace(0, 1, n_clusters))
+    for c in range(n_clusters):
+        members = df[df["semantic_cluster"] == c]
+        ax.scatter(
+            members["umap_x"], members["umap_y"],
+            c=[palette[c]], s=8, alpha=0.5,
+            label=f"Cluster {c} (n={len(members)})",
+        )
+    ax.legend(loc="upper right", fontsize=8, framealpha=0.9, markerscale=3)
+    ax.set_title(
+        "Semantic landscape of climate finance literature\n"
+        "(multilingual abstract embeddings, UMAP projection)",
+        fontsize=13,
+    )
+    ax.set_xlabel("UMAP 1")
+    ax.set_ylabel("UMAP 2")
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.pdf"), dpi=300, bbox_inches="tight")
+    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.png"), dpi=150, bbox_inches="tight")
+    log.info("Saved semantic map → figures/fig_semantic.pdf")
+    plt.close()
+
+    # --- Figure: Colored by language ---
+    fig, ax = plt.subplots(figsize=(12, 9))
+    lang_map = {"en": "English", "fr": "French", "zh": "Chinese",
+                "ja": "Japanese", "de": "German", "es": "Spanish", "pt": "Portuguese"}
+    df["lang_label"] = df["language"].map(lang_map).fillna("Other")
+    lang_colors = {
+        "English": "lightgrey", "French": "#E63946", "Chinese": "#E9C46A",
+        "Japanese": "#264653", "German": "#2A9D8F", "Spanish": "#F4A261",
+        "Portuguese": "#606C38", "Other": "#ADB5BD",
+    }
+    en = df[df["lang_label"] == "English"]
+    ax.scatter(en["umap_x"], en["umap_y"],
+               c=lang_colors["English"], s=3, alpha=0.2, label=f"English (n={len(en)})")
+    for lang in ["French", "Chinese", "Japanese", "German", "Spanish", "Portuguese", "Other"]:
+        subset = df[df["lang_label"] == lang]
+        if len(subset) > 0:
+            ax.scatter(
+                subset["umap_x"], subset["umap_y"],
+                c=lang_colors[lang], s=20, alpha=0.8,
+                label=f"{lang} (n={len(subset)})",
+                edgecolors="white", linewidths=0.3,
+            )
+    ax.legend(loc="upper right", fontsize=8, framealpha=0.9, markerscale=2)
+    ax.set_title(
+        "Language distribution in the semantic landscape\n"
+        "(non-English works highlighted)",
+        fontsize=13,
+    )
+    ax.set_xlabel("UMAP 1")
+    ax.set_ylabel("UMAP 2")
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
+    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.png"), dpi=150, bbox_inches="tight")
+    log.info("Saved semantic map (language) → figures/fig_semantic_lang.pdf")
+    plt.close()
+
+    # --- Figure: Colored by period ---
+    fig, ax = plt.subplots(figsize=(12, 9))
+    period_map = {
+        (1990, 2008): "1990–2008",
+        (2009, 2015): "2009–2015",
+        (2016, 2021): "2016–2021",
+        (2022, 2024): "2022–2024",
+    }
+    period_colors = {
+        "1990–2008": "#ADB5BD",
+        "2009–2015": "#F4A261",
+        "2016–2021": "#E76F51",
+        "2022–2024": "#264653",
+    }
+
+    def assign_period(year):
+        for (lo, hi), label in period_map.items():
+            if lo <= year <= hi:
+                return label
+        return "Other"
+
+    df["period"] = df["year"].apply(assign_period)
+    for period in ["1990–2008", "2009–2015", "2016–2021", "2022–2024"]:
+        subset = df[df["period"] == period]
+        ax.scatter(
+            subset["umap_x"], subset["umap_y"],
+            c=period_colors[period], s=5, alpha=0.4,
+            label=f"{period} (n={len(subset)})",
+        )
+    ax.legend(loc="upper right", fontsize=9, framealpha=0.9, markerscale=4)
+    ax.set_title(
+        "Temporal evolution of the semantic landscape\n"
+        "(colored by article's periodization)",
+        fontsize=13,
+    )
+    ax.set_xlabel("UMAP 1")
+    ax.set_ylabel("UMAP 2")
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.pdf"), dpi=300, bbox_inches="tight")
+    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.png"), dpi=150, bbox_inches="tight")
+    log.info("Saved semantic map (period) → figures/fig_semantic_period.pdf")
+    plt.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -171,110 +279,7 @@ def main():
     if args.no_pdf:
         log.info("Skipping figure generation (--no-pdf)")
     else:
-        sns.set_style("whitegrid")
-
-        # --- Figure: Colored by semantic cluster ---
-        fig, ax = plt.subplots(figsize=(12, 9))
-        palette = plt.cm.Set2(np.linspace(0, 1, n_clusters))
-        for c in range(n_clusters):
-            members = df[df["semantic_cluster"] == c]
-            ax.scatter(
-                members["umap_x"], members["umap_y"],
-                c=[palette[c]], s=8, alpha=0.5,
-                label=f"Cluster {c} (n={len(members)})",
-            )
-        ax.legend(loc="upper right", fontsize=8, framealpha=0.9, markerscale=3)
-        ax.set_title(
-            "Semantic landscape of climate finance literature\n"
-            "(multilingual abstract embeddings, UMAP projection)",
-            fontsize=13,
-        )
-        ax.set_xlabel("UMAP 1")
-        ax.set_ylabel("UMAP 2")
-        plt.tight_layout()
-        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.pdf"), dpi=300, bbox_inches="tight")
-        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.png"), dpi=150, bbox_inches="tight")
-        log.info("Saved semantic map → figures/fig_semantic.pdf")
-        plt.close()
-
-        # --- Figure: Colored by language ---
-        fig, ax = plt.subplots(figsize=(12, 9))
-        lang_map = {"en": "English", "fr": "French", "zh": "Chinese",
-                    "ja": "Japanese", "de": "German", "es": "Spanish", "pt": "Portuguese"}
-        df["lang_label"] = df["language"].map(lang_map).fillna("Other")
-        lang_colors = {
-            "English": "lightgrey", "French": "#E63946", "Chinese": "#E9C46A",
-            "Japanese": "#264653", "German": "#2A9D8F", "Spanish": "#F4A261",
-            "Portuguese": "#606C38", "Other": "#ADB5BD",
-        }
-        en = df[df["lang_label"] == "English"]
-        ax.scatter(en["umap_x"], en["umap_y"],
-                   c=lang_colors["English"], s=3, alpha=0.2, label=f"English (n={len(en)})")
-        for lang in ["French", "Chinese", "Japanese", "German", "Spanish", "Portuguese", "Other"]:
-            subset = df[df["lang_label"] == lang]
-            if len(subset) > 0:
-                ax.scatter(
-                    subset["umap_x"], subset["umap_y"],
-                    c=lang_colors[lang], s=20, alpha=0.8,
-                    label=f"{lang} (n={len(subset)})",
-                    edgecolors="white", linewidths=0.3,
-                )
-        ax.legend(loc="upper right", fontsize=8, framealpha=0.9, markerscale=2)
-        ax.set_title(
-            "Language distribution in the semantic landscape\n"
-            "(non-English works highlighted)",
-            fontsize=13,
-        )
-        ax.set_xlabel("UMAP 1")
-        ax.set_ylabel("UMAP 2")
-        plt.tight_layout()
-        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
-        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.png"), dpi=150, bbox_inches="tight")
-        log.info("Saved semantic map (language) → figures/fig_semantic_lang.pdf")
-        plt.close()
-
-        # --- Figure: Colored by period ---
-        fig, ax = plt.subplots(figsize=(12, 9))
-        period_map = {
-            (1990, 2008): "1990–2008",
-            (2009, 2015): "2009–2015",
-            (2016, 2021): "2016–2021",
-            (2022, 2024): "2022–2024",
-        }
-        period_colors = {
-            "1990–2008": "#ADB5BD",
-            "2009–2015": "#F4A261",
-            "2016–2021": "#E76F51",
-            "2022–2024": "#264653",
-        }
-
-        def assign_period(year):
-            for (lo, hi), label in period_map.items():
-                if lo <= year <= hi:
-                    return label
-            return "Other"
-
-        df["period"] = df["year"].apply(assign_period)
-        for period in ["1990–2008", "2009–2015", "2016–2021", "2022–2024"]:
-            subset = df[df["period"] == period]
-            ax.scatter(
-                subset["umap_x"], subset["umap_y"],
-                c=period_colors[period], s=5, alpha=0.4,
-                label=f"{period} (n={len(subset)})",
-            )
-        ax.legend(loc="upper right", fontsize=9, framealpha=0.9, markerscale=4)
-        ax.set_title(
-            "Temporal evolution of the semantic landscape\n"
-            "(colored by article's periodization)",
-            fontsize=13,
-        )
-        ax.set_xlabel("UMAP 1")
-        ax.set_ylabel("UMAP 2")
-        plt.tight_layout()
-        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.pdf"), dpi=300, bbox_inches="tight")
-        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.png"), dpi=150, bbox_inches="tight")
-        log.info("Saved semantic map (period) → figures/fig_semantic_period.pdf")
-        plt.close()
+        _generate_figures(df, n_clusters, plt, sns)
 
     # --- Save cluster assignments ---
     out = df[["source", "doi", "title", "first_author", "year", "language",
