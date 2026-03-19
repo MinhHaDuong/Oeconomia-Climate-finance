@@ -111,8 +111,7 @@ else:
 # ============================================================
 
 # Period boundaries: from --breaks CLI or config/analysis.yaml
-cfg = load_analysis_config()
-_p_cfg = cfg["periodization"]
+_p_cfg = _cfg["periodization"]
 if args.breaks:
     all_breaks = [int(y.strip()) for y in args.breaks.split(",")]
 else:
