@@ -40,7 +40,8 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 # --- Constants ---
-CITE_THRESHOLD = 50
+_cfg = load_analysis_config()
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
 # Periods from config (fixes 2023 inconsistency)
 _period_tuples, _period_labels = load_analysis_periods()
@@ -73,7 +74,6 @@ ACCOUNTABILITY_TERMS = {
 # ============================================================
 
 log.info("Loading data...")
-_cfg = load_analysis_config()
 _year_min = _cfg["periodization"]["year_min"]
 _year_max = _cfg["periodization"]["year_max"]
 

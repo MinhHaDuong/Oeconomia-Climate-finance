@@ -54,7 +54,8 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 
 
 # --- Constants ---
-CITE_THRESHOLD = 50
+_cfg = load_analysis_config()
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 DBIC_THRESHOLD = 200
 N_COMPONENTS = 10
 
@@ -103,7 +104,6 @@ else:
 # ============================================================
 
 log.info("Loading data...")
-_cfg = load_analysis_config()
 _year_min = _cfg["periodization"]["year_min"]
 _year_max = _cfg["periodization"]["year_max"]
 

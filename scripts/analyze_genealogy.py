@@ -124,7 +124,7 @@ log.info("Semantic clusters loaded: %d papers", len(sem_df))
 # Step 2: Select backbone papers
 # ============================================================
 
-CITE_THRESHOLD = 50
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 log.info("Selecting backbone (cited_by_count >= %d)...", CITE_THRESHOLD)
 
 has_abs = works["abstract"].notna() & (works["abstract"].str.len() > 50)
