@@ -366,17 +366,22 @@ def load_refined_citations():
     return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 
 
-def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=50):
+def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=None):
     """Load refined_works.csv with standard filtering + optional embeddings.
 
     Applies: year coercion, title-present filter, year in [year_min, year_max]
     (from config/analysis.yaml), optional core filtering (cited_by_count >= cite_threshold).
+
+    If cite_threshold is None, the value is read from config/analysis.yaml
+    (clustering.cite_threshold) so there is a single source of truth.
 
     Returns (df, embeddings) where embeddings is None if with_embeddings=False.
     """
     import numpy as np
 
     cfg = load_analysis_config()
+    if cite_threshold is None:
+        cite_threshold = cfg["clustering"]["cite_threshold"]
     year_min = cfg["periodization"]["year_min"]
     year_max = cfg["periodization"]["year_max"]
 
