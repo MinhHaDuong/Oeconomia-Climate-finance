@@ -12,6 +12,7 @@ Usage:
     python scripts/catalog_scispsace.py
 """
 
+import argparse
 import glob
 import os
 import re
@@ -171,4 +172,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()

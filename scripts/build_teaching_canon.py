@@ -12,6 +12,7 @@ Usage:
     python scripts/build_teaching_canon.py
 """
 
+import argparse
 import os
 
 import pandas as pd
@@ -111,4 +112,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()

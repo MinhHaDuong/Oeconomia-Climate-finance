@@ -9,6 +9,7 @@ Produces:
 - Reverse check: highly-cited corpus papers by bib authors not in bib
 """
 
+import argparse
 import os
 import re
 
@@ -319,4 +320,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()

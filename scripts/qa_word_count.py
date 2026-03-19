@@ -15,6 +15,7 @@ Usage:
 If no path is given, defaults to output/content/manuscript.pdf.
 """
 
+import argparse
 import re
 import sys
 
@@ -248,4 +249,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_known_args()
     main()
