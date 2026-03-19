@@ -43,6 +43,18 @@ Parked ideas for post-submission.
 - Pros: works offline, possibly faster, full history in git
 - Cons: reinventing the wheel, harder to onboard helpers later
 
+**2026-03-19 field test — this worked.** `gh` was unavailable in the sandbox. Created 12 tickets across two files (`docs/tickets-script-hygiene.md`, `docs/tickets-wave2-complexity.md`) following the `new-ticket` runbook template. Five parallel agents consumed these file-based tickets identically to how they'd consume GitHub Issues — the ticket format is the contract, not the hosting. Cross-refs used ticket letters (A-E) instead of issue numbers; the wave plan section at the bottom of each file served as the project board.
+
+**Emerging design:**
+- `tickets/NNN-short-title.md` (open) → `tickets/done/NNN-short-title.md` (completed)
+- Sequential numbering, not GitHub issue numbers
+- `start-ticket` reads from local file or `gh issue view` — same template either way
+- `celebrate.md` moves file to `done/` and appends completion summary
+- Optional `gh-sync` script bridges local files ↔ GitHub Issues when connectivity exists
+- Tickets are git-versioned — full blame, diff, history for free
+
+**What we don't need from GitHub:** labels (use filename prefixes), milestones (use wave plan sections), project boards (use the wave plan). **What we'd miss:** web UI for human browsing, webhook automation. Acceptable tradeoff for a solo+agents workflow. See also `braindump-harness-extraction.md` §3 for the fuller writeup.
+
 ## Conversation logging & replay
 
 - Memorize all conversations and tool calls
