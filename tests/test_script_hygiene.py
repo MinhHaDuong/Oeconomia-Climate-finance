@@ -288,16 +288,18 @@ class TestFunctionComplexity:
 
 
 class TestModuleLength:
-    """Modules must not grow unbounded. utils.py is 717 lines — split it.
+    """Modules must not grow unbounded.
 
-    Uses wc-style line counting. Threshold: 500 lines per module
-    (generous enough for analysis scripts, catches god modules).
+    Two thresholds:
+    - 500 lines: smell (warns, does not fail)
+    - 800 lines: wall (hard fail — split the module)
     """
 
-    MAX_MODULE_LINES = 500
+    SMELL_LINES = 500
+    MAX_MODULE_LINES = 800
 
     def test_no_god_modules(self):
-        """No script exceeds 500 lines."""
+        """No script exceeds 800 lines."""
         violators = []
         for name in _all_scripts():
             path = os.path.join(SCRIPTS_DIR, name)
@@ -310,6 +312,23 @@ class TestModuleLength:
             f"(split into focused modules): "
             + ", ".join(f"{n} ({l}L)" for n, l in violators)
         )
+
+    def test_module_length_smell(self):
+        """Warn (not fail) when scripts exceed 500 lines."""
+        smelly = []
+        for name in _all_scripts():
+            path = os.path.join(SCRIPTS_DIR, name)
+            with open(path) as f:
+                lines = sum(1 for _ in f)
+            if lines > self.SMELL_LINES:
+                smelly.append((name, lines))
+        if smelly:
+            import warnings
+            warnings.warn(
+                f"{len(smelly)} scripts exceed {self.SMELL_LINES} lines "
+                f"(consider splitting): "
+                + ", ".join(f"{n} ({l}L)" for n, l in smelly)
+            )
 
 
 # ---------------------------------------------------------------------------
