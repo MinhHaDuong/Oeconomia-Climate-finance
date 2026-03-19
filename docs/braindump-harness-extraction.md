@@ -82,9 +82,15 @@ A 50-line analysis script that runs once doesn't need the same armor as a librar
 - Validate at system boundaries (user input, file I/O, API responses). Trust internal code.
 - `TYPE_CHECKING` imports are fine for avoiding circular deps, but don't build a cathedral of Protocol classes for a 200-line script.
 
+**Modern Python (3.10+):**
+- Use built-in generics: `list[str]`, `dict[str, int]`, `tuple[int, ...]`, `str | None`. Never `from typing import List, Dict, Tuple, Optional`.
+- Use `X | Y` union syntax, not `Union[X, Y]`.
+- **No `from __future__ import annotations`.** We target 3.10+ where PEP 604 and built-in generics work natively. `__future__` annotations are a compat shim for older Pythons we don't support.
+- Use `@dataclass` freely, but plain. No `(frozen=True, slots=True, kw_only=True)` stacking unless each flag earns its keep.
+
 **What we don't do:**
 - **No ABC classes.** Abstract base classes add indirection for hypothetical polymorphism that rarely arrives. Duck typing and simple functions are almost always enough. If you need a contract, use Protocol (structural subtyping) — it doesn't force an inheritance hierarchy.
-- No gratuitous `@dataclass(frozen=True, slots=True, kw_only=True)` stacking. Plain dataclass or even a named tuple is fine.
+- No `from __future__ import annotations` — see above.
 - No type-level gymnastics (`TypeVar`, `ParamSpec`, `Concatenate`) unless you're writing a genuinely generic library. We're writing research scripts.
 
 This fits the harness philosophy: guardrails that help, not bureaucracy that slows.
