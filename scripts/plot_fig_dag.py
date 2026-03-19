@@ -4,6 +4,7 @@ Reads the pipeline definition and renders a directed acyclic graph
 showing stage dependencies. Output: content/figures/fig_dag.png
 """
 
+import argparse
 import os
 
 import matplotlib
@@ -152,5 +153,7 @@ def draw_dag(deps):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     deps = load_dag()
     draw_dag(deps)
