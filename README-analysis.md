@@ -24,6 +24,9 @@ make verify      # check outputs match expected checksums
 # Option B: container (requires podman or docker, no other install needed)
 podman build -t climate-finance .
 podman run climate-finance
+
+# Cleanup: remove container and image from local storage
+podman rm -a && podman rmi climate-finance && podman system prune -f
 ```
 
 ## Contents
