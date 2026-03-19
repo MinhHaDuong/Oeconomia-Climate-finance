@@ -91,7 +91,18 @@ tickets/
 
 The hybrid model (local files as source of truth, gh sync when available) gives the best of both.
 
-### 3b. Launch coding team leader in background to poll tickets
+### 3b. Skill-based agent coordination
+
+Replace fixed "agent perspective" tables with a composable skill pool:
+- Skills: atomic markdown files (one sentence scope each)
+- Experts: named skill bundles + perspective (yaml)
+- Coordinators: runbooks assemble purpose-built teams per event
+- Directory structure: `skills/`, `experts/`, `runbooks/`
+- Hybrid model: experts are sensible defaults, coordinator can add/drop skills per task
+- Academic metaphor: skill=expertise, expert=reviewer, coordinator=editor
+- Applies broadly: review, doing, planning, any multi-agent step
+
+### 3c. Launch coding team leader in background to poll tickets
 
 A background agent that watches the ticket queue (GitHub Issues or `tickets/` directory), picks ripe tickets (dependencies met, labels ready), and either starts work or alerts. Automating the "Select" step of the wave cycle.
 
@@ -152,12 +163,6 @@ Patterns the harness should encourage for any research pipeline:
 - All diagnostic output goes through `logging` to stderr. Never bare `print()`.
 - stdout is for data. stderr is for humans. Mixing them breaks pipes.
 
-**Every entry point gets argparse:**
-- If `__name__ == "__main__"` exists, it gets an argument parser. No exceptions.
-- Even if there are no required args today, the parser is the place to add `--dry-run`, `--verbose`, `--output` tomorrow without refactoring.
-
-**No `sys.path` hacks:**
-- Make the scripts importable through proper packaging (`pyproject.toml`), not `sys.path.insert(0, ...)` in every file.
 
 ### 6. Sweep disk for reusable guidelines from past projects
 
@@ -181,35 +186,26 @@ Audit of the Oeconomia pipeline (63 scripts, ~19k lines) to inform harness defau
 - **Consistent logging** — `from utils import get_logger` is the universal pattern.
 - **f-strings dominant** (461 uses vs 307 `%`-format, mostly in logging where `%` is idiomatic).
 
-### Top 5 surprises
+### Remaining issues
 
 **1. `utils.py` is a 717-line god module.**
-Logging, retries, path resolution, checkpointing, data loading — all in one file. The retry machinery mutates a passed-in `counters` dict as a side effect. If anything deserves splitting, it's this: `utils_io.py`, `utils_retry.py`, `utils_paths.py`.
+Logging, retries, path resolution, checkpointing, data loading — all in one file. If anything deserves splitting, it's this: `utils_io.py`, `utils_retry.py`, `utils_paths.py`. Note: the retry/backoff machinery could be replaced by libraries (tenacity, urllib3.retry) but works well as-is — not worth the dependency.
 
-**2. `sys.path.insert(0, ...)` in 44 of 63 scripts.**
-The single most repeated boilerplate. A `pyproject.toml` change (make `scripts/` an installable package) eliminates all 44 copies. Fine at 5 scripts, technical debt at 63.
+**2. Plotting scripts have 200–400 line functions.**
+`plot_fig_alluvial.py`, `analyze_genealogy.py`, `analyze_bimodality.py` — long procedural plot descriptions. This is fine when the code is linear and self-contained. It only becomes a problem when DRY violations or branching complexity creep in.
 
-**3. Plotting scripts have 200–400 line functions.**
-`plot_fig_alluvial.py`, `analyze_genealogy.py`, `analyze_bimodality.py` — these are imperative scripts wrapped in a `def`. The "1 figure = 1 file" guideline (idea #5) would help, but the existing long functions also need decomposition.
+**3. Other hardcoded constants.**
+Weights (`W_CENTRALITY = 0.4`), page sizes, retry counts, resolution parameters — still hardcoded inline across 20+ scripts. `CITE_THRESHOLD` was centralized to `config/analysis.yaml`, but the pattern should extend to other research parameters.
 
-**4. `CITE_THRESHOLD = 50` defined independently in 3+ files.**
-Weights (`W_CENTRALITY = 0.4`), page sizes, retry counts, resolution parameters — all hardcoded inline across 20+ scripts. No central config. A single `config.yml` would make research decisions visible and auditable.
-
-**5. 22 entry-point scripts have no argparse.**
-Including 800+ line scripts like `build_het_core.py` and `compare_communities_across_windows.py`. Parameters can only be changed by editing source. Meanwhile 41 other scripts use argparse properly.
-
-### By the numbers
+### By the numbers (2026-03-19)
 | Metric | Value |
 |--------|-------|
-| Total scripts | 63 |
-| Average length | 299 lines |
-| Longest | `collect_syllabi.py` (856 lines) |
+| Total scripts | 68 (63 + 5 archive_traditions) |
+| Average length | ~308 lines |
+| Longest | `collect_syllabi.py` (855 lines) |
 | Classes | 0 |
-| Functions >50 lines | 76 |
-| Scripts with argparse | 56 / 63 (was 41, +15 today) |
-| Scripts with `sys.path` hack | 0 / 63 (was 44, all removed today) |
-| Test files | 26 |
-| Scripts with direct unit tests | ~2 / 63 |
+| Functions >50 statements (ruff PLR0915) | 22 |
+| Test files | 27 |
 
 ## Arc
 
