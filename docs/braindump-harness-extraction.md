@@ -132,6 +132,46 @@ Harvest conventions already written in other repos on this machine. Known candid
 
 Action: scan `~/` for `AGENTS.md`, `CLAUDE.md`, `coding-guidelines`, `.editorconfig`, `pyproject.toml` coding sections, and any style/convention docs. Deduplicate and fold the best into the harness as default templates.
 
+## Codebase review findings (2026-03-19)
+
+Audit of the Oeconomia pipeline (63 scripts, ~19k lines) to inform harness defaults.
+
+### What works well
+- **Zero classes, all procedural** — appropriate for a data pipeline. No inheritance tangles.
+- **No security smells** — zero `exec()`/`eval()`, no bare `except`, no star imports.
+- **Consistent logging** — `from utils import get_logger` is the universal pattern.
+- **f-strings dominant** (461 uses vs 307 `%`-format, mostly in logging where `%` is idiomatic).
+
+### Top 5 surprises
+
+**1. `utils.py` is a 717-line god module.**
+Logging, retries, path resolution, checkpointing, data loading — all in one file. The retry machinery mutates a passed-in `counters` dict as a side effect. If anything deserves splitting, it's this: `utils_io.py`, `utils_retry.py`, `utils_paths.py`.
+
+**2. `sys.path.insert(0, ...)` in 44 of 63 scripts.**
+The single most repeated boilerplate. A `pyproject.toml` change (make `scripts/` an installable package) eliminates all 44 copies. Fine at 5 scripts, technical debt at 63.
+
+**3. Plotting scripts have 200–400 line functions.**
+`plot_fig_alluvial.py`, `analyze_genealogy.py`, `analyze_bimodality.py` — these are imperative scripts wrapped in a `def`. The "1 figure = 1 file" guideline (idea #5) would help, but the existing long functions also need decomposition.
+
+**4. `CITE_THRESHOLD = 50` defined independently in 3+ files.**
+Weights (`W_CENTRALITY = 0.4`), page sizes, retry counts, resolution parameters — all hardcoded inline across 20+ scripts. No central config. A single `config.yml` would make research decisions visible and auditable.
+
+**5. 22 entry-point scripts have no argparse.**
+Including 800+ line scripts like `build_het_core.py` and `compare_communities_across_windows.py`. Parameters can only be changed by editing source. Meanwhile 41 other scripts use argparse properly.
+
+### By the numbers
+| Metric | Value |
+|--------|-------|
+| Total scripts | 63 |
+| Average length | 299 lines |
+| Longest | `collect_syllabi.py` (856 lines) |
+| Classes | 0 |
+| Functions >50 lines | 76 |
+| Scripts with argparse | 41 / 63 |
+| Scripts with `sys.path` hack | 44 / 63 |
+| Test files | 26 |
+| Scripts with direct unit tests | ~2 / 63 |
+
 ## Arc
 
 These six ideas form a coherent sequence: extract the methodology (1), validate it intellectually (2), operationalize it (3), add sensible defaults for code quality (4+5+6).
