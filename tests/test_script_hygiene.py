@@ -8,6 +8,13 @@ these tests stay to prevent regression.
 IMPORTANT: none of these changes may alter archive outputs. The
 test_archive_bit_invariance class verifies that archive checksums
 (expected_outputs.md5, checksums.md5) remain identical after refactoring.
+
+Uses existing code checkers where available:
+- ruff C901: McCabe cyclomatic complexity (threshold 10)
+- ruff PLR0915: too many statements per function (threshold 50)
+- ruff PLR0912: too many branches per function (threshold 12)
+- ruff UP006/UP007/UP035: legacy typing imports
+- ast: bare print() detection, sys.path hacks
 """
 
 import ast
@@ -58,6 +65,10 @@ def _scripts_with_main_guard():
 # Scripts that are pure libraries (no __main__ guard, imported by others).
 # These are exempt from argparse and sys.path checks.
 LIBRARY_SCRIPTS = {"utils.py", "plot_style.py", "refine_flags.py"}
+
+_RUFF_AVAILABLE = subprocess.run(
+    ["uv", "run", "ruff", "--version"], capture_output=True
+).returncode == 0
 
 
 # ---------------------------------------------------------------------------
@@ -165,13 +176,7 @@ class TestRuffModernPython:
     UP035: Deprecated typing imports
     """
 
-    @pytest.mark.skipif(
-        subprocess.run(
-            ["uv", "run", "ruff", "--version"],
-            capture_output=True
-        ).returncode != 0,
-        reason="ruff not available",
-    )
+    @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
     def test_no_legacy_typing(self):
         """No legacy typing imports (List, Dict, Tuple, Optional, Union)."""
         result = subprocess.run(
@@ -183,13 +188,7 @@ class TestRuffModernPython:
             f"Ruff found legacy typing patterns:\n{result.stdout}"
         )
 
-    @pytest.mark.skipif(
-        subprocess.run(
-            ["uv", "run", "ruff", "--version"],
-            capture_output=True
-        ).returncode != 0,
-        reason="ruff not available",
-    )
+    @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
     def test_no_future_annotations(self):
         """No from __future__ import annotations (we target 3.10+)."""
         violators = []
@@ -203,7 +202,84 @@ class TestRuffModernPython:
 
 
 # ---------------------------------------------------------------------------
-# 5. Archive bit-invariance
+# 5. Complexity and length (ruff C901, PLR0915, PLR0912)
+# ---------------------------------------------------------------------------
+
+
+class TestFunctionComplexity:
+    """Functions must not exceed McCabe complexity 10 (ruff C901).
+
+    Currently 85 violations across C901+PLR0915+PLR0912. The braindump
+    identified 76 functions >50 lines and plotting scripts with 200-400
+    line monolithic functions. These rules catch both.
+    """
+
+    @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
+    def test_mccabe_complexity(self):
+        """No function exceeds McCabe complexity threshold (C901, max 10)."""
+        result = subprocess.run(
+            ["uv", "run", "ruff", "check", "--select", "C901",
+             "--no-fix", SCRIPTS_DIR],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0, (
+            f"Ruff C901: functions too complex (McCabe > 10):\n{result.stdout}"
+        )
+
+    @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
+    def test_function_length(self):
+        """No function exceeds 50 statements (PLR0915)."""
+        result = subprocess.run(
+            ["uv", "run", "ruff", "check", "--select", "PLR0915",
+             "--no-fix", SCRIPTS_DIR],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0, (
+            f"Ruff PLR0915: functions with too many statements (> 50):\n"
+            f"{result.stdout}"
+        )
+
+    @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
+    def test_branch_count(self):
+        """No function exceeds 12 branches (PLR0912)."""
+        result = subprocess.run(
+            ["uv", "run", "ruff", "check", "--select", "PLR0912",
+             "--no-fix", SCRIPTS_DIR],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0, (
+            f"Ruff PLR0912: functions with too many branches (> 12):\n"
+            f"{result.stdout}"
+        )
+
+
+class TestModuleLength:
+    """Modules must not grow unbounded. utils.py is 717 lines — split it.
+
+    Uses wc-style line counting. Threshold: 500 lines per module
+    (generous enough for analysis scripts, catches god modules).
+    """
+
+    MAX_MODULE_LINES = 500
+
+    def test_no_god_modules(self):
+        """No script exceeds 500 lines."""
+        violators = []
+        for name in _all_scripts():
+            path = os.path.join(SCRIPTS_DIR, name)
+            with open(path) as f:
+                lines = sum(1 for _ in f)
+            if lines > self.MAX_MODULE_LINES:
+                violators.append((name, lines))
+        assert not violators, (
+            f"{len(violators)} scripts exceed {self.MAX_MODULE_LINES} lines "
+            f"(split into focused modules): "
+            + ", ".join(f"{n} ({l}L)" for n, l in violators)
+        )
+
+
+# ---------------------------------------------------------------------------
+# 6. Archive bit-invariance
 # ---------------------------------------------------------------------------
 
 class TestArchiveBitInvariance:
@@ -273,7 +349,7 @@ class TestArchiveBitInvariance:
 
 
 # ---------------------------------------------------------------------------
-# 6. No bare print() in scripts (existing convention, mechanical check)
+# 7. No bare print() in scripts (existing convention, mechanical check)
 # ---------------------------------------------------------------------------
 
 class TestNoBarePrint:
