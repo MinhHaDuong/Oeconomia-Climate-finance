@@ -1,0 +1,28 @@
+**To:** Francesco Sergi, Managing Editor, Oeconomia
+**From:** Minh Ha-Duong, CIRED/CNRS
+**Re:** Varia submission — "Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity"
+
+Dear Professor Sergi,
+
+Following your encouraging response of February 16, 2026 to my extended abstract submitted for the special issue on "History of Climate Economics," I am pleased to submit the full manuscript as a Varia contribution.
+
+The paper traces how economists working in international organisations — particularly at the OECD Development Assistance Committee — constructed climate finance as a distinct economic object between 1990 and 2025. It argues that they did not discover a pre-existing reality but built the accounting categories (Rio markers, mobilised-private-finance methodologies, concessionality thresholds) through which climate-related financial flows were rendered measurable and governable. Drawing on the sociology of quantification (Desrosières, Porter), performativity (Callon, MacKenzie), and economization (Çalışkan and Callon), the paper situates this construction within the broader history of climate economics.
+
+The historical argument is grounded in a computational analysis of approximately 30,000 works (1990–2025) from six bibliographic sources. Sentence-transformer embeddings and sliding-window divergence tests detect structural breaks endogenously, identifying a crystallisation between 2007 and 2014 and confirming that neither Paris (2015) nor Glasgow (2021) disrupted the field's conceptual architecture. The corpus analysis supports the historical interpretation; the periodisation is grounded in the institutional record.
+
+The manuscript is approximately 9,000 words (33 pages) with 48 bibliographic references, 2 figures, and 2 tables.
+
+The paper is not under consideration elsewhere. A version of the abstract has been accepted for presentation at the ESHET-HES Joint Conference (Nice, May 2026). A preprint has been deposited on HAL under a short embargo.
+
+**Replication archive.** The computational claims in the manuscript are supported by a full replication archive deposited at https://doi.org/10.5281/zenodo.19097045, omitted from the manuscript for blind review. The archive contains two tested packages: one reproducing the figures and tables from the corpus data (`uv sync && make && make verify`), and one reproducing the manuscript PDF from pre-built figures (`make && make verify`). Reviewers are welcome to access the archive; I leave it to your discretion whether to share the DOI during review.
+
+**Note on the bibliography.** The replication archives ship a corrected version of the Oeconomia CSL citation style file that includes ISBN/ISSN fields in the rendered bibliography. The submitted manuscript uses this corrected version.
+
+I would be happy to provide any additional information needed for the evaluation process.
+
+Respectfully,
+
+Minh Ha-Duong
+CIRED (Centre International de Recherche sur l'Environnement et le Développement)
+CNRS / ENPC / AgroParisTech
+minh.ha-duong@cnrs.fr

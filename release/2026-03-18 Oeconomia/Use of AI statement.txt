@@ -1,0 +1,17 @@
+**Disclosure: Use of AI Writing Assistance**
+
+This manuscript was written with the assistance of large language models (Claude, Anthropic). The author used AI tools in the following capacities:
+
+1. **Computational pipeline:** AI-assisted development of Python scripts for corpus construction, embedding analysis, tables and figure generation. All scripts were reviewed, tested, and validated by the author. The full pipeline is reproducible (`make` regenerates all outputs from data).
+
+2. **Literature search and synthesis:** AI tools were used to search bibliographic databases, identify relevant works, and draft initial summaries. All claims were verified against primary sources.
+
+3. **Drafting and revision:** AI tools produced draft text that the author substantively revised, restructured, and rewrote. The historical argument, periodisation, theoretical framework, and all interpretive claims are the author's own.
+4. **Code review and project management:** AI tools assisted with code quality, build system design, and replication archive packaging.
+
+The author takes sole responsibility for the content, arguments, and any errors in the manuscript. AI tools are not listed as co-authors, consistent with current COPE guidelines (AI tools cannot meet authorship criteria of accountability and consent).
+
+The author has no objection to providing access on demand to the project's Github, with the understanding that it lifts the anonymity veil, and only the manuscript + the reproductibility archives are to be considered publishable.
+
+The Author
+2026-03-18
