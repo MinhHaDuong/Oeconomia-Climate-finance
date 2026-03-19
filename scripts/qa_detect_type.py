@@ -76,6 +76,72 @@ DISSERTATION_PATTERNS = [
 ]
 
 
+def _match_any(patterns, text, flags=re.IGNORECASE):
+    """Return True if any regex pattern matches text."""
+    return any(re.search(pat, text, flags) for pat in patterns)
+
+
+def _is_empty(value):
+    """Return True if a metadata field is missing / blank / NaN-like."""
+    return not value or value in ("nan", "none", "")
+
+
+def _classify_from_source(source, title, doi, journal):
+    """Source-based shortcuts (grey literature, teaching canon)."""
+    if "grey" in source:
+        return "working-paper" if _match_any(WORKING_PAPER_PATTERNS, title) else "report"
+    if "teaching" in source:
+        if _match_any(BOOK_DOI_PATTERNS, doi, flags=0):
+            return "book"
+        if _is_empty(journal):
+            return "book"
+    return None
+
+
+def _classify_from_doi(doi, title):
+    """DOI-prefix and DOI-pattern classification."""
+    doi_prefix = doi.split("/")[0] if "/" in doi else ""
+    if doi_prefix in REPORT_DOI_PREFIXES:
+        return "working-paper" if _match_any(WORKING_PAPER_PATTERNS, title) else "report"
+    if _match_any(BOOK_DOI_PATTERNS, doi, flags=0):
+        return "book"
+    return None
+
+
+def _classify_from_journal(journal, title):
+    """Journal-field analysis: publisher check, proceedings, real journal."""
+    if _is_empty(journal):
+        return None
+    journal_clean = journal.strip().lower()
+    if journal_clean in PUBLISHERS_NOT_JOURNALS:
+        return "working-paper" if _match_any(WORKING_PAPER_PATTERNS, title) else "report"
+    if any(w in journal_clean for w in ("proceedings", "conference", "symposium")):
+        return "conference-paper"
+    if "procedia" in journal_clean:
+        return "conference-paper"
+    if len(journal_clean) > 3:
+        return "article"
+    return None
+
+
+# Ordered list of (patterns, doc_type) for title-based fallback classification.
+_TITLE_RULES = [
+    (DISSERTATION_PATTERNS, "dissertation"),
+    (WORKING_PAPER_PATTERNS, "working-paper"),
+    (REPORT_TITLE_PATTERNS, "report"),
+    (CONFERENCE_PATTERNS, "conference-paper"),
+    (BOOK_TITLE_PATTERNS, "book"),
+]
+
+
+def _classify_from_title(title):
+    """Title-based classification when journal is absent."""
+    for patterns, doc_type in _TITLE_RULES:
+        if _match_any(patterns, title):
+            return doc_type
+    return None
+
+
 def classify_type(row):
     """Classify document type from metadata heuristics."""
     title = str(row.get("title", "") or "").lower()
@@ -84,71 +150,24 @@ def classify_type(row):
     source = str(row.get("source", "") or "").lower()
     abstract = str(row.get("abstract", "") or "")
 
-    # Source-based shortcuts
-    if "grey" in source:
-        # Check if it's a working paper or a report
-        for pat in WORKING_PAPER_PATTERNS:
-            if re.search(pat, title, re.IGNORECASE):
-                return "working-paper"
-        return "report"
+    result = _classify_from_source(source, title, doi, journal)
+    if result:
+        return result
 
-    if "teaching" in source:
-        # Teaching canon is mostly books and seminal articles
-        for pat in BOOK_DOI_PATTERNS:
-            if re.search(pat, doi):
-                return "book"
-        if not journal or journal in ("nan", "none", ""):
-            return "book"
+    result = _classify_from_doi(doi, title)
+    if result:
+        return result
 
-    # DOI-based classification
-    doi_prefix = doi.split("/")[0] if "/" in doi else ""
-    if doi_prefix in REPORT_DOI_PREFIXES:
-        for pat in WORKING_PAPER_PATTERNS:
-            if re.search(pat, title, re.IGNORECASE):
-                return "working-paper"
-        return "report"
-    for pat in BOOK_DOI_PATTERNS:
-        if re.search(pat, doi):
-            return "book"
+    result = _classify_from_journal(journal, title)
+    if result:
+        return result
 
-    # Journal field analysis
-    if journal and journal not in ("nan", "none", ""):
-        journal_clean = journal.strip().lower()
-        # Is it actually a publisher?
-        if journal_clean in PUBLISHERS_NOT_JOURNALS:
-            for pat in WORKING_PAPER_PATTERNS:
-                if re.search(pat, title, re.IGNORECASE):
-                    return "working-paper"
-            return "report"
-        # Conference proceedings journal names
-        if any(w in journal_clean for w in ["proceedings", "conference", "symposium"]):
-            return "conference-paper"
-        # Energy Procedia, Procedia, etc.
-        if "procedia" in journal_clean:
-            return "conference-paper"
-        # If journal looks like a real journal name, it's an article
-        if len(journal_clean) > 3:
-            return "article"
-
-    # Title-based classification (no journal match)
-    for pat in DISSERTATION_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "dissertation"
-    for pat in WORKING_PAPER_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "working-paper"
-    for pat in REPORT_TITLE_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "report"
-    for pat in CONFERENCE_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "conference-paper"
-    for pat in BOOK_TITLE_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "book"
+    result = _classify_from_title(title)
+    if result:
+        return result
 
     # Fallback: if has a DOI and abstract, likely an article
-    if doi and doi not in ("nan", "none", "") and len(abstract) > 100:
+    if not _is_empty(doi) and len(abstract) > 100:
         return "article"
 
     return "other"
