@@ -71,7 +71,7 @@ def _scripts_with_main_guard():
 
 
 # Scripts that are pure libraries (no __main__ guard, imported by others).
-# These are exempt from argparse and sys.path checks.
+# These are exempt from argparse checks (no __main__ guard).
 LIBRARY_SCRIPTS = {"utils.py", "plot_style.py", "refine_flags.py"}
 
 # Subdirectory scripts that legitimately need sys.path.insert to reach
@@ -167,8 +167,8 @@ class TestCentralizedConstants:
 class TestArgparsePresence:
     """Every script with __main__ guard must use argparse.
 
-    Currently 20 scripts with entry points lack argparse. This test
-    enforces that each gets a parser with at least --help.
+    All entry-point scripts now have argparse. This test prevents
+    regressions — each must have a parser with at least --help.
     """
 
     def test_main_scripts_have_argparse(self):
