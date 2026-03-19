@@ -7,16 +7,26 @@ reproducible from the Phase 1 corpus data (refined_works.csv).
 
 ## Prerequisites
 
-- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- [uv](https://docs.astral.sh/uv/) (Python package manager), **or**
+- [Podman](https://podman.io/) or Docker
 
 ## Usage
 
 ```bash
 tar xzf climate-finance-analysis.tar.gz
 cd climate-finance-analysis
+
+# Option A: native (requires uv)
 uv sync          # install Python dependencies (pinned in uv.lock)
 make             # rebuild all figures and tables from data
 make verify      # check outputs match expected checksums
+
+# Option B: container (requires podman or docker, no other install needed)
+podman build -t climate-finance .
+podman run climate-finance
+
+# Cleanup: remove container and image from local storage
+podman rm -a && podman rmi climate-finance && podman system prune -f
 ```
 
 ## Contents
@@ -29,6 +39,7 @@ make verify      # check outputs match expected checksums
 | `expected_outputs.md5` | Checksums of expected outputs |
 | `Makefile` | Build and verify targets |
 | `pyproject.toml`, `uv.lock` | Pinned Python dependencies |
+| `Dockerfile` | OCI container build (Podman/Docker) |
 
 ## Verification
 

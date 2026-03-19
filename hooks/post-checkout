@@ -10,7 +10,12 @@ if [ ! -e .env ]; then
     fi
 fi
 
-# Populate DVC-managed data from local cache
+# Populate DVC-managed data from local cache.
+# DVC is in the "corpus" dependency group and needs a torch extra.
 if [ -f dvc.lock ]; then
-    uv run dvc checkout 2>/dev/null || true
+    case "$(hostname)" in
+        padme) extra=cu130 ;;
+        *)     extra=cpu ;;
+    esac
+    uv run --group corpus --extra "$extra" dvc checkout 2>/dev/null || true
 fi

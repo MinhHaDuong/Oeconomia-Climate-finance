@@ -427,8 +427,9 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	cp Makefile.analysis-manuscript                $(ANALYSIS_TMP)/Makefile
 	cp pyproject.toml uv.lock           $(ANALYSIS_TMP)/
 	echo 'CLIMATE_FINANCE_DATA=data' > $(ANALYSIS_TMP)/.env
-	@# README for reviewers
+	@# README + container file for reviewers
 	cp README-analysis.md $(ANALYSIS_TMP)/README.md
+	cp Dockerfile.analysis $(ANALYSIS_TMP)/Dockerfile
 	@# Expected output checksums — reviewers verify with: make && make verify
 	md5sum $(ANALYSIS_OUTPUTS) > $(ANALYSIS_TMP)/expected_outputs.md5
 	@echo "=== Creating tarball ==="
