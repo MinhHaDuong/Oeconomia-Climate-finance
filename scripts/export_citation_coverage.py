@@ -10,11 +10,9 @@ Usage:
 """
 
 import os
-import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi, load_analysis_periods
 
 log = get_logger("export_citation_coverage")

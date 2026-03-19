@@ -19,7 +19,6 @@ Produces:
 """
 
 import os
-import sys
 from collections import Counter
 
 import numpy as np
@@ -29,11 +28,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.pairwise import cosine_distances
 
-# Add scripts dir to path for utils import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_REPO = os.path.dirname(SCRIPT_DIR)
-sys.path.insert(0, os.path.join(MAIN_REPO, "..", "..", "..", "..", "scripts"))
-sys.path.insert(0, SCRIPT_DIR)
 
 from utils import CATALOGS_DIR, normalize_doi, normalize_title
 

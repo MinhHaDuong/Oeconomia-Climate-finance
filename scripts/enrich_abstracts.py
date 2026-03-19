@@ -25,7 +25,6 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import requests
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, OPENALEX_API_KEY,
                    save_csv, reconstruct_abstract, normalize_doi,
                    retry_get, save_run_report, make_run_id, get_logger)

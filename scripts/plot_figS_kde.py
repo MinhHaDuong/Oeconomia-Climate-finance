@@ -6,7 +6,6 @@ Produces:
 
 import argparse
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +13,6 @@ import pandas as pd
 from scipy.stats import gaussian_kde
 from sklearn.mixture import GaussianMixture
 
-sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT, FILL
 from utils import BASE_DIR, get_logger, save_figure
 

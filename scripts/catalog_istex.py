@@ -18,11 +18,9 @@ import glob
 import json
 import os
 import re
-import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, RAW_DIR, WORKS_COLUMNS, REFS_COLUMNS,
                    get_logger, normalize_doi, polite_get, save_csv,
                    pool_path, append_to_pool, load_pool_records,

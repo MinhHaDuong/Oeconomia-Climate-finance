@@ -18,7 +18,6 @@ Usage:
 """
 
 import os
-import sys
 from collections import defaultdict
 
 import community as community_louvain
@@ -29,7 +28,6 @@ from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Add scripts dir to path for utils
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils import CATALOGS_DIR, normalize_doi
 
 # ============================================================

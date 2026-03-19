@@ -19,13 +19,11 @@ Usage:
 """
 
 import os
-import sys
 from collections import defaultdict
 
 import pandas as pd
 import yaml
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import BASE_DIR, DATA_DIR, get_logger
 
 log = get_logger("analyze_teaching_canon")

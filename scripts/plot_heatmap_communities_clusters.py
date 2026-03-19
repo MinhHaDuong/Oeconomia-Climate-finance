@@ -16,14 +16,11 @@ Usage:
 
 import argparse
 import os
-import sys
 from collections import defaultdict
 
 import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
 from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_cluster_labels,
                    load_refined_citations, load_refined_embeddings,

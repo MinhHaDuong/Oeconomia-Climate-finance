@@ -15,13 +15,11 @@ Usage:
 If no path is given, defaults to output/content/manuscript.pdf.
 """
 
-import os
 import re
 import sys
 
 import pdfplumber
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import get_logger
 
 log = get_logger("qa_word_count")
