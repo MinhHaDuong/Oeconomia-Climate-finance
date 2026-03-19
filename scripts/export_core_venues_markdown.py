@@ -16,11 +16,9 @@ Usage:
 
 import argparse
 import os
-import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from summarize_core_venues import canonical_venue, venue_type
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 

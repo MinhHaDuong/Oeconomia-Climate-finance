@@ -11,13 +11,11 @@ Usage:
 
 import argparse
 import os
-import sys
 import time
 
 import pandas as pd
 import requests
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv,
                    load_collect_config)
 

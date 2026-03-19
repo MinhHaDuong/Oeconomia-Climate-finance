@@ -12,12 +12,10 @@ Usage:
 
 import argparse
 import os
-import sys
 from collections import Counter
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, get_logger, normalize_doi, polite_get, MAILTO, OPENALEX_API_KEY
 
 log = get_logger("mine_openalex_keywords")

@@ -18,13 +18,11 @@ Usage:
 
 import argparse
 import os
-import sys
 import textwrap
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT
 from utils import BASE_DIR, load_cluster_labels, save_figure
 

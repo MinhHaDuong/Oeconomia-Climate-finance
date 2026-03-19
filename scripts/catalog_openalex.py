@@ -30,13 +30,11 @@ import argparse
 import json
 import os
 import re
-import sys
 from datetime import date
 
 import pandas as pd
 import yaml
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO, OPENALEX_API_KEY,
                    get_logger, normalize_doi, reconstruct_abstract, polite_get,
                    save_csv, pool_path, append_to_pool, load_pool_ids,

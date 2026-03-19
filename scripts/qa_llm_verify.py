@@ -26,7 +26,6 @@ import time
 import pandas as pd
 import requests
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, save_csv, BASE_DIR, get_logger
 
 log = get_logger("qa_llm_verify")
