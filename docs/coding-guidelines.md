@@ -17,6 +17,21 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 - House style: `docs/oeconomia-style.md` (eyeballed from 15-4 samples)
 - **Logging, not print.** All scripts MUST use `from utils import get_logger; log = get_logger("script_name")` — never bare `print()`. The `get_logger()` factory configures a shared `pipeline` root logger with `StreamHandler` (auto-flush to stderr, `HH:MM:SS LEVEL message` format). Use `log.info()` for progress, `log.warning()` for retries/rate-limits, `log.error()` for failures.
 
+## Script hygiene
+
+- **No `sys.path` hacks.** Never `sys.path.insert(0, ...)`. Make scripts importable through proper packaging (`pyproject.toml`), not path manipulation in every file.
+- **Centralize research parameters.** Constants like `CITE_THRESHOLD` belong in `config/analysis.yaml`, not hardcoded across scripts. Scripts read them via `load_analysis_config()`. If a value appears in more than one file, it must come from config.
+- **Every entry point gets argparse.** If `__name__ == "__main__"` exists, it gets an `ArgumentParser`. Even with no required args today — the parser is where `--dry-run`, `--verbose`, `--output` go tomorrow without refactoring.
+
+## Python style (3.10+)
+
+- Use built-in generics: `list[str]`, `dict[str, int]`, `str | None`. Never `from typing import List, Dict, Tuple, Optional`.
+- Use `X | Y` union syntax, not `Union[X, Y]`.
+- No `from __future__ import annotations` — we target 3.10+ where these work natively.
+- No ABC classes. Use Protocol for structural subtyping if needed.
+- Type hints where they clarify intent (function signatures, data structures). Skip where they add noise (obvious locals, one-liners).
+- Assertions at system boundaries (file I/O, API responses). Trust internal code.
+
 ## Dependency management
 
 - **Always use `uv sync`** to install dependencies. Never use `pip` or `uv pip`.
