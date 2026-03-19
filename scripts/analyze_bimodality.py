@@ -88,7 +88,7 @@ assert len(embeddings) == len(df), f"Embedding size mismatch: {len(embeddings)} 
 log.info("Loaded %d papers with embeddings (%dD)", len(df), embeddings.shape[1])
 
 # Core filtering: keep only highly-cited papers
-CITE_THRESHOLD = 50
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
 if args.core_only:
     core_mask = df["cited_by_count"] >= CITE_THRESHOLD

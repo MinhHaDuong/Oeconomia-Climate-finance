@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_figure
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_figure, load_analysis_config
 
 log = get_logger("plot_fig_alluvial")
 
@@ -31,7 +31,8 @@ FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
-CITE_THRESHOLD = 50
+_cfg = load_analysis_config()
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Render alluvial figure and interactive HTML")

@@ -63,7 +63,8 @@ log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
 # ============================================================
 
 K_DEFAULT = 6
-CITE_THRESHOLD = 50
+_cfg = load_analysis_config()
+CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
 log.info("Fitting global KMeans (k=%d) on full corpus...", K_DEFAULT)
 kmeans = KMeans(n_clusters=K_DEFAULT, random_state=42, n_init=20)
