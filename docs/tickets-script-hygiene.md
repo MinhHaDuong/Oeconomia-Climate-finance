@@ -136,8 +136,10 @@ verify_bibliography.py
 
 Tickets 1-3 are mechanical (low risk, high reward). Tickets 4-7 overlap and require judgment. Suggested waves:
 
-**Wave 1:** Tickets 1 + 2 + 3 (boilerplate removal, can parallelize)
+**Wave 1:** Tickets 1 + 2 + 3 — **DONE** (2026-03-19, all 3 tests green)
 **Wave 2:** Tickets 4 + 5 + 6 (complexity reduction, work together per script)
 **Wave 3:** Ticket 7 (module splitting, depends on wave 2 settling)
 
-Each wave ends with `make archive-analysis` + checksum verification.
+Wave 2-3 detailed tickets: `docs/tickets-wave2-complexity.md` (grouped by script cluster, not by ruff rule, to avoid duplicate refactoring).
+
+Each wave ends with `make check` (full test suite + archive verification).
