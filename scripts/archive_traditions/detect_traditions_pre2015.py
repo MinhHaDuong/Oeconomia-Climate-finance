@@ -15,7 +15,11 @@ Usage:
 """
 
 import os
+import sys
 from collections import defaultdict
+
+# archive_traditions/ is a subdirectory of scripts/ — need parent on path to import utils
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import community as community_louvain
 import networkx as nx
@@ -24,7 +28,6 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# Add scripts dir to path for utils
 from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
 
 CUTOFF_YEAR = 2014
