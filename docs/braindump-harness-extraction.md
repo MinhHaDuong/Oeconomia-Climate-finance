@@ -52,9 +52,48 @@ Intellectual audit — positioning what we've built against the canon.
 
 The review could surface gaps, validate design choices, and give the harness intellectual credibility. Could become a "Design Rationale" or "Intellectual Lineage" document in the new repo.
 
-### 3. Launch coding team leader in background to poll tickets
+### 3. Offline ticket system — file-based, gh-optional
 
-A background agent that watches `gh issue list`, picks ripe tickets (dependencies met, labels ready), and either starts work or alerts. Automating the "Select" step of the wave cycle.
+Today's session proved that `gh` CLI is not always available (sandboxed environments, CI runners, air-gapped machines). The harness assumed GitHub Issues as the planning artifact, but the actual work happened with markdown files in `docs/tickets-*.md`. This worked surprisingly well.
+
+**What happened:**
+- 7 tickets created in `docs/tickets-script-hygiene.md` (Wave 1), then 5 more in `docs/tickets-wave2-complexity.md` (Waves 2-3). Each follows the `runbooks/new-ticket.md` template (Context, Relevant files, Actions, Test, Verification, Invariants, Exit criteria).
+- Agents consumed tickets from these files exactly as they would from GitHub Issues — the ticket *is* the context, the format doesn't care where it lives.
+- Cross-referencing worked via ticket letters (A-E) and file names, not issue numbers.
+- The wave plan section at the bottom of each file served as the project board.
+
+**Design insight:** The harness should treat **ticket = markdown document** as the primitive, with GitHub Issues as one possible backend, not the only one. The `new-ticket` and `start-ticket` runbooks should work with either:
+- `gh issue create` (when available)
+- A local `tickets/` directory with numbered markdown files (when not)
+
+**Proposed ticket file convention:**
+```
+tickets/
+  NNN-short-title.md       # open ticket
+  done/NNN-short-title.md  # completed (moved after merge)
+```
+- Numbering is sequential, not GitHub issue numbers.
+- `start-ticket` reads from `tickets/NNN-*.md` instead of `gh issue view NNN`.
+- `celebrate.md` moves the file to `done/` and appends a completion summary.
+- When `gh` *is* available, a sync script can push/pull between local files and GitHub Issues (like a two-way bridge).
+
+**Why this is better than "just install gh":**
+- Zero external dependencies. Works in any sandbox, container, or CI.
+- Tickets are versioned in git — full history, blame, diff.
+- Agents can create tickets without authentication tokens.
+- The ticket file *is* the handoff document — no URL indirection.
+
+**What we lose without GitHub:**
+- Web UI for humans to browse/comment.
+- Labels, milestones, project boards.
+- `--parent` sub-issue hierarchy.
+- Webhook-triggered automation.
+
+The hybrid model (local files as source of truth, gh sync when available) gives the best of both.
+
+### 3b. Launch coding team leader in background to poll tickets
+
+A background agent that watches the ticket queue (GitHub Issues or `tickets/` directory), picks ripe tickets (dependencies met, labels ready), and either starts work or alerts. Automating the "Select" step of the wave cycle.
 
 Depends on idea #1 being solid first. But it's the natural next step: the harness already describes the wave cycle, this adds the cron.
 
@@ -167,8 +206,8 @@ Including 800+ line scripts like `build_het_core.py` and `compare_communities_ac
 | Longest | `collect_syllabi.py` (856 lines) |
 | Classes | 0 |
 | Functions >50 lines | 76 |
-| Scripts with argparse | 41 / 63 |
-| Scripts with `sys.path` hack | 44 / 63 |
+| Scripts with argparse | 56 / 63 (was 41, +15 today) |
+| Scripts with `sys.path` hack | 0 / 63 (was 44, all removed today) |
 | Test files | 26 |
 | Scripts with direct unit tests | ~2 / 63 |
 
