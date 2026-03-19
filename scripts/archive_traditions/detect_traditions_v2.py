@@ -31,22 +31,24 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from utils import CATALOGS_DIR, normalize_doi
+from utils import get_logger, CATALOGS_DIR, normalize_doi
+
+log = get_logger("detect_traditions_v2")
 
 # ============================================================
 # Step 1: Load and filter data to pre-2007
 # ============================================================
 
-print("=" * 70)
-print("DETECTING PRE-2007 INTELLECTUAL TRADITIONS")
-print("=" * 70)
+log.info("=" * 70)
+log.info("DETECTING PRE-2007 INTELLECTUAL TRADITIONS")
+log.info("=" * 70)
 
-print("\n--- Loading data ---")
+log.info("\n--- Loading data ---")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 works["cited_by_count"] = pd.to_numeric(works["cited_by_count"], errors="coerce").fillna(0)
-print(f"Total works: {len(works)}")
+log.info(f"Total works: {len(works)}")
 
 # Build DOI -> metadata lookup
 doi_meta = {}
@@ -62,14 +64,14 @@ for _, row in works.iterrows():
         }
 
 # Load citations
-print("Loading citations...")
+log.info("Loading citations...")
 cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
 cit = cit[(cit["source_doi"] != "") & (cit["ref_doi"] != "")]
 cit = cit[~cit["source_doi"].isin(["nan", "none", ""])]
 cit = cit[~cit["ref_doi"].isin(["nan", "none", ""])]
-print(f"Citation pairs with DOIs: {len(cit)}")
+log.info(f"Citation pairs with DOIs: {len(cit)}")
 
 # Add ref metadata from citations for papers not in works
 for _, row in cit.iterrows():
@@ -95,41 +97,41 @@ for _, row in cit.iterrows():
 # Step 2: Coverage statistics for pre-2007
 # ============================================================
 
-print("\n--- Coverage statistics ---")
+log.info("\n--- Coverage statistics ---")
 
 # Pre-2007 works in the corpus
 pre2007 = works[works["year"] <= 2006].copy()
-print(f"Works with year <= 2006: {len(pre2007)}")
-print(f"  With DOI: {pre2007['doi_norm'].apply(lambda x: x not in ('', 'nan', 'none')).sum()}")
+log.info(f"Works with year <= 2006: {len(pre2007)}")
+log.info(f"  With DOI: {pre2007['doi_norm'].apply(lambda x: x not in ('', 'nan', 'none')).sum()}")
 pre2007_dois = set(pre2007["doi_norm"]) - {"", "nan", "none"}
-print(f"  Unique DOIs: {len(pre2007_dois)}")
+log.info(f"  Unique DOIs: {len(pre2007_dois)}")
 
 # How many pre-2007 works appear as sources in citations?
 source_dois = set(cit["source_doi"])
 pre2007_as_sources = pre2007_dois & source_dois
-print(f"  Pre-2007 DOIs appearing as citation sources: {len(pre2007_as_sources)}")
+log.info(f"  Pre-2007 DOIs appearing as citation sources: {len(pre2007_as_sources)}")
 
 # How many pre-2007 works appear as references?
 ref_dois = set(cit["ref_doi"])
 pre2007_as_refs = pre2007_dois & ref_dois
-print(f"  Pre-2007 DOIs appearing as cited references: {len(pre2007_as_refs)}")
+log.info(f"  Pre-2007 DOIs appearing as cited references: {len(pre2007_as_refs)}")
 
 # All pre-2007 DOIs involved in any citation link
 pre2007_in_citations = pre2007_as_sources | pre2007_as_refs
-print(f"  Pre-2007 DOIs in citation network (source or ref): {len(pre2007_in_citations)}")
-print(f"  Coverage: {len(pre2007_in_citations)/len(pre2007_dois)*100:.1f}% of pre-2007 corpus DOIs")
+log.info(f"  Pre-2007 DOIs in citation network (source or ref): {len(pre2007_in_citations)}")
+log.info(f"  Coverage: {len(pre2007_in_citations)/len(pre2007_dois)*100:.1f}% of pre-2007 corpus DOIs")
 
 # References in citations.csv with year <= 2006 (including outside corpus)
 cit["ref_year_num"] = pd.to_numeric(cit["ref_year"], errors="coerce")
 pre2007_refs_all = set(cit[cit["ref_year_num"] <= 2006]["ref_doi"]) - {"", "nan", "none"}
-print(f"\nAll cited references with year <= 2006: {len(pre2007_refs_all)}")
+log.info(f"\nAll cited references with year <= 2006: {len(pre2007_refs_all)}")
 
 # Citation links where BOTH source and ref are pre-2007
 cit_source_year = cit["source_doi"].map(lambda d: doi_meta.get(d, {}).get("year"))
 cit_pre2007 = cit[
     (cit_source_year <= 2006) & (cit["ref_year_num"] <= 2006)
 ].copy()
-print(f"Citation links where both source AND ref are pre-2007: {len(cit_pre2007)}")
+log.info(f"Citation links where both source AND ref are pre-2007: {len(cit_pre2007)}")
 
 # ============================================================
 # Step 3: Build networks — using ALL citations (not just pre-2007 sources)
@@ -137,19 +139,19 @@ print(f"Citation links where both source AND ref are pre-2007: {len(cit_pre2007)
 # Strategy: use co-citation among ALL citing papers (including post-2006)
 # to detect pre-2007 intellectual communities. This gives much better coverage.
 
-print("\n" + "=" * 70)
-print("APPROACH A: Co-citation network of pre-2007 references")
-print("(Two pre-2007 refs linked if co-cited by ANY paper in the corpus)")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("APPROACH A: Co-citation network of pre-2007 references")
+log.info("(Two pre-2007 refs linked if co-cited by ANY paper in the corpus)")
+log.info("=" * 70)
 
 # Identify pre-2007 references that are frequently cited
 ref_counts = cit.groupby("ref_doi").size().sort_values(ascending=False)
 
 # Filter to refs with year <= 2006
 pre2007_ref_counts = ref_counts[ref_counts.index.isin(pre2007_refs_all)]
-print(f"\nPre-2007 references cited at least once: {len(pre2007_ref_counts)}")
-print(f"Pre-2007 references cited >= 3 times: {(pre2007_ref_counts >= 3).sum()}")
-print(f"Pre-2007 references cited >= 5 times: {(pre2007_ref_counts >= 5).sum()}")
+log.info(f"\nPre-2007 references cited at least once: {len(pre2007_ref_counts)}")
+log.info(f"Pre-2007 references cited >= 3 times: {(pre2007_ref_counts >= 3).sum()}")
+log.info(f"Pre-2007 references cited >= 5 times: {(pre2007_ref_counts >= 5).sum()}")
 
 # Use top N most-cited pre-2007 references
 TOP_N = 150
@@ -157,11 +159,11 @@ top_pre2007_refs = pre2007_ref_counts.head(TOP_N).index.tolist()
 top_set = set(top_pre2007_refs)
 ref_to_idx = {ref: i for i, ref in enumerate(top_pre2007_refs)}
 
-print(f"\nUsing top {TOP_N} most-cited pre-2007 references")
-print(f"Min citations in top set: {pre2007_ref_counts.iloc[min(TOP_N-1, len(pre2007_ref_counts)-1)]}")
+log.info(f"\nUsing top {TOP_N} most-cited pre-2007 references")
+log.info(f"Min citations in top set: {pre2007_ref_counts.iloc[min(TOP_N-1, len(pre2007_ref_counts)-1)]}")
 
 # Build co-citation matrix
-print("Building co-citation matrix...")
+log.info("Building co-citation matrix...")
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 
 cocit_matrix = lil_matrix((TOP_N, TOP_N), dtype=np.float64)
@@ -178,7 +180,7 @@ for source_doi, ref_list in source_groups.items():
 
 cocit_dense = cocit_matrix.toarray()
 n_pairs = np.count_nonzero(cocit_dense) // 2
-print(f"Non-zero co-citation pairs: {n_pairs}")
+log.info(f"Non-zero co-citation pairs: {n_pairs}")
 
 # Build graph
 G_cocit = nx.Graph()
@@ -200,13 +202,13 @@ for i in range(TOP_N):
 
 isolates = list(nx.isolates(G_cocit))
 G_cocit.remove_nodes_from(isolates)
-print(f"Network: {G_cocit.number_of_nodes()} nodes, {G_cocit.number_of_edges()} edges")
-print(f"Removed {len(isolates)} isolates")
+log.info(f"Network: {G_cocit.number_of_nodes()} nodes, {G_cocit.number_of_edges()} edges")
+log.info(f"Removed {len(isolates)} isolates")
 
 # Louvain community detection
 partition_cocit = community_louvain.best_partition(G_cocit, weight="weight", random_state=42)
 n_comm = len(set(partition_cocit.values()))
-print(f"Communities detected: {n_comm}")
+log.info(f"Communities detected: {n_comm}")
 
 
 def characterize_communities(partition, graph, doi_meta, ref_counts, label=""):
@@ -215,9 +217,9 @@ def characterize_communities(partition, graph, doi_meta, ref_counts, label=""):
     for doi, comm in partition.items():
         comm_papers[comm].append(doi)
 
-    print(f"\n{'='*60}")
-    print(f"COMMUNITY PROFILES {label}")
-    print(f"{'='*60}")
+    log.info(f"\n{'='*60}")
+    log.info(f"COMMUNITY PROFILES {label}")
+    log.info(f"{'='*60}")
 
     for c in sorted(comm_papers.keys()):
         papers = comm_papers[c]
@@ -227,10 +229,10 @@ def characterize_communities(partition, graph, doi_meta, ref_counts, label=""):
                                + ref_counts.get(d, 0),
                                reverse=True)
 
-        print(f"\n--- Community {c} ({len(papers)} papers) ---")
+        log.info(f"\n--- Community {c} ({len(papers)} papers) ---")
 
         # Top papers
-        print("  Top papers:")
+        log.info("  Top papers:")
         for d in papers_sorted[:12]:
             meta = doi_meta.get(d, {})
             author = str(meta.get("first_author", "?"))
@@ -244,7 +246,7 @@ def characterize_communities(partition, graph, doi_meta, ref_counts, label=""):
                 title = f"[{d}]"
             cbc = meta.get("cited_by_count", 0)
             rc = ref_counts.get(d, 0)
-            print(f"    [{rc:>3}x ref'd] {author} ({year}) {title}")
+            log.info(f"    [{rc:>3}x ref'd] {author} ({year}) {title}")
 
         # TF-IDF: use abstracts first, fall back to titles
         texts = []
@@ -271,11 +273,11 @@ def characterize_communities(partition, graph, doi_meta, ref_counts, label=""):
                 top_idx = mean_tfidf.argsort()[::-1][:20]
                 terms = tfidf.get_feature_names_out()
                 top_terms = [terms[i] for i in top_idx]
-                print(f"  Top TF-IDF terms ({len(texts)} texts): {', '.join(top_terms)}")
+                log.info(f"  Top TF-IDF terms ({len(texts)} texts): {', '.join(top_terms)}")
             except Exception as e:
-                print(f"  (TF-IDF failed: {e})")
+                log.info(f"  (TF-IDF failed: {e})")
         else:
-            print(f"  (Only {len(texts)} texts available — skipping TF-IDF)")
+            log.info(f"  (Only {len(texts)} texts available — skipping TF-IDF)")
 
     return comm_papers
 
@@ -289,9 +291,9 @@ comm_papers_cocit = characterize_communities(
 # Approach B: Direct citation graph among pre-2007 works
 # ============================================================
 
-print("\n" + "=" * 70)
-print("APPROACH B: Direct citation graph among pre-2007 works")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("APPROACH B: Direct citation graph among pre-2007 works")
+log.info("=" * 70)
 
 # Build direct citation edges between pre-2007 works
 # A -> B means A cites B, both pre-2007
@@ -306,7 +308,7 @@ for _, row in cit.iterrows():
             direct_edges.append((s, r))
 
 direct_edges = list(set(direct_edges))
-print(f"Direct citation edges (both in pre-2007 corpus): {len(direct_edges)}")
+log.info(f"Direct citation edges (both in pre-2007 corpus): {len(direct_edges)}")
 
 if len(direct_edges) > 10:
     G_direct = nx.Graph()  # undirected for community detection
@@ -319,30 +321,30 @@ if len(direct_edges) > 10:
     # Remove isolates
     isolates_d = list(nx.isolates(G_direct))
     G_direct.remove_nodes_from(isolates_d)
-    print(f"Network: {G_direct.number_of_nodes()} nodes, {G_direct.number_of_edges()} edges")
+    log.info(f"Network: {G_direct.number_of_nodes()} nodes, {G_direct.number_of_edges()} edges")
 
     if G_direct.number_of_nodes() >= 5:
         partition_direct = community_louvain.best_partition(G_direct, weight="weight", random_state=42)
         n_comm_d = len(set(partition_direct.values()))
-        print(f"Communities detected: {n_comm_d}")
+        log.info(f"Communities detected: {n_comm_d}")
 
         characterize_communities(
             partition_direct, G_direct, doi_meta, ref_counts,
             label="(Direct citation, pre-2007 corpus papers)"
         )
     else:
-        print("Too few connected nodes for community detection.")
+        log.info("Too few connected nodes for community detection.")
 else:
-    print("Too few direct citation edges for community detection.")
+    log.info("Too few direct citation edges for community detection.")
 
 # ============================================================
 # Approach C: Bibliographic coupling among pre-2007 works
 # ============================================================
 
-print("\n" + "=" * 70)
-print("APPROACH C: Bibliographic coupling among pre-2007 works")
-print("(Two papers linked if they share references)")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("APPROACH C: Bibliographic coupling among pre-2007 works")
+log.info("(Two papers linked if they share references)")
+log.info("=" * 70)
 
 # For each pre-2007 source paper, collect its reference set
 source_to_refs = defaultdict(set)
@@ -353,7 +355,7 @@ for _, row in cit.iterrows():
         source_to_refs[s].add(r)
 
 pre2007_with_refs = {d for d in pre2007_dois if d in source_to_refs and len(source_to_refs[d]) >= 2}
-print(f"Pre-2007 papers with >= 2 references in citations.csv: {len(pre2007_with_refs)}")
+log.info(f"Pre-2007 papers with >= 2 references in citations.csv: {len(pre2007_with_refs)}")
 
 if len(pre2007_with_refs) >= 10:
     # Build bibliographic coupling graph
@@ -385,30 +387,30 @@ if len(pre2007_with_refs) >= 10:
 
     isolates_bc = list(nx.isolates(G_bibcoup))
     G_bibcoup.remove_nodes_from(isolates_bc)
-    print(f"Network (min coupling={MIN_COUPLING}): {G_bibcoup.number_of_nodes()} nodes, {G_bibcoup.number_of_edges()} edges")
+    log.info(f"Network (min coupling={MIN_COUPLING}): {G_bibcoup.number_of_nodes()} nodes, {G_bibcoup.number_of_edges()} edges")
 
     if G_bibcoup.number_of_nodes() >= 5:
         partition_bc = community_louvain.best_partition(G_bibcoup, weight="weight", random_state=42)
         n_comm_bc = len(set(partition_bc.values()))
-        print(f"Communities detected: {n_comm_bc}")
+        log.info(f"Communities detected: {n_comm_bc}")
 
         characterize_communities(
             partition_bc, G_bibcoup, doi_meta, ref_counts,
             label="(Bibliographic coupling, pre-2007 corpus)"
         )
     else:
-        print("Too few connected nodes.")
+        log.info("Too few connected nodes.")
 else:
-    print("Too few papers with references for bibliographic coupling.")
+    log.info("Too few papers with references for bibliographic coupling.")
 
 
 # ============================================================
 # Approach D: Co-citation with resolution tuning for 3 communities
 # ============================================================
 
-print("\n" + "=" * 70)
-print("APPROACH D: Co-citation with resolution tuning (targeting ~3 communities)")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("APPROACH D: Co-citation with resolution tuning (targeting ~3 communities)")
+log.info("=" * 70)
 
 # Try different resolution parameters
 for gamma in [0.5, 0.7, 1.0, 1.5, 2.0]:
@@ -421,9 +423,9 @@ for gamma in [0.5, 0.7, 1.0, 1.5, 2.0]:
         for v in part.values():
             sizes[v] += 1
         size_str = ", ".join(f"{s}" for s in sorted(sizes.values(), reverse=True))
-        print(f"  gamma={gamma}: {n_c} communities (sizes: {size_str})")
+        log.info(f"  gamma={gamma}: {n_c} communities (sizes: {size_str})")
     except TypeError:
-        print(f"  gamma={gamma}: resolution parameter not supported")
+        log.info(f"  gamma={gamma}: resolution parameter not supported")
         break
 
 # Use gamma that gives ~3 communities
@@ -445,7 +447,7 @@ for gamma in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2.0]:
 
 if best_gamma is not None:
     n_c = len(set(best_partition.values()))
-    print(f"\nBest resolution for ~3 communities: gamma={best_gamma} -> {n_c} communities")
+    log.info(f"\nBest resolution for ~3 communities: gamma={best_gamma} -> {n_c} communities")
 
     comm_papers_tuned = characterize_communities(
         best_partition, G_cocit, doi_meta, ref_counts,
@@ -453,32 +455,32 @@ if best_gamma is not None:
     )
 
 # Also show gamma=0.5 (5 communities) for finer detail
-print("\n" + "=" * 70)
-print("APPROACH E: Co-citation gamma=0.5 (5 communities — finer resolution)")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("APPROACH E: Co-citation gamma=0.5 (5 communities — finer resolution)")
+log.info("=" * 70)
 try:
     part_05 = community_louvain.best_partition(
         G_cocit, weight="weight", resolution=0.5, random_state=42
     )
     n_c_05 = len(set(part_05.values()))
-    print(f"Communities: {n_c_05}")
+    log.info(f"Communities: {n_c_05}")
     characterize_communities(
         part_05, G_cocit, doi_meta, ref_counts,
         label="(Co-citation, gamma=0.5)"
     )
 except TypeError:
-    print("Resolution parameter not supported.")
+    log.info("Resolution parameter not supported.")
 
 
 # ============================================================
 # Summary assessment
 # ============================================================
 
-print("\n" + "=" * 70)
-print("SUMMARY AND ASSESSMENT")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("SUMMARY AND ASSESSMENT")
+log.info("=" * 70)
 
-print("""
+log.info("""
 The hypothesis is that three disconnected traditions preceded climate finance:
   1. Environmental economics (carbon pricing, externalities, IAMs)
   2. Development economics (ODA, aid flows, concessionality)
@@ -496,4 +498,4 @@ Key caveats:
     papers that were later cited together in climate finance work
 """)
 
-print("Done.")
+log.info("Done.")

@@ -27,7 +27,9 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from utils import BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import get_logger, BASE_DIR, CATALOGS_DIR, normalize_doi
+
+log = get_logger("detect_traditions_pre2020")
 
 # ============================================================
 # Step 1: Load and filter data to pre-2020
@@ -37,22 +39,22 @@ YEAR_CUTOFF = 2019
 TOP_N = 250
 MIN_COCIT = 3  # minimum co-citation count for an edge
 
-print("=" * 70)
-print(f"DETECTING PRE-{YEAR_CUTOFF + 1} INTELLECTUAL TRADITIONS")
-print("=" * 70)
+log.info("=" * 70)
+log.info(f"DETECTING PRE-{YEAR_CUTOFF + 1} INTELLECTUAL TRADITIONS")
+log.info("=" * 70)
 
-print("\n--- Loading data ---")
+log.info("\n--- Loading data ---")
 works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
 works["year"] = pd.to_numeric(works["year"], errors="coerce")
 works["doi_norm"] = works["doi"].apply(normalize_doi)
 works["cited_by_count"] = pd.to_numeric(
     works["cited_by_count"], errors="coerce"
 ).fillna(0)
-print(f"Total works: {len(works)}")
+log.info(f"Total works: {len(works)}")
 
 # Pre-2020 works
 pre2020 = works[works["year"] <= YEAR_CUTOFF].copy()
-print(f"Works with year <= {YEAR_CUTOFF}: {len(pre2020)}")
+log.info(f"Works with year <= {YEAR_CUTOFF}: {len(pre2020)}")
 
 # Build DOI -> metadata lookup (vectorized, no iterrows on 22K rows)
 doi_meta = {}
@@ -67,7 +69,7 @@ for row in works.loc[valid].itertuples(index=False):
     }
 
 # Load citations
-print("Loading citations...")
+log.info("Loading citations...")
 cit = pd.read_csv(os.path.join(CATALOGS_DIR, "citations.csv"), low_memory=False)
 cit["source_doi"] = cit["source_doi"].apply(normalize_doi)
 cit["ref_doi"] = cit["ref_doi"].apply(normalize_doi)
@@ -77,7 +79,7 @@ cit = cit[
     & cit["ref_doi"].notna()
     & ~cit["ref_doi"].isin(["", "nan", "none"])
 ]
-print(f"Citation pairs with DOIs: {len(cit)}")
+log.info(f"Citation pairs with DOIs: {len(cit)}")
 
 # Add ref metadata from citations for papers not in works
 cit["ref_year_num"] = pd.to_numeric(cit["ref_year"], errors="coerce")
@@ -97,39 +99,39 @@ for row in cit.itertuples(index=False):
 # Step 2: Coverage statistics
 # ============================================================
 
-print(f"\n--- Coverage statistics (year <= {YEAR_CUTOFF}) ---")
+log.info(f"\n--- Coverage statistics (year <= {YEAR_CUTOFF}) ---")
 
 pre2020_dois = set(pre2020["doi_norm"]) - {"", "nan", "none"}
-print(f"  Unique pre-{YEAR_CUTOFF + 1} DOIs in corpus: {len(pre2020_dois)}")
+log.info(f"  Unique pre-{YEAR_CUTOFF + 1} DOIs in corpus: {len(pre2020_dois)}")
 
 source_dois = set(cit["source_doi"])
 pre2020_as_sources = pre2020_dois & source_dois
-print(f"  Pre-{YEAR_CUTOFF + 1} DOIs as citation sources: {len(pre2020_as_sources)}")
+log.info(f"  Pre-{YEAR_CUTOFF + 1} DOIs as citation sources: {len(pre2020_as_sources)}")
 
 # All references with year <= 2019
 pre2020_refs_all = set(
     cit[cit["ref_year_num"] <= YEAR_CUTOFF]["ref_doi"]
 ) - {"", "nan", "none"}
-print(f"  All cited references with year <= {YEAR_CUTOFF}: {len(pre2020_refs_all)}")
+log.info(f"  All cited references with year <= {YEAR_CUTOFF}: {len(pre2020_refs_all)}")
 
 # ============================================================
 # Step 3: Build co-citation network
 # ============================================================
 
-print("\n" + "=" * 70)
-print(f"CO-CITATION NETWORK: top {TOP_N} pre-{YEAR_CUTOFF + 1} references")
-print("(Two pre-2020 refs linked if co-cited by ANY paper in the corpus)")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info(f"CO-CITATION NETWORK: top {TOP_N} pre-{YEAR_CUTOFF + 1} references")
+log.info("(Two pre-2020 refs linked if co-cited by ANY paper in the corpus)")
+log.info("=" * 70)
 
 # Count how often each reference is cited
 ref_counts = cit.groupby("ref_doi").size().sort_values(ascending=False)
 
 # Filter to pre-2020 references
 pre2020_ref_counts = ref_counts[ref_counts.index.isin(pre2020_refs_all)]
-print(f"\nPre-{YEAR_CUTOFF + 1} references cited at least once: {len(pre2020_ref_counts)}")
-print(f"Pre-{YEAR_CUTOFF + 1} references cited >= 3 times: {(pre2020_ref_counts >= 3).sum()}")
-print(f"Pre-{YEAR_CUTOFF + 1} references cited >= 5 times: {(pre2020_ref_counts >= 5).sum()}")
-print(f"Pre-{YEAR_CUTOFF + 1} references cited >= 10 times: {(pre2020_ref_counts >= 10).sum()}")
+log.info(f"\nPre-{YEAR_CUTOFF + 1} references cited at least once: {len(pre2020_ref_counts)}")
+log.info(f"Pre-{YEAR_CUTOFF + 1} references cited >= 3 times: {(pre2020_ref_counts >= 3).sum()}")
+log.info(f"Pre-{YEAR_CUTOFF + 1} references cited >= 5 times: {(pre2020_ref_counts >= 5).sum()}")
+log.info(f"Pre-{YEAR_CUTOFF + 1} references cited >= 10 times: {(pre2020_ref_counts >= 10).sum()}")
 
 # Select top N
 actual_n = min(TOP_N, len(pre2020_ref_counts))
@@ -137,11 +139,11 @@ top_refs = pre2020_ref_counts.head(actual_n).index.tolist()
 top_set = set(top_refs)
 ref_to_idx = {ref: i for i, ref in enumerate(top_refs)}
 
-print(f"\nUsing top {actual_n} most-cited pre-{YEAR_CUTOFF + 1} references")
-print(f"Min citations in top set: {pre2020_ref_counts.iloc[actual_n - 1]}")
+log.info(f"\nUsing top {actual_n} most-cited pre-{YEAR_CUTOFF + 1} references")
+log.info(f"Min citations in top set: {pre2020_ref_counts.iloc[actual_n - 1]}")
 
 # Build co-citation matrix
-print("Building co-citation matrix...")
+log.info("Building co-citation matrix...")
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 
 cocit_matrix = lil_matrix((actual_n, actual_n), dtype=np.float64)
@@ -158,7 +160,7 @@ for _source_doi, ref_list in source_groups.items():
 
 cocit_dense = cocit_matrix.toarray()
 n_pairs = np.count_nonzero(cocit_dense) // 2
-print(f"Non-zero co-citation pairs: {n_pairs}")
+log.info(f"Non-zero co-citation pairs: {n_pairs}")
 
 # Build graph
 G = nx.Graph()
@@ -179,8 +181,8 @@ for i in range(actual_n):
 
 isolates = list(nx.isolates(G))
 G.remove_nodes_from(isolates)
-print(f"Network: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
-print(f"Removed {len(isolates)} isolates")
+log.info(f"Network: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
+log.info(f"Removed {len(isolates)} isolates")
 
 
 # ============================================================
@@ -194,9 +196,9 @@ def characterize_communities(partition, ref_counts, doi_meta, label=""):
     for doi, comm in partition.items():
         comm_papers[comm].append(doi)
 
-    print(f"\n{'=' * 60}")
-    print(f"COMMUNITY PROFILES {label}")
-    print(f"{'=' * 60}")
+    log.info(f"\n{'=' * 60}")
+    log.info(f"COMMUNITY PROFILES {label}")
+    log.info(f"{'=' * 60}")
 
     results = []
 
@@ -209,10 +211,10 @@ def characterize_communities(partition, ref_counts, doi_meta, label=""):
             reverse=True,
         )
 
-        print(f"\n--- Community {c} ({len(papers)} papers) ---")
+        log.info(f"\n--- Community {c} ({len(papers)} papers) ---")
 
         # Top papers
-        print("  Top 10 papers:")
+        log.info("  Top 10 papers:")
         for d in papers_sorted[:10]:
             meta = doi_meta.get(d, {})
             author = str(meta.get("first_author", "?"))
@@ -225,7 +227,7 @@ def characterize_communities(partition, ref_counts, doi_meta, label=""):
             if title in ("nan", "None", ""):
                 title = f"[{d}]"
             rc = ref_counts.get(d, 0)
-            print(f"    [{rc:>3}x cited] {author} ({year}) {title}")
+            log.info(f"    [{rc:>3}x cited] {author} ({year}) {title}")
 
         # TF-IDF on abstracts (fall back to titles)
         texts = []
@@ -255,13 +257,13 @@ def characterize_communities(partition, ref_counts, doi_meta, label=""):
                 top_idx = mean_tfidf.argsort()[::-1][:20]
                 terms = tfidf.get_feature_names_out()
                 top_terms = [terms[i] for i in top_idx]
-                print(
+                log.info(
                     f"  Top TF-IDF terms ({len(texts)} texts): {', '.join(top_terms)}"
                 )
             except Exception as e:
-                print(f"  (TF-IDF failed: {e})")
+                log.info(f"  (TF-IDF failed: {e})")
         else:
-            print(f"  (Only {len(texts)} texts available -- skipping TF-IDF)")
+            log.info(f"  (Only {len(texts)} texts available -- skipping TF-IDF)")
 
         # Collect results for CSV
         for d in papers:
@@ -284,7 +286,7 @@ def characterize_communities(partition, ref_counts, doi_meta, label=""):
 # Step 4: Louvain — default resolution
 # ============================================================
 
-print("\n--- Louvain community detection (default resolution) ---")
+log.info("\n--- Louvain community detection (default resolution) ---")
 partition_default = community_louvain.best_partition(
     G, weight="weight", random_state=42
 )
@@ -293,7 +295,7 @@ sizes = defaultdict(int)
 for v in partition_default.values():
     sizes[v] += 1
 size_str = ", ".join(str(s) for s in sorted(sizes.values(), reverse=True))
-print(f"Communities: {n_comm} (sizes: {size_str})")
+log.info(f"Communities: {n_comm} (sizes: {size_str})")
 
 df_default = characterize_communities(
     partition_default,
@@ -306,9 +308,9 @@ df_default = characterize_communities(
 # Step 5: Louvain — resolution scan
 # ============================================================
 
-print("\n" + "=" * 70)
-print("RESOLUTION SCAN")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("RESOLUTION SCAN")
+log.info("=" * 70)
 
 for gamma in [0.3, 0.5, 0.7, 1.0, 1.5, 2.0]:
     part = community_louvain.best_partition(
@@ -319,15 +321,15 @@ for gamma in [0.3, 0.5, 0.7, 1.0, 1.5, 2.0]:
     for v in part.values():
         sz[v] += 1
     sz_str = ", ".join(str(s) for s in sorted(sz.values(), reverse=True))
-    print(f"  gamma={gamma}: {n_c} communities (sizes: {sz_str})")
+    log.info(f"  gamma={gamma}: {n_c} communities (sizes: {sz_str})")
 
 # ============================================================
 # Step 6: Louvain — gamma=0.5 for finer detail
 # ============================================================
 
-print("\n" + "=" * 70)
-print("DETAILED PROFILES: gamma=0.5")
-print("=" * 70)
+log.info("\n" + "=" * 70)
+log.info("DETAILED PROFILES: gamma=0.5")
+log.info("=" * 70)
 
 partition_05 = community_louvain.best_partition(
     G, weight="weight", resolution=0.5, random_state=42
@@ -337,7 +339,7 @@ sizes_05 = defaultdict(int)
 for v in partition_05.values():
     sizes_05[v] += 1
 size_str_05 = ", ".join(str(s) for s in sorted(sizes_05.values(), reverse=True))
-print(f"Communities: {n_comm_05} (sizes: {size_str_05})")
+log.info(f"Communities: {n_comm_05} (sizes: {size_str_05})")
 
 df_05 = characterize_communities(
     partition_05,
@@ -370,18 +372,18 @@ df_05 = df_05.sort_values(
 
 outpath = os.path.join(output_dir, "traditions_pre2020_communities.csv")
 df_05.to_csv(outpath, index=False)
-print(f"\nSaved community assignments to {outpath}")
-print(f"  Rows: {len(df_05)}, Communities (gamma=0.5): {n_comm_05}, "
+log.info(f"\nSaved community assignments to {outpath}")
+log.info(f"  Rows: {len(df_05)}, Communities (gamma=0.5): {n_comm_05}, "
       f"Communities (default): {n_comm}")
 
 # ============================================================
 # Summary
 # ============================================================
 
-print("\n" + "=" * 70)
-print("SUMMARY")
-print("=" * 70)
-print(f"""
+log.info("\n" + "=" * 70)
+log.info("SUMMARY")
+log.info("=" * 70)
+log.info(f"""
 Analysis: co-citation communities among top {actual_n} most-cited
 references published <= {YEAR_CUTOFF}, co-cited by ANY paper in the corpus.
 
@@ -396,4 +398,4 @@ Output: {outpath}
 Key caveat: citation data covers only the original ~12K corpus (stale).
 """)
 
-print("Done.")
+log.info("Done.")
