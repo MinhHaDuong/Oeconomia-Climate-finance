@@ -9,6 +9,7 @@ Usage:
     uv run python scripts/export_citation_coverage.py
 """
 
+import argparse
 import os
 
 import pandas as pd
@@ -75,4 +76,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()

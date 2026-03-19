@@ -13,6 +13,7 @@ Usage:
     python scripts/analyze_syllabi.py
 """
 
+import argparse
 import os
 
 import pandas as pd
@@ -96,4 +97,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()

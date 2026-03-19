@@ -18,6 +18,7 @@ Run with:
   uv run python scripts/gen_missing_references.py
 """
 
+import argparse
 import os
 import re
 
@@ -241,4 +242,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()

@@ -9,6 +9,7 @@ non-English share, journal-article share, DOI coverage, reference coverage,
 and abstract availability.
 """
 
+import argparse
 import os
 
 import pandas as pd
@@ -147,4 +148,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     main()
