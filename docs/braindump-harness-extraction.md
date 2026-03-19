@@ -62,11 +62,30 @@ Depends on idea #1 being solid first. But it's the natural next step: the harnes
 
 The harness should include guidance on type assertions / type hints. Tone: light and helpful, not obnoxious. Not a type-everything-or-else mandate. More like:
 
-- Use type hints where they **clarify intent** (function signatures, data structures, return types).
-- Skip them where they add noise (obvious local variables, one-liners).
-- Prefer `assert isinstance(x, Foo)` over `cast(Foo, x)` — it's a runtime check that doubles as documentation.
-- `TYPE_CHECKING` imports are fine for avoiding circular deps, but don't build a cathedral of Protocol classes for a 200-line script.
+**Core principle: defensive effort proportional to risk.**
+
+A 50-line analysis script that runs once doesn't need the same armor as a library used by ten other modules. Scale up defenses as blast radius grows:
+
+| Risk level | Example | Appropriate defense |
+|------------|---------|-------------------|
+| Low | Local script, single-use | Docstring, maybe a return type hint |
+| Medium | Shared utility, pipeline step | Function signatures typed, key asserts, basic tests |
+| High | Library consumed by others, data contract boundary | Full type hints, validation at entry points, thorough tests |
+
+**Type hints:**
+- Use where they **clarify intent** (function signatures, data structures, return types).
+- Skip where they add noise (obvious local variables, one-liners, scripts under 100 lines).
 - The goal is **reader comprehension**, not mypy score. If a type annotation makes the code harder to read, delete it.
+
+**Assertions and validation:**
+- Prefer `assert isinstance(x, Foo)` over `cast(Foo, x)` — it's a runtime check that doubles as documentation.
+- Validate at system boundaries (user input, file I/O, API responses). Trust internal code.
+- `TYPE_CHECKING` imports are fine for avoiding circular deps, but don't build a cathedral of Protocol classes for a 200-line script.
+
+**What we don't do:**
+- **No ABC classes.** Abstract base classes add indirection for hypothetical polymorphism that rarely arrives. Duck typing and simple functions are almost always enough. If you need a contract, use Protocol (structural subtyping) — it doesn't force an inheritance hierarchy.
+- No gratuitous `@dataclass(frozen=True, slots=True, kw_only=True)` stacking. Plain dataclass or even a named tuple is fine.
+- No type-level gymnastics (`TypeVar`, `ParamSpec`, `Concatenate`) unless you're writing a genuinely generic library. We're writing research scripts.
 
 This fits the harness philosophy: guardrails that help, not bureaucracy that slows.
 
