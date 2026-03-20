@@ -248,6 +248,130 @@ def robust_minmax(values):
     return (clipped - p1) / (p99 - p1)
 
 
+# ── PIPELINE helpers ─────────────────────────────────────────────────
+
+
+def _add_pagerank(s2):
+    """Compute PageRank on the citation graph within S2 and add as column."""
+    log.info("-- Step 3: Citation centrality (PageRank) --")
+    s2_dois = set(s2["doi_norm"]) - {""}
+
+    try:
+        cit = load_refined_citations().astype(str)
+        cit["source_doi_norm"] = cit["source_doi"].apply(normalize_doi)
+        cit["ref_doi_norm"] = cit["ref_doi"].apply(normalize_doi)
+        cit = cit[(cit["source_doi_norm"] != "") & (cit["ref_doi_norm"] != "")]
+
+        edges = cit[
+            cit["source_doi_norm"].isin(s2_dois)
+            & cit["ref_doi_norm"].isin(s2_dois)
+        ]
+        log.info("Citation edges within S2: %d", len(edges))
+
+        G = nx.DiGraph()
+        G.add_nodes_from(s2_dois)
+        for _, row in edges.iterrows():
+            G.add_edge(row["source_doi_norm"], row["ref_doi_norm"])
+
+        n_with_edges = sum(1 for n in G.nodes() if G.degree(n) > 0)
+        log.info("Nodes with edges: %d / %d", n_with_edges, len(s2_dois))
+
+        pr = nx.pagerank(G, alpha=0.85)
+    except FileNotFoundError:
+        log.warning("No refined_citations.csv found -- centrality = 0 for all")
+        pr = {}
+
+    s2["pagerank"] = s2["doi_norm"].map(pr).fillna(0.0)
+    return s2
+
+
+def _select_with_quotas(s2):
+    """Select top TARGET_N papers with diversity quotas, return sorted DataFrame."""
+    log.info("-- Step 5: Select top %d with quotas --", TARGET_N)
+    s2["_non_english"] = s2.apply(is_non_english, axis=1)
+    s2["_global_south"] = s2.apply(is_global_south, axis=1)
+
+    min_reports = int(TARGET_N * QUOTAS["institutional_reports_min"])
+    min_non_eng = int(TARGET_N * QUOTAS["non_english_min"])
+    min_gs = int(TARGET_N * QUOTAS["global_south_min"])
+
+    selected_idx = []
+    cnt_reports = 0
+    cnt_non_eng = 0
+    cnt_gs = 0
+
+    # Pre-allocate: guaranteed inclusion for teaching canon papers (2+ institutions)
+    canon_guaranteed = s2[s2["teaching_count"] >= 2].index.tolist()
+    for i in canon_guaranteed:
+        pos = s2.index.get_loc(i)
+        selected_idx.append(pos)
+        row = s2.iloc[pos]
+        if row["_is_report"]:
+            cnt_reports += 1
+        if row["_non_english"]:
+            cnt_non_eng += 1
+        if row["_global_south"]:
+            cnt_gs += 1
+    log.info("Teaching canon guaranteed: %d", len(selected_idx))
+
+    selected_set = set(selected_idx)
+
+    # Main pass: prioritize papers that help meet quotas
+    for i in range(len(s2)):
+        if len(selected_idx) >= TARGET_N:
+            break
+        if i in selected_set:
+            continue
+        row = s2.iloc[i]
+        helps_quota = False
+        if row["_is_report"] and cnt_reports < min_reports:
+            helps_quota = True
+        if row["_non_english"] and cnt_non_eng < min_non_eng:
+            helps_quota = True
+        if row["_global_south"] and cnt_gs < min_gs:
+            helps_quota = True
+
+        quotas_met = (
+            cnt_reports >= min_reports
+            and cnt_non_eng >= min_non_eng
+            and cnt_gs >= min_gs
+        )
+
+        if helps_quota or quotas_met:
+            selected_idx.append(i)
+            selected_set.add(i)
+            if row["_is_report"]:
+                cnt_reports += 1
+            if row["_non_english"]:
+                cnt_non_eng += 1
+            if row["_global_south"]:
+                cnt_gs += 1
+
+    # Fill remaining slots freely from top-scored
+    if len(selected_idx) < TARGET_N:
+        for i in range(len(s2)):
+            if len(selected_idx) >= TARGET_N:
+                break
+            if i not in selected_set:
+                selected_idx.append(i)
+
+    selected = s2.iloc[selected_idx].copy()
+    selected = selected.sort_values("score", ascending=False).reset_index(drop=True)
+
+    final_reports = selected["_is_report"].sum()
+    final_non_eng = selected["_non_english"].sum()
+    final_gs = selected["_global_south"].sum()
+
+    log.info("Selected: %d", len(selected))
+    log.info("Institutional reports: %d (%.1f%%)",
+             final_reports, 100 * final_reports / len(selected))
+    log.info("Non-English: %d (%.1f%%)",
+             final_non_eng, 100 * final_non_eng / len(selected))
+    log.info("Global South: %d (%.1f%%)",
+             final_gs, 100 * final_gs / len(selected))
+    return selected
+
+
 # ── PIPELINE ────────────────────────────────────────────────────────────
 
 def main():
@@ -300,36 +424,7 @@ def main():
 
     # ── Step 3: Citation centrality ─────────────────────────────────
 
-    log.info("-- Step 3: Citation centrality (PageRank) --")
-    s2_dois = set(s2["doi_norm"]) - {""}
-
-    try:
-        cit = load_refined_citations().astype(str)
-        cit["source_doi_norm"] = cit["source_doi"].apply(normalize_doi)
-        cit["ref_doi_norm"] = cit["ref_doi"].apply(normalize_doi)
-        cit = cit[(cit["source_doi_norm"] != "") & (cit["ref_doi_norm"] != "")]
-
-        # Restrict to edges within S2
-        edges = cit[
-            cit["source_doi_norm"].isin(s2_dois)
-            & cit["ref_doi_norm"].isin(s2_dois)
-        ]
-        log.info("Citation edges within S2: %d", len(edges))
-
-        G = nx.DiGraph()
-        G.add_nodes_from(s2_dois)
-        for _, row in edges.iterrows():
-            G.add_edge(row["source_doi_norm"], row["ref_doi_norm"])
-
-        n_with_edges = sum(1 for n in G.nodes() if G.degree(n) > 0)
-        log.info("Nodes with edges: %d / %d", n_with_edges, len(s2_dois))
-
-        pr = nx.pagerank(G, alpha=0.85)
-    except FileNotFoundError:
-        log.warning("No refined_citations.csv found -- centrality = 0 for all")
-        pr = {}
-
-    s2["pagerank"] = s2["doi_norm"].map(pr).fillna(0.0)
+    s2 = _add_pagerank(s2)
 
     # ── Step 4: Score and rank ──────────────────────────────────────
 
@@ -362,86 +457,7 @@ def main():
 
     # ── Step 5: Select with quotas ──────────────────────────────────
 
-    log.info("-- Step 5: Select top %d with quotas --", TARGET_N)
-    s2["_non_english"] = s2.apply(is_non_english, axis=1)
-    s2["_global_south"] = s2.apply(is_global_south, axis=1)
-
-    min_reports = int(TARGET_N * QUOTAS["institutional_reports_min"])
-    min_non_eng = int(TARGET_N * QUOTAS["non_english_min"])
-    min_gs = int(TARGET_N * QUOTAS["global_south_min"])
-
-    selected_idx = []
-    cnt_reports = 0
-    cnt_non_eng = 0
-    cnt_gs = 0
-
-    # Pre-allocate: guaranteed inclusion for teaching canon papers (2+ inst)
-    canon_guaranteed = s2[s2["teaching_count"] >= 2].index.tolist()
-    for i in canon_guaranteed:
-        pos = s2.index.get_loc(i)
-        selected_idx.append(pos)
-        row = s2.iloc[pos]
-        if row["_is_report"]:
-            cnt_reports += 1
-        if row["_non_english"]:
-            cnt_non_eng += 1
-        if row["_global_south"]:
-            cnt_gs += 1
-    log.info("Teaching canon guaranteed: %d", len(selected_idx))
-
-    selected_set = set(selected_idx)
-
-    # Main pass: prioritize papers that help meet quotas
-    for i in range(len(s2)):
-        if len(selected_idx) >= TARGET_N:
-            break
-        if i in selected_set:
-            continue
-        row = s2.iloc[i]
-        helps_quota = False
-        if row["_is_report"] and cnt_reports < min_reports:
-            helps_quota = True
-        if row["_non_english"] and cnt_non_eng < min_non_eng:
-            helps_quota = True
-        if row["_global_south"] and cnt_gs < min_gs:
-            helps_quota = True
-
-        # Always add if helps quota or if quotas are already met
-        quotas_met = (
-            cnt_reports >= min_reports
-            and cnt_non_eng >= min_non_eng
-            and cnt_gs >= min_gs
-        )
-
-        if helps_quota or quotas_met:
-            selected_idx.append(i)
-            selected_set.add(i)
-            if row["_is_report"]:
-                cnt_reports += 1
-            if row["_non_english"]:
-                cnt_non_eng += 1
-            if row["_global_south"]:
-                cnt_gs += 1
-
-    # Fill remaining slots freely from top-scored
-    if len(selected_idx) < TARGET_N:
-        for i in range(len(s2)):
-            if len(selected_idx) >= TARGET_N:
-                break
-            if i not in selected_set:
-                selected_idx.append(i)
-
-    selected = s2.iloc[selected_idx].copy()
-    selected = selected.sort_values("score", ascending=False).reset_index(drop=True)
-
-    final_reports = selected["_is_report"].sum()
-    final_non_eng = selected["_non_english"].sum()
-    final_gs = selected["_global_south"].sum()
-
-    log.info("Selected: %d", len(selected))
-    log.info("Institutional reports: %d (%.1f%%)", final_reports, 100 * final_reports / len(selected))
-    log.info("Non-English: %d (%.1f%%)", final_non_eng, 100 * final_non_eng / len(selected))
-    log.info("Global South: %d (%.1f%%)", final_gs, 100 * final_gs / len(selected))
+    selected = _select_with_quotas(s2)
 
     # ── Step 6: Output ──────────────────────────────────────────────
 

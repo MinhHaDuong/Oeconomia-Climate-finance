@@ -425,6 +425,88 @@ def extract_from_pool(config):
     return df
 
 
+def _download_tiers(tiers, args, existing_ids, query_dates, global_from_date,
+                    year_min, year_max, today):
+    """Run the download phase across all tiers. Returns (total, completed, skipped, budget_start)."""
+    grand_total = 0
+    queries_completed = 0
+    queries_skipped = 0
+    stop_no_budget = False
+    budget_start = None
+
+    for tier_num in sorted(tiers.keys()):
+        if stop_no_budget:
+            break
+        tier_cfg = tiers[tier_num]
+        desc = tier_cfg.get("description", f"Tier {tier_num}")
+        terms = tier_cfg.get("terms", [])
+        min_groups = tier_cfg.get("min_concept_groups", 0)
+
+        log.info("=" * 60)
+        log.info("TIER %s: %s", tier_num, desc)
+        log.info("%d queries, min_concept_groups=%d", len(terms), min_groups)
+        log.info("=" * 60)
+
+        for term in terms:
+            slug = query_slug(term)
+            pf = pool_path("openalex", slug)
+
+            if global_from_date:
+                from_date = global_from_date
+            elif slug in query_dates:
+                from_date = query_dates[slug]
+            elif "_global" in query_dates:
+                from_date = query_dates["_global"]
+            else:
+                from_date = None
+
+            if args.dry_run:
+                count = dry_run_query(term, args.delay, from_date,
+                                      year_min=year_min, year_max=year_max)
+                date_info = f" (since {from_date})" if from_date else ""
+                log.info('"%s": %s results%s', term, f"{count:,}", date_info)
+                grand_total += count
+                continue
+
+            if budget_start is None:
+                probe_params = {
+                    "filter": build_filter(term, from_date,
+                                           year_min=year_min, year_max=year_max),
+                    "per_page": 1, "mailto": MAILTO,
+                }
+                if OPENALEX_API_KEY:
+                    probe_params["api_key"] = OPENALEX_API_KEY
+                probe_resp = polite_get(OA_API, params=probe_params,
+                                        delay=args.delay)
+                budget_start = capture_budget(probe_resp)
+                if probe_resp.status_code == 429:
+                    log.warning("Rate limited on budget probe — budget exhausted.")
+                    budget_start = "0"
+                log.info("Budget at start: $%s", budget_start)
+                if budget_exhausted(budget_start):
+                    log.warning("Budget already exhausted at start — aborting.")
+                    stop_no_budget = True
+                    break
+
+            date_info = f" (since {from_date})" if from_date else ""
+            log.info('Querying: "%s"%s', term, date_info)
+            n_new, out_of_budget = fetch_query(
+                term, args.delay, args.limit, existing_ids, pf,
+                from_date=from_date, year_min=year_min, year_max=year_max)
+            grand_total += n_new
+            queries_completed += 1
+
+            query_dates[slug] = today
+            save_query_dates(query_dates)
+
+            if out_of_budget:
+                log.warning("Budget exhausted — skipping remaining queries.")
+                stop_no_budget = True
+                break
+
+    return grand_total, queries_completed, queries_skipped, budget_start
+
+
 # --- Main ---
 
 def main():
@@ -499,84 +581,10 @@ def main():
     today = date.today().isoformat()
 
     # Download phase
-    grand_total = 0
-    queries_completed = 0
-    queries_skipped = 0
-    stop_no_budget = False
-
-    for tier_num in sorted(tiers.keys()):
-        if stop_no_budget:
-            break
-        tier_cfg = tiers[tier_num]
-        desc = tier_cfg.get("description", f"Tier {tier_num}")
-        terms = tier_cfg.get("terms", [])
-        min_groups = tier_cfg.get("min_concept_groups", 0)
-
-        log.info("=" * 60)
-        log.info("TIER %s: %s", tier_num, desc)
-        log.info("%d queries, min_concept_groups=%d", len(terms), min_groups)
-        log.info("=" * 60)
-
-        for term in terms:
-            slug = query_slug(term)
-            pf = pool_path("openalex", slug)
-
-            # Resolve from_date for this query:
-            # explicit --from-date > per-query sidecar > global sidecar > None
-            if global_from_date:
-                from_date = global_from_date
-            elif slug in query_dates:
-                from_date = query_dates[slug]
-            elif "_global" in query_dates:
-                from_date = query_dates["_global"]
-            else:
-                from_date = None
-
-            if args.dry_run:
-                count = dry_run_query(term, args.delay, from_date,
-                                      year_min=year_min, year_max=year_max)
-                date_info = f" (since {from_date})" if from_date else ""
-                log.info('"%s": %s results%s', term, f"{count:,}", date_info)
-                grand_total += count
-                continue
-
-            # Probe budget before first real query
-            if budget_start is None:
-                probe_params = {
-                    "filter": build_filter(term, from_date,
-                                           year_min=year_min, year_max=year_max),
-                    "per_page": 1, "mailto": MAILTO,
-                }
-                if OPENALEX_API_KEY:
-                    probe_params["api_key"] = OPENALEX_API_KEY
-                probe_resp = polite_get(OA_API, params=probe_params,
-                                        delay=args.delay)
-                budget_start = capture_budget(probe_resp)
-                if probe_resp.status_code == 429:
-                    log.warning("Rate limited on budget probe — budget exhausted.")
-                    budget_start = "0"
-                log.info("Budget at start: $%s", budget_start)
-                if budget_exhausted(budget_start):
-                    log.warning("Budget already exhausted at start — aborting.")
-                    stop_no_budget = True
-                    break
-
-            date_info = f" (since {from_date})" if from_date else ""
-            log.info('Querying: "%s"%s', term, date_info)
-            n_new, out_of_budget = fetch_query(
-                term, args.delay, args.limit, existing_ids, pf,
-                from_date=from_date, year_min=year_min, year_max=year_max)
-            grand_total += n_new
-            queries_completed += 1
-
-            # Record per-query completion date
-            query_dates[slug] = today
-            save_query_dates(query_dates)
-
-            if out_of_budget:
-                log.warning("Budget exhausted — skipping remaining queries.")
-                stop_no_budget = True
-                break
+    grand_total, queries_completed, queries_skipped, budget_start = _download_tiers(
+        tiers, args, existing_ids, query_dates, global_from_date,
+        year_min, year_max, today,
+    )
 
     if args.dry_run:
         log.info("=" * 60)

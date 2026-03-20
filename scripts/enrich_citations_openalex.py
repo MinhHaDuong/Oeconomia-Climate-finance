@@ -156,6 +156,65 @@ def print_resume_preview(done_dois, all_dois, missing):
              len(all_dois), len(done_dois), done_file_rows, ckpt_rows, len(missing))
 
 
+def _build_citation_rows(all_source_refs, id_metadata):
+    """Convert source→ref_ids mapping into flat citation rows."""
+    log.info("Building citation rows...")
+    rows = []
+    for source_doi, ref_ids in all_source_refs.items():
+        for oa_id in ref_ids:
+            meta = id_metadata.get(oa_id, {})
+            rows.append({
+                "source_doi": source_doi,
+                "source_id": f"openalex:{oa_id}",
+                "ref_doi": meta.get("doi", ""),
+                "ref_title": meta.get("title", ""),
+                "ref_first_author": "",
+                "ref_year": meta.get("year", ""),
+                "ref_journal": meta.get("journal", ""),
+                "ref_raw": json.dumps({"openalex_id": oa_id}, ensure_ascii=False),
+            })
+    return rows
+
+
+def _merge_checkpoint():
+    """Merge checkpoint CSV into citations.csv, deduplicating. Returns (new_refs_df, deduped_count)."""
+    log.info("Merging into citations.csv...")
+    existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
+
+    rows_deduped = 0
+    if os.path.exists(CHECKPOINT_PATH) and os.path.getsize(CHECKPOINT_PATH) > 0:
+        new_refs = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
+        is_sentinel = (
+            (new_refs["ref_doi"].isna() | (new_refs["ref_doi"] == ""))
+            & (new_refs["ref_title"].isna() | (new_refs["ref_title"] == ""))
+        )
+        new_refs_real = new_refs[~is_sentinel].copy()
+
+        existing_keys = set(
+            zip(existing["source_doi"].apply(normalize_doi),
+                existing["ref_doi"].fillna("").apply(normalize_doi))
+        )
+        new_refs_real["_key"] = list(zip(
+            new_refs_real["source_doi"].apply(normalize_doi),
+            new_refs_real["ref_doi"].fillna("").apply(normalize_doi),
+        ))
+        dupes_mask = new_refs_real["_key"].isin(existing_keys)
+        rows_deduped = int(dupes_mask.sum())
+        new_refs_real = new_refs_real[~dupes_mask].drop(columns=["_key"])
+
+        combined = pd.concat([existing, new_refs_real], ignore_index=True)
+        combined.to_csv(CITATIONS_PATH, index=False)
+        os.remove(CHECKPOINT_PATH)
+        log.info("Merged: %d old + %d new (-%d sentinels, -%d dupes) = %d rows",
+                 len(existing), len(new_refs_real),
+                 int(is_sentinel.sum()), rows_deduped, len(combined))
+    else:
+        log.info("No new data to merge.")
+        new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
+
+    return new_refs_real, rows_deduped
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Enrich citations from OpenAlex (DOIs processed in priority order: "
@@ -347,62 +406,14 @@ def main():
                      batch_num, n_resolve_batches, len(id_metadata))
 
     # ── Build rows and write checkpoint ──────────────────────────────────
-    log.info("Building citation rows...")
-    rows = []
-    for source_doi, ref_ids in all_source_refs.items():
-        for oa_id in ref_ids:
-            meta = id_metadata.get(oa_id, {})
-            rows.append({
-                "source_doi": source_doi,
-                "source_id": f"openalex:{oa_id}",
-                "ref_doi": meta.get("doi", ""),
-                "ref_title": meta.get("title", ""),
-                "ref_first_author": "",
-                "ref_year": meta.get("year", ""),
-                "ref_journal": meta.get("journal", ""),
-                "ref_raw": json.dumps({"openalex_id": oa_id}, ensure_ascii=False),
-            })
+    rows = _build_citation_rows(all_source_refs, id_metadata)
 
     if rows:
         batch_df = pd.DataFrame(rows, columns=REFS_COLUMNS)
         batch_df.to_csv(CHECKPOINT_PATH, mode="a", header=False, index=False)
 
     # ── Merge checkpoint into citations.csv ───────────────────────────────
-    log.info("Merging into citations.csv...")
-    existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
-
-    rows_deduped = 0
-    if os.path.exists(CHECKPOINT_PATH) and os.path.getsize(CHECKPOINT_PATH) > 0:
-        new_refs = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
-        is_sentinel = (
-            (new_refs["ref_doi"].isna() | (new_refs["ref_doi"] == ""))
-            & (new_refs["ref_title"].isna() | (new_refs["ref_title"] == ""))
-        )
-        new_refs_real = new_refs[~is_sentinel].copy()
-
-        # Remove duplicates already in citations.csv (same source_doi + ref_doi)
-        existing_keys = set(
-            zip(existing["source_doi"].apply(normalize_doi),
-                existing["ref_doi"].fillna("").apply(normalize_doi))
-        )
-        new_refs_real["_key"] = list(zip(
-            new_refs_real["source_doi"].apply(normalize_doi),
-            new_refs_real["ref_doi"].fillna("").apply(normalize_doi),
-        ))
-        dupes_mask = new_refs_real["_key"].isin(existing_keys)
-        rows_deduped = int(dupes_mask.sum())
-        new_refs_real = new_refs_real[~dupes_mask].drop(columns=["_key"])
-
-        combined = pd.concat([existing, new_refs_real], ignore_index=True)
-        combined.to_csv(CITATIONS_PATH, index=False)
-        os.remove(CHECKPOINT_PATH)
-        log.info("Merged: %d old + %d new (-%d sentinels, -%d dupes) = %d rows",
-                 len(existing), len(new_refs_real),
-                 int(is_sentinel.sum()), rows_deduped, len(combined))
-    else:
-        log.info("No new data to merge.")
-        new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
-        combined = existing
+    new_refs_real, rows_deduped = _merge_checkpoint()
 
     elapsed = time.time() - t0
     log.info("Done in %.0fs: %d sources, %d OA IDs, %d resolved, "

@@ -195,6 +195,37 @@ def compute_auc(scores, labels):
     return u / (n_pos * n_neg)
 
 
+def _find_optimal_threshold(pos_scores, neg_scores):
+    """Find the threshold that maximizes Youden's J statistic."""
+    all_scores = np.concatenate([pos_scores, neg_scores])
+    thresholds = np.linspace(all_scores.min(), all_scores.max(), 200)
+    best_j = -1
+    best_thresh = 0
+    for t in thresholds:
+        tp = (pos_scores >= t).sum()
+        tn = (neg_scores < t).sum()
+        tpr = tp / max(len(pos_scores), 1)
+        tnr = tn / max(len(neg_scores), 1)
+        j = tpr + tnr - 1
+        if j > best_j:
+            best_j = j
+            best_thresh = t
+
+    tp = (pos_scores >= best_thresh).sum()
+    fn = (pos_scores < best_thresh).sum()
+    tn = (neg_scores < best_thresh).sum()
+    fp = (neg_scores >= best_thresh).sum()
+    precision = tp / max(tp + fp, 1)
+    recall = tp / max(tp + fn, 1)
+    f1 = 2 * precision * recall / max(precision + recall, 1e-10)
+
+    log.info("=== Optimal threshold (Youden's J = %.3f) ===", best_j)
+    log.info("  Threshold: %.4f", best_thresh)
+    log.info("  Precision: %.3f  Recall: %.3f  F1: %.3f", precision, recall, f1)
+    log.info("  TP=%d  FN=%d  FP=%d  TN=%d", tp, fn, fp, tn)
+    return best_thresh
+
+
 def calibrate(args):
     """Main calibration workflow."""
     config = _load_config()
@@ -305,32 +336,7 @@ def calibrate(args):
              neg_scores.mean(), np.median(neg_scores), neg_scores.std(),
              neg_scores.min(), neg_scores.max())
 
-    # Find optimal threshold (Youden's J)
-    thresholds = np.linspace(all_scores.min(), all_scores.max(), 200)
-    best_j = -1
-    best_thresh = 0
-    for t in thresholds:
-        tp = (pos_scores >= t).sum()
-        tn = (neg_scores < t).sum()
-        tpr = tp / max(len(pos_scores), 1)
-        tnr = tn / max(len(neg_scores), 1)
-        j = tpr + tnr - 1
-        if j > best_j:
-            best_j = j
-            best_thresh = t
-
-    tp = (pos_scores >= best_thresh).sum()
-    fn = (pos_scores < best_thresh).sum()
-    tn = (neg_scores < best_thresh).sum()
-    fp = (neg_scores >= best_thresh).sum()
-    precision = tp / max(tp + fp, 1)
-    recall = tp / max(tp + fn, 1)
-    f1 = 2 * precision * recall / max(precision + recall, 1e-10)
-
-    log.info("=== Optimal threshold (Youden's J = %.3f) ===", best_j)
-    log.info("  Threshold: %.4f", best_thresh)
-    log.info("  Precision: %.3f  Recall: %.3f  F1: %.3f", precision, recall, f1)
-    log.info("  TP=%d  FN=%d  FP=%d  TN=%d", tp, fn, fp, tn)
+    best_thresh = _find_optimal_threshold(pos_scores, neg_scores)
 
     # Compare with LLM cache
     if llm_cache:
