@@ -172,6 +172,33 @@ class TestFileExistence:
 
 
 # ═══════════════════════════════════════════════════════════
+# 1b. SOURCE CATALOGS — per-source row count guards
+# ═══════════════════════════════════════════════════════════
+
+ISTEX_WORKS_PATH = os.path.join(CATALOGS_DIR, "istex_works.csv")
+ISTEX_MIN = 700  # ticket #257: was 4, should be ~754
+
+
+class TestSourceCatalogs:
+    """Per-source catalog files must have expected row counts."""
+
+    def test_istex_catalog_count(self):
+        """#257: ISTEX catalog must have ≥700 records (was stale at 4)."""
+        if not os.path.isfile(ISTEX_WORKS_PATH):
+            pytest.skip(f"istex_works.csv not found at {ISTEX_WORKS_PATH}")
+        istex = pd.read_csv(ISTEX_WORKS_PATH)
+        assert len(istex) >= ISTEX_MIN, (
+            f"ISTEX catalog has only {len(istex)} records (expected ≥{ISTEX_MIN})"
+            + _diagnosis(
+                "istex_works.csv is stale — DVC did not re-run catalog_istex",
+                "dvc repro catalog_istex (re-fetches from ISTEX API)",
+                "~2 min",
+                "571 works missing from corpus — ~2% undercount",
+            )
+        )
+
+
+# ═══════════════════════════════════════════════════════════
 # 2. CORPUS SIZE — plausible range guards
 # ═══════════════════════════════════════════════════════════
 
