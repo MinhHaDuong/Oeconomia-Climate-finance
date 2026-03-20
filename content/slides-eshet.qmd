@@ -1,0 +1,251 @@
+---
+title: "Inventing Climate Finance"
+subtitle: "From Incremental Costs to Strategic Ambiguity"
+author: "Minh Ha-Duong (CNRS, CIRED)"
+date: "May 2026"
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+    width: 1600
+    height: 900
+    footer: "ESHET-HES Joint Conference, Nice 2026"
+    logo: ""
+bibliography: bibliography/main.bib
+---
+
+## {background-color="#1a1a2e"}
+
+::: {.r-fit-text}
+How did **climate finance** become countable?
+:::
+
+::: {.notes}
+Opening hook. The audience is historians of economic thought.
+They know Pigou, Coase, Nordhaus. They do NOT know Rio markers.
+:::
+
+## The Baku number
+
+> In November 2024, negotiators agreed that developed countries should
+> mobilise **$300 billion per year** for climate action in the developing world.
+
+- No institution holds this sum
+- No ledger records it
+- No methodology for counting it commands consensus
+
+. . .
+
+The number was produced by applying **accounting conventions** that are
+themselves the object of bitter dispute.
+
+::: {.notes}
+This is the same opening as the paper. Let it land.
+:::
+
+## A missing chapter in the HET of climate economics
+
+| Existing HET | This paper |
+|---|---|
+| Nordhaus, Stern, IAMs [@pottier2016] | Accounting categories |
+| Optimisation | Commensuration [@espeland_stevens1998] |
+| "What should the carbon price be?" | "Does this dollar count?" |
+| Model-building | Category-making |
+
+. . .
+
+**Conference theme fit**: economists under pressure to produce
+*usable categories*, not *correct models*
+
+::: {.notes}
+Position the contribution. The audience needs to see why this is HET,
+not just policy studies. The Espeland & Stevens reference signals STS literacy.
+:::
+
+## Three acts
+
+![](figures/fig_bars.png){width="80%"}
+
+::: {.notes}
+The figure shows publication volume. Three acts visible:
+I. Before (1990-2006), II. Crystallization (2007-2014), III. Disputes (2015-2024)
+:::
+
+---
+
+## Act I: Before Climate Finance (1990--2006)
+
+> The developed country Parties [...] shall provide **new and additional**
+> financial resources to meet the agreed full costs [...] needed by the
+> developing country Parties to meet the agreed full **incremental costs**
+> of implementing measures [...] (UNFCCC 1992, Article 4.3)
+
+. . .
+
+Three disconnected traditions, no unified object:
+
+1. **Environmental economics**: externalities, carbon pricing, Coase/Pigou
+2. **Development finance**: ODA, aid effectiveness, conditionality
+3. **Financial economics**: risk, returns, portfolio theory
+
+::: {.notes}
+Emphasise the legal precision of Article 4.3 — it will contrast with the
+deliberate ambiguity that replaces it.
+:::
+
+## Act II: Crystallization (2007--2014)
+
+:::: {.columns}
+::: {.column width="50%"}
+**Key events:**
+
+- Bali 2007: negotiations mandate
+- Copenhagen 2009: $100bn pledge
+- Cancun 2010: Green Climate Fund
+- OECD Rio markers: Corfee-Morlot's
+  statistical infrastructure
+:::
+::: {.column width="50%"}
+**What happened:**
+
+- Three traditions converge into one object
+- Accounting categories replace legal precision
+- The efficiency--accountability divide crystallises
+:::
+::::
+
+. . .
+
+Corpus evidence: structural break at **2007--2009** (endogenous,
+embedding-based detection), not at 2015 or 2021.
+
+::: {.notes}
+The key claim: crystallization happened at Copenhagen, not Paris.
+The computational evidence corroborates the historical narrative.
+:::
+
+## The two poles
+
+:::: {.columns}
+::: {.column width="48%"}
+### Efficiency pole
+- Market failure → catalytic public finance
+- Leverage, mobilisation, de-risking
+- "How to attract private capital?"
+- Stern, IFC, Climate Policy Initiative
+:::
+::: {.column width="48%"}
+### Accountability pole
+- Distributive justice → obligation
+- Additionality, grant equivalence, equity
+- "Does this dollar really count?"
+- Michaelowa, Roberts & Weikmans, Oxfam
+:::
+::::
+
+. . .
+
+Both poles need each other. The tension is **constitutive** of the field,
+not a problem to be resolved.
+
+::: {.notes}
+This is the core analytical claim. Present it as a structural feature,
+not a normative judgment.
+:::
+
+## Act III: Disputes within stable categories (2015--2024)
+
+Four controversies, all fought within categories established in Act II:
+
+| Controversy | Efficiency framing | Accountability framing |
+|---|---|---|
+| Concessional loans | Leverage, budget-neutral | Grant equivalent, inflated |
+| Rio markers | Self-reporting, flexible | Over-reporting, no verification |
+| Mobilised private finance | Attribution, multiplier | Double-counting, additionality |
+| ODA boundary | Climate-development synergy | Climate relabelling of aid |
+
+. . .
+
+Paris 2015 changed **volume**, not **structure**.
+
+::: {.notes}
+The point: nothing structurally new since Copenhagen.
+Paris accelerated but did not reorganise the field.
+:::
+
+## Strategic ambiguity
+
+From Article 4.3's legal precision:
+
+> "new and additional financial resources [...] agreed full incremental costs"
+
+. . .
+
+To deliberately vague categories:
+
+> "climate finance" (no agreed definition, no agreed methodology, no agreed baseline)
+
+. . .
+
+Ambiguity was not a **deficiency** to be repaired but a **political resource**
+exploited by all sides.
+
+::: {.notes}
+The punchline. This is what the HET audience should take away.
+:::
+
+## Computational corroboration
+
+:::: {.columns}
+::: {.column width="50%"}
+- ~30,000 works, 6 sources
+- Multilingual (EN, FR, ZH, JA, DE)
+- Sentence-transformer embeddings
+- Endogenous periodisation
+:::
+::: {.column width="50%"}
+![](figures/fig_composition.png){width="100%"}
+:::
+::::
+
+. . .
+
+The periodisation and argument rest on the **institutional record**.
+The computational patterns **corroborate** the historical narrative
+rather than generating it.
+
+::: {.notes}
+Keep this brief. The audience cares about the history, not the method.
+One slide is enough.
+:::
+
+## For discussion
+
+1. What other economic objects were built through **accounting** rather than
+   **modelling**? (GDP, inflation, poverty lines, ESG scores...)
+
+2. Does "economists under pressure" always produce **strategic ambiguity**,
+   or is climate finance a special case?
+
+3. Is the efficiency--accountability divide specific to climate, or does it
+   reproduce a deeper structure in development economics?
+
+::: {.notes}
+Open questions for the Q&A. These connect to the conference theme and
+invite the audience to bring their own cases.
+:::
+
+## Thank you {background-color="#1a1a2e"}
+
+::: {.r-fit-text}
+Minh Ha-Duong (CNRS, CIRED)
+:::
+
+Paper submitted to *Oeconomia* (under review)
+
+Data & code: [doi.org/10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)
+
+::: {.notes}
+Final slide. Keep on screen during Q&A.
+:::
