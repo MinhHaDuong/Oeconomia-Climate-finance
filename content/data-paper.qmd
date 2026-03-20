@@ -11,7 +11,7 @@ bibliography: bibliography/main.bib
 abstract: |
   We present a multilingual, deduplicated corpus of {{< meta corpus_total >}} works
   on climate finance published between 1990 and 2024, assembled from
-  {{< meta corpus_sources >}} bibliographic sources: OpenAlex, Semantic Scholar,
+  {{< meta corpus_sources >}} bibliographic sources: OpenAlex,
   ISTEX, bibCNRS, SciSpace, and institutional grey literature. The search
   strategy targets eight languages through a four-tier keyword taxonomy.
   A six-flag quality pipeline combining metadata checks, citation isolation
@@ -20,17 +20,19 @@ abstract: |
   trail. Pre-computed 384-dimensional sentence-transformer embeddings
   (paraphrase-multilingual-MiniLM-L12-v2) place all works in a shared
   semantic space regardless of language, enabling clustering, topic modelling,
-  and temporal analysis without re-encoding. The corpus, embeddings, citation
-  network, cluster assignments, and audit log are deposited in Zenodo under
-  CC BY 4.0. All construction and validation scripts are publicly available.
+  and temporal analysis without re-encoding. An internal citation network
+  extracted from Crossref and OpenAlex captures citing/cited relationships
+  among corpus works, supporting co-citation and bibliographic coupling
+  studies. The corpus, embeddings, citation network, and audit log are
+  deposited in Zenodo under CC BY 4.0. All construction and validation
+  scripts are publicly available.
 format:
   pdf:
     pdf-engine: xelatex
 ---
 
-<!-- Target journal: Scientific Data (Springer Nature) — Data Descriptor format -->
-<!-- Constraints: abstract max 170 words (no refs, no findings), B&S max 700 words -->
-<!-- Fallback: Data Science Journal (CODATA/Ubiquity Press) — Research Paper format -->
+<!-- Target journal: Research Data Journal for the Humanities and Social Sciences (RDJ4HSS) -->
+<!-- Constraints: ~2,500 words, diamond OA, Brill -->
 <!-- See docs/journal-survey-data-paper.md for full journal assessment -->
 
 ## Background & Summary
@@ -48,7 +50,7 @@ Key statistics:
 - **{{< meta corpus_total >}}** refined works after deduplication and quality filtering
 - **{{< meta corpus_with_embeddings >}}** works with sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions)
 - **{{< meta corpus_core >}}** core works (cited $\geq$ {{< meta corpus_core_threshold >}} times), forming the field's intellectual backbone
-- **{{< meta corpus_sources >}} sources**: OpenAlex, Semantic Scholar, ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI)
+- **{{< meta corpus_sources >}} sources**: OpenAlex, ISTEX, bibCNRS, SciSpace, grey literature (OECD/UNFCCC/World Bank/CPI), teaching canon
 - **Languages**: English ({{< meta lang_english_pct >}}%), Portuguese, Spanish, French, Chinese, Japanese, German, and others
 - **Full audit trail**: every inclusion/exclusion decision recorded in `corpus_audit.csv`
 
@@ -86,7 +88,6 @@ The primary corpus file. Each row represents one deduplicated work.
 | `source` | string | Primary source (highest-priority source that contributed this record) |
 | `source_count` | integer | Number of distinct sources contributing this record (sum of `from_*`) |
 | `from_openalex` | integer (0/1) | Whether OpenAlex contributed this record |
-| `from_semanticscholar` | integer (0/1) | Whether Semantic Scholar contributed this record |
 | `from_istex` | integer (0/1) | Whether ISTEX contributed this record |
 | `from_bibcnrs` | integer (0/1) | Whether bibCNRS contributed this record |
 | `from_scispsace` | integer (0/1) | Whether SciSpace contributed this record |
@@ -120,17 +121,6 @@ Complete audit trail recording every inclusion/exclusion decision during corpus 
 | `flag_reason` | string | Why the work was flagged (if applicable) |
 | `protection_reason` | string | Why the work was protected (if applicable) |
 
-### semantic_clusters.csv
-
-KMeans cluster assignments (k=6) for all embedded works.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | string | Work identifier |
-| `cluster` | integer | Cluster label (0--5) |
-| `umap_x` | float | UMAP 2D projection, x-coordinate |
-| `umap_y` | float | UMAP 2D projection, y-coordinate |
-
 ### citations.csv
 
 Internal citation network extracted via Crossref and OpenAlex enrichment.
@@ -163,7 +153,7 @@ An independent LLM audit (`google/gemma-2-27b-it` via OpenRouter) on a stratifie
 
 ### Coverage analysis
 
-The {{< meta corpus_sources >}}-source design provides complementary coverage (@tbl-sources). OpenAlex dominates in volume but the smaller sources contribute unique records absent from academic databases: bibCNRS adds 202 non-English works, grey literature provides 88 institutional reports, and the teaching canon contributes 16 pedagogical references. ISTEX's 4 records all survived refinement---3 were independently discovered by OpenAlex, confirming cross-source consistency. ISBN coverage is not reported because the corpus metadata does not include ISBNs; book-chapter identification relies on DOI and work-type fields instead.
+The {{< meta corpus_sources >}}-source design provides complementary coverage (@tbl-sources). OpenAlex dominates in volume but the smaller sources contribute unique records absent from academic databases: bibCNRS adds 202 non-English works, grey literature provides 88 institutional reports, and the teaching canon contributes 16 pedagogical references. ISTEX's 4 records all survived refinement---3 were independently discovered by OpenAlex, confirming cross-source consistency. Raw counts can exceed original catalog sizes (e.g., SciSpace 663 vs. 280 hand-harvested) because DOI-based deduplication merges records across sources, propagating provenance flags to the merged record.
 
 {{< include _includes/tab_corpus_sources.md >}}
 
@@ -214,6 +204,6 @@ Scripts are organised in `scripts/` with a shared `utils.py` module providing da
 
 ## Data Availability
 
-The dataset is deposited in Zenodo at [https://doi.org/10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045). The deposit includes `refined_works.csv`, `embeddings.npz`, `corpus_audit.csv`, `semantic_clusters.csv`, and `citations.csv`. The dataset is released under CC BY 4.0.
+The dataset is deposited in Zenodo at [https://doi.org/10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045). The deposit includes `refined_works.csv`, `embeddings.npz`, `corpus_audit.csv`, and `citations.csv`. The dataset is released under CC BY 4.0.
 
 Two sources require institutional credentials for re-collection: bibCNRS (CNRS Janus login) and SciSpace (commercial tool). Their raw exports are included in the Zenodo deposit to ensure full reproducibility despite access restrictions. All other sources (OpenAlex, ISTEX, grey literature, teaching canon) are collected via public APIs and can be re-harvested from the repository scripts.
