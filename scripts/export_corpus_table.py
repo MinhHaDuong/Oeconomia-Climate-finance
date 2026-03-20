@@ -71,8 +71,11 @@ def main():
     log.info("Loaded %d refined works from %s", len(df), path)
 
     # Load unified corpus (before filtering) for raw counts
+    # Must include from_* columns — usecols=["source"] dropped them (#251 bug)
     unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
-    unified = pd.read_csv(unified_path, usecols=["source"])
+    unified_cols = pd.read_csv(unified_path, nrows=0).columns.tolist()
+    use = [c for c in unified_cols if c.startswith("from_") or c in ("source", "source_count")]
+    unified = pd.read_csv(unified_path, usecols=use)
     log.info("Loaded %d unified works from %s", len(unified), unified_path)
 
     # Load citations for reference coverage
@@ -94,10 +97,11 @@ def main():
         meta = SOURCE_META[src]
         n_raw = int(mask_u.sum())
         n_refined = len(sub)
+        n_unique = int(((df["source_count"] == 1) & (df[from_col] == 1)).sum()) if from_col in df.columns else 0
         if n_refined == 0:
             rows.append({
                 "Source": meta["label"], "Query": meta["query"],
-                "Raw": n_raw, "Refined": n_refined,
+                "Raw": n_raw, "Refined": n_refined, "Unique": n_unique,
             })
             continue
         rows.append({
@@ -105,6 +109,7 @@ def main():
             "Query": meta["query"],
             "Raw": n_raw,
             "Refined": n_refined,
+            "Unique": n_unique,
             "non-EN": int((~sub["is_english"]).sum()),
             "%Journal": f"{sub['has_journal'].mean() * 100:.0f}%",
             "%DOI": f"{sub['has_doi'].mean() * 100:.0f}%",
