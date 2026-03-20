@@ -115,6 +115,82 @@ log.info("Unique referenced DOIs: %d", len(ref_counts))
 # ============================================================
 
 
+def _extract_tfidf_terms(texts):
+    """Return top 15 TF-IDF terms from a list of texts, or [] if too few texts."""
+    if len(texts) < 3:
+        log.info("    (Only %d texts -- skipping TF-IDF)", len(texts))
+        return []
+    try:
+        tfidf = TfidfVectorizer(
+            max_features=500,
+            stop_words="english",
+            ngram_range=(1, 2),
+            min_df=2,
+            max_df=0.8,
+        )
+        X = tfidf.fit_transform(texts)
+        mean_tfidf = np.asarray(X.mean(axis=0)).flatten()
+        top_idx = mean_tfidf.argsort()[::-1][:15]
+        terms = tfidf.get_feature_names_out()
+        result = [terms[i] for i in top_idx]
+        log.info("    TF-IDF (%d texts): %s", len(texts), ", ".join(result[:10]))
+        return result
+    except Exception as e:
+        log.warning("    (TF-IDF failed: %s)", e)
+        return []
+
+
+def _characterize_community(c, papers_set, doi_meta, ref_counts):
+    """Log top papers and TF-IDF terms for one community; return a short label."""
+    papers = list(papers_set)
+    papers_sorted = sorted(papers, key=lambda d: ref_counts.get(d, 0), reverse=True)
+
+    # Top 5 papers
+    log.info("  Community %d (%d papers):", c, len(papers))
+    log.info("    Top 5 papers:")
+    top_authors = []
+    for d in papers_sorted[:5]:
+        meta = doi_meta.get(d, {})
+        author = str(meta.get("first_author", "?"))
+        if author in ("nan", "None", ""):
+            author = "?"
+        year_val = meta.get("year", "?")
+        if year_val and not pd.isna(year_val):
+            year_val = int(year_val)
+        title = str(meta.get("title", ""))[:70]
+        if title in ("nan", "None", ""):
+            title = f"[{d[:30]}]"
+        rc = ref_counts.get(d, 0)
+        log.info("      [%3dx] %s (%s) %s", rc, author, year_val, title)
+        surname = author.split(",")[0].split(";")[0].strip().split()[-1]
+        if surname not in ("?", "nan", "None", ""):
+            top_authors.append(surname)
+
+    # Gather texts for TF-IDF
+    texts = []
+    for d in papers:
+        meta = doi_meta.get(d, {})
+        ab = meta.get("abstract", "")
+        title = meta.get("title", "")
+        text = ""
+        if ab and len(str(ab)) > 30 and str(ab) != "nan":
+            text = str(ab)
+        elif title and len(str(title)) > 5 and str(title) != "nan":
+            text = str(title)
+        if text:
+            texts.append(text)
+
+    tfidf_terms = _extract_tfidf_terms(texts)
+
+    # Build a short label from top 3 TF-IDF unigrams
+    label_terms = [t for t in tfidf_terms if " " not in t][:3]
+    if label_terms:
+        return " / ".join(label_terms)
+    if top_authors:
+        return " / ".join(top_authors[:3])
+    return "(?)"
+
+
 def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
     """Run the full co-citation community detection pipeline for one time window.
 
@@ -122,14 +198,21 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
     """
     label = f"year <= {cutoff_year}"
     log.info("=" * 80)
-    log.info("WINDOW: %s | Top %d refs | min co-cit >= %d | resolution=%s",
-             label, top_n, min_cocit, resolution)
+    log.info(
+        "WINDOW: %s | Top %d refs | min co-cit >= %d | resolution=%s",
+        label,
+        top_n,
+        min_cocit,
+        resolution,
+    )
     log.info("=" * 80)
 
     # Identify all references with year <= cutoff
-    pre_refs = set(
-        cit[cit["ref_year_num"] <= cutoff_year]["ref_doi"]
-    ) - {"", "nan", "none"}
+    pre_refs = set(cit[cit["ref_year_num"] <= cutoff_year]["ref_doi"]) - {
+        "",
+        "nan",
+        "none",
+    }
     log.info("  Unique refs with year <= %d: %d", cutoff_year, len(pre_refs))
 
     # Count how often each such ref is cited (by ANY paper in corpus)
@@ -147,8 +230,11 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
 
     log.info("  Using top %d most-cited refs", actual_n)
     if actual_n > 0:
-        log.info("  Citation range in top set: %s .. %s",
-                 pre_ref_counts.iloc[0], pre_ref_counts.iloc[actual_n - 1])
+        log.info(
+            "  Citation range in top set: %s .. %s",
+            pre_ref_counts.iloc[0],
+            pre_ref_counts.iloc[actual_n - 1],
+        )
 
     # Build co-citation matrix
     log.info("  Building co-citation matrix...")
@@ -197,9 +283,7 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
             "graph": G,
             "community_dois": {},
             "community_labels": {},
-            "stats": {
-                "nodes": 0, "edges": 0, "n_communities": 0, "modularity": 0
-            },
+            "stats": {"nodes": 0, "edges": 0, "n_communities": 0, "modularity": 0},
         }
 
     # Louvain
@@ -222,76 +306,9 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
 
     community_labels = {}
     for c in sorted(community_dois.keys()):
-        papers = list(community_dois[c])
-        papers_sorted = sorted(
-            papers, key=lambda d: ref_counts.get(d, 0), reverse=True
+        community_labels[c] = _characterize_community(
+            c, community_dois[c], doi_meta, ref_counts
         )
-
-        # Top 5 papers
-        log.info("  Community %d (%d papers):", c, len(papers))
-        log.info("    Top 5 papers:")
-        top_authors = []
-        for d in papers_sorted[:5]:
-            meta = doi_meta.get(d, {})
-            author = str(meta.get("first_author", "?"))
-            if author in ("nan", "None", ""):
-                author = "?"
-            year_val = meta.get("year", "?")
-            if year_val and not pd.isna(year_val):
-                year_val = int(year_val)
-            title = str(meta.get("title", ""))[:70]
-            if title in ("nan", "None", ""):
-                title = f"[{d[:30]}]"
-            rc = ref_counts.get(d, 0)
-            log.info("      [%3dx] %s (%s) %s", rc, author, year_val, title)
-            surname = author.split(",")[0].split(";")[0].strip().split()[-1]
-            if surname not in ("?", "nan", "None", ""):
-                top_authors.append(surname)
-
-        # TF-IDF terms
-        texts = []
-        for d in papers:
-            meta = doi_meta.get(d, {})
-            ab = meta.get("abstract", "")
-            title = meta.get("title", "")
-            text = ""
-            if ab and len(str(ab)) > 30 and str(ab) != "nan":
-                text = str(ab)
-            elif title and len(str(title)) > 5 and str(title) != "nan":
-                text = str(title)
-            if text:
-                texts.append(text)
-
-        tfidf_terms = []
-        if len(texts) >= 3:
-            try:
-                tfidf = TfidfVectorizer(
-                    max_features=500,
-                    stop_words="english",
-                    ngram_range=(1, 2),
-                    min_df=2,
-                    max_df=0.8,
-                )
-                X = tfidf.fit_transform(texts)
-                mean_tfidf = np.asarray(X.mean(axis=0)).flatten()
-                top_idx = mean_tfidf.argsort()[::-1][:15]
-                terms = tfidf.get_feature_names_out()
-                tfidf_terms = [terms[i] for i in top_idx]
-                log.info("    TF-IDF (%d texts): %s", len(texts), ", ".join(tfidf_terms[:10]))
-            except Exception as e:
-                log.warning("    (TF-IDF failed: %s)", e)
-        else:
-            log.info("    (Only %d texts -- skipping TF-IDF)", len(texts))
-
-        # Build a short label from top 3 TF-IDF unigrams
-        label_terms = [t for t in tfidf_terms if " " not in t][:3]
-        if label_terms:
-            short_label = " / ".join(label_terms)
-        elif top_authors:
-            short_label = " / ".join(top_authors[:3])
-        else:
-            short_label = "(?)"
-        community_labels[c] = short_label
 
     return {
         "partition": partition,
@@ -471,7 +488,7 @@ for w_idx, w in enumerate(WINDOWS):
 log.info("%s", header)
 log.info("%s", sep)
 
-row_letter = ord('A')
+row_letter = ord("A")
 for aligned_row in aligned_rows:
     # Main line: community ID, size, label
     line1 = f"  {chr(row_letter):>2s}"
@@ -530,9 +547,17 @@ for i in range(len(window_labels)):
         overlap = all_dois_1 & all_dois_2
         only_1 = all_dois_1 - all_dois_2
         only_2 = all_dois_2 - all_dois_1
-        log.info("  %s (%d refs) vs %s (%d refs):", w1, len(all_dois_1), w2, len(all_dois_2))
-        log.info("    Shared: %d, Only in %s: %d, Only in %s: %d",
-                 len(overlap), w1, len(only_1), w2, len(only_2))
+        log.info(
+            "  %s (%d refs) vs %s (%d refs):", w1, len(all_dois_1), w2, len(all_dois_2)
+        )
+        log.info(
+            "    Shared: %d, Only in %s: %d, Only in %s: %d",
+            len(overlap),
+            w1,
+            len(only_1),
+            w2,
+            len(only_2),
+        )
         log.info("    Jaccard (full sets): %.3f", jaccard(all_dois_1, all_dois_2))
 
 # ============================================================
@@ -551,6 +576,8 @@ for w in WINDOWS:
     s = r["stats"]
     log.info("  %s (year <= %d):", w["label"], w["cutoff"])
     log.info("    Network: %d nodes, %d edges", s["nodes"], s["edges"])
-    log.info("    Communities: %d, Modularity: %.4f", s["n_communities"], s["modularity"])
+    log.info(
+        "    Communities: %d, Modularity: %.4f", s["n_communities"], s["modularity"]
+    )
 
 log.info("Done.")
