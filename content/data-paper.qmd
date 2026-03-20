@@ -44,7 +44,7 @@ Climate finance---the financial flows directed at mitigating and adapting to cli
 
 A growing scholarly literature addresses this contested object, spanning economics, political science, international relations, development studies, and environmental governance. Yet researchers approaching climate finance face a fragmented bibliographic landscape. Academic publications are scattered across databases with different coverage profiles. Institutional reports from the OECD, UNFCCC, World Bank, and Climate Policy Initiative---documents that have shaped the very categories of the debate---are absent from standard academic databases. And the literature is multilingual: while English dominates, French, Chinese, Japanese, and German traditions contribute perspectives that monolingual corpora miss entirely.
 
-Recent bibliometric work has begun to map this literature. @care_weber2023 survey sustainable finance bibliometrics using Scopus; @shang_jin2023 analyse climate finance publications from Web of Science; @nalimov_miskiewicz2023 map the field using a single-database keyword search. While valuable, these studies rely on one database each, cover English-language publications only, and do not publish reusable datasets. Their underlying corpora are not available for independent reanalysis.
+Recent bibliometric work has begun to map this literature. @care_weber2023 survey sustainable finance bibliometrics using Scopus; @shang_jin2023 analyse climate finance publications from Web of Science; @maria_etal2023 map green finance using Scopus with network analysis. While valuable, these studies rely on one database each, cover English-language publications only, and none publishes a reusable dataset. @shang_jin2023 contains no data availability statement despite the journal's mandatory policy. @maria_etal2023 mentions a GitHub repository with R scripts but provides no URL and no formal data availability statement. @care_weber2023 is behind an Elsevier paywall (CC-BY-NC-ND) with no publicly accessible dataset. We verified these claims by checking each paper's data availability section, the journal's data sharing policy, and public repositories (Zenodo, GitHub, Dataverse) for associated deposits.
 
 Our dataset addresses these limitations by assembling a multilingual corpus from {{< meta corpus_sources >}} complementary sources, applying a documented quality-filtering pipeline with full audit trail, and providing pre-computed sentence-transformer embeddings that place all works in a shared semantic space regardless of language. The dataset was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance [Ha-Duong, under review]. However, its scope and documentation make it reusable for a range of applications across the humanities and social sciences: topic modelling, citation network analysis, bibliometric mapping, temporal analysis of concept emergence, and cross-lingual studies of how climate finance is discussed in different linguistic and institutional traditions.
 
@@ -58,10 +58,10 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 |--------|------------|----------|
 | OpenAlex | Automated (free API) | Primary academic source: tiered keyword search |
 | ISTEX | Automated (public API) | French national archive (Springer, Elsevier, Wiley) |
-| Grey literature | Hybrid (YAML seed + World Bank API) | OECD, UNFCCC, World Bank, CPI reports |
-| Teaching canon | Semi-automated (scraping + manual) | Syllabus readings from ~130 courses |
+| Grey literature | Hybrid (curated seed + World Bank API) | 16 curated reports (OECD, UNFCCC, CPI, UN) + World Bank repository |
+| Teaching canon | AI-assisted (scraping + LLM extraction) | Syllabus readings from ~130 courses |
 | bibCNRS | Hand-harvested (CNRS credentials) | Non-English literature (FR, ZH, JA) via WoS/EconLit |
-| SciSpace | Hand-harvested (commercial tool) | AI-curated thematic corpus |
+| SciSpace | AI-collected, hand-exported | SciSpace systematic review tool exports |
 
 : Sources, automation level, and coverage scope. {#tbl-sources}
 
@@ -81,9 +81,25 @@ Flagged works are removed unless protected by one of four conditions: citation c
 
 ### 2.3 Quality, Completeness, and Potential Biases {#sec-quality}
 
-Relevance filtering (flag 6) uses a cross-encoder reranker (BAAI/bge-reranker-v2-m3, 568M parameters) rather than a generative LLM, ensuring deterministic, reproducible classification without API costs. The model was calibrated on weak labels derived from independent corpus signals: teaching syllabi, high-citation works ($\geq$ 50), and multi-source overlap as positives; metadata-deficient and blacklist-matched works as negatives. The best query was selected from 100 candidates by AUC, achieving 0.766 on weak labels. Human validation on a stratified sample of 100 works (20 per score quintile, blinded to scores) yielded AUC = 0.818 and 81% accuracy (precision 74%, recall 76%). The proportion of human-relevant papers increased monotonically across score quintiles, confirming a clear signal. An independent LLM audit (Gemma 2 27B) on a separate stratified sample provides a second check. Both methods serve as independent checks on the flagging pipeline, not as ground truth, since what counts as "climate finance" is itself a contested category.
+@tbl-qa summarises the corpus composition and quality metrics per source, computed by automated QA scripts.
 
-Users should be aware of several potential biases. First, non-English coverage, while deliberate, remains limited ({{< meta lang_english_pct >}}% English). Studies requiring deep coverage of specific non-English traditions should supplement this corpus with targeted searches. Second, citation counts reflect OpenAlex data as of the collection date and favour older, English-language works---a well-known bias in bibliometrics that affects any citation-based analysis. Third, grey literature records often lack abstracts, limiting their utility for embedding-based analyses; these works cluster based on title and keywords alone. Fourth, the teaching-canon component reflects a harvesting bias toward business schools (Harvard, NYU Stern, Stanford) that publish detailed syllabi on public websites. Development economics and international relations programmes, where climate finance is taught as part of broader courses on environmental governance, tend to use institutional platforms that are not publicly accessible. The teaching convergence we observe is therefore a convergence within business-school curricula, not across the full disciplinary landscape.
+| Source | Refined | %DOI | %Abstract | %Refs | %OA |
+|--------|--------:|-----:|----------:|------:|----:|
+| OpenAlex | 29,343 | 73% | 87% | 41% | 80% |
+| ISTEX | 4 | 100% | 75% | 75% | 75% |
+| bibCNRS | 222 | 11% | 5% | 1% | 4% |
+| SciSpace | 608 | 82% | 90% | 48% | 38% |
+| Grey literature | 183 | 97% | 97% | 2% | 22% |
+| Teaching canon | 23 | 100% | 52% | 52% | 22% |
+| **Total (deduplicated)** | **29,878** | **72%** | **86%** | **41%** | **78%** |
+
+: Per-source corpus quality metrics. Refined counts exceed raw for small sources because deduplication assigns multi-source works to all contributing sources. Generated by `export_corpus_table.py`. {#tbl-qa}
+
+The merge pipeline reduces 41,162 raw records to {{< meta corpus_total >}} refined works (27.5% removal rate). Citation graph verification against Crossref on a stratified sample of 30 papers yielded precision = 1.0 and recall = 1.0. The citation network contains 722,727 rows covering 45% of corpus DOIs; coverage reaches 80% for core papers (cited $\geq$ 50).
+
+Relevance filtering (flag 6) uses a cross-encoder reranker (BAAI/bge-reranker-v2-m3, 568M parameters) rather than a generative LLM, ensuring deterministic, reproducible classification without API costs. The model was calibrated on weak labels derived from independent corpus signals. Human validation on a stratified sample of 100 works (20 per score quintile, blinded to scores) yielded AUC = 0.818 and 81% accuracy (precision 74%, recall 76%). An independent LLM audit (Gemma 2 27B) provides a second check. Both methods serve as independent checks on the flagging pipeline, not as ground truth, since what counts as "climate finance" is itself a contested category.
+
+Users should be aware of several potential biases. Non-English coverage remains limited ({{< meta lang_english_pct >}}% English). Citation counts reflect OpenAlex data as of the collection date and favour older, English-language works. Grey literature records often lack abstracts (though 97% have them in this corpus). The teaching-canon component reflects a harvesting bias toward business schools that publish syllabi on public websites; development economics and international relations programmes tend to use institutional platforms that are not publicly accessible.
 
 ## 3. Data {#sec-data}
 
@@ -94,17 +110,11 @@ The dataset consists of five files deposited in Zenodo, also reproducible from s
 
 **refined_works.csv** ({{< meta corpus_total >}} rows). The primary corpus file. Each row is one deduplicated work with columns for: identifier, DOI, title, first author, year, abstract, citation count, publication venue, work type, language code, source provenance flags (one boolean column per source: `from_openalex`, `from_istex`, `from_bibcnrs`, `from_scispsace`, `from_grey`, `from_teaching`), and quality-filtering metadata (`is_flagged`, `flag_reason`, `is_protected`). Of these, {{< meta corpus_core >}} core works (cited $\geq$ {{< meta corpus_core_threshold >}} times) form the field's most-cited core. @fig-bars shows the temporal distribution.
 
-**embeddings.npz.** Compressed NumPy archive containing L2-normalised {{< meta emb_dimensions >}}-dimensional vectors for {{< meta corpus_with_embeddings >}} works, computed by the multilingual sentence-transformer *paraphrase-multilingual-MiniLM-L12-v2*. The embedding count exceeds the refined corpus size because embeddings are computed before quality filtering (on all works with titles in the 1990--2024 range); the full cache is preserved to support alternative filtering strategies. Each work's embedded text concatenates title, abstract (if longer than 20 characters), and keywords. The model places texts in English, French, Chinese, Japanese, and German into a shared semantic space. Cross-lingual coherence was confirmed: non-English works cluster with thematically similar English-language works rather than forming language-specific clusters (@fig-semantic). The embeddings serve as direct input for BERTopic, top2vec, or other embedding-based topic models, avoiding the need to re-encode approximately {{< meta corpus_total_approx >}} documents. The L2-normalised vectors also support cosine-similarity search for finding related works. A keyed cache ensures incremental updates: only new works are encoded when the corpus grows.
+**embeddings.npz.** Compressed NumPy archive containing L2-normalised {{< meta emb_dimensions >}}-dimensional vectors for {{< meta corpus_with_embeddings >}} works, computed by the multilingual sentence-transformer *paraphrase-multilingual-MiniLM-L12-v2*. The embedding count exceeds the refined corpus size because embeddings are computed before quality filtering (on all works with titles in the 1990--2024 range); the full cache is preserved to support alternative filtering strategies. Each work's embedded text concatenates title, abstract (if longer than 20 characters), and keywords. The model places texts in English, French, Chinese, Japanese, and German into a shared semantic space. Cross-lingual coherence was confirmed: non-English works cluster with thematically similar English-language works rather than forming language-specific clusters. The embeddings serve as direct input for BERTopic, top2vec, or other embedding-based topic models, avoiding the need to re-encode approximately {{< meta corpus_total_approx >}} documents. The L2-normalised vectors also support cosine-similarity search for finding related works.
 
 **corpus_audit.csv.** Complete audit trail: every work receives a decision (`kept`, `removed`, or `protected`) with reasons.
 
-**semantic_clusters.csv.** KMeans cluster assignments (k=6) with UMAP 2D coordinates for all embedded works. The six clusters correspond to interpretable thematic groups that align with established subfield boundaries: carbon markets and emissions trading, green bonds and sustainable finance, climate adaptation and resilience, renewable energy investment, forestry and REDD+ finance, and social governance and climate justice. The UMAP projection (n_neighbors=15, min_dist=0.05, cosine metric) provides a 2D representation suitable for visualisation and spatial analysis of field structure.
-
-**citations.csv.** Internal citation network extracted via Crossref and OpenAlex enrichment. Each row records a (citing, cited) pair where both works belong to the corpus, enabling co-citation analysis, bibliographic coupling, and citation genealogy studies within the field. The network captures the intellectual structure of climate finance scholarship over time.
-
-Individual source catalogs are also preserved as separate CSV files (e.g., `openalex_works.csv`, `istex_works.csv`), enabling provenance tracking back to individual databases.
-
-![UMAP projection of the corpus, coloured by KMeans cluster (k=6). Thematic clusters correspond to established subfields: carbon markets, green finance, adaptation, renewable energy, forestry/REDD+, and social/governance.](figures/fig_semantic.png){#fig-semantic width=100%}
+**citations.csv.** Internal citation network (722,727 rows) extracted via Crossref and OpenAlex enrichment. Each row records a (citing, cited) pair where both works belong to the corpus, enabling co-citation analysis, bibliographic coupling, and citation genealogy studies.
 
 ![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
 
