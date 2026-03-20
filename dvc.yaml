@@ -45,15 +45,14 @@ stages:
       - data/catalogs/openalex_works.csv
       - data/catalogs/openalex_citations.csv
 
-  # TEMP: Semantic Scholar skipped for pre-submission (rate-limited, minor source).
-  # Uncomment when S2 API key is configured in .env.
-  # catalog_s2:
-  #   cmd: uv run python scripts/catalog_semanticscholar.py --resume
-  #   deps:
-  #     - scripts/catalog_semanticscholar.py
-  #     - scripts/utils.py
-  #   outs:
-  #     - data/catalogs/semanticscholar_works.csv
+  catalog_s2:
+    cmd: uv run python scripts/catalog_semanticscholar.py --resume
+    deps:
+      - scripts/catalog_semanticscholar.py
+      - scripts/utils.py
+      - config/openalex_queries.yaml
+    outs:
+      - data/catalogs/semanticscholar_works.csv
 
   catalog_grey:
     cmd: uv run python scripts/catalog_grey.py
@@ -88,6 +87,7 @@ stages:
       - data/catalogs/bibcnrs_works.csv
       - data/catalogs/istex_works.csv
       - data/catalogs/openalex_works.csv
+      - data/catalogs/semanticscholar_works.csv
       - data/catalogs/grey_works.csv
       - data/catalogs/teaching_works.csv
       # Hand-curated input (pre-placed, not produced by pipeline)
