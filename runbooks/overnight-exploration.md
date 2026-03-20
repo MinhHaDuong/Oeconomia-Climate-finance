@@ -169,6 +169,35 @@ Before the session ends:
 3. Run `runbooks/celebrate-day.md` with the overnight log as input.
 4. Final PR list in the last message — the author's morning briefing.
 
+## Time and budget management
+
+### Clock awareness
+
+Check the wall clock (`date`) at bootstrap and periodically. Plan work
+backwards from the morning review:
+
+- **Before 02:00** — deep work: deliverable drafting, competing explorations.
+- **02:00–06:00** — lighter work: braindumps, literature notes, self-reviews.
+- **06:00–07:30** — wrap-up: push all branches, write overnight log, clean worktrees.
+- **By 08:00** — session must be complete. Final message is the morning briefing.
+
+Don't start a new multi-file refactoring or paper section after 06:00.
+Finish in-progress work, commit what you have, note what's incomplete.
+
+### Token budget
+
+Subagents consume tokens from the same budget. Be strategic:
+
+- **Prefer sequential over parallel** when results from one task inform the next.
+- **Cap subagent scope** — give focused prompts, not open-ended exploration.
+- **Avoid redundant reads** — if you've read a file, summarize key facts in
+  the subagent prompt rather than having it re-read the same file.
+- **Braindumps are cheap** — writing reflection notes costs few tokens
+  and produces high value. Prefer braindumping over launching another agent
+  when budget feels tight.
+- **Monitor** — if you notice responses getting shorter or tool calls
+  being declined, enter wrap-up mode immediately regardless of the clock.
+
 ## Invariants
 
 - **Never merge to main.** All changes as PRs.
