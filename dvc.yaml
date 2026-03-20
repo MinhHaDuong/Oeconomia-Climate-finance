@@ -30,6 +30,7 @@ stages:
       - scripts/catalog_istex.py
       - scripts/utils.py
       - config/corpus_collect.yaml
+      - data/pool/istex
     outs:
       - data/catalogs/istex_works.csv
       - data/catalogs/istex_refs.csv
@@ -41,6 +42,7 @@ stages:
       - scripts/utils.py
       - config/openalex_queries.yaml
       - config/corpus_collect.yaml
+      - data/pool/openalex
     outs:
       - data/catalogs/openalex_works.csv
       - data/catalogs/openalex_citations.csv
