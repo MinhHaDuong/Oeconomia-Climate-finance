@@ -89,11 +89,13 @@ Fix red tests, hygiene issues, and technical debt — but only within the
 1. **Dream**: understand the problem, explore alternatives.
 2. **Plan**: write ticket with test spec.
 3. **Do**: TDD in a worktree (red → green → refactor → PR).
-4. **Self-review**: launch a review agent in a fresh worktree (`runbooks/review-pr.md`).
+4. **Self-review**: single review agent in a fresh worktree (lightweight —
+   focus on correctness and behavioral preservation, not full multi-reviewer).
 5. **Fix**: address review findings, push fixes.
 6. **PR**: open for morning review.
 
-Parallelize independent tickets across worktrees.
+Parallelize independent tickets across worktrees (max 4 active at once —
+more causes git/disk contention and token waste).
 
 ### 3. Competing explorations (up to 3)
 
@@ -129,7 +131,9 @@ Each braindump is dated and committed — they form a trail of the exploration.
 
 ### 5. Keep reflection notes
 
-Write `docs/overnight-log-YYYY-MM-DD.md` on a branch throughout the session.
+Write `docs/overnight-log-YYYY-MM-DD.md` on a dedicated branch
+(`overnight-log-YYYY-MM-DD`). This branch carries only the log and
+braindumps — never mixed into a feature branch.
 
 Include a balance summary table:
 
@@ -166,7 +170,9 @@ Before the session ends:
 
 1. Ensure all worktrees are cleaned up.
 2. All work is pushed and PRs are open.
-3. Run `runbooks/celebrate-day.md` with the overnight log as input.
+3. Write the morning briefing (overnight log + PR list).
+   Do NOT run `celebrate-day.md` — that would re-trigger overnight
+   exploration (step 8). The overnight log IS the celebration artifact.
 4. Final PR list in the last message — the author's morning briefing.
 
 ## Time and budget management
@@ -204,7 +210,9 @@ Subagents consume tokens from the same budget. Be strategic:
 - **Archive bit-identical.** Verify: `make archive-analysis && make -C /tmp/climate-finance-analysis verify`
 - **One ticket per worktree.** Independent work stays independent.
 - **Commit messages explain why.** Overnight work must be reviewable.
-- **No long-running tasks.** Don't launch `make` or API calls that run for hours.
+- **No unattended long-running tasks.** Don't launch processes that may run
+  for hours (full `make`, API harvesting, model training). Quick checks
+  (`make check-fast`, `uv run pytest`, `uv run ruff`) are fine.
 
 ## Anti-patterns from first session (2026-03-19)
 
