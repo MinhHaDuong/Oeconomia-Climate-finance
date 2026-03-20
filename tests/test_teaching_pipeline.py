@@ -222,6 +222,75 @@ class TestBuildTeachingYamlNoManual:
         assert len(sources) >= 1
 
 
+# --- Ground truth: 24 unique works from the pipeline-generated teaching_sources.yaml ---
+# 22 DOIs + 2 title-only. The scraper must rediscover all of these.
+REFERENCE_DOIS = {
+    "10.1146/annurev-financial-102620-103311",
+    "10.1016/j.jfineco.2020.12.011",
+    "10.2139/ssrn.3438533",
+    "10.3386/w28940",
+    "10.1016/j.jbankfin.2018.10.012",
+    "10.1016/j.jfineco.2019.03.013",
+    "10.1093/rfs/hhab032",
+    "10.1093/rfs/hhz072",
+    "10.1111/jofi.13219",
+    "10.1111/jofi.13272",
+    "10.1515/9783110733488-019",
+    "10.1017/9781108886246.018",
+    "10.4324/9781315147024-21",
+    "10.1080/20430795.2020.1717241",
+    "10.2139/ssrn.6115887",
+    "10.54648/eucl2018032",
+    "10.4337/9781786432636.00019",
+    "10.1016/j.ecolecon.2021.107022",
+    "10.1093/oso/9780190662455.003.0003",
+    "10.1108/s2051-503020160000019005",
+    "10.59117/20.500.11822/43406",
+    "10.7551/mitpress/9780262035620.003.0009",
+}
+REFERENCE_TITLES = {
+    "principles of sustainable finance",
+    "global landscape of climate finance",
+}
+
+
+class TestScraperCoverage:
+    """Validate that scraper output covers all 24 reference works."""
+
+    @pytest.mark.skipif(
+        not os.path.exists(os.path.join(
+            os.path.dirname(__file__), "..", "data", "teaching_sources.yaml")),
+        reason="teaching_sources.yaml not yet generated (run scraper first)")
+    def test_output_covers_reference_works(self):
+        """teaching_sources.yaml must contain all 24 reference works."""
+        yaml_path = os.path.join(
+            os.path.dirname(__file__), "..", "data", "teaching_sources.yaml")
+        with open(yaml_path) as f:
+            sources = yaml.safe_load(f)
+
+        # Collect all DOIs and titles from output
+        output_dois = set()
+        output_titles = set()
+        for src in sources:
+            for r in src.get("readings", []):
+                doi = (r.get("doi") or "").strip().lower()
+                title = (r.get("title") or "").strip().lower()
+                if doi:
+                    output_dois.add(doi)
+                if title:
+                    output_titles.add(title)
+
+        # Check DOI coverage
+        missing_dois = REFERENCE_DOIS - output_dois
+        assert not missing_dois, \
+            f"Missing {len(missing_dois)} reference DOIs: {missing_dois}"
+
+        # Check title-only coverage
+        missing_titles = REFERENCE_TITLES - output_titles
+        assert not missing_titles, \
+            f"Missing {len(missing_titles)} reference titles: {missing_titles}"
+
+
 class TestBuildTeachingCanonPath:
     """Verify build_teaching_canon.py reads from data/, not config/."""
 
