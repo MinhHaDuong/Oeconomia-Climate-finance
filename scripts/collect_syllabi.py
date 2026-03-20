@@ -25,12 +25,12 @@ import os
 import re
 import sys
 import time
-import urllib.request
 from datetime import datetime, timezone
 
 import pandas as pd
 
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
+from syllabi_llm import llm_call
 from utils import (BASE_DIR, DATA_DIR, MAILTO, get_logger, normalize_title,
                    polite_get, save_csv)
 
@@ -72,33 +72,6 @@ def append_jsonl(records, path):
     with open(path, "a", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-
-def llm_call(prompt, api_key, model="google/gemma-2-27b-it", max_tokens=2000):
-    """Call OpenRouter LLM. Returns response text or None on error."""
-    body = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-        "temperature": 0,
-    }).encode()
-
-    req = urllib.request.Request(
-        "https://openrouter.ai/api/v1/chat/completions",
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        log.error("LLM error: %s", e)
-        return None
 
 
 def extract_pdf_text(pdf_path, page_cap=50):
@@ -372,8 +345,8 @@ TEXT (first 2000 chars):
 def stage_classify():
     """LLM classifies fetched pages as syllabi or not."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key:
-        log.error("OPENROUTER_API_KEY not set. Export it or add to ~/.bashrc")
+    if not api_key and not os.environ.get("OLLAMA_MODEL"):
+        log.error("Set OPENROUTER_API_KEY or OLLAMA_MODEL.")
         sys.exit(1)
 
     pages = load_jsonl(PAGES_PATH)
@@ -456,8 +429,8 @@ SYLLABUS TEXT:
 def stage_extract():
     """LLM extracts bibliographic references from confirmed syllabi."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key:
-        log.error("OPENROUTER_API_KEY not set.")
+    if not api_key and not os.environ.get("OLLAMA_MODEL"):
+        log.error("Set OPENROUTER_API_KEY or OLLAMA_MODEL.")
         sys.exit(1)
 
     classified = load_jsonl(CLASSIFIED_PATH)
