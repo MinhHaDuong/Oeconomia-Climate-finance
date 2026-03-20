@@ -15,15 +15,17 @@ abstract: |
   {{< meta corpus_total >}} works on climate finance published between 1990
   and 2024, assembled from {{< meta corpus_sources >}} bibliographic sources:
   OpenAlex, ISTEX, bibCNRS, SciSpace, institutional grey literature, and
-  a curated teaching canon. The search strategy targets eight languages through a
-  four-tier keyword taxonomy. A six-flag quality pipeline combining metadata
-  checks, citation isolation, semantic outlier filtering, and cross-encoder
-  relevance scoring produces a curated dataset with full audit trail.
-  Pre-computed 384-dimensional sentence-transformer embeddings place all
-  works in a shared semantic space regardless of language, enabling
-  clustering, topic modelling, and temporal analysis without re-encoding.
-  The corpus, embeddings, citation network, cluster assignments, and audit
-  log are deposited in Zenodo under CC BY 4.0.
+  a curated teaching canon. The search strategy targets eight languages
+  through a four-tier keyword taxonomy. A six-flag quality pipeline
+  combining metadata checks, citation isolation, semantic outlier
+  filtering, and cross-encoder relevance scoring produces a curated
+  dataset with full audit trail. An internal citation network of 722,727
+  links, extracted via Crossref and OpenAlex, supports co-citation
+  analysis and bibliographic coupling within the field. Pre-computed
+  384-dimensional multilingual sentence-transformer embeddings enable
+  clustering, topic modelling, and cross-lingual analysis without
+  re-encoding. The corpus, embeddings, citation network, and audit log
+  are deposited in Zenodo under CC BY 4.0.
 keywords: |
   climate finance -- bibliometric corpus -- multilingual --
   sentence-transformer embeddings -- scientometrics -- history of economic thought
