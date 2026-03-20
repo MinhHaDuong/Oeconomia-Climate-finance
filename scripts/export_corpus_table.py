@@ -72,7 +72,10 @@ def main():
 
     # Load unified corpus (before filtering) for raw counts
     unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
-    unified = pd.read_csv(unified_path, usecols=["source"])
+    from_cols = [f"from_{s}" for s in PRIMARY_SOURCES]
+    header = pd.read_csv(unified_path, nrows=0).columns
+    want = ["source"] + [c for c in from_cols if c in header]
+    unified = pd.read_csv(unified_path, usecols=want)
     log.info("Loaded %d unified works from %s", len(unified), unified_path)
 
     # Load citations for reference coverage
