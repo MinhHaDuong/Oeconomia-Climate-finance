@@ -165,18 +165,24 @@ class TestScraperChunkOverlap:
         assert CHUNK_OVERLAP >= 500, "Overlap should be ≥500 chars"
 
     def test_chunks_overlap(self):
-        """Chunks produced for extraction should overlap."""
+        """Chunks produced for extraction should overlap with matching content."""
         from collect_syllabi import make_chunks
 
-        text = "A" * 10000  # 10k chars
+        # Use distinguishable characters so overlap assertion is meaningful
+        text = "".join(str(i % 10) for i in range(10000))
         chunks = make_chunks(text, chunk_size=4000, overlap=500)
         assert len(chunks) >= 3
         # Verify overlap: end of chunk N overlaps with start of chunk N+1
         for i in range(len(chunks) - 1):
-            # The last `overlap` chars of chunk[i] should appear at start of chunk[i+1]
             tail = chunks[i][-500:]
             assert chunks[i + 1].startswith(tail), \
                 f"Chunk {i} and {i+1} should overlap by 500 chars"
+
+    def test_chunks_reject_bad_overlap(self):
+        """make_chunks raises ValueError if overlap >= chunk_size."""
+        from collect_syllabi import make_chunks
+        with pytest.raises(ValueError):
+            make_chunks("hello", chunk_size=100, overlap=100)
 
 
 class TestBuildTeachingYamlNoManual:
