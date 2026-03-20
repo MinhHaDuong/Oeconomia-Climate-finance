@@ -45,7 +45,9 @@ you attempted anyway.
 
 ### 0. Bootstrap
 
-Run `on-start.md` trigger. Then read all territory files listed in the prompt.
+Run `on-start.md` trigger. Record start time (`date`). Then read all
+territory files listed in the prompt. Note the start time in the overnight
+log immediately — don't wait until wrap-up to start the log.
 
 ### 1. Forward on the next deliverable
 
@@ -135,9 +137,12 @@ Write `docs/overnight-log-YYYY-MM-DD.md` on a dedicated branch
 (`overnight-log-YYYY-MM-DD`). This branch carries only the log and
 braindumps — never mixed into a feature branch.
 
-Include a balance summary table:
+Include a balance and time summary:
 
 ```
+Session: started HH:MM, ended HH:MM (Xh total)
+Clock phases: deep work until HH:MM, lighter work until HH:MM, wrap-up at HH:MM
+
 | Category | Tickets | Approx % |
 |----------|---------|----------|
 | Deliverable (paper/slides/reading) | #N, #M | 65% |
@@ -152,6 +157,7 @@ Also include:
 - What worked, what didn't, what surprised you
 - Feedback memories saved during the session
 - Open questions for the author
+- Token usage if available (total tokens, number of tool calls)
 
 ### Mid-session checkpoint
 
