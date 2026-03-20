@@ -97,14 +97,21 @@ Parallelize independent tickets across worktrees.
 
 ### 3. Competing explorations (up to 3)
 
-For strategic choices (which journal? which framing? which structure?),
-explore up to 3 approaches in parallel worktrees:
+For each braindump idea or strategic choice, brainstorm alternative
+implementations, assess them, then try up to 3 promising candidates
+in parallel worktrees. The exploration is within one idea, not across
+different ideas.
+
+Example: braindump says "offline ticket system." You brainstorm:
+(A) flat markdown files in `tickets/`, (B) YAML frontmatter with
+status tracking, (C) SQLite-backed with markdown export. Assess
+trade-offs, then implement the 2-3 most promising in parallel PRs.
 
 - Branch naming: `t{N}-explore-A-desc`, `t{N}-explore-B-desc`, `t{N}-explore-C-desc`
 - Each gets its own PR with a clear thesis statement in the description.
 - Morning review picks the winner; losers become reference material.
 
-This applies to code (competing refactoring approaches) and prose
+This applies to code (competing implementations) and prose
 (competing paper framings, journal targets, outlines).
 
 ### 4. Recursive braindump
