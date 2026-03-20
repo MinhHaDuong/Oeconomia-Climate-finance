@@ -118,6 +118,8 @@ The dataset consists of five files deposited in Zenodo, also reproducible from s
 
 **citations.csv.** Internal citation network (722,727 rows) extracted via Crossref and OpenAlex enrichment. Each row records a (citing, cited) pair where both works belong to the corpus, enabling co-citation analysis, bibliographic coupling, and citation genealogy studies.
 
+**Source catalogs.** Individual per-source catalogs (`openalex_works.csv`, `istex_works.csv`, etc.) are preserved in the deposit, enabling provenance tracking back to individual databases before merge and deduplication.
+
 ![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
 
 The CC BY 4.0 licence applies to the dataset. All pipeline scripts are available in the project repository, organised in three phases: corpus building (API harvesting, merging, enrichment, and quality filtering), analysis (embedding projection, clustering, and derived statistics), and document rendering. The pipeline requires Python $\geq$ 3.10, managed with `uv` (dependency resolution from `pyproject.toml`), and uses DVC (Data Version Control) to track the pipeline DAG and ensure reproducibility. A `Makefile` provides convenience targets for each phase.
