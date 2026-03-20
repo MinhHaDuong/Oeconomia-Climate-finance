@@ -37,7 +37,7 @@ from utils import (BASE_DIR, DATA_DIR, MAILTO, get_logger, normalize_title,
 log = get_logger("collect_syllabi")
 
 # --- Constants ---
-PDF_TEXT_LIMIT = 50000  # Max chars from PDF text extraction (was 20KB, increased for completeness)
+TEXT_LIMIT = 50000  # Max chars from PDF text extraction (was 20KB, increased for completeness)
 CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
 
 # --- Paths ---
@@ -123,7 +123,7 @@ def extract_pdf_text(pdf_path, page_cap=50):
                     cells = [str(c).strip() for c in row if c]
                     if cells:
                         text_parts.append(" | ".join(cells))
-    return "\n\n".join(text_parts)[:PDF_TEXT_LIMIT]
+    return "\n\n".join(text_parts)[:TEXT_LIMIT]
 
 
 def make_chunks(text, chunk_size=8000, overlap=None):
@@ -335,7 +335,7 @@ def stage_fetch():
                 for tag in soup(["script", "style", "nav", "footer", "header"]):
                     tag.decompose()
                 text = soup.get_text(separator="\n", strip=True)
-                page_rec["text"] = text[:PDF_TEXT_LIMIT]
+                page_rec["text"] = text[:TEXT_LIMIT]
                 page_rec["content_type"] = "text/html"
 
         except Exception as e:

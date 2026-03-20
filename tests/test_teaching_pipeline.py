@@ -150,10 +150,10 @@ class TestScraperPdfExtraction:
         assert "Climate Casino" in text
         assert "Stern" in text
 
-    def test_pdf_text_limit_increased(self):
-        """PDF text truncation should allow at least 50KB."""
-        from collect_syllabi import PDF_TEXT_LIMIT
-        assert PDF_TEXT_LIMIT >= 50000
+    def test_text_limit_increased(self):
+        """Text truncation should allow at least 50KB (was 20KB)."""
+        from collect_syllabi import TEXT_LIMIT
+        assert TEXT_LIMIT >= 50000
 
 
 class TestScraperChunkOverlap:

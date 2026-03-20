@@ -65,8 +65,6 @@ stages:
     outs:
       - data/catalogs/grey_works.csv
 
-  # IMPROVEMENT: teaching canon relies on manually curated YAML from syllabi.
-  # A discovery script could scrape syllabi sources automatically.
   catalog_teaching:
     cmd: >-
       uv run python scripts/build_teaching_yaml.py &&
