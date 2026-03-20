@@ -56,23 +56,21 @@ Run `on-start.md` trigger. Record start time (`date`). Then read all
 territory files listed in the prompt. Note the start time in the overnight
 log immediately — don't wait until wrap-up to start the log.
 
-Set up telemetry for token tracking. All `claude` CLI calls during the
-session must use these env vars so usage is logged:
+**Usage tracking:** every Agent tool task notification includes
+`<usage>` with `total_tokens`, `tool_uses`, and `duration_ms`.
+Record these per-agent metrics in the overnight log as they arrive.
+At wrap-up, sum them into a per-cycle and session-total table.
+
+For CLI subagents (`claude -p`), enable OTEL to capture the same data:
 
 ```bash
 export CLAUDE_CODE_ENABLE_TELEMETRY=1
 export OTEL_METRICS_EXPORTER=console
-export OTEL_LOG_FILE="$PWD/docs/overnight-otel-$(date +%Y-%m-%d).jsonl"
 ```
 
-When launching subagents via the CLI, pipe OTEL console output to the log:
-
-```bash
-claude -p "task description" 2>>"$OTEL_LOG_FILE"
-```
-
-At wrap-up, summarize the OTEL log in the overnight log: total tokens
-(input + output + cache), total cost, and per-cycle breakdown.
+Prefer internal Agent-tool subagents over CLI — they share the parent's
+cached context (4x cheaper in measured tests: 29K vs 126K tokens for
+the same review task).
 
 ### 1. Forward on the next deliverable
 
@@ -223,10 +221,14 @@ Finish in-progress work, commit what you have, note what's incomplete.
 
 ### Token budget
 
-The subscription plan uses rolling usage windows. The OTEL console
-exporter (set up in bootstrap) captures per-call token and cost data.
+The subscription plan uses rolling usage windows. Usage data comes from
+two sources: task notification `<usage>` tags (Agent tool) and OTEL
+console output (CLI `claude -p`).
 
 **Rules:**
+- **Prefer Agent-tool subagents over CLI.** They inherit cached context
+  and cost ~4x less (measured: 29K vs 126K tokens for same review).
+  Use CLI only when OTEL cost measurement is specifically needed.
 - **Default to sequential.** Parallel agents multiply token consumption.
 - **One subagent at a time** — never more than 2 concurrent.
 - **Cap subagent scope** — give focused prompts with pre-summarized
@@ -237,9 +239,9 @@ exporter (set up in bootstrap) captures per-call token and cost data.
   and produces high value. Prefer braindumping over launching agents.
 - **Monitor throttling** — if responses get slower, tool calls are
   declined, or you see rate-limit errors, enter wrap-up immediately.
-- **Log usage** — at mid-session and wrap-up, parse the OTEL log to
-  extract cumulative tokens and cost. Include in the overnight log.
-  This builds calibration data across sessions.
+- **Log usage** — record each task notification's `total_tokens`,
+  `tool_uses`, `duration_ms` in the overnight log as they arrive.
+  At wrap-up, sum into a per-cycle and session-total table.
 
 ## Invariants
 
