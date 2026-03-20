@@ -203,19 +203,34 @@ backwards from the morning review:
 Don't start a new multi-file refactoring or paper section after 06:00.
 Finish in-progress work, commit what you have, note what's incomplete.
 
-### Token budget
+### Token budget (Max 5x plan)
 
-Subagents consume tokens from the same budget. Be strategic:
+The Max 5x plan ($100/mo) uses rolling usage windows — a 5-hour burst
+window and a 7-day weekly window. Each Claude Code tool call consumes
+50K-150K tokens (10-100x more than chat). One DD cycle ≈ 115K tokens.
 
-- **Prefer sequential over parallel** when results from one task inform the next.
-- **Cap subagent scope** — give focused prompts, not open-ended exploration.
-- **Avoid redundant reads** — if you've read a file, summarize key facts in
-  the subagent prompt rather than having it re-read the same file.
+**Budget per overnight (8h, ~2 rolling windows):**
+
+| Strategy | DD cycles | Subagents | Throttle risk |
+|----------|-----------|-----------|---------------|
+| Conservative | 5-6 | 0, all sequential | Low |
+| Moderate | 3-4 | 1-2 focused subagents/cycle | Medium |
+| Aggressive | 2-3 | Parallel agents | High — will throttle |
+
+**Rules:**
+- **Default to conservative.** Sequential work, no parallel agents.
+- **One subagent at a time** — never more than 2 concurrent.
+  Each subagent burns a full context window (~50K-150K tokens).
+- **Cap subagent scope** — give focused prompts with pre-summarized
+  context. Don't let subagents re-read files you've already read.
+- **Use Sonnet for subagents, Opus for main thread** — Sonnet is
+  cheaper and has a separate usage bucket on Max.
 - **Braindumps are cheap** — writing reflection notes costs few tokens
-  and produces high value. Prefer braindumping over launching another agent
-  when budget feels tight.
-- **Monitor** — if you notice responses getting shorter or tool calls
-  being declined, enter wrap-up mode immediately regardless of the clock.
+  and produces high value. Prefer braindumping over launching agents.
+- **Monitor throttling** — if responses get slower, tool calls are
+  declined, or you see rate-limit errors, enter wrap-up immediately.
+- **Check usage** — run `/stats` at bootstrap and mid-session checkpoint
+  to track consumption against the rolling window.
 
 ## Invariants
 
