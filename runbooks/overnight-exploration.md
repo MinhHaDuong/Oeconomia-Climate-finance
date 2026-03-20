@@ -203,34 +203,26 @@ backwards from the morning review:
 Don't start a new multi-file refactoring or paper section after 06:00.
 Finish in-progress work, commit what you have, note what's incomplete.
 
-### Token budget (Max 5x plan)
+### Token budget
 
-The Max 5x plan ($100/mo) uses rolling usage windows — a 5-hour burst
-window and a 7-day weekly window. Each Claude Code tool call consumes
-50K-150K tokens (10-100x more than chat). One DD cycle ≈ 115K tokens.
-
-**Budget per overnight (8h, ~2 rolling windows):**
-
-| Strategy | DD cycles | Subagents | Throttle risk |
-|----------|-----------|-----------|---------------|
-| Conservative | 5-6 | 0, all sequential | Low |
-| Moderate | 3-4 | 1-2 focused subagents/cycle | Medium |
-| Aggressive | 2-3 | Parallel agents | High — will throttle |
+The subscription plan uses rolling usage windows. Check actual limits
+with `/stats` (in the CLI or VS Code panel) at bootstrap and at each
+mid-session checkpoint.
 
 **Rules:**
-- **Default to conservative.** Sequential work, no parallel agents.
+- **Default to sequential.** Parallel agents multiply token consumption.
 - **One subagent at a time** — never more than 2 concurrent.
-  Each subagent burns a full context window (~50K-150K tokens).
 - **Cap subagent scope** — give focused prompts with pre-summarized
   context. Don't let subagents re-read files you've already read.
-- **Use Sonnet for subagents, Opus for main thread** — Sonnet is
-  cheaper and has a separate usage bucket on Max.
+- **Use Sonnet for subagents** — cheaper and has a separate usage
+  bucket on Max plans. Reserve Opus for the main thread.
 - **Braindumps are cheap** — writing reflection notes costs few tokens
   and produces high value. Prefer braindumping over launching agents.
 - **Monitor throttling** — if responses get slower, tool calls are
   declined, or you see rate-limit errors, enter wrap-up immediately.
-- **Check usage** — run `/stats` at bootstrap and mid-session checkpoint
-  to track consumption against the rolling window.
+- **Log usage** — record `/stats` output in the overnight log at
+  bootstrap, mid-session, and wrap-up. This builds calibration data
+  for future sessions.
 
 ## Invariants
 
