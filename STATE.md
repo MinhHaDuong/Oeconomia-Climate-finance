@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-19
+Last updated: 2026-03-20
 
 ## Status: SUBMITTED
 
@@ -51,15 +51,21 @@ None.
 
 ## Active PRs
 
-- #231: refactor detect_communities (C901 28→15)
-- #232: convert print→logging in archive_traditions
-- #233: extract constants from collect_syllabi.py (855→747L)
-- #234: extract helpers from classify_type (C901 31→6)
-- #235: extract helpers from 5 long functions (PLR0915 wall)
+None.
+
+## Recent merges (2026-03-20)
+
+- #241: housekeeping STATE refresh
+- #245: overnight log 2026-03-20
+- #242: overnight exploration runbook
+- #243: data paper journal survey + Scientific Data alignment
+- #244: ESHET-HES slides first draft + plan
+- #231–#235: refactoring wave (detect_communities, archive_traditions logging, collect_syllabi split, classify_type, long functions)
 
 ## Next actions
 
-- Prepare ESHET-HES conference slides (Nice, May 26–29)
+- Prepare ESHET-HES conference slides (Nice, May 26–29) — first draft merged (#244), needs author review
+- Data paper: choose journal target (Scientific Data vs DSJ) — survey merged (#243)
 - Continue reading plan (Tier 1 books)
 
 ## Open tickets
