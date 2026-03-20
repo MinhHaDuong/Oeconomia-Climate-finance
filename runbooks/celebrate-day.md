@@ -17,6 +17,10 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    - `gh pr list` → no stale PRs
 6. **Refresh STATE.md** — update date, stats, active work section. Commit on main.
 7. **Memory sweep** — follow `runbooks/memory.md` (includes runbook cross-reference).
-8. **Overnight exploration** — if the user wants to launch an overnight autonomous session,
+8. **Log celebration** — record structured session metrics:
+    ```bash
+    ~/CNRS/code/agentic-harness/telemetry/bin/log-celebration '{"project":"oeconomia","session_type":"day","commits":N,"prs_merged":N,"memories_saved":N,"deliverables":[...],"feedback_memories":[...],"surprises":[...],"next":[...]}'
+    ```
+9. **Overnight exploration** — if the user wants to launch an overnight autonomous session,
    hand off to `runbooks/overnight-exploration.md`. The end-of-day celebration is the
    natural entry point: all branches are pushed, STATE is fresh, context is warm.
