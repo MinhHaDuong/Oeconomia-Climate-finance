@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-18
+Last updated: 2026-03-19
 
 ## Status: SUBMITTED
 
@@ -51,7 +51,11 @@ None.
 
 ## Active PRs
 
-None.
+- #231: refactor detect_communities (C901 28→15)
+- #232: convert print→logging in archive_traditions
+- #233: extract constants from collect_syllabi.py (855→747L)
+- #234: extract helpers from classify_type (C901 31→6)
+- #235: extract helpers from 5 long functions (PLR0915 wall)
 
 ## Next actions
 
@@ -61,3 +65,8 @@ None.
 ## Open tickets
 
 - #213: Add export_citation_coverage.py to archive-analysis recipe
+- #236: Harness extraction — split workflow harness into its own repo
+- #237: Harness — offline file-based ticket system (gh-optional)
+- #238: Harness — intellectual audit against SE canon
+- #239: Harness — type assertion and script hygiene guidelines
+- #240: Harness — sweep disk for reusable guidelines from past projects
