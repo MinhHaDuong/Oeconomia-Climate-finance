@@ -56,6 +56,24 @@ Run `on-start.md` trigger. Record start time (`date`). Then read all
 territory files listed in the prompt. Note the start time in the overnight
 log immediately — don't wait until wrap-up to start the log.
 
+Set up telemetry for token tracking. All `claude` CLI calls during the
+session must use these env vars so usage is logged:
+
+```bash
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+export OTEL_METRICS_EXPORTER=console
+export OTEL_LOG_FILE="$PWD/docs/overnight-otel-$(date +%Y-%m-%d).jsonl"
+```
+
+When launching subagents via the CLI, pipe OTEL console output to the log:
+
+```bash
+claude -p "task description" 2>>"$OTEL_LOG_FILE"
+```
+
+At wrap-up, summarize the OTEL log in the overnight log: total tokens
+(input + output + cache), total cost, and per-cycle breakdown.
+
 ### 1. Forward on the next deliverable
 
 Do this first, while context is fresh.
@@ -205,9 +223,8 @@ Finish in-progress work, commit what you have, note what's incomplete.
 
 ### Token budget
 
-The subscription plan uses rolling usage windows. Check actual limits
-with `/stats` (in the CLI or VS Code panel) at bootstrap and at each
-mid-session checkpoint.
+The subscription plan uses rolling usage windows. The OTEL console
+exporter (set up in bootstrap) captures per-call token and cost data.
 
 **Rules:**
 - **Default to sequential.** Parallel agents multiply token consumption.
@@ -220,9 +237,9 @@ mid-session checkpoint.
   and produces high value. Prefer braindumping over launching agents.
 - **Monitor throttling** — if responses get slower, tool calls are
   declined, or you see rate-limit errors, enter wrap-up immediately.
-- **Log usage** — record `/stats` output in the overnight log at
-  bootstrap, mid-session, and wrap-up. This builds calibration data
-  for future sessions.
+- **Log usage** — at mid-session and wrap-up, parse the OTEL log to
+  extract cumulative tokens and cost. Include in the overnight log.
+  This builds calibration data across sessions.
 
 ## Invariants
 
