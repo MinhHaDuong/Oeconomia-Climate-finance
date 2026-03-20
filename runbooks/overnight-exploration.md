@@ -43,6 +43,13 @@ you attempted anyway.
 
 ## Procedure
 
+The session is a loop of Dragon Dreaming cycles, not a single pass.
+Each cycle: Dream (explore) → Plan (outline/ticket) → Do (draft/code/PR)
+→ Celebrate (braindump what you learned). Then start the next cycle,
+informed by what the previous one revealed. A full overnight (8h) should
+produce 2-3 complete DD cycles. The mid-session checkpoint (step 5b)
+is between cycles, not at the end.
+
 ### 0. Bootstrap
 
 Run `on-start.md` trigger. Record start time (`date`). Then read all
