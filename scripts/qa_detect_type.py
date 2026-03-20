@@ -28,16 +28,42 @@ log = get_logger("qa_detect_type")
 
 # Publishers that are NOT journals (often stored in journal field)
 PUBLISHERS_NOT_JOURNALS = {
-    "world bank", "oecd", "oecd publishing", "imf", "international monetary fund",
-    "undp", "unep", "unfccc", "iea", "irena", "adb", "asian development bank",
-    "african development bank", "inter-american development bank",
-    "european commission", "european investment bank",
-    "climate policy initiative", "overseas development institute",
-    "brookings institution", "chatham house", "wri", "world resources institute",
-    "cifor", "cgiar", "fao", "giz",
-    "springer", "elsevier", "wiley", "taylor & francis", "routledge",
-    "cambridge university press", "oxford university press", "mit press",
-    "palgrave macmillan", "edward elgar",
+    "world bank",
+    "oecd",
+    "oecd publishing",
+    "imf",
+    "international monetary fund",
+    "undp",
+    "unep",
+    "unfccc",
+    "iea",
+    "irena",
+    "adb",
+    "asian development bank",
+    "african development bank",
+    "inter-american development bank",
+    "european commission",
+    "european investment bank",
+    "climate policy initiative",
+    "overseas development institute",
+    "brookings institution",
+    "chatham house",
+    "wri",
+    "world resources institute",
+    "cifor",
+    "cgiar",
+    "fao",
+    "giz",
+    "springer",
+    "elsevier",
+    "wiley",
+    "taylor & francis",
+    "routledge",
+    "cambridge university press",
+    "oxford university press",
+    "mit press",
+    "palgrave macmillan",
+    "edward elgar",
 }
 
 # DOI prefixes that indicate specific types
@@ -53,27 +79,112 @@ BOOK_DOI_PATTERNS = {
 
 # Title patterns
 WORKING_PAPER_PATTERNS = [
-    r"\bworking paper\b", r"\bwp\s*#?\d+", r"\bdiscussion paper\b",
-    r"\bpolicy\s+research\s+working\s+paper\b", r"\bnber\b",
-    r"\bcepr\b", r"\bssrn\b",
+    r"\bworking paper\b",
+    r"\bwp\s*#?\d+",
+    r"\bdiscussion paper\b",
+    r"\bpolicy\s+research\s+working\s+paper\b",
+    r"\bnber\b",
+    r"\bcepr\b",
+    r"\bssrn\b",
 ]
 REPORT_TITLE_PATTERNS = [
-    r"\breport\b", r"\bcountry\s+climate\s+and\s+development\b",
-    r"\bworld\s+development\s+report\b", r"\bglobal\s+economic\s+prospects\b",
-    r"\bevaluation\b.*\bpaper\b", r"\broadmap\b", r"\bmarket\s+study\b",
-    r"\bguidelines?\b", r"\bhandbook\b",
+    r"\breport\b",
+    r"\bcountry\s+climate\s+and\s+development\b",
+    r"\bworld\s+development\s+report\b",
+    r"\bglobal\s+economic\s+prospects\b",
+    r"\bevaluation\b.*\bpaper\b",
+    r"\broadmap\b",
+    r"\bmarket\s+study\b",
+    r"\bguidelines?\b",
+    r"\bhandbook\b",
 ]
 BOOK_TITLE_PATTERNS = [
     r"^the\s+(economics|politics|political\s+economy)\s+of\b",
     r"\ba\s+(guide|companion|introduction)\s+to\b",
 ]
 CONFERENCE_PATTERNS = [
-    r"\bconference\b", r"\bproceedings\b", r"\bsymposium\b",
+    r"\bconference\b",
+    r"\bproceedings\b",
+    r"\bsymposium\b",
     r"\bworkshop\b",
 ]
 DISSERTATION_PATTERNS = [
-    r"\bdissertation\b", r"\bthesis\b", r"\bph\.?d\.?\b",
+    r"\bdissertation\b",
+    r"\bthesis\b",
+    r"\bph\.?d\.?\b",
 ]
+
+
+def _match_any(patterns, text, flags=re.IGNORECASE):
+    """Return True if any regex pattern matches text."""
+    return any(re.search(pat, text, flags) for pat in patterns)
+
+
+def _is_empty(value):
+    """Return True if a metadata field is missing / blank / NaN-like."""
+    return not value or value in ("nan", "none", "")
+
+
+def _classify_from_source(source, title, doi, journal):
+    """Source-based shortcuts (grey literature, teaching canon)."""
+    if "grey" in source:
+        return (
+            "working-paper" if _match_any(WORKING_PAPER_PATTERNS, title) else "report"
+        )
+    if "teaching" in source:
+        if _match_any(BOOK_DOI_PATTERNS, doi, flags=0):
+            return "book"
+        if _is_empty(journal):
+            return "book"
+    return None
+
+
+def _classify_from_doi(doi, title):
+    """DOI-prefix and DOI-pattern classification."""
+    doi_prefix = doi.split("/")[0] if "/" in doi else ""
+    if doi_prefix in REPORT_DOI_PREFIXES:
+        return (
+            "working-paper" if _match_any(WORKING_PAPER_PATTERNS, title) else "report"
+        )
+    if _match_any(BOOK_DOI_PATTERNS, doi, flags=0):
+        return "book"
+    return None
+
+
+def _classify_from_journal(journal, title):
+    """Journal-field analysis: publisher check, proceedings, real journal."""
+    if _is_empty(journal):
+        return None
+    # journal is already lowered+stripped by classify_type
+    if journal in PUBLISHERS_NOT_JOURNALS:
+        return (
+            "working-paper" if _match_any(WORKING_PAPER_PATTERNS, title) else "report"
+        )
+    if any(w in journal for w in ("proceedings", "conference", "symposium")):
+        return "conference-paper"
+    if "procedia" in journal:
+        return "conference-paper"
+    if len(journal) > 3:
+        return "article"
+    return None
+
+
+# Ordered list of (patterns, doc_type) for title-based fallback classification.
+_TITLE_RULES = [
+    (DISSERTATION_PATTERNS, "dissertation"),
+    (WORKING_PAPER_PATTERNS, "working-paper"),
+    (REPORT_TITLE_PATTERNS, "report"),
+    (CONFERENCE_PATTERNS, "conference-paper"),
+    (BOOK_TITLE_PATTERNS, "book"),
+]
+
+
+def _classify_from_title(title):
+    """Title-based classification when journal is absent."""
+    for patterns, doc_type in _TITLE_RULES:
+        if _match_any(patterns, title):
+            return doc_type
+    return None
 
 
 def classify_type(row):
@@ -84,71 +195,24 @@ def classify_type(row):
     source = str(row.get("source", "") or "").lower()
     abstract = str(row.get("abstract", "") or "")
 
-    # Source-based shortcuts
-    if "grey" in source:
-        # Check if it's a working paper or a report
-        for pat in WORKING_PAPER_PATTERNS:
-            if re.search(pat, title, re.IGNORECASE):
-                return "working-paper"
-        return "report"
+    result = _classify_from_source(source, title, doi, journal)
+    if result:
+        return result
 
-    if "teaching" in source:
-        # Teaching canon is mostly books and seminal articles
-        for pat in BOOK_DOI_PATTERNS:
-            if re.search(pat, doi):
-                return "book"
-        if not journal or journal in ("nan", "none", ""):
-            return "book"
+    result = _classify_from_doi(doi, title)
+    if result:
+        return result
 
-    # DOI-based classification
-    doi_prefix = doi.split("/")[0] if "/" in doi else ""
-    if doi_prefix in REPORT_DOI_PREFIXES:
-        for pat in WORKING_PAPER_PATTERNS:
-            if re.search(pat, title, re.IGNORECASE):
-                return "working-paper"
-        return "report"
-    for pat in BOOK_DOI_PATTERNS:
-        if re.search(pat, doi):
-            return "book"
+    result = _classify_from_journal(journal, title)
+    if result:
+        return result
 
-    # Journal field analysis
-    if journal and journal not in ("nan", "none", ""):
-        journal_clean = journal.strip().lower()
-        # Is it actually a publisher?
-        if journal_clean in PUBLISHERS_NOT_JOURNALS:
-            for pat in WORKING_PAPER_PATTERNS:
-                if re.search(pat, title, re.IGNORECASE):
-                    return "working-paper"
-            return "report"
-        # Conference proceedings journal names
-        if any(w in journal_clean for w in ["proceedings", "conference", "symposium"]):
-            return "conference-paper"
-        # Energy Procedia, Procedia, etc.
-        if "procedia" in journal_clean:
-            return "conference-paper"
-        # If journal looks like a real journal name, it's an article
-        if len(journal_clean) > 3:
-            return "article"
-
-    # Title-based classification (no journal match)
-    for pat in DISSERTATION_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "dissertation"
-    for pat in WORKING_PAPER_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "working-paper"
-    for pat in REPORT_TITLE_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "report"
-    for pat in CONFERENCE_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "conference-paper"
-    for pat in BOOK_TITLE_PATTERNS:
-        if re.search(pat, title, re.IGNORECASE):
-            return "book"
+    result = _classify_from_title(title)
+    if result:
+        return result
 
     # Fallback: if has a DOI and abstract, likely an article
-    if doi and doi not in ("nan", "none", "") and len(abstract) > 100:
+    if not _is_empty(doi) and len(abstract) > 100:
         return "article"
 
     return "other"
@@ -156,7 +220,9 @@ def classify_type(row):
 
 def main():
     parser = argparse.ArgumentParser(description="Detect and fix document types")
-    parser.add_argument("--apply", action="store_true", help="Write doc_type to refined_works.csv")
+    parser.add_argument(
+        "--apply", action="store_true", help="Write doc_type to refined_works.csv"
+    )
     args = parser.parse_args()
 
     path = os.path.join(CATALOGS_DIR, "refined_works.csv")
@@ -173,13 +239,22 @@ def main():
 
     # By source
     PRIMARY_SOURCES = [
-        "openalex", "openalex_historical", "istex", "bibcnrs",
-        "scispsace", "grey", "teaching",
+        "openalex",
+        "openalex_historical",
+        "istex",
+        "bibcnrs",
+        "scispsace",
+        "grey",
+        "teaching",
     ]
     log.info("=== Document type by source ===")
     for src in PRIMARY_SOURCES:
         from_col = f"from_{src}"
-        mask = df[from_col] == 1 if from_col in df.columns else df["source"].str.contains(src, na=False)
+        mask = (
+            df[from_col] == 1
+            if from_col in df.columns
+            else df["source"].str.contains(src, na=False)
+        )
         sub = df[mask]
         if len(sub) == 0:
             continue
@@ -193,9 +268,17 @@ def main():
     # Flag misleading journal entries
     is_publisher = df["journal"].str.lower().str.strip().isin(PUBLISHERS_NOT_JOURNALS)
     n_misleading = is_publisher.sum()
-    log.info("=== Misleading journal field (publisher name, not journal): %d ===", n_misleading)
+    log.info(
+        "=== Misleading journal field (publisher name, not journal): %d ===",
+        n_misleading,
+    )
     if n_misleading > 0:
-        log.info("\n%s", df[is_publisher][["title", "journal", "doc_type"]].head(10).to_string(max_colwidth=60))
+        log.info(
+            "\n%s",
+            df[is_publisher][["title", "journal", "doc_type"]]
+            .head(10)
+            .to_string(max_colwidth=60),
+        )
 
     # Save report
     report = df[["title", "journal", "source", "doc_type"]].copy()
@@ -206,7 +289,9 @@ def main():
         full_df = pd.read_csv(path)
         full_df["doc_type"] = df["doc_type"]
         # Clean misleading journal entries: move publisher to a note, clear journal
-        publisher_mask = full_df["journal"].str.lower().str.strip().isin(PUBLISHERS_NOT_JOURNALS)
+        publisher_mask = (
+            full_df["journal"].str.lower().str.strip().isin(PUBLISHERS_NOT_JOURNALS)
+        )
         full_df.loc[publisher_mask, "journal"] = ""
         full_df.to_csv(path, index=False)
         log.info("Updated %s with doc_type column and cleaned journal field", path)
