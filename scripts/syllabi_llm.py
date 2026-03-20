@@ -31,6 +31,9 @@ def llm_call(prompt, api_key, model="google/gemma-2-27b-it", max_tokens=2000):
 
 def _llm_call_ollama(prompt, model, max_tokens):
     """Call local Ollama server (OpenAI-compatible API)."""
+    # Disable chain-of-thought for Qwen3.5 to reduce latency
+    if "qwen" in model.lower():
+        prompt = "/no_think\n" + prompt
     body = json.dumps({
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
