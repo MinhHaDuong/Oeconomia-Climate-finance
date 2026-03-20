@@ -163,14 +163,9 @@ An independent LLM audit (`google/gemma-2-27b-it` via OpenRouter) on a stratifie
 
 ### Coverage analysis
 
-The {{< meta corpus_sources >}}-source design provides complementary coverage:
+The {{< meta corpus_sources >}}-source design provides complementary coverage (@tbl-sources). OpenAlex dominates in volume but the smaller sources contribute unique records absent from academic databases: bibCNRS adds 202 non-English works, grey literature provides 88 institutional reports, and the teaching canon contributes 16 pedagogical references. ISTEX's 4 records all survived refinement---3 were independently discovered by OpenAlex, confirming cross-source consistency. ISBN coverage is not reported because the corpus metadata does not include ISBNs; book-chapter identification relies on DOI and work-type fields instead.
 
-- **OpenAlex** provides the broadest English-language academic coverage via tiered keyword queries
-- **Semantic Scholar** complements OpenAlex with arXiv preprints, dissertations, and working papers
-- **ISTEX** captures French-language literature from the national archive
-- **bibCNRS** adds non-English academic literature (Chinese, Japanese, German) via WoS/EconLit/FRANCIS
-- **SciSpace** contributes AI-curated seed papers from its systematic review tool
-- **Grey literature** includes institutional reports (OECD, UNFCCC, World Bank, CPI) that are central to the field but absent from academic databases
+{{< include _includes/tab_corpus_sources.md >}}
 
 ### Embedding quality
 
