@@ -76,6 +76,7 @@ The agent must always know and declare its current DD phase.
 | review-pr | Reviewing a pull request (code) | `runbooks/review-pr.md` |
 | review-pr-prose | Reviewing a pull request (prose/manuscript) | `runbooks/review-pr-prose.md` |
 | memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
+| overnight | Unsupervised overnight session (via end-session) | `runbooks/overnight-exploration.md` |
 
 ## Git discipline
 
