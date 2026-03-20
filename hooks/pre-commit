@@ -23,22 +23,21 @@ if [ -n "$secrets" ]; then
 fi
 
 # 4. No large files (>500KB), except uv.lock (grows with CUDA wheel metadata)
-large=""
-for file in $(git diff --cached --name-only --diff-filter=d); do
+large=$(git diff --cached --name-only --diff-filter=d | while IFS= read -r file; do
     case "$file" in uv.lock) continue ;; esac
     size=$(wc -c < "$file" 2>/dev/null || echo 0)
     if [ "$size" -gt 512000 ]; then
-        large="$large  $file ($(( size / 1024 ))KB)\n"
+        printf '  %s (%dKB)\n' "$file" "$(( size / 1024 ))"
     fi
-done
+done)
 if [ -n "$large" ]; then
     echo "ERROR: Large files staged (>500KB):" >&2
-    printf '%s' "$large" >&2
+    echo "$large" >&2
     exit 1
 fi
 
 # 5. No conflict markers
-conflicts=$(git diff --cached --name-only | xargs grep -l '^<<<<<<<\|^>>>>>>>\|^=======$' 2>/dev/null || true)
+conflicts=$(git diff --cached --name-only -z | xargs -0 grep -l '^<<<<<<<\|^>>>>>>>\|^=======$' 2>/dev/null || true)
 if [ -n "$conflicts" ]; then
     echo "ERROR: Unresolved merge conflict markers in:" >&2
     echo "$conflicts" >&2
