@@ -23,56 +23,36 @@ Archive outputs must remain bit-identical on any code-change PR.
 Verify: make archive-analysis && make -C /tmp/climate-finance-analysis verify
 ```
 
+## Balance rule
+
+**Deliverable work gets at least 60% of the session's effort.** Tooling
+(red tests, hygiene, refactoring) is capped at 40%. If you've spent two
+consecutive tickets on tooling, the next ticket must advance a deliverable.
+Track this in the overnight log (step 5).
+
+**What counts as a deliverable:** items listed in `ROADMAP.md` under the
+current milestone — papers, slides, reading notes, figures, responses to
+reviewers. Braindumps about tooling, harness improvements, and repo hygiene
+are explicitly NOT deliverables. They are tooling.
+
+**Escape hatch:** if `make check-fast` fails and the failure blocks all
+deliverable work (build broken, render broken, data pipeline broken), tooling
+may exceed 40%. Document the blocker in the overnight log with: (a) what
+broke, (b) why it blocks deliverables, (c) what deliverable-forward work
+you attempted anyway.
+
 ## Procedure
 
 ### 0. Bootstrap
 
 Run `on-start.md` trigger. Then read all territory files listed in the prompt.
 
-### 1. Full ticket lifecycle
+### 1. Forward on the next deliverable
 
-Don't just open tickets — work them through the complete cycle:
-
-1. **Dream**: understand the problem, explore alternatives.
-2. **Plan**: write ticket with test spec.
-3. **Do**: TDD in a worktree (red → green → refactor → PR).
-4. **Self-review**: launch a review agent in a fresh worktree (`runbooks/review-pr.md`).
-5. **Fix**: address review findings, push fixes.
-6. **PR**: open for morning review.
-
-Parallelize independent tickets across worktrees.
-
-### 2. Recursive braindump
-
-When you finish working the ideas in existing braindumps:
-
-1. Write a new braindump (`docs/braindump-YYYY-MM-DD-topic.md`) reflecting what you
-   learned, what new ideas emerged, and what surprised you.
-2. Commit it on a branch.
-3. Work the new braindump's actionable ideas.
-4. Loop until ideas dry up or all ideas are post-submission/blocked.
-
-Each braindump is dated and committed — they form a trail of the exploration.
-
-### 3. Competing explorations (up to 3)
-
-For strategic choices (which journal? which framing? which structure?),
-explore up to 3 approaches in parallel worktrees:
-
-- Branch naming: `explore/A-short-desc`, `explore/B-short-desc`, `explore/C-short-desc`
-- Each gets its own PR with a clear thesis statement in the description.
-- Morning review picks the winner; losers become reference material.
-
-This applies to code (competing refactoring approaches) and prose
-(competing paper framings, journal targets, outlines).
-
-### 4. Forward on the next deliverable
+Do this first, while context is fresh.
 
 The overnight session must push forward on what matters most — the next
-paper, not just code tooling. Tooling work (red tests, hygiene) is valid
-but should not consume the entire session.
-
-For a paper deliverable, the full cycle:
+paper, slides, or reading notes. For a paper deliverable, the full cycle:
 
 1. **Analyze findings**: what research outputs are available?
    Read scripts, figures, tables, stats. What story do they tell?
@@ -99,17 +79,79 @@ For a paper deliverable, the full cycle:
 
 8. **Iterate**: cycle through steps 5-7, refining.
 
-Run up to 3 journal targets in parallel (competing PRs per step 3 above).
+Run up to 3 journal targets in parallel (competing PRs per step 3 below).
+
+### 2. Tooling tickets (capped)
+
+Fix red tests, hygiene issues, and technical debt — but only within the
+40% budget. Work them through the full lifecycle:
+
+1. **Dream**: understand the problem, explore alternatives.
+2. **Plan**: write ticket with test spec.
+3. **Do**: TDD in a worktree (red → green → refactor → PR).
+4. **Self-review**: launch a review agent in a fresh worktree (`runbooks/review-pr.md`).
+5. **Fix**: address review findings, push fixes.
+6. **PR**: open for morning review.
+
+Parallelize independent tickets across worktrees.
+
+### 3. Competing explorations (up to 3)
+
+For strategic choices (which journal? which framing? which structure?),
+explore up to 3 approaches in parallel worktrees:
+
+- Branch naming: `t{N}-explore-A-desc`, `t{N}-explore-B-desc`, `t{N}-explore-C-desc`
+- Each gets its own PR with a clear thesis statement in the description.
+- Morning review picks the winner; losers become reference material.
+
+This applies to code (competing refactoring approaches) and prose
+(competing paper framings, journal targets, outlines).
+
+### 4. Recursive braindump
+
+When you finish working the current ideas:
+
+1. Write a new braindump (`docs/braindump-YYYY-MM-DD-topic.md`) reflecting what you
+   learned, what new ideas emerged, and what surprised you.
+2. Commit it on a branch.
+3. Work the new braindump's actionable ideas — but only if they advance
+   a deliverable (not more tooling, unless within the 40% budget).
+4. Loop until ideas dry up or all ideas are post-submission/blocked.
+
+Each braindump is dated and committed — they form a trail of the exploration.
 
 ### 5. Keep reflection notes
 
-Write `docs/overnight-log-YYYY-MM-DD.md` on a branch throughout the session:
+Write `docs/overnight-log-YYYY-MM-DD.md` on a branch throughout the session.
 
+Include a balance summary table:
+
+```
+| Category | Tickets | Approx % |
+|----------|---------|----------|
+| Deliverable (paper/slides/reading) | #N, #M | 65% |
+| Tooling (tests/hygiene/refactor) | #P, #Q | 30% |
+| Meta (braindumps/planning) | #R | 5% |
+```
+
+If Tooling exceeds 40%, explain why in the "Decisions made" section.
+
+Also include:
 - Decisions made and alternatives considered
 - What worked, what didn't, what surprised you
 - Feedback memories saved during the session
 - Open questions for the author
-- Time allocation: how much went to tooling vs. deliverables?
+
+### Mid-session checkpoint
+
+After roughly half of available effort, pause and check:
+
+- [ ] Have I opened at least one deliverable-forward PR?
+- [ ] Is my tooling/deliverable ratio within bounds?
+- [ ] Have I self-reviewed at least one PR?
+- [ ] Have I written or updated the overnight log?
+
+If any box is unchecked, pause tooling and address it.
 
 ### 6. Wrap up
 
@@ -123,7 +165,7 @@ Before the session ends:
 ## Invariants
 
 - **Never merge to main.** All changes as PRs.
-- **Archive bit-identical.** Verify on any code-change PR.
+- **Archive bit-identical.** Verify: `make archive-analysis && make -C /tmp/climate-finance-analysis verify`
 - **One ticket per worktree.** Independent work stays independent.
 - **Commit messages explain why.** Overnight work must be reviewable.
 - **No long-running tasks.** Don't launch `make` or API calls that run for hours.
