@@ -170,7 +170,7 @@ Rationale:
 
 ### Design decisions
 
-- **Random short IDs, not sequential** — sequential counters require a central authority. A 7-char random hex (`secrets.token_hex(4)[:7]`) is unique enough at <200 tickets and simpler than content-addressable hashing.
+- **Semantic slug IDs, not sequential or random hex** — the ID is the initials of a freely chosen semantic slug. The slug relates to the ticket's purpose but is not a mechanical derivation of the title. Example: slug `auth-flow-gates` → ID `afg`. If the ID collides with an existing local ticket, append `2`, `3`, etc. (`afg2`). Collisions are accepted — they're rare at project scale and the suffix handles them. No counter file, no hash, no ceremony.
 - **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history (merge-safe). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and >200 tickets, simultaneous edits to the same ticket are rare.
 - **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
 - **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
@@ -225,7 +225,7 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 
 | Header | Required | Description |
 |--------|----------|-------------|
-| `Id` | yes | 7-char random hex identifier |
+| `Id` | yes | Initials of the semantic slug (e.g., `afg` from `auth-flow-gates`) |
 | `Title` | yes | Short description |
 | `Author` | yes | Creator |
 | `Status` | yes | Current state (open, doing, closed, …) |
@@ -260,31 +260,31 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 
 ### Naming convention
 
-Ticket files are named `{id}-{slug}.ticket` (e.g., `a3b8f2c-add-auth-flow.ticket`). The `.ticket` extension avoids triggering Markdown linters on non-Markdown content; editors can associate `*.ticket` with Markdown mode for body-section highlighting. The ID is a random 7-char hex for uniqueness. The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
+Ticket files are named `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is a freely chosen semantic name — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. If the ID collides locally, append a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters on non-Markdown content; editors can associate `*.ticket` with Markdown mode for body-section highlighting. Branches follow the same pattern: `t/afg-auth-flow-gates`.
 
 ### Examples
 
 **Development ticket:**
 
 ```
-Id: a3b8f2c
+Id: afg
 Title: Add authentication flow
 Author: minh
 Status: open
 Created: 2026-03-21
 Coordination: local
 Assigned-to: agent-x
-Blocked-by: c7d9e1
-Blocked-by: f4a2b8
-X-Discovered-from: 9e1c3d
+Blocked-by: cm
+Blocked-by: fds
+X-Discovered-from: prt
 X-Phase: dreaming
 
 --- log ---
 2026-03-21T10:00Z created
 2026-03-21T11:30Z status open
 2026-03-21T14:00Z phase dreaming
-2026-03-22T09:00Z blocked-by + c7d9e1
-2026-03-22T09:00Z blocked-by + f4a2b8
+2026-03-22T09:00Z blocked-by + cm
+2026-03-22T09:00Z blocked-by + fds
 
 --- body ---
 Free-form description goes here.
@@ -294,7 +294,7 @@ Markdown OK.
 **Peer review comment (future extension):**
 
 ```
-Id: r1c03a7
+Id: cmcd
 Title: R1.3 — Clarify methodology for COP funding data
 Author: reviewer-1
 Status: pending
@@ -315,7 +315,7 @@ mix both without explanation.
 
 --- response ---
 Added paragraph in §3.2 distinguishing pledges from disbursements.
-Table 3 now has separate columns. See commit a3b8f2c.
+Table 3 now has separate columns. See commit abc1234.
 ```
 
 Peer review tickets add `X-` extension headers (`X-Review-round`, `X-Comment-number`, `X-Section`, `X-Page`) and a `--- response ---` section. The reviewer's words stay untouched in the body; the author's point-by-point reply goes in response.
@@ -331,8 +331,8 @@ grep -l "^Status: open" tickets/*.ticket
 # Tickets in doing phase
 grep -l "^X-Phase: doing" tickets/*.ticket
 
-# What blocks ticket a3b8f2c?
-grep "^Blocked-by:" tickets/a3b8f2c-*.ticket | cut -d' ' -f2
+# What blocks ticket afg?
+grep "^Blocked-by:" tickets/afg-*.ticket | cut -d' ' -f2
 
 # Tickets with no blockers
 grep -rL "^Blocked-by:" tickets/*.ticket
@@ -344,7 +344,7 @@ ls tickets/ | cut -d- -f1
 grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
 
 # History of a ticket
-sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.ticket
+sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/afg-*.ticket
 ```
 
 The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.

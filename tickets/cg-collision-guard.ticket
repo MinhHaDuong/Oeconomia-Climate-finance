@@ -1,7 +1,7 @@
-Id: dbf8dae
+Id: cg
 Title: Specify ID collision detection and handling
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-21
 Coordination: local
 X-Discovered-from: gh#237
@@ -10,6 +10,7 @@ X-Phase: planning
 --- log ---
 2026-03-21T12:00Z created
 2026-03-21T12:00Z status open
+2026-03-21T18:00Z status closed — superseded by semantic-slug naming (suffix handles collisions)
 
 --- body ---
 Distributed systems + DevOps review: 7-char hex has ~0.007%
