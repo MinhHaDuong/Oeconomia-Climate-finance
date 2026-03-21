@@ -127,19 +127,26 @@ Rationale:
 
 ### File format
 
-RFC 822 style headers (like email), not YAML — designed so most queries are bash one-liners with standard Unix tools.
+**Why RFC 822?** A ticket is a conversation — someone raises an issue, others respond, status evolves over time. Email solved this format problem decades ago: structured headers for metadata, free-form body for content, append-only threading for history. RFC 822 headers (`Key: Value` lines) are the natural format for this, and the same format Python chose for PEPs (PEP 1 specifies RFC 822 headers for the same reasons: greppable, human-readable, tool-friendly).
+
+Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose with Unix pipes. RFC 822 headers work with bare `grep` and `cut`.
+
+Headers appear in this order (like PEP 1). Fields marked * are optional.
 
 ```
 Id: a3b8f2c
 Title: Add authentication flow
+Author: minh
 Status: open
 Phase: dreaming
-Created: 2026-03-21
-Author: minh
 Coordination: local
-Blocked-by: c7d9e1
-Blocked-by: f4a2b8
-Discovered-from: 9e1c3d
+Created: 2026-03-21
+Gh-issue: #247*
+Assigned-to: agent-x*
+Blocked-by: c7d9e1*
+Blocked-by: f4a2b8*
+Discovered-from: 9e1c3d*
+Supersedes: b4e7d2a*
 
 --- log ---
 2026-03-21T10:00Z created
@@ -181,6 +188,26 @@ sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.md
 ```
 
 The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.
+
+### Migration from GitHub Issues
+
+Existing GitHub issues become local ticket files via a one-time migration script:
+
+1. `gh issue list --json number,title,state,body,assignees,labels,createdAt` dumps all issues.
+2. For each issue, generate a ticket file: hash the content, extract fields into RFC 822 headers, body becomes the `--- body ---` section.
+3. Map GitHub fields: `state` → `Status`, `labels` → one header per label, `assignees` → `Assigned-to`, `number` → `Gh-issue: #N` (preserves the reference, not used as ID).
+4. Close GitHub issues with a comment linking to the local ticket file, or keep them open as mirrors — author's choice.
+
+The `Gh-issue:` header maintains the link. A `Coordination: gh#N` ticket is just a local ticket that happens to also exist on GitHub. The local file is the source of truth; GitHub is the coordination channel.
+
+### GitHub compatibility
+
+The system is gh-optional, not gh-hostile:
+
+- **Big tickets** use GitHub for coordination (`Coordination: gh#N`). The GitHub issue is real — it has an assignee, comments, and visibility to external collaborators.
+- **Small tickets** are local-only. GitHub never sees them. No noise in the issue tracker.
+- **PRs still go through GitHub.** The code review workflow is unchanged. Ticket state changes travel with the PR branch.
+- **`gh` CLI is available but not required.** Agents that can't reach GitHub still work on `local` tickets. Offline-first by default, online when it matters.
 
 ### Naming convention
 
