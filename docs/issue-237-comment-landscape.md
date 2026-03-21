@@ -116,13 +116,13 @@ Storing a database file (SQLite, Dolt) inside git has fundamental problems:
 **Build custom skills wrapping plain markdown files** — the approach sketched in the overnight runbook (option B: YAML frontmatter with status tracking).
 
 Rationale:
-- **Zero dependencies** beyond Claude Code itself (skills can call compiled Rust tooling for performance-critical operations like dependency graph traversal)
+- **Zero dependencies** beyond Claude Code and Python (already in the project)
 - **Free worktree sync** via git (tickets are just files)
 - **Append-only logs** for conflict resolution — ticket files are append-only event streams (like git-bug's operation-based model). No in-place mutation of fields. Status changes, reassignments, and comments are appended as timestamped entries. Git merges appended lines cleanly; concurrent edits to the same ticket don't conflict.
 - **PR-compatible** — ticket state changes travel with code changes
 - **Dragon Dreaming phases** encoded in frontmatter (no tool supports this natively)
-- **Dependency tracking** via frontmatter fields (`blocked_by: [a3b8f2, c7d9e1]`) — parse with a Rust CLI or let the agent read YAML directly
-- **`ready` computation** — a skill (backed by Rust CLI in `tools/`) that parses frontmatter, walks the dependency graph, and returns tickets whose blockers are all closed. Fast at any scale, inspectable, no magic.
+- **Dependency tracking** via frontmatter fields (`blocked_by: [a3b8f2, c7d9e1]`) — parse with Python or let the agent read YAML directly
+- **`ready` computation** — a Python skill that parses frontmatter, walks the dependency graph, and returns tickets whose blockers are all closed. Simple, inspectable, no magic.
 - **Schema validation** — a pre-commit check validates that ticket frontmatter contains required fields (`id`, `title`, `status`, `created`) and that `blocked_by` references exist. Prevents schema drift over time.
 
 ### Naming convention
@@ -133,7 +133,7 @@ Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). Th
 
 - **Hash-based IDs, not sequential** — sequential counters require a central authority, which breaks under distributed/parallel creation. Short hash prefixes (like git) for usability.
 - **Append-only, not mutable** — avoids merge conflicts on concurrent edits. Current state is derived by replaying the log. Trade-off: slightly larger files, but tickets rarely exceed a few KB.
-- **Rust tooling for skills** — skills are shell commands, so they can call any binary. A compiled Rust CLI for `ready`/`validate` keeps queries fast without runtime dependencies. Compile once, check into `tools/` or install via `cargo install`.
+- **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
 
 Steal the good ideas from Beads and tk:
 - `blocked_by` / `discovered_from` / `supersedes` link types in frontmatter
