@@ -1,0 +1,32 @@
+Id: dg8e3b6
+Title: Add missing examples: closed ticket, forge#N, conflict replay, response separator
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+Blocked-by: d7c4f2e
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+PEP/structure review: the Specification examples section has gaps.
+
+Missing examples:
+1. **Closed ticket** — `ready` computation depends on identifying
+   closed blockers. Show `Status: closed` and the log entry for
+   closing.
+2. **forge#N ticket** — the two-tier contention policy is a major
+   design feature but has no example. Show `Coordination: gh#42`,
+   `Forge-issue: gh#42`, `Assigned-to: agent-x`.
+3. **Conflict + replay scenario** — the key merge-safety claim has
+   no worked example. Show a header conflict and how the log helps
+   resolve it. (Scoped by d7c4f2e — depends on whether we formalize
+   replay or drop to manual resolution.)
+4. **`--- response ---` separator** — appears in the peer review
+   example but is never specified in the format description. Either
+   add it to the spec (enumerate valid separators) or define a
+   general `--- word ---` extension pattern.

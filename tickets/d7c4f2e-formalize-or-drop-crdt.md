@@ -1,0 +1,35 @@
+Id: d7c4f2e
+Title: Formalize log replay as CRDT or drop the claim
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+Blocked-by: d1a3f7c
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+Distributed systems review: "replay log to reconstruct header" is
+an implicit CRDT without the formalism. Missing:
+
+1. Operation grammar (is `status open` absolute or transitional?
+   what does `blocked-by + id` vs `blocked-by - id` mean?)
+2. Commutativity rules (concurrent `status doing` and `status closed`
+   — which wins?)
+3. Idempotency (same log entry appears on both sides of a merge)
+4. Ordering (wall clocks are insufficient — see d8a1b3f)
+
+Two options:
+A. Formalize: define operation types, Lamport timestamps, merge rules.
+   Proper but heavy for this scale.
+B. Drop the claim: header is source of truth, manual conflict
+   resolution when it conflicts. Honest and sufficient at <5 agents.
+
+Recommendation: option B now, design space for A later. Change the
+doc to say: "The log provides audit history. If the header conflicts
+during merge, resolve manually — the log helps you understand what
+happened. At this scale, that's a rare, fast operation."
