@@ -168,7 +168,13 @@ Free-form description goes here.
 Markdown OK.
 ```
 
-**Structure:** mutable header (greppable current state) + append-only log (merge-safe history) + free-form body. If the header conflicts on merge, replay the log to reconstruct. The log only appends lines, so git merges it cleanly.
+**Structure:** three sections separated by marker lines:
+
+1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
+2. **Log** (after `--- log ---`) — append-only timestamped events. Merge-safe history. Source of truth if header conflicts.
+3. **Body** (after `--- body ---`) — free-form markdown description.
+
+**Separator collision:** what if the body contains a literal `--- log ---` or `--- body ---`? The parser uses only the *first* occurrence of each separator, scanning top-down. Since headers come first (terminated by blank line), then log, then body — and body is always last — a `--- body ---` string inside the body text is harmless (the parser already found the real one). A `--- log ---` inside the body is also safe because it appears after `--- body ---`. In practice, these strings are unlikely to appear in ticket descriptions. If paranoia demands it, switch to a more distinctive separator like `════ log ════`, but start simple.
 
 **One-liner examples** (Unix philosophy — each query is a pipeline):
 
@@ -201,10 +207,11 @@ The only query that needs Python is `ready` (open tickets where all `Blocked-by`
 
 Existing GitHub issues become local ticket files via a one-time migration script:
 
-1. `gh issue list --json number,title,state,body,assignees,labels,createdAt` dumps all issues.
-2. For each issue, generate a ticket file: hash the content, extract fields into RFC 822 headers, body becomes the `--- body ---` section.
+1. `gh issue list --json number,title,state,body,assignees,labels,createdAt` dumps all issues as JSON.
+2. JSON → RFC 822 is trivial — just flatten key-value pairs into `Key: Value\n` lines. A `jq` one-liner or a few lines of Python. No special converter needed.
 3. Map GitHub fields: `state` → `Status`, `labels` → one header per label, `assignees` → `Assigned-to`, `number` → `Gh-issue: #N` (preserves the reference, not used as ID).
-4. Close GitHub issues with a comment linking to the local ticket file, or keep them open as mirrors — author's choice.
+4. The hard part isn't format conversion — it's deciding which issues to migrate and how to map GitHub labels/milestones to local fields.
+5. Close GitHub issues with a comment linking to the local ticket file, or keep them open as mirrors — author's choice.
 
 The `Gh-issue:` header maintains the link. A `Coordination: gh#N` ticket is just a local ticket that happens to also exist on GitHub. The local file is the source of truth; GitHub is the coordination channel.
 
