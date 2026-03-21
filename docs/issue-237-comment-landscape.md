@@ -262,6 +262,11 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 
 Ticket files are named `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is a freely chosen semantic name — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. If the ID collides locally, append a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters on non-Markdown content; editors can associate `*.ticket` with Markdown mode for body-section highlighting. Branches follow the same pattern: `t/afg-auth-flow-gates`.
 
+**Uniqueness enforcement** — two layers:
+
+1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append the next available numeric suffix.
+2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject if any ID appears more than once. This catches the merge/rebase case — two branches independently create tickets with the same initials, git merges the files cleanly (different filenames), but duplicate IDs slip through. The validator is the safety net.
+
 ### Examples
 
 **Development ticket:**
