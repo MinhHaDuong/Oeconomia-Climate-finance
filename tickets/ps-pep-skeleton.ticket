@@ -1,12 +1,12 @@
-Id: ad80b5b
+Id: ps
 Title: Add missing PEP sections: Backwards Compat, Security, Reference Impl
 Author: claude
 Status: open
 Created: 2026-03-21
 Coordination: local
-Blocked-by: f15eb48
-Blocked-by: 1d4c4dc
-Blocked-by: cbe27df
+Blocked-by: wf
+Blocked-by: wf2
+Blocked-by: rg
 X-Discovered-from: gh#237
 X-Phase: planning
 
@@ -26,4 +26,4 @@ PEP/structure review: missing standard PEP sections.
    implement the system, or a stub "to be implemented" note.
 
 Each is short. Can be done in one pass after the structural
-reorganization (f15eb48, 1d4c4dc, cbe27df).
+reorganization (wf, wf2, rg).

@@ -1,4 +1,4 @@
-Id: 7687a43
+Id: hms
 Title: Specify merge resolution strategy for ticket header conflicts
 Author: claude
 Status: open
@@ -23,4 +23,4 @@ Options:
    this scale (<5 agents, <200 tickets)
 
 Option 3 is the honest minimum. Option 1 is the proper solution if
-we later formalize the log as a CRDT (see 6a9c68c).
+we later formalize the log as a CRDT (see lss).

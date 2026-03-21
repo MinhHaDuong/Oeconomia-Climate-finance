@@ -1,10 +1,10 @@
-Id: d9101a1
+Id: eg
 Title: Add missing examples: closed ticket, forge#N, conflict replay, response separator
 Author: claude
 Status: open
 Created: 2026-03-21
 Coordination: local
-Blocked-by: 6274ce1
+Blocked-by: con
 X-Discovered-from: gh#237
 X-Phase: planning
 
@@ -24,7 +24,7 @@ Missing examples:
    `Forge-issue: gh#42`, `Assigned-to: agent-x`.
 3. **Conflict + replay scenario** — the key merge-safety claim has
    no worked example. Show a header conflict and how the log helps
-   resolve it. (Scoped by 6274ce1 — depends on whether we formalize
+   resolve it. (Scoped by con — depends on whether we formalize
    replay or drop to manual resolution.)
 4. **`--- response ---` separator** — appears in the peer review
    example but is never specified in the format description. Either
