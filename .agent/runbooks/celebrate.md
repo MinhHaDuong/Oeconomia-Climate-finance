@@ -16,7 +16,13 @@ Run this sequence after completing a task. Do not skip steps.
 7. **Merge to main**: feature work goes through a PR in the ticket system. Chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
 8. **Push** and **clean up**: delete local and remote branch.
 9. **Close** the ticket if still open.
-10. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed
+10. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed:
+    ```bash
+    # Local tickets:
+    grep -l "^X-Parent: <PARENT_ID>" tickets/*.ticket | xargs grep "^Status:" | grep -v closed
+    # Forge tickets:
+    gh issue view <PARENT> --json subIssues
+    ```
     - If any sibling is still open: do nothing — tracker stays open.
     - If all siblings are now closed, run integration review on the tracking ticket:
       1. Re-read all child PR diffs: for each child, find the PR with `gh pr list --search "closes:#<child>"`, then read it with `gh pr diff <PR#>`.

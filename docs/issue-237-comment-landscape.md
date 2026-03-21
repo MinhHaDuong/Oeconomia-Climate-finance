@@ -241,7 +241,8 @@ When `Coordination:` references a forge issue, add a `Forge-issue:` header with 
 | Header | Domain | Description |
 |--------|--------|-------------|
 | `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
-| `X-Discovered-from` | provenance | ID of parent ticket |
+| `X-Parent` | hierarchy | ID of parent ticket (sub-issue relationship) |
+| `X-Discovered-from` | provenance | ID of ticket that led to discovering this one |
 | `X-Supersedes` | provenance | ID of replaced ticket |
 | `X-Review-round` | peer review (future) | R1, R2, R3 |
 | `X-Comment-number` | peer review (future) | Reviewer's comment number |
