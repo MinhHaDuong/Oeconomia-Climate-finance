@@ -264,8 +264,8 @@ Ticket files are named `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`)
 
 **Uniqueness enforcement** — two layers:
 
-1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append the next available numeric suffix.
-2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject if any ID appears more than once. The error message reports the next available suffix (e.g., `"duplicate Id 'wf' — next available: wf3"`). The validator cannot auto-fix because renaming an ID requires updating cross-references (`Blocked-by:`, body text) across multiple files. This catches the merge/rebase case — two branches independently pick the same initials, git merges cleanly (different filenames), but duplicate IDs slip through.
+1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append the next available numeric suffix. Best-effort — concurrent agents can race past this check.
+2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject if any ID appears more than once. The error message reports the next available suffix (e.g., `"duplicate Id 'wf' — next available: wf3"`). The validator cannot auto-fix because renaming an ID requires updating cross-references (`Blocked-by:`, body text) across multiple files. This catches both the merge/rebase case and the concurrent-creation race.
 
 ### Examples
 
