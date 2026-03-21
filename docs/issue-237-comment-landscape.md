@@ -139,9 +139,35 @@ Rationale:
 
 Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose with Unix pipes. RFC 822 headers work with bare `grep` and `cut`.
 
-**The header set is open** — like email and HTTP, any `Key: Value` line is valid. A small set of headers is required (`Id`, `Title`, `Status`, `Created`), but projects add domain-specific headers freely. The schema validates required fields; unknown headers are passed through, not rejected. This means the same format works for development tickets, peer review comments, and use cases we haven't imagined yet.
+**The header set is open**, following RFC 822 conventions: a set of standard headers that core tools understand, and `X-` extension headers for domain-specific metadata. The validator type-checks standard headers and passes `X-` headers through untouched. This means the same format works for development tickets, peer review comments, and use cases we haven't imagined yet — without schema changes.
 
-Required headers appear first (like PEP 1). Everything else is optional and domain-specific.
+**Standard headers** (core tools know these):
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Id` | yes | Content-addressable hash |
+| `Title` | yes | Short description |
+| `Author` | yes | Creator |
+| `Status` | yes | Current state (open, doing, closed, …) |
+| `Created` | yes | ISO date |
+| `Coordination` | no | `local` (default) or `gh#N` |
+| `Assigned-to` | no | Agent or person owning the work |
+| `Gh-issue` | no | Link to GitHub issue `#N` |
+| `Blocked-by` | no | Hash of blocking ticket (repeatable) |
+| `Discovered-from` | no | Hash of parent ticket |
+| `Supersedes` | no | Hash of replaced ticket |
+
+**X- extension headers** (domain-specific, ignored by core tools):
+
+| Header | Domain | Description |
+|--------|--------|-------------|
+| `X-Review-round` | peer review | R1, R2, R3 |
+| `X-Comment-number` | peer review | Reviewer's comment number |
+| `X-Section` | peer review | Manuscript section reference |
+| `X-Page` | peer review | Page number |
+| `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
+
+Projects add `X-` headers freely. If an extension proves universally useful, promote it to standard (drop the `X-` prefix).
 
 **Example — development ticket:**
 
@@ -150,15 +176,14 @@ Id: a3b8f2c
 Title: Add authentication flow
 Author: minh
 Status: open
-Phase: dreaming
-Coordination: local
 Created: 2026-03-21
-Gh-issue: #247
+Coordination: local
 Assigned-to: agent-x
 Blocked-by: c7d9e1
 Blocked-by: f4a2b8
 Discovered-from: 9e1c3d
-Supersedes: b4e7d2a
+Gh-issue: #247
+X-Phase: dreaming
 
 --- log ---
 2026-03-21T10:00Z created
@@ -180,10 +205,10 @@ Title: R1.3 — Clarify methodology for COP funding data
 Author: reviewer-1
 Status: pending
 Created: 2026-03-21
-Review-round: R1
-Comment-number: 3
-Section: 3.2
-Page: 12
+X-Review-round: R1
+X-Comment-number: 3
+X-Section: 3.2
+X-Page: 12
 
 --- log ---
 2026-03-21T10:00Z created
@@ -199,7 +224,7 @@ Added paragraph in §3.2 distinguishing pledges from disbursements.
 Table 3 now has separate columns. See commit a3b8f2c.
 ```
 
-Peer review tickets add domain-specific headers (`Review-round`, `Comment-number`, `Section`, `Page`) and a `--- response ---` section. The reviewer's words stay untouched in the body; the author's point-by-point reply goes in response.
+Peer review tickets add `X-` extension headers (`X-Review-round`, `X-Comment-number`, `X-Section`, `X-Page`) and a `--- response ---` section. The reviewer's words stay untouched in the body; the author's point-by-point reply goes in response.
 
 **One-liners for peer review:**
 
@@ -208,11 +233,11 @@ Peer review tickets add domain-specific headers (`Review-round`, `Comment-number
 grep -l "^Status: pending" tickets/r1c*.md
 
 # All comments about section 3
-grep -l "^Section: 3" tickets/r1c*.md
+grep -l "^X-Section: 3" tickets/r1c*.md
 
 # Generate response document (all R1 comments + responses, in order)
-for f in $(grep -l "^Review-round: R1" tickets/*.md | sort); do
-  grep "^Comment-number:" "$f"
+for f in $(grep -l "^X-Review-round: R1" tickets/*.md | sort); do
+  grep "^X-Comment-number:" "$f"
   sed -n '/^--- body ---$/,/^--- response ---$/p' "$f"
   sed -n '/^--- response ---$/,$p' "$f"
   echo
@@ -234,7 +259,7 @@ done
 grep -l "^Status: open" tickets/*.md
 
 # Tickets in doing phase
-grep -l "^Phase: doing" tickets/*.md
+grep -l "^X-Phase: doing" tickets/*.md
 
 # What blocks ticket a3b8f2c?
 grep "^Blocked-by:" tickets/a3b8f2c-*.md | cut -d' ' -f2
