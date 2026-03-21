@@ -136,6 +136,7 @@ Status: open
 Phase: dreaming
 Created: 2026-03-21
 Author: minh
+Coordination: local
 Blocked-by: c7d9e1
 Blocked-by: f4a2b8
 Discovered-from: 9e1c3d
@@ -192,6 +193,10 @@ Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). Th
 - **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
 - **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
 - **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
+- **Two-tier contention policy** — the `Coordination:` header field controls how agents claim work:
+  - **`Coordination: local`** (default) — no coordination protocol. Any agent can start working on the ticket without asking. If two agents independently produce solutions, the author reviews both PRs and picks the better one. Duplicated work is cheap (agent compute is abundant), and competition can surface better solutions. Best for small, well-scoped tickets where the cost of wasted work is low.
+  - **`Coordination: gh#N`** with `Assigned-to: agent-name` — the ticket is registered as GitHub issue #N. The GitHub assignee is the single owner. Other agents must check `gh issue view N` before starting — if already assigned, skip it. This adds a GitHub dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
+  - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets `gh#N`. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade a ticket to `gh#N` later, but you can't un-waste the coordination overhead.
 
 Steal the good ideas from Beads and tk:
 - `blocked_by` / `discovered_from` / `supersedes` link types in frontmatter
