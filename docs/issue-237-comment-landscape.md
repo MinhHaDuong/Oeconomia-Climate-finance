@@ -141,6 +141,50 @@ Rationale:
 - **`ready` computation** — a Python skill that parses headers, walks the dependency graph, and returns tickets whose blockers are all closed. Simple, inspectable, no magic.
 - **Schema validation** — a pre-commit check validates that ticket headers contain required fields (`Id`, `Title`, `Status`, `Created`) and that `Blocked-by` references exist. Prevents schema drift over time.
 
+### Design decisions
+
+- **Random short IDs, not sequential** — sequential counters require a central authority. A 7-char random hex (`secrets.token_hex(4)[:7]`) is unique enough at <200 tickets and simpler than content-addressable hashing.
+- **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history (merge-safe). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and >200 tickets, simultaneous edits to the same ticket are rare.
+- **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
+- **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
+- **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
+- **Two-tier contention policy** — the `Coordination:` header field controls how agents claim work:
+  - **`Coordination: local`** (default) — no coordination protocol. Any agent can start working on the ticket without asking. If two agents independently produce solutions, the author reviews both PRs and picks the better one. Duplicated work is cheap (agent compute is abundant), and competition can surface better solutions. Best for small, well-scoped tickets where the cost of wasted work is low.
+  - **`Coordination: gh#N`** with `Assigned-to: agent-name` — the ticket is registered as GitHub issue #N. The GitHub assignee is the single owner. Other agents must check `gh issue view N` before starting — if already assigned, skip it. This adds a GitHub dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
+  - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets `gh#N`. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade a ticket to `gh#N` later, but you can't un-waste the coordination overhead.
+  - **Example — `gh#N`:** "Refresh corpus from UNFCCC sources" — takes an hour, downloads large files, overwrites data files that other tickets depend on. Running it twice in parallel wastes bandwidth and risks conflicts. Gets `Coordination: gh#251`, one agent owns it.
+  - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
+
+Steal the good ideas from Beads and tk:
+- `Blocked-by` as standard header; `X-Discovered-from` / `X-Supersedes` as extension headers when needed
+- `ready` command as a skill
+- Memory compaction as a periodic sweep skill
+
+Skip what doesn't fit:
+- Dolt DB layer
+- Daemon processes
+- Push-to-main workflow
+- Sequential IDs
+
+### GitHub compatibility
+
+The system is gh-optional, not gh-hostile:
+
+- **Big tickets** use GitHub for coordination (`Coordination: gh#N`). The GitHub issue is real — it has an assignee, comments, and visibility to external collaborators.
+- **Small tickets** are local-only. GitHub never sees them. No noise in the issue tracker.
+- **PRs still go through GitHub.** The code review workflow is unchanged. Ticket state changes travel with the PR branch.
+- **`gh` CLI is available but not required.** Agents that can't reach GitHub still work on `local` tickets. Offline-first by default, online when it matters.
+
+### Transition: natural attrition
+
+No migration. Existing GitHub issues close naturally as their work completes. New small/short-lived tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — GitHub never stopped working, nothing to undo.
+
+The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer. No new tools needed.
+
+---
+
+## Specification
+
 ### File format
 
 **Why RFC 822?** A ticket is a conversation — someone raises an issue, others respond, status evolves over time. Email solved this format problem decades ago: structured headers for metadata, free-form body for content, append-only threading for history. RFC 822 headers (`Key: Value` lines) are the natural format for this, and the same format Python chose for PEPs (PEP 1 specifies RFC 822 headers for the same reasons: greppable, human-readable, tool-friendly).
@@ -178,7 +222,21 @@ When `Coordination: gh#N`, add `Gh-issue: #N` to link to the GitHub issue. This 
 
 Projects add `X-` headers freely. If an extension proves universally useful, promote it to standard (drop the `X-` prefix).
 
-**Example — development ticket:**
+**Structure:** three sections separated by marker lines:
+
+1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
+2. **Log** (after `--- log ---`) — append-only timestamped events. Merge-safe history. Source of truth if header conflicts.
+3. **Body** (after `--- body ---`) — free-form markdown description.
+
+**Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
+
+### Naming convention
+
+Ticket files are named `{id}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). The ID is a random 7-char hex for uniqueness. The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
+
+### Examples
+
+**Development ticket:**
 
 ```
 Id: a3b8f2c
@@ -205,7 +263,7 @@ Free-form description goes here.
 Markdown OK.
 ```
 
-**Example — peer review comment (future extension):**
+**Peer review comment (future extension):**
 
 ```
 Id: r1c03a7
@@ -234,33 +292,9 @@ Table 3 now has separate columns. See commit a3b8f2c.
 
 Peer review tickets add `X-` extension headers (`X-Review-round`, `X-Comment-number`, `X-Section`, `X-Page`) and a `--- response ---` section. The reviewer's words stay untouched in the body; the author's point-by-point reply goes in response.
 
-**One-liners for peer review:**
+### One-liner queries
 
-```bash
-# Unaddressed comments from R1
-grep -l "^Status: pending" tickets/r1c*.md
-
-# All comments about section 3
-grep -l "^X-Section: 3" tickets/r1c*.md
-
-# Generate response document (all R1 comments + responses, in order)
-for f in $(grep -l "^X-Review-round: R1" tickets/*.md | sort); do
-  grep "^X-Comment-number:" "$f"
-  sed -n '/^--- body ---$/,/^--- response ---$/p' "$f"
-  sed -n '/^--- response ---$/,$p' "$f"
-  echo
-done
-```
-
-**Structure:** three sections separated by marker lines:
-
-1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — append-only timestamped events. Merge-safe history. Source of truth if header conflicts.
-3. **Body** (after `--- body ---`) — free-form markdown description.
-
-**Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
-
-**One-liner examples** (Unix philosophy — each query is a pipeline):
+Unix philosophy — each query is a pipeline:
 
 ```bash
 # All open tickets
@@ -287,46 +321,20 @@ sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.md
 
 The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.
 
-### Transition: natural attrition
+**Peer review one-liners:**
 
-No migration. Existing GitHub issues close naturally as their work completes. New small/short-lived tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — GitHub never stopped working, nothing to undo.
+```bash
+# Unaddressed comments from R1
+grep -l "^Status: pending" tickets/r1c*.md
 
-### GitHub compatibility
+# All comments about section 3
+grep -l "^X-Section: 3" tickets/r1c*.md
 
-The system is gh-optional, not gh-hostile:
-
-- **Big tickets** use GitHub for coordination (`Coordination: gh#N`). The GitHub issue is real — it has an assignee, comments, and visibility to external collaborators.
-- **Small tickets** are local-only. GitHub never sees them. No noise in the issue tracker.
-- **PRs still go through GitHub.** The code review workflow is unchanged. Ticket state changes travel with the PR branch.
-- **`gh` CLI is available but not required.** Agents that can't reach GitHub still work on `local` tickets. Offline-first by default, online when it matters.
-
-### Naming convention
-
-Ticket files are named `{id}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). The ID is a random 7-char hex for uniqueness. The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
-
-### Design decisions
-
-- **Random short IDs, not sequential** — sequential counters require a central authority. A 7-char random hex (`secrets.token_hex(4)[:7]`) is unique enough at <200 tickets and simpler than content-addressable hashing.
-- **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history (merge-safe). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and >200 tickets, simultaneous edits to the same ticket are rare.
-- **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
-- **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
-- **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
-- **Two-tier contention policy** — the `Coordination:` header field controls how agents claim work:
-  - **`Coordination: local`** (default) — no coordination protocol. Any agent can start working on the ticket without asking. If two agents independently produce solutions, the author reviews both PRs and picks the better one. Duplicated work is cheap (agent compute is abundant), and competition can surface better solutions. Best for small, well-scoped tickets where the cost of wasted work is low.
-  - **`Coordination: gh#N`** with `Assigned-to: agent-name` — the ticket is registered as GitHub issue #N. The GitHub assignee is the single owner. Other agents must check `gh issue view N` before starting — if already assigned, skip it. This adds a GitHub dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
-  - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets `gh#N`. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade a ticket to `gh#N` later, but you can't un-waste the coordination overhead.
-  - **Example — `gh#N`:** "Refresh corpus from UNFCCC sources" — takes an hour, downloads large files, overwrites data files that other tickets depend on. Running it twice in parallel wastes bandwidth and risks conflicts. Gets `Coordination: gh#251`, one agent owns it.
-  - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
-
-Steal the good ideas from Beads and tk:
-- `Blocked-by` as standard header; `X-Discovered-from` / `X-Supersedes` as extension headers when needed
-- `ready` command as a skill
-- Memory compaction as a periodic sweep skill
-
-Skip what doesn't fit:
-- Dolt DB layer
-- Daemon processes
-- Push-to-main workflow
-- Sequential IDs
-
-The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer. No new tools needed.
+# Generate response document (all R1 comments + responses, in order)
+for f in $(grep -l "^X-Review-round: R1" tickets/*.md | sort); do
+  grep "^X-Comment-number:" "$f"
+  sed -n '/^--- body ---$/,/^--- response ---$/p' "$f"
+  sed -n '/^--- response ---$/,$p' "$f"
+  echo
+done
+```
