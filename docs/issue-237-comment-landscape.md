@@ -1,6 +1,14 @@
-# Landscape analysis: distributed issue trackers for agent workflows
+Gh-issue: #237
+Title: Distributed issue tracking for agent workflows
+Author: minh, claude
+Status: draft
+Type: design
+Created: 2026-03-21
+Post-History: 2026-03-21 (landscape survey, design discussion)
 
-**Context:** #237 asks for an offline, file-based, gh-optional ticket system. This comment surveys the existing ecosystem and evaluates fit with our multi-worktree, PR-based, Dragon Dreaming workflow.
+# Distributed issue tracking for agent workflows
+
+This document surveys existing distributed issue trackers and proposes a custom file-based ticket system for our multi-worktree, PR-based, Dragon Dreaming workflow. The goal: an offline, file-based, gh-optional ticket system.
 
 ## The contenders
 
