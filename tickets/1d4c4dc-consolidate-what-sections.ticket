@@ -1,10 +1,10 @@
-Id: dc4a8f1
+Id: 1d4c4dc
 Title: Consolidate "what" content into Specification
 Author: claude
 Status: open
 Created: 2026-03-21
 Coordination: local
-Blocked-by: db3c7e2
+Blocked-by: f15eb48
 X-Discovered-from: gh#237
 X-Phase: planning
 
@@ -21,4 +21,4 @@ Fix: move the "what" parts of Recommendation into Specification as
 an overview/preamble. What remains (Forge compatibility, Transition)
 becomes standalone sections. Delete the Recommendation heading.
 
-Depends on db3c7e2 (consolidating "why") to avoid double-restructure.
+Depends on f15eb48 (consolidating "why") to avoid double-restructure.

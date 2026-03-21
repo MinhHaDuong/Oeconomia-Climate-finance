@@ -1,10 +1,10 @@
-Id: d7c4f2e
+Id: 6274ce1
 Title: Formalize log replay as CRDT or drop the claim
 Author: claude
 Status: open
 Created: 2026-03-21
 Coordination: local
-Blocked-by: d1a3f7c
+Blocked-by: 7687a43
 X-Discovered-from: gh#237
 X-Phase: planning
 
@@ -21,7 +21,7 @@ an implicit CRDT without the formalism. Missing:
 2. Commutativity rules (concurrent `status doing` and `status closed`
    — which wins?)
 3. Idempotency (same log entry appears on both sides of a merge)
-4. Ordering (wall clocks are insufficient — see d8a1b3f)
+4. Ordering (wall clocks are insufficient — see a8b7e72)
 
 Two options:
 A. Formalize: define operation types, Lamport timestamps, merge rules.

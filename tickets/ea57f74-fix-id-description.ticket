@@ -1,4 +1,4 @@
-Id: d9e5c1a
+Id: ea57f74
 Title: Fix Id field description: "random hex" not "content-addressable hash"
 Author: claude
 Status: open
