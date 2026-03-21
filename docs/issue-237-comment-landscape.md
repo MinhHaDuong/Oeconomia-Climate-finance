@@ -134,6 +134,7 @@ Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). Th
 - **Hash-based IDs, not sequential** — sequential counters require a central authority, which breaks under distributed/parallel creation. Short hash prefixes (like git) for usability.
 - **Append-only, not mutable** — avoids merge conflicts on concurrent edits. Current state is derived by replaying the log. Trade-off: slightly larger files, but tickets rarely exceed a few KB.
 - **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
+- **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
 
 Steal the good ideas from Beads and tk:
 - `blocked_by` / `discovered_from` / `supersedes` link types in frontmatter
