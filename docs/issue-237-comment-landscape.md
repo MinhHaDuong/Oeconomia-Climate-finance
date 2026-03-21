@@ -241,7 +241,7 @@ When `Coordination:` references a forge issue, add a `Forge-issue:` header with 
 | Header | Domain | Description |
 |--------|--------|-------------|
 | `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
-| `X-Parent` | hierarchy | ID of parent ticket (sub-issue relationship) |
+| `X-Parent` | hierarchy | ID of parent ticket (sub-issue relationship). Child→parent only; list children via `grep -l "^X-Parent: {id}" tickets/*.ticket`. No reverse header — avoids a second source of truth that stales on add/remove. Same principle as `Blocked-by` (no `Blocks:` counterpart). |
 | `X-Discovered-from` | provenance | ID of ticket that led to discovering this one |
 | `X-Supersedes` | provenance | ID of replaced ticket |
 | `X-Review-round` | peer review (future) | R1, R2, R3 |
