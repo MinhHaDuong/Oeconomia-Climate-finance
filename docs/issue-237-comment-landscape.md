@@ -32,7 +32,7 @@
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
-| **Custom Claude Code skills** | Markdown/YAML files in `tickets/` | Claude Code | N/A | yours | Yes (by definition) |
+| **Custom Claude Code skills** | RFC 822 text files in `tickets/` | Claude Code | N/A | yours | Yes (by definition) |
 
 ## Analysis by architecture class
 
@@ -113,17 +113,17 @@ Storing a database file (SQLite, Dolt) inside git has fundamental problems:
 
 ## Recommendation for #237
 
-**Build custom skills wrapping plain markdown files** — the approach sketched in the overnight runbook (option B: YAML frontmatter with status tracking).
+**Build custom skills wrapping plain text files with RFC 822 headers** — evolved from the overnight runbook's option B, refined through design discussion.
 
 Rationale:
 - **Zero dependencies** beyond Claude Code and Python (already in the project)
 - **Free worktree sync** via git (tickets are just files)
-- **Append-only logs** for conflict resolution — ticket files are append-only event streams (like git-bug's operation-based model). No in-place mutation of fields. Status changes, reassignments, and comments are appended as timestamped entries. Git merges appended lines cleanly; concurrent edits to the same ticket don't conflict.
+- **Mutable header + append-only log** — the header holds current state (greppable with Unix tools). The log section is append-only history (merge-safe). If concurrent edits conflict on the header, replay the log to reconstruct. Inspired by git-bug's operation-based model, but using plain text instead of git objects.
 - **PR-compatible** — ticket state changes travel with code changes
 - **Dragon Dreaming phases** encoded in frontmatter (no tool supports this natively)
-- **Dependency tracking** via frontmatter fields (`blocked_by: [a3b8f2, c7d9e1]`) — parse with Python or let the agent read YAML directly
-- **`ready` computation** — a Python skill that parses frontmatter, walks the dependency graph, and returns tickets whose blockers are all closed. Simple, inspectable, no magic.
-- **Schema validation** — a pre-commit check validates that ticket frontmatter contains required fields (`id`, `title`, `status`, `created`) and that `blocked_by` references exist. Prevents schema drift over time.
+- **Dependency tracking** via RFC 822 headers (`Blocked-by: a3b8f2`, one per line) — parse with `grep | cut` or Python
+- **`ready` computation** — a Python skill that parses headers, walks the dependency graph, and returns tickets whose blockers are all closed. Simple, inspectable, no magic.
+- **Schema validation** — a pre-commit check validates that ticket headers contain required fields (`Id`, `Title`, `Status`, `Created`) and that `Blocked-by` references exist. Prevents schema drift over time.
 
 ### File format
 
@@ -201,7 +201,7 @@ Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). Th
   - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
 
 Steal the good ideas from Beads and tk:
-- `blocked_by` / `discovered_from` / `supersedes` link types in frontmatter
+- `Blocked-by` / `Discovered-from` / `Supersedes` link types as RFC 822 headers
 - `ready` command as a skill
 - Memory compaction as a periodic sweep skill
 
