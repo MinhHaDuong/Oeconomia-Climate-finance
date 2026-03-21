@@ -1,0 +1,23 @@
+Id: db3c7e2
+Title: Consolidate "why" content into Motivation + Rationale
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+PEP/structure review: "why" content is scattered across four sections:
+Motivation, Design philosophy, Rationale, and Design decisions (under
+Recommendation). PEP convention puts all justification in Motivation
+(the problem) + Rationale (why this solution).
+
+Fix: merge "Design philosophy" into Rationale as a subsection.
+Move "Design decisions" from Recommendation into Rationale.
+Result: Motivation explains the problem, Rationale explains the
+solution choice. Two sections, not four.

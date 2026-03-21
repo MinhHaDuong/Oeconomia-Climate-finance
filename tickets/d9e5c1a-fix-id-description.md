@@ -1,0 +1,23 @@
+Id: d9e5c1a
+Title: Fix Id field description: "random hex" not "content-addressable hash"
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+Distributed systems review: the spec table (line 218) describes Id
+as "Content-addressable hash" but the design decisions (line 164)
+say it's a "7-char random hex." These contradict each other.
+
+A content-addressable hash is derived from content (like git blobs).
+A random hex is not content-addressable.
+
+Fix: change the table description from "Content-addressable hash"
+to "7-char random hex identifier". One-line edit.

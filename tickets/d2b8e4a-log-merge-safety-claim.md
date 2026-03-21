@@ -1,0 +1,31 @@
+Id: d2b8e4a
+Title: Downscope "append-only log is merge-safe" claim
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+Distributed systems review: "append-only log is merge-safe" is
+overstated. Git's 3-way merge can conflict when two agents append
+at the same insertion point, especially when appended lines are
+structurally similar (both start with timestamp + status).
+
+The claim is true *in practice* at low concurrency but not
+*guaranteed* by git's merge algorithm.
+
+Fix: replace "merge-safe" with "merge-friendly at low concurrency"
+throughout. Add a note: "At <5 agents, concurrent appends to the
+same ticket's log are rare. Git auto-merges them correctly in most
+cases. When it doesn't, the conflict is easy to resolve manually —
+pick both sides."
+
+A trailing sentinel line convention (fixed footer) could force
+appends to different positions, making auto-merge more reliable.
+Consider as a future enhancement.

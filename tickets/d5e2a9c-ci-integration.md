@@ -1,0 +1,26 @@
+Id: d5e2a9c
+Title: Add CI/CD integration section to spec
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+DevOps review: CI/CD integration is completely absent. Questions:
+
+1. Should CI validate ticket format on every push? (yes — add to
+   `make check`)
+2. Should CI run `ready` to generate a ticket board? (nice to have,
+   not required initially)
+3. Should `tickets/` be excluded from artifact builds? (yes — add to
+   Quarto's `_quarto.yml` exclude list)
+4. Are ticket files included in shallow clones? (yes, they're regular
+   files — this is desired)
+
+Minimum: add `validate-tickets` to `make check`. The rest can wait.

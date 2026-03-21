@@ -1,0 +1,29 @@
+Id: de6c1f4
+Title: Add missing PEP sections: Backwards Compat, Security, Reference Impl
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+Blocked-by: db3c7e2
+Blocked-by: dc4a8f1
+Blocked-by: dd5b9e3
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+PEP/structure review: missing standard PEP sections.
+
+1. **Backwards Compatibility**: "Transition: natural attrition"
+   content already exists — promote to top-level section.
+2. **Security Considerations**: brief note — local tickets contain
+   no secrets, forge#N flow uses existing forge auth, no new attack
+   surface.
+3. **Reference Implementation**: pointer to the skills/runbooks that
+   implement the system, or a stub "to be implemented" note.
+
+Each is short. Can be done in one pass after the structural
+reorganization (db3c7e2, dc4a8f1, dd5b9e3).

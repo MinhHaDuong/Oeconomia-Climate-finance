@@ -1,0 +1,26 @@
+Id: d6f3b7a
+Title: Reconcile branch naming convention between AGENTS.md and ticket spec
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+DevOps review: AGENTS.md says `t{N}-short-description` (sequential
+number, hyphen-separated). The ticket spec says
+`t/a3b8f2c-add-auth-flow` (slash, random hex ID).
+
+These need reconciliation. Options:
+1. Keep AGENTS.md convention (`t{N}`), tickets use sequential-ish
+   names.
+2. Update AGENTS.md to match ticket spec (`t/a3b8f2c-slug`).
+3. Use `t{N}` for forge tickets (they have a number) and
+   `t/a3b8f2c` for local tickets (they have a hex ID).
+
+Option 3 is cleanest: branch naming follows the ticket's identity.

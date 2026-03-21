@@ -1,0 +1,26 @@
+Id: d1a3f7c
+Title: Specify merge resolution strategy for ticket header conflicts
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+DevOps review: the doc claims "replay the log to reconstruct" when
+headers conflict, but specifies no concrete mechanism — no git merge
+driver, no post-merge hook, no tool.
+
+Options:
+1. Custom git merge driver for `tickets/*.md` (`.gitattributes`)
+2. Post-merge hook that detects conflict markers and replays log
+3. Drop the claim — state that manual conflict resolution is fine at
+   this scale (<5 agents, <200 tickets)
+
+Option 3 is the honest minimum. Option 1 is the proper solution if
+we later formalize the log as a CRDT (see d2b8e4a).

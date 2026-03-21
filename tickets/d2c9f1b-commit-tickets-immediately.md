@@ -1,0 +1,21 @@
+Id: d2c9f1b
+Title: Add rule: commit ticket files immediately after creation
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+DevOps review: uncommitted tickets are invisible across worktrees.
+Agent in worktree A creates a ticket but doesn't commit — agent in
+worktree B runs `ready` and doesn't see it.
+
+Fix: add to the `new-ticket` skill: "commit the ticket file
+immediately after creation." One-line rule in docs/coding-guidelines.md
+and in the new-ticket runbook.

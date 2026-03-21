@@ -1,0 +1,28 @@
+Id: d3a7e2f
+Title: Specify offline fallback for forge#N tickets
+Author: claude
+Status: open
+Created: 2026-03-21
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-21T12:00Z created
+2026-03-21T12:00Z status open
+
+--- body ---
+DevOps review: an agent working offline encounters a `forge#N` ticket.
+It can't check the forge assignee. What should it do?
+
+The doc says "agents that can't reach the forge still work on local
+tickets" but is silent on what happens with forge#N tickets when
+offline. Needs an explicit rule:
+
+- Skip forge#N tickets when offline? (safest)
+- Queue them for later? (more complex)
+- Optimistically start and risk duplication? (risky)
+
+Recommendation: skip. Add to spec: "When offline, agents MUST skip
+tickets with `Coordination: forge#N`. Only `local` tickets are
+available offline."
