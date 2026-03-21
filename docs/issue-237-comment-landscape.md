@@ -125,6 +125,62 @@ Rationale:
 - **`ready` computation** — a Python skill that parses frontmatter, walks the dependency graph, and returns tickets whose blockers are all closed. Simple, inspectable, no magic.
 - **Schema validation** — a pre-commit check validates that ticket frontmatter contains required fields (`id`, `title`, `status`, `created`) and that `blocked_by` references exist. Prevents schema drift over time.
 
+### File format
+
+RFC 822 style headers (like email), not YAML — designed so most queries are bash one-liners with standard Unix tools.
+
+```
+Id: a3b8f2c
+Title: Add authentication flow
+Status: open
+Phase: dreaming
+Created: 2026-03-21
+Author: minh
+Blocked-by: c7d9e1
+Blocked-by: f4a2b8
+Discovered-from: 9e1c3d
+
+--- log ---
+2026-03-21T10:00Z created
+2026-03-21T11:30Z status open
+2026-03-21T14:00Z phase dreaming
+2026-03-22T09:00Z blocked-by + c7d9e1
+2026-03-22T09:00Z blocked-by + f4a2b8
+
+--- body ---
+Free-form description goes here.
+Markdown OK.
+```
+
+**Structure:** mutable header (greppable current state) + append-only log (merge-safe history) + free-form body. If the header conflicts on merge, replay the log to reconstruct. The log only appends lines, so git merges it cleanly.
+
+**One-liner examples** (Unix philosophy — each query is a pipeline):
+
+```bash
+# All open tickets
+grep -l "^Status: open" tickets/*.md
+
+# Tickets in doing phase
+grep -l "^Phase: doing" tickets/*.md
+
+# What blocks ticket a3b8f2c?
+grep "^Blocked-by:" tickets/a3b8f2c-*.md | cut -d' ' -f2
+
+# Tickets with no blockers
+grep -rL "^Blocked-by:" tickets/*.md
+
+# All ticket IDs
+ls tickets/ | cut -d- -f1
+
+# Count tickets by status
+grep "^Status:" tickets/*.md | cut -d' ' -f2 | sort | uniq -c | sort -rn
+
+# History of a ticket
+sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.md
+```
+
+The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.
+
 ### Naming convention
 
 Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). The hash is the canonical ID (content-addressable, distributed-safe). The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
@@ -132,7 +188,8 @@ Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). Th
 ### Design decisions
 
 - **Hash-based IDs, not sequential** — sequential counters require a central authority, which breaks under distributed/parallel creation. Short hash prefixes (like git) for usability.
-- **Append-only, not mutable** — avoids merge conflicts on concurrent edits. Current state is derived by replaying the log. Trade-off: slightly larger files, but tickets rarely exceed a few KB.
+- **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history (merge-safe). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and >200 tickets, simultaneous edits to the same ticket are rare.
+- **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
 - **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
 - **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
 
