@@ -8,7 +8,15 @@ Post-History: 2026-03-21 (landscape survey, design discussion)
 
 # Distributed issue tracking for agent workflows
 
-This document surveys existing distributed issue trackers and proposes a custom file-based ticket system for our multi-worktree, PR-based, Dragon Dreaming workflow. The goal: an offline, file-based, gh-optional ticket system.
+This document surveys existing distributed issue trackers and proposes a lightweight local ticket format to complement GitHub Issues. Local tickets handle small, fast, agent-scoped work. GitHub handles coordination-heavy, externally-visible work. Neither subsumes the other — cohabitation is the permanent state.
+
+## Design philosophy
+
+1. **Two independent systems, not one with two backends.** Local tickets and GH issues are separate systems that can optionally link via `Coordination: gh#N`. No shared ID space, no sync layer.
+2. **Natural attrition, not migration.** GH issues close when their work gets done. New small tickets are born local. The mix shifts organically.
+3. **Promote is rare, not routine.** A local ticket can be upgraded to `gh#N` if it turns out bigger than expected. This is the exception. There is no routine promotion workflow.
+4. **Rollback is trivial.** Stop creating local tickets. GH never stopped working. Nothing to undo.
+5. **Cohabitation is permanent.** Some tickets will always be GH (cross-repo, external contributors). Both are first-class indefinitely.
 
 ## The contenders
 
@@ -152,20 +160,21 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 | `Created` | yes | ISO date |
 | `Coordination` | no | `local` (default) or `gh#N` |
 | `Assigned-to` | no | Agent or person owning the work |
-| `Gh-issue` | no | Link to GitHub issue `#N` |
-| `Blocked-by` | no | Hash of blocking ticket (repeatable) |
-| `Discovered-from` | no | Hash of parent ticket |
-| `Supersedes` | no | Hash of replaced ticket |
+| `Blocked-by` | no | ID of blocking ticket (repeatable) |
+
+When `Coordination: gh#N`, add `Gh-issue: #N` to link to the GitHub issue. This header only appears on coordinated tickets — it is not a standard field for local tickets.
 
 **X- extension headers** (domain-specific, ignored by core tools):
 
 | Header | Domain | Description |
 |--------|--------|-------------|
-| `X-Review-round` | peer review | R1, R2, R3 |
-| `X-Comment-number` | peer review | Reviewer's comment number |
-| `X-Section` | peer review | Manuscript section reference |
-| `X-Page` | peer review | Page number |
 | `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
+| `X-Discovered-from` | provenance | ID of parent ticket |
+| `X-Supersedes` | provenance | ID of replaced ticket |
+| `X-Review-round` | peer review (future) | R1, R2, R3 |
+| `X-Comment-number` | peer review (future) | Reviewer's comment number |
+| `X-Section` | peer review (future) | Manuscript section reference |
+| `X-Page` | peer review (future) | Page number |
 
 Projects add `X-` headers freely. If an extension proves universally useful, promote it to standard (drop the `X-` prefix).
 
@@ -181,8 +190,7 @@ Coordination: local
 Assigned-to: agent-x
 Blocked-by: c7d9e1
 Blocked-by: f4a2b8
-Discovered-from: 9e1c3d
-Gh-issue: #247
+X-Discovered-from: 9e1c3d
 X-Phase: dreaming
 
 --- log ---
@@ -197,7 +205,7 @@ Free-form description goes here.
 Markdown OK.
 ```
 
-**Example — peer review comment:**
+**Example — peer review comment (future extension):**
 
 ```
 Id: r1c03a7
@@ -250,7 +258,7 @@ done
 2. **Log** (after `--- log ---`) — append-only timestamped events. Merge-safe history. Source of truth if header conflicts.
 3. **Body** (after `--- body ---`) — free-form markdown description.
 
-**Separator collision:** what if the body contains a literal `--- log ---` or `--- body ---`? The parser uses only the *first* occurrence of each separator, scanning top-down. Since headers come first (terminated by blank line), then log, then body — and body is always last — a `--- body ---` string inside the body text is harmless (the parser already found the real one). A `--- log ---` inside the body is also safe because it appears after `--- body ---`. In practice, these strings are unlikely to appear in ticket descriptions. If paranoia demands it, switch to a more distinctive separator like `════ log ════`, but start simple.
+**Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
 
 **One-liner examples** (Unix philosophy — each query is a pipeline):
 
@@ -279,17 +287,9 @@ sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.md
 
 The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.
 
-### Migration from GitHub Issues
+### Transition: natural attrition
 
-Existing GitHub issues become local ticket files via a one-time migration script:
-
-1. `gh issue list --json number,title,state,body,assignees,labels,createdAt` dumps all issues as JSON.
-2. JSON → RFC 822 is trivial — just flatten key-value pairs into `Key: Value\n` lines. A `jq` one-liner or a few lines of Python. No special converter needed.
-3. Map GitHub fields: `state` → `Status`, `labels` → one header per label, `assignees` → `Assigned-to`, `number` → `Gh-issue: #N` (preserves the reference, not used as ID).
-4. The hard part isn't format conversion — it's deciding which issues to migrate and how to map GitHub labels/milestones to local fields.
-5. Close GitHub issues with a comment linking to the local ticket file, or keep them open as mirrors — author's choice.
-
-The `Gh-issue:` header maintains the link. A `Coordination: gh#N` ticket is just a local ticket that happens to also exist on GitHub. The local file is the source of truth; GitHub is the coordination channel.
+No migration. Existing GitHub issues close naturally as their work completes. New small/short-lived tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — GitHub never stopped working, nothing to undo.
 
 ### GitHub compatibility
 
@@ -302,11 +302,11 @@ The system is gh-optional, not gh-hostile:
 
 ### Naming convention
 
-Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). The hash is the canonical ID (content-addressable, distributed-safe). The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
+Ticket files are named `{id}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). The ID is a random 7-char hex for uniqueness. The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
 
 ### Design decisions
 
-- **Hash-based IDs, not sequential** — sequential counters require a central authority, which breaks under distributed/parallel creation. Short hash prefixes (like git) for usability.
+- **Random short IDs, not sequential** — sequential counters require a central authority. A 7-char random hex (`secrets.token_hex(4)[:7]`) is unique enough at <200 tickets and simpler than content-addressable hashing.
 - **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history (merge-safe). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and >200 tickets, simultaneous edits to the same ticket are rare.
 - **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
 - **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
@@ -319,7 +319,7 @@ Ticket files are named `{hash}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). Th
   - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
 
 Steal the good ideas from Beads and tk:
-- `Blocked-by` / `Discovered-from` / `Supersedes` link types as RFC 822 headers
+- `Blocked-by` as standard header; `X-Discovered-from` / `X-Supersedes` as extension headers when needed
 - `ready` command as a skill
 - Memory compaction as a periodic sweep skill
 
