@@ -8,7 +8,21 @@ Post-History: 2026-03-21 (landscape survey, design discussion)
 
 # Distributed issue tracking for agent workflows
 
+## Abstract
+
 This document surveys existing distributed issue trackers and proposes a lightweight local ticket format to complement GitHub Issues. Local tickets handle small, fast, agent-scoped work. GitHub handles coordination-heavy, externally-visible work. Neither subsumes the other — cohabitation is the permanent state.
+
+## Motivation
+
+GitHub Issues work well for coordination — cross-repo visibility, external contributors, assignee-based ownership. But our agent workflow creates tickets that GitHub was not designed for:
+
+- **Volume.** Agents discover sub-tasks during execution. A single planning session can spawn 5–10 tickets. At that rate, the GitHub issue tracker fills with noise that only agents read.
+- **Locality.** Small tickets ("fix typo in §3.2", "rename variable in pipeline.py") live and die within one branch. They never need external visibility. Creating a GitHub issue, assigning it, closing it — all overhead for a five-minute edit.
+- **Offline.** Agents working in worktrees may not have network access. GitHub requires it. A local ticket file works regardless.
+- **Workflow mismatch.** Our Dragon Dreaming phases (dreaming → planning → doing → celebrating) and TDD inner loop (red → green → refactor) have no GitHub equivalent. We encode them in conventions that GitHub can't enforce.
+- **Speed.** Creating a file is instant. Creating a GitHub issue requires an API call, a network round-trip, and error handling for rate limits and auth failures.
+
+None of these problems justify *replacing* GitHub. They justify *complementing* it with a lightweight local layer for the small/fast/agent-scoped work that GitHub handles poorly.
 
 ## Design philosophy
 
@@ -18,9 +32,13 @@ This document surveys existing distributed issue trackers and proposes a lightwe
 4. **Rollback is trivial.** Stop creating local tickets. GH never stopped working. Nothing to undo.
 5. **Cohabitation is permanent.** Some tickets will always be GH (cross-repo, external contributors). Both are first-class indefinitely.
 
-## The contenders
+## Rationale
 
-### A. File-in-repo approaches (git-native sync for free)
+We surveyed the landscape of distributed issue trackers, evaluated them against our constraints, and concluded that custom skills wrapping plain text files are the best fit. This section documents what we considered and why we rejected it.
+
+### Landscape survey
+
+#### A. File-in-repo approaches (git-native sync for free)
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
@@ -30,29 +48,29 @@ This document surveys existing distributed issue trackers and proposes a lightwe
 | **[Bugs Everywhere](https://bugseverywhere.readthedocs.io)** | Files in `.be/` | Python | ~old | GPLv2 | No (designed pre-AI era) |
 | **[TrackDown](https://github.com/mgoellnitz/trackdown)** | Markdown files in repo | Java/Gradle | small | Apache-2.0 | No |
 
-### B. Git-object approaches (not files, stored in git refs)
+#### B. Git-object approaches (not files, stored in git refs)
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
 | **[git-bug](https://github.com/git-bug/git-bug)** | Git objects in `refs/bugs/` | Go binary | 9.7k | GPLv3 | Partial (JSON output, TUI, bridges) |
 | **[git-appraise](https://github.com/google/git-appraise)** | Git notes in `refs/notes/` | Go binary | 6.2k | Apache-2.0 | No (code review, not issues) |
 
-### C. External database approaches
+#### C. External database approaches
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
 | **[Beads (bd)](https://github.com/steveyegge/beads)** | Dolt DB in `.beads/` | Go binary + Dolt | 19.4k | MIT | Yes (designed for agents) |
 | **[Fossil](https://fossil-scm.org)** | SQLite DB (entire SCM) | C binary | N/A | BSD-2 | No (replaces git entirely) |
 
-### D. The "just use custom skills" approach
+#### D. The "just use custom skills" approach
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
 | **Custom Claude Code skills** | RFC 822 text files in `tickets/` | Claude Code | N/A | yours | Yes (by definition) |
 
-## Analysis by architecture class
+### Analysis by architecture class
 
-### File-in-repo (Centy, tk, git-issue): natural fit, but...
+#### File-in-repo (Centy, tk, git-issue): natural fit, but...
 
 **Pros:**
 - Git worktrees get ticket sync for free — no second sync layer
@@ -72,7 +90,7 @@ This document surveys existing distributed issue trackers and proposes a lightwe
 
 **git-issue** specifically: mature (864 stars, tested on multiple platforms), but designed for humans not agents. No JSON output, no dependency graph, no `ready` queue. Would need wrapping.
 
-### Git-object (git-bug): elegant but friction with worktrees
+#### Git-object (git-bug): elegant but friction with worktrees
 
 **Pros:**
 - Clean working directory (issues don't clutter file tree)
@@ -85,7 +103,7 @@ This document surveys existing distributed issue trackers and proposes a lightwe
 - No agent-specific features (no `claim`, no `ready`, no dependency graph)
 - GPLv3 license may matter if harness becomes a distributable tool
 
-### External DB (Beads): powerful but adds a sync layer
+#### External DB (Beads): powerful but adds a sync layer
 
 **Pros:**
 - Best dependency graph (`blocks`, `relates_to`, `discovered_from`, `supersedes`)
@@ -100,11 +118,11 @@ This document surveys existing distributed issue trackers and proposes a lightwe
 - **Dolt dependency.** MySQL-compatible but still an extra binary to install and maintain. Agents need it available in every environment.
 - **Alpha status** (pre-1.0). CLI API may change.
 
-### Fossil: non-starter
+#### Fossil: non-starter
 
 Replaces git entirely. Not compatible with our git-based workflow. Mentioned for completeness only.
 
-## Unfit with extra tooling: the real cost
+### The real cost of extra tooling
 
 Each external tool introduces:
 
@@ -116,7 +134,7 @@ Each external tool introduces:
 
 For a research project with one author and intermittent agent sessions, the overhead of Beads (Dolt install + dual sync + push-to-main philosophy) or even Centy (Node.js daemon) is disproportionate to the benefit.
 
-## The "DB in git" approach: analysis
+### The "DB in git" antipattern
 
 Storing a database file (SQLite, Dolt) inside git has fundamental problems:
 
@@ -127,7 +145,7 @@ Storing a database file (SQLite, Dolt) inside git has fundamental problems:
 
 **Verdict:** "DB in git" is an antipattern for this use case. Either go full file-based (text merges naturally) or full external-DB (Dolt handles its own sync). The hybrid corrupts both.
 
-## Recommendation for #237
+## Recommendation
 
 **Build custom skills wrapping plain text files with RFC 822 headers** — evolved from the overnight runbook's option B, refined through design discussion.
 
