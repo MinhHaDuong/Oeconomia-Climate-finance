@@ -161,7 +161,7 @@ Storing a database file (SQLite, Dolt) inside git has fundamental problems:
 Rationale:
 - **Zero dependencies** beyond Claude Code and Python (already in the project)
 - **Free worktree sync** via git (tickets are just files)
-- **Mutable header + append-only log** — the header holds current state (greppable with Unix tools). The log section is append-only history (merge-safe). If concurrent edits conflict on the header, replay the log to reconstruct. Inspired by git-bug's operation-based model, but using plain text instead of git objects.
+- **Mutable header + append-only log** — the header holds current state (greppable with Unix tools). The log section is append-only history (merge-friendly at low concurrency). If concurrent edits conflict on the header, resolve manually by replaying the log. No custom merge driver or post-merge hook — manual resolution is sufficient at current scale (< 5 agents). Inspired by git-bug's operation-based model, but using plain text instead of git objects.
 - **PR-compatible** — ticket state changes travel with code changes
 - **Dragon Dreaming phases** encoded in frontmatter (no tool supports this natively)
 - **Dependency tracking** via RFC 822 headers (`Blocked-by: a3b8f2`, one per line) — parse with `grep | cut` or Python
@@ -171,13 +171,15 @@ Rationale:
 ### Design decisions
 
 - **Semantic slug IDs, not sequential or random hex** — the ID is the initials of a freely chosen semantic slug. The slug relates to the ticket's purpose but is not a mechanical derivation of the title. Example: slug `auth-flow-gates` → ID `afg`. If the ID collides with an existing local ticket, append `2`, `3`, etc. (`afg2`). Collisions are accepted — they're rare at project scale and the suffix handles them. No counter file, no hash, no ceremony.
-- **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history (merge-safe). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and >200 tickets, simultaneous edits to the same ticket are rare.
+- **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history — merge-friendly at low concurrency, not merge-safe in general (git's 3-way merge can conflict when concurrent appends touch adjacent lines). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and <200 tickets, simultaneous edits to the same ticket are rare.
 - **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
 - **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
 - **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
 - **Two-tier contention policy** — the `Coordination:` header field controls how agents claim work:
   - **`Coordination: local`** (default) — no coordination protocol. Any agent can start working on the ticket without asking. If two agents independently produce solutions, the author reviews both PRs and picks the better one. Duplicated work is cheap (agent compute is abundant), and competition can surface better solutions. Best for small, well-scoped tickets where the cost of wasted work is low.
   - **`Coordination: forge#N`** with `Assigned-to: agent-name` — the ticket is registered as a forge issue (e.g., `gh#251` for GitHub, `gl#251` for GitLab). The forge assignee is the single owner. Other agents must check the forge before starting — if already assigned, skip it. This adds a forge dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
+  - **Authority rule for `Assigned-to`:** on `local` tickets, the `Assigned-to` header is authoritative. On `forge#N` tickets, the forge assignee is authoritative — the header is a local cache that may lag. If they conflict, trust the forge.
+  - **Offline fallback:** agents that cannot reach the forge skip `forge#N` tickets entirely — work only on `local` tickets. No guessing at forge state. When connectivity returns, the agent can pick up forge tickets again.
   - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets a forge issue. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade later, but you can't un-waste the coordination overhead.
   - **Example — `forge#N`:** "Refresh corpus from UNFCCC sources" — takes an hour, downloads large files, overwrites data files that other tickets depend on. Running it twice in parallel wastes bandwidth and risks conflicts. Gets `Coordination: gh#251`, one agent owns it.
   - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
@@ -254,7 +256,7 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 **Structure:** three sections separated by marker lines:
 
 1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — append-only timestamped events. Merge-safe history. Source of truth if header conflicts.
+2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Agent ID identifies who made the change. Merge-friendly at low concurrency (< 5 agents). Source of truth if header conflicts. Wall clocks may skew across machines — accepted at current scale, no Lamport timestamps.
 3. **Body** (after `--- body ---`) — free-form markdown description.
 
 **Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
@@ -286,11 +288,11 @@ X-Discovered-from: prt
 X-Phase: dreaming
 
 --- log ---
-2026-03-21T10:00Z created
-2026-03-21T11:30Z status open
-2026-03-21T14:00Z phase dreaming
-2026-03-22T09:00Z blocked-by + cm
-2026-03-22T09:00Z blocked-by + fds
+2026-03-21T10:00Z agent-x created
+2026-03-21T11:30Z agent-x status open
+2026-03-21T14:00Z agent-x phase dreaming
+2026-03-22T09:00Z agent-y blocked-by + cm
+2026-03-22T09:00Z agent-y blocked-by + fds
 
 --- body ---
 Free-form description goes here.
@@ -311,8 +313,8 @@ X-Section: 3.2
 X-Page: 12
 
 --- log ---
-2026-03-21T10:00Z created
-2026-03-25T14:00Z status pending → addressed
+2026-03-21T10:00Z reviewer-1 created
+2026-03-25T14:00Z minh status pending → addressed
 
 --- body ---
 The methodology for aggregating COP funding commitments is unclear.

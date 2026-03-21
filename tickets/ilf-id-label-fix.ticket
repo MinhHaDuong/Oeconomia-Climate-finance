@@ -8,9 +8,9 @@ X-Discovered-from: gh#237
 X-Phase: planning
 
 --- log ---
-2026-03-21T12:00Z created
-2026-03-21T12:00Z status open
-2026-03-21T18:00Z status closed — superseded by semantic-slug naming redesign
+2026-03-21T12:00Z claude created
+2026-03-21T12:00Z claude status open
+2026-03-21T18:00Z claude status closed — superseded by semantic-slug naming redesign
 
 --- body ---
 Distributed systems review: the spec table (line 218) describes Id

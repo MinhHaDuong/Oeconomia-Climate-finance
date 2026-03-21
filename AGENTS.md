@@ -80,7 +80,7 @@ The agent must always know and declare its current DD phase.
 
 ## Git discipline
 
-- **Always work on a branch.** Branch naming: `t{N}-short-description`.
+- **Always work on a branch.** Branch naming: `t/{id}-{slug}` (e.g., `t/afg-auth-flow-gates`). The ID and slug come from the ticket's semantic slug naming (see spec).
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically by `on-start` trigger.
