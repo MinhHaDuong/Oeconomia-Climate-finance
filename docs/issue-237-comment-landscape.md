@@ -10,27 +10,36 @@ Post-History: 2026-03-21 (landscape survey, design discussion)
 
 ## Abstract
 
-This document surveys existing distributed issue trackers and proposes a lightweight local ticket format to complement GitHub Issues. Local tickets handle small, fast, agent-scoped work. GitHub handles coordination-heavy, externally-visible work. Neither subsumes the other — cohabitation is the permanent state.
+This document surveys existing distributed issue trackers and proposes a lightweight local ticket format to complement forge-hosted issue trackers (GitHub Issues, GitLab Issues, etc.). Local tickets handle small, fast, agent-scoped work. The forge handles coordination-heavy, externally-visible work. Neither subsumes the other — cohabitation is the permanent state.
 
 ## Motivation
 
-GitHub Issues work well for coordination — cross-repo visibility, external contributors, assignee-based ownership. But our agent workflow creates tickets that GitHub was not designed for:
+### The concrete problem
 
-- **Volume.** Agents discover sub-tasks during execution. A single planning session can spawn 5–10 tickets. At that rate, the GitHub issue tracker fills with noise that only agents read.
-- **Locality.** Small tickets ("fix typo in §3.2", "rename variable in pipeline.py") live and die within one branch. They never need external visibility. Creating a GitHub issue, assigning it, closing it — all overhead for a five-minute edit.
-- **Offline.** Agents working in worktrees may not have network access. GitHub requires it. A local ticket file works regardless.
-- **Workflow mismatch.** Our Dragon Dreaming phases (dreaming → planning → doing → celebrating) and TDD inner loop (red → green → refactor) have no GitHub equivalent. We encode them in conventions that GitHub can't enforce.
-- **Speed.** Creating a file is instant. Creating a GitHub issue requires an API call, a network round-trip, and error handling for rate limits and auth failures.
+This project — a climate finance history written with Claude Code agents — hit the limits of forge-hosted issue trackers early. A typical session: the agent plans a chapter revision, discovers that the data pipeline needs a fix, the fix reveals a test gap, and the test gap spawns a documentation update. That's four tickets from one planning step. Over a week of overnight autonomous sessions, the GitHub issue tracker accumulated dozens of agent-internal tickets that only agents read — drowning the few human-facing issues that matter for coordination.
 
-None of these problems justify *replacing* GitHub. They justify *complementing* it with a lightweight local layer for the small/fast/agent-scoped work that GitHub handles poorly.
+The problem is not GitHub-specific. GitLab, Gitea, Forgejo — any forge-hosted tracker has the same friction for this pattern. The mismatch is between *forge trackers* (designed for human coordination across repositories) and *agent workflows* (high-volume, short-lived, branch-scoped, offline-capable).
+
+### Why forge trackers don't fit agent work
+
+Forge-hosted issue trackers (GitHub Issues, GitLab Issues, Gitea, etc.) work well for coordination — cross-repo visibility, external contributors, assignee-based ownership. But agent workflows create tickets that forges were not designed for:
+
+- **Volume.** Agents discover sub-tasks during execution. A single planning session can spawn 5–10 tickets. At that rate, the forge issue tracker fills with noise that only agents read.
+- **Locality.** Small tickets ("fix typo in §3.2", "rename variable in pipeline.py") live and die within one branch. They never need external visibility. Creating a forge issue, assigning it, closing it — all overhead for a five-minute edit.
+- **Offline.** Agents working in worktrees may not have network access. Forge APIs require it. A local ticket file works regardless.
+- **Workflow mismatch.** Our Dragon Dreaming phases (dreaming → planning → doing → celebrating) and TDD inner loop (red → green → refactor) have no forge equivalent. We encode them in conventions that no forge can enforce.
+- **Speed.** Creating a file is instant. Creating a forge issue requires an API call, a network round-trip, and error handling for rate limits and auth failures.
+
+None of these problems justify *replacing* the forge tracker. They justify *complementing* it with a lightweight local layer for the small/fast/agent-scoped work that forge trackers handle poorly.
 
 ## Design philosophy
 
-1. **Two independent systems, not one with two backends.** Local tickets and GH issues are separate systems that can optionally link via `Coordination: gh#N`. No shared ID space, no sync layer.
-2. **Natural attrition, not migration.** GH issues close when their work gets done. New small tickets are born local. The mix shifts organically.
-3. **Promote is rare, not routine.** A local ticket can be upgraded to `gh#N` if it turns out bigger than expected. This is the exception. There is no routine promotion workflow.
-4. **Rollback is trivial.** Stop creating local tickets. GH never stopped working. Nothing to undo.
-5. **Cohabitation is permanent.** Some tickets will always be GH (cross-repo, external contributors). Both are first-class indefinitely.
+1. **Two independent systems, not one with two backends.** Local tickets and forge issues are separate systems that can optionally link via `Coordination: forge#N`. No shared ID space, no sync layer.
+2. **Natural attrition, not migration.** Forge issues close when their work gets done. New small tickets are born local. The mix shifts organically.
+3. **Promote is rare, not routine.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception. There is no routine promotion workflow.
+4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
+5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
+6. **Forge-agnostic.** The local ticket system works with any git forge — GitHub, GitLab, Gitea, Forgejo, or none at all. The `Coordination:` header uses a forge-specific prefix (`gh#N`, `gl#N`, etc.) only when linking to a specific forge issue. The rest of the system is pure git.
 
 ## Rationale
 
@@ -168,9 +177,9 @@ Rationale:
 - **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
 - **Two-tier contention policy** — the `Coordination:` header field controls how agents claim work:
   - **`Coordination: local`** (default) — no coordination protocol. Any agent can start working on the ticket without asking. If two agents independently produce solutions, the author reviews both PRs and picks the better one. Duplicated work is cheap (agent compute is abundant), and competition can surface better solutions. Best for small, well-scoped tickets where the cost of wasted work is low.
-  - **`Coordination: gh#N`** with `Assigned-to: agent-name` — the ticket is registered as GitHub issue #N. The GitHub assignee is the single owner. Other agents must check `gh issue view N` before starting — if already assigned, skip it. This adds a GitHub dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
-  - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets `gh#N`. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade a ticket to `gh#N` later, but you can't un-waste the coordination overhead.
-  - **Example — `gh#N`:** "Refresh corpus from UNFCCC sources" — takes an hour, downloads large files, overwrites data files that other tickets depend on. Running it twice in parallel wastes bandwidth and risks conflicts. Gets `Coordination: gh#251`, one agent owns it.
+  - **`Coordination: forge#N`** with `Assigned-to: agent-name` — the ticket is registered as a forge issue (e.g., `gh#251` for GitHub, `gl#251` for GitLab). The forge assignee is the single owner. Other agents must check the forge before starting — if already assigned, skip it. This adds a forge dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
+  - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets a forge issue. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade later, but you can't un-waste the coordination overhead.
+  - **Example — `forge#N`:** "Refresh corpus from UNFCCC sources" — takes an hour, downloads large files, overwrites data files that other tickets depend on. Running it twice in parallel wastes bandwidth and risks conflicts. Gets `Coordination: gh#251`, one agent owns it.
   - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
 
 Steal the good ideas from Beads and tk:
@@ -184,18 +193,19 @@ Skip what doesn't fit:
 - Push-to-main workflow
 - Sequential IDs
 
-### GitHub compatibility
+### Forge compatibility
 
-The system is gh-optional, not gh-hostile:
+The system is forge-optional, not forge-hostile. It works with GitHub, GitLab, Gitea, Forgejo — or no forge at all:
 
-- **Big tickets** use GitHub for coordination (`Coordination: gh#N`). The GitHub issue is real — it has an assignee, comments, and visibility to external collaborators.
-- **Small tickets** are local-only. GitHub never sees them. No noise in the issue tracker.
-- **PRs still go through GitHub.** The code review workflow is unchanged. Ticket state changes travel with the PR branch.
-- **`gh` CLI is available but not required.** Agents that can't reach GitHub still work on `local` tickets. Offline-first by default, online when it matters.
+- **Big tickets** use the forge for coordination (`Coordination: gh#N`, `gl#N`, etc.). The forge issue is real — it has an assignee, comments, and visibility to external collaborators.
+- **Small tickets** are local-only. The forge never sees them. No noise in the issue tracker.
+- **PRs/MRs still go through the forge.** The code review workflow is unchanged. Ticket state changes travel with the branch.
+- **Forge CLI is available but not required.** Agents that can't reach the forge still work on `local` tickets. Offline-first by default, online when it matters.
+- **Forge-specific prefix convention:** `gh#N` (GitHub), `gl#N` (GitLab), `gt#N` (Gitea/Forgejo). The prefix tells agents which API to query. Projects using a single forge just pick one prefix and stick with it.
 
 ### Transition: natural attrition
 
-No migration. Existing GitHub issues close naturally as their work completes. New small/short-lived tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — GitHub never stopped working, nothing to undo.
+No migration. Existing forge issues close naturally as their work completes. New small/short-lived tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — the forge never stopped working, nothing to undo.
 
 The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer. No new tools needed.
 
@@ -220,11 +230,11 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 | `Author` | yes | Creator |
 | `Status` | yes | Current state (open, doing, closed, …) |
 | `Created` | yes | ISO date |
-| `Coordination` | no | `local` (default) or `gh#N` |
+| `Coordination` | no | `local` (default) or `forge#N` (e.g., `gh#42`, `gl#42`) |
 | `Assigned-to` | no | Agent or person owning the work |
 | `Blocked-by` | no | ID of blocking ticket (repeatable) |
 
-When `Coordination: gh#N`, add `Gh-issue: #N` to link to the GitHub issue. This header only appears on coordinated tickets — it is not a standard field for local tickets.
+When `Coordination:` references a forge issue, add a `Forge-issue:` header with the full reference (e.g., `Forge-issue: gh#42`). This header only appears on coordinated tickets — it is not a standard field for local tickets.
 
 **X- extension headers** (domain-specific, ignored by core tools):
 
