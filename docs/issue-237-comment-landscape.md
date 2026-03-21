@@ -125,7 +125,7 @@ Rationale:
 - **`ready` computation** — a skill that greps frontmatter for `status: open` where all `blocked_by` entries are `status: closed`. Simple, inspectable, no magic.
 
 Steal the good ideas from Beads and tk:
-- Hash-based IDs (or sequential — with one author, collisions aren't a real risk)
+- Hash-based IDs (not sequential — sequential counters require a central authority, which breaks under distributed/parallel creation)
 - `blocked_by` / `discovered_from` / `supersedes` link types in frontmatter
 - `ready` command as a skill
 - Memory compaction as a periodic sweep skill
