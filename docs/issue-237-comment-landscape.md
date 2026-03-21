@@ -1,215 +1,142 @@
 Gh-issue: #237
-Title: Distributed issue tracking for agent workflows
+Title: Local ticket system for agent workflows
 Author: minh, claude
 Status: draft
 Type: design
 Created: 2026-03-21
-Post-History: 2026-03-21 (landscape survey, design discussion)
+Post-History: 2026-03-21 (landscape survey, design discussion, motivation correction)
 
-# Distributed issue tracking for agent workflows
+# Local ticket system for agent workflows
 
 ## Abstract
 
-This document surveys existing distributed issue trackers and proposes a lightweight local ticket format to complement forge-hosted issue trackers (GitHub Issues, GitLab Issues, etc.). Local tickets handle small, fast, agent-scoped work. The forge handles coordination-heavy, externally-visible work. Neither subsumes the other — cohabitation is the permanent state.
+Claude Code App cannot access forge CLIs (`gh`, `gl`). This makes forge-hosted issue trackers unusable as the agent's primary work queue. We propose a lightweight local ticket format — plain text files with RFC 822 headers in `tickets/` — to serve as the agent's native work surface. Forge issues remain the coordination layer for human-facing, cross-repo work. The two systems coexist permanently; neither subsumes the other.
 
 ## Motivation
 
-### The concrete problem
+### The forcing function
 
-This project — a climate finance history written with Claude Code agents — hit the limits of forge-hosted issue trackers early. A typical session: the agent plans a chapter revision, discovers that the data pipeline needs a fix, the fix reveals a test gap, and the test gap spawns a documentation update. That's four tickets from one planning step. Over a week of overnight autonomous sessions, the GitHub issue tracker accumulated dozens of agent-internal tickets that only agents read — drowning the few human-facing issues that matter for coordination.
+Claude Code App runs in a sandboxed environment without access to forge CLIs. There is no `gh issue list`, no `gh issue create`, no `gh issue view`. The agent literally cannot read or write GitHub Issues.
 
-The problem is not GitHub-specific. GitLab, Gitea, Forgejo — any forge-hosted tracker has the same friction for this pattern. The mismatch is between *forge trackers* (designed for human coordination across repositories) and *agent workflows* (high-volume, short-lived, branch-scoped, offline-capable).
+This is not a convenience problem — it is a capability gap. An agent that cannot access the issue tracker cannot:
 
-### Why forge trackers don't fit agent work
+- Pick the next task from a prioritized backlog
+- Create sub-tickets discovered during execution
+- Update ticket status as work progresses
+- Check what blocks a ticket before starting it
 
-Forge-hosted issue trackers (GitHub Issues, GitLab Issues, Gitea, etc.) work well for coordination — cross-repo visibility, external contributors, assignee-based ownership. But agent workflows create tickets that forges were not designed for:
+Without a local alternative, the agent is blind to its own work queue. Every session starts with the human copy-pasting issue content into the conversation, and every sub-task discovered mid-session either gets lost or pollutes the chat context.
 
-- **Volume.** Agents discover sub-tasks during execution. A single planning session can spawn 5–10 tickets. At that rate, the forge issue tracker fills with noise that only agents read.
-- **Locality.** Small tickets ("fix typo in §3.2", "rename variable in pipeline.py") live and die within one branch. They never need external visibility. Creating a forge issue, assigning it, closing it — all overhead for a five-minute edit.
-- **Offline.** Agents working in worktrees may not have network access. Forge APIs require it. A local ticket file works regardless.
-- **Workflow mismatch.** Our Dragon Dreaming phases (dreaming → planning → doing → celebrating) and TDD inner loop (red → green → refactor) have no forge equivalent. We encode them in conventions that no forge can enforce.
-- **Speed.** Creating a file is instant. Creating a forge issue requires an API call, a network round-trip, and error handling for rate limits and auth failures.
+### Secondary benefits
 
-None of these problems justify *replacing* the forge tracker. They justify *complementing* it with a lightweight local layer for the small/fast/agent-scoped work that forge trackers handle poorly.
+Once the primary constraint forces us to a local ticket system, several bonuses follow:
+
+- **Speed.** Creating a file is instant. No API call, no network round-trip, no rate-limit handling.
+- **Worktree portability.** Tickets travel with `git` — every worktree has the full backlog, every branch can carry ticket state changes alongside code.
+- **Offline-first.** Agents in worktrees, CI containers, or air-gapped environments work identically.
+- **Workflow encoding.** Dragon Dreaming phases, TDD inner loop, dependency graphs — all expressible in headers. No forge supports these natively.
+- **Noise reduction.** Small agent-internal tickets ("fix typo in §3.2", "rename variable") never pollute the forge tracker. The forge stays clean for human coordination.
+
+These are real benefits, but they are not why we're doing this. We're doing this because the agent can't reach the forge.
 
 ## Design philosophy
 
-1. **Two independent systems, not one with two backends.** Local tickets and forge issues are separate systems that can optionally link via `Coordination: forge#N`. No shared ID space, no sync layer.
-2. **Natural attrition, not migration.** Forge issues close when their work gets done. New small tickets are born local. The mix shifts organically.
-3. **Promote is rare, not routine.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception. There is no routine promotion workflow.
+1. **Two independent systems.** Local tickets and forge issues are separate. They can link via `Coordination: forge#N` but share no ID space and no sync layer.
+2. **Natural attrition.** Existing forge issues close as their work completes. New small tickets are born local. The mix shifts organically.
+3. **Promote is rare.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception.
 4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
 5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
-6. **Forge-agnostic.** The local ticket system works with any git forge — GitHub, GitLab, Gitea, Forgejo, or none at all. The `Coordination:` header uses a forge-specific prefix (`gh#N`, `gl#N`, etc.) only when linking to a specific forge issue. The rest of the system is pure git.
+6. **Forge-agnostic.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all.
 
 ## Rationale
 
-We surveyed the landscape of distributed issue trackers, evaluated them against our constraints, and concluded that custom skills wrapping plain text files are the best fit. This section documents what we considered and why we rejected it.
-
 ### Landscape survey
 
-#### A. File-in-repo approaches (git-native sync for free)
+We surveyed existing distributed issue trackers and evaluated them against our constraints.
+
+#### A. File-in-repo (git-native sync)
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
-| **[Centy](https://centy.io)** | Markdown files in `.centy/` | Node.js 20+, daemon | ~new | MIT | Yes (Claude Code integration advertised) |
-| **[ticket (tk)](https://github.com/wedow/ticket)** | Markdown + YAML frontmatter in `.tickets/` | Bash, coreutils (jq, rg optional) | ~new | MIT | Yes (designed for Claude Opus) |
-| **[git-issue](https://github.com/dspinellis/git-issue)** | Files in `.issues/` git branch | jq, curl, GNU date | 864 | Apache-2.0 | Partial (scriptable, no JSON mode) |
-| **[Bugs Everywhere](https://bugseverywhere.readthedocs.io)** | Files in `.be/` | Python | ~old | GPLv2 | No (designed pre-AI era) |
-| **[TrackDown](https://github.com/mgoellnitz/trackdown)** | Markdown files in repo | Java/Gradle | small | Apache-2.0 | No |
+| **[Centy](https://centy.io)** | Markdown in `.centy/` | Node.js 20+, daemon | ~new | MIT | Yes (Claude Code integration) |
+| **[ticket (tk)](https://github.com/wedow/ticket)** | Markdown + YAML in `.tickets/` | Bash, coreutils | ~new | MIT | Yes (designed for Claude) |
+| **[git-issue](https://github.com/dspinellis/git-issue)** | Files in `.issues/` branch | jq, curl, GNU date | 864 | Apache-2.0 | Partial |
+| **[Bugs Everywhere](https://bugseverywhere.readthedocs.io)** | Files in `.be/` | Python | ~old | GPLv2 | No |
+| **[TrackDown](https://github.com/mgoellnitz/trackdown)** | Markdown in repo | Java/Gradle | small | Apache-2.0 | No |
 
-#### B. Git-object approaches (not files, stored in git refs)
-
-| Tool | Storage | Deps | Stars | License | Agent-ready |
-|------|---------|------|-------|---------|-------------|
-| **[git-bug](https://github.com/git-bug/git-bug)** | Git objects in `refs/bugs/` | Go binary | 9.7k | GPLv3 | Partial (JSON output, TUI, bridges) |
-| **[git-appraise](https://github.com/google/git-appraise)** | Git notes in `refs/notes/` | Go binary | 6.2k | Apache-2.0 | No (code review, not issues) |
-
-#### C. External database approaches
+#### B. Git-object (stored in refs, not files)
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
-| **[Beads (bd)](https://github.com/steveyegge/beads)** | Dolt DB in `.beads/` | Go binary + Dolt | 19.4k | MIT | Yes (designed for agents) |
-| **[Fossil](https://fossil-scm.org)** | SQLite DB (entire SCM) | C binary | N/A | BSD-2 | No (replaces git entirely) |
+| **[git-bug](https://github.com/git-bug/git-bug)** | Git objects in `refs/bugs/` | Go binary | 9.7k | GPLv3 | Partial |
+| **[git-appraise](https://github.com/google/git-appraise)** | Git notes in `refs/notes/` | Go binary | 6.2k | Apache-2.0 | No |
 
-#### D. The "just use custom skills" approach
+#### C. External database
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
-| **Custom Claude Code skills** | RFC 822 text files in `tickets/` | Claude Code | N/A | yours | Yes (by definition) |
+| **[Beads (bd)](https://github.com/steveyegge/beads)** | Dolt DB in `.beads/` | Go + Dolt | 19.4k | MIT | Yes |
+| **[Fossil](https://fossil-scm.org)** | SQLite (entire SCM) | C binary | N/A | BSD-2 | No |
 
-### Analysis by architecture class
+#### D. Custom skills
 
-#### File-in-repo (Centy, tk, git-issue): natural fit, but...
+| Tool | Storage | Deps | Stars | License | Agent-ready |
+|------|---------|------|-------|---------|-------------|
+| **Custom Claude Code skills** | RFC 822 files in `tickets/` | Claude Code | N/A | yours | Yes (by definition) |
 
-**Pros:**
-- Git worktrees get ticket sync for free — no second sync layer
-- Readable with any text editor, greppable, diffable
-- PRs can include ticket state changes alongside code
-- Zero extra infrastructure
+### Analysis
 
-**Cons:**
-- Merge conflicts on concurrent ticket edits (two agents update same file)
-- No structured dependency graph (you build it yourself or go without)
-- No `ready` command computing transitive closure of blockers
-- Schema-free means schema-drift over time
+#### File-in-repo (Centy, tk, git-issue)
 
-**Centy** specifically: very new, requires Node.js daemon (extra process to manage), minimal documentation available. Too immature to evaluate properly.
+**Pros:** git worktree sync for free, readable/greppable/diffable, PRs include ticket changes, zero infrastructure.
 
-**ticket (tk)** specifically: single bash script, dependency graph built-in, `tk ready` command, YAML frontmatter gives structure. Includes `migrate-beads` command (positioned as Beads replacement). Most aligned with our needs among file-based tools. But brand new — no track record.
+**Cons:** merge conflicts on concurrent edits, no structured dependency graph, no `ready` command, schema-free means schema-drift.
 
-**git-issue** specifically: mature (864 stars, tested on multiple platforms), but designed for humans not agents. No JSON output, no dependency graph, no `ready` queue. Would need wrapping.
+**Centy** — very new, Node.js daemon required, minimal docs. Too immature.
 
-#### Git-object (git-bug): elegant but friction with worktrees
+**ticket (tk)** — single bash script, dependency graph built-in, `tk ready` command. Most aligned with our needs, but brand new — no track record.
 
-**Pros:**
-- Clean working directory (issues don't clutter file tree)
-- Excellent merge semantics (operation-based, not text-based)
-- GitHub/GitLab bridges for bidirectional sync
-- JSON output, 9.7k stars, GPLv3, mature
+**git-issue** — mature but designed for humans. No JSON output, no dependency graph. Would need wrapping.
 
-**Cons:**
-- **Worktree problem:** git objects are shared across worktrees (they live in `.git/objects/`), but refs may not be. `git-bug` stores in `refs/bugs/` — behavior with `git worktree` is undertested. Risk of corruption or stale reads.
-- No agent-specific features (no `claim`, no `ready`, no dependency graph)
-- GPLv3 license may matter if harness becomes a distributable tool
+#### Git-object (git-bug)
 
-#### External DB (Beads): powerful but adds a sync layer
+**Pros:** clean working directory, excellent merge semantics (operation-based), forge bridges, JSON output, mature.
 
-**Pros:**
-- Best dependency graph (`blocks`, `relates_to`, `discovered_from`, `supersedes`)
-- `bd ready` computes transitive closure in ~10ms
-- Atomic `--claim` prevents double-work in multi-agent setups
-- Memory compaction preserves context window budget
-- 19.4k stars, active development
+**Cons:** worktree problem (`refs/bugs/` behavior with `git worktree` is undertested — risk of corruption), no agent features (`claim`, `ready`, dependency graph), GPLv3.
 
-**Cons:**
-- **Second sync layer.** Each worktree has its own `.beads/` Dolt DB. Syncing requires `bd dolt push/pull` on top of `git push/pull`. Two version-control systems to keep coordinated.
-- **Philosophy clash.** Beads prescribes "push to main, never create PRs." Our workflow requires PRs for review gates. Beads' `--claim` assumes a single-main workflow.
-- **Dolt dependency.** MySQL-compatible but still an extra binary to install and maintain. Agents need it available in every environment.
-- **Alpha status** (pre-1.0). CLI API may change.
+#### External DB (Beads)
 
-#### Fossil: non-starter
+**Pros:** best dependency graph (`blocks`, `relates_to`, `discovered_from`, `supersedes`), `bd ready` transitive closure in ~10ms, atomic `--claim`, memory compaction.
 
-Replaces git entirely. Not compatible with our git-based workflow. Mentioned for completeness only.
+**Cons:** second sync layer (Dolt push/pull on top of git), philosophy clash (push-to-main, no PRs), Dolt dependency in every environment, alpha status.
+
+#### Fossil
+
+Non-starter — replaces git entirely.
 
 ### The real cost of extra tooling
 
-Each external tool introduces:
-
-1. **Installation burden** — every new machine, container, CI runner needs the tool
-2. **Sync overhead** — DB-based tools need their own push/pull cycle on top of git
-3. **Learning curve** — agents need instructions for the tool; humans need docs
-4. **Failure modes** — more moving parts = more ways to break
-5. **Philosophy mismatch** — tools encode their creator's workflow assumptions
-
-For a research project with one author and intermittent agent sessions, the overhead of Beads (Dolt install + dual sync + push-to-main philosophy) or even Centy (Node.js daemon) is disproportionate to the benefit.
+Each external tool introduces: installation burden, sync overhead, learning curve, new failure modes, philosophy mismatch. For a research project with one author and intermittent agent sessions, the overhead of Beads (Dolt + dual sync + push-to-main) or Centy (Node.js daemon) is disproportionate.
 
 ### The "DB in git" antipattern
 
-Storing a database file (SQLite, Dolt) inside git has fundamental problems:
+1. **Binary blobs don't merge.** SQLite `.db` is opaque — concurrent worktree changes produce unresolvable conflicts.
+2. **Dolt is not DB-in-git** — it's git-for-DBs: own merge algorithm, own remotes, own push/pull. Two parallel VCS.
+3. **Repository bloat.** Binary blobs resist delta compression.
+4. **Worktree isolation breaks.** Shared `.git/objects/` vs worktree-local DB files — syncing pollutes code history.
 
-1. **Binary blobs don't merge.** Git can merge text files line-by-line. A SQLite `.db` file is opaque binary — concurrent changes in different worktrees produce a merge conflict that git cannot resolve. You must pick one side entirely.
-2. **Dolt solves this differently.** Dolt is *not* a DB-in-git — it's a git-for-DBs. It has its own merge algorithm, its own remotes, its own push/pull. This means two parallel version-control systems.
-3. **Repository bloat.** Every DB state change creates a new binary blob. Git can't delta-compress binaries efficiently. Over months, the repo grows.
-4. **Worktree isolation breaks.** Git worktrees share `.git/objects/`. A DB file in the working tree is worktree-local, but syncing it requires commits+merges that pollute the code history.
+**Verdict:** either go full file-based (text merges naturally) or full external-DB (Dolt handles its own sync). The hybrid corrupts both.
 
-**Verdict:** "DB in git" is an antipattern for this use case. Either go full file-based (text merges naturally) or full external-DB (Dolt handles its own sync). The hybrid corrupts both.
+### Conclusion
 
-## Recommendation
+**Build custom skills wrapping plain text files with RFC 822 headers.**
 
-**Build custom skills wrapping plain text files with RFC 822 headers** — evolved from the overnight runbook's option B, refined through design discussion.
-
-Rationale:
-- **Zero dependencies** beyond Claude Code and Python (already in the project)
-- **Free worktree sync** via git (tickets are just files)
-- **Mutable header + append-only log** — the header holds current state (greppable with Unix tools). The log section is append-only history (merge-friendly at low concurrency). If concurrent edits conflict on the header, resolve manually by replaying the log. No custom merge driver or post-merge hook — manual resolution is sufficient at current scale (< 5 agents). Inspired by git-bug's operation-based model, but using plain text instead of git objects.
-- **PR-compatible** — ticket state changes travel with code changes
-- **Dragon Dreaming phases** encoded in frontmatter (no tool supports this natively)
-- **Dependency tracking** via RFC 822 headers (`Blocked-by: a3b8f2`, one per line) — parse with `grep | cut` or Python
-- **`ready` computation** — a Python skill that parses headers, walks the dependency graph, and returns tickets whose blockers are all closed. Simple, inspectable, no magic.
-- **Schema validation** — a pre-commit check validates that ticket headers contain required fields (`Id`, `Title`, `Status`, `Created`) and that `Blocked-by` references exist. Prevents schema drift over time.
-
-### Design decisions
-
-- **Semantic slug IDs, not sequential or random hex** — the ID is the initials of a freely chosen semantic slug. The slug relates to the ticket's purpose but is not a mechanical derivation of the title. Example: slug `auth-flow-gates` → ID `afg`. If the ID collides with an existing local ticket, append `2`, `3`, etc. (`afg2`). Collisions are accepted — they're rare at project scale and the suffix handles them. No counter file, no hash, no ceremony.
-- **Mutable header + append-only log** — the header is a greppable index of current state (fast Unix one-liners). The log is append-only history — merge-friendly at low concurrency, not merge-safe in general (git's 3-way merge can conflict when concurrent appends touch adjacent lines). If concurrent edits conflict on the header, the log is the source of truth to reconstruct it. Trade-off: header can conflict, but at <5 agents and <200 tickets, simultaneous edits to the same ticket are rare.
-- **RFC 822 headers, not YAML** — `Key: value` lines are greppable with bare `grep` and `cut`. No parser needed for simple queries. YAML requires a library to handle correctly (quoting, multiline, anchors). Email-style headers are the simplest format that works with Unix pipes.
-- **Python first, Rust someday** — start with Python scripts (the project already depends on Python everywhere). Skills are shell commands, so the implementation can be swapped to a compiled Rust binary later if performance matters — the interface stays the same. At <200 tickets, Python is fast enough and faster to iterate on.
-- **Rebuild, don't cache** — `ready` and `validate` scan all ticket files on every call. No index, no cache. A cache is a second source of truth that needs invalidation, and git operations (checkout, merge, rebase) change files under you across worktrees. At <200 tickets, a full scan is milliseconds. If it gets slow, profile first — the fix is faster parsing (ripgrep, Rust), not a cache layer.
-- **Two-tier contention policy** — the `Coordination:` header field controls how agents claim work:
-  - **`Coordination: local`** (default) — no coordination protocol. Any agent can start working on the ticket without asking. If two agents independently produce solutions, the author reviews both PRs and picks the better one. Duplicated work is cheap (agent compute is abundant), and competition can surface better solutions. Best for small, well-scoped tickets where the cost of wasted work is low.
-  - **`Coordination: forge#N`** with `Assigned-to: agent-name` — the ticket is registered as a forge issue (e.g., `gh#251` for GitHub, `gl#251` for GitLab). The forge assignee is the single owner. Other agents must check the forge before starting — if already assigned, skip it. This adds a forge dependency but provides real coordination. Reserved for big tickets where duplicate work would be wasteful (multi-day effort, complex cross-cutting changes, tickets that touch many files).
-  - **Authority rule for `Assigned-to`:** on `local` tickets, the `Assigned-to` header is authoritative. On `forge#N` tickets, the forge assignee is authoritative — the header is a local cache that may lag. If they conflict, trust the forge.
-  - **Offline fallback:** agents that cannot reach the forge skip `forge#N` tickets entirely — work only on `local` tickets. No guessing at forge state. When connectivity returns, the agent can pick up forge tickets again.
-  - **The decision happens at creation time.** The `new-ticket` skill asks: is this big? If the ticket spans multiple subsystems, requires multi-day work, or has high coordination cost if duplicated, it gets a forge issue. Otherwise it stays `local`. When in doubt, default to `local` — you can always upgrade later, but you can't un-waste the coordination overhead.
-  - **Example — `forge#N`:** "Refresh corpus from UNFCCC sources" — takes an hour, downloads large files, overwrites data files that other tickets depend on. Running it twice in parallel wastes bandwidth and risks conflicts. Gets `Coordination: gh#251`, one agent owns it.
-  - **Example — `local`:** "Fix typo in chapter 3" — five-minute edit, single file. If two agents both fix it, the author picks the better PR in seconds. No coordination needed.
-
-Steal the good ideas from Beads and tk:
-- `Blocked-by` as standard header; `X-Discovered-from` / `X-Supersedes` as extension headers when needed
-- `ready` command as a skill
-- Memory compaction as a periodic sweep skill
+Steal the good ideas:
+- From Beads: `Blocked-by` header, `ready` command, memory compaction
+- From tk: dependency graph, `X-Discovered-from` / `X-Supersedes` headers
 
 Skip what doesn't fit:
-- Dolt DB layer
-- Daemon processes
-- Push-to-main workflow
-- Sequential IDs
-
-### Forge compatibility
-
-The system is forge-optional, not forge-hostile. It works with GitHub, GitLab, Gitea, Forgejo — or no forge at all:
-
-- **Big tickets** use the forge for coordination (`Coordination: gh#N`, `gl#N`, etc.). The forge issue is real — it has an assignee, comments, and visibility to external collaborators.
-- **Small tickets** are local-only. The forge never sees them. No noise in the issue tracker.
-- **PRs/MRs still go through the forge.** The code review workflow is unchanged. Ticket state changes travel with the branch.
-- **Forge CLI is available but not required.** Agents that can't reach the forge still work on `local` tickets. Offline-first by default, online when it matters.
-- **Forge-specific prefix convention:** `gh#N` (GitHub), `gl#N` (GitLab), `gt#N` (Gitea/Forgejo). The prefix tells agents which API to query. Projects using a single forge just pick one prefix and stick with it.
-
-### Transition: natural attrition
-
-No migration. Existing forge issues close naturally as their work completes. New small/short-lived tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — the forge never stopped working, nothing to undo.
-
-The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer. No new tools needed.
+- Dolt DB layer, daemon processes, push-to-main workflow, sequential IDs
 
 ---
 
@@ -217,58 +144,71 @@ The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, 
 
 ### File format
 
-**Why RFC 822?** A ticket is a conversation — someone raises an issue, others respond, status evolves over time. Email solved this format problem decades ago: structured headers for metadata, free-form body for content, append-only threading for history. RFC 822 headers (`Key: Value` lines) are the natural format for this, and the same format Python chose for PEPs (PEP 1 specifies RFC 822 headers for the same reasons: greppable, human-readable, tool-friendly).
+**Why RFC 822?** A ticket is a conversation — someone raises an issue, others respond, status evolves. Email solved this decades ago: structured headers for metadata, free-form body for content, append-only threading for history. Python chose the same format for PEPs (PEP 1), for the same reasons: greppable, human-readable, tool-friendly.
 
 Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose with Unix pipes. RFC 822 headers work with bare `grep` and `cut`.
 
-**The header set is open**, following RFC 822 conventions: a set of standard headers that core tools understand, and `X-` extension headers for domain-specific metadata. The validator type-checks standard headers and passes `X-` headers through untouched. This means the same format works for development tickets, peer review comments, and use cases we haven't imagined yet — without schema changes.
+**The header set is open**, following RFC 822 conventions: standard headers that core tools understand, and `X-` extension headers for domain-specific metadata. The validator type-checks standard headers and passes `X-` headers through untouched.
 
-**Standard headers** (core tools know these):
+**Standard headers:**
 
 | Header | Required | Description |
 |--------|----------|-------------|
 | `Id` | yes | Initials of the semantic slug (e.g., `afg` from `auth-flow-gates`) |
 | `Title` | yes | Short description |
 | `Author` | yes | Creator |
-| `Status` | yes | Current state (open, doing, closed, …) |
+| `Status` | yes | Current state (open, doing, closed, ...) |
 | `Created` | yes | ISO date |
 | `Coordination` | no | `local` (default) or `forge#N` (e.g., `gh#42`, `gl#42`) |
 | `Assigned-to` | no | Agent or person owning the work |
 | `Blocked-by` | no | ID of blocking ticket (repeatable) |
 
-When `Coordination:` references a forge issue, add a `Forge-issue:` header with the full reference (e.g., `Forge-issue: gh#42`). This header only appears on coordinated tickets — it is not a standard field for local tickets.
+When `Coordination:` references a forge issue, add a `Forge-issue:` header with the full reference (e.g., `Forge-issue: gh#42`).
 
-**X- extension headers** (domain-specific, ignored by core tools):
+**X- extension headers:**
 
 | Header | Domain | Description |
 |--------|--------|-------------|
 | `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
-| `X-Parent` | hierarchy | ID of parent ticket (sub-issue relationship). Child→parent only; list children via `grep -l "^X-Parent: {id}" tickets/*.ticket`. No reverse header — avoids a second source of truth that stales on add/remove. Same principle as `Blocked-by` (no `Blocks:` counterpart). |
-| `X-Discovered-from` | provenance | ID of ticket that led to discovering this one |
+| `X-Parent` | hierarchy | ID of parent ticket (child->parent only) |
+| `X-Discovered-from` | provenance | ID of ticket that led to this one |
 | `X-Supersedes` | provenance | ID of replaced ticket |
-| `X-Review-round` | peer review (future) | R1, R2, R3 |
-| `X-Comment-number` | peer review (future) | Reviewer's comment number |
-| `X-Section` | peer review (future) | Manuscript section reference |
-| `X-Page` | peer review (future) | Page number |
+| `X-Review-round` | peer review | R1, R2, R3 |
+| `X-Comment-number` | peer review | Reviewer's comment number |
+| `X-Section` | peer review | Manuscript section reference |
+| `X-Page` | peer review | Page number |
+
+List children via `grep -l "^X-Parent: {id}" tickets/*.ticket`. No reverse header — avoids a second source of truth. Same principle as `Blocked-by` (no `Blocks:` counterpart).
 
 Projects add `X-` headers freely. If an extension proves universally useful, promote it to standard (drop the `X-` prefix).
 
-**Structure:** three sections separated by marker lines:
+**Structure** — three sections separated by marker lines:
 
 1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Agent ID identifies who made the change. Merge-friendly at low concurrency (< 5 agents). Source of truth if header conflicts. Wall clocks may skew across machines — accepted at current scale, no Lamport timestamps.
+2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Source of truth if header conflicts.
 3. **Body** (after `--- body ---`) — free-form markdown description.
 
 **Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
 
 ### Naming convention
 
-Ticket files are named `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is a freely chosen semantic name — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. If the ID collides locally, append a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters on non-Markdown content; editors can associate `*.ticket` with Markdown mode for body-section highlighting. Branches follow the same pattern: `t/afg-auth-flow-gates`.
+Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is freely chosen — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. Collisions get a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters. Branches: `t/{id}-{slug}`.
 
 **Uniqueness enforcement** — two layers:
 
-1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append the next available numeric suffix. Best-effort — concurrent agents can race past this check.
-2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject if any ID appears more than once. The error message reports the next available suffix (e.g., `"duplicate Id 'wf' — next available: wf3"`). The validator cannot auto-fix because renaming an ID requires updating cross-references (`Blocked-by:`, body text) across multiple files. This catches both the merge/rebase case and the concurrent-creation race.
+1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append next available suffix. Best-effort — concurrent agents can race past this.
+2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject duplicates. Error reports next available suffix (e.g., `"duplicate Id 'wf' -- next available: wf3"`). No auto-fix — renaming an ID requires updating cross-references across files.
+
+### Design decisions
+
+- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
+- **Mutable header + append-only log** — the header is a greppable index. The log is append-only history, merge-friendly at low concurrency (< 5 agents). If the header conflicts, replay the log to reconstruct it.
+- **RFC 822 over YAML** — `Key: value` lines work with `grep` and `cut`. YAML needs a library.
+- **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
+- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
+- **Two-tier contention:**
+  - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
+  - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
 
 ### Examples
 
@@ -303,7 +243,7 @@ Markdown OK.
 
 ```
 Id: cmcd
-Title: R1.3 — Clarify methodology for COP funding data
+Title: R1.3 -- Clarify methodology for COP funding data
 Author: reviewer-1
 Status: pending
 Created: 2026-03-21
@@ -314,7 +254,7 @@ X-Page: 12
 
 --- log ---
 2026-03-21T10:00Z reviewer-1 created
-2026-03-25T14:00Z minh status pending → addressed
+2026-03-25T14:00Z minh status pending -> addressed
 
 --- body ---
 The methodology for aggregating COP funding commitments is unclear.
@@ -322,15 +262,11 @@ How are pledges vs disbursements distinguished? Table 3 seems to
 mix both without explanation.
 
 --- response ---
-Added paragraph in §3.2 distinguishing pledges from disbursements.
+Added paragraph in 3.2 distinguishing pledges from disbursements.
 Table 3 now has separate columns. See commit abc1234.
 ```
 
-Peer review tickets add `X-` extension headers (`X-Review-round`, `X-Comment-number`, `X-Section`, `X-Page`) and a `--- response ---` section. The reviewer's words stay untouched in the body; the author's point-by-point reply goes in response.
-
 ### One-liner queries
-
-Unix philosophy — each query is a pipeline:
 
 ```bash
 # All open tickets
@@ -345,9 +281,6 @@ grep "^Blocked-by:" tickets/afg-*.ticket | cut -d' ' -f2
 # Tickets with no blockers
 grep -rL "^Blocked-by:" tickets/*.ticket
 
-# All ticket IDs
-ls tickets/ | cut -d- -f1
-
 # Count tickets by status
 grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
 
@@ -355,22 +288,20 @@ grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
 sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/afg-*.ticket
 ```
 
-The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.
+The only query needing Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — a graph traversal, not a text filter.
 
-**Peer review one-liners:**
+### Forge compatibility
 
-```bash
-# Unaddressed comments from R1
-grep -l "^Status: pending" tickets/r1c*.ticket
+The system is forge-optional, not forge-hostile:
 
-# All comments about section 3
-grep -l "^X-Section: 3" tickets/r1c*.ticket
+- **Big tickets** use the forge for coordination (`Coordination: gh#N`). The forge issue is real — assignee, comments, external visibility.
+- **Small tickets** are local-only. No forge noise.
+- **PRs still go through the forge.** Code review is unchanged.
+- **Forge CLI available but not required.** Agents without `gh` work on `local` tickets. Offline-first by default.
+- **Prefix convention:** `gh#N` (GitHub), `gl#N` (GitLab), `gt#N` (Gitea/Forgejo).
 
-# Generate response document (all R1 comments + responses, in order)
-for f in $(grep -l "^X-Review-round: R1" tickets/*.ticket | sort); do
-  grep "^X-Comment-number:" "$f"
-  sed -n '/^--- body ---$/,/^--- response ---$/p' "$f"
-  sed -n '/^--- response ---$/,$p' "$f"
-  echo
-done
-```
+### Transition
+
+No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
+
+The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
