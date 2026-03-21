@@ -1,15 +1,16 @@
 Id: lss
 Title: Downscope "append-only log is merge-safe" claim
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-21
 Coordination: local
 X-Discovered-from: gh#237
 X-Phase: planning
 
 --- log ---
-2026-03-21T12:00Z created
-2026-03-21T12:00Z status open
+2026-03-21T12:00Z claude created
+2026-03-21T12:00Z claude status open
+2026-03-21T19:00Z claude status closed — fixed in semantic-slug naming branch
 
 --- body ---
 Distributed systems review: "append-only log is merge-safe" is

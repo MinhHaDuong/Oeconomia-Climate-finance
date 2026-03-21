@@ -1,15 +1,16 @@
 Id: bnu
 Title: Reconcile branch naming convention between AGENTS.md and ticket spec
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-21
 Coordination: local
 X-Discovered-from: gh#237
 X-Phase: planning
 
 --- log ---
-2026-03-21T12:00Z created
-2026-03-21T12:00Z status open
+2026-03-21T12:00Z claude created
+2026-03-21T12:00Z claude status open
+2026-03-21T19:00Z claude status closed — fixed in semantic-slug naming branch
 
 --- body ---
 DevOps review: AGENTS.md says `t{N}-short-description` (sequential

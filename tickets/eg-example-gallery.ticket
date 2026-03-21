@@ -9,8 +9,8 @@ X-Discovered-from: gh#237
 X-Phase: planning
 
 --- log ---
-2026-03-21T12:00Z created
-2026-03-21T12:00Z status open
+2026-03-21T12:00Z claude created
+2026-03-21T12:00Z claude status open
 
 --- body ---
 PEP/structure review: the Specification examples section has gaps.
