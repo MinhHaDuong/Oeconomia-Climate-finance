@@ -139,7 +139,11 @@ Rationale:
 
 Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose with Unix pipes. RFC 822 headers work with bare `grep` and `cut`.
 
-Headers appear in this order (like PEP 1). Fields marked * are optional.
+**The header set is open** — like email and HTTP, any `Key: Value` line is valid. A small set of headers is required (`Id`, `Title`, `Status`, `Created`), but projects add domain-specific headers freely. The schema validates required fields; unknown headers are passed through, not rejected. This means the same format works for development tickets, peer review comments, and use cases we haven't imagined yet.
+
+Required headers appear first (like PEP 1). Everything else is optional and domain-specific.
+
+**Example — development ticket:**
 
 ```
 Id: a3b8f2c
@@ -149,12 +153,12 @@ Status: open
 Phase: dreaming
 Coordination: local
 Created: 2026-03-21
-Gh-issue: #247*
-Assigned-to: agent-x*
-Blocked-by: c7d9e1*
-Blocked-by: f4a2b8*
-Discovered-from: 9e1c3d*
-Supersedes: b4e7d2a*
+Gh-issue: #247
+Assigned-to: agent-x
+Blocked-by: c7d9e1
+Blocked-by: f4a2b8
+Discovered-from: 9e1c3d
+Supersedes: b4e7d2a
 
 --- log ---
 2026-03-21T10:00Z created
@@ -166,6 +170,53 @@ Supersedes: b4e7d2a*
 --- body ---
 Free-form description goes here.
 Markdown OK.
+```
+
+**Example — peer review comment:**
+
+```
+Id: r1c03a7
+Title: R1.3 — Clarify methodology for COP funding data
+Author: reviewer-1
+Status: pending
+Created: 2026-03-21
+Review-round: R1
+Comment-number: 3
+Section: 3.2
+Page: 12
+
+--- log ---
+2026-03-21T10:00Z created
+2026-03-25T14:00Z status pending → addressed
+
+--- body ---
+The methodology for aggregating COP funding commitments is unclear.
+How are pledges vs disbursements distinguished? Table 3 seems to
+mix both without explanation.
+
+--- response ---
+Added paragraph in §3.2 distinguishing pledges from disbursements.
+Table 3 now has separate columns. See commit a3b8f2c.
+```
+
+Peer review tickets add domain-specific headers (`Review-round`, `Comment-number`, `Section`, `Page`) and a `--- response ---` section. The reviewer's words stay untouched in the body; the author's point-by-point reply goes in response.
+
+**One-liners for peer review:**
+
+```bash
+# Unaddressed comments from R1
+grep -l "^Status: pending" tickets/r1c*.md
+
+# All comments about section 3
+grep -l "^Section: 3" tickets/r1c*.md
+
+# Generate response document (all R1 comments + responses, in order)
+for f in $(grep -l "^Review-round: R1" tickets/*.md | sort); do
+  grep "^Comment-number:" "$f"
+  sed -n '/^--- body ---$/,/^--- response ---$/p' "$f"
+  sed -n '/^--- response ---$/,$p' "$f"
+  echo
+done
 ```
 
 **Structure:** three sections separated by marker lines:
