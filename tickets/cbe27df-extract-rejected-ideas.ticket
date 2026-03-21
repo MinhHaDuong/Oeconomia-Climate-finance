@@ -1,10 +1,10 @@
-Id: dd5b9e3
+Id: cbe27df
 Title: Extract landscape survey into Rejected Ideas section
 Author: claude
 Status: open
 Created: 2026-03-21
 Coordination: local
-Blocked-by: db3c7e2
+Blocked-by: f15eb48
 X-Discovered-from: gh#237
 X-Phase: planning
 
@@ -23,5 +23,5 @@ antipattern + "real cost of extra tooling" into a new "Rejected
 Ideas" section. Keep in Rationale only the justification for the
 specific design choices of the proposed system.
 
-Depends on db3c7e2 (the "why" consolidation determines what stays
+Depends on f15eb48 (the "why" consolidation determines what stays
 in Rationale).

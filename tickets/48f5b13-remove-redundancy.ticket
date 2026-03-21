@@ -1,11 +1,11 @@
-Id: df7d2a5
+Id: 48f5b13
 Title: Remove redundant content across sections
 Author: claude
 Status: open
 Created: 2026-03-21
 Coordination: local
-Blocked-by: db3c7e2
-Blocked-by: dc4a8f1
+Blocked-by: f15eb48
+Blocked-by: 1d4c4dc
 X-Discovered-from: gh#237
 X-Phase: planning
 
@@ -30,5 +30,5 @@ Fix: after structural reorganization, each concept should appear
 exactly once — rationale in Rationale, specification in Specification.
 Cross-reference, don't repeat.
 
-Depends on db3c7e2 and dc4a8f1 (the restructure determines where
+Depends on f15eb48 and 1d4c4dc (the restructure determines where
 each concept's canonical home is).

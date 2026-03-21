@@ -225,7 +225,7 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 
 | Header | Required | Description |
 |--------|----------|-------------|
-| `Id` | yes | Content-addressable hash |
+| `Id` | yes | 7-char random hex identifier |
 | `Title` | yes | Short description |
 | `Author` | yes | Creator |
 | `Status` | yes | Current state (open, doing, closed, …) |
@@ -260,7 +260,7 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 
 ### Naming convention
 
-Ticket files are named `{id}-{slug}.md` (e.g., `a3b8f2c-add-auth-flow.md`). The ID is a random 7-char hex for uniqueness. The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
+Ticket files are named `{id}-{slug}.ticket` (e.g., `a3b8f2c-add-auth-flow.ticket`). The `.ticket` extension avoids triggering Markdown linters on non-Markdown content; editors can associate `*.ticket` with Markdown mode for body-section highlighting. The ID is a random 7-char hex for uniqueness. The slug is human-readable context. Branches follow the same pattern: `t/a3b8f2c-add-auth-flow`.
 
 ### Examples
 
@@ -326,25 +326,25 @@ Unix philosophy — each query is a pipeline:
 
 ```bash
 # All open tickets
-grep -l "^Status: open" tickets/*.md
+grep -l "^Status: open" tickets/*.ticket
 
 # Tickets in doing phase
-grep -l "^X-Phase: doing" tickets/*.md
+grep -l "^X-Phase: doing" tickets/*.ticket
 
 # What blocks ticket a3b8f2c?
-grep "^Blocked-by:" tickets/a3b8f2c-*.md | cut -d' ' -f2
+grep "^Blocked-by:" tickets/a3b8f2c-*.ticket | cut -d' ' -f2
 
 # Tickets with no blockers
-grep -rL "^Blocked-by:" tickets/*.md
+grep -rL "^Blocked-by:" tickets/*.ticket
 
 # All ticket IDs
 ls tickets/ | cut -d- -f1
 
 # Count tickets by status
-grep "^Status:" tickets/*.md | cut -d' ' -f2 | sort | uniq -c | sort -rn
+grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
 
 # History of a ticket
-sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.md
+sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/a3b8f2c-*.ticket
 ```
 
 The only query that needs Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — that's a graph traversal, not a text filter.
@@ -353,13 +353,13 @@ The only query that needs Python is `ready` (open tickets where all `Blocked-by`
 
 ```bash
 # Unaddressed comments from R1
-grep -l "^Status: pending" tickets/r1c*.md
+grep -l "^Status: pending" tickets/r1c*.ticket
 
 # All comments about section 3
-grep -l "^X-Section: 3" tickets/r1c*.md
+grep -l "^X-Section: 3" tickets/r1c*.ticket
 
 # Generate response document (all R1 comments + responses, in order)
-for f in $(grep -l "^X-Review-round: R1" tickets/*.md | sort); do
+for f in $(grep -l "^X-Review-round: R1" tickets/*.ticket | sort); do
   grep "^X-Comment-number:" "$f"
   sed -n '/^--- body ---$/,/^--- response ---$/p' "$f"
   sed -n '/^--- response ---$/,$p' "$f"
