@@ -37,7 +37,18 @@ if [ -n "$large" ]; then
     exit 1
 fi
 
-# 5. No conflict markers
+# 5. Validate staged .ticket files
+staged_tickets=$(git diff --cached --name-only --diff-filter=d | grep '\.ticket$' || true)
+if [ -n "$staged_tickets" ]; then
+    if command -v uv >/dev/null 2>&1; then
+        if ! uv run python scripts/validate_tickets.py tickets/ 2>&1; then
+            echo "ERROR: Ticket validation failed." >&2
+            exit 1
+        fi
+    fi
+fi
+
+# 6. No conflict markers
 conflicts=$(git diff --cached --name-only -z | xargs -0 grep -l '^<<<<<<<\|^>>>>>>>\|^=======$' 2>/dev/null || true)
 if [ -n "$conflicts" ]; then
     echo "ERROR: Unresolved merge conflict markers in:" >&2

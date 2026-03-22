@@ -102,7 +102,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus lint-prose validate-tickets ticket-ready ticket-archive clean rebuild archive-analysis archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -600,12 +600,22 @@ archive-datapaper: check-corpus
 	rm -rf $(DPAPER_TMP)
 	@echo "Done: $(DPAPER_ARCHIVE).tar.gz"
 
+# ── Ticket tooling ───────────────────────────────────────
+validate-tickets:
+	@uv run python scripts/validate_tickets.py tickets/
+
+ticket-ready:
+	@uv run python scripts/ready_tickets.py
+
+ticket-archive:
+	@uv run python scripts/archive_tickets.py tickets/ --days=$(or $(DAYS),90)
+
 # ── All checks (tests + lint) ────────────────────────────
-check: lint-prose
+check: lint-prose validate-tickets
 	uv run pytest tests/ -v --tb=short
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
-check-fast: lint-prose
+check-fast: lint-prose validate-tickets
 	uv run pytest tests/ -v --tb=short -m "not slow and not integration"
 
 # ── Prose linting (AI-tell detection) ─────────────────────
