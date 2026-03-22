@@ -1,0 +1,43 @@
+Id: rtd
+Title: Add ticket lifecycle instructions to runbooks
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T15:00Z claude created
+2026-03-22T15:00Z claude status open
+
+--- body ---
+## Context
+Agent UX review found two high-severity discoverability gaps:
+
+1. `make ticket-ready` is not mentioned in any agent-facing doc
+   (AGENTS.md, on-start.md, start-ticket.md). An agent has no
+   path from "I should find work" to the command.
+
+2. Neither start-ticket.md nor celebrate.md tells agents HOW to
+   transition Status or write log entries. The format lives only
+   in the spec, not in the runbooks agents actually consult.
+
+Also: Blocked-by forward references require committing blocking
+tickets first — undocumented ordering constraint.
+
+## Actions
+1. AGENTS.md wave cycle "Select" step: add
+   "Run `make ticket-ready` to list unblocked open tickets."
+2. start-ticket.md: after creating worktree, add instructions to
+   set `Status: doing`, append log entry, commit immediately
+3. celebrate.md: add instruction to set `Status: closed` with
+   log entry
+4. new-ticket.md: add note about commit ordering when using
+   Blocked-by (commit blocking tickets first)
+5. Add `make ticket-ready` output to include filename
+   (already has it in JSON mode, add to human-readable mode)
+
+## Exit criteria
+- An agent reading only AGENTS.md + runbooks can find, claim,
+  and close tickets without consulting the spec
