@@ -165,6 +165,28 @@ uv run python scripts/summarize_core_venues.py   # Core venue tables + instituti
 uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 venue markdown table
 ```
 
+## Ticket tooling
+
+Tickets (`.ticket` files in `tickets/`) track work items with structured YAML-like headers. Three tools operate on them:
+
+| Command | Purpose |
+|---------|---------|
+| `make validate-tickets` | Check all tickets parse correctly and have required fields |
+| `make ticket-ready` | List open tickets whose blockers are all resolved |
+| `make ticket-archive` | Find closed tickets older than N days (`DAYS=90`, `EXECUTE=1` to move) |
+
+Three interchangeable implementations exist, auto-selected by the Makefile:
+
+| Backend | When | Override |
+|---------|------|----------|
+| **Go** (`tickets/tools/go/`) | Binary present (build: `cd tickets/tools/go && go build`) | `TICKET_TOOL=go` |
+| **POSIX sh+awk** (`tickets/tools/bash-fast/`) | Fallback — zero-install, runs on Alpine/Busybox | `TICKET_TOOL=sh` |
+| **Python** (`tickets/tools/`) | Final fallback — reference implementation, clearest to read | `TICKET_TOOL=python` |
+
+Auto-detection cascade: Go binary → awk available → Python via uv. All three produce identical output and are tested together.
+
+The Python implementation uses a shared parser (`ticket_parser.py`) with three entry-point scripts. The Go implementation is a single binary with subcommands (`validate`, `ready`, `archive`). The sh implementation is three standalone scripts, each embedding its own awk program.
+
 ## Citation graph
 
 `citations.csv` (775,288 rows) was built from two sources:
