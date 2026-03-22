@@ -1,193 +1,234 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # DAG-safe archival of old closed tickets.
-# Fast variant using awk for single-pass parsing.
+# POSIX sh + awk — runs on Alpine, Busybox, dash, any /bin/sh.
 #
 # Usage:
 #     archive_tickets.sh [tickets/] [--days N] [--execute]
 #
 # Default: dry-run. Pass --execute to actually move files and commit.
 #
-# Deps: bash, awk, sort, date, git (standard on any dev machine)
+# Deps: sh, awk, date, git (standard on any system)
 
-set -euo pipefail
+set -eu
 
-DAG_HEADERS="Blocked-by X-Discovered-from X-Supersedes"
+# ---------------------------------------------------------------------------
+# Argument parsing (no arrays — just variables)
+# ---------------------------------------------------------------------------
+execute=false
+days=90
+ticket_dir="tickets"
 
-# Single-pass awk parser: extracts Id, Status, last log timestamp, DAG refs.
-# Output: FILENAME \t ID \t STATUS \t LAST_LOG_TS \t DAG_REFS(comma-sep)
-parse_all_tickets() {
-    awk -v dag_hdrs="Blocked-by,X-Discovered-from,X-Supersedes" '
-    BEGIN { split(dag_hdrs, dh, ",") }
-    FNR == 1 {
-        if (NR > 1) emit()
-        reset()
-        file = FILENAME
-        n = split(file, parts, "/")
-        fname = parts[n]
-    }
-    section == "headers" {
-        if ($0 ~ /^[[:space:]]*$/) { section = "gap"; next }
-        if ($0 ~ /^[A-Za-z][A-Za-z0-9_-]*[[:space:]]*:/) {
-            colon = index($0, ":")
-            key = substr($0, 1, colon - 1)
-            val = substr($0, colon + 1)
-            sub(/^[[:space:]]+/, "", key); sub(/[[:space:]]+$/, "", key)
-            sub(/^[[:space:]]+/, "", val); sub(/[[:space:]]+$/, "", val)
-            if (key == "Id") tid = val
-            else if (key == "Status") status = val
-            else {
-                for (i in dh) {
-                    if (key == dh[i]) {
-                        dag_refs = dag_refs (dag_refs ? "," : "") val
-                        break
-                    }
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --execute)        execute=true; shift ;;
+        --days=*)         days="${1#--days=}"; shift ;;
+        --days)           days="$2"; shift 2 ;;
+        --*)              shift ;;
+        *)                ticket_dir="$1"; shift ;;
+    esac
+done
+
+if [ ! -d "$ticket_dir" ]; then
+    echo "Directory not found: $ticket_dir"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Collect file lists
+# ---------------------------------------------------------------------------
+live_files=""
+for f in "$ticket_dir"/*.ticket; do
+    [ -e "$f" ] && live_files="$live_files $f"
+done
+
+all_files="$live_files"
+archive_dir="${ticket_dir%/}/archive"
+if [ -d "$archive_dir" ]; then
+    for f in "$archive_dir"/*.ticket; do
+        [ -e "$f" ] && all_files="$all_files $f"
+    done
+fi
+
+if [ -z "$live_files" ]; then
+    echo "Nothing to archive (threshold: ${days} days)."
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Compute cutoff epoch
+# ---------------------------------------------------------------------------
+cutoff_epoch=$(date -d "-${days} days" +%s 2>/dev/null || date -v-${days}d +%s 2>/dev/null)
+
+# ---------------------------------------------------------------------------
+# Single awk program: parse all files, find archivable tickets.
+# Output lines:
+#   ARCHIVABLE <filename>
+#   DAGPROTECTED <id>
+#   NOTHING
+# ---------------------------------------------------------------------------
+# shellcheck disable=SC2086
+result=$(awk -v cutoff="$cutoff_epoch" -v dag_hdrs="Blocked-by,X-Discovered-from,X-Supersedes" '
+BEGIN {
+    split(dag_hdrs, dh, ",")
+    section = "headers"
+}
+
+FNR == 1 {
+    if (NR > 1) emit()
+    reset()
+    file = FILENAME
+    n = split(file, parts, "/")
+    fname = parts[n]
+    # Track whether this file is "live" (not in archive/ subpath)
+    is_live = (file !~ /\/archive\//)
+}
+
+section == "headers" {
+    if ($0 ~ /^[[:space:]]*$/) { section = "gap"; next }
+    if ($0 ~ /^[A-Za-z][A-Za-z0-9_-]*[[:space:]]*:/) {
+        colon = index($0, ":")
+        key = substr($0, 1, colon - 1)
+        val = substr($0, colon + 1)
+        sub(/^[[:space:]]+/, "", key); sub(/[[:space:]]+$/, "", key)
+        sub(/^[[:space:]]+/, "", val); sub(/[[:space:]]+$/, "", val)
+        if (key == "Id") tid = val
+        else if (key == "Status") status = val
+        else {
+            for (i in dh) {
+                if (key == dh[i]) {
+                    dag_refs = dag_refs (dag_refs ? "," : "") val
+                    break
                 }
             }
         }
-        next
     }
-    section == "gap" {
-        if ($0 ~ /^[[:space:]]*--- log ---/) { section = "log"; next }
-        if ($0 ~ /^[[:space:]]*--- body ---/) { section = "body"; next }
-        next
+    next
+}
+section == "gap" {
+    if ($0 ~ /^[[:space:]]*--- log ---/) { section = "log"; next }
+    if ($0 ~ /^[[:space:]]*--- body ---/) { section = "body"; next }
+    next
+}
+section == "log" {
+    if ($0 ~ /^[[:space:]]*--- body ---/) { section = "body"; next }
+    if ($0 ~ /[^[:space:]]/) {
+        if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+Z?/))
+            last_ts = substr($0, RSTART, RLENGTH)
     }
-    section == "log" {
-        if ($0 ~ /^[[:space:]]*--- body ---/) { section = "body"; next }
-        # Track last non-empty log line timestamp
-        if ($0 ~ /[^[:space:]]/) {
-            if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+Z?/)) {
-                last_ts = substr($0, RSTART, RLENGTH)
-            }
-        }
-        next
+    next
+}
+section == "body" { next }
+
+function reset() {
+    section = "headers"; tid = ""; status = ""; last_ts = ""; dag_refs = ""
+}
+function emit() {
+    ntix++
+    tix_fname[ntix]  = fname
+    tix_id[ntix]     = tid
+    tix_status[ntix] = status
+    tix_last_ts[ntix]= last_ts
+    tix_live[ntix]   = is_live
+
+    # Collect DAG references from all tickets (live + archived)
+    if (dag_refs != "") {
+        nr = split(dag_refs, drefs, ",")
+        for (r = 1; r <= nr; r++)
+            referenced[drefs[r]] = 1
     }
-    section == "body" { next }
-    function reset() {
-        section = "headers"; tid = ""; status = ""; last_ts = ""; dag_refs = ""
-    }
-    function emit() {
-        printf "%s\x01%s\x01%s\x01%s\x01%s\n", fname, tid, status, last_ts, dag_refs
-    }
-    END { if (NR > 0) emit() }
-    ' "$@"
 }
 
-main() {
-    local execute=false
-    local days=90
-    local ticket_dir="tickets"
-    local -a positional=()
+END {
+    if (NR > 0) emit()
 
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --execute) execute=true; shift ;;
-            --days=*) days="${1#--days=}"; shift ;;
-            --days) days="$2"; shift 2 ;;
-            --*) shift ;;
-            *) positional+=("$1"); shift ;;
-        esac
-    done
+    narchivable = 0
+    nprotected = 0
 
-    [[ ${#positional[@]} -gt 0 ]] && ticket_dir="${positional[0]}"
+    for (i = 1; i <= ntix; i++) {
+        if (!tix_live[i]) continue
+        if (tix_status[i] != "closed") continue
+        if (tix_last_ts[i] == "") continue
 
-    if [[ ! -d "$ticket_dir" ]]; then
-        echo "Directory not found: $ticket_dir"
-        exit 1
-    fi
+        # Parse timestamp to epoch
+        ts = tix_last_ts[i]
+        sub(/Z$/, "", ts)
+        # YYYY-MM-DDTHH:MM(:SS)?
+        if (length(ts) < 16) continue
+        Y  = substr(ts, 1, 4) + 0
+        Mo = substr(ts, 6, 2) + 0
+        D  = substr(ts, 9, 2) + 0
+        H  = substr(ts, 12, 2) + 0
+        Mi = substr(ts, 15, 2) + 0
+        S  = 0
+        if (length(ts) >= 19 && substr(ts, 17, 1) == ":")
+            S = substr(ts, 18, 2) + 0
 
-    # Collect all ticket files (live + archived) for DAG reference scan
-    local -a live_files=() all_files=()
-    local f
-    for f in "$ticket_dir"/*.ticket; do
-        [[ -e "$f" ]] && live_files+=("$f") && all_files+=("$f")
-    done
-    local archive_dir="${ticket_dir%/}/archive"
-    if [[ -d "$archive_dir" ]]; then
-        for f in "$archive_dir"/*.ticket; do
-            [[ -e "$f" ]] && all_files+=("$f")
-        done
-    fi
+        # Simplified epoch (same formula both sides use for comparison)
+        # Use days-since-epoch approach for reliable comparison
+        # Julian Day Number (simplified, good enough for recent dates)
+        a = int((14 - Mo) / 12)
+        y = Y + 4800 - a
+        m = Mo + 12 * a - 3
+        jdn = D + int((153 * m + 2) / 5) + 365 * y + int(y/4) - int(y/100) + int(y/400) - 32045
+        ts_epoch = (jdn - 2440588) * 86400 + H * 3600 + Mi * 60 + S
 
-    if [[ ${#live_files[@]} -eq 0 ]]; then
-        echo "Nothing to archive (threshold: ${days} days)."
-        exit 0
-    fi
-
-    # Parse all files in one pass
-    local parsed
-    parsed=$(parse_all_tickets "${all_files[@]}")
-
-    # Collect all referenced IDs (from DAG headers across all tickets)
-    local -A referenced_ids=()
-    while IFS=$'\x01' read -r fname tid status last_ts dag_refs; do
-        if [[ -n "$dag_refs" ]]; then
-            IFS=',' read -ra refs <<< "$dag_refs"
-            for ref in "${refs[@]}"; do
-                referenced_ids["$ref"]=1
-            done
-        fi
-    done <<< "$parsed"
-
-    # Compute cutoff timestamp
-    local cutoff_epoch
-    cutoff_epoch=$(date -d "-${days} days" +%s 2>/dev/null || date -v-${days}d +%s 2>/dev/null)
-
-    # Find archivable candidates from live files only
-    local -a archivable=() dag_protected=()
-    # Re-parse only live files for candidate selection
-    local live_parsed
-    live_parsed=$(parse_all_tickets "${live_files[@]}")
-
-    while IFS=$'\x01' read -r fname tid status last_ts dag_refs; do
-        [[ "$status" != "closed" ]] && continue
-        [[ -z "$last_ts" ]] && continue
-
-        # Parse timestamp
-        local ts_clean="$last_ts"
-        [[ "$ts_clean" != *Z ]] && ts_clean="${ts_clean}Z"
-        # Convert ISO to epoch (GNU date or BSD date)
-        local ts_epoch
-        ts_epoch=$(date -d "${ts_clean}" +%s 2>/dev/null || date -jf "%Y-%m-%dT%H:%M:%SZ" "${ts_clean}" +%s 2>/dev/null || echo 0)
-
-        (( ts_epoch >= cutoff_epoch )) && continue
+        if (ts_epoch >= cutoff + 0) continue
 
         # DAG protection check
-        if [[ -n "${referenced_ids[$tid]:-}" ]]; then
-            dag_protected+=("$tid")
-        else
-            archivable+=("$fname")
-        fi
-    done <<< "$live_parsed"
+        if (tix_id[i] in referenced) {
+            nprotected++
+            protected_ids = protected_ids (protected_ids ? ", " : "") tix_id[i]
+        } else {
+            narchivable++
+            archivable[narchivable] = tix_fname[i]
+            archivable_ids = archivable_ids (archivable_ids ? ", " : "") tix_id[i]
+        }
+    }
 
-    if [[ ${#dag_protected[@]} -gt 0 ]]; then
-        local protected_list
-        protected_list=$(printf '%s\n' "${dag_protected[@]}" | sort | paste -sd', ')
-        echo "DAG-protected (skipping ${#dag_protected[@]}): ${protected_list}"
-    fi
+    if (nprotected > 0)
+        printf "DAG-protected (skipping %d): %s\n", nprotected, protected_ids
 
-    if [[ ${#archivable[@]} -eq 0 ]]; then
-        echo "Nothing to archive (threshold: ${days} days)."
-        exit 0
-    fi
-
-    local archivable_ids
-    archivable_ids=$(printf '%s\n' "${archivable[@]}" | sed 's/-.*//' | sort | paste -sd', ')
-    echo "Will archive ${#archivable[@]} ticket(s): ${archivable_ids}"
-
-    if [[ "$execute" != "true" ]]; then
-        echo "Dry run. Pass --execute to proceed."
-        exit 0
-    fi
-
-    mkdir -p "$archive_dir"
-    for fname in "${archivable[@]}"; do
-        git mv "${ticket_dir}/${fname}" "${archive_dir}/${fname}"
-        echo "  moved ${fname}"
-    done
-
-    local msg="archive ${#archivable[@]} closed tickets (>${days} days, DAG-safe)"
-    git commit -m "$msg"
-    echo "Committed: ${msg}"
+    if (narchivable == 0) {
+        print "NOTHING"
+    } else {
+        printf "SUMMARY %d %s\n", narchivable, archivable_ids
+        for (i = 1; i <= narchivable; i++)
+            printf "ARCHIVABLE %s\n", archivable[i]
+    }
 }
+' $all_files)
 
-main "$@"
+# ---------------------------------------------------------------------------
+# Process awk output
+# ---------------------------------------------------------------------------
+if echo "$result" | grep -q "^NOTHING$"; then
+    # Print any DAG-protected lines first
+    echo "$result" | grep "^DAG-protected" || true
+    echo "Nothing to archive (threshold: ${days} days)."
+    exit 0
+fi
+
+# Print DAG-protected info
+echo "$result" | grep "^DAG-protected" || true
+
+# Extract summary
+summary_line=$(echo "$result" | grep "^SUMMARY")
+count=$(echo "$summary_line" | awk '{print $2}')
+ids=$(echo "$summary_line" | sed 's/^SUMMARY [0-9]* //')
+
+echo "Will archive ${count} ticket(s): ${ids}"
+
+if [ "$execute" != true ]; then
+    echo "Dry run. Pass --execute to proceed."
+    exit 0
+fi
+
+mkdir -p "$archive_dir"
+echo "$result" | grep "^ARCHIVABLE " | while read -r _ fname; do
+    git mv "${ticket_dir}/${fname}" "${archive_dir}/${fname}"
+    echo "  moved ${fname}"
+done
+
+msg="archive ${count} closed tickets (>${days} days, DAG-safe)"
+git commit -m "$msg"
+echo "Committed: ${msg}"
