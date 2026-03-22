@@ -97,7 +97,7 @@ When issue exploration leads to multiple action items, open one ticket for each.
 
 ### Wave cycle
 
-1. **Select** — pick ripe tickets (dependencies met, blockers cleared).
+1. **Select** — pick ripe tickets (dependencies met, blockers cleared). Run `make ticket-ready` to list unblocked open tickets.
 2. **Launch** — each ticket in its own worktree, independent tickets in parallel.
 3. **Verify** — review each PR in a fresh-context worktree (`runbooks/review-pr.md`).
 4. **Learn** — for each result:

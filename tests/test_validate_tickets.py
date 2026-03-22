@@ -1,12 +1,9 @@
 """Tests for ticket validation (tickets/tools/validate_tickets.py)."""
 
-import sys
 import textwrap
 from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
 
 from ticket_parser import Ticket, parse_ticket
 from validate_tickets import validate_all, validate_ticket
@@ -54,6 +51,27 @@ class TestParser:
         assert t.filename_id == "afg"
         assert len(t.log_lines) == 1
         assert "Free-form body" in t.body
+
+    def test_blank_line_ends_headers(self, tmp_ticket):
+        """A blank line between headers should end the header block."""
+        t = _parse(
+            tmp_ticket,
+            "afg-test.ticket",
+            """\
+            Id: afg
+            Title: Test
+            Author: a
+
+            Status: open
+            Created: 2026-01-01
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        # Status and Created are after the blank line, so NOT parsed as headers
+        assert "Status" not in t.headers
+        assert "Created" not in t.headers
 
     def test_parse_repeatable_headers(self, tmp_ticket):
         t = _parse(

@@ -71,7 +71,7 @@ def main() -> int:
         else:
             print(f"Ready tickets ({len(ready)}):")
             for r in ready:
-                print(f"  {r['id']:8s} {r['title']}")
+                print(f"  {r['id']:8s} {r['file']:40s} {r['title']}")
 
     return 0
 

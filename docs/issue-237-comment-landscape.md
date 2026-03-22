@@ -117,7 +117,7 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 
 **Structure** — three sections separated by marker lines:
 
-1. **Header** (RFC 822 key-value pairs) — current state. Ends at first blank line.
+1. **Header** (RFC 822 key-value pairs) — current state. Ends at the first blank line; lines between the header block and the `--- log ---` separator are ignored.
 2. **Log** (after `--- log ---`) — append-only events, in chronological order. Format: `{ISO-timestamp} {agent-id} {event}`. Aids manual resolution if headers conflict during merge.
 3. **Body** (after `--- body ---`) — free-form markdown description. Domain-specific workflows may add further named separators inside the body (e.g., `--- response ---` in peer review tickets). These are not parsed by core tools — only `--- log ---` and `--- body ---` are structural.
 
@@ -125,7 +125,11 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 
 ### Naming convention
 
-Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is freely chosen — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. Collisions get a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters. Branches: `t/{id}-{slug}`.
+Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is freely chosen — it relates to the ticket's purpose but is not derived mechanically from the title. Branches: `t/{id}-{slug}`.
+
+**ID derivation** — split the slug on hyphens, take the first character of each part: `auth-flow-gates` → `afg`, `validate-tickets` → `vt`, `cycle-detection` → `cd`. The ID is set once at creation and treated as immutable; tools read it from the filename prefix, not by re-deriving it. Avoid single-word slugs (single-character IDs are collision-prone); prefer two or three words. Numeric slug parts contribute their first digit: `r2-fix` → `rf`.
+
+Collisions get a numeric suffix starting at 2: `afg`, `afg2`, `afg3`, …. The `.ticket` extension avoids triggering Markdown linters.
 
 **Uniqueness enforcement** — two layers:
 

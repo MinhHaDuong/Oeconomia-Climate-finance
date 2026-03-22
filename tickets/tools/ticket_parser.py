@@ -62,7 +62,7 @@ def parse_ticket(path: Path) -> Ticket:
     log_lines: list[str] = []
     body_lines: list[str] = []
 
-    section = "headers"  # headers | log | body
+    section = "headers"  # headers | gap | log | body
     log_seen = False
     body_seen = False
 
@@ -78,11 +78,14 @@ def parse_ticket(path: Path) -> Ticket:
 
         if section == "headers":
             if not line.strip():
-                continue  # skip blank lines in header area
+                section = "gap"
+                continue
             m = re.match(r"^([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(.*)", line)
             if m:
                 key, val = m.group(1), m.group(2).strip()
                 headers.setdefault(key, []).append(val)
+        elif section == "gap":
+            pass  # ignore lines between header block and log separator
         elif section == "log":
             if line.strip():
                 log_lines.append(line)
