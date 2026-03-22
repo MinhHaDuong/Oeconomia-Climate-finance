@@ -76,7 +76,7 @@ PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
 
-DATAPAPER_FIGS  := content/figures/fig_semantic.png
+DATAPAPER_FIGS  := content/figures/fig_semantic.png content/figures/fig_dag.png
 
 COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluvial.png \
                    content/figures/fig_breaks.png \
@@ -353,6 +353,10 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 .PHONY: lexical-figures
 lexical-figures: content/tables/tab_lexical_tfidf.csv
 	uv run python scripts/plot_fig_lexical_tfidf.py --no-pdf
+
+# DVC pipeline DAG (data paper)
+content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
+	uv run python $<
 
 figures-manuscript: check-manuscript-data $(MANUSCRIPT_FIGS)
 figures-datapaper:  check-corpus $(DATAPAPER_FIGS)
