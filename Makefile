@@ -59,7 +59,8 @@ TECHREP_INCLUDES := content/_includes/corpus-construction.md \
 DATAPAPER_INCLUDES := content/_includes/corpus-construction.md \
 		content/_includes/corpus-refinement.md \
 		content/_includes/embedding-generation.md \
-		content/_includes/reproducibility.md
+		content/_includes/reproducibility.md \
+		content/tables/tab_corpus_sources.md
 
 COMPANION_INCLUDES := content/_includes/embedding-generation.md \
 		content/_includes/structural-breaks.md \
@@ -203,10 +204,10 @@ content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scr
 content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $<
 
-content/tables/tab_corpus_sources.csv: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
+content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md &: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-corpus-tables: content/tables/tab_corpus_sources.csv \
+corpus-tables: content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md \
                content/tables/tab_citation_coverage.md
 
 # ── Statistics (computed from pipeline outputs) ──────────
