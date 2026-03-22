@@ -28,6 +28,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - `python-dotenv` loads `.env` secrets automatically
 - All HTTP callers use unified retry_get (5 retries, backoff+jitter, 429+5xx)
 - Budget guard: catalog_openalex stops gracefully when daily budget exhausted
+- Syllabi fetch stage parallelized: 100 workers, per-host rate limiting (1 req/s)
 
 ## Figures & tables
 
@@ -55,6 +56,7 @@ None.
 
 ## Recent merges (2026-03-22)
 
+- #268/#265: Parallelize syllabi fetch stage (100 workers, per-host 1 req/s rate limiting, ~10-15x speedup)
 - #259: Teaching scraper: improved PDF parsing (table extraction, 50KB limit, chunk overlap), removed manual catalog — scraper is now sole source
 - #260: ISTEX rebuild
 - #241: housekeeping STATE refresh
