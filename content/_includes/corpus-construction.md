@@ -7,6 +7,7 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 | Source | Script | Automation | Coverage |
 |---|---|---|---|
 | OpenAlex | `catalog_openalex.py` | Automated (free API) | Primary academic source: tiered keyword search (4 tiers, ~50 queries) |
+| Semantic Scholar | `catalog_semanticscholar.py` | Automated (API key) | Cross-database academic search: same tiered queries, 1000-per-query API cap |
 | ISTEX | `catalog_istex.py --api` | Automated (public API) | French national archive: `"climate finance" OR "finance climat" OR "finance climatique"` |
 | Grey literature | `catalog_grey.py` | Hybrid (YAML seed + World Bank API) | OECD, UNFCCC, World Bank, CPI reports |
 | Teaching canon | `build_teaching_canon.py` | Automated (YAML extraction) | Syllabus readings from 15 institutions |

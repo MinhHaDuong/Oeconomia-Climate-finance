@@ -4,7 +4,7 @@ Date: 2026-03-20
 
 ## Context
 
-The climate finance corpus (29,878 works, 6 sources, multilingual, with embeddings)
+The climate finance corpus (29,878 works, 7 sources, multilingual, with embeddings)
 needs a data paper — a standalone publication describing the dataset for reuse.
 The companion methods paper (`companion-paper.qmd`) is a separate submission
 targeting scientometrics journals.

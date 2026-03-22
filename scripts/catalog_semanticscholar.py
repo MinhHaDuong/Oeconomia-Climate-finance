@@ -19,14 +19,13 @@ Usage:
     --pool-only       Download to pool, don't build CSV
     --extract-only    Build CSV from existing pool, don't download
     --dry-run         Show queries and expected counts
-    --limit N         Max results per query (0=all, API max ~10K per query)
+    --limit N         Max results per query (0=all, API max 1000 per query)
     --delay S         Delay between requests (default: 1.0)
 """
 
 import argparse
 import os
 import re
-import time
 
 import pandas as pd
 import yaml
@@ -34,7 +33,7 @@ import yaml
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS,
                    get_logger, normalize_doi, save_csv,
                    pool_path, append_to_pool, load_pool_ids,
-                   load_pool_records)
+                   load_pool_records, retry_get)
 
 log = get_logger("catalog_semanticscholar")
 
@@ -73,24 +72,16 @@ def query_slug(term):
 
 
 def s2_get(url, params, delay=1.0, max_retries=5):
-    """GET with rate limiting and retry for Semantic Scholar API."""
-    import requests
-    headers = {"User-Agent": "ClimateFinancePipeline/1.0 (mailto:minh.haduong@cnrs.fr)"}
+    """GET with rate limiting and retry for Semantic Scholar API.
+
+    Thin wrapper around retry_get that adds the S2 API key header.
+    """
+    headers = {}
     api_key = os.environ.get("S2_API_KEY", "")
     if api_key:
         headers["x-api-key"] = api_key
-
-    for attempt in range(max_retries):
-        time.sleep(delay)
-        resp = requests.get(url, params=params, headers=headers, timeout=30)
-        if resp.status_code == 429:
-            wait = int(resp.headers.get("Retry-After", 3 * (attempt + 1)))
-            log.warning("  Rate limited. Waiting %ds...", wait)
-            time.sleep(wait)
-            continue
-        resp.raise_for_status()
-        return resp
-    raise RuntimeError(f"Failed after {max_retries} retries: {url}")
+    return retry_get(url, params=params, headers=headers,
+                     delay=delay, max_retries=max_retries, timeout=30)
 
 
 def build_record(r):
@@ -134,14 +125,17 @@ def build_record(r):
 def fetch_query(search_term, delay, limit, existing_ids, pool_file):
     """Fetch all papers matching a search term from S2, append to pool.
 
-    S2 search API uses offset-based pagination (max offset ~10,000).
+    S2 search API uses offset-based pagination. The /paper/search endpoint
+    requires offset + limit ≤ 1000, so we can retrieve at most 1000 results
+    per query term.
     """
     offset = 0
     per_page = 100  # S2 max is 100
+    max_offset = 1000  # S2 search API hard limit
     n_new = 0
     batch = []
 
-    while True:
+    while offset + per_page <= max_offset:
         params = {
             "query": search_term,
             "fields": S2_FIELDS,
@@ -174,8 +168,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
 
         log.info("  [%s] %d/%d (new: %d)", search_term, offset, total, n_new)
 
-        # S2 caps at ~10K offset
-        if offset >= total or offset >= 9999:
+        if offset >= total:
             break
         if limit and offset >= limit:
             break
@@ -243,7 +236,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true",
                         help="Show queries and expected counts")
     parser.add_argument("--limit", type=int, default=0,
-                        help="Max results per query (0=all, S2 caps at ~10K)")
+                        help="Max results per query (0=all, S2 caps at 1000)")
     parser.add_argument("--delay", type=float, default=1.0,
                         help="Delay between requests (default: 1.0s)")
     args = parser.parse_args()

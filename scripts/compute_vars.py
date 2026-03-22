@@ -205,7 +205,7 @@ def corpus_stats(v):
         en_count = lang.str.lower().isin(["en", "english"]).sum()
         v["lang_english_pct"] = _pct(100 * en_count / n)
 
-    v["corpus_sources"] = "6"
+    v["corpus_sources"] = "7"
 
 
 def embedding_stats(v):

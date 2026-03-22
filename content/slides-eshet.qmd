@@ -199,7 +199,7 @@ The punchline. This is what the HET audience should take away.
 
 :::: {.columns}
 ::: {.column width="50%"}
-- ~30,000 works, 6 sources
+- ~30,000 works, 7 sources
 - Multilingual (EN, FR, ZH, JA, DE)
 - Sentence-transformer embeddings
 - Endogenous periodisation
