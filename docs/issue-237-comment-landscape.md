@@ -315,10 +315,10 @@ make ticket-archive DAYS=180     # custom threshold
 ```
 
 The procedure:
-1. Select tickets where `Status: closed` and last log entry is older than the threshold.
-2. Move them to `tickets/archive/`. Git records the move — `git log --follow` still works.
-3. Update any `Blocked-by` references in open tickets to use the new path (none expected — open tickets shouldn't block on closed ones, but check anyway).
-4. Commit the move in a single commit: `archive N closed tickets (>{DAYS} days)`.
+1. Collect candidates: tickets where `Status: closed` and last log entry is older than the threshold.
+2. Preserve the DAG: remove from candidates any ticket whose ID appears in a `Blocked-by`, `X-Discovered-from`, or `X-Supersedes` header of a non-archived ticket. These are still part of the live dependency graph.
+3. Move survivors to `tickets/archive/`. Git records the move — `git log --follow` still works.
+4. Commit the move in a single commit: `archive N closed tickets (>{DAYS} days, DAG-safe)`.
 
 **Recovery:** `git mv tickets/archive/foo.ticket tickets/` to restore any ticket.
 
