@@ -20,6 +20,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -309,9 +310,11 @@ def _fetch_one(url):
         page_rec["content_type"] = ct
 
         if "pdf" in ct.lower() or url.lower().endswith(".pdf"):
-            pdf_name = re.sub(r'[^\w\-.]', '_', url.split("/")[-1] or "page.pdf")
-            if not pdf_name.endswith(".pdf"):
-                pdf_name += ".pdf"
+            base = re.sub(r'[^\w\-.]', '_', url.split("/")[-1] or "page")
+            if base.lower().endswith(".pdf"):
+                base = base[:-4]
+            url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
+            pdf_name = f"{base}_{url_hash}.pdf"
             pdf_path = os.path.join(PDF_DIR, pdf_name)
             with open(pdf_path, "wb") as f:
                 f.write(resp.content)
@@ -361,8 +364,14 @@ def stage_fetch():
     if not pending:
         return
 
-    # Per-host rate limiting: each host has a lock and a last-request timestamp
-    host_locks = defaultdict(threading.Lock)
+    # Group pending URLs by host for rate limiting and logging
+    host_counts = defaultdict(int)
+    for rec in pending:
+        host = urlparse(rec["url"]).hostname or "unknown"
+        host_counts[host] += 1
+
+    # Pre-create per-host locks before spawning threads (avoids defaultdict race)
+    host_locks = {host: threading.Lock() for host in host_counts}
     host_last_request = {}  # hostname → monotonic timestamp
     host_time_lock = threading.Lock()  # protects host_last_request reads/writes
 
@@ -396,12 +405,6 @@ def stage_fetch():
             log.info("[%d/%d] %s", completed[0], len(pending), url[:80])
 
         return result
-
-    # Group by host to log distribution
-    host_counts = defaultdict(int)
-    for rec in pending:
-        host = urlparse(rec["url"]).hostname or "unknown"
-        host_counts[host] += 1
     n_hosts = len(host_counts)
     max_per_host = max(host_counts.values())
     log.info("Fetching from %d hosts (max %d URLs/host), %d workers",
