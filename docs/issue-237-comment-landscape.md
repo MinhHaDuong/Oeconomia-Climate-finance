@@ -57,7 +57,7 @@ These are real benefits, but they are not why we're doing this. We're doing this
 - **Mutable header + append-only log** — the header is a greppable index. The log is append-only by convention; concurrent appends to the same ticket are rare at low agent counts and auto-merge correctly in most cases. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
 - **RFC 822 over YAML** — see [File format](#file-format) for the full rationale.
 - **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
-- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
+- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds. If the ticket count outgrows this, the first lever is archival (`make ticket-archive`); the second is indexing or switching to a database-backed tool.
 - **Two-tier contention:**
   - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
   - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
@@ -98,6 +98,8 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 | `Blocked-by` | no | ID of blocking ticket (repeatable) |
 | `Forge-issue` | no | Full forge reference when `Coordination` uses a forge prefix (e.g., `gh#42`) |
 
+`Coordination` controls workflow behavior (local vs. forge-assigned). `Forge-issue` is the greppable cross-reference for humans. They overlap on simple cases like `gh#42`; they diverge if the coordination protocol evolves (e.g., `Coordination: forge-assigned` vs. `Forge-issue: gh#42`).
+
 Status values: `open` (available for work), `doing` (claimed, in progress), `closed` (completed or cancelled), `pending` (awaiting external input, e.g., peer review — excluded from `ready` output).
 
 **X- extension headers:**
@@ -132,6 +134,8 @@ Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is fr
 **ID derivation** — split the slug on hyphens, take the first character of each part: `auth-flow-gates` → `afg`, `validate-tickets` → `vt`, `cycle-detection` → `cd`. The ID is set once at creation and treated as immutable; tools read it from the filename prefix, not by re-deriving it. Avoid single-word slugs (single-character IDs are collision-prone); prefer two or three words. Numeric slug parts contribute their first digit: `r2-fix` → `rf`.
 
 Collisions get a numeric suffix starting at 2: `afg`, `afg2`, `afg3`, …. The `.ticket` extension avoids triggering Markdown linters.
+
+**Slugs are ASCII.** IDs and filenames use `[a-z0-9]` only. Non-ASCII project names or titles should use romanized slugs (e.g., `données-climat` → `dc`).
 
 **Uniqueness enforcement** — two layers:
 
@@ -249,6 +253,8 @@ The log shows agent-y's close happened after agent-x's claim. Resolution: accept
 
 ### One-liner queries
 
+These use GNU/BSD grep extensions (`-l`, `-L`, `-r`) — available on Linux and macOS out of the box. Strictly POSIX environments would need `xargs`-based equivalents.
+
 ```bash
 # All open tickets
 grep -l "^Status: open" tickets/*.ticket
@@ -338,7 +344,9 @@ The implementation lives in the project's harness layer:
 - **Ready query** (`tickets/tools/ready_tickets.py`): graph traversal to find unblocked open tickets.
 - **Archive** (`tickets/tools/archive_tickets.py`): DAG-safe archival of old closed tickets.
 
-Tools live in `tickets/tools/` so the entire ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python (no external dependencies beyond stdlib). Skills are shell commands, so the implementation swaps transparently.
+Tools live in `tickets/tools/` so the core ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python (no external dependencies beyond stdlib). Skills are shell commands, so the implementation swaps transparently.
+
+**Adopting in another repo:** copy `tickets/tools/` and add three integration points: (1) Makefile or task runner targets wrapping each script, (2) pre-commit hook calling `validate_tickets.py` on staged `.ticket` files, (3) agent instructions referencing the ticket lifecycle. The Python tools are self-contained; the integration is project-specific.
 
 ## Rejected Ideas
 
