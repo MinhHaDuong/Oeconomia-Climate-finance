@@ -281,7 +281,7 @@ def stage_search(limit=0):
 # Stage 2: Fetch
 # ============================================================
 
-FETCH_WORKERS = 30       # Global concurrency — different hosts in parallel
+FETCH_WORKERS = 100      # Global concurrency — different hosts in parallel
 HOST_INTERVAL = 1.0      # Min seconds between requests to the same host
 
 
