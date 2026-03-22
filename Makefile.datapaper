@@ -1,0 +1,62 @@
+# Data paper reproducibility — Climate Finance Corpus
+#
+# Two verification levels:
+#   Level 1 (fast, offline): verify pre-built outputs against checksums
+#   Level 2 (slow, online):  rebuild corpus from APIs and compare
+#
+# Prerequisites: Python >= 3.10, uv
+# Usage:
+#   make verify-quick    # Level 1: checksums only (~1 min)
+#   make verify-rebuild  # Level 2: full rebuild + compare (~4-6 hours, needs internet)
+
+export PYTHONHASHSEED := 0
+export SOURCE_DATE_EPOCH := 0
+
+DATA := data/catalogs
+
+.DEFAULT_GOAL := verify-quick
+.PHONY: verify-quick verify-rebuild corpus stats help
+
+help:
+	@echo "Targets:"
+	@echo "  verify-quick    Check pre-built outputs against checksums (fast, offline)"
+	@echo "  verify-rebuild  Rebuild corpus from APIs and compare (slow, needs internet)"
+	@echo "  corpus          Run full corpus building pipeline"
+	@echo "  stats           Regenerate computed statistics"
+
+# ── Level 1: checksum verification (fast, offline) ────────
+# Verifies that the shipped data files are bitwise identical to the
+# author's outputs. No Python, no network, no API keys needed.
+verify-quick:
+	@echo "=== Level 1: Verifying shipped outputs against checksums ==="
+	md5sum -c checksums-data.md5
+	@echo "=== Level 1: PASS — all checksums match ==="
+
+# ── Level 2: full rebuild and comparison (slow) ───────────
+# Rebuilds the corpus from source APIs and compares row counts and
+# key statistics against the shipped reference. Exact byte-identity
+# is NOT expected because:
+#   - API responses may include new publications added since the harvest date
+#   - Crossref metadata updates continuously
+#   - OpenAlex citation counts change daily
+# Instead, we verify structural equivalence: schema, row-count tolerance,
+# and statistical similarity.
+verify-rebuild: corpus
+	@echo "=== Level 2: Comparing rebuilt corpus against reference ==="
+	uv run python verify_corpus.py
+	@echo "=== Level 2: DONE — see comparison report above ==="
+
+# ── Corpus building ───────────────────────────────────────
+corpus:
+	@echo "=== Building corpus from source APIs ==="
+	@echo "WARNING: This takes 4-6 hours and requires internet access."
+	@echo "API keys: set OPENALEX_PREMIUM_KEY in .env for faster OpenAlex harvest."
+	@echo ""
+	uv sync --group corpus --extra cpu
+	uv run make -f Makefile corpus
+	@echo "=== Corpus build complete ==="
+
+# ── Statistics ────────────────────────────────────────────
+stats:
+	uv run python scripts/compute_vars.py
+	uv run python scripts/export_corpus_table.py

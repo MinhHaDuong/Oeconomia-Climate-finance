@@ -76,7 +76,7 @@ PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
 
-DATAPAPER_FIGS  := content/figures/fig_semantic.png content/figures/fig_dag.png
+DATAPAPER_FIGS  := content/figures/fig_bars.png content/figures/fig_dag.png
 
 COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluvial.png \
                    content/figures/fig_breaks.png \
