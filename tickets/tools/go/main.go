@@ -452,12 +452,14 @@ func cmdReady(args []string) int {
 
 	var warnings []string
 	var ready []readyEntry
+	openCount := 0
 
 	for i := range tickets {
 		t := &tickets[i]
 		if t.Status() != "open" {
 			continue
 		}
+		openCount++
 
 		blocked := false
 		for _, refID := range t.BlockedBy() {
@@ -499,7 +501,11 @@ func cmdReady(args []string) int {
 		}
 	} else {
 		if len(ready) == 0 {
-			fmt.Println("No ready tickets.")
+			if openCount == 0 {
+				fmt.Printf("All %d tickets closed.\n", len(tickets))
+			} else {
+				fmt.Printf("%d open tickets, all blocked.\n", openCount)
+			}
 		} else {
 			fmt.Printf("Ready tickets (%d):\n", len(ready))
 			for _, r := range ready {
