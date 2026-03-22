@@ -26,6 +26,10 @@ SOURCE_META = {
         "label": "OpenAlex",
         "query": "4-tier keyword taxonomy, 9 languages (default.search on title+abstract+fulltext)",
     },
+    "semanticscholar": {
+        "label": "Semantic Scholar",
+        "query": "Same keyword taxonomy via S2 Academic Graph API (1000/query cap)",
+    },
     "istex": {
         "label": "ISTEX",
         "query": '"climate finance" OR "finance climat*" on French institutional archive',
