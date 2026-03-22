@@ -59,6 +59,30 @@ OUTPUT_CSV = os.path.join(SYLLABI_DIR, "reading_lists.csv")
 # Helpers
 # ============================================================
 
+def _clean_doi(raw):
+    """Extract a clean DOI (10.xxxx/...) from a raw string.
+
+    Handles:
+    - https://doi.org/10.xxx → 10.xxx
+    - http://dx.doi.org/10.xxx → 10.xxx
+    - https://doi.org/doi:10.xxx → 10.xxx
+    - https://publisher.com/doi/full/10.xxx → 10.xxx
+    - Already-clean 10.xxx → 10.xxx
+    - Non-DOI URLs (SSRN, HDL) → ""
+    - None / "" → ""
+    """
+    if not raw:
+        return ""
+    raw = str(raw).strip()
+    if not raw:
+        return ""
+    # Extract the 10.xxxx/... DOI pattern from anywhere in the string
+    m = re.search(r"(10\.\d{4,}[^\s]*)", raw)
+    if m:
+        return m.group(1).lower()
+    return ""
+
+
 def load_jsonl(path):
     """Load all records from a JSONL file."""
     records = []
@@ -750,7 +774,7 @@ def stage_normalize():
                 "authors": ref.get("authors", ""),
                 "year": ref.get("year"),
                 "journal_or_publisher": ref.get("journal_or_publisher", ""),
-                "doi": ref.get("doi") or "",
+                "doi": _clean_doi(ref.get("doi")),
                 "type": ref.get("type", "other"),
                 "course_name": rec.get("course_name", ""),
                 "institution": rec.get("institution", ""),

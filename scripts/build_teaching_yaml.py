@@ -32,6 +32,7 @@ OUTPUT_YAML = os.path.join(DATA_DIR, "teaching_sources.yaml")
 
 MIN_COURSES = 2  # DOI entries: keep if appearing on >=2 syllabi
 MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (>=3 syllabi)
+MIN_READINGS_DETAILED = 20  # Courses with >=20 DOI readings are "detailed syllabi"
 OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
 MIN_SHARED_READINGS = 10  # Require >=10 shared readings to consider dedup
 
@@ -151,23 +152,70 @@ def _dedup_course_names(df):
 
 # --- Source 1: scraped readings ---
 
+def _find_detailed_courses(df):
+    """Identify courses that are detailed syllabi (many DOI readings).
+
+    A course with >= MIN_READINGS_DETAILED DOI readings is a curated reading
+    list (e.g., Harvard FECS doctoral seminar). Its readings pass at n_courses=1
+    because the syllabus itself is a quality signal — no cross-course
+    corroboration needed.
+    """
+    has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
+
+    # Count DOI readings per individual course
+    course_doi_counts = defaultdict(int)
+    for _, row in df[has_doi].iterrows():
+        for c in str(row.get("courses", "")).split(";"):
+            c = c.strip()
+            if c:
+                course_doi_counts[c] += 1
+
+    detailed = {c for c, n in course_doi_counts.items()
+                if n >= MIN_READINGS_DETAILED}
+    if detailed:
+        log.info("  Detailed syllabi (>=%d DOI readings): %s",
+                 MIN_READINGS_DETAILED,
+                 ", ".join(sorted(detailed)[:5]))
+    return detailed
+
+
 def load_scraped(csv_path):
     """Load scraped readings, apply course dedup and selection filter.
+
+    Two-tier filter:
+    - Tier 1 (detailed syllabi): courses with >= MIN_READINGS_DETAILED DOI
+      readings.  Their DOI readings pass at n_courses >= 1.
+    - Tier 2 (standard): DOI + n_courses >= 2, or no DOI + n_courses >= 3.
 
     Returns list of (institution, course, reading) record dicts.
     """
     df = pd.read_csv(csv_path)
     df = _dedup_course_names(df)
 
-    # Filter: (DOI + n>=2) OR (no DOI + n>=3)
     has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
-    keep = (has_doi & (df["n_courses"] >= MIN_COURSES)) | \
-           (~has_doi & (df["n_courses"] >= MIN_COURSES_NO_DOI))
+
+    # Identify detailed syllabi
+    detailed_courses = _find_detailed_courses(df)
+
+    # Tier 1: DOI reading from a detailed syllabus
+    from_detailed = df["courses"].apply(
+        lambda x: any(c.strip() in detailed_courses
+                      for c in str(x).split(";")))
+    tier1 = has_doi & from_detailed
+
+    # Tier 2: standard convergence filter
+    tier2 = (has_doi & (df["n_courses"] >= MIN_COURSES)) | \
+            (~has_doi & (df["n_courses"] >= MIN_COURSES_NO_DOI))
+
+    keep = tier1 | tier2
     df = df[keep]
+    n_tier1 = tier1[keep].sum()
+    n_tier2_only = (~tier1[keep] & tier2[keep]).sum()
     n_doi = has_doi[keep].sum()
     n_nodoi = len(df) - n_doi
-    log.info("  After filter: %d readings (%d with DOI, %d title-only)",
-             len(df), n_doi, n_nodoi)
+    log.info("  After filter: %d readings (%d tier1-detailed, %d tier2-convergence)",
+             len(df), n_tier1, n_tier2_only)
+    log.info("  %d with DOI, %d title-only", n_doi, n_nodoi)
 
     records = []
     for _, row in df.iterrows():
