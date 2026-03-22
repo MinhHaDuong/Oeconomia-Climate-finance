@@ -24,9 +24,13 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 import urllib.request
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -276,10 +280,70 @@ def stage_search(limit=0):
 # Stage 2: Fetch
 # ============================================================
 
-def stage_fetch():
-    """Download page content for each candidate URL."""
+FETCH_WORKERS = 30       # Global concurrency — different hosts in parallel
+HOST_INTERVAL = 1.0      # Min seconds between requests to the same host
+
+
+def _fetch_one(url):
+    """Fetch a single URL and return a page record dict.
+
+    Handles both HTML and PDF responses.  Pure function (no file I/O for
+    the checkpoint — caller writes the result).
+    """
     from bs4 import BeautifulSoup
 
+    page_rec = {
+        "url": url,
+        "content_type": "",
+        "text": "",
+        "fetch_date": datetime.now(timezone.utc).isoformat(),
+        "http_status": 0,
+        "error": "",
+    }
+
+    try:
+        headers = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
+        resp = polite_get(url, headers=headers, delay=0.5)
+        ct = resp.headers.get("Content-Type", "")
+        page_rec["http_status"] = resp.status_code
+        page_rec["content_type"] = ct
+
+        if "pdf" in ct.lower() or url.lower().endswith(".pdf"):
+            pdf_name = re.sub(r'[^\w\-.]', '_', url.split("/")[-1] or "page.pdf")
+            if not pdf_name.endswith(".pdf"):
+                pdf_name += ".pdf"
+            pdf_path = os.path.join(PDF_DIR, pdf_name)
+            with open(pdf_path, "wb") as f:
+                f.write(resp.content)
+
+            try:
+                page_rec["text"] = extract_pdf_text(pdf_path)
+                page_rec["content_type"] = "application/pdf"
+            except Exception as e:
+                page_rec["error"] = f"PDF parse error: {e}"
+                log.warning("PDF parse error: %s", e)
+        else:
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for tag in soup(["script", "style", "nav", "footer", "header"]):
+                tag.decompose()
+            text = soup.get_text(separator="\n", strip=True)
+            page_rec["text"] = text[:TEXT_LIMIT]
+            page_rec["content_type"] = "text/html"
+
+    except Exception as e:
+        page_rec["error"] = str(e)
+        log.error("Fetch error for %s: %s", url, e)
+
+    return page_rec
+
+
+def stage_fetch():
+    """Download page content for each candidate URL.
+
+    Uses a thread pool for I/O parallelism across different hosts, with
+    per-host rate limiting (max 1 request per HOST_INTERVAL seconds to
+    the same hostname).  Checkpoint writes are serialized via a lock.
+    """
     os.makedirs(PDF_DIR, exist_ok=True)
 
     # Load search results
@@ -294,58 +358,65 @@ def stage_fetch():
     pending = [r for r in urls_to_fetch if r["url"] not in done_urls]
     log.info("Fetch: %d already done, %d pending", len(done_urls), len(pending))
 
-    for i, rec in enumerate(pending):
-        url = rec["url"]
-        log.info("[%d/%d] %s", i + 1, len(pending), url[:80])
+    if not pending:
+        return
 
-        page_rec = {
-            "url": url,
-            "content_type": "",
-            "text": "",
-            "fetch_date": datetime.now(timezone.utc).isoformat(),
-            "http_status": 0,
-            "error": "",
-        }
+    # Per-host rate limiting: each host has a lock and a last-request timestamp
+    host_locks = defaultdict(threading.Lock)
+    host_last_request = {}  # hostname → monotonic timestamp
+    host_time_lock = threading.Lock()  # protects host_last_request reads/writes
 
-        try:
-            headers = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
-            resp = polite_get(url, headers=headers, delay=0.5)
-            ct = resp.headers.get("Content-Type", "")
-            page_rec["http_status"] = resp.status_code
-            page_rec["content_type"] = ct
+    # Checkpoint write lock — serializes appends to pages.jsonl
+    write_lock = threading.Lock()
+    completed = [0]  # mutable counter for progress logging
 
-            if "pdf" in ct.lower() or url.lower().endswith(".pdf"):
-                # Save PDF, extract text
-                pdf_name = re.sub(r'[^\w\-.]', '_', url.split("/")[-1] or "page.pdf")
-                if not pdf_name.endswith(".pdf"):
-                    pdf_name += ".pdf"
-                pdf_path = os.path.join(PDF_DIR, pdf_name)
-                with open(pdf_path, "wb") as f:
-                    f.write(resp.content)
+    def rate_limited_fetch(url):
+        """Fetch url, respecting per-host rate limit."""
+        host = urlparse(url).hostname or "unknown"
 
-                try:
-                    page_rec["text"] = extract_pdf_text(pdf_path)
-                    page_rec["content_type"] = "application/pdf"
-                except Exception as e:
-                    page_rec["error"] = f"PDF parse error: {e}"
-                    log.warning("PDF parse error: %s", e)
+        # Acquire per-host lock so only one thread hits this host at a time
+        with host_locks[host]:
+            # Enforce minimum interval since last request to this host
+            with host_time_lock:
+                last = host_last_request.get(host, 0)
+                now = time.monotonic()
+                wait = HOST_INTERVAL - (now - last)
+            if wait > 0:
+                time.sleep(wait)
 
-            else:
-                # HTML
-                soup = BeautifulSoup(resp.text, "html.parser")
-                # Remove script/style
-                for tag in soup(["script", "style", "nav", "footer", "header"]):
-                    tag.decompose()
-                text = soup.get_text(separator="\n", strip=True)
-                page_rec["text"] = text[:TEXT_LIMIT]
-                page_rec["content_type"] = "text/html"
+            result = _fetch_one(url)
 
-        except Exception as e:
-            page_rec["error"] = str(e)
-            log.error("Fetch error for %s: %s", url, e)
+            with host_time_lock:
+                host_last_request[host] = time.monotonic()
 
-        append_jsonl([page_rec], PAGES_PATH)
-        time.sleep(0.3)
+        # Thread-safe checkpoint write
+        with write_lock:
+            append_jsonl([result], PAGES_PATH)
+            completed[0] += 1
+            log.info("[%d/%d] %s", completed[0], len(pending), url[:80])
+
+        return result
+
+    # Group by host to log distribution
+    host_counts = defaultdict(int)
+    for rec in pending:
+        host = urlparse(rec["url"]).hostname or "unknown"
+        host_counts[host] += 1
+    n_hosts = len(host_counts)
+    max_per_host = max(host_counts.values())
+    log.info("Fetching from %d hosts (max %d URLs/host), %d workers",
+             n_hosts, max_per_host, FETCH_WORKERS)
+
+    with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as pool:
+        futures = {pool.submit(rate_limited_fetch, rec["url"]): rec
+                   for rec in pending}
+        for future in as_completed(futures):
+            # Propagate exceptions for visibility (already logged inside)
+            try:
+                future.result()
+            except Exception as e:
+                url = futures[future]["url"]
+                log.error("Unhandled error fetching %s: %s", url[:80], e)
 
     # Summary
     all_pages = load_jsonl(PAGES_PATH)
