@@ -345,6 +345,48 @@ class TestCycleDetection:
         assert not any("cycle" in e for e in errors)
 
 
+class TestExtraIds:
+    def test_blocked_by_archived_id_passes(self, tmp_ticket):
+        """A Blocked-by reference to an archived ticket ID should pass."""
+        t = _parse(
+            tmp_ticket,
+            "afg-test.ticket",
+            """\
+            Id: afg
+            Title: Test
+            Author: a
+            Status: open
+            Created: 2026-01-01
+            Blocked-by: archived
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        # Without extra_ids, this would fail
+        errors = validate_all([t], extra_ids={"archived"})
+        assert not any("unknown ticket ID" in e for e in errors)
+
+    def test_blocked_by_missing_without_extra_ids_fails(self, tmp_ticket):
+        t = _parse(
+            tmp_ticket,
+            "afg-test.ticket",
+            """\
+            Id: afg
+            Title: Test
+            Author: a
+            Status: open
+            Created: 2026-01-01
+            Blocked-by: gone
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        errors = validate_all([t])
+        assert any("unknown ticket ID" in e for e in errors)
+
+
 class TestExistingTickets:
     """Validate all real tickets in the repository pass."""
 

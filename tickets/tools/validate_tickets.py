@@ -99,8 +99,14 @@ def detect_cycles(tickets: list[Ticket]) -> list[str]:
     return errors
 
 
-def validate_all(tickets: list[Ticket]) -> list[str]:
-    """Validate a collection of tickets. Returns all errors."""
+def validate_all(
+    tickets: list[Ticket], extra_ids: set[str] | None = None
+) -> list[str]:
+    """Validate a collection of tickets. Returns all errors.
+
+    extra_ids: additional known IDs (e.g., from archived tickets) that
+    are valid Blocked-by targets but are not themselves validated.
+    """
     errors: list[str] = []
 
     # Collect all IDs and check for duplicates
@@ -128,6 +134,8 @@ def validate_all(tickets: list[Ticket]) -> list[str]:
             )
 
     all_ids = set(id_to_files.keys())
+    if extra_ids:
+        all_ids |= extra_ids
 
     # Per-ticket validation
     for t in tickets:
@@ -159,7 +167,18 @@ def main() -> int:
         print("No .ticket files found.")
         return 0
 
-    errors = validate_all(tickets)
+    # Load archived ticket IDs as valid Blocked-by targets
+    extra_ids: set[str] = set()
+    for arg in args:
+        p = Path(arg)
+        if p.is_dir():
+            archive_dir = p / "archive"
+            if archive_dir.is_dir():
+                for at in load_tickets(archive_dir):
+                    if at.id:
+                        extra_ids.add(at.id)
+
+    errors = validate_all(tickets, extra_ids=extra_ids)
 
     if errors:
         print(f"TICKET VALIDATION FAILED ({len(errors)} error(s)):")
