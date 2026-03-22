@@ -54,13 +54,16 @@ These are real benefits, but they are not why we're doing this. We're doing this
 ### Design decisions
 
 - **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
-- **Mutable header + append-only log** — the header is a greppable index. The log is append-only audit history. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
+- **Mutable header + append-only log** — the header is a greppable index. The log is append-only by convention; concurrent appends to the same ticket are rare at low agent counts and auto-merge correctly in most cases. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
 - **RFC 822 over YAML** — see [File format](#file-format) for the full rationale.
 - **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
 - **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
 - **Two-tier contention:**
   - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
   - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
+- **No atomic claim primitive.** Two agents can both see a ticket as ready and start work concurrently. An atomic `claim` operation (e.g., compare-and-swap on `Status: doing` + `Assigned-to`) would prevent this, but at < 5 agents the duplication is rare and the cost of duplicated work is low. If contention grows, the mitigation is promotion to `Coordination: forge#N`, not a distributed lock.
+- **No formal log grammar.** Log entries are free-form human-readable text (`{ISO-timestamp} {agent-id} {event}`). The `{event}` field is not parsed by tools — the log is audit history, not a machine-executable operation log. Formalizing event types (as a CRDT operation set) was considered and rejected: the complexity is disproportionate at this scale (see ticket `con`).
+- **Direct Blocked-by, not transitive closure.** The `ready` command checks only direct `Blocked-by` references, not transitive ancestors. If A is blocked by B and B is blocked by C (open), A is already not-ready because B is open (not closed). Transitive closure would only matter if we checked "all ancestors closed" — we don't, so direct checking is correct and sufficient.
 
 ### Conclusion
 
@@ -316,6 +319,10 @@ Forge-coordinated tickets (`Coordination: gh#N`) use the existing forge authenti
 
 The `Assigned-to` header is informational — it does not grant permissions. Authorization remains with the forge (for forge tickets) or with git branch protection (for local tickets).
 
+**Identity is advisory, not authenticated.** The `Author` header and log-line attribution (e.g., `agent-x status doing`) are free-form strings. Nothing prevents one agent from writing `Author: agent-y`. For accountability, rely on `git log` attribution (signed commits, SSH keys) rather than in-file identity fields. At the current trust level (single author, trusted agents), this is a non-issue.
+
+**Archive on the right branch is the operator's responsibility.** `make ticket-archive EXECUTE=1` commits on whatever branch is checked out. The spec says "the author runs it" — this is a human-facing operation, not an automated one. Running it from a feature worktree would place the archive commit on the wrong branch. The tool does not enforce a branch guard; the operator must be on `main`.
+
 ## Reference Implementation
 
 The implementation lives in the project's harness layer:
@@ -377,7 +384,15 @@ We surveyed existing distributed issue trackers and evaluated them against our c
 
 **git-issue** — mature but designed for humans. No JSON output, no dependency graph. Would need wrapping.
 
+**Bugs Everywhere** — GPLv2, unmaintained since ~2012, Python 2 heritage. No agent features, no active development. Excluded at the table-scan stage.
+
+**TrackDown** — Java/Gradle dependency, no JSON output, no agent features. Wrong ecosystem entirely.
+
+**Why not tk?** tk is the closest match — single bash script, dependency graph, `tk ready`. We adopt its approach (adapt, not adopt): custom skills let us implement exactly the subset we need without inheriting tk's unknown future direction or bash portability concerns. The ideas travel; the dependency doesn't.
+
 #### Git-object (git-bug)
+
+**git-appraise** — shares the same worktree uncertainty as git-bug and adds no agent features. Rejected on the same grounds.
 
 **Pros:** clean working directory, excellent merge semantics (operation-based), forge bridges, JSON output, mature.
 
