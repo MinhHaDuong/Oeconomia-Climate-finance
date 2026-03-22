@@ -49,7 +49,7 @@ def test_raw_counts_use_from_columns(corpus_table):
 
 def test_unique_column_plausible(corpus_table):
     """Unique must be <= Refined for every source."""
-    data_rows = corpus_table[corpus_table["Source"] != "TOTAL (deduplicated)"]
+    data_rows = corpus_table[corpus_table["Source"] != "TOTAL"]
     for _, row in data_rows.iterrows():
         if pd.notna(row.get("Unique")) and pd.notna(row.get("Refined")):
             assert row["Unique"] <= row["Refined"], (
@@ -58,6 +58,6 @@ def test_unique_column_plausible(corpus_table):
 
 
 def test_total_row_present(corpus_table):
-    """A TOTAL (deduplicated) row must exist."""
-    total = corpus_table[corpus_table["Source"] == "TOTAL (deduplicated)"]
+    """A TOTAL row must exist."""
+    total = corpus_table[corpus_table["Source"] == "TOTAL"]
     assert len(total) == 1, "Missing TOTAL row"

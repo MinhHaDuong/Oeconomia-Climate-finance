@@ -83,7 +83,7 @@ Flagged works are removed unless protected by one of four conditions: citation c
 
 ### 2.3 Quality, Completeness, and Potential Biases {#sec-quality}
 
-@tbl-sources summarises the corpus composition and metadata completeness per source, computed by `export_corpus_table.py`. The "Refined" column counts all works with a `from_*` flag for that source after deduplication and quality filtering; a single work may appear in multiple rows if discovered by several sources. %DOI is the share of works with a valid DOI. %Abstract is the share with an abstract longer than 50 characters. %Refs is the share with at least one reference in the citation graph (extracted via Crossref and OpenAlex).
+@tbl-quality summarises the corpus composition and metadata completeness per source, computed by `export_corpus_table.py`. The "Refined" column counts all works with a `from_*` flag for that source after deduplication and quality filtering; a single work may appear in multiple rows if discovered by several sources. %DOI is the share of works with a valid DOI. %Abstract is the share with an abstract longer than 50 characters. %Refs is the share with at least one reference in the citation graph (extracted via Crossref and OpenAlex).
 
 {{< include tables/tab_corpus_sources.md >}}
 

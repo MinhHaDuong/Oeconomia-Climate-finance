@@ -56,7 +56,7 @@ CAPTION = (
     " *Refined*: after six-flag quality filtering."
     " *Unique*: found only in that source (`source_count = 1`)."
     " *%DOI*, *%Abstract*, *%Refs*: metadata completeness among refined"
-    " records. {#tbl-sources}"
+    " records. {#tbl-quality}"
 )
 
 
