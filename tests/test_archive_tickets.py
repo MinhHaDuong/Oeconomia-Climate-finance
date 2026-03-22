@@ -1,12 +1,9 @@
 """Tests for archive_tickets.py — DAG-safe archival of old closed tickets."""
 
-import sys
 import textwrap
 from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
 
 from archive_tickets import find_archivable, last_log_date
 from ticket_parser import parse_ticket

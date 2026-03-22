@@ -7,6 +7,7 @@ Tickets are handoff documents. A new agent will only have the context provided. 
 1. **Choose a semantic slug** — a freely chosen name related to the ticket's purpose. ID = initials of the slug words. Check `ls tickets/{id}-*.ticket` for collisions; if collision, append numeric suffix.
 2. **Write the ticket file** as `tickets/{id}-{slug}.ticket` using RFC 822 format (see spec).
 3. **Commit immediately** — uncommitted tickets are invisible across worktrees. `git add tickets/{id}-{slug}.ticket && git commit -m "Open ticket {id}: {title}"`.
+4. **Commit ordering**: if the new ticket has `Blocked-by` references, commit the blocking tickets first. The pre-commit validator checks that all `Blocked-by` IDs exist.
 
 The body should contain enough context for another agent to work autonomously:
 

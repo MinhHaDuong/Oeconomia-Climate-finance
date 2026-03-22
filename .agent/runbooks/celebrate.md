@@ -15,8 +15,9 @@ Run this sequence after completing a task. Do not skip steps.
 
 7. **Merge to main**: feature work goes through a PR in the ticket system. Chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
 8. **Push** and **clean up**: delete local and remote branch.
-9. **Close** the ticket if still open.
-10. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed:
+9. **Close the ticket** — set `Status: closed` in the header, append a log entry with the reason (`{ISO-timestamp} {agent-id} status closed — {reason}`), and commit.
+10. **Close** the GitHub issue if one exists.
+11. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed:
     ```bash
     # Local tickets:
     grep -l "^X-Parent: <PARENT_ID>" tickets/*.ticket | xargs grep "^Status:" | grep -v closed
@@ -30,13 +31,21 @@ Run this sequence after completing a task. Do not skip steps.
       3. Check the tracking ticket's exit criteria — are they all met?
       4. If gaps remain: open new sub-tickets on the tracking ticket, leave it open.
       5. If all criteria met: close the tracking ticket with a summary comment.
-11. **Verify hygiene** — no stale artifacts left behind:
+12. **Verify hygiene** — no stale artifacts left behind:
     - `git worktree list` → only main (or active work)
     - `git branch -a` → no stale remote branches from merged PRs
     - No orphan tickets from completed work
     - `gh pr list` → no stale PRs from merged/superseded branches
-12. **Log celebration** — record structured session metrics (skip if harness not installed):
+13. **Log celebration** — record structured session metrics (skip if harness not installed):
     ```bash
     ~/.agent/log/log-celebration '{"project":"oeconomia","session_type":"task","commits":N,"prs_merged":N,"deliverables":[...],"surprises":[...],"next":[...]}'
     ```
-13. **Offer** to work on AGENTS.md if the workflow can be improved.
+14. **Offer** to work on AGENTS.md if the workflow can be improved.
+
+## Merge message format
+
+```
+Merge <branch>: <one-line summary>
+
+<Tactical detail: architecture decisions, cross-file impacts, residual debt.>
+```
