@@ -38,7 +38,7 @@ if [ -z "$file_list" ]; then
     if [ "$use_json" = true ]; then
         echo "[]"
     else
-        echo "All 0 tickets closed."
+        echo "No tickets found."
     fi
     exit 0
 fi
@@ -133,8 +133,10 @@ END {
         }
     } else {
         if (nready == 0) {
-            if (nopen == 0) {
-                printf "All %d tickets closed.\n", ntix
+            if (ntix == 0) {
+                print "No tickets found."
+            } else if (nopen == 0) {
+                printf "All %d tickets are closed.\n", ntix
             } else {
                 printf "%d open tickets, all blocked.\n", nopen
             }

@@ -501,8 +501,10 @@ func cmdReady(args []string) int {
 		}
 	} else {
 		if len(ready) == 0 {
-			if openCount == 0 {
-				fmt.Printf("All %d tickets closed.\n", len(tickets))
+			if len(tickets) == 0 {
+				fmt.Println("No tickets found.")
+			} else if openCount == 0 {
+				fmt.Printf("All %d tickets are closed.\n", len(tickets))
 			} else {
 				fmt.Printf("%d open tickets, all blocked.\n", openCount)
 			}

@@ -69,11 +69,12 @@ def main() -> int:
         print(json.dumps(ready, indent=2))
     else:
         if not ready:
-            if open_count == 0:
-                print(f"All {total} tickets closed.")
+            if total == 0:
+                print("No tickets found.")
+            elif open_count == 0:
+                print(f"All {total} tickets are closed.")
             else:
-                blocked = open_count - len(ready)
-                print(f"{open_count} open tickets, all blocked ({blocked} blocked).")
+                print(f"{open_count} open tickets, all blocked.")
         else:
             print(f"Ready tickets ({len(ready)}):")
             for r in ready:
