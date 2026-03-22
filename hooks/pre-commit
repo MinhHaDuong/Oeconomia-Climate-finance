@@ -44,6 +44,8 @@ if [ -n "$staged_tickets" ]; then
             echo "ERROR: Ticket validation failed." >&2
             exit 1
         fi
+    else
+        echo "WARNING: uv not found — skipping ticket validation." >&2
     fi
 fi
 

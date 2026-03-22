@@ -93,10 +93,12 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 | `Author` | yes | Creator |
 | `Status` | yes | Current state: `open`, `doing`, `closed`, `pending` |
 | `Created` | yes | ISO date |
-| `Coordination` | no | `local` (default) or `forge#N` (e.g., `gh#42`, `gl#42`) |
+| `Coordination` | no | `local` (default) or forge-prefix + issue number (e.g., `gh#42`, `gl#42`, `gt#7`) |
 | `Assigned-to` | no | Agent or person owning the work |
 | `Blocked-by` | no | ID of blocking ticket (repeatable) |
 | `Forge-issue` | no | Full forge reference when `Coordination` is `forge#N` (e.g., `gh#42`) |
+
+Status values: `open` (available for work), `doing` (claimed, in progress), `closed` (completed or cancelled), `pending` (awaiting external input, e.g., peer review — excluded from `ready` output).
 
 **X- extension headers:**
 
@@ -171,7 +173,7 @@ Markdown OK.
 Id: cmcd
 Title: R1.3 -- Clarify methodology for COP funding data
 Author: reviewer-1
-Status: pending
+Status: closed
 Created: 2026-03-21
 X-Review-round: R1
 X-Comment-number: 3
@@ -180,7 +182,7 @@ X-Page: 12
 
 --- log ---
 2026-03-21T10:00Z reviewer-1 created
-2026-03-25T14:00Z minh status pending -> addressed
+2026-03-25T14:00Z minh status pending -> closed
 
 --- body ---
 The methodology for aggregating COP funding commitments is unclear.

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from ticket_parser import Ticket, parse_ticket
-from validate_tickets import validate_all, validate_ticket
+from validate_tickets import detect_cycles, validate_all, validate_ticket
 
 
 @pytest.fixture
@@ -289,6 +289,60 @@ class TestValidateAll:
         )
         errors = validate_all([t1, t2])
         assert errors == []
+
+
+class TestCycleDetection:
+    def test_simple_cycle(self, tmp_ticket):
+        t1 = _parse(tmp_ticket, "a-one.ticket", """\
+            Id: a
+            Title: One
+            Author: x
+            Status: open
+            Created: 2026-01-01
+            Blocked-by: b
+
+            --- log ---
+            --- body ---
+        """)
+        t2 = _parse(tmp_ticket, "b-two.ticket", """\
+            Id: b
+            Title: Two
+            Author: x
+            Status: open
+            Created: 2026-01-01
+            Blocked-by: a
+
+            --- log ---
+            --- body ---
+        """)
+        errors = validate_all([t1, t2])
+        assert any("dependency cycle" in e for e in errors)
+        assert any("a -> b -> a" in e for e in errors)
+
+    def test_no_cycle(self, tmp_ticket):
+        t1 = _parse(tmp_ticket, "a-one.ticket", """\
+            Id: a
+            Title: One
+            Author: x
+            Status: open
+            Created: 2026-01-01
+            Blocked-by: b
+
+            --- log ---
+            --- body ---
+        """)
+        t2 = _parse(tmp_ticket, "b-two.ticket", """\
+            Id: b
+            Title: Two
+            Author: x
+            Status: closed
+            Created: 2026-01-01
+
+            --- log ---
+            --- body ---
+        """)
+        errors = validate_all([t1, t2])
+        assert not any("cycle" in e for e in errors)
 
 
 class TestExistingTickets:

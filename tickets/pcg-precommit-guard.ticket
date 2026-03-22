@@ -1,7 +1,7 @@
 Id: pcg
 Title: Fix pre-commit: warn on missing uv, validate only staged files
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-22
 Coordination: local
 X-Discovered-from: gh#237
@@ -10,6 +10,7 @@ X-Phase: planning
 --- log ---
 2026-03-22T14:00Z claude created
 2026-03-22T14:00Z claude status open
+2026-03-22T16:30Z claude status closed — uv-missing warning added to pre-commit guard 5
 
 --- body ---
 ## Context
