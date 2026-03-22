@@ -22,7 +22,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 
 - Torch installs CPU or CUDA via `--extra cpu` / `--extra cu130` (uv extras with conflicts)
 - DVC pipeline split into per-source stages (catalog_istex, catalog_openalex, etc.)
-- Semantic Scholar skipped for pre-submission (rate-limited, minor source)
+- Semantic Scholar enabled (33,897 works harvested, 1000-per-query API cap)
 - OpenAlex Premium API key configured ($2/day budget)
 - `--from-date` incremental filtering added (sidecar auto-detection)
 - `python-dotenv` loads `.env` secrets automatically
