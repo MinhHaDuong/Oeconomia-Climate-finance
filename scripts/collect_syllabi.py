@@ -71,10 +71,13 @@ def load_jsonl(path):
     return records
 
 
+_jsonl_lock = threading.Lock()
+
+
 def append_jsonl(records, path):
-    """Append records to a JSONL file."""
+    """Append records to a JSONL file (thread-safe)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
+    with _jsonl_lock, open(path, "a", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
@@ -511,12 +514,18 @@ def stage_classify():
     done_urls = {r["url"] for r in classified}
 
     pending = [p for p in pages_with_text if p["url"] not in done_urls]
-    log.info("Classify: %d already done, %d pending", len(done_urls), len(pending))
+    # Ollama: limit concurrency to avoid GPU contention; OpenRouter: go wide
+    ollama_mode = os.environ.get("OLLAMA_MODEL") is not None or _ollama_available()
+    max_workers = 2 if (ollama_mode and not os.environ.get("OLLAMA_MODEL") == "") else 20
+    log.info("Classify: %d already done, %d pending, %d workers",
+             len(done_urls), len(pending), max_workers)
 
-    for i, page in enumerate(pending):
+    counter = {"done": 0}
+    counter_lock = threading.Lock()
+
+    def classify_one(page):
         url = page["url"]
         text_snippet = page["text"][:2000]
-        log.info("[%d/%d] %s", i + 1, len(pending), url[:80])
 
         prompt = CLASSIFY_PROMPT.format(text=text_snippet)
         response = llm_call(prompt, api_key)
@@ -543,10 +552,18 @@ def stage_classify():
 
         status = "SYLLABUS" if rec["is_syllabus"] else "skip"
         reading = "+refs" if rec["has_reading_list"] else ""
-        log.info("-> %s%s | %s | %s", status, reading, rec['institution'], rec['course_name'])
+        with counter_lock:
+            counter["done"] += 1
+            log.info("[%d/%d] %s -> %s%s | %s | %s",
+                     counter["done"], len(pending), url[:60],
+                     status, reading, rec['institution'], rec['course_name'])
 
         append_jsonl([rec], CLASSIFIED_PATH)
-        time.sleep(0.5)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = [pool.submit(classify_one, p) for p in pending]
+        for f in as_completed(futures):
+            f.result()  # raise exceptions
 
     # Summary
     all_classified = load_jsonl(CLASSIFIED_PATH)
@@ -599,21 +616,28 @@ def stage_extract():
     done_urls = {r["url"] for r in extracted}
 
     pending = [s for s in syllabi if s["url"] not in done_urls]
-    log.info("Extract: %d already done, %d pending", len(done_urls), len(pending))
+    ollama_mode = os.environ.get("OLLAMA_MODEL") is not None or _ollama_available()
+    max_workers = 2 if (ollama_mode and not os.environ.get("OLLAMA_MODEL") == "") else 10
+    log.info("Extract: %d already done, %d pending, %d workers",
+             len(done_urls), len(pending), max_workers)
 
-    total_refs = 0
-    for i, syllabus in enumerate(pending):
+    total_refs_lock = threading.Lock()
+    total_refs = [0]
+    counter = {"done": 0}
+    counter_lock = threading.Lock()
+
+    def extract_one(syllabus):
         url = syllabus["url"]
         page = page_by_url.get(url, {})
         text = page.get("text", "")
         if not text:
-            log.info("[%d/%d] %s -- no text, skipping", i + 1, len(pending), url[:60])
             append_jsonl([{"url": url, "references": [], "error": "no_text"}],
                          REFERENCES_PATH)
-            continue
-
-        log.info("[%d/%d] %s (%s)", i + 1, len(pending),
-                 syllabus['course_name'], syllabus['institution'])
+            with counter_lock:
+                counter["done"] += 1
+                log.info("[%d/%d] %s -- no text, skipping",
+                         counter["done"], len(pending), url[:60])
+            return
 
         # For long texts, chunk with overlap to avoid splitting references
         all_refs = []
@@ -628,8 +652,6 @@ def stage_extract():
                 all_refs.extend(parsed)
             elif parsed and isinstance(parsed, dict):
                 all_refs.append(parsed)
-
-            time.sleep(0.5)
 
         # Deduplicate within this syllabus by normalized title
         seen_titles = set()
@@ -653,8 +675,19 @@ def stage_extract():
             "error": "",
         }
         append_jsonl([rec], REFERENCES_PATH)
-        total_refs += len(unique_refs)
-        log.info("-> %d references extracted", len(unique_refs))
+        with total_refs_lock:
+            total_refs[0] += len(unique_refs)
+        with counter_lock:
+            counter["done"] += 1
+            log.info("[%d/%d] %s (%s) -> %d refs",
+                     counter["done"], len(pending),
+                     syllabus['course_name'], syllabus['institution'],
+                     len(unique_refs))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = [pool.submit(extract_one, s) for s in pending]
+        for f in as_completed(futures):
+            f.result()  # raise exceptions
 
     # Summary
     all_extracted = load_jsonl(REFERENCES_PATH)
