@@ -1,148 +1,147 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Find open tickets whose blockers are all resolved.
-# Fast variant using awk for single-pass parsing.
+# POSIX sh + awk — runs on Alpine, Busybox, dash, any /bin/sh.
 #
 # Usage:
 #     ready_tickets.sh [tickets/]
 #     ready_tickets.sh --json [tickets/]
 #
-# Deps: bash, awk, sort (standard on any dev machine with git)
+# Deps: sh, awk (standard on any system with git)
 
-set -euo pipefail
+set -eu
 
-# Single-pass awk parser: extracts Id, Title, Status, Blocked-by per file.
-# Output: FILENAME \t ID \t TITLE \t STATUS \t BLOCKED_BY(comma-sep)
-parse_all_tickets() {
-    awk '
-    FNR == 1 {
-        if (NR > 1) emit()
-        reset()
-        file = FILENAME
-        n = split(file, parts, "/")
-        fname = parts[n]
-    }
-    section == "headers" {
-        if ($0 ~ /^[[:space:]]*$/) { section = "gap"; next }
-        if ($0 ~ /^[A-Za-z][A-Za-z0-9_-]*[[:space:]]*:/) {
-            colon = index($0, ":")
-            key = substr($0, 1, colon - 1)
-            val = substr($0, colon + 1)
-            sub(/^[[:space:]]+/, "", key); sub(/[[:space:]]+$/, "", key)
-            sub(/^[[:space:]]+/, "", val); sub(/[[:space:]]+$/, "", val)
-            if (key == "Id") tid = val
-            else if (key == "Title") title = val
-            else if (key == "Status") status = val
-            else if (key == "Blocked-by") blocked = blocked (blocked ? "," : "") val
-        }
-        next
-    }
-    section == "gap" || section == "log" {
-        if ($0 ~ /^[[:space:]]*--- log ---/) { section = "log"; next }
-        if ($0 ~ /^[[:space:]]*--- body ---/) { section = "body"; next }
-        next
-    }
-    section == "body" { next }
-    function reset() { section = "headers"; tid = ""; title = ""; status = ""; blocked = "" }
-    function emit() { printf "%s\x01%s\x01%s\x01%s\x01%s\n", fname, tid, title, status, blocked }
-    END { if (NR > 0) emit() }
-    ' "$@"
-}
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+use_json=false
+ticket_dir="tickets"
 
-main() {
-    local use_json=false
-    local -a args=()
+for a in "$@"; do
+    case "$a" in
+        --json) use_json=true ;;
+        *)      ticket_dir="$a" ;;
+    esac
+done
 
-    for a in "$@"; do
-        if [[ "$a" == "--json" ]]; then
-            use_json=true
-        else
-            args+=("$a")
-        fi
-    done
+if [ ! -d "$ticket_dir" ]; then
+    echo "Directory not found: $ticket_dir"
+    exit 1
+fi
 
-    local ticket_dir="${args[0]:-tickets}"
+# Collect ticket files
+file_list=""
+for f in "$ticket_dir"/*.ticket; do
+    [ -e "$f" ] && file_list="$file_list $f"
+done
 
-    if [[ ! -d "$ticket_dir" ]]; then
-        echo "Directory not found: $ticket_dir"
-        exit 1
-    fi
-
-    local -a files=()
-    local f
-    for f in "$ticket_dir"/*.ticket; do
-        [[ -e "$f" ]] && files+=("$f")
-    done
-
-    if [[ ${#files[@]} -eq 0 ]]; then
-        if [[ "$use_json" == "true" ]]; then
-            echo "[]"
-        else
-            echo "No ready tickets."
-        fi
-        exit 0
-    fi
-
-    local parsed
-    parsed=$(parse_all_tickets "${files[@]}")
-
-    # Build status-by-id map
-    local -A status_by_id=()
-    while IFS=$'\x01' read -r fname tid title status blocked; do
-        [[ -n "$tid" ]] && status_by_id["$tid"]="$status"
-    done <<< "$parsed"
-
-    # Find ready tickets
-    local -a ready_ids=() ready_files=() ready_titles=()
-    while IFS=$'\x01' read -r fname tid title status blocked; do
-        [[ "$status" != "open" ]] && continue
-
-        local is_blocked=false
-        if [[ -n "$blocked" ]]; then
-            IFS=',' read -ra refs <<< "$blocked"
-            for ref in "${refs[@]}"; do
-                local ref_status="${status_by_id[$ref]:-}"
-                if [[ -z "$ref_status" ]]; then
-                    echo "WARNING: ${fname}: Blocked-by '${ref}' not found (treating as satisfied)" >&2
-                elif [[ "$ref_status" != "closed" ]]; then
-                    is_blocked=true
-                    break
-                fi
-            done
-        fi
-
-        if [[ "$is_blocked" == "false" ]]; then
-            ready_ids+=("$tid")
-            ready_files+=("$fname")
-            ready_titles+=("$title")
-        fi
-    done <<< "$parsed"
-
-    # Output
-    if [[ "$use_json" == "true" ]]; then
-        if [[ ${#ready_ids[@]} -eq 0 ]]; then
-            echo "[]"
-        else
-            echo "["
-            local i
-            for (( i=0; i<${#ready_ids[@]}; i++ )); do
-                local comma=""
-                (( i < ${#ready_ids[@]} - 1 )) && comma=","
-                printf '  {"id": "%s", "title": "%s", "file": "%s"}%s\n' \
-                    "${ready_ids[$i]}" "${ready_titles[$i]}" "${ready_files[$i]}" "$comma"
-            done
-            echo "]"
-        fi
+if [ -z "$file_list" ]; then
+    if [ "$use_json" = true ]; then
+        echo "[]"
     else
-        if [[ ${#ready_ids[@]} -eq 0 ]]; then
-            echo "No ready tickets."
-        else
-            echo "Ready tickets (${#ready_ids[@]}):"
-            local i
-            for (( i=0; i<${#ready_ids[@]}; i++ )); do
-                printf "  %-8s %-40s %s\n" "${ready_ids[$i]}" "${ready_files[$i]}" "${ready_titles[$i]}"
-            done
-        fi
+        echo "No ready tickets."
     fi
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Single awk program: parse all tickets, find ready ones, output results.
+# ---------------------------------------------------------------------------
+# shellcheck disable=SC2086
+awk -v use_json="$use_json" '
+# --- Parser ---
+FNR == 1 {
+    if (NR > 1) emit()
+    reset()
+    file = FILENAME
+    n = split(file, parts, "/")
+    fname = parts[n]
+}
+section == "headers" {
+    if ($0 ~ /^[[:space:]]*$/) { section = "gap"; next }
+    if ($0 ~ /^[A-Za-z][A-Za-z0-9_-]*[[:space:]]*:/) {
+        colon = index($0, ":")
+        key = substr($0, 1, colon - 1)
+        val = substr($0, colon + 1)
+        sub(/^[[:space:]]+/, "", key); sub(/[[:space:]]+$/, "", key)
+        sub(/^[[:space:]]+/, "", val); sub(/[[:space:]]+$/, "", val)
+        if (key == "Id") tid = val
+        else if (key == "Title") title = val
+        else if (key == "Status") status = val
+        else if (key == "Blocked-by") blocked = blocked (blocked ? "," : "") val
+    }
+    next
+}
+section == "gap" || section == "log" {
+    if ($0 ~ /^[[:space:]]*--- log ---/) { section = "log"; next }
+    if ($0 ~ /^[[:space:]]*--- body ---/) { section = "body"; next }
+    next
+}
+section == "body" { next }
+function reset() { section = "headers"; tid = ""; title = ""; status = ""; blocked = "" }
+function emit() {
+    ntix++
+    tix_fname[ntix] = fname; tix_id[ntix] = tid
+    tix_title[ntix] = title; tix_status[ntix] = status
+    tix_blocked[ntix] = blocked
+    if (tid != "") status_by_id[tid] = status
 }
 
-main "$@"
+END {
+    if (NR > 0) emit()
+
+    nready = 0
+    for (i = 1; i <= ntix; i++) {
+        if (tix_status[i] != "open") continue
+        is_blocked = 0
+        if (tix_blocked[i] != "") {
+            nb = split(tix_blocked[i], refs, ",")
+            for (r = 1; r <= nb; r++) {
+                ref = refs[r]
+                if (!(ref in status_by_id)) {
+                    printf "WARNING: %s: Blocked-by '\''%s'\'' not found (treating as satisfied)\n", tix_fname[i], ref > "/dev/stderr"
+                } else if (status_by_id[ref] != "closed") {
+                    is_blocked = 1
+                    break
+                }
+            }
+        }
+        if (!is_blocked) {
+            nready++
+            ready_id[nready] = tix_id[i]
+            ready_title[nready] = tix_title[i]
+            ready_file[nready] = tix_fname[i]
+        }
+    }
+
+    if (use_json == "true") {
+        if (nready == 0) {
+            print "[]"
+        } else {
+            print "["
+            for (i = 1; i <= nready; i++) {
+                comma = (i < nready) ? "," : ""
+                printf "  {\"id\": \"%s\", \"title\": \"%s\", \"file\": \"%s\"}%s\n", \
+                    json_esc(ready_id[i]), json_esc(ready_title[i]), json_esc(ready_file[i]), comma
+            }
+            print "]"
+        }
+    } else {
+        if (nready == 0) {
+            print "No ready tickets."
+        } else {
+            printf "Ready tickets (%d):\n", nready
+            for (i = 1; i <= nready; i++)
+                printf "  %-8s %-40s %s\n", ready_id[i], ready_file[i], ready_title[i]
+        }
+    }
+}
+
+function json_esc(s) {
+    gsub(/\\/, "\\\\", s)
+    gsub(/"/, "\\\"", s)
+    gsub(/\n/, "\\n", s)
+    gsub(/\r/, "\\r", s)
+    gsub(/\t/, "\\t", s)
+    return s
+}
+' $file_list
