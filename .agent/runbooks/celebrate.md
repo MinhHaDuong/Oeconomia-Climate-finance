@@ -13,9 +13,9 @@ Run this sequence after completing a task. Do not skip steps.
 
 ## Close and clean up
 
-7. **Merge to main**: feature work goes through a PR in the ticket system. Chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
-8. **Push** and **clean up**: delete local and remote branch.
-9. **Close the ticket** — set `Status: closed` in the header, append a log entry with the reason (`{ISO-timestamp} {agent-id} status closed — {reason}`), and commit.
+7. **Close the ticket** — set `Status: closed` in the header, append a log entry with the reason (`{ISO-timestamp} {agent-id} status closed — {reason}`), and commit on the branch (before merging — the pre-commit hook blocks direct commits on `main`).
+8. **Merge to main**: feature work goes through a PR in the ticket system. Chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
+9. **Push** and **clean up**: delete local and remote branch.
 10. **Close** the GitHub issue if one exists.
 11. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed:
     ```bash
