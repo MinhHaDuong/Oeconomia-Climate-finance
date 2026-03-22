@@ -54,7 +54,7 @@ These are real benefits, but they are not why we're doing this. We're doing this
 
 - **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
 - **Mutable header + append-only log** — the header is a greppable index. The log is append-only audit history. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
-- **RFC 822 over YAML** — `Key: value` lines work with `grep` and `cut`. YAML needs a library.
+- **RFC 822 over YAML** — see [File format](#file-format) for the full rationale.
 - **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
 - **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
 - **Two-tier contention:**
@@ -118,8 +118,8 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 
 **Structure** — three sections separated by marker lines:
 
-1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Aids manual resolution if header conflicts.
+1. **Header** (RFC 822 key-value pairs) — current state. Ends at first blank line.
+2. **Log** (after `--- log ---`) — events, in chronological order. Format: `{ISO-timestamp} {agent-id} {event}`.
 3. **Body** (after `--- body ---`) — free-form markdown description. Domain-specific workflows may add further named separators inside the body (e.g., `--- response ---` in peer review tickets). These are not parsed by core tools — only `--- log ---` and `--- body ---` are structural.
 
 **Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
@@ -296,12 +296,6 @@ The procedure:
 
 This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` feels too long.
 
-### Transition
-
-No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
-
-The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
-
 ### CI/CD integration
 
 **Ticket validation in `make check`:** `validate-tickets` runs as part of `make check` and `make check-fast`. It verifies required headers, unique IDs, valid `Blocked-by` references, and filename/ID consistency. Errors block the build.
@@ -311,6 +305,31 @@ The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, 
 **Quarto exclusion:** add `tickets/` to `_quarto.yml`'s exclude list — ticket files are not manuscript content.
 
 **Shallow clones:** ticket files are regular tracked files. They survive `--depth 1` clones, which means CI runners and ephemeral containers see the full backlog without special configuration.
+
+## Backwards Compatibility
+
+No migration required. The two systems coexist permanently (see [Design philosophy](#design-philosophy)). Rollback is equally trivial: `tickets/` can be deleted or gitignored with no side effects on the rest of the repository.
+
+The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
+
+## Security Considerations
+
+Local ticket files contain no secrets — they are plain text metadata committed to the repository. The pre-commit hook already rejects files matching secret patterns (`.env`, `credentials`, `*.pem`, `*.key`).
+
+Forge-coordinated tickets (`Coordination: gh#N`) use the existing forge authentication. No new credentials, tokens, or attack surface are introduced.
+
+The `Assigned-to` header is informational — it does not grant permissions. Authorization remains with the forge (for forge tickets) or with git branch protection (for local tickets).
+
+## Reference Implementation
+
+The implementation lives in the project's harness layer:
+
+- **Runbooks** (`runbooks/new-ticket.md`, `runbooks/start-ticket.md`): agent instructions for creating and working tickets.
+- **Validation** (`scripts/validate_tickets.py`): header checks, ID uniqueness, `Blocked-by` reference integrity. Wired into `make check` and the pre-commit hook.
+- **Ready query** (`scripts/ready_tickets.py`): graph traversal to find unblocked open tickets.
+- **Archive** (`scripts/archive_tickets.py`): DAG-safe archival of old closed tickets.
+
+Scripts are Python (the project's existing toolchain). Skills are shell commands, so the implementation can be swapped transparently.
 
 ## Rejected Ideas
 
