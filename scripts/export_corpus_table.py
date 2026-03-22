@@ -1,8 +1,8 @@
-"""Export corpus composition table by source for the technical report.
+"""Export corpus composition table by source.
 
 Produces:
 - content/tables/tab_corpus_sources.csv: detailed stats per source
-- stdout: formatted markdown table
+- content/tables/tab_corpus_sources.md: Quarto-includable markdown table
 
 Shows for each source: query description, records before/after refinement,
 non-English share, journal-article share, DOI coverage, reference coverage,
@@ -49,6 +49,38 @@ SOURCE_META = {
 }
 
 PRIMARY_SOURCES = list(SOURCE_META.keys())
+
+CAPTION = (
+    ": Corpus sources. *Raw*: records with `from_*` provenance flag before"
+    " filtering (a record in multiple sources is counted once per source)."
+    " *Refined*: after six-flag quality filtering."
+    " *Unique*: found only in that source (`source_count = 1`)."
+    " *%DOI*, *%Abstract*, *%Refs*: metadata completeness among refined"
+    " records. {#tbl-quality}"
+)
+
+
+def _write_md_table(summary: pd.DataFrame, path: str) -> None:
+    """Write a Quarto-includable markdown table with selected columns."""
+    cols = ["Source", "Raw", "Refined", "Unique", "%DOI", "%Abstract", "%Refs"]
+    lines = [
+        "| Source | Raw | Refined | Unique | %DOI | %Abstract | %Refs |",
+        "|:-------|----:|--------:|-------:|-----:|----------:|------:|",
+    ]
+    for _, row in summary.iterrows():
+        is_total = "TOTAL" in str(row["Source"])
+        vals = []
+        for c in cols:
+            v = row.get(c, "")
+            if c in ("Raw", "Refined", "Unique"):
+                v = f"{int(v):,}" if pd.notna(v) else ""
+            vals.append(f"**{v}**" if is_total else str(v))
+        lines.append("| " + " | ".join(vals) + " |")
+    lines.append("")
+    lines.append(CAPTION)
+    lines.append("")
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
 
 
 def main():
@@ -118,11 +150,13 @@ def main():
         })
 
     # Totals row (deduplicated)
+    n_unique_total = int((df["source_count"] == 1).sum()) if "source_count" in df.columns else 0
     rows.append({
-        "Source": "TOTAL (deduplicated)",
+        "Source": "TOTAL",
         "Query": "",
         "Raw": len(unified),
         "Refined": len(df),
+        "Unique": n_unique_total,
         "non-EN": int((~df["is_english"]).sum()),
         "%Journal": f"{df['has_journal'].mean() * 100:.0f}%",
         "%DOI": f"{df['has_doi'].mean() * 100:.0f}%",
@@ -132,24 +166,14 @@ def main():
 
     summary = pd.DataFrame(rows)
 
-    # Save CSV
-    out_path = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.csv")
-    save_csv(summary, out_path)
+    # Save CSV (full detail)
+    csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.csv")
+    save_csv(summary, csv_path)
 
-    # Log markdown table
-    log.info("| Source | Query | Raw | Refined | non-EN "
-             "| %%Journal | %%DOI | %%Refs | %%Abstract |")
-    log.info("|:-------|:------|---:|---:|---:|---:|---:|---:|---:|")
-    for _, row in summary.iterrows():
-        non_en = int(row.get("non-EN", 0)) if pd.notna(row.get("non-EN")) else 0
-        log.info(
-            "| %s | %s | %s | %s | %s | %s | %s | %s | %s |",
-            row['Source'], row['Query'],
-            f"{int(row['Raw']):,}", f"{int(row['Refined']):,}", f"{non_en:,}",
-            row.get('%Journal', ''), row.get('%DOI', ''),
-            row.get('%Refs', ''),
-            row.get('%Abstract', ''),
-        )
+    # Save markdown table (included by data-paper.qmd and _includes/tab_corpus_sources.md)
+    md_path = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.md")
+    _write_md_table(summary, md_path)
+    log.info("Wrote %s", md_path)
 
 
 if __name__ == "__main__":

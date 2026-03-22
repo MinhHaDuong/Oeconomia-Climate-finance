@@ -33,7 +33,7 @@ See the `Makefile` for the full dependency graph and `dvc.yaml` for the DVC pipe
 
 | Script | Output | Used by |
 |--------|--------|---------|
-| `export_corpus_table.py` | `tab_corpus_sources.csv` | TechRep §1, Data Paper |
+| `export_corpus_table.py` | `tab_corpus_sources.csv`, `tab_corpus_sources.md` | TechRep §1, Data Paper |
 | `export_citation_coverage.py` | `tab_citation_coverage.md` | TechRep §11, Data Paper |
 | `qa_citations.py` | `qa_citations_report.json` | TechRep §11 |
 
