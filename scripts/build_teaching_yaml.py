@@ -23,7 +23,7 @@ from collections import defaultdict
 import pandas as pd
 import yaml
 
-from utils import DATA_DIR, get_logger
+from utils import DATA_DIR, clean_doi, get_logger
 
 log = get_logger("build_teaching_yaml")
 
@@ -190,6 +190,10 @@ def load_scraped(csv_path):
     Returns list of (institution, course, reading) record dicts.
     """
     df = pd.read_csv(csv_path)
+
+    # Clean DOIs: strip URL prefixes (https://doi.org/..., publisher URLs)
+    df["doi"] = df["doi"].apply(lambda x: clean_doi(x) if pd.notna(x) else "")
+
     df = _dedup_course_names(df)
 
     has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")

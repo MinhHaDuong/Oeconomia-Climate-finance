@@ -36,8 +36,8 @@ from urllib.parse import urlparse
 import pandas as pd
 
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
-from utils import (BASE_DIR, DATA_DIR, MAILTO, dedup_courses, get_logger,
-                   normalize_title, polite_get, save_csv)
+from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
+                   get_logger, normalize_title, polite_get, save_csv)
 
 log = get_logger("collect_syllabi")
 
@@ -59,28 +59,7 @@ OUTPUT_CSV = os.path.join(SYLLABI_DIR, "reading_lists.csv")
 # Helpers
 # ============================================================
 
-def _clean_doi(raw):
-    """Extract a clean DOI (10.xxxx/...) from a raw string.
-
-    Handles:
-    - https://doi.org/10.xxx → 10.xxx
-    - http://dx.doi.org/10.xxx → 10.xxx
-    - https://doi.org/doi:10.xxx → 10.xxx
-    - https://publisher.com/doi/full/10.xxx → 10.xxx
-    - Already-clean 10.xxx → 10.xxx
-    - Non-DOI URLs (SSRN, HDL) → ""
-    - None / "" → ""
-    """
-    if not raw:
-        return ""
-    raw = str(raw).strip()
-    if not raw:
-        return ""
-    # Extract the 10.xxxx/... DOI pattern from anywhere in the string
-    m = re.search(r"(10\.\d{4,}[^\s]*)", raw)
-    if m:
-        return m.group(1).lower()
-    return ""
+_clean_doi = clean_doi  # Alias for backward compatibility with tests
 
 
 def load_jsonl(path):

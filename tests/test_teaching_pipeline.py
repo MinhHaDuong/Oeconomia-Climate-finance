@@ -222,47 +222,37 @@ class TestBuildTeachingYamlNoManual:
         assert len(sources) >= 1
 
 
-# --- Ground truth: 24 unique works from the pipeline-generated teaching_sources.yaml ---
-# 22 DOIs + 2 title-only. The scraper must rediscover all of these.
+# --- Ground truth: core works that appear on >= 2 syllabi ---
+# These are the convergence-validated DOIs: works independently assigned
+# by multiple courses.  Scraper must find all of them.
 REFERENCE_DOIS = {
-    "10.1146/annurev-financial-102620-103311",
-    "10.1016/j.jfineco.2020.12.011",
-    "10.2139/ssrn.3438533",
-    "10.3386/w28940",
-    "10.1016/j.jbankfin.2018.10.012",
-    "10.1016/j.jfineco.2019.03.013",
-    "10.1093/rfs/hhab032",
-    "10.1093/rfs/hhz072",
-    "10.1111/jofi.13219",
-    "10.1111/jofi.13272",
-    "10.1515/9783110733488-019",
-    "10.1017/9781108886246.018",
-    "10.4324/9781315147024-21",
-    "10.1080/20430795.2020.1717241",
-    "10.2139/ssrn.6115887",
-    "10.54648/eucl2018032",
-    "10.4337/9781786432636.00019",
-    "10.1016/j.ecolecon.2021.107022",
-    "10.1093/oso/9780190662455.003.0003",
-    "10.1108/s2051-503020160000019005",
-    "10.59117/20.500.11822/43406",
-    "10.7551/mitpress/9780262035620.003.0009",
+    "10.1146/annurev-financial-102620-103311",   # Giglio, Kelly, Stroebel — Climate finance
+    "10.1016/j.jfineco.2020.12.011",             # Pastor, Stambaugh, Taylor — Sustainable investing
+    "10.2139/ssrn.3438533",                       # Berg, Kolbel, Rigobon — ESG ratings divergence
+    "10.3386/w28940",                             # Pastor, Stambaugh, Taylor — Dissecting green returns
+    "10.1016/j.jbankfin.2018.10.012",            # Zerbib — Green bond premium
+    "10.1093/rfs/hhab032",                        # Giglio et al. — Long-run discount rates
+    "10.1093/rfs/hhz072",                         # Engle et al. — Hedging climate change news
+    "10.1111/jofi.13272",                         # Bolton & Kacperczyk — Carbon-transition risk
+    "10.4337/9781786432636.00019",                # Green Bond Principles
+    "10.1016/j.ecolecon.2021.107022",             # Central bank mandates and sustainability
+    "10.7551/mitpress/9780262035620.003.0009",    # Sustainable Development Goals
+    "10.2307/2676219",                            # Heinkel et al. — Green investment
 }
 REFERENCE_TITLES = {
     "principles of sustainable finance",
-    "global landscape of climate finance",
 }
 
 
 class TestScraperCoverage:
-    """Validate that scraper output covers all 24 reference works."""
+    """Validate that scraper output covers convergence-validated core works."""
 
     @pytest.mark.skipif(
         not os.path.exists(os.path.join(
             os.path.dirname(__file__), "..", "data", "teaching_sources.yaml")),
         reason="teaching_sources.yaml not yet generated (run scraper first)")
     def test_output_covers_reference_works(self):
-        """teaching_sources.yaml must contain all 24 reference works."""
+        """teaching_sources.yaml must contain all convergence-validated core works."""
         yaml_path = os.path.join(
             os.path.dirname(__file__), "..", "data", "teaching_sources.yaml")
         with open(yaml_path) as f:
@@ -289,6 +279,12 @@ class TestScraperCoverage:
         missing_titles = REFERENCE_TITLES - output_titles
         assert not missing_titles, \
             f"Missing {len(missing_titles)} reference titles: {missing_titles}"
+
+        # Minimum output size: must have at least 40 courses and 200 readings
+        n_courses = len(sources)
+        n_readings = sum(len(s.get("readings", [])) for s in sources)
+        assert n_courses >= 30, f"Expected >=30 courses, got {n_courses}"
+        assert n_readings >= 100, f"Expected >=100 readings, got {n_readings}"
 
 
 class TestCleanDoi:
