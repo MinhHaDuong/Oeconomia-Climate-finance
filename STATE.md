@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-20
+Last updated: 2026-03-22
 
 ## Status: SUBMITTED
 
@@ -53,8 +53,10 @@ None.
 
 None.
 
-## Recent merges (2026-03-20)
+## Recent merges (2026-03-22)
 
+- #259: Teaching scraper: improved PDF parsing (table extraction, 50KB limit, chunk overlap), removed manual catalog — scraper is now sole source
+- #260: ISTEX rebuild
 - #241: housekeeping STATE refresh
 - #245: overnight log 2026-03-20
 - #242: overnight exploration runbook

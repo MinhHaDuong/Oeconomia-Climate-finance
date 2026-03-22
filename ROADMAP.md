@@ -36,6 +36,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Waiting for referee reports (~3 mo
 - Flags column normalized (#126): removed derived list from extended_works.csv; boolean columns are source of truth
 - catalog_bibcnrs as DVC stage (#134): data/exports/ DVC-tracked
 - Teaching source pipeline (#135): scraped syllabi → YAML → teaching_works.csv
+- Teaching scraper improvement (#258): PDF table extraction + chunk overlap, manual catalog removed — scraper covers all 24 reference works alone
 - Split discover into per-source DVC stages (#152): parallel, granular, skippable
 - OpenAlex --from-date incremental filtering (#153): budget-aware, sidecar auto-detect
 - Venue table replaces fig-seed (#150, #151): @tbl-venues in §3.4 body
