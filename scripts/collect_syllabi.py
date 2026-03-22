@@ -20,19 +20,24 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import sys
+import threading
 import time
 import urllib.request
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 import pandas as pd
 
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
-from utils import (BASE_DIR, DATA_DIR, MAILTO, get_logger, normalize_title,
-                   polite_get, save_csv)
+from utils import (BASE_DIR, DATA_DIR, MAILTO, dedup_courses, get_logger,
+                   normalize_title, polite_get, save_csv)
 
 log = get_logger("collect_syllabi")
 
@@ -276,10 +281,72 @@ def stage_search(limit=0):
 # Stage 2: Fetch
 # ============================================================
 
-def stage_fetch():
-    """Download page content for each candidate URL."""
+FETCH_WORKERS = 100      # Global concurrency — different hosts in parallel
+HOST_INTERVAL = 1.0      # Min seconds between requests to the same host
+
+
+def _fetch_one(url):
+    """Fetch a single URL and return a page record dict.
+
+    Handles both HTML and PDF responses.  Pure function (no file I/O for
+    the checkpoint — caller writes the result).
+    """
     from bs4 import BeautifulSoup
 
+    page_rec = {
+        "url": url,
+        "content_type": "",
+        "text": "",
+        "fetch_date": datetime.now(timezone.utc).isoformat(),
+        "http_status": 0,
+        "error": "",
+    }
+
+    try:
+        headers = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
+        resp = polite_get(url, headers=headers, delay=0.5)
+        ct = resp.headers.get("Content-Type", "")
+        page_rec["http_status"] = resp.status_code
+        page_rec["content_type"] = ct
+
+        if "pdf" in ct.lower() or url.lower().endswith(".pdf"):
+            base = re.sub(r'[^\w\-.]', '_', url.split("/")[-1] or "page")
+            if base.lower().endswith(".pdf"):
+                base = base[:-4]
+            url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
+            pdf_name = f"{base}_{url_hash}.pdf"
+            pdf_path = os.path.join(PDF_DIR, pdf_name)
+            with open(pdf_path, "wb") as f:
+                f.write(resp.content)
+
+            try:
+                page_rec["text"] = extract_pdf_text(pdf_path)
+                page_rec["content_type"] = "application/pdf"
+            except Exception as e:
+                page_rec["error"] = f"PDF parse error: {e}"
+                log.warning("PDF parse error: %s", e)
+        else:
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for tag in soup(["script", "style", "nav", "footer", "header"]):
+                tag.decompose()
+            text = soup.get_text(separator="\n", strip=True)
+            page_rec["text"] = text[:TEXT_LIMIT]
+            page_rec["content_type"] = "text/html"
+
+    except Exception as e:
+        page_rec["error"] = str(e)
+        log.error("Fetch error for %s: %s", url, e)
+
+    return page_rec
+
+
+def stage_fetch():
+    """Download page content for each candidate URL.
+
+    Uses a thread pool for I/O parallelism across different hosts, with
+    per-host rate limiting (max 1 request per HOST_INTERVAL seconds to
+    the same hostname).  Checkpoint writes are serialized via a lock.
+    """
     os.makedirs(PDF_DIR, exist_ok=True)
 
     # Load search results
@@ -294,58 +361,65 @@ def stage_fetch():
     pending = [r for r in urls_to_fetch if r["url"] not in done_urls]
     log.info("Fetch: %d already done, %d pending", len(done_urls), len(pending))
 
-    for i, rec in enumerate(pending):
-        url = rec["url"]
-        log.info("[%d/%d] %s", i + 1, len(pending), url[:80])
+    if not pending:
+        return
 
-        page_rec = {
-            "url": url,
-            "content_type": "",
-            "text": "",
-            "fetch_date": datetime.now(timezone.utc).isoformat(),
-            "http_status": 0,
-            "error": "",
-        }
+    # Group pending URLs by host for rate limiting and logging
+    host_counts = defaultdict(int)
+    for rec in pending:
+        host = urlparse(rec["url"]).hostname or "unknown"
+        host_counts[host] += 1
 
-        try:
-            headers = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
-            resp = polite_get(url, headers=headers, delay=0.5)
-            ct = resp.headers.get("Content-Type", "")
-            page_rec["http_status"] = resp.status_code
-            page_rec["content_type"] = ct
+    # Pre-create per-host locks before spawning threads (avoids defaultdict race)
+    host_locks = {host: threading.Lock() for host in host_counts}
+    host_last_request = {}  # hostname → monotonic timestamp
+    host_time_lock = threading.Lock()  # protects host_last_request reads/writes
 
-            if "pdf" in ct.lower() or url.lower().endswith(".pdf"):
-                # Save PDF, extract text
-                pdf_name = re.sub(r'[^\w\-.]', '_', url.split("/")[-1] or "page.pdf")
-                if not pdf_name.endswith(".pdf"):
-                    pdf_name += ".pdf"
-                pdf_path = os.path.join(PDF_DIR, pdf_name)
-                with open(pdf_path, "wb") as f:
-                    f.write(resp.content)
+    # Checkpoint write lock — serializes appends to pages.jsonl
+    write_lock = threading.Lock()
+    completed = [0]  # mutable counter for progress logging
 
-                try:
-                    page_rec["text"] = extract_pdf_text(pdf_path)
-                    page_rec["content_type"] = "application/pdf"
-                except Exception as e:
-                    page_rec["error"] = f"PDF parse error: {e}"
-                    log.warning("PDF parse error: %s", e)
+    def rate_limited_fetch(url):
+        """Fetch url, respecting per-host rate limit."""
+        host = urlparse(url).hostname or "unknown"
 
-            else:
-                # HTML
-                soup = BeautifulSoup(resp.text, "html.parser")
-                # Remove script/style
-                for tag in soup(["script", "style", "nav", "footer", "header"]):
-                    tag.decompose()
-                text = soup.get_text(separator="\n", strip=True)
-                page_rec["text"] = text[:TEXT_LIMIT]
-                page_rec["content_type"] = "text/html"
+        # Acquire per-host lock so only one thread hits this host at a time
+        with host_locks[host]:
+            # Enforce minimum interval since last request to this host
+            with host_time_lock:
+                last = host_last_request.get(host, 0)
+                now = time.monotonic()
+                wait = HOST_INTERVAL - (now - last)
+            if wait > 0:
+                time.sleep(wait)
 
-        except Exception as e:
-            page_rec["error"] = str(e)
-            log.error("Fetch error for %s: %s", url, e)
+            result = _fetch_one(url)
 
-        append_jsonl([page_rec], PAGES_PATH)
-        time.sleep(0.3)
+            with host_time_lock:
+                host_last_request[host] = time.monotonic()
+
+        # Thread-safe checkpoint write
+        with write_lock:
+            append_jsonl([result], PAGES_PATH)
+            completed[0] += 1
+            log.info("[%d/%d] %s", completed[0], len(pending), url[:80])
+
+        return result
+    n_hosts = len(host_counts)
+    max_per_host = max(host_counts.values())
+    log.info("Fetching from %d hosts (max %d URLs/host), %d workers",
+             n_hosts, max_per_host, FETCH_WORKERS)
+
+    with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as pool:
+        futures = {pool.submit(rate_limited_fetch, rec["url"]): rec
+                   for rec in pending}
+        for future in as_completed(futures):
+            # Propagate exceptions for visibility (already logged inside)
+            try:
+                future.result()
+            except Exception as e:
+                url = futures[future]["url"]
+                log.error("Unhandled error fetching %s: %s", url[:80], e)
 
     # Summary
     all_pages = load_jsonl(PAGES_PATH)
@@ -574,74 +648,6 @@ def crossref_lookup(title, authors=""):
     return ""
 
 
-def _dedup_courses(grouped, course_col, overlap_threshold=0.8,
-                   min_shared=10):
-    """Merge near-duplicate courses and recount n_courses.
-
-    Two courses are considered duplicates if they share ≥ min_shared readings
-    AND > overlap_threshold of the smaller course's readings. This prevents
-    false merges when courses share just 1-2 popular papers by coincidence.
-
-    Modifies the grouped DataFrame in place: updates courses, institutions,
-    and adds/updates n_courses.
-    """
-    from collections import defaultdict
-
-    # Build course → set of reading keys (row indices)
-    course_readings = defaultdict(set)
-    for idx, row in grouped.iterrows():
-        courses = [c.strip() for c in row[course_col].split(" ; ")]
-        for c in courses:
-            if c:
-                course_readings[c].add(idx)
-
-    # Find courses that overlap significantly
-    course_list = list(course_readings.keys())
-    merged = {}  # course_name → canonical_name
-    for i, c1 in enumerate(course_list):
-        if c1 in merged:
-            continue
-        for c2 in course_list[i + 1:]:
-            if c2 in merged:
-                continue
-            s1, s2 = course_readings[c1], course_readings[c2]
-            if not s1 or not s2:
-                continue
-            n_shared = len(s1 & s2)
-            overlap = n_shared / min(len(s1), len(s2))
-            if n_shared >= min_shared and overlap > overlap_threshold:
-                # Merge c2 into c1 (keep shorter name as canonical)
-                canonical = c1 if len(c1) <= len(c2) else c2
-                alias = c2 if canonical == c1 else c1
-                merged[alias] = canonical
-                log.info("Course dedup: '%s' -> '%s'", alias[:50], canonical[:50])
-
-    if not merged:
-        grouped["n_courses"] = grouped[course_col].apply(
-            lambda x: len(set(x.split(" ; "))) if x else 0)
-        return grouped
-
-    # Apply merges to each row
-    def apply_merge(courses_str):
-        courses = [c.strip() for c in courses_str.split(" ; ")]
-        deduped = []
-        seen = set()
-        for c in courses:
-            canonical = merged.get(c, c)
-            if canonical not in seen:
-                deduped.append(canonical)
-                seen.add(canonical)
-        return " ; ".join(sorted(deduped))
-
-    grouped[course_col] = grouped[course_col].apply(apply_merge)
-    grouped["n_courses"] = grouped[course_col].apply(
-        lambda x: len(set(x.split(" ; "))) if x else 0)
-
-    n_merged = len(merged)
-    log.info("Merged %d duplicate course names", n_merged)
-    return grouped
-
-
 def stage_normalize():
     """Deduplicate and enrich references via CrossRef."""
     extracted = load_jsonl(REFERENCES_PATH)
@@ -717,7 +723,7 @@ def stage_normalize():
     # Some courses appear under multiple institution names (e.g., co-organized
     # MOOCs). We detect these by reading overlap: if two courses share >80%
     # of their readings, they are the same course and should count as one.
-    grouped = _dedup_courses(grouped, "course_name")
+    grouped = dedup_courses(grouped, "course_name")
 
     # Sort by number of courses (most assigned first)
     grouped = grouped.sort_values("n_courses", ascending=False).reset_index(drop=True)

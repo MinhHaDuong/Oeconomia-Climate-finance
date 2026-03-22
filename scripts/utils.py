@@ -534,6 +534,71 @@ def save_csv(df, path):
     _utils_log.info("Saved %d rows to %s", len(df), path)
 
 
+def dedup_courses(grouped, course_col, overlap_threshold=0.8, min_shared=10):
+    """Merge near-duplicate courses and recount n_courses.
+
+    Two courses are considered duplicates if they share >= min_shared readings
+    AND > overlap_threshold of the smaller course's readings.  This prevents
+    false merges when courses share just 1-2 popular papers by coincidence.
+
+    Modifies the grouped DataFrame in place: updates courses, institutions,
+    and adds/updates n_courses.
+    """
+    from collections import defaultdict
+
+    # Build course -> set of reading keys (row indices)
+    course_readings = defaultdict(set)
+    for idx, row in grouped.iterrows():
+        courses = [c.strip() for c in row[course_col].split(" ; ")]
+        for c in courses:
+            if c:
+                course_readings[c].add(idx)
+
+    # Find courses that overlap significantly
+    course_list = list(course_readings.keys())
+    merged = {}  # course_name -> canonical_name
+    for i, c1 in enumerate(course_list):
+        if c1 in merged:
+            continue
+        for c2 in course_list[i + 1:]:
+            if c2 in merged:
+                continue
+            s1, s2 = course_readings[c1], course_readings[c2]
+            if not s1 or not s2:
+                continue
+            n_shared = len(s1 & s2)
+            overlap = n_shared / min(len(s1), len(s2))
+            if n_shared >= min_shared and overlap > overlap_threshold:
+                canonical = c1 if len(c1) <= len(c2) else c2
+                alias = c2 if canonical == c1 else c1
+                merged[alias] = canonical
+                _utils_log.info("Course dedup: '%s' -> '%s'",
+                                alias[:50], canonical[:50])
+
+    if not merged:
+        grouped["n_courses"] = grouped[course_col].apply(
+            lambda x: len(set(x.split(" ; "))) if x else 0)
+        return grouped
+
+    def apply_merge(courses_str):
+        courses = [c.strip() for c in courses_str.split(" ; ")]
+        deduped = []
+        seen = set()
+        for c in courses:
+            canonical = merged.get(c, c)
+            if canonical not in seen:
+                deduped.append(canonical)
+                seen.add(canonical)
+        return " ; ".join(sorted(deduped))
+
+    grouped[course_col] = grouped[course_col].apply(apply_merge)
+    grouped["n_courses"] = grouped[course_col].apply(
+        lambda x: len(set(x.split(" ; "))) if x else 0)
+
+    _utils_log.info("Merged %d duplicate course names", len(merged))
+    return grouped
+
+
 def load_checkpoint(path):
     """Load records from a JSONL checkpoint file."""
     records = []
