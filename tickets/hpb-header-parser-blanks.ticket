@@ -1,0 +1,34 @@
+Id: hpb
+Title: Fix parser: blank line should end header section
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+Blocked-by: vt
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+Spec writer review: spec says "Header ends at first blank line" but
+the parser skips blank lines in the header section (line 81:
+if not line.strip(): continue). These disagree.
+
+In practice, existing tickets have a blank line between headers and
+the log separator, so the parser works. But the spec promise is
+violated — a blank line between two headers would be silently
+swallowed instead of ending the header block.
+
+## Actions
+1. Decide: change spec or change parser?
+   Recommendation: change parser to match spec — first blank line
+   in header section transitions to "between headers and log"
+2. Add test: header with blank line in middle
+
+## Exit criteria
+- Parser and spec agree on blank line semantics
+- Existing tickets still parse correctly

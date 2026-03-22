@@ -1,0 +1,38 @@
+Id: ssc
+Title: Fix spec/validator status consistency (pending, addressed)
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+Spec writer review found three status inconsistencies:
+
+1. pending is in the valid set but never explained in the spec
+2. Peer review example shows log "status pending -> addressed"
+   but addressed is not in VALID_STATUSES — validator would reject it
+3. Same example shows Status: pending in header after the log says
+   it was changed — header should reflect current state
+
+Also: Coordination header description says "forge#N" but examples
+use "gh#42". The pattern vs. concrete instance distinction is unclear.
+
+## Actions
+1. Add brief explanation of each status value in the spec
+2. Either add addressed to valid statuses or change the example
+   to show Status: closed (simpler — addressed is peer-review jargon)
+3. Fix the peer review example: header should show the current state
+4. Clarify Coordination format: "forge-prefix#N" with explicit
+   examples (gh#, gl#, gt#)
+
+## Exit criteria
+- All example headers match current state after logged events
+- All status values used in examples are in VALID_STATUSES
+- Coordination format is unambiguous

@@ -1,0 +1,37 @@
+Id: avi
+Title: Include archived ticket IDs in validation and archive DAG checks
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+Blocked-by: vt
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+Two related issues found by distributed systems + DevOps reviews:
+
+1. validate_tickets uses load_tickets(tickets/) which is non-recursive.
+   After archival, a live ticket with Blocked-by: cm (where cm is in
+   tickets/archive/) passes validation — the reference vanishes from
+   all_ids silently.
+
+2. archive DAG protection only scans tickets/ for references. If
+   ticket A (archived) references ticket B (closed, old) via
+   X-Discovered-from, B is unprotected in subsequent archive passes.
+
+## Actions
+1. In validate_all: also load tickets/archive/*.ticket into all_ids
+   (but don't validate them — just use them as a reference set)
+2. In find_archivable: also scan tickets/archive/*.ticket when
+   building referenced_ids
+3. Add tests for both scenarios
+
+## Exit criteria
+- Blocked-by referencing an archived ticket ID passes validation
+- Archive DAG protection sees references from archived tickets
