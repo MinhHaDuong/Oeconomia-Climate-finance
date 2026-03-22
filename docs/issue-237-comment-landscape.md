@@ -41,6 +41,279 @@ These are real benefits, but they are not why we're doing this. We're doing this
 
 ## Rationale
 
+### Design philosophy
+
+1. **Two independent systems.** Local tickets and forge issues are separate. They can link via `Coordination: forge#N` but share no ID space and no sync layer.
+2. **Natural attrition.** Existing forge issues close as their work completes. New small tickets are born local. The mix shifts organically.
+3. **Promote is rare.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception.
+4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
+5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
+6. **Forge-agnostic.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all.
+
+### Design decisions
+
+- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
+- **Mutable header + append-only log** — the header is a greppable index. The log is append-only audit history. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
+- **RFC 822 over YAML** — `Key: value` lines work with `grep` and `cut`. YAML needs a library.
+- **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
+- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
+- **Two-tier contention:**
+  - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
+  - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
+
+### Conclusion
+
+**Build custom skills wrapping plain text files with RFC 822 headers.**
+
+Steal the good ideas:
+- From Beads: `Blocked-by` header, `ready` command, memory compaction
+- From tk: dependency graph, `X-Discovered-from` / `X-Supersedes` headers
+
+Skip what doesn't fit:
+- Dolt DB layer, daemon processes, push-to-main workflow, sequential IDs
+
+---
+
+## Specification
+
+### File format
+
+**Why RFC 822?** A ticket is a conversation — someone raises an issue, others respond, status evolves. Email solved this decades ago: structured headers for metadata, free-form body for content, append-only threading for history. Python chose the same format for PEPs (PEP 1), for the same reasons: greppable, human-readable, tool-friendly.
+
+Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose with Unix pipes. RFC 822 headers work with bare `grep` and `cut`.
+
+**The header set is open**, following RFC 822 conventions: standard headers that core tools understand, and `X-` extension headers for domain-specific metadata. The validator type-checks standard headers and passes `X-` headers through untouched.
+
+**Standard headers:**
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Id` | yes | Initials of the semantic slug (e.g., `afg` from `auth-flow-gates`) |
+| `Title` | yes | Short description |
+| `Author` | yes | Creator |
+| `Status` | yes | Current state (open, doing, closed, ...) |
+| `Created` | yes | ISO date |
+| `Coordination` | no | `local` (default) or `forge#N` (e.g., `gh#42`, `gl#42`) |
+| `Assigned-to` | no | Agent or person owning the work |
+| `Blocked-by` | no | ID of blocking ticket (repeatable) |
+
+When `Coordination:` references a forge issue, add a `Forge-issue:` header with the full reference (e.g., `Forge-issue: gh#42`).
+
+**X- extension headers:**
+
+| Header | Domain | Description |
+|--------|--------|-------------|
+| `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
+| `X-Parent` | hierarchy | ID of parent ticket (child->parent only) |
+| `X-Discovered-from` | provenance | ID of ticket that led to this one |
+| `X-Supersedes` | provenance | ID of replaced ticket |
+| `X-Review-round` | peer review | R1, R2, R3 |
+| `X-Comment-number` | peer review | Reviewer's comment number |
+| `X-Section` | peer review | Manuscript section reference |
+| `X-Page` | peer review | Page number |
+
+List children via `grep -l "^X-Parent: {id}" tickets/*.ticket`. No reverse header — avoids a second source of truth. Same principle as `Blocked-by` (no `Blocks:` counterpart).
+
+Projects add `X-` headers freely. If an extension proves universally useful, promote it to standard (drop the `X-` prefix).
+
+**Structure** — three sections separated by marker lines:
+
+1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
+2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Aids manual resolution if header conflicts.
+3. **Body** (after `--- body ---`) — free-form markdown description. Domain-specific workflows may add further named separators inside the body (e.g., `--- response ---` in peer review tickets). These are not parsed by core tools — only `--- log ---` and `--- body ---` are structural.
+
+**Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
+
+### Naming convention
+
+Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is freely chosen — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. Collisions get a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters. Branches: `t/{id}-{slug}`.
+
+**Uniqueness enforcement** — two layers:
+
+1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append next available suffix. Best-effort — concurrent agents can race past this.
+2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject duplicates. Error reports next available suffix (e.g., `"duplicate Id 'wf' -- next available: wf3"`). No auto-fix — renaming an ID requires updating cross-references across files.
+
+### Examples
+
+**Development ticket:**
+
+```
+Id: afg
+Title: Add authentication flow
+Author: minh
+Status: open
+Created: 2026-03-21
+Coordination: local
+Assigned-to: agent-x
+Blocked-by: cm
+Blocked-by: fds
+X-Discovered-from: prt
+X-Phase: dreaming
+
+--- log ---
+2026-03-21T10:00Z agent-x created
+2026-03-21T11:30Z agent-x status open
+2026-03-21T14:00Z agent-x phase dreaming
+2026-03-22T09:00Z agent-y blocked-by + cm
+2026-03-22T09:00Z agent-y blocked-by + fds
+
+--- body ---
+Free-form description goes here.
+Markdown OK.
+```
+
+**Peer review comment (future extension):**
+
+```
+Id: cmcd
+Title: R1.3 -- Clarify methodology for COP funding data
+Author: reviewer-1
+Status: pending
+Created: 2026-03-21
+X-Review-round: R1
+X-Comment-number: 3
+X-Section: 3.2
+X-Page: 12
+
+--- log ---
+2026-03-21T10:00Z reviewer-1 created
+2026-03-25T14:00Z minh status pending -> addressed
+
+--- body ---
+The methodology for aggregating COP funding commitments is unclear.
+How are pledges vs disbursements distinguished? Table 3 seems to
+mix both without explanation.
+
+--- response ---
+Added paragraph in 3.2 distinguishing pledges from disbursements.
+Table 3 now has separate columns. See commit abc1234.
+```
+
+**Closed ticket:**
+
+```
+Id: cm
+Title: Configure CI matrix
+Author: agent-x
+Status: closed
+Created: 2026-03-20
+Coordination: local
+
+--- log ---
+2026-03-20T09:00Z agent-x created
+2026-03-20T09:00Z agent-x status open
+2026-03-20T14:00Z agent-x status doing
+2026-03-21T11:00Z agent-x status closed — merged PR #15
+
+--- body ---
+Set up GitHub Actions matrix for Python 3.11 and 3.12.
+```
+
+**Forge-coordinated ticket:**
+
+```
+Id: bap
+Title: Build authentication pipeline
+Author: minh
+Status: doing
+Created: 2026-03-19
+Coordination: gh#42
+Forge-issue: gh#42
+Assigned-to: agent-y
+X-Phase: doing
+
+--- log ---
+2026-03-19T10:00Z minh created
+2026-03-19T10:00Z minh status open
+2026-03-20T08:00Z agent-y assigned-to agent-y
+2026-03-20T08:00Z agent-y status doing
+
+--- body ---
+Big cross-cutting feature requiring human coordination.
+See gh#42 for discussion and scope.
+```
+
+**Conflict resolution scenario:**
+
+Two agents edit the same ticket header concurrently — agent-x sets `Status: doing`, agent-y sets `Status: closed`. Git reports a merge conflict on the `Status:` line. The merge operator reads the log:
+
+    2026-03-22T10:00Z agent-x status doing
+    2026-03-22T10:05Z agent-y status closed — merged PR #18
+
+The log shows agent-y's close happened after agent-x's claim. Resolution: accept `Status: closed`. The log is append-only, so both entries survive the merge — no history is lost.
+
+### One-liner queries
+
+```bash
+# All open tickets
+grep -l "^Status: open" tickets/*.ticket
+
+# Tickets in doing phase
+grep -l "^X-Phase: doing" tickets/*.ticket
+
+# What blocks ticket afg?
+grep "^Blocked-by:" tickets/afg-*.ticket | cut -d' ' -f2
+
+# Tickets with no blockers
+grep -rL "^Blocked-by:" tickets/*.ticket
+
+# Count tickets by status
+grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
+
+# History of a ticket
+sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/afg-*.ticket
+```
+
+The only query needing Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — a graph traversal, not a text filter.
+
+### Forge compatibility
+
+The system is forge-optional, not forge-hostile:
+
+- **Big tickets** use the forge for coordination (`Coordination: gh#N`). The forge issue is real — assignee, comments, external visibility.
+- **Small tickets** are local-only. No forge noise.
+- **PRs still go through the forge.** Code review is unchanged.
+- **Forge CLI available but not required.** Agents without `gh` work on `local` tickets. Offline-first by default.
+- **Prefix convention:** `gh#N` (GitHub), `gl#N` (GitLab), `gt#N` (Gitea/Forgejo).
+
+### Cleanup
+
+Closed tickets stay in `tickets/` by default — they're small, greppable, and occasionally referenced by `Blocked-by`. But if the directory grows noisy, run an on-demand archive:
+
+```bash
+# Archive closed tickets older than 90 days
+make ticket-archive              # default: 90 days
+make ticket-archive DAYS=180     # custom threshold
+```
+
+The procedure:
+1. Collect candidates: tickets where `Status: closed` and last log entry is older than the threshold.
+2. Preserve the DAG: remove from candidates any ticket whose ID appears in a `Blocked-by`, `X-Discovered-from`, or `X-Supersedes` header of a non-archived ticket. These are still part of the live dependency graph.
+3. Move survivors to `tickets/archive/`. Git records the move — `git log --follow` still works.
+4. Commit the move in a single commit: `archive N closed tickets (>{DAYS} days, DAG-safe)`.
+
+**Recovery:** `git mv tickets/archive/foo.ticket tickets/` to restore any ticket.
+
+This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` feels too long.
+
+### Transition
+
+No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
+
+The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
+
+### CI/CD integration
+
+**Ticket validation in `make check`:** `validate-tickets` runs as part of `make check` and `make check-fast`. It verifies required headers, unique IDs, valid `Blocked-by` references, and filename/ID consistency. Errors block the build.
+
+**Pre-commit guard:** the pre-commit hook calls `validate-tickets` on staged `.ticket` files. Duplicate IDs and malformed headers are caught before they enter history.
+
+**Quarto exclusion:** add `tickets/` to `_quarto.yml`'s exclude list — ticket files are not manuscript content.
+
+**Shallow clones:** ticket files are regular tracked files. They survive `--depth 1` clones, which means CI runners and ephemeral containers see the full backlog without special configuration.
+
+## Rejected Ideas
+
 ### Landscape survey
 
 We surveyed existing distributed issue trackers and evaluated them against our constraints.
@@ -118,224 +391,6 @@ Each external tool introduces: installation burden, sync overhead, learning curv
 
 **Verdict:** either go full file-based (text merges naturally) or full external-DB (Dolt handles its own sync). The hybrid corrupts both.
 
-### Conclusion
-
-**Build custom skills wrapping plain text files with RFC 822 headers.**
-
-Steal the good ideas:
-- From Beads: `Blocked-by` header, `ready` command, memory compaction
-- From tk: dependency graph, `X-Discovered-from` / `X-Supersedes` headers
-
-Skip what doesn't fit:
-- Dolt DB layer, daemon processes, push-to-main workflow, sequential IDs
-
-### Design philosophy
-
-1. **Two independent systems.** Local tickets and forge issues are separate. They can link via `Coordination: forge#N` but share no ID space and no sync layer.
-2. **Natural attrition.** Existing forge issues close as their work completes. New small tickets are born local. The mix shifts organically.
-3. **Promote is rare.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception.
-4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
-5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
-6. **Forge-agnostic.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all.
-
-### Design decisions
-
-- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
-- **Mutable header + append-only log** — the header is a greppable index. The log is append-only audit history. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
-- **RFC 822 over YAML** — `Key: value` lines work with `grep` and `cut`. YAML needs a library.
-- **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
-- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
-- **Two-tier contention:**
-  - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
-  - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
-
----
-
-## Specification
-
-### File format
-
-**Why RFC 822?** A ticket is a conversation — someone raises an issue, others respond, status evolves. Email solved this decades ago: structured headers for metadata, free-form body for content, append-only threading for history. Python chose the same format for PEPs (PEP 1), for the same reasons: greppable, human-readable, tool-friendly.
-
-Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose with Unix pipes. RFC 822 headers work with bare `grep` and `cut`.
-
-**The header set is open**, following RFC 822 conventions: standard headers that core tools understand, and `X-` extension headers for domain-specific metadata. The validator type-checks standard headers and passes `X-` headers through untouched.
-
-**Standard headers:**
-
-| Header | Required | Description |
-|--------|----------|-------------|
-| `Id` | yes | Initials of the semantic slug (e.g., `afg` from `auth-flow-gates`) |
-| `Title` | yes | Short description |
-| `Author` | yes | Creator |
-| `Status` | yes | Current state (open, doing, closed, ...) |
-| `Created` | yes | ISO date |
-| `Coordination` | no | `local` (default) or `forge#N` (e.g., `gh#42`, `gl#42`) |
-| `Assigned-to` | no | Agent or person owning the work |
-| `Blocked-by` | no | ID of blocking ticket (repeatable) |
-
-When `Coordination:` references a forge issue, add a `Forge-issue:` header with the full reference (e.g., `Forge-issue: gh#42`).
-
-**X- extension headers:**
-
-| Header | Domain | Description |
-|--------|--------|-------------|
-| `X-Phase` | Dragon Dreaming | dreaming, planning, doing, celebrating |
-| `X-Parent` | hierarchy | ID of parent ticket (child->parent only) |
-| `X-Discovered-from` | provenance | ID of ticket that led to this one |
-| `X-Supersedes` | provenance | ID of replaced ticket |
-| `X-Review-round` | peer review | R1, R2, R3 |
-| `X-Comment-number` | peer review | Reviewer's comment number |
-| `X-Section` | peer review | Manuscript section reference |
-| `X-Page` | peer review | Page number |
-
-List children via `grep -l "^X-Parent: {id}" tickets/*.ticket`. No reverse header — avoids a second source of truth. Same principle as `Blocked-by` (no `Blocks:` counterpart).
-
-Projects add `X-` headers freely. If an extension proves universally useful, promote it to standard (drop the `X-` prefix).
-
-**Structure** — three sections separated by marker lines:
-
-1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Aids manual resolution if header conflicts.
-3. **Body** (after `--- body ---`) — free-form markdown description.
-
-**Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
-
-### Naming convention
-
-Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is freely chosen — it relates to the ticket's purpose but is not derived mechanically from the title. The ID is the initials of the slug words. Collisions get a numeric suffix (`afg2`). The `.ticket` extension avoids triggering Markdown linters. Branches: `t/{id}-{slug}`.
-
-**Uniqueness enforcement** — two layers:
-
-1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append next available suffix. Best-effort — concurrent agents can race past this.
-2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject duplicates. Error reports next available suffix (e.g., `"duplicate Id 'wf' -- next available: wf3"`). No auto-fix — renaming an ID requires updating cross-references across files.
-
-### Examples
-
-**Development ticket:**
-
-```
-Id: afg
-Title: Add authentication flow
-Author: minh
-Status: open
-Created: 2026-03-21
-Coordination: local
-Assigned-to: agent-x
-Blocked-by: cm
-Blocked-by: fds
-X-Discovered-from: prt
-X-Phase: dreaming
-
---- log ---
-2026-03-21T10:00Z agent-x created
-2026-03-21T11:30Z agent-x status open
-2026-03-21T14:00Z agent-x phase dreaming
-2026-03-22T09:00Z agent-y blocked-by + cm
-2026-03-22T09:00Z agent-y blocked-by + fds
-
---- body ---
-Free-form description goes here.
-Markdown OK.
-```
-
-**Peer review comment (future extension):**
-
-```
-Id: cmcd
-Title: R1.3 -- Clarify methodology for COP funding data
-Author: reviewer-1
-Status: pending
-Created: 2026-03-21
-X-Review-round: R1
-X-Comment-number: 3
-X-Section: 3.2
-X-Page: 12
-
---- log ---
-2026-03-21T10:00Z reviewer-1 created
-2026-03-25T14:00Z minh status pending -> addressed
-
---- body ---
-The methodology for aggregating COP funding commitments is unclear.
-How are pledges vs disbursements distinguished? Table 3 seems to
-mix both without explanation.
-
---- response ---
-Added paragraph in 3.2 distinguishing pledges from disbursements.
-Table 3 now has separate columns. See commit abc1234.
-```
-
-### One-liner queries
-
-```bash
-# All open tickets
-grep -l "^Status: open" tickets/*.ticket
-
-# Tickets in doing phase
-grep -l "^X-Phase: doing" tickets/*.ticket
-
-# What blocks ticket afg?
-grep "^Blocked-by:" tickets/afg-*.ticket | cut -d' ' -f2
-
-# Tickets with no blockers
-grep -rL "^Blocked-by:" tickets/*.ticket
-
-# Count tickets by status
-grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
-
-# History of a ticket
-sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/afg-*.ticket
-```
-
-The only query needing Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — a graph traversal, not a text filter.
-
-### Forge compatibility
-
-The system is forge-optional, not forge-hostile:
-
-- **Big tickets** use the forge for coordination (`Coordination: gh#N`). The forge issue is real — assignee, comments, external visibility.
-- **Small tickets** are local-only. No forge noise.
-- **PRs still go through the forge.** Code review is unchanged.
-- **Forge CLI available but not required.** Agents without `gh` work on `local` tickets. Offline-first by default.
-- **Prefix convention:** `gh#N` (GitHub), `gl#N` (GitLab), `gt#N` (Gitea/Forgejo).
-
 ### Rejected alternatives
 
 **Subdirectory for closed tickets (`tickets/closed/`).** Moves break `Blocked-by` references — every grep would need two paths. Status is metadata (in the header), not location (in the filesystem). Git treats moves as delete+create, cluttering history. Filtering closed tickets is already a one-liner: `grep -L "^Status: closed" tickets/*.ticket`.
-
-### Cleanup
-
-Closed tickets stay in `tickets/` by default — they're small, greppable, and occasionally referenced by `Blocked-by`. But if the directory grows noisy, run an on-demand archive:
-
-```bash
-# Archive closed tickets older than 90 days
-make ticket-archive              # default: 90 days
-make ticket-archive DAYS=180     # custom threshold
-```
-
-The procedure:
-1. Collect candidates: tickets where `Status: closed` and last log entry is older than the threshold.
-2. Preserve the DAG: remove from candidates any ticket whose ID appears in a `Blocked-by`, `X-Discovered-from`, or `X-Supersedes` header of a non-archived ticket. These are still part of the live dependency graph.
-3. Move survivors to `tickets/archive/`. Git records the move — `git log --follow` still works.
-4. Commit the move in a single commit: `archive N closed tickets (>{DAYS} days, DAG-safe)`.
-
-**Recovery:** `git mv tickets/archive/foo.ticket tickets/` to restore any ticket.
-
-This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` feels too long.
-
-### Transition
-
-No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
-
-The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
-
-### CI/CD integration
-
-**Ticket validation in `make check`:** `validate-tickets` runs as part of `make check` and `make check-fast`. It verifies required headers, unique IDs, valid `Blocked-by` references, and filename/ID consistency. Errors block the build.
-
-**Pre-commit guard:** the pre-commit hook calls `validate-tickets` on staged `.ticket` files. Duplicate IDs and malformed headers are caught before they enter history.
-
-**Quarto exclusion:** add `tickets/` to `_quarto.yml`'s exclude list — ticket files are not manuscript content.
-
-**Shallow clones:** ticket files are regular tracked files. They survive `--depth 1` clones, which means CI runners and ephemeral containers see the full backlog without special configuration.
