@@ -322,9 +322,7 @@ func validateAll(tickets []Ticket, extraIDs map[string]bool) []string {
 			maxNum := 1
 			for otherID := range idToFiles {
 				if otherID == base {
-					if 1 > maxNum {
-						maxNum = 1
-					}
+					// base exists as an ID; maxNum already starts at 1
 				} else if strings.HasPrefix(otherID, base) {
 					suffix := otherID[len(base):]
 					if n, err := strconv.Atoi(suffix); err == nil && n > maxNum {
