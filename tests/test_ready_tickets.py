@@ -37,9 +37,11 @@ class TestReady:
                 """
             }
         )
-        ready, warnings = find_ready(d)
+        ready, warnings, total, open_count = find_ready(d)
         assert len(ready) == 1
         assert ready[0]["id"] == "afg"
+        assert total == 1
+        assert open_count == 1
 
     def test_open_blocked_by_closed_is_ready(self, ticket_dir):
         d = ticket_dir(
@@ -67,7 +69,7 @@ class TestReady:
                 """,
             }
         )
-        ready, _ = find_ready(d)
+        ready, _, _, _ = find_ready(d)
         assert len(ready) == 1
         assert ready[0]["id"] == "afg"
 
@@ -97,7 +99,7 @@ class TestReady:
                 """,
             }
         )
-        ready, _ = find_ready(d)
+        ready, _, _, _ = find_ready(d)
         assert len(ready) == 1  # only xyz is ready (no blockers)
         assert ready[0]["id"] == "xyz"
 
@@ -139,7 +141,7 @@ class TestReady:
                 """,
             }
         )
-        ready, _ = find_ready(d)
+        ready, _, _, _ = find_ready(d)
         ids = {r["id"] for r in ready}
         assert ids == {"c"}  # only c is ready
 
@@ -158,7 +160,7 @@ class TestReady:
                 """
             }
         )
-        ready, _ = find_ready(d)
+        ready, _, _, _ = find_ready(d)
         assert len(ready) == 0
 
     def test_missing_ref_warns(self, ticket_dir):
@@ -177,15 +179,55 @@ class TestReady:
                 """
             }
         )
-        ready, warnings = find_ready(d)
+        ready, warnings, _, _ = find_ready(d)
         assert len(ready) == 1  # treated as satisfied
         assert any("gone" in w for w in warnings)
+
+    def test_all_closed_counts(self, ticket_dir):
+        """When all tickets are closed, total > 0 and open_count == 0."""
+        d = ticket_dir(
+            **{
+                "afg-test.ticket": """\
+                    Id: afg
+                    Title: Test
+                    Author: a
+                    Status: closed
+                    Created: 2026-01-01
+
+                    --- log ---
+                    --- body ---
+                """,
+                "xyz-dep.ticket": """\
+                    Id: xyz
+                    Title: Dep
+                    Author: a
+                    Status: closed
+                    Created: 2026-01-01
+
+                    --- log ---
+                    --- body ---
+                """,
+            }
+        )
+        ready, _, total, open_count = find_ready(d)
+        assert len(ready) == 0
+        assert total == 2
+        assert open_count == 0
+
+    def test_empty_dir(self, ticket_dir):
+        """Empty directory returns zero counts."""
+        d = ticket_dir()  # no tickets
+        ready, _, total, open_count = find_ready(d)
+        assert len(ready) == 0
+        assert total == 0
+        assert open_count == 0
 
     def test_real_tickets(self):
         """Smoke test on real tickets — should not crash."""
         ticket_dir = Path(__file__).resolve().parent.parent / "tickets"
         if not ticket_dir.exists():
             pytest.skip("No tickets/")
-        ready, warnings = find_ready(ticket_dir)
-        # Just verify it runs without error
+        ready, warnings, total, open_count = find_ready(ticket_dir)
         assert isinstance(ready, list)
+        assert total >= 0
+        assert open_count >= 0

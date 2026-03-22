@@ -187,7 +187,7 @@ END {
             base = tid; sub(/[0-9]+$/, "", base)
             max_num = 1
             for (other in id_files) {
-                if (other == base) { if (1 > max_num) max_num = 1 }
+                if (other == base) { }
                 else if (index(other, base) == 1) {
                     suffix = substr(other, length(base) + 1)
                     if (suffix ~ /^[0-9]+$/ && suffix + 0 > max_num)

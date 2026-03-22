@@ -224,11 +224,16 @@ if [ "$execute" != true ]; then
 fi
 
 mkdir -p "$archive_dir"
-echo "$result" | grep "^ARCHIVABLE " | while read -r _ fname; do
-    git mv "${ticket_dir}/${fname}" "${archive_dir}/${fname}"
+# Avoid subshell: extract filenames first, then loop without pipe.
+archivable_files=$(echo "$result" | grep "^ARCHIVABLE " | awk '{print $2}')
+for fname in $archivable_files; do
+    git mv "${ticket_dir}/${fname}" "${archive_dir}/${fname}" || {
+        echo "error: git mv failed for ${fname}" >&2
+        exit 1
+    }
     echo "  moved ${fname}"
 done
 
 msg="archive ${count} closed tickets (>${days} days, DAG-safe)"
-git commit -m "$msg"
+git commit -m "$msg" || { echo "error: git commit failed" >&2; exit 1; }
 echo "Committed: ${msg}"
