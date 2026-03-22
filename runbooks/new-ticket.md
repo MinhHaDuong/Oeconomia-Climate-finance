@@ -25,6 +25,9 @@ What problem or need this addresses. Why now.
 
 ## Test
 - What test to write first (red step of TDD)
+- For prose tickets: the equivalent "red" step — e.g., a word count target,
+  a `grep` assertion on section content, or a `lint-prose` check that currently fails.
+  See `docs/writing-guidelines.md` for prose-specific test conventions.
 
 ## Verification
 - [ ] How to confirm each action worked
