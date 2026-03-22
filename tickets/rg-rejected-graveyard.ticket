@@ -1,7 +1,7 @@
 Id: rg
 Title: Extract landscape survey into Rejected Ideas section
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-21
 Coordination: local
 Blocked-by: wf
@@ -11,6 +11,7 @@ X-Phase: planning
 --- log ---
 2026-03-21T12:00Z claude created
 2026-03-21T12:00Z claude status open
+2026-03-22T11:00Z claude status closed — landscape survey + analysis extracted to Rejected Ideas
 
 --- body ---
 PEP/structure review: the Rationale section is primarily a survey of
