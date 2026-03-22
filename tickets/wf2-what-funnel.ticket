@@ -1,7 +1,7 @@
 Id: wf2
 Title: Consolidate "what" content into Specification
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-21
 Coordination: local
 Blocked-by: wf
@@ -11,6 +11,7 @@ X-Phase: planning
 --- log ---
 2026-03-21T12:00Z claude created
 2026-03-21T12:00Z claude status open
+2026-03-22T11:00Z claude status closed — Rationale reordered: philosophy → decisions → conclusion
 
 --- body ---
 PEP/structure review: "what we're building" appears in both
