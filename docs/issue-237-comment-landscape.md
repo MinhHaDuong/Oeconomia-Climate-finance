@@ -4,7 +4,8 @@ Author: minh, claude
 Status: draft
 Type: design
 Created: 2026-03-21
-Post-History: 2026-03-21 (landscape survey, design discussion, motivation correction)
+Post-History: 2026-03-21 (landscape survey, design discussion, motivation correction),
+              2026-03-22 (PEP restructure, tooling implementation, review round)
 
 # Local ticket system for agent workflows
 
@@ -65,14 +66,10 @@ These are real benefits, but they are not why we're doing this. We're doing this
 
 **Build custom skills wrapping plain text files with RFC 822 headers.**
 
-Steal the good ideas:
-- From Beads: `Blocked-by` header, `ready` command, memory compaction
-- From tk: dependency graph, `X-Discovered-from` / `X-Supersedes` headers
-
-Skip what doesn't fit:
-- Dolt DB layer, daemon processes, push-to-main workflow, sequential IDs
-
----
+From the landscape survey (see [Rejected Ideas](#rejected-ideas)):
+- Adopted from Beads: `Blocked-by` header, `ready` command
+- Adopted from tk: dependency graph, `X-Discovered-from` / `X-Supersedes` headers
+- Skipped: Dolt DB layer, daemon processes, push-to-main workflow, sequential IDs
 
 ## Specification
 
@@ -91,13 +88,12 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 | `Id` | yes | Initials of the semantic slug (e.g., `afg` from `auth-flow-gates`) |
 | `Title` | yes | Short description |
 | `Author` | yes | Creator |
-| `Status` | yes | Current state (open, doing, closed, ...) |
+| `Status` | yes | Current state: `open`, `doing`, `closed`, `pending` |
 | `Created` | yes | ISO date |
 | `Coordination` | no | `local` (default) or `forge#N` (e.g., `gh#42`, `gl#42`) |
 | `Assigned-to` | no | Agent or person owning the work |
 | `Blocked-by` | no | ID of blocking ticket (repeatable) |
-
-When `Coordination:` references a forge issue, add a `Forge-issue:` header with the full reference (e.g., `Forge-issue: gh#42`).
+| `Forge-issue` | no | Full forge reference when `Coordination` is `forge#N` (e.g., `gh#42`) |
 
 **X- extension headers:**
 
@@ -119,7 +115,7 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 **Structure** — three sections separated by marker lines:
 
 1. **Header** (RFC 822 key-value pairs) — current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — events, in chronological order. Format: `{ISO-timestamp} {agent-id} {event}`.
+2. **Log** (after `--- log ---`) — append-only events, in chronological order. Format: `{ISO-timestamp} {agent-id} {event}`. Aids manual resolution if headers conflict during merge.
 3. **Body** (after `--- body ---`) — free-form markdown description. Domain-specific workflows may add further named separators inside the body (e.g., `--- response ---` in peer review tickets). These are not parsed by core tools — only `--- log ---` and `--- body ---` are structural.
 
 **Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.

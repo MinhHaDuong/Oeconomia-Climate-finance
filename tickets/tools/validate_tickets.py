@@ -2,8 +2,8 @@
 """Validate .ticket files: required headers, unique IDs, valid references.
 
 Usage:
-    python scripts/validate_tickets.py [tickets/]
-    python scripts/validate_tickets.py tickets/foo.ticket tickets/bar.ticket
+    python tickets/tools/validate_tickets.py [tickets/]
+    python tickets/tools/validate_tickets.py tickets/foo.ticket tickets/bar.ticket
 
 Exit 0 on success, exit 1 with diagnostics on failure.
 """

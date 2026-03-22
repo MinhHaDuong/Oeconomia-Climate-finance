@@ -80,7 +80,10 @@ def main() -> int:
 
     i = 0
     while i < len(args):
-        if args[i] == "--days" and i + 1 < len(args):
+        if args[i].startswith("--days="):
+            days = int(args[i].split("=", 1)[1])
+            i += 1
+        elif args[i] == "--days" and i + 1 < len(args):
             days = int(args[i + 1])
             i += 2
         elif not args[i].startswith("--"):
