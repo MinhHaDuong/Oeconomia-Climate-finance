@@ -26,7 +26,6 @@ Usage:
 import argparse
 import os
 import re
-import time
 
 import pandas as pd
 import yaml
@@ -34,7 +33,7 @@ import yaml
 from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS,
                    get_logger, normalize_doi, save_csv,
                    pool_path, append_to_pool, load_pool_ids,
-                   load_pool_records)
+                   load_pool_records, retry_get)
 
 log = get_logger("catalog_semanticscholar")
 
@@ -73,30 +72,16 @@ def query_slug(term):
 
 
 def s2_get(url, params, delay=1.0, max_retries=5):
-    """GET with rate limiting and retry for Semantic Scholar API."""
-    import requests
-    headers = {"User-Agent": "ClimateFinancePipeline/1.0 (mailto:minh.haduong@cnrs.fr)"}
+    """GET with rate limiting and retry for Semantic Scholar API.
+
+    Thin wrapper around retry_get that adds the S2 API key header.
+    """
+    headers = {}
     api_key = os.environ.get("S2_API_KEY", "")
     if api_key:
         headers["x-api-key"] = api_key
-
-    for attempt in range(max_retries):
-        time.sleep(delay)
-        resp = requests.get(url, params=params, headers=headers, timeout=30)
-        if resp.status_code == 429:
-            wait = int(resp.headers.get("Retry-After", 3 * (attempt + 1)))
-            log.warning("  Rate limited. Waiting %ds...", wait)
-            time.sleep(wait)
-            continue
-        if resp.status_code >= 500:
-            wait = 3 * (attempt + 1)
-            log.warning("  Server error %d. Retrying in %ds...",
-                        resp.status_code, wait)
-            time.sleep(wait)
-            continue
-        resp.raise_for_status()
-        return resp
-    raise RuntimeError(f"Failed after {max_retries} retries: {url}")
+    return retry_get(url, params=params, headers=headers,
+                     delay=delay, max_retries=max_retries, timeout=30)
 
 
 def build_record(r):
