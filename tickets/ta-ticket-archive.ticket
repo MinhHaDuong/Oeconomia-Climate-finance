@@ -1,7 +1,7 @@
 Id: ta
 Title: Add DAG-safe ticket archive command
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-22
 Coordination: local
 Blocked-by: vt
@@ -11,6 +11,7 @@ X-Phase: planning
 --- log ---
 2026-03-22T10:00Z claude created
 2026-03-22T10:00Z claude status open
+2026-03-22T12:00Z claude status closed — archive_tickets.py in tickets/tools/, 6 tests, make ticket-archive wired
 
 --- body ---
 ## Context
