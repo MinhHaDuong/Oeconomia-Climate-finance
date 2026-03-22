@@ -358,7 +358,7 @@ figures-manuscript: check-manuscript-data $(MANUSCRIPT_FIGS)
 figures-datapaper:  check-corpus $(DATAPAPER_FIGS)
 figures-companion:  check-corpus $(COMPANION_FIGS)
 figures-techrep:    check-corpus $(TECHREP_FIGS)
-figures: check-corpus $(ALL_FIGS)
+figures: check-corpus $(ALL_FIGS) corpus-tables
 
 # ═══════════════════════════════════════════════════════════
 # PHASE 3 — Render (Quarto → PDF/DOCX)
