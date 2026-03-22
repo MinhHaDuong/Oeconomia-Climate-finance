@@ -53,7 +53,7 @@ These are real benefits, but they are not why we're doing this. We're doing this
 
 ### Design decisions
 
-- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
+- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. At < 200 tickets, collisions are rare; the numeric suffix handles them.
 - **Mutable header + append-only log** — the header is a greppable index. The log is append-only by convention; concurrent appends to the same ticket are rare at low agent counts and auto-merge correctly in most cases. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
 - **RFC 822 over YAML** — see [File format](#file-format) for the full rationale.
 - **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
@@ -96,7 +96,7 @@ Not YAML — YAML requires a parser, has quoting gotchas, and doesn't compose wi
 | `Coordination` | no | `local` (default) or forge-prefix + issue number (e.g., `gh#42`, `gl#42`, `gt#7`) |
 | `Assigned-to` | no | Agent or person owning the work |
 | `Blocked-by` | no | ID of blocking ticket (repeatable) |
-| `Forge-issue` | no | Full forge reference when `Coordination` is `forge#N` (e.g., `gh#42`) |
+| `Forge-issue` | no | Full forge reference when `Coordination` uses a forge prefix (e.g., `gh#42`) |
 
 Status values: `open` (available for work), `doing` (claimed, in progress), `closed` (completed or cancelled), `pending` (awaiting external input, e.g., peer review — excluded from `ready` output).
 
@@ -269,7 +269,7 @@ grep "^Status:" tickets/*.ticket | cut -d' ' -f2 | sort | uniq -c | sort -rn
 sed -n '/^--- log ---$/,/^--- body ---$/p' tickets/afg-*.ticket
 ```
 
-The only query needing Python is `ready` (open tickets where all `Blocked-by` refs point to closed tickets) — a graph traversal, not a text filter.
+Queries needing Python: `ready` (open tickets where all `Blocked-by` refs point to closed tickets — a graph traversal), `validate` (header checks, duplicate IDs, cycle detection), and `archive` (DAG-safe archival). Everything else is a one-liner.
 
 ### Forge compatibility
 
@@ -307,7 +307,7 @@ This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` f
 
 **Pre-commit guard:** the pre-commit hook calls `validate-tickets` on staged `.ticket` files. Duplicate IDs and malformed headers are caught before they enter history.
 
-**Quarto exclusion:** add `tickets/` to `_quarto.yml`'s exclude list — ticket files are not manuscript content.
+**Quarto exclusion:** `_quarto.yml` uses an explicit render list, so `.ticket` files are never rendered. No exclusion entry is needed.
 
 **Shallow clones:** ticket files are regular tracked files. They survive `--depth 1` clones, which means CI runners and ephemeral containers see the full backlog without special configuration.
 
@@ -315,7 +315,7 @@ This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` f
 
 No migration required. The two systems coexist permanently (see [Design philosophy](#design-philosophy)). Rollback is equally trivial: `tickets/` can be deleted or gitignored with no side effects on the rest of the repository.
 
-The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
+The agent workflow harness (described in `AGENTS.md`) defines runbooks for ticket lifecycle events: `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
 
 ## Security Considerations
 
@@ -396,13 +396,13 @@ We surveyed existing distributed issue trackers and evaluated them against our c
 
 **Why not tk?** tk is the closest match — single bash script, dependency graph, `tk ready`. We adopt its approach (adapt, not adopt): custom skills let us implement exactly the subset we need without inheriting tk's unknown future direction or bash portability concerns. The ideas travel; the dependency doesn't.
 
-#### Git-object (git-bug)
-
-**git-appraise** — shares the same worktree uncertainty as git-bug and adds no agent features. Rejected on the same grounds.
+#### Git-object (git-bug, git-appraise)
 
 **Pros:** clean working directory, excellent merge semantics (operation-based), forge bridges, JSON output, mature.
 
 **Cons:** worktree problem (`refs/bugs/` behavior with `git worktree` is undertested — risk of corruption), no agent features (`claim`, `ready`, dependency graph), GPLv3.
+
+**git-appraise** — shares the same worktree uncertainty and adds no agent features. Rejected on the same grounds.
 
 #### External DB (Beads)
 

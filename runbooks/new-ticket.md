@@ -59,4 +59,4 @@ If investigation of a ticket reveals multiple independent action items:
    ```bash
    gh issue create --title "..." --body "..." --parent <TRACKING_ISSUE_NUMBER>
    ```
-4. The tracking ticket closes only after integration review (see `runbooks/celebrate.md` step 10).
+4. The tracking ticket closes only after integration review (see `runbooks/celebrate.md` step 11).
