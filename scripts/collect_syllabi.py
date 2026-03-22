@@ -125,7 +125,61 @@ def make_chunks(text, chunk_size=8000, overlap=None):
 
 
 def llm_call(prompt, api_key, model="google/gemma-2-27b-it", max_tokens=2000):
-    """Call OpenRouter LLM. Returns response text or None on error."""
+    """Call LLM via local Ollama if available, else OpenRouter.
+
+    Ollama backend: set OLLAMA_MODEL env var (default: qwen3.5:27b).
+    OpenRouter backend: uses api_key and model params.
+    """
+    # OLLAMA_MODEL unset → auto-detect; set to "" → force OpenRouter; set to name → use that model
+    ollama_model = os.environ.get("OLLAMA_MODEL")
+    if ollama_model is not None:
+        if ollama_model:
+            return _llm_call_ollama(prompt, ollama_model, max_tokens)
+        # Explicit empty string: skip Ollama, use OpenRouter
+    elif _ollama_available():
+        return _llm_call_ollama(prompt, "qwen3.5:27b", max_tokens)
+    return _llm_call_openrouter(prompt, api_key, model, max_tokens)
+
+
+def _ollama_available():
+    """Check if Ollama server is reachable."""
+    try:
+        req = urllib.request.Request("http://localhost:11434/api/tags")
+        with urllib.request.urlopen(req, timeout=2):
+            return True
+    except Exception:
+        return False
+
+
+def _llm_call_ollama(prompt, model, max_tokens):
+    """Call local Ollama server (OpenAI-compatible API)."""
+    if "qwen" in model.lower():
+        prompt = "/no_think\n" + prompt
+    body = json.dumps({
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "temperature": 0,
+        "stream": False,
+    }).encode()
+
+    req = urllib.request.Request(
+        "http://localhost:11434/v1/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json"},
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read())
+        return result["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        log.error("Ollama error: %s", e)
+        return None
+
+
+def _llm_call_openrouter(prompt, api_key, model, max_tokens):
+    """Call OpenRouter API."""
     body = json.dumps({
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
@@ -446,8 +500,8 @@ TEXT (first 2000 chars):
 def stage_classify():
     """LLM classifies fetched pages as syllabi or not."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key.strip():
-        log.error("OPENROUTER_API_KEY not set.")
+    if not api_key.strip() and not _ollama_available():
+        log.error("Neither OLLAMA nor OPENROUTER_API_KEY available.")
         sys.exit(1)
 
     pages = load_jsonl(PAGES_PATH)
@@ -530,8 +584,8 @@ SYLLABUS TEXT:
 def stage_extract():
     """LLM extracts bibliographic references from confirmed syllabi."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key.strip():
-        log.error("OPENROUTER_API_KEY not set.")
+    if not api_key.strip() and not _ollama_available():
+        log.error("Neither OLLAMA nor OPENROUTER_API_KEY available.")
         sys.exit(1)
 
     classified = load_jsonl(CLASSIFIED_PATH)

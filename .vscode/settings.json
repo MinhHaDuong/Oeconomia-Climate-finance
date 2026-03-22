@@ -1,4 +1,5 @@
 {
+    "python.terminal.activateEnvironment": false,
     "makefile.configureOnOpen": false,
     "claudeCode.initialPermissionMode": "bypassPermissions",
     "claudeCode.allowDangerouslySkipPermissions": true,
