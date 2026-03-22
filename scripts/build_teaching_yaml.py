@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
-"""Build teaching_sources.yaml from two independent collection efforts.
+"""Build teaching_sources.yaml from scraped reading lists.
 
 Reads:
   data/syllabi/reading_lists.csv    — automated web scraping (collect_syllabi.py)
-  data/syllabi/manual_catalog.yaml  — manually cataloged from syllabi PDFs
 
 Writes:
   data/teaching_sources.yaml
 
-The two sources are kept separate upstream (different collection methods,
-different provenance). This script merges them at the output stage, applies
-selection filters, and writes the unified YAML that build_teaching_canon.py
-expects.
-
-Selection criteria for scraped readings (reading_lists.csv):
+Selection criteria:
   - has DOI AND n_courses >= 2, OR
   - no DOI AND n_courses >= 3
-Manual catalog readings pass through unfiltered (already curated).
-
-Deduplication: readings appearing in both sources are kept once (DOI match).
 
 Usage:
     python scripts/build_teaching_yaml.py
@@ -37,7 +28,6 @@ from utils import DATA_DIR, get_logger
 log = get_logger("build_teaching_yaml")
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
-INPUT_MANUAL = os.path.join(DATA_DIR, "syllabi", "manual_catalog.yaml")
 OUTPUT_YAML = os.path.join(DATA_DIR, "teaching_sources.yaml")
 
 MIN_COURSES = 2  # DOI entries: keep if appearing on >=2 syllabi
@@ -205,34 +195,7 @@ def load_scraped(csv_path):
     return records
 
 
-# --- Source 2: manual catalog ---
-
-def load_manual(yaml_path):
-    """Load manually cataloged readings (already structured as YAML).
-
-    Returns list of record dicts in the same format as load_scraped.
-    """
-    with open(yaml_path, encoding="utf-8") as f:
-        sources = yaml.safe_load(f)
-
-    records = []
-    for src in sources:
-        for r in src.get("readings", []):
-            records.append({
-                "institution": src["institution"],
-                "course": src["course"],
-                "doi": _clean(r.get("doi", "")),
-                "title": _clean(r.get("title", "")),
-                "authors": _clean(r.get("authors", "")),
-                "year": str(r["year"]) if r.get("year") else "",
-                "countries": "",
-                "origin": "manual",
-            })
-
-    return records
-
-
-# --- Merge and output ---
+# --- Build output ---
 
 def build_yaml_structure(records):
     """Group records by (institution, course) and build YAML-ready structure."""
@@ -291,42 +254,15 @@ def build_yaml_structure(records):
 
 
 def main():
-    # Source 1: scraped
-    scraped_records = []
     if os.path.exists(INPUT_CSV):
-        log.info("Source 1 (scraped): %s", INPUT_CSV)
-        scraped_records = load_scraped(INPUT_CSV)
-        log.info("  %d (reading, course) pairs", len(scraped_records))
+        log.info("Reading scraped data: %s", INPUT_CSV)
+        records = load_scraped(INPUT_CSV)
+        log.info("  %d (reading, course) pairs", len(records))
     else:
-        log.info("Source 1 (scraped): not found, skipping")
+        log.info("No reading_lists.csv found at %s", INPUT_CSV)
+        records = []
 
-    # Source 2: manual catalog
-    manual_records = []
-    if os.path.exists(INPUT_MANUAL):
-        log.info("Source 2 (manual):  %s", INPUT_MANUAL)
-        manual_records = load_manual(INPUT_MANUAL)
-        log.info("  %d (reading, course) pairs", len(manual_records))
-    else:
-        log.info("Source 2 (manual):  not found, skipping")
-
-    # Merge: manual records first, then scraped (dedup by DOI at output)
-    all_records = manual_records + scraped_records
-
-    # Deduplicate across sources: if a DOI appears in both manual and scraped,
-    # the manual version wins (it has richer metadata).
-    manual_dois = {r["doi"].lower() for r in manual_records if r["doi"]}
-    deduped_records = []
-    scraped_skipped = 0
-    for r in all_records:
-        if r["origin"] == "scraped" and r["doi"] and r["doi"].lower() in manual_dois:
-            scraped_skipped += 1
-            continue
-        deduped_records.append(r)
-
-    if scraped_skipped:
-        log.info("  Dedup: %d scraped readings already in manual catalog", scraped_skipped)
-
-    sources = build_yaml_structure(deduped_records)
+    sources = build_yaml_structure(records)
     total_readings = sum(len(s["readings"]) for s in sources)
     unique_dois = set()
     for s in sources:

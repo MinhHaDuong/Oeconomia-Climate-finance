@@ -36,6 +36,10 @@ from utils import (BASE_DIR, DATA_DIR, MAILTO, get_logger, normalize_title,
 
 log = get_logger("collect_syllabi")
 
+# --- Constants ---
+TEXT_LIMIT = 50000  # Max chars from PDF text extraction (was 20KB, increased for completeness)
+CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
+
 # --- Paths ---
 SYLLABI_DIR = os.path.join(DATA_DIR, "syllabi")
 PDF_DIR = os.path.join(SYLLABI_DIR, "pdfs")
@@ -68,6 +72,51 @@ def append_jsonl(records, path):
     with open(path, "a", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def extract_pdf_text(pdf_path, page_cap=50):
+    """Extract text from a PDF, combining body text and table content.
+
+    Uses pdfplumber to get both extract_text() and extract_tables(),
+    merging table cells into the output so tabular reading lists aren't lost.
+    """
+    import pdfplumber
+
+    text_parts = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages[:page_cap]:
+            # Body text
+            t = page.extract_text()
+            if t:
+                text_parts.append(t)
+            # Table content — cells that may not appear in extract_text()
+            tables = page.extract_tables()
+            for table in (tables or []):
+                for row in table:
+                    cells = [str(c).strip() for c in row if c and str(c).strip()]
+                    if cells:
+                        text_parts.append(" | ".join(cells))
+    return "\n\n".join(text_parts)[:TEXT_LIMIT]
+
+
+def make_chunks(text, chunk_size=8000, overlap=None):
+    """Split text into overlapping chunks for LLM extraction.
+
+    Overlap prevents references from being split across chunk boundaries.
+    """
+    if overlap is None:
+        overlap = CHUNK_OVERLAP
+    if overlap >= chunk_size:
+        raise ValueError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start = end - overlap  # Step back by overlap amount
+        if start + overlap >= len(text):
+            break  # Last chunk captured everything
+    return chunks
 
 
 def llm_call(prompt, api_key, model="google/gemma-2-27b-it", max_tokens=2000):
@@ -275,14 +324,7 @@ def stage_fetch():
                     f.write(resp.content)
 
                 try:
-                    import pdfplumber
-                    text_parts = []
-                    with pdfplumber.open(pdf_path) as pdf:
-                        for page in pdf.pages[:50]:  # Cap at 50 pages
-                            t = page.extract_text()
-                            if t:
-                                text_parts.append(t)
-                    page_rec["text"] = "\n\n".join(text_parts)[:20000]
+                    page_rec["text"] = extract_pdf_text(pdf_path)
                     page_rec["content_type"] = "application/pdf"
                 except Exception as e:
                     page_rec["error"] = f"PDF parse error: {e}"
@@ -295,7 +337,7 @@ def stage_fetch():
                 for tag in soup(["script", "style", "nav", "footer", "header"]):
                     tag.decompose()
                 text = soup.get_text(separator="\n", strip=True)
-                page_rec["text"] = text[:20000]
+                page_rec["text"] = text[:TEXT_LIMIT]
                 page_rec["content_type"] = "text/html"
 
         except Exception as e:
@@ -330,8 +372,8 @@ TEXT (first 2000 chars):
 def stage_classify():
     """LLM classifies fetched pages as syllabi or not."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key:
-        log.error("OPENROUTER_API_KEY not set. Export it or add to ~/.bashrc")
+    if not api_key.strip():
+        log.error("OPENROUTER_API_KEY not set.")
         sys.exit(1)
 
     pages = load_jsonl(PAGES_PATH)
@@ -414,7 +456,7 @@ SYLLABUS TEXT:
 def stage_extract():
     """LLM extracts bibliographic references from confirmed syllabi."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key:
+    if not api_key.strip():
         log.error("OPENROUTER_API_KEY not set.")
         sys.exit(1)
 
@@ -445,12 +487,11 @@ def stage_extract():
         log.info("[%d/%d] %s (%s)", i + 1, len(pending),
                  syllabus['course_name'], syllabus['institution'])
 
-        # For long texts, chunk and extract from each chunk
-        chunk_size = 8000
+        # For long texts, chunk with overlap to avoid splitting references
         all_refs = []
+        chunks = make_chunks(text, chunk_size=8000)
 
-        for chunk_start in range(0, len(text), chunk_size):
-            chunk = text[chunk_start:chunk_start + chunk_size]
+        for chunk in chunks:
             prompt = EXTRACT_PROMPT.format(text=chunk)
             response = llm_call(prompt, api_key, max_tokens=4000)
 

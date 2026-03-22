@@ -3,16 +3,14 @@
 
 Reads:
   data/syllabi/reading_lists.csv     — scraped syllabi
-  data/syllabi/manual_catalog.yaml   — manually cataloged syllabi
   data/catalogs/unified_works.csv    — corpus
 
 Writes:
   content/tables/tab_teaching_canon.csv
 
 Lists works from the corpus that appear on syllabi at 3+ distinct
-institutions, combining both collection sources. This documents the
-absence of a clear teaching canon: only a handful of works converge
-across institutions.
+institutions. This documents the absence of a clear teaching canon:
+only a handful of works converge across institutions.
 
 Usage:
     python scripts/analyze_teaching_canon.py
@@ -22,14 +20,12 @@ import os
 from collections import defaultdict
 
 import pandas as pd
-import yaml
 
 from utils import BASE_DIR, DATA_DIR, get_logger
 
 log = get_logger("analyze_teaching_canon")
 
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
-INPUT_MANUAL = os.path.join(DATA_DIR, "syllabi", "manual_catalog.yaml")
 DEFAULT_UNIFIED = os.path.join(DATA_DIR, "catalogs", "unified_works.csv")
 OUTPUT_TABLE = os.path.join(BASE_DIR, "content", "tables", "tab_teaching_canon.csv")
 
@@ -52,25 +48,9 @@ def _norm_inst(name):
 
 
 def collect_institutions():
-    """Count distinct institutions per work across both sources."""
+    """Count distinct institutions per work from scraped reading lists."""
     work_insts = defaultdict(set)  # dedup_key → set of institution names
 
-    # Source 1: manual catalog
-    if os.path.exists(INPUT_MANUAL):
-        with open(INPUT_MANUAL, encoding="utf-8") as f:
-            sources = yaml.safe_load(f)
-        for src in sources:
-            inst = _norm_inst(src["institution"])
-            if not inst:
-                continue
-            for r in src.get("readings", []):
-                doi = (r.get("doi") or "").lower().strip()
-                title = (r.get("title") or "").lower().strip()
-                key = doi if doi else title
-                if key:
-                    work_insts[key].add(inst)
-
-    # Source 2: scraped CSV
     if os.path.exists(INPUT_CSV):
         df = pd.read_csv(INPUT_CSV)
         for _, row in df.iterrows():

@@ -45,6 +45,9 @@ corpus = [
     "bibtexparser",
     "rapidfuzz",
 ]
+dev = [
+    "fpdf2>=2.8.7",
+]
 
 [tool.pytest.ini_options]
 markers = [
