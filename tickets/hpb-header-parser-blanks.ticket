@@ -1,7 +1,7 @@
 Id: hpb
 Title: Fix parser: blank line should end header section
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-22
 Coordination: local
 Blocked-by: vt
@@ -11,6 +11,7 @@ X-Phase: planning
 --- log ---
 2026-03-22T14:00Z claude created
 2026-03-22T14:00Z claude status open
+2026-03-22T16:00Z claude status closed — parser changed to match spec, gap state added
 
 --- body ---
 ## Context
