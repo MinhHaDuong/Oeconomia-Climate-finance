@@ -42,6 +42,16 @@ These are real benefits, but they are not why we're doing this. We're doing this
 
 ## Rationale
 
+### Design constraints
+
+The ticket system is agnostic to:
+
+- **Operating system.** Plain text + Python stdlib. No platform-specific APIs or paths.
+- **Programming language.** Tickets describe work — the project's language is irrelevant. The reference tools are Python; reimplementation in any language is straightforward.
+- **Forge.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all. Forge CLIs are optional, never required.
+- **Project size and kind.** Research papers, web apps, monorepos, single-file scripts. The format imposes no project structure beyond a `tickets/` directory.
+- **Build system.** The spec defines CLI commands (`python tickets/tools/validate_tickets.py`). Whether a project wraps these in Make, Just, Taskfile, npm scripts, or bare shell aliases is a local implementation detail — not part of the spec.
+
 ### Design philosophy
 
 1. **Two independent systems.** Local tickets and forge issues are separate. They can link via `Coordination: forge#N` but share no ID space and no sync layer.
@@ -49,15 +59,15 @@ These are real benefits, but they are not why we're doing this. We're doing this
 3. **Promote is rare.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception.
 4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
 5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
-6. **Forge-agnostic.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all.
+6. **Forge-agnostic.** (See Design constraints above.)
 
 ### Design decisions
 
 - **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. At < 200 tickets, collisions are rare; the numeric suffix handles them.
 - **Mutable header + append-only log** — the header is a greppable index. The log is append-only by convention; concurrent appends to the same ticket are rare at low agent counts and auto-merge correctly in most cases. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
 - **RFC 822 over YAML** — see [File format](#file-format) for the full rationale.
-- **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
-- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds. If the ticket count outgrows this, the first lever is archival (`make ticket-archive`); the second is indexing or switching to a database-backed tool.
+- **Reference implementation in Python** — Python stdlib only, no external deps. Skills are shell commands wrapping the scripts, so the implementation language swaps transparently. At < 200 tickets, Python is fast enough. A Rust/Go rewrite changes nothing about the format or protocol.
+- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds. If the ticket count outgrows this, the first lever is archival (see [Cleanup](#cleanup)); the second is indexing or switching to a database-backed tool.
 - **Two-tier contention:**
   - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
   - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
@@ -292,10 +302,17 @@ The system is forge-optional, not forge-hostile:
 Closed tickets stay in `tickets/` by default — they're small, greppable, and occasionally referenced by `Blocked-by`. But if the directory grows noisy, run an on-demand archive:
 
 ```bash
-# Archive closed tickets older than 90 days
-make ticket-archive              # default: 90 days
-make ticket-archive DAYS=180     # custom threshold
+# Archive closed tickets older than 90 days (dry run)
+python tickets/tools/archive_tickets.py tickets/ --days 90
+
+# Execute the archive
+python tickets/tools/archive_tickets.py tickets/ --days 90 --execute
+
+# Custom threshold
+python tickets/tools/archive_tickets.py tickets/ --days 180 --execute
 ```
+
+Projects typically wrap these in their build system (Make, Just, npm, etc.) for convenience.
 
 The procedure:
 1. Collect candidates: tickets where `Status: closed` and last log entry is older than the threshold.
@@ -309,11 +326,11 @@ This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` f
 
 ### CI/CD integration
 
-**Ticket validation in `make check`:** `validate-tickets` runs as part of `make check` and `make check-fast`. It verifies required headers, unique IDs, valid `Blocked-by` references, and filename/ID consistency. Errors block the build.
+**Ticket validation in CI:** wire `python tickets/tools/validate_tickets.py tickets/` into whatever check target your build system provides. It verifies required headers, unique IDs, valid `Blocked-by` references, and filename/ID consistency. Non-zero exit blocks the build.
 
-**Pre-commit guard:** the pre-commit hook calls `validate-tickets` on staged `.ticket` files. Duplicate IDs and malformed headers are caught before they enter history.
+**Pre-commit guard:** the pre-commit hook calls `validate_tickets.py` on staged `.ticket` files. Duplicate IDs and malformed headers are caught before they enter history.
 
-**Quarto exclusion:** `_quarto.yml` uses an explicit render list, so `.ticket` files are never rendered. No exclusion entry is needed.
+**Build system exclusion:** `.ticket` files are not source code or manuscript content. Exclude `tickets/` from doc generators, bundlers, or linters that scan by extension. (Projects using Quarto's explicit render list need no exclusion.)
 
 **Shallow clones:** ticket files are regular tracked files. They survive `--depth 1` clones, which means CI runners and ephemeral containers see the full backlog without special configuration.
 
@@ -333,20 +350,20 @@ The `Assigned-to` header is informational — it does not grant permissions. Aut
 
 **Identity is advisory, not authenticated.** The `Author` header and log-line attribution (e.g., `agent-x status doing`) are free-form strings. Nothing prevents one agent from writing `Author: agent-y`. For accountability, rely on `git log` attribution (signed commits, SSH keys) rather than in-file identity fields. At the current trust level (single author, trusted agents), this is a non-issue.
 
-**Archive on the right branch is the operator's responsibility.** `make ticket-archive EXECUTE=1` commits on whatever branch is checked out. The spec says "the author runs it" — this is a human-facing operation, not an automated one. Running it from a feature worktree would place the archive commit on the wrong branch. The tool does not enforce a branch guard; the operator must be on `main`.
+**Archive on the right branch is the operator's responsibility.** `archive_tickets.py --execute` commits on whatever branch is checked out. The spec says "the author runs it" — this is a human-facing operation, not an automated one. Running it from a feature worktree would place the archive commit on the wrong branch. The tool does not enforce a branch guard; the operator must be on `main`.
 
 ## Reference Implementation
 
 The implementation lives in the project's harness layer:
 
 - **Runbooks** (`runbooks/new-ticket.md`, `runbooks/start-ticket.md`): agent instructions for creating and working tickets.
-- **Validation** (`tickets/tools/validate_tickets.py`): header checks, ID uniqueness, `Blocked-by` reference integrity. Wired into `make check` and the pre-commit hook.
+- **Validation** (`tickets/tools/validate_tickets.py`): header checks, ID uniqueness, `Blocked-by` reference integrity. Wire into your CI check target and the pre-commit hook.
 - **Ready query** (`tickets/tools/ready_tickets.py`): graph traversal to find unblocked open tickets.
 - **Archive** (`tickets/tools/archive_tickets.py`): DAG-safe archival of old closed tickets.
 
-Tools live in `tickets/tools/` so the core ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python (no external dependencies beyond stdlib). Skills are shell commands, so the implementation swaps transparently.
+Tools live in `tickets/tools/` so the core ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python (no external dependencies beyond stdlib). Skills are shell commands, so the implementation language swaps transparently.
 
-**Adopting in another repo:** copy `tickets/tools/` and add three integration points: (1) Makefile or task runner targets wrapping each script, (2) pre-commit hook calling `validate_tickets.py` on staged `.ticket` files, (3) agent instructions referencing the ticket lifecycle. The Python tools are self-contained; the integration is project-specific.
+**Adopting in another repo:** copy `tickets/tools/` and add three integration points: (1) task runner targets wrapping each script (Make, Just, npm, etc. — your choice), (2) pre-commit hook calling `validate_tickets.py` on staged `.ticket` files, (3) agent instructions referencing the ticket lifecycle. The Python tools are self-contained; the integration layer is project-specific.
 
 ## Rejected Ideas
 
