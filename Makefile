@@ -601,16 +601,16 @@ archive-datapaper: check-corpus
 	@echo "Done: $(DPAPER_ARCHIVE).tar.gz"
 
 # ── Ticket tooling ───────────────────────────────────────
-# Three implementations (choose via TICKET_TOOL):
-#   python   — reference implementation, clearest to read (default)
-#   go       — compiled binary, ~50x faster (needs: cd tickets/tools/go && go build)
-#   sh       — POSIX sh+awk, zero-install, Alpine/container-friendly
-TICKET_TOOL ?= python
+# Three implementations: go (fast), sh (portable), python (reference).
+# Auto-detect: go binary → POSIX sh+awk → Python via uv.
+# Override: make validate-tickets TICKET_TOOL=python
+_GO_BIN := tickets/tools/go/ticket-tools
+TICKET_TOOL ?= $(if $(wildcard $(_GO_BIN)),go,$(if $(shell command -v awk 2>/dev/null),sh,python))
 
 ifeq ($(TICKET_TOOL),go)
-  _TV := @tickets/tools/go/ticket-tools validate tickets/
-  _TR := @tickets/tools/go/ticket-tools ready tickets/
-  _TA := @tickets/tools/go/ticket-tools archive tickets/ --days=$(or $(DAYS),90) $(if $(EXECUTE),--execute)
+  _TV := @$(_GO_BIN) validate tickets/
+  _TR := @$(_GO_BIN) ready tickets/
+  _TA := @$(_GO_BIN) archive tickets/ --days=$(or $(DAYS),90) $(if $(EXECUTE),--execute)
 else ifeq ($(TICKET_TOOL),sh)
   _TV := @sh tickets/tools/bash-fast/validate_tickets.sh tickets/
   _TR := @sh tickets/tools/bash-fast/ready_tickets.sh tickets/
