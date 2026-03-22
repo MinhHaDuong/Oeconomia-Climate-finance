@@ -209,7 +209,7 @@ The corpus and embeddings are designed to support multiple research directions b
 
 All scripts for corpus construction, refinement, and embedding generation are available in the project repository at [URL to be added upon acceptance]. The pipeline is organised into three phases:
 
-- **Phase 1 (corpus building)**: `catalog_openalex.py`, `catalog_istex.py`, `catalog_grey.py`, `build_teaching_canon.py`, `catalog_merge.py`, `corpus_refine.py`, `enrich_embeddings.py` --- discovery, merge, enrichment, and quality filtering
+- **Phase 1 (corpus building)**: `catalog_openalex.py`, `catalog_semanticscholar.py`, `catalog_istex.py`, `catalog_grey.py`, `build_teaching_canon.py`, `catalog_merge.py`, `corpus_refine.py`, `enrich_embeddings.py` --- discovery, merge, enrichment, and quality filtering
 - **Phase 2 (analysis)**: `analyze_embeddings.py` and downstream scripts --- UMAP projection, clustering, and derived analyses
 - **Phase 3 (rendering)**: Quarto documents producing PDF and DOCX outputs
 

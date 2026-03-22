@@ -76,7 +76,7 @@ in policy studies.
 - Economists produced governability through ambiguity
 
 ### 7. Method note (1-2 slides, 2 min)
-- Brief: ~30,000 works, 6 sources, multilingual embeddings
+- Brief: ~30,000 works, 7 sources, multilingual embeddings
 - Endogenous periodization corroborates historical narrative
 - Reflexive note: our method is itself an act of commensuration
 
