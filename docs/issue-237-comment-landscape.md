@@ -39,15 +39,6 @@ Once the primary constraint forces us to a local ticket system, several bonuses 
 
 These are real benefits, but they are not why we're doing this. We're doing this because the agent can't reach the forge.
 
-## Design philosophy
-
-1. **Two independent systems.** Local tickets and forge issues are separate. They can link via `Coordination: forge#N` but share no ID space and no sync layer.
-2. **Natural attrition.** Existing forge issues close as their work completes. New small tickets are born local. The mix shifts organically.
-3. **Promote is rare.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception.
-4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
-5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
-6. **Forge-agnostic.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all.
-
 ## Rationale
 
 ### Landscape survey
@@ -138,6 +129,26 @@ Steal the good ideas:
 Skip what doesn't fit:
 - Dolt DB layer, daemon processes, push-to-main workflow, sequential IDs
 
+### Design philosophy
+
+1. **Two independent systems.** Local tickets and forge issues are separate. They can link via `Coordination: forge#N` but share no ID space and no sync layer.
+2. **Natural attrition.** Existing forge issues close as their work completes. New small tickets are born local. The mix shifts organically.
+3. **Promote is rare.** A local ticket can be upgraded to a forge issue if it turns out bigger than expected. This is the exception.
+4. **Rollback is trivial.** Stop creating local tickets. The forge never stopped working. Nothing to undo.
+5. **Cohabitation is permanent.** Some tickets will always be forge-hosted (cross-repo, external contributors). Both are first-class indefinitely.
+6. **Forge-agnostic.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all.
+
+### Design decisions
+
+- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
+- **Mutable header + append-only log** — the header is a greppable index. The log is append-only audit history. If the header conflicts during merge, resolve manually — the log helps you understand what happened. At < 5 agents, header conflicts are rare and fast to resolve.
+- **RFC 822 over YAML** — `Key: value` lines work with `grep` and `cut`. YAML needs a library.
+- **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
+- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
+- **Two-tier contention:**
+  - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
+  - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
+
 ---
 
 ## Specification
@@ -185,7 +196,7 @@ Projects add `X-` headers freely. If an extension proves universally useful, pro
 **Structure** — three sections separated by marker lines:
 
 1. **Header** (RFC 822 key-value pairs) — mutable, greppable current state. Ends at first blank line.
-2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Source of truth if header conflicts.
+2. **Log** (after `--- log ---`) — append-only events. Format: `{ISO-timestamp} {agent-id} {event}`. Aids manual resolution if header conflicts.
 3. **Body** (after `--- body ---`) — free-form markdown description.
 
 **Separator collision:** the parser uses only the *first* occurrence of each separator, scanning top-down. Body is always last, so duplicates inside it are harmless.
@@ -198,17 +209,6 @@ Files: `{id}-{slug}.ticket` (e.g., `afg-auth-flow-gates.ticket`). The slug is fr
 
 1. **At creation time** (`new-ticket` skill): check `ls tickets/{id}-*.ticket` before writing. If the ID exists, append next available suffix. Best-effort — concurrent agents can race past this.
 2. **At commit time** (pre-commit validator): extract `Id:` from all ticket files, reject duplicates. Error reports next available suffix (e.g., `"duplicate Id 'wf' -- next available: wf3"`). No auto-fix — renaming an ID requires updating cross-references across files.
-
-### Design decisions
-
-- **Semantic slug IDs** — the ID is the initials of a freely chosen slug. No counter file, no hash, no ceremony. Collisions are rare at project scale; the numeric suffix handles them.
-- **Mutable header + append-only log** — the header is a greppable index. The log is append-only history, merge-friendly at low concurrency (< 5 agents). If the header conflicts, replay the log to reconstruct it.
-- **RFC 822 over YAML** — `Key: value` lines work with `grep` and `cut`. YAML needs a library.
-- **Python first, Rust someday** — Python scripts (already in the project). Skills are shell commands, so the implementation swaps transparently. At < 200 tickets, Python is fast enough.
-- **Rebuild, don't cache** — `ready` and `validate` scan all files on every call. No index, no cache. Git operations change files under you across worktrees. At < 200 tickets, full scan is milliseconds.
-- **Two-tier contention:**
-  - **`Coordination: local`** (default) — no protocol. Any agent can start. Duplicated work is cheap.
-  - **`Coordination: forge#N`** — forge assignee is the single owner. Reserved for big tickets. Offline agents skip `forge#N` tickets entirely.
 
 ### Examples
 
@@ -329,3 +329,13 @@ This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` f
 No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
 
 The harness already has runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
+
+### CI/CD integration
+
+**Ticket validation in `make check`:** `validate-tickets` runs as part of `make check` and `make check-fast`. It verifies required headers, unique IDs, valid `Blocked-by` references, and filename/ID consistency. Errors block the build.
+
+**Pre-commit guard:** the pre-commit hook calls `validate-tickets` on staged `.ticket` files. Duplicate IDs and malformed headers are caught before they enter history.
+
+**Quarto exclusion:** add `tickets/` to `_quarto.yml`'s exclude list — ticket files are not manuscript content.
+
+**Shallow clones:** ticket files are regular tracked files. They survive `--depth 1` clones, which means CI runners and ephemeral containers see the full backlog without special configuration.
