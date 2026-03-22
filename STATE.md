@@ -44,7 +44,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - Project-wide include deps on render targets (Quarto resolves includes across all `_quarto.yml` files); surgical figure deps per document
 - No data files, no API calls, no Phase 1 caches required during render
 - Manuscript deps: .qmd + manuscript-vars.yml + 2 figures + all project includes + bibliography
-- All Phase 2 generated tables (including .md) in gitignored `content/tables/`; `content/_includes/` is hand-written only
+- All Phase 2 generated tables (including .md) in gitignored `content/tables/`; manuscripts include them via `{{< include >}}`
 
 ## Blockers
 
@@ -59,6 +59,7 @@ None.
 - #268/#265: Parallelize syllabi fetch stage (100 workers, per-host 1 req/s rate limiting, ~10-15x speedup)
 - #259: Teaching scraper: improved PDF parsing (table extraction, 50KB limit, chunk overlap), removed manual catalog — scraper is now sole source
 - #260: ISTEX rebuild
+- #273: Corpus source table generated, not hardcoded (fixes stale ISTEX=4)
 - #241: housekeeping STATE refresh
 - #245: overnight log 2026-03-20
 - #242: overnight exploration runbook
