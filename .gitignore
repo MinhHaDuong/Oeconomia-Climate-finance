@@ -59,3 +59,4 @@ output/
 
 /.quarto/
 _variables.yml
+/tickets/tools/rust/ticket-tools/target/
