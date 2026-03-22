@@ -601,14 +601,34 @@ archive-datapaper: check-corpus
 	@echo "Done: $(DPAPER_ARCHIVE).tar.gz"
 
 # ── Ticket tooling ───────────────────────────────────────
+# Three implementations (choose via TICKET_TOOL):
+#   python   — reference implementation, clearest to read (default)
+#   go       — compiled binary, ~50x faster (needs: cd tickets/tools/go && go build)
+#   sh       — POSIX sh+awk, zero-install, Alpine/container-friendly
+TICKET_TOOL ?= python
+
+ifeq ($(TICKET_TOOL),go)
+  _TV := @tickets/tools/go/ticket-tools validate tickets/
+  _TR := @tickets/tools/go/ticket-tools ready tickets/
+  _TA := @tickets/tools/go/ticket-tools archive tickets/ --days=$(or $(DAYS),90) $(if $(EXECUTE),--execute)
+else ifeq ($(TICKET_TOOL),sh)
+  _TV := @sh tickets/tools/bash-fast/validate_tickets.sh tickets/
+  _TR := @sh tickets/tools/bash-fast/ready_tickets.sh tickets/
+  _TA := @sh tickets/tools/bash-fast/archive_tickets.sh tickets/ --days $(or $(DAYS),90) $(if $(EXECUTE),--execute)
+else
+  _TV := @uv run python tickets/tools/validate_tickets.py tickets/
+  _TR := @uv run python tickets/tools/ready_tickets.py tickets/
+  _TA := @uv run python tickets/tools/archive_tickets.py tickets/ --days=$(or $(DAYS),90) $(if $(EXECUTE),--execute)
+endif
+
 validate-tickets:
-	@uv run python tickets/tools/validate_tickets.py tickets/
+	$(_TV)
 
 ticket-ready:
-	@uv run python tickets/tools/ready_tickets.py tickets/
+	$(_TR)
 
 ticket-archive:
-	@uv run python tickets/tools/archive_tickets.py tickets/ --days=$(or $(DAYS),90) $(if $(EXECUTE),--execute)
+	$(_TA)
 
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose validate-tickets
