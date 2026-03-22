@@ -361,7 +361,7 @@ The implementation lives in the project's harness layer:
 - **Ready query** (`tickets/tools/ready_tickets.py`): graph traversal to find unblocked open tickets.
 - **Archive** (`tickets/tools/archive_tickets.py`): DAG-safe archival of old closed tickets.
 
-Tools live in `tickets/tools/` so the core ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python (no external dependencies beyond stdlib). Skills are shell commands, so the implementation language swaps transparently.
+Tools live in `tickets/tools/` so the core ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python stdlib only — no external libraries, no `pip install`. The total is ~525 lines across four files (`ticket_parser.py`, `validate_tickets.py`, `ready_tickets.py`, `archive_tickets.py`) using only `pathlib`, `re`, `json`, `datetime`, and `subprocess`. Any language with file I/O and regex can reimplement the full set. Skills are shell commands, so the implementation language swaps transparently.
 
 **Adopting in another repo:** copy `tickets/tools/` and add three integration points: (1) task runner targets wrapping each script (Make, Just, npm, etc. — your choice), (2) pre-commit hook calling `validate_tickets.py` on staged `.ticket` files, (3) agent instructions referencing the ticket lifecycle. The Python tools are self-contained; the integration layer is project-specific.
 
