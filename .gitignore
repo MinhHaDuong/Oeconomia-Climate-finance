@@ -52,3 +52,4 @@ output/
 
 # Claude Code config
 .claude/
+/tickets/tools/rust/ticket-tools/target/

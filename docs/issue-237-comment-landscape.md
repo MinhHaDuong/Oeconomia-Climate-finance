@@ -51,6 +51,7 @@ The ticket system is agnostic to:
 - **Forge.** Works with GitHub, GitLab, Gitea, Forgejo, or no forge at all. Forge CLIs are optional, never required.
 - **Project size and kind.** Research papers, web apps, monorepos, single-file scripts. The format imposes no project structure beyond a `tickets/` directory.
 - **Build system.** The spec defines CLI commands (`python tickets/tools/validate_tickets.py`). Whether a project wraps these in Make, Just, Taskfile, npm scripts, or bare shell aliases is a local implementation detail — not part of the spec.
+- **Agent and harness.** The file format is plain text with no agent-specific semantics in the core headers. Claude Code, Cursor, Aider, Copilot Workspace, or a human with `$EDITOR` — any consumer that reads files can work tickets. The `X-Phase` header (Dragon Dreaming) is an extension, not a requirement. Projects using other methodologies (GTD, Scrum, Kanban) add their own `X-` headers. The format is a drop-in replacement for any file-based ticket system (e.g., GSD XML tickets) — same directory, same git workflow, different syntax.
 
 ### Design philosophy
 
@@ -338,7 +339,7 @@ This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` f
 
 No migration required. The two systems coexist permanently (see [Design philosophy](#design-philosophy)). Rollback is equally trivial: `tickets/` can be deleted or gitignored with no side effects on the rest of the repository.
 
-The agent workflow harness (described in `AGENTS.md`) defines runbooks for ticket lifecycle events: `new-ticket`, `start-ticket`, `review-pr`, `celebrate`. These become the workflow engine. The ticket files become the data layer.
+Projects using an agent harness (e.g., this project's `AGENTS.md` runbooks for `new-ticket`, `start-ticket`, `review-pr`, `celebrate`) wire ticket lifecycle events into their workflow engine. The ticket files are the data layer; the harness is the control layer. Projects without a harness use the tools directly.
 
 ## Security Considerations
 
@@ -354,9 +355,9 @@ The `Assigned-to` header is informational — it does not grant permissions. Aut
 
 ## Reference Implementation
 
-The implementation lives in the project's harness layer:
+The implementation lives in the project's tooling layer:
 
-- **Runbooks** (`runbooks/new-ticket.md`, `runbooks/start-ticket.md`): agent instructions for creating and working tickets.
+- **Runbooks** (`runbooks/new-ticket.md`, `runbooks/start-ticket.md`): this project's agent instructions for creating and working tickets. Other projects replace these with their own workflow docs or skip them entirely.
 - **Validation** (`tickets/tools/validate_tickets.py`): header checks, ID uniqueness, `Blocked-by` reference integrity. Wire into your CI check target and the pre-commit hook.
 - **Ready query** (`tickets/tools/ready_tickets.py`): graph traversal to find unblocked open tickets.
 - **Archive** (`tickets/tools/archive_tickets.py`): DAG-safe archival of old closed tickets.
@@ -399,7 +400,7 @@ We surveyed existing distributed issue trackers and evaluated them against our c
 
 | Tool | Storage | Deps | Stars | License | Agent-ready |
 |------|---------|------|-------|---------|-------------|
-| **Custom Claude Code skills** | RFC 822 files in `tickets/` | Claude Code | N/A | yours | Yes (by definition) |
+| **Custom skills / scripts** | RFC 822 files in `tickets/` | Python (stdlib) | N/A | yours | Yes (by definition) |
 
 ### Analysis
 
