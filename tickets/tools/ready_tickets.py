@@ -19,16 +19,18 @@ from pathlib import Path
 from ticket_parser import load_tickets
 
 
-def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str]]:
-    """Return (ready_tickets, warnings)."""
+def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str], int, int]:
+    """Return (ready_tickets, warnings, total_count, open_count)."""
     tickets = load_tickets(ticket_dir)
     status_by_id = {t.id: t.status for t in tickets}
     warnings: list[str] = []
     ready = []
+    open_count = 0
 
     for t in tickets:
         if t.status != "open":
             continue
+        open_count += 1
 
         blocked = False
         for ref in t.blocked_by:
@@ -44,7 +46,7 @@ def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str]]:
         if not blocked:
             ready.append({"id": t.id, "title": t.title, "file": t.path.name})
 
-    return ready, warnings
+    return ready, warnings, len(tickets), open_count
 
 
 def main() -> int:
@@ -58,7 +60,7 @@ def main() -> int:
         print(f"Directory not found: {ticket_dir}")
         return 1
 
-    ready, warnings = find_ready(ticket_dir)
+    ready, warnings, total, open_count = find_ready(ticket_dir)
 
     for w in warnings:
         print(f"WARNING: {w}", file=sys.stderr)
@@ -67,7 +69,11 @@ def main() -> int:
         print(json.dumps(ready, indent=2))
     else:
         if not ready:
-            print("No ready tickets.")
+            if open_count == 0:
+                print(f"All {total} tickets closed.")
+            else:
+                blocked = open_count - len(ready)
+                print(f"{open_count} open tickets, all blocked ({blocked} blocked).")
         else:
             print(f"Ready tickets ({len(ready)}):")
             for r in ready:
