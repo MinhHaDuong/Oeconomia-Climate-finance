@@ -1,0 +1,56 @@
+Id: vt
+Title: Add validate-tickets script and wire into make check
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T10:00Z claude created
+2026-03-22T10:00Z claude status open
+
+--- body ---
+## Context
+The ticket spec defines validation rules (required headers, no
+duplicate IDs, valid Status values) but no validator exists.
+Pre-commit hook has no ticket checks. `make check` has no ticket
+checks.
+
+## Relevant files
+- `hooks/pre-commit` — add ticket validation call
+- `Makefile` — add `validate-tickets` to `check` and `check-fast`
+- `scripts/validate_tickets.py` — new script
+
+## Actions
+1. Write `scripts/validate_tickets.py`:
+   - Parse all `tickets/*.ticket` files (RFC 822 headers + separators)
+   - Check required headers: Id, Title, Author, Status, Created
+   - Check Id matches filename pattern (`{id}-*.ticket`)
+   - Reject duplicate Ids across all ticket files
+   - Validate Status values (open, doing, closed)
+   - Validate Blocked-by references point to existing ticket Ids
+   - Validate X-Phase values if present
+   - Exit 0 on success, exit 1 with diagnostics on failure
+2. Add `validate-tickets` target to Makefile
+3. Wire into `check-fast` and `check` targets
+4. Add ticket validation to pre-commit hook (guard 6)
+
+## Test
+First test: `test_validate_tickets.py`
+- Valid ticket file passes
+- Missing required header fails
+- Duplicate Id fails with suggested suffix
+- Blocked-by pointing to nonexistent Id fails
+- Id/filename mismatch fails
+
+## Verification
+- [ ] `make check-fast` runs ticket validation
+- [ ] Pre-commit rejects a ticket with duplicate Id
+- [ ] Existing tickets all pass validation
+
+## Exit criteria
+- All existing tickets pass validation
+- `make check-fast` includes ticket validation
+- Pre-commit hook includes ticket validation

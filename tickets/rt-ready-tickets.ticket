@@ -1,0 +1,53 @@
+Id: rt
+Title: Add ready command — list unblocked open tickets
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+Blocked-by: vt
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T10:00Z claude created
+2026-03-22T10:00Z claude status open
+
+--- body ---
+## Context
+The spec describes a `ready` command that finds open tickets whose
+Blocked-by references all point to closed tickets (transitive
+closure). This is the only query needing code beyond grep. No
+implementation exists.
+
+## Relevant files
+- `scripts/validate_tickets.py` — reuse ticket parser from vt
+- `scripts/ready_tickets.py` — new script
+- `Makefile` — add `ticket-ready` target
+
+## Actions
+1. Extract ticket parser from `validate_tickets.py` into shared
+   module (`scripts/ticket_parser.py`) or reuse inline.
+2. Write `scripts/ready_tickets.py`:
+   - Parse all tickets in `tickets/`
+   - Build dependency graph from Blocked-by headers
+   - Compute ready set: open tickets where every Blocked-by
+     target has Status: closed (or doesn't exist — treat missing
+     as satisfied, with warning)
+   - Output: one ticket Id per line (greppable), or `--json` for
+     structured output
+3. Add `ticket-ready` target to Makefile
+
+## Test
+First test: `test_ready_tickets.py`
+- Open ticket with no blockers → ready
+- Open ticket blocked by closed ticket → ready
+- Open ticket blocked by open ticket → not ready
+- Transitive: A blocked by B, B blocked by C (open) → A not ready
+
+## Verification
+- [ ] `make ticket-ready` lists currently unblocked tickets
+- [ ] Output matches manual grep analysis
+
+## Exit criteria
+- `make ticket-ready` works correctly on existing tickets
+- Handles edge cases (missing refs, circular deps with warning)

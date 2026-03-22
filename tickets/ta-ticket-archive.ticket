@@ -1,0 +1,58 @@
+Id: ta
+Title: Add DAG-safe ticket archive command
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+Blocked-by: vt
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T10:00Z claude created
+2026-03-22T10:00Z claude status open
+
+--- body ---
+## Context
+The spec describes `make ticket-archive` to move old closed tickets
+to `tickets/archive/`. Must preserve the DAG: never archive a
+closed ticket referenced by a live ticket's Blocked-by,
+X-Discovered-from, or X-Supersedes header.
+
+## Relevant files
+- `scripts/validate_tickets.py` — reuse ticket parser from vt
+- `scripts/archive_tickets.py` — new script
+- `Makefile` — add `ticket-archive` target
+
+## Actions
+1. Write `scripts/archive_tickets.py`:
+   - Parse all tickets in `tickets/` (not `tickets/archive/`)
+   - Collect candidates: Status: closed, last log entry older
+     than DAYS threshold (default 90)
+   - Collect all Ids referenced by Blocked-by, X-Discovered-from,
+     X-Supersedes in non-archived tickets
+   - Remove from candidates any ticket whose Id is in the
+     referenced set (DAG safety)
+   - Print plan: "Will archive N tickets: [ids]. Skipping M
+     DAG-referenced: [ids]."
+   - With --execute: `git mv` each candidate to `tickets/archive/`,
+     then commit
+   - Without --execute: dry-run only (default)
+2. Add `ticket-archive` target to Makefile with DAYS parameter
+
+## Test
+First test: `test_archive_tickets.py`
+- Closed ticket older than threshold with no references → archivable
+- Closed ticket older than threshold referenced by open ticket → not archivable
+- Closed ticket younger than threshold → not archivable
+- X-Discovered-from reference also protects from archive
+
+## Verification
+- [ ] Dry run lists correct candidates
+- [ ] DAG-referenced tickets are excluded
+- [ ] `--execute` moves files and commits
+
+## Exit criteria
+- `make ticket-archive` does a dry run
+- `make ticket-archive EXECUTE=1` performs the archive
+- DAG references are always respected
