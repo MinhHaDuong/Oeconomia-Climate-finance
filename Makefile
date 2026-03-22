@@ -528,13 +528,13 @@ archive-datapaper: check-corpus
 
 # ── Ticket tooling ───────────────────────────────────────
 validate-tickets:
-	@uv run python scripts/validate_tickets.py tickets/
+	@uv run python tickets/tools/validate_tickets.py tickets/
 
 ticket-ready:
-	@uv run python scripts/ready_tickets.py
+	@uv run python tickets/tools/ready_tickets.py
 
 ticket-archive:
-	@uv run python scripts/archive_tickets.py tickets/ --days=$(or $(DAYS),90)
+	@uv run python tickets/tools/archive_tickets.py tickets/ --days=$(or $(DAYS),90)
 
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose validate-tickets

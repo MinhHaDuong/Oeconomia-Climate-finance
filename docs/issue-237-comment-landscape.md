@@ -325,11 +325,11 @@ The `Assigned-to` header is informational — it does not grant permissions. Aut
 The implementation lives in the project's harness layer:
 
 - **Runbooks** (`runbooks/new-ticket.md`, `runbooks/start-ticket.md`): agent instructions for creating and working tickets.
-- **Validation** (`scripts/validate_tickets.py`): header checks, ID uniqueness, `Blocked-by` reference integrity. Wired into `make check` and the pre-commit hook.
-- **Ready query** (`scripts/ready_tickets.py`): graph traversal to find unblocked open tickets.
-- **Archive** (`scripts/archive_tickets.py`): DAG-safe archival of old closed tickets.
+- **Validation** (`tickets/tools/validate_tickets.py`): header checks, ID uniqueness, `Blocked-by` reference integrity. Wired into `make check` and the pre-commit hook.
+- **Ready query** (`tickets/tools/ready_tickets.py`): graph traversal to find unblocked open tickets.
+- **Archive** (`tickets/tools/archive_tickets.py`): DAG-safe archival of old closed tickets.
 
-Scripts are Python (the project's existing toolchain). Skills are shell commands, so the implementation can be swapped transparently.
+Tools live in `tickets/tools/` so the entire ticket system (`tickets/` + `tickets/tools/`) is portable to other repos. Scripts are Python (no external dependencies beyond stdlib). Skills are shell commands, so the implementation swaps transparently.
 
 ## Rejected Ideas
 
