@@ -1,0 +1,37 @@
+Id: pcg
+Title: Fix pre-commit: warn on missing uv, validate only staged files
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+DevOps + security reviews found two issues in pre-commit guard 5:
+
+1. If uv is not installed, ticket validation is silently skipped.
+   Should warn explicitly so the committer knows.
+
+2. Guard validates ALL tickets in tickets/, not just staged ones.
+   An already-broken unstaged ticket blocks unrelated commits.
+   Should pass only staged .ticket file paths to the validator.
+
+## Actions
+1. Add explicit warning when uv is not found (not a hard fail —
+   developer laptops may not have uv)
+2. Pass staged .ticket file paths to validate_tickets.py instead
+   of the whole directory
+3. For cross-file checks (duplicate IDs), validate_tickets.py needs
+   a mode where it loads all tickets as reference but only reports
+   errors on the specified files — or just validate the full dir
+   (current behavior) but accept the tradeoff
+
+## Exit criteria
+- Missing uv produces a visible warning
+- Pre-commit validates staged files (or full dir with documented tradeoff)

@@ -1,0 +1,35 @@
+Id: idr
+Title: Specify ID derivation rule precisely
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+Spec writer review: "The ID is the initials of the slug words" is
+underspecified:
+- What delimiter? (hyphens, but not stated)
+- What about single-character IDs? (collision-prone)
+- Numeric slug parts? (r2-fix → rf? r2?)
+- Is the ID re-derived or immutable after creation?
+
+The parser uses filename prefix (split on first hyphen), not
+re-derivation. The spec should document this.
+
+## Actions
+1. Add explicit derivation rule: "Split slug on hyphens, take
+   first letter of each part. Example: auth-flow-gates → afg"
+2. Note that single-character slugs should be avoided
+3. State that numeric suffixes for collision (afg2) start at 2
+4. Clarify: ID is set once at creation, filename is canonical
+
+## Exit criteria
+- A reader can derive any ID from any slug unambiguously
+- Edge cases are documented

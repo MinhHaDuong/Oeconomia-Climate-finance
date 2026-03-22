@@ -605,7 +605,7 @@ validate-tickets:
 	@uv run python tickets/tools/validate_tickets.py tickets/
 
 ticket-ready:
-	@uv run python tickets/tools/ready_tickets.py
+	@uv run python tickets/tools/ready_tickets.py tickets/
 
 ticket-archive:
 	@uv run python tickets/tools/archive_tickets.py tickets/ --days=$(or $(DAYS),90)

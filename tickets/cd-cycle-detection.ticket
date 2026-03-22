@@ -1,0 +1,32 @@
+Id: cd
+Title: Add cycle detection to validate-tickets
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+Blocked-by: vt
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+Distributed systems review: validate_tickets checks that Blocked-by
+references exist, but never checks for cycles. A→B→A passes
+validation silently. Both tickets are permanently stuck — neither
+appears in `ready` output — but no error is raised.
+
+Found by: distributed systems expert, review round 2.
+
+## Actions
+1. Add DFS cycle detection in `validate_all` after building the
+   dependency graph from Blocked-by headers
+2. Emit error listing the full cycle path
+3. Add test: A→B→A produces a cycle error
+
+## Exit criteria
+- `validate_all` rejects cycles with a clear error message
+- Test covers simple and multi-node cycles

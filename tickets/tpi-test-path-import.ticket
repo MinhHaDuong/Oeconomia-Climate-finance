@@ -1,0 +1,28 @@
+Id: tpi
+Title: Add conftest.py for ticket tools import path
+Author: claude
+Status: open
+Created: 2026-03-22
+Coordination: local
+X-Discovered-from: gh#237
+X-Phase: planning
+
+--- log ---
+2026-03-22T14:00Z claude created
+2026-03-22T14:00Z claude status open
+
+--- body ---
+## Context
+DevOps review: every test file repeats
+`sys.path.insert(0, .../tickets/tools)`. This is fragile — new test
+files must copy the incantation. Should use conftest.py or
+pyproject.toml pythonpath.
+
+## Actions
+1. Add tests/conftest.py with the sys.path insert
+2. Remove the sys.path lines from individual test files
+3. Or: add tickets/tools to [tool.pytest.ini_options] pythonpath
+
+## Exit criteria
+- New test files can import ticket_parser without sys.path hacks
+- Existing tests still pass
