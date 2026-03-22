@@ -1,7 +1,7 @@
 Id: avi
 Title: Include archived ticket IDs in validation and archive DAG checks
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-22
 Coordination: local
 Blocked-by: vt
@@ -11,6 +11,7 @@ X-Phase: planning
 --- log ---
 2026-03-22T14:00Z claude created
 2026-03-22T14:00Z claude status open
+2026-03-22T17:00Z claude status closed — validator loads archive/ IDs as extra_ids, archive DAG scans archive/ too
 
 --- body ---
 ## Context

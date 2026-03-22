@@ -43,9 +43,13 @@ def find_archivable(
     tickets = load_tickets(ticket_dir)
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
-    # Collect all IDs referenced by DAG headers in non-archived tickets
+    # Collect all IDs referenced by DAG headers in live AND archived tickets
     referenced_ids: set[str] = set()
-    for t in tickets:
+    all_tickets = list(tickets)
+    archive_dir = ticket_dir / "archive"
+    if archive_dir.is_dir():
+        all_tickets.extend(load_tickets(archive_dir))
+    for t in all_tickets:
         for hdr in DAG_HEADERS:
             for val in t.headers.get(hdr, []):
                 referenced_ids.add(val)
