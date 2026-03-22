@@ -300,6 +300,10 @@ The system is forge-optional, not forge-hostile:
 - **Forge CLI available but not required.** Agents without `gh` work on `local` tickets. Offline-first by default.
 - **Prefix convention:** `gh#N` (GitHub), `gl#N` (GitLab), `gt#N` (Gitea/Forgejo).
 
+### Rejected alternatives
+
+**Subdirectory for closed tickets (`tickets/closed/`).** Moves break `Blocked-by` references — every grep would need two paths. Status is metadata (in the header), not location (in the filesystem). Git treats moves as delete+create, cluttering history. Filtering closed tickets is already a one-liner: `grep -L "^Status: closed" tickets/*.ticket`.
+
 ### Transition
 
 No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
