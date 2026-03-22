@@ -304,6 +304,26 @@ The system is forge-optional, not forge-hostile:
 
 **Subdirectory for closed tickets (`tickets/closed/`).** Moves break `Blocked-by` references — every grep would need two paths. Status is metadata (in the header), not location (in the filesystem). Git treats moves as delete+create, cluttering history. Filtering closed tickets is already a one-liner: `grep -L "^Status: closed" tickets/*.ticket`.
 
+### Cleanup
+
+Closed tickets stay in `tickets/` by default — they're small, greppable, and occasionally referenced by `Blocked-by`. But if the directory grows noisy, run an on-demand archive:
+
+```bash
+# Archive closed tickets older than 90 days
+make ticket-archive              # default: 90 days
+make ticket-archive DAYS=180     # custom threshold
+```
+
+The procedure:
+1. Select tickets where `Status: closed` and last log entry is older than the threshold.
+2. Move them to `tickets/archive/`. Git records the move — `git log --follow` still works.
+3. Update any `Blocked-by` references in open tickets to use the new path (none expected — open tickets shouldn't block on closed ones, but check anyway).
+4. Commit the move in a single commit: `archive N closed tickets (>{DAYS} days)`.
+
+**Recovery:** `git mv tickets/archive/foo.ticket tickets/` to restore any ticket.
+
+This is never automatic. The author runs it when `ls tickets/*.ticket | wc -l` feels too long.
+
 ### Transition
 
 No migration. Existing forge issues close naturally. New small tickets are born local. The mix shifts organically. If local tickets don't work out, stop creating them — nothing to undo.
