@@ -1,7 +1,7 @@
 Id: cd
 Title: Add cycle detection to validate-tickets
 Author: claude
-Status: open
+Status: closed
 Created: 2026-03-22
 Coordination: local
 Blocked-by: vt
@@ -11,6 +11,7 @@ X-Phase: planning
 --- log ---
 2026-03-22T14:00Z claude created
 2026-03-22T14:00Z claude status open
+2026-03-22T16:30Z claude status closed — DFS cycle detection in validate_all, 2 tests
 
 --- body ---
 ## Context

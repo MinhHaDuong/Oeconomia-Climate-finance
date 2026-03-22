@@ -63,6 +63,42 @@ def validate_ticket(ticket: Ticket, all_ids: set[str]) -> list[str]:
     return errors
 
 
+def detect_cycles(tickets: list[Ticket]) -> list[str]:
+    """Detect cycles in the Blocked-by dependency graph via DFS."""
+    errors = []
+    adj: dict[str, list[str]] = {}
+    for t in tickets:
+        if t.id:
+            adj[t.id] = list(t.blocked_by)
+
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color: dict[str, int] = {tid: WHITE for tid in adj}
+
+    def dfs(node: str, path: list[str]) -> None:
+        color[node] = GRAY
+        path.append(node)
+        for neighbor in adj.get(node, []):
+            if neighbor not in color:
+                continue  # reference to unknown ID, handled elsewhere
+            if color[neighbor] == GRAY:
+                # Found a cycle — extract it from path
+                cycle_start = path.index(neighbor)
+                cycle = path[cycle_start:] + [neighbor]
+                errors.append(
+                    f"dependency cycle: {' -> '.join(cycle)}"
+                )
+            elif color[neighbor] == WHITE:
+                dfs(neighbor, path)
+        path.pop()
+        color[node] = BLACK
+
+    for tid in adj:
+        if color[tid] == WHITE:
+            dfs(tid, [])
+
+    return errors
+
+
 def validate_all(tickets: list[Ticket]) -> list[str]:
     """Validate a collection of tickets. Returns all errors."""
     errors: list[str] = []
@@ -96,6 +132,8 @@ def validate_all(tickets: list[Ticket]) -> list[str]:
     # Per-ticket validation
     for t in tickets:
         errors.extend(validate_ticket(t, all_ids))
+
+    errors.extend(detect_cycles(tickets))
 
     return errors
 
