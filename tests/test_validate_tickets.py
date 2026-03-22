@@ -1,4 +1,4 @@
-"""Tests for ticket validation (scripts/validate_tickets.py)."""
+"""Tests for ticket validation (tickets/tools/validate_tickets.py)."""
 
 import sys
 import textwrap
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
 
 from ticket_parser import Ticket, parse_ticket
 from validate_tickets import validate_all, validate_ticket

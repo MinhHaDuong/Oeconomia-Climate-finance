@@ -41,7 +41,7 @@ fi
 staged_tickets=$(git diff --cached --name-only --diff-filter=d | grep '\.ticket$' || true)
 if [ -n "$staged_tickets" ]; then
     if command -v uv >/dev/null 2>&1; then
-        if ! uv run python scripts/validate_tickets.py tickets/ 2>&1; then
+        if ! uv run python tickets/tools/validate_tickets.py tickets/ 2>&1; then
             echo "ERROR: Ticket validation failed." >&2
             exit 1
         fi
