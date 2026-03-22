@@ -534,7 +534,7 @@ ticket-ready:
 	@uv run python tickets/tools/ready_tickets.py tickets/
 
 ticket-archive:
-	@uv run python tickets/tools/archive_tickets.py tickets/ --days=$(or $(DAYS),90)
+	@uv run python tickets/tools/archive_tickets.py tickets/ --days=$(or $(DAYS),90) $(if $(EXECUTE),--execute)
 
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose validate-tickets
