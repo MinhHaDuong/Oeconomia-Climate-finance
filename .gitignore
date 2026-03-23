@@ -22,6 +22,7 @@ data/catalogs/.citations_batch_checkpoint.csv
 content/figures/
 content/tables/
 content/*-vars.yml
+!content/manuscript-vars.yml
 
 # Python / uv
 .venv/

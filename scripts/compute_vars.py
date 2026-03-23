@@ -27,10 +27,8 @@ CONTENT_DIR = os.path.join(BASE_DIR, "content")
 # Which variables each document uses (direct + {{< include >}}'d files).
 # Each document gets a sibling -vars.yml containing only its variables.
 DOC_VARS = {
-    "manuscript": [
-        # direct only (tab_venues.md has no vars)
-        "corpus_total_approx",
-    ],
+    # "manuscript" is pinned to v1.0 values — not auto-generated.
+    # Edit content/manuscript-vars.yml manually if needed.
     "technical-report": [
         # direct: corpus_sources, corpus_total
         # includes: bimodality-analysis, citation-quality, core-vs-full,
