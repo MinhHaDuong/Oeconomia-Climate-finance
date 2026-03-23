@@ -57,7 +57,7 @@ SEARCH_PATH = os.path.join(SYLLABI_DIR, "search_results.jsonl")
 PAGES_PATH = os.path.join(SYLLABI_DIR, "pages.jsonl")
 CLASSIFIED_PATH = os.path.join(SYLLABI_DIR, "classified.jsonl")
 REFERENCES_PATH = os.path.join(SYLLABI_DIR, "raw_references.jsonl")
-EXTRACT_CACHE_PATH = os.path.join(SYLLABI_DIR, "extract_cache.jsonl")
+EXTRACT_CACHE_PATH = os.path.join(BASE_DIR, "enrich_cache", "extract_syllabi.jsonl")
 OUTPUT_CSV = os.path.join(SYLLABI_DIR, "reading_lists.csv")
 
 
@@ -99,21 +99,14 @@ def _extract_cache_key(text, model):
 def _load_extract_cache(path):
     """Load extraction cache from JSONL. Returns {key: refs_list}."""
     cache = {}
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    rec = json.loads(line)
-                    cache[rec["key"]] = rec["refs"]
+    for rec in load_jsonl(path):
+        cache[rec["key"]] = rec["refs"]
     return cache
 
 
 def _save_extract_cache_entry(path, key, refs):
     """Append one cache entry to JSONL (thread-safe)."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with _jsonl_lock, open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"key": key, "refs": refs}, ensure_ascii=False) + "\n")
+    append_jsonl([{"key": key, "refs": refs}], path)
 
 
 def extract_pdf_text(pdf_path, page_cap=50):
@@ -698,7 +691,7 @@ def stage_extract():
         cache_key = _extract_cache_key(text, extract_model)
         cached = extract_cache.get(cache_key)
         if cached is not None:
-            all_refs = cached
+            all_refs = list(cached)
             with counter_lock:
                 log.debug("Cache hit for %s", url[:60])
         else:

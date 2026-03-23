@@ -13,6 +13,9 @@ content/bibliography/*.pdf
 # Machine-specific data path (see .env.example)
 .env
 
+# Incremental enrichment caches (survive DVC re-runs, see docs/coding-guidelines.md)
+enrich_cache/
+
 # Data directory — DVC manages catalog/pool/exports/syllabi (*.dvc files tracked by git)
 data/raw/
 data/teaching_sources.yaml
