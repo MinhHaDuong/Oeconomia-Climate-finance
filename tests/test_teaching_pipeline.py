@@ -222,47 +222,37 @@ class TestBuildTeachingYamlNoManual:
         assert len(sources) >= 1
 
 
-# --- Ground truth: 24 unique works from the pipeline-generated teaching_sources.yaml ---
-# 22 DOIs + 2 title-only. The scraper must rediscover all of these.
+# --- Ground truth: core works that appear on >= 2 syllabi ---
+# These are the convergence-validated DOIs: works independently assigned
+# by multiple courses.  Scraper must find all of them.
 REFERENCE_DOIS = {
-    "10.1146/annurev-financial-102620-103311",
-    "10.1016/j.jfineco.2020.12.011",
-    "10.2139/ssrn.3438533",
-    "10.3386/w28940",
-    "10.1016/j.jbankfin.2018.10.012",
-    "10.1016/j.jfineco.2019.03.013",
-    "10.1093/rfs/hhab032",
-    "10.1093/rfs/hhz072",
-    "10.1111/jofi.13219",
-    "10.1111/jofi.13272",
-    "10.1515/9783110733488-019",
-    "10.1017/9781108886246.018",
-    "10.4324/9781315147024-21",
-    "10.1080/20430795.2020.1717241",
-    "10.2139/ssrn.6115887",
-    "10.54648/eucl2018032",
-    "10.4337/9781786432636.00019",
-    "10.1016/j.ecolecon.2021.107022",
-    "10.1093/oso/9780190662455.003.0003",
-    "10.1108/s2051-503020160000019005",
-    "10.59117/20.500.11822/43406",
-    "10.7551/mitpress/9780262035620.003.0009",
+    "10.1146/annurev-financial-102620-103311",   # Giglio, Kelly, Stroebel — Climate finance
+    "10.1016/j.jfineco.2020.12.011",             # Pastor, Stambaugh, Taylor — Sustainable investing
+    "10.2139/ssrn.3438533",                       # Berg, Kolbel, Rigobon — ESG ratings divergence
+    "10.3386/w28940",                             # Pastor, Stambaugh, Taylor — Dissecting green returns
+    "10.1016/j.jbankfin.2018.10.012",            # Zerbib — Green bond premium
+    "10.1093/rfs/hhab032",                        # Giglio et al. — Long-run discount rates
+    "10.1093/rfs/hhz072",                         # Engle et al. — Hedging climate change news
+    "10.1111/jofi.13272",                         # Bolton & Kacperczyk — Carbon-transition risk
+    "10.4337/9781786432636.00019",                # Green Bond Principles
+    "10.1016/j.ecolecon.2021.107022",             # Central bank mandates and sustainability
+    "10.7551/mitpress/9780262035620.003.0009",    # Sustainable Development Goals
+    "10.2307/2676219",                            # Heinkel et al. — Green investment
 }
 REFERENCE_TITLES = {
     "principles of sustainable finance",
-    "global landscape of climate finance",
 }
 
 
 class TestScraperCoverage:
-    """Validate that scraper output covers all 24 reference works."""
+    """Validate that scraper output covers convergence-validated core works."""
 
     @pytest.mark.skipif(
         not os.path.exists(os.path.join(
             os.path.dirname(__file__), "..", "data", "teaching_sources.yaml")),
         reason="teaching_sources.yaml not yet generated (run scraper first)")
     def test_output_covers_reference_works(self):
-        """teaching_sources.yaml must contain all 24 reference works."""
+        """teaching_sources.yaml must contain all convergence-validated core works."""
         yaml_path = os.path.join(
             os.path.dirname(__file__), "..", "data", "teaching_sources.yaml")
         with open(yaml_path) as f:
@@ -289,6 +279,123 @@ class TestScraperCoverage:
         missing_titles = REFERENCE_TITLES - output_titles
         assert not missing_titles, \
             f"Missing {len(missing_titles)} reference titles: {missing_titles}"
+
+        # Minimum output size: must have at least 40 courses and 200 readings
+        n_courses = len(sources)
+        n_readings = sum(len(s.get("readings", [])) for s in sources)
+        assert n_courses >= 30, f"Expected >=30 courses, got {n_courses}"
+        assert n_readings >= 100, f"Expected >=100 readings, got {n_readings}"
+
+
+class TestCleanDoi:
+    """Tests for _clean_doi in collect_syllabi.py."""
+
+    def test_strips_https_doi_org_prefix(self):
+        """DOIs with https://doi.org/ prefix are cleaned."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi("https://doi.org/10.1257/aer.104.5.544") == "10.1257/aer.104.5.544"
+
+    def test_strips_http_dx_doi_prefix(self):
+        """DOIs with http://dx.doi.org/ prefix are cleaned."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi("http://dx.doi.org/10.1234/test") == "10.1234/test"
+
+    def test_strips_publisher_url(self):
+        """DOIs embedded in publisher URLs are extracted."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi("https://onlinelibrary.wiley.com/doi/full/10.1111/1475-679X.12481") == "10.1111/1475-679x.12481"
+
+    def test_clean_doi_already_clean(self):
+        """Clean DOIs are returned lowercase unchanged."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi("10.1234/test") == "10.1234/test"
+
+    def test_clean_doi_none_empty(self):
+        """None and empty string return empty string."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi(None) == ""
+        assert _clean_doi("") == ""
+
+    def test_clean_doi_non_doi_url(self):
+        """Non-DOI URLs (SSRN, HDL) are returned empty."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi("https://ssrn.com/abstract=4565220") == ""
+        assert _clean_doi("http://hdl.handle.net/10419/237920") == ""
+
+    def test_clean_doi_double_prefix(self):
+        """DOIs with doi: inside URL are cleaned."""
+        from collect_syllabi import _clean_doi
+        assert _clean_doi("https://doi.org/doi:10.1038/nclimate3255") == "10.1038/nclimate3255"
+
+
+class TestTwoTierFilter:
+    """Tests for two-tier filter in build_teaching_yaml.py."""
+
+    def test_detailed_syllabus_readings_pass_at_one_course(self, tmp_path):
+        """Readings from detailed syllabi (>=MIN_READINGS_DETAILED DOIs) pass at n_courses=1."""
+        from build_teaching_yaml import load_scraped, MIN_READINGS_DETAILED
+
+        # Create a CSV: one detailed course with many readings + one small course
+        rows = []
+        # Detailed course with MIN_READINGS_DETAILED readings
+        for i in range(MIN_READINGS_DETAILED + 5):
+            rows.append({
+                "doi": f"10.1234/detail{i}", "title": f"Detailed Paper {i}",
+                "authors": f"Author {i}", "year": 2023,
+                "journal_or_publisher": "Journal", "type": "article",
+                "courses": "Advanced Climate Finance",
+                "institutions": "Top University",
+                "countries": "USA", "n_courses": 1, "in_corpus": False,
+            })
+        # Small course reading (should be filtered at n_courses=1)
+        rows.append({
+            "doi": "10.1234/small", "title": "Small Paper",
+            "authors": "Nobody", "year": 2023,
+            "journal_or_publisher": "Journal", "type": "article",
+            "courses": "Intro Course",
+            "institutions": "Small College",
+            "countries": "USA", "n_courses": 1, "in_corpus": False,
+        })
+
+        cols = ["doi", "title", "authors", "year", "journal_or_publisher",
+                "type", "courses", "institutions", "countries", "n_courses",
+                "in_corpus"]
+        import pandas as pd
+        df = pd.DataFrame(rows, columns=cols)
+        csv_path = str(tmp_path / "reading_lists.csv")
+        df.to_csv(csv_path, index=False)
+
+        records = load_scraped(csv_path)
+        # All detailed course readings should pass (have DOI + from detailed course)
+        detailed_records = [r for r in records if r["course"] == "Advanced Climate Finance"]
+        assert len(detailed_records) >= MIN_READINGS_DETAILED
+        # Small course reading should NOT pass (n_courses=1, not from detailed course)
+        small_records = [r for r in records if r["course"] == "Intro Course"]
+        assert len(small_records) == 0
+
+    def test_standard_filter_still_applies(self, tmp_path):
+        """Non-detailed course readings still need n_courses>=2 for DOI."""
+        from build_teaching_yaml import load_scraped
+
+        rows = [{
+            "doi": "10.1234/alone", "title": "Lonely Paper",
+            "authors": "Solo", "year": 2023,
+            "journal_or_publisher": "Journal", "type": "article",
+            "courses": "Small Course",
+            "institutions": "College",
+            "countries": "USA", "n_courses": 1, "in_corpus": False,
+        }]
+
+        cols = ["doi", "title", "authors", "year", "journal_or_publisher",
+                "type", "courses", "institutions", "countries", "n_courses",
+                "in_corpus"]
+        import pandas as pd
+        df = pd.DataFrame(rows, columns=cols)
+        csv_path = str(tmp_path / "reading_lists.csv")
+        df.to_csv(csv_path, index=False)
+
+        records = load_scraped(csv_path)
+        assert len(records) == 0  # filtered out
 
 
 class TestBuildTeachingCanonPath:

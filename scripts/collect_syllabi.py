@@ -36,8 +36,8 @@ from urllib.parse import urlparse
 import pandas as pd
 
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
-from utils import (BASE_DIR, DATA_DIR, MAILTO, dedup_courses, get_logger,
-                   normalize_title, polite_get, save_csv)
+from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
+                   get_logger, normalize_title, polite_get, save_csv)
 
 log = get_logger("collect_syllabi")
 
@@ -58,6 +58,9 @@ OUTPUT_CSV = os.path.join(SYLLABI_DIR, "reading_lists.csv")
 # ============================================================
 # Helpers
 # ============================================================
+
+_clean_doi = clean_doi  # Alias for backward compatibility with tests
+
 
 def load_jsonl(path):
     """Load all records from a JSONL file."""
@@ -750,7 +753,7 @@ def stage_normalize():
                 "authors": ref.get("authors", ""),
                 "year": ref.get("year"),
                 "journal_or_publisher": ref.get("journal_or_publisher", ""),
-                "doi": ref.get("doi") or "",
+                "doi": _clean_doi(ref.get("doi")),
                 "type": ref.get("type", "other"),
                 "course_name": rec.get("course_name", ""),
                 "institution": rec.get("institution", ""),
