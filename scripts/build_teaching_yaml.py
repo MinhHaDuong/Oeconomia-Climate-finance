@@ -35,7 +35,8 @@ MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (>=3 syllabi)
 MIN_READINGS_DETAILED = 20  # Courses with >=20 DOI readings are "detailed syllabi"
 OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
 MIN_SHARED_READINGS = 10  # Require >=10 shared readings to consider dedup
-FUZZY_THRESHOLD = 80  # rapidfuzz token_sort_ratio threshold for title grouping
+FUZZY_THRESHOLD = 75  # rapidfuzz token_sort_ratio threshold for title grouping
+FUZZY_MIN_WORDS = 4   # titles shorter than this skip fuzzy matching (too generic)
 
 
 def _clean(val):
@@ -94,19 +95,24 @@ def _infer_region(countries_str):
     return regions.pop()
 
 
-def fuzzy_title_groups(titles, threshold=FUZZY_THRESHOLD):
-    """Group similar titles using rapidfuzz token_set_ratio.
+def fuzzy_title_groups(titles, threshold=FUZZY_THRESHOLD,
+                       min_words=FUZZY_MIN_WORDS):
+    """Group similar titles using rapidfuzz token_sort_ratio.
 
     Returns a list of group IDs (ints), one per input title. Titles that
     match above *threshold* share the same group ID. Uses single-linkage
     clustering: if A matches B and B matches C, all three are in one group,
     even if A and C don't directly match.
 
-    Token set ratio handles substring containment well: "The Stern Review"
-    vs "The Economics of Climate Change: The Stern Review" scores 100
-    because all tokens of the shorter string appear in the longer one.
+    Titles with fewer than *min_words* words are excluded from fuzzy
+    matching to avoid false positives from short generic phrases like
+    "Climate Change" matching many longer titles.
+
+    Token sort ratio is symmetric and handles word reordering, making it
+    effective for edition variants ("Global Landscape of Climate Finance
+    2021" vs "Global landscape of climate finance in 2019").
     """
-    from rapidfuzz.fuzz import token_set_ratio
+    from rapidfuzz.fuzz import token_sort_ratio
 
     n = len(titles)
     # Union-Find for single-linkage clustering
@@ -125,13 +131,14 @@ def fuzzy_title_groups(titles, threshold=FUZZY_THRESHOLD):
 
     # Compare all pairs — O(n^2) but n is small (~900 title-only readings)
     normalized = [t.lower().strip() for t in titles]
+    word_counts = [len(t.split()) for t in normalized]
     for i in range(n):
-        if not normalized[i]:
+        if not normalized[i] or word_counts[i] < min_words:
             continue
         for j in range(i + 1, n):
-            if not normalized[j]:
+            if not normalized[j] or word_counts[j] < min_words:
                 continue
-            score = token_set_ratio(normalized[i], normalized[j])
+            score = token_sort_ratio(normalized[i], normalized[j])
             if score >= threshold:
                 union(i, j)
 
@@ -157,7 +164,6 @@ def _fuzzy_dedup_title_only(df):
 
     titles = nodoi_rows["title"].fillna("").tolist()
     groups = fuzzy_title_groups(titles)
-    nodoi_rows = nodoi_rows.copy()
     nodoi_rows["_fuzzy_group"] = groups
 
     # Merge rows within each fuzzy group
