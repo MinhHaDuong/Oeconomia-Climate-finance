@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-22
+Last updated: 2026-03-23
 
 ## Status: SUBMITTED
 
@@ -29,6 +29,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - All HTTP callers use unified retry_get (5 retries, backoff+jitter, 429+5xx)
 - Budget guard: catalog_openalex stops gracefully when daily budget exhausted
 - Syllabi fetch stage parallelized: 100 workers, per-host rate limiting (1 req/s)
+- `in_v1` provenance column in refined_works.csv (29,696 / 52,682 rows match v1.0-submission)
 
 ## Figures & tables
 
@@ -54,8 +55,9 @@ None.
 
 None.
 
-## Recent merges (2026-03-22)
+## Recent merges (2026-03-23)
 
+- #290/#283: Add `in_v1` provenance column — marks v1.0-submission rows in refined_works.csv
 - #268/#265: Parallelize syllabi fetch stage (100 workers, per-host 1 req/s rate limiting, ~10-15x speedup)
 - #259: Teaching scraper: improved PDF parsing (table extraction, 50KB limit, chunk overlap), removed manual catalog — scraper is now sole source
 - #260: ISTEX rebuild
@@ -75,6 +77,7 @@ None.
 
 ## Open tickets
 
+- ~~#283: Add in_v1 provenance column~~ (merged #290)
 - #213: Add export_citation_coverage.py to archive-analysis recipe
 - #236: Harness extraction — split workflow harness into its own repo
 - #237: Harness — offline file-based ticket system (gh-optional)
