@@ -21,6 +21,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 ## Corpus
 
 - Torch installs CPU or CUDA via `--extra cpu` / `--extra cu130` (uv extras with conflicts)
+- Filtering pipeline renamed from "refinement" (scripts: `corpus_filter.py`, `filter_flags.py`)
 - DVC pipeline split into per-source stages (catalog_istex, catalog_openalex, etc.)
 - Semantic Scholar enabled (33,897 works harvested, 1000-per-query API cap)
 - OpenAlex Premium API key configured ($2/day budget)
@@ -53,10 +54,12 @@ None.
 
 ## Active PRs
 
-- #292: Unify DOI lookup — replace syllabi CrossRef with cached OpenAlex resolve_doi (#291)
+None.
 
 ## Recent merges (2026-03-23)
 
+- #295/#261: Rename refinement → filtering throughout codebase (process naming, product unchanged)
+- #294: Fix DOI lookup — restore CrossRef for teaching, fix OpenAlex search
 - #274/#270: Add Semantic Scholar to corpus table SOURCE_META + sync test
 - #276/#271: Add Semantic Scholar to data paper (7th source in prose, table, provenance flags)
 - #290/#283: Add `in_v1` provenance column — marks v1.0-submission rows in refined_works.csv
@@ -83,7 +86,7 @@ None.
 - ~~#271: Add S2 to data paper~~ (merged #276)
 - ~~#283: Add in_v1 provenance column~~ (merged #290)
 - #288: Add progress bars, ETA, stuck detection, and desktop notifications to pipeline scripts
-- #291: Unify DOI lookup — replace syllabi CrossRef with cached OpenAlex resolve_doi
+- ~~#291: Unify DOI lookup~~ (merged #294)
 - #213: Add export_citation_coverage.py to archive-analysis recipe
 - #236: Harness extraction — split workflow harness into its own repo
 - #237: Harness — offline file-based ticket system (gh-optional)
