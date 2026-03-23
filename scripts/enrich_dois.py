@@ -126,20 +126,27 @@ def find_doi(title, year=None, author=None):
     Two-level cache (in-memory + on-disk) makes repeated lookups free.
     Callers never touch cache directly — just call find_doi(title, year).
 
-    When author is provided, checks a more precise title+author cache key
-    first, then falls back to the title-only key. New lookups write to
-    both keys so existing cache entries remain valid (zero blast radius).
+    When author or year is provided, checks a precise title+meta cache key
+    (title|author|year) first, then falls back to the title-only key.
+    New lookups write to both keys so existing cache entries remain valid
+    (zero blast radius).
     """
     tnorm = normalize_title(title) if title else ""
     if not tnorm:
         return ""
 
     anorm = _normalize_author(author)
+    try:
+        ynorm = str(int(float(year))) if year and pd.notna(year) else ""
+    except (ValueError, TypeError):
+        ynorm = ""
     title_key = f"title:{tnorm}"
-    author_key = f"title+author:{tnorm}|{anorm}" if anorm else None
+    precise_parts = [tnorm, anorm, ynorm]
+    has_precise = anorm or ynorm
+    precise_key = f"title+meta:{tnorm}|{anorm}|{ynorm}" if has_precise else None
 
     # Build ordered list of cache keys to check: author-keyed first, then title-only
-    check_keys = [author_key, title_key] if author_key else [title_key]
+    check_keys = [precise_key, title_key] if precise_key else [title_key]
 
     # Level 1: in-memory cache
     for key in check_keys:
@@ -158,7 +165,7 @@ def find_doi(title, year=None, author=None):
     result = doi if doi and sim >= TITLE_SIM_THRESHOLD else ""
 
     # Store in both caches — write to all applicable keys
-    write_keys = [author_key, title_key] if author_key else [title_key]
+    write_keys = [precise_key, title_key] if precise_key else [title_key]
     for key in write_keys:
         _title_cache[key] = result
         cache[key] = result

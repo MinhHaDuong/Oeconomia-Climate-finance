@@ -98,7 +98,7 @@ class TestResolveDoi:
         _title_cache.clear()
 
     def test_find_doi_author_cache_key(self):
-        """find_doi with author checks title+author key first, then title-only."""
+        """find_doi with author+year checks precise key first, then title-only."""
         from enrich_dois import find_doi, _title_cache, normalize_title
 
         _title_cache.clear()
@@ -106,12 +106,12 @@ class TestResolveDoi:
         title = "Climate Risk and Financial Markets"
         author = "John Smith"
         tnorm = normalize_title(title)
-        author_key = f"title+author:{tnorm}|john smith"
+        precise_key = f"title+meta:{tnorm}|john smith|2023"
         title_key = f"title:{tnorm}"
 
-        # Scenario: author-keyed cache has a different DOI than title-only cache
+        # Scenario: precise cache has a different DOI than title-only cache
         disk = {
-            author_key: "10.1234/author-match",
+            precise_key: "10.1234/author-match",
             title_key: "10.1234/title-only-match",
         }
 
@@ -166,17 +166,17 @@ class TestResolveDoi:
             mock_save.assert_called_once()
             saved = mock_save.call_args[0][0]
             # Both keys should be present
-            author_keys = [k for k in saved if k.startswith("title+author:")]
+            precise_keys = [k for k in saved if k.startswith("title+meta:")]
             title_keys = [k for k in saved if k.startswith("title:")]
-            assert len(author_keys) == 1
+            assert len(precise_keys) == 1
             assert len(title_keys) == 1
-            assert saved[author_keys[0]] == "10.1234/dual-key"
+            assert saved[precise_keys[0]] == "10.1234/dual-key"
             assert saved[title_keys[0]] == "10.1234/dual-key"
 
         _title_cache.clear()
 
     def test_find_doi_no_author_still_works(self):
-        """find_doi without author uses title-only key (backward compatible)."""
+        """find_doi without author but with year writes precise + title keys."""
         from enrich_dois import find_doi, _title_cache
 
         _title_cache.clear()
@@ -192,11 +192,12 @@ class TestResolveDoi:
 
             mock_save.assert_called_once()
             saved = mock_save.call_args[0][0]
-            # Only title key, no author key
-            author_keys = [k for k in saved if k.startswith("title+author:")]
+            # Year alone creates a precise key (title+meta:..||2020)
+            precise_keys = [k for k in saved if k.startswith("title+meta:")]
             title_keys = [k for k in saved if k.startswith("title:")]
-            assert len(author_keys) == 0
+            assert len(precise_keys) == 1
             assert len(title_keys) == 1
+            assert "||2020" in precise_keys[0]
 
         _title_cache.clear()
 
