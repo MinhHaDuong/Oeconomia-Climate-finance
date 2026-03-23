@@ -31,13 +31,12 @@ from refine_flags import (
     flag_semantic_outlier,
     flag_title_blacklist,
 )
-from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv, load_analysis_config
+from utils import CATALOGS_DIR, CONFIG_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv, load_analysis_config
 
 log = get_logger("corpus_refine")
 
 # --- Paths ---
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
-CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config")
 V1_IDENTIFIERS_PATH = os.path.join(CONFIG_DIR, "v1_identifiers.txt.gz")
 
 # ============================================================
