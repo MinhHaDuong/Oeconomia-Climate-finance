@@ -43,8 +43,9 @@ log = get_logger("collect_syllabi")
 
 # --- Constants ---
 # No text truncation — make_chunks() handles splitting for LLM calls
-CHUNK_SIZE = 20000      # ~5K tokens per chunk — fits any 8K+ context model
-CHUNK_OVERLAP = 1000    # Overlap between chunks to avoid splitting references at boundaries
+CHUNK_SIZE = 8000       # ~2K tokens per chunk — proven to work with gemma-2-27b-it
+CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
+MAX_TEXT_CHARS = 500000 # Skip pages over 500K chars (misclassified books/reports, not syllabi)
 
 # --- Paths ---
 SYLLABI_DIR = os.path.join(DATA_DIR, "syllabi")
@@ -641,6 +642,14 @@ def stage_extract():
                 counter["done"] += 1
                 log.info("[%d/%d] %s -- no text, skipping",
                          counter["done"], len(pending), url[:60])
+            return
+        if len(text) > MAX_TEXT_CHARS:
+            append_jsonl([{"url": url, "references": [], "error": f"too_large_{len(text)}_chars"}],
+                         REFERENCES_PATH)
+            with counter_lock:
+                counter["done"] += 1
+                log.warning("[%d/%d] %s -- %d chars, skipping (likely not a syllabus)",
+                            counter["done"], len(pending), url[:60], len(text))
             return
 
         # For long texts, chunk with overlap to avoid splitting references
