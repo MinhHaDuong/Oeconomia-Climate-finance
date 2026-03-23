@@ -37,7 +37,7 @@ SHORT_LABELS = {
     "2": "Kyoto mechanisms",               # kyoto protocol, technology transfer, non-annex
     "3": "$100bn pledge & fund flows",     # 100 billion, funds, GCF, financing, private
     "4": "Paris Agreement & governance",   # paris agreement, human rights, loss damage
-    "5": "Energy & resources",              # energy, renewable, power, electricity, solar
+    "5": "Renewable energy & power",        # energy, renewable, power, electricity, solar
 }
 
 _ACRONYMS = {"gcf", "cop", "unfccc", "ets", "cdm", "redd", "sdgs", "ndcs", "esg", "co2", "ghg"}
