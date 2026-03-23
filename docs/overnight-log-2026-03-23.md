@@ -1,0 +1,98 @@
+# Overnight log — 2026-03-23
+
+Session: started 20:30, ended 22:00 (1.5h total)
+Clock: deep work throughout, compressed session
+
+## What got done
+
+### Cycle 1: Clustering methods implementation (tooling)
+- Implemented `scripts/compare_clustering.py` (713 lines)
+- Three clustering methods: KMeans (baseline), HDBSCAN (density), Spectral (graph)
+- Spectral subsampling for >5K works (eigendecomposition O(n³) infeasible on 27K)
+- 13 unit tests on synthetic data — all pass
+
+### Cycle 2: Multi-space comparison (deliverable)
+
+Ran comparison on real corpus (27,315 works, 384D embeddings).
+
+**Cross-snapshot stability (ARI on shared works):**
+
+| Method | orig→v1_tagged | orig→full | v1_tagged→full |
+|--------|---------------|-----------|----------------|
+| KMeans | 0.678 | 0.674 | **0.980** |
+| HDBSCAN | 0.865* | 0.858* | **0.992*** |
+| Spectral | 0.666 | 0.774 | 0.587 |
+
+*HDBSCAN ARI inflated by 97.7% noise classification.
+
+**Multi-space silhouette (the key result):**
+
+| Space | Silhouette at k=6 | Range (k=3-12) | Interpretation |
+|-------|------------------|----------------|----------------|
+| Semantic (384D embeddings) | 0.025 | 0.025–0.038 | No structure |
+| Lexical (TF-IDF 100D) | 0.046 | 0.032–0.062 | Weak, no peak |
+| Citation (coupling 100D, L2) | 0.083 | 0.052–0.108 | 3× semantic |
+
+**KMeans perturbation stability:**
+- 1% drop: ARI = 0.887 ± 0.161
+- 5% drop: ARI = 0.848 ± 0.168
+- 10% drop: ARI = 0.885 ± 0.150
+
+### Cycle 3: Tech report section (deliverable)
+- Wrote `content/_includes/clustering-comparison.md` (section 7)
+- Wired into `content/technical-report.qmd`
+- Generated 3 figures: ARI heatmap, perturbation chart, multi-space silhouette
+
+### Self-review
+- Fresh-context Sonnet agent found 3 bugs + 3 test gaps
+- Fixed: citation index alignment, spectral subsampling label preservation, empty DOI leak
+- Added tests for citation space builder and spectral subsampling path
+
+### PR opened
+- PR #377: Clustering methods comparison (#299)
+
+## Balance
+
+| Category | Work | Approx % |
+|----------|------|----------|
+| Deliverable (multi-space analysis + tech report) | comparison runs, section writing | 55% |
+| Tooling (implementation, tests) | compare_clustering.py, tests | 35% |
+| Meta (review, log) | self-review, overnight log | 10% |
+
+## Decisions made
+
+1. **Skip BERTopic** (#302): requires adding `bertopic` dependency (heavy, pulls transformers). Deferred — the three methods tested are sufficient for the comparison.
+2. **Spectral subsampling at 5K works**: full eigendecomposition on 27K×384D is infeasible. Subsample + centroid assignment for out-of-sample. This makes spectral results an approximation.
+3. **Cluster on raw embeddings (384D)**, not UMAP-reduced (2D). Matches the alluvial pipeline (compute_clusters.py). UMAP adds a non-deterministic projection step.
+4. **L2 normalize citation coupling vectors**: without normalization, hub works dominate (silhouette=0.99 artifact). With normalization, silhouette=0.05-0.11 — genuine moderate structure.
+5. **User suggestion: test lexical + citation spaces** — transformed the analysis from "KMeans is unstable" to "climate finance has no natural cluster structure."
+
+## What surprised me
+
+- **Citation space 97.4% SVD variance**: the bibliographic coupling matrix is extremely sparse. A few hub works dominate the eigenspectrum. Without normalization, KMeans puts 11,086/11,097 works in one cluster.
+- **All silhouette scores are terrible**: even citation space peaks at 0.11. There are no well-separated clusters in any representation. KMeans imposes structure where none exists.
+- **HDBSCAN 97.7% noise on semantic embeddings**: the space is truly continuous. No dense regions.
+- **KMeans perturbation std = 0.16**: most runs are stable but ~1 in 10 reshuffles significantly. This explains Errata 1.
+
+## What worked
+
+- Multi-space comparison (user's suggestion) elevated the analysis from a methods comparison to an insight about the field's structure
+- Self-review in fresh context caught real bugs (citation index alignment was critical)
+- TDD cycle kept the implementation focused
+
+## Open questions for author
+
+1. Should we add the multi-space finding to the manuscript revision? "Climate finance is a continuum, not a typology" strengthens the paper's argument.
+2. HDBSCAN with min_cluster_size=50 on semantic space ran ~5 min per snapshot. Should we sweep parameters despite the 97% noise?
+3. The v1.0 DOI matching only found 18,467 of 29,875 works. Many v1.0 identifiers may not be DOIs. Worth investigating?
+4. BERTopic: add as optional dependency or skip entirely?
+
+## Feedback memories to save
+
+- Multi-space comparison is more informative than multi-method comparison on one space
+- Citation space needs L2 normalization to avoid hub artifacts
+- HDBSCAN is too slow for overnight runs on 27K works (~5 min/run × many runs)
+
+## Token usage
+
+Session operated within context window — no CLI subagents. One Sonnet subagent for self-review (~33K tokens). Main thread was efficient due to compressed session.
