@@ -57,6 +57,16 @@ def title_similarity(a, b):
     return SequenceMatcher(None, na, nb).ratio()
 
 
+def _normalize_author(author):
+    """Normalize author string: lowercase, strip, first author only.
+
+    Used both for cache keys and for appending author to OpenAlex search.
+    """
+    if not author:
+        return ""
+    return str(author).split(";")[0].split(",")[0].strip().lower()
+
+
 def search_doi(title, year=None, author=None):
     """Search OpenAlex for a work by title, optionally filtered by year.
 
@@ -66,11 +76,9 @@ def search_doi(title, year=None, author=None):
     Returns (doi, openalex_id, similarity) or (None, None, 0).
     """
     search_str = title[:200]
-    if author:
-        # Use first author only (before any comma/semicolon separator)
-        first_author = str(author).split(";")[0].split(",")[0].strip()
-        if first_author:
-            search_str = f"{search_str} {first_author}"
+    first_author = _normalize_author(author)
+    if first_author:
+        search_str = f"{search_str} {first_author}"
 
     params = {
         "search": search_str,
@@ -110,14 +118,6 @@ def search_doi(title, year=None, author=None):
 # --- Cache-transparent DOI resolver for external callers ---
 
 _title_cache = {}  # in-memory: cache_key → doi or ""
-
-
-def _normalize_author(author):
-    """Normalize author string for cache key: lowercase, strip, first author."""
-    if not author:
-        return ""
-    first = str(author).split(";")[0].split(",")[0].strip().lower()
-    return first
 
 
 def find_doi(title, year=None, author=None):

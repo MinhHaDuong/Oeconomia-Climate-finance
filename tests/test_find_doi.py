@@ -209,11 +209,11 @@ class TestResolveDoi:
 
             search_doi("Climate Finance Overview", year=2023, author="Stern")
 
-            # Check that the search param includes the author
+            # Check that the search param includes the author (lowercased)
             call_kwargs = mock_get.call_args
             params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
             search_str = params["search"]
-            assert "Stern" in search_str
+            assert "stern" in search_str
 
     def test_search_doi_no_author(self):
         """search_doi without author uses title-only search (backward compatible)."""
