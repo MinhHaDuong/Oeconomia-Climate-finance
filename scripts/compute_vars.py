@@ -77,10 +77,13 @@ DOC_VARS = {
     "data-paper": [
         # direct + includes: corpus-construction, corpus-filtering,
         #   embedding-generation
+        "cite_refined_rows",
         "corpus_core",
         "corpus_core_threshold",
         "corpus_multi_source",
         "corpus_multi_source_pct",
+        "corpus_raw",
+        "corpus_removal_pct",
         "corpus_sources",
         "corpus_total",
         "corpus_total_approx",
@@ -204,6 +207,13 @@ def corpus_stats(v):
         v["lang_english_pct"] = _pct(100 * en_count / n)
 
     v["corpus_sources"] = str(len(SOURCE_NAMES))
+
+    # Raw (pre-filter) count from unified_works.csv
+    unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
+    if os.path.isfile(unified_path):
+        unified_n = len(pd.read_csv(unified_path, usecols=["id"]))
+        v["corpus_raw"] = _int(unified_n)
+        v["corpus_removal_pct"] = _pct(100 * (unified_n - n) / unified_n)
 
 
 def embedding_stats(v):
@@ -345,6 +355,12 @@ def citation_stats(v):
             total_dois = int(v["cite_total_dois"].replace(",", ""))
             v["cite_coverage_pct"] = _pct(100 * fetched / total_dois, 0)
             v["cite_never_fetched"] = _int(total_dois - fetched)
+
+    # Refined (corpus-internal) citations from refined_citations.csv
+    from utils import REFINED_CITATIONS_PATH
+    if os.path.isfile(REFINED_CITATIONS_PATH):
+        ref_cite_df = pd.read_csv(REFINED_CITATIONS_PATH, usecols=["source_doi"])
+        v["cite_refined_rows"] = _int(len(ref_cite_df))
 
 
 # ── Write YAML ───────────────────────────────────────────────

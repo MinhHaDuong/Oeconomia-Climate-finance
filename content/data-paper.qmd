@@ -19,8 +19,9 @@ abstract: |
   through a four-tier keyword taxonomy. A six-flag quality pipeline
   combining metadata checks, citation isolation, semantic outlier
   filtering, and cross-encoder relevance scoring produces a curated
-  dataset with full audit trail. An internal citation network of 722,727
-  links, extracted via Crossref and OpenAlex, supports co-citation
+  dataset with full audit trail. An internal citation network of
+  {{< meta cite_refined_rows >}} links, extracted via Crossref and
+  OpenAlex, supports co-citation
   analysis and bibliographic coupling within the field. Pre-computed
   384-dimensional multilingual sentence-transformer embeddings enable
   clustering, topic modelling, and cross-lingual analysis without
@@ -71,7 +72,7 @@ The search strategy uses a four-tier keyword taxonomy reflecting the evolving vo
 
 The corpus is multilingual by design. While English dominates ({{< meta lang_english_pct >}}%), the strategy explicitly targeted French (*finance climat*, *finance climatique*), Chinese, Japanese, and German through ISTEX, bibCNRS, and multilingual OpenAlex queries. This deliberate multilingual scope, though it yields a modest non-English share, provides a foundation for cross-linguistic studies that monolingual corpora cannot support.
 
-All API queries are bounded to publication years 1990--2024. Raw API responses are stored in an append-only pool as compressed JSONL files, preserving complete responses for future re-extraction without re-downloading. OpenAlex indexes RePEc, so economics working papers are covered without a separate harvest. The two hand-harvested sources (bibCNRS, SciSpace) together contribute approximately 900 works before deduplication. bibCNRS is a CNRS legacy portal aggregating news and regional databases (Gale, Wanfang, NewsBank) that capture non-English public discourse on climate finance — a dimension absent from academic databases. Their inclusion is validated by multi-source overlap: many of their records are independently confirmed by automated sources, confirming retrieval consistency.
+All API queries are bounded to publication years 1990--2024. Raw API responses are stored in an append-only pool as compressed JSONL files, preserving complete responses for future re-extraction without re-downloading. OpenAlex indexes RePEc, so economics working papers are covered without a separate harvest. The two hand-harvested sources (bibCNRS, SciSpace) together contribute 905 works before deduplication. bibCNRS is a CNRS legacy portal aggregating news and regional databases (Gale, Wanfang, NewsBank) that capture non-English public discourse on climate finance — a dimension absent from academic databases. Their inclusion is validated by multi-source overlap: many of their records are independently confirmed by automated sources, confirming retrieval consistency.
 
 ### 2.2 Data Structure {#sec-data-structure}
 
@@ -87,7 +88,7 @@ Flagged works are removed unless protected by one of four conditions: citation c
 
 {{< include tables/tab_corpus_sources.md >}}
 
-The merge pipeline reduces 41,162 raw records to {{< meta corpus_total >}} refined works (27.5% removal rate). Citation graph verification against Crossref on a stratified sample of 30 papers yielded precision = 1.0 and recall = 1.0. The citation network contains 722,727 rows covering 45% of corpus DOIs; coverage reaches 80% for core papers (cited $\geq$ 50).
+The merge pipeline reduces {{< meta corpus_raw >}} raw records to {{< meta corpus_total >}} refined works ({{< meta corpus_removal_pct >}}% removal rate). Citation graph verification against Crossref on a stratified sample of 30 papers yielded precision = 1.0 and recall = 1.0. The citation network contains {{< meta cite_refined_rows >}} rows covering 45% of corpus DOIs; coverage reaches 80% for core papers (cited $\geq$ 50).
 
 Relevance filtering (flag 6) uses a cross-encoder reranker (BAAI/bge-reranker-v2-m3, 568M parameters) rather than a generative LLM, ensuring deterministic, reproducible classification without API costs. The model was calibrated in two stages. First, the best query was selected from 100 candidates evaluated on a stratified sample of 200 weak-labeled papers (100 positive, 100 negative), achieving AUC = 0.766. Second, human validation on a separate stratified sample of 100 works (20 per score quintile, blinded to scores) yielded AUC = 0.818 and 81% accuracy (precision 74%, recall 76%); an additional 100 boundary cases near the initial threshold were coded to refine the final cutoff. An independent LLM audit provides a second check. Both methods serve as independent checks on the flagging pipeline, not as ground truth, since what counts as "climate finance" is itself a contested category. All calibration and validation tables (weak labels, human-coded samples) are included in the Zenodo deposit.
 
@@ -106,7 +107,7 @@ The dataset consists of five files deposited in Zenodo, also reproducible from s
 
 **corpus_audit.csv.** Complete audit trail: every work receives a decision (`kept`, `removed`, or `protected`) with reasons.
 
-**citations.csv.** Internal citation network (722,727 rows) extracted via Crossref and OpenAlex enrichment. Each row records a (citing, cited) pair where both works belong to the corpus, enabling co-citation analysis, bibliographic coupling, and citation genealogy studies.
+**citations.csv.** Internal citation network ({{< meta cite_refined_rows >}} rows) extracted via Crossref and OpenAlex enrichment. Each row records a (citing, cited) pair where both works belong to the corpus, enabling co-citation analysis, bibliographic coupling, and citation genealogy studies.
 
 **Source catalogs.** Individual per-source catalogs (`openalex_works.csv`, `istex_works.csv`, etc.) are preserved in the deposit, enabling provenance tracking back to individual databases before merge and deduplication.
 
