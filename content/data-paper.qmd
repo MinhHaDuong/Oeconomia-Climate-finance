@@ -7,7 +7,7 @@ author:
       - name: "CNRS"
       - name: "CIRED"
     email: "haduong@centre-cired.fr"
-date: "2026-03-20"
+date: "2026-03-23"
 metadata-files: [data-paper-vars.yml]
 bibliography: bibliography/main.bib
 abstract: |
@@ -20,9 +20,8 @@ abstract: |
   combining metadata checks, citation isolation, semantic outlier
   filtering, and cross-encoder relevance scoring produces a curated
   dataset with full audit trail. An internal citation network of
-  {{< meta cite_refined_rows >}} links, extracted via Crossref and
-  OpenAlex, supports co-citation
-  analysis and bibliographic coupling within the field. Pre-computed
+  {{< meta cite_refined_rows >}} links, extracted via Crossref and OpenAlex,
+  supports co-citation analysis and bibliographic coupling within the field. Pre-computed
   384-dimensional multilingual sentence-transformer embeddings enable
   clustering, topic modelling, and cross-lingual analysis without
   re-encoding. The corpus, embeddings, citation network, and audit log
