@@ -218,12 +218,14 @@ def main():
     # Process
     resolved = 0
     not_found = 0
+    has_author_col = "first_author" in to_process.columns
     for i, (idx, row) in enumerate(to_process.iterrows()):
         title = str(row["title"])
         year = row.get("year")
         sid = row["source_id"]
+        author = str(row["first_author"]) if has_author_col else None
 
-        doi, oa_id, sim = search_doi(title, year)
+        doi, oa_id, sim = search_doi(title, year, author=author)
 
         if doi and sim >= TITLE_SIM_THRESHOLD:
             cache[sid] = doi
