@@ -151,9 +151,38 @@ class TestScraperPdfExtraction:
         assert "Stern" in text
 
     def test_text_limit_increased(self):
-        """Text truncation should allow at least 50KB (was 20KB)."""
+        """Text truncation should allow at least 200KB to cover long PDFs like Harvard FECS."""
         from collect_syllabi import TEXT_LIMIT
-        assert TEXT_LIMIT >= 50000
+        assert TEXT_LIMIT >= 200000
+
+    def test_extract_pdf_text_no_table_duplication(self, tmp_path):
+        """PDF extraction should not duplicate content via table extraction.
+
+        Table extraction (extract_tables) produces pipe-separated rows that
+        duplicate text already captured by extract_text(), confusing the LLM
+        in overlapping chunks. Body text alone is sufficient.
+        """
+        from collect_syllabi import extract_pdf_text
+        from fpdf import FPDF
+
+        # Build a PDF with a table-like structure
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Helvetica", size=12)
+        pdf.cell(200, 10, text="Reading List", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(100, 10, text="Nordhaus", border=1)
+        pdf.cell(90, 10, text="The Climate Casino", border=1, new_x="LMARGIN", new_y="NEXT")
+
+        pdf_path = str(tmp_path / "test_table.pdf")
+        pdf.output(pdf_path)
+
+        text = extract_pdf_text(pdf_path)
+        # "Nordhaus" should appear exactly once (from body text),
+        # not twice (once from body text, once from table extraction)
+        assert text.count("Nordhaus") == 1, (
+            f"Expected 'Nordhaus' once (body text only), "
+            f"found {text.count('Nordhaus')} times — table extraction is duplicating content"
+        )
 
 
 class TestScraperChunkOverlap:
@@ -542,3 +571,21 @@ class TestFuzzyTitleDedup:
         # "Climate Change" is too short to fuzzy-match anything
         assert groups[0] != groups[1], "Short generic title should not merge with IPCC"
         assert groups[0] != groups[2], "Short generic title should not merge with Nordhaus"
+
+
+class TestSeedUrls:
+    """Tests for seed URL coverage in syllabi_config.py."""
+
+    def test_mit_ocw_seed_url(self):
+        """MIT OCW 15-023J should be in SEED_URLS (recovers 2 missing readings)."""
+        from syllabi_config import SEED_URLS
+        urls = [s["url"] for s in SEED_URLS]
+        assert any("ocw.mit.edu" in u and "15-023j" in u.lower() for u in urls), \
+            "MIT OCW 15-023J Global Climate Change URL missing from SEED_URLS"
+
+    def test_stanford_welch_seed_url(self):
+        """Stanford ivo-welch climate change URL should be in SEED_URLS (recovers 2 missing readings)."""
+        from syllabi_config import SEED_URLS
+        urls = [s["url"] for s in SEED_URLS]
+        assert any("ivo-welch.info" in u for u in urls), \
+            "Stanford ivo-welch climate change URL missing from SEED_URLS"
