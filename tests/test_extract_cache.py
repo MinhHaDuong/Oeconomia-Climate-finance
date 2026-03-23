@@ -65,6 +65,7 @@ class TestExtractCacheRoundTrip:
         from collect_syllabi import _load_extract_cache
         with tempfile.TemporaryDirectory() as tmpdir:
             cache_path = os.path.join(tmpdir, "extract_cache.jsonl")
+            open(cache_path, "w").close()  # create truly empty file
             cache = _load_extract_cache(cache_path)
             assert cache == {}
 
