@@ -57,13 +57,23 @@ def title_similarity(a, b):
     return SequenceMatcher(None, na, nb).ratio()
 
 
-def search_doi(title, year=None):
+def search_doi(title, year=None, author=None):
     """Search OpenAlex for a work by title, optionally filtered by year.
+
+    When author is provided, appends the first author name to the search
+    string for better precision on generic titles.
 
     Returns (doi, openalex_id, similarity) or (None, None, 0).
     """
+    search_str = title[:200]
+    if author:
+        # Use first author only (before any comma/semicolon separator)
+        first_author = str(author).split(";")[0].split(",")[0].strip()
+        if first_author:
+            search_str = f"{search_str} {first_author}"
+
     params = {
-        "search": title[:200],
+        "search": search_str,
         "select": "id,doi,title,publication_year",
         "per_page": 5,
         "mailto": MAILTO,
@@ -99,37 +109,59 @@ def search_doi(title, year=None):
 
 # --- Cache-transparent DOI resolver for external callers ---
 
-_title_cache = {}  # in-memory: normalized_title → doi or ""
+_title_cache = {}  # in-memory: cache_key → doi or ""
 
 
-def find_doi(title, year=None):
+def _normalize_author(author):
+    """Normalize author string for cache key: lowercase, strip, first author."""
+    if not author:
+        return ""
+    first = str(author).split(";")[0].split(",")[0].strip().lower()
+    return first
+
+
+def find_doi(title, year=None, author=None):
     """Cached DOI lookup. Returns DOI string or empty string.
 
     Two-level cache (in-memory + on-disk) makes repeated lookups free.
     Callers never touch cache directly — just call find_doi(title, year).
+
+    When author is provided, checks a more precise title+author cache key
+    first, then falls back to the title-only key. New lookups write to
+    both keys so existing cache entries remain valid (zero blast radius).
     """
     tnorm = normalize_title(title) if title else ""
     if not tnorm:
         return ""
 
+    anorm = _normalize_author(author)
+    title_key = f"title:{tnorm}"
+    author_key = f"title+author:{tnorm}|{anorm}" if anorm else None
+
+    # Build ordered list of cache keys to check: author-keyed first, then title-only
+    check_keys = [author_key, title_key] if author_key else [title_key]
+
     # Level 1: in-memory cache
-    if tnorm in _title_cache:
-        return _title_cache[tnorm]
+    for key in check_keys:
+        if key in _title_cache:
+            return _title_cache[key]
 
     # Level 2: on-disk cache (shared across runs)
     cache = load_cache()
-    disk_key = f"title:{tnorm}"
-    if disk_key in cache:
-        _title_cache[tnorm] = cache[disk_key]
-        return cache[disk_key]
+    for key in check_keys:
+        if key in cache:
+            _title_cache[key] = cache[key]
+            return cache[key]
 
     # Level 3: query OpenAlex
-    doi, _oa_id, sim = search_doi(title, year)
+    doi, _oa_id, sim = search_doi(title, year, author=author)
     result = doi if doi and sim >= TITLE_SIM_THRESHOLD else ""
 
-    # Store in both caches
-    _title_cache[tnorm] = result
-    cache[disk_key] = result
+    # Store in both caches — write to all applicable keys
+    write_keys = [author_key, title_key] if author_key else [title_key]
+    for key in write_keys:
+        _title_cache[key] = result
+        cache[key] = result
     save_cache(cache)
 
     return result
