@@ -87,41 +87,38 @@ def main():
     # is written at the end as an ephemeral artifact.
     legacy_path = os.path.join(CATALOGS_DIR, "embeddings.npy")
 
+    def _load_npz_cache(path):
+        """Try to load cached embeddings from an .npz file.
+
+        Returns (key_to_vec, key_to_hash) if model/fields match, else ({}, {}).
+        """
+        cache = np.load(path, allow_pickle=True)
+        cached_model = str(cache["model"]) if "model" in cache.files else ""
+        cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
+        if cached_model != MODEL_NAME or cached_fields != TEXT_FIELDS:
+            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
+                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
+            return {}, {}
+        cached_keys = cache["keys"]
+        cached_vecs = cache["vectors"]
+        cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
+        kvec = dict(zip(cached_keys, cached_vecs))
+        khash = dict(zip(cached_keys, cached_hashes)) if cached_hashes is not None else {}
+        return kvec, khash
+
     key_to_vec = {}   # key → vector
     key_to_hash = {}  # key → text hash (to detect content changes)
     if os.path.exists(EMBEDDINGS_CACHE_PATH):
-        cache = np.load(EMBEDDINGS_CACHE_PATH, allow_pickle=True)
-        cached_model = str(cache["model"]) if "model" in cache.files else ""
-        cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
-        if cached_model == MODEL_NAME and cached_fields == TEXT_FIELDS:
-            cached_keys = cache["keys"]
-            cached_vecs = cache["vectors"]
-            cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
-            key_to_vec = dict(zip(cached_keys, cached_vecs))
-            if cached_hashes is not None:
-                key_to_hash = dict(zip(cached_keys, cached_hashes))
+        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_CACHE_PATH)
+        if key_to_vec:
             log.info("Loaded %d cached embeddings (model: %s, fields: %s)",
                      len(key_to_vec), MODEL_NAME, TEXT_FIELDS)
-        else:
-            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
-                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
     elif os.path.exists(EMBEDDINGS_PATH):
         # Migration: old pattern stored cache in the DVC output itself
-        cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
-        cached_model = str(cache["model"]) if "model" in cache.files else ""
-        cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
-        if cached_model == MODEL_NAME and cached_fields == TEXT_FIELDS:
-            cached_keys = cache["keys"]
-            cached_vecs = cache["vectors"]
-            cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
-            key_to_vec = dict(zip(cached_keys, cached_vecs))
-            if cached_hashes is not None:
-                key_to_hash = dict(zip(cached_keys, cached_hashes))
+        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_PATH)
+        if key_to_vec:
             log.info("Migrated %d cached embeddings from DVC output → enrich_cache/",
                      len(key_to_vec))
-        else:
-            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
-                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
     elif os.path.exists(legacy_path):
         log.info("Found legacy %s, will migrate to .npz (full recompute)", legacy_path)
     else:

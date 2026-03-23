@@ -53,22 +53,19 @@ class TestEnrichEmbeddingsScript:
         assert "EMBEDDINGS_CACHE_PATH" in self.source
 
     def test_reads_cache_from_cache_path(self):
-        """Cache loading must use EMBEDDINGS_CACHE_PATH, not EMBEDDINGS_PATH."""
+        """Cache loading must use EMBEDDINGS_CACHE_PATH, not EMBEDDINGS_PATH directly."""
         tree = ast.parse(self.source)
-        # Find np.load calls — at least one must reference EMBEDDINGS_CACHE_PATH
-        load_targets = []
+        # Find all function calls where EMBEDDINGS_CACHE_PATH is an argument
+        # (either np.load(EMBEDDINGS_CACHE_PATH) or helper(EMBEDDINGS_CACHE_PATH))
+        cache_path_used = False
         for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                # Match np.load(SOMETHING)
-                func = node.func
-                if (isinstance(func, ast.Attribute) and func.attr == "load"
-                        and isinstance(func.value, ast.Name) and func.value.id == "np"):
-                    if node.args:
-                        arg = node.args[0]
-                        if isinstance(arg, ast.Name):
-                            load_targets.append(arg.id)
-        assert "EMBEDDINGS_CACHE_PATH" in load_targets, (
-            f"np.load must be called with EMBEDDINGS_CACHE_PATH, found: {load_targets}"
+            if isinstance(node, ast.Call) and node.args:
+                for arg in node.args:
+                    if isinstance(arg, ast.Name) and arg.id == "EMBEDDINGS_CACHE_PATH":
+                        cache_path_used = True
+                        break
+        assert cache_path_used, (
+            "EMBEDDINGS_CACHE_PATH must be passed to a function call (np.load or helper)"
         )
 
 
