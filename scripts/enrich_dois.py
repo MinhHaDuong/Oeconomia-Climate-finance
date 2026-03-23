@@ -97,6 +97,44 @@ def search_doi(title, year=None):
     return best_doi, best_id, best_sim
 
 
+# --- Cache-transparent DOI resolver for external callers ---
+
+_title_cache = {}  # in-memory: normalized_title → doi or ""
+
+
+def resolve_doi(title, year=None):
+    """Cached DOI lookup. Returns DOI string or empty string.
+
+    Two-level cache (in-memory + on-disk) makes repeated lookups free.
+    Callers never touch cache directly — just call resolve_doi(title, year).
+    """
+    tnorm = normalize_title(title) if title else ""
+    if not tnorm:
+        return ""
+
+    # Level 1: in-memory cache
+    if tnorm in _title_cache:
+        return _title_cache[tnorm]
+
+    # Level 2: on-disk cache (shared across runs)
+    cache = load_cache()
+    disk_key = f"title:{tnorm}"
+    if disk_key in cache:
+        _title_cache[tnorm] = cache[disk_key]
+        return cache[disk_key]
+
+    # Level 3: query OpenAlex
+    doi, _oa_id, sim = search_doi(title, year)
+    result = doi if doi and sim >= TITLE_SIM_THRESHOLD else ""
+
+    # Store in both caches
+    _title_cache[tnorm] = result
+    cache[disk_key] = result
+    save_cache(cache)
+
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
