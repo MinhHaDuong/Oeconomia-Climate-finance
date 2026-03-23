@@ -117,24 +117,18 @@ class TestBuildTeachingYaml:
 
 
 class TestScraperPdfExtraction:
-    """Tests for improved PDF text extraction in collect_syllabi.py."""
+    """Tests for PDF text extraction in collect_syllabi.py."""
 
-    def test_extract_pdf_text_includes_tables(self, tmp_path):
-        """PDF extraction should capture table content alongside body text."""
+    def test_extract_pdf_text_captures_cell_content(self, tmp_path):
+        """extract_text() captures text in bordered cells without table extraction."""
         from collect_syllabi import extract_pdf_text
-
-        # Create a minimal PDF with a table using reportlab if available,
-        # otherwise use pdfplumber's test fixtures.
-        # For now, test the function signature and that it returns table text.
-        import pdfplumber
         from fpdf import FPDF
 
-        # Build a PDF with a simple table of readings
+        # Build a PDF with bordered cells (table-like layout)
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", size=12)
         pdf.cell(200, 10, text="Course Reading List", new_x="LMARGIN", new_y="NEXT")
-        # Simulate a table-like structure
         pdf.cell(100, 10, text="Author", border=1)
         pdf.cell(90, 10, text="Title", border=1, new_x="LMARGIN", new_y="NEXT")
         pdf.cell(100, 10, text="Nordhaus", border=1)
