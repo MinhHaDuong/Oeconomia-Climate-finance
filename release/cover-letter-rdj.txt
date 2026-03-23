@@ -6,7 +6,7 @@ Dear Editors,
 
 I am pleased to submit a data paper describing a multilingual bibliometric corpus of climate finance literature for your consideration.
 
-**The dataset.** The corpus assembles 29,878 deduplicated works on climate finance published between 1990 and 2024, drawn from six complementary sources: OpenAlex, ISTEX, bibCNRS, SciSpace, institutional grey literature (OECD, UNFCCC, World Bank, Climate Policy Initiative), and a curated teaching canon. The search strategy targets eight languages through a four-tier keyword taxonomy. A documented quality-filtering pipeline with full audit trail ensures reproducibility. Pre-computed multilingual sentence-transformer embeddings place all works in a shared semantic space regardless of language.
+**The dataset.** The corpus assembles 31,012 deduplicated works on climate finance published between 1990 and 2024, drawn from six complementary sources: OpenAlex, ISTEX, bibCNRS, SciSpace, institutional grey literature (OECD, UNFCCC, World Bank, Climate Policy Initiative), and a curated teaching canon. The search strategy targets eight languages through a four-tier keyword taxonomy. A documented six-flag quality-filtering pipeline with full audit trail ensures reproducibility. Pre-computed multilingual sentence-transformer embeddings place all works in a shared semantic space regardless of language. An internal citation network of 637,444 links supports co-citation analysis.
 
 **Why this dataset matters for HSS.** Climate finance is a contested category at the intersection of economics, political science, development studies, and environmental governance. Existing bibliometric studies of this literature rely on single databases, cover English only, and do not publish reusable datasets. Our corpus addresses these limitations by combining academic and institutional sources, including the grey literature that has shaped the very categories of the debate. The multilingual design — targeting French, Chinese, Japanese, and German alongside English — supports cross-linguistic studies that monolingual corpora cannot.
 
@@ -16,7 +16,7 @@ I am pleased to submit a data paper describing a multilingual bibliometric corpu
 
 **Scope fit.** The Research Data Journal's focus on humanities and social sciences research data, its commitment to FAIR principles, and its diamond open access model make it an ideal venue for this dataset. The corpus supports research across multiple HSS disciplines: history of economics, science and technology studies, political science of international development, and digital humanities.
 
-The paper is not under consideration elsewhere. The manuscript is approximately 2,100 words (within the 2,500-word limit) and includes two figures and one table.
+The paper is not under consideration elsewhere. The manuscript is approximately 2,500 words and includes one figure and one table.
 
 I would be happy to provide any additional information needed for the review process.
 
