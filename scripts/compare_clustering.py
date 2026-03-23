@@ -74,9 +74,31 @@ def cluster_hdbscan(X, min_cluster_size=50, min_samples=None):
     return clusterer.fit_predict(X)
 
 
-def cluster_spectral(X, k=6, random_state=42):
-    """Spectral clustering on nearest-neighbor affinity graph."""
+def cluster_spectral(X, k=6, random_state=42, max_n=5000):
+    """Spectral clustering on nearest-neighbor affinity graph.
+
+    When len(X) > max_n, subsample to max_n works (eigendecomposition is
+    O(n³), infeasible on >10K works with 384D input). Remaining points
+    are assigned to nearest cluster centroid.
+    """
     from sklearn.cluster import SpectralClustering
+    from sklearn.metrics import pairwise_distances_argmin_min
+
+    n = len(X)
+    if n <= max_n:
+        sc = SpectralClustering(
+            n_clusters=k,
+            random_state=random_state,
+            affinity="nearest_neighbors",
+            n_neighbors=min(15, n - 1),
+            n_jobs=1,
+        )
+        return sc.fit_predict(X)
+
+    # Subsample + assign remaining via nearest centroid
+    rng = np.random.RandomState(random_state)
+    sample_idx = rng.choice(n, max_n, replace=False)
+    X_sample = X[sample_idx]
 
     sc = SpectralClustering(
         n_clusters=k,
@@ -85,7 +107,13 @@ def cluster_spectral(X, k=6, random_state=42):
         n_neighbors=15,
         n_jobs=1,
     )
-    return sc.fit_predict(X)
+    sample_labels = sc.fit_predict(X_sample)
+
+    # Compute centroids from sample, assign all points
+    centroids = np.array([X_sample[sample_labels == c].mean(axis=0)
+                          for c in range(k)])
+    all_labels, _ = pairwise_distances_argmin_min(X, centroids)
+    return all_labels
 
 
 # ============================================================
@@ -482,6 +510,140 @@ def generate_figures(ari_table, perturbation_table, optimal_k):
 
 
 # ============================================================
+# Multi-space representations
+# ============================================================
+
+
+def build_tfidf_space(df, max_features=5000):
+    """Build TF-IDF representation from abstracts.
+
+    Returns (X_tfidf, valid_idx) where X_tfidf is a dense matrix and
+    valid_idx maps rows back to df positions.
+    """
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.decomposition import TruncatedSVD
+
+    abstracts = df["abstract"].fillna("")
+    has_abstract = abstracts.str.len() > 20
+    valid_idx = np.where(has_abstract.values)[0]
+    texts = abstracts.iloc[valid_idx].tolist()
+    log.info("TF-IDF space: %d works with abstracts (of %d total)",
+             len(valid_idx), len(df))
+
+    vectorizer = TfidfVectorizer(
+        max_features=max_features, sublinear_tf=True,
+        stop_words="english", min_df=3, max_df=0.8,
+        ngram_range=(1, 2),
+    )
+    X_tfidf = vectorizer.fit_transform(texts)
+
+    # Reduce to 100D via SVD for clustering (sparse TF-IDF is high-dim)
+    n_components = min(100, X_tfidf.shape[1] - 1, len(valid_idx) - 1)
+    svd = TruncatedSVD(n_components=n_components, random_state=42)
+    X_reduced = svd.fit_transform(X_tfidf)
+    explained = svd.explained_variance_ratio_.sum()
+    log.info("TF-IDF SVD: 100 components explain %.1f%% of variance", explained * 100)
+    return X_reduced, valid_idx
+
+
+def build_citation_space(df, citations_path=None):
+    """Build bibliographic coupling matrix from citation data.
+
+    Two works are coupled if they share references. Returns (X_coupling,
+    valid_idx) where X_coupling is SVD-reduced and valid_idx maps to df.
+    """
+    from scipy.sparse import csr_matrix
+    from sklearn.decomposition import TruncatedSVD
+
+    if citations_path is None:
+        citations_path = os.path.join(CATALOGS_DIR, "refined_citations.csv")
+    if not os.path.exists(citations_path):
+        log.warning("No citations file at %s, skipping citation space",
+                     citations_path)
+        return None, None
+
+    cit = pd.read_csv(citations_path, usecols=["source_doi", "ref_doi"])
+    cit = cit.dropna(subset=["source_doi", "ref_doi"])
+    cit["source_doi"] = cit["source_doi"].str.lower()
+    cit["ref_doi"] = cit["ref_doi"].str.lower()
+
+    # Map corpus DOIs to indices
+    doi_lower = df["doi"].fillna("").str.lower()
+    corpus_dois = set(doi_lower)
+    # Only keep citations from corpus works
+    cit = cit[cit["source_doi"].isin(corpus_dois)]
+
+    # Build source→ref incidence matrix
+    sources = cit["source_doi"].unique()
+    source_to_idx = {d: i for i, d in enumerate(sources)}
+    refs = cit["ref_doi"].unique()
+    ref_to_idx = {d: i for i, d in enumerate(refs)}
+
+    rows = [source_to_idx[d] for d in cit["source_doi"]]
+    cols = [ref_to_idx[d] for d in cit["ref_doi"]]
+    data = np.ones(len(rows))
+    incidence = csr_matrix((data, (rows, cols)),
+                           shape=(len(sources), len(refs)))
+
+    # Bibliographic coupling = incidence @ incidence.T
+    coupling = incidence @ incidence.T
+    coupling.setdiag(0)  # no self-coupling
+    log.info("Bibliographic coupling: %d sources, %d refs, %d non-zero entries",
+             len(sources), len(refs), coupling.nnz)
+
+    # SVD reduction
+    n_components = min(100, len(sources) - 1)
+    svd = TruncatedSVD(n_components=n_components, random_state=42)
+    X_coupling = svd.fit_transform(coupling)
+    explained = svd.explained_variance_ratio_.sum()
+    log.info("Citation SVD: %d components explain %.1f%% of variance",
+             n_components, explained * 100)
+
+    # Map back to df indices
+    doi_to_df_idx = {d: i for i, d in enumerate(doi_lower)}
+    valid_idx = np.array([doi_to_df_idx[d] for d in sources
+                          if d in doi_to_df_idx])
+    # Reorder coupling matrix to match valid_idx
+    source_order = [source_to_idx[doi_lower.iloc[i]]
+                    for i in valid_idx if doi_lower.iloc[i] in source_to_idx]
+    X_coupling = X_coupling[source_order]
+
+    log.info("Citation space: %d works with coupling data", len(valid_idx))
+    return X_coupling, valid_idx
+
+
+def multi_space_silhouette(df, embeddings, k_range=range(3, 13)):
+    """Compare silhouette across semantic, lexical, and citation spaces."""
+    results = {}
+
+    # Semantic space (already have embeddings)
+    log.info("=== Multi-space silhouette comparison ===")
+    log.info("--- Semantic space (384D embeddings) ---")
+    results["semantic"] = silhouette_sweep(embeddings, k_range=k_range)
+    for r in results["semantic"]:
+        log.info("  k=%d: silhouette=%.4f", r["k"], r["silhouette"])
+
+    # Lexical space (TF-IDF)
+    log.info("--- Lexical space (TF-IDF → 100D SVD) ---")
+    X_tfidf, tfidf_idx = build_tfidf_space(df)
+    results["lexical"] = silhouette_sweep(X_tfidf, k_range=k_range)
+    for r in results["lexical"]:
+        log.info("  k=%d: silhouette=%.4f", r["k"], r["silhouette"])
+
+    # Citation space (bibliographic coupling)
+    log.info("--- Citation space (bibliographic coupling → 100D SVD) ---")
+    X_cit, cit_idx = build_citation_space(df)
+    if X_cit is not None:
+        results["citation"] = silhouette_sweep(X_cit, k_range=k_range)
+        for r in results["citation"]:
+            log.info("  k=%d: silhouette=%.4f", r["k"], r["silhouette"])
+    else:
+        log.warning("Citation space not available")
+
+    return results
+
+
+# ============================================================
 # Entry point
 # ============================================================
 
@@ -517,6 +679,17 @@ def main():
     # Run optimal-k analysis on full corpus
     X_full = snapshots["full"][0]
     optimal_k = run_optimal_k(X_full, k_range=range(k_lo, k_hi + 1))
+
+    # Multi-space comparison: semantic vs lexical vs citation
+    df_full, _ = load_analysis_corpus(v1_only=False, with_embeddings=False)
+    space_results = multi_space_silhouette(
+        df_full, X_full, k_range=range(k_lo, k_hi + 1)
+    )
+    # Save multi-space results
+    space_path = os.path.join(TABLES_DIR, "clustering_multi_space.json")
+    with open(space_path, "w") as f:
+        json.dump(space_results, f, indent=2)
+    log.info("Saved multi-space results → %s", space_path)
 
     # Save results
     save_results(ari_table, perturbation_table, optimal_k)

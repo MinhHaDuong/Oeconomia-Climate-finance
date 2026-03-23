@@ -8,6 +8,7 @@ import os
 import sys
 
 import numpy as np
+import pandas as pd
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
@@ -157,3 +158,26 @@ class TestOptimalK:
             assert "n_clusters" in r
             assert "noise_fraction" in r
             assert 0 <= r["noise_fraction"] <= 1
+
+
+# ---------------------------------------------------------------------------
+# Test: multi-space representations
+# ---------------------------------------------------------------------------
+
+class TestMultiSpace:
+    """TF-IDF and citation space builders produce valid outputs."""
+
+    def test_tfidf_space(self):
+        from compare_clustering import build_tfidf_space
+        df = pd.DataFrame({
+            "abstract": [
+                "climate change finance green bonds sustainable investment",
+                "carbon emissions trading scheme cap and trade policy",
+                "renewable energy solar wind power electricity generation",
+                "forest conservation biodiversity ecosystem services land use",
+            ] * 10  # 40 works
+        })
+        X, valid_idx = build_tfidf_space(df, max_features=100)
+        assert X.shape[0] == 40
+        assert X.shape[1] <= 100
+        assert len(valid_idx) == 40
