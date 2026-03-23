@@ -8,7 +8,8 @@ Method:
 - Incremental caching: only new works are encoded (keyed by DOI/source_id)
 
 Produces:
-- data/catalogs/embeddings.npz: Embedding cache (vectors + metadata)
+- data/catalogs/embeddings.npz: DVC output (vectors + metadata)
+- data/catalogs/enrich_cache/embeddings_cache.npz: Incremental cache (survives DVC re-runs)
 """
 
 import argparse
@@ -20,7 +21,8 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 import numpy as np
 import pandas as pd
 
-from utils import CATALOGS_DIR, EMBEDDINGS_PATH, get_logger, load_analysis_config, work_key
+from utils import (CATALOGS_DIR, EMBEDDINGS_CACHE_DIR, EMBEDDINGS_CACHE_PATH,
+                   EMBEDDINGS_PATH, get_logger, load_analysis_config, work_key)
 
 log = get_logger("enrich_embeddings")
 
@@ -80,26 +82,43 @@ def main():
     df["_thash"] = df["_text"].apply(text_hash)
 
     # --- Incremental embedding cache ---
+    # Cache lives in enrich_cache/ (not a DVC output), so DVC re-runs
+    # don't destroy already-computed vectors. The DVC output (EMBEDDINGS_PATH)
+    # is written at the end as an ephemeral artifact.
     legacy_path = os.path.join(CATALOGS_DIR, "embeddings.npy")
+
+    def _load_npz_cache(path):
+        """Try to load cached embeddings from an .npz file.
+
+        Returns (key_to_vec, key_to_hash) if model/fields match, else ({}, {}).
+        """
+        cache = np.load(path, allow_pickle=True)
+        cached_model = str(cache["model"]) if "model" in cache.files else ""
+        cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
+        if cached_model != MODEL_NAME or cached_fields != TEXT_FIELDS:
+            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
+                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
+            return {}, {}
+        cached_keys = cache["keys"]
+        cached_vecs = cache["vectors"]
+        cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
+        kvec = dict(zip(cached_keys, cached_vecs))
+        khash = dict(zip(cached_keys, cached_hashes)) if cached_hashes is not None else {}
+        return kvec, khash
 
     key_to_vec = {}   # key → vector
     key_to_hash = {}  # key → text hash (to detect content changes)
-    if os.path.exists(EMBEDDINGS_PATH):
-        cache = np.load(EMBEDDINGS_PATH, allow_pickle=True)
-        cached_model = str(cache["model"]) if "model" in cache.files else ""
-        cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
-        if cached_model == MODEL_NAME and cached_fields == TEXT_FIELDS:
-            cached_keys = cache["keys"]
-            cached_vecs = cache["vectors"]
-            cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
-            key_to_vec = dict(zip(cached_keys, cached_vecs))
-            if cached_hashes is not None:
-                key_to_hash = dict(zip(cached_keys, cached_hashes))
+    if os.path.exists(EMBEDDINGS_CACHE_PATH):
+        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_CACHE_PATH)
+        if key_to_vec:
             log.info("Loaded %d cached embeddings (model: %s, fields: %s)",
                      len(key_to_vec), MODEL_NAME, TEXT_FIELDS)
-        else:
-            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
-                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
+    elif os.path.exists(EMBEDDINGS_PATH):
+        # Migration: old pattern stored cache in the DVC output itself
+        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_PATH)
+        if key_to_vec:
+            log.info("Migrated %d cached embeddings from DVC output → enrich_cache/",
+                     len(key_to_vec))
     elif os.path.exists(legacy_path):
         log.info("Found legacy %s, will migrate to .npz (full recompute)", legacy_path)
     else:
@@ -145,16 +164,21 @@ def main():
     if n_new > 0:
         embeddings[~hit_mask] = new_vecs
 
-    # Save cache
-    np.savez_compressed(
-        EMBEDDINGS_PATH,
+    # Save incremental cache (survives DVC re-runs)
+    os.makedirs(EMBEDDINGS_CACHE_DIR, exist_ok=True)
+    cache_arrays = dict(
         vectors=embeddings,
         keys=keys,
         text_hashes=thashes,
         model=np.array(MODEL_NAME),
         text_fields=np.array(TEXT_FIELDS),
     )
-    log.info("Saved %d embeddings → %s", len(embeddings), EMBEDDINGS_PATH)
+    np.savez_compressed(EMBEDDINGS_CACHE_PATH, **cache_arrays)
+    log.info("Saved %d embeddings cache → %s", len(embeddings), EMBEDDINGS_CACHE_PATH)
+
+    # Save DVC output (ephemeral — may be deleted on next DVC repro)
+    np.savez_compressed(EMBEDDINGS_PATH, **cache_arrays)
+    log.info("Saved %d embeddings output → %s", len(embeddings), EMBEDDINGS_PATH)
 
     # Clean up legacy file
     if os.path.exists(legacy_path):
