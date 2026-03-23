@@ -435,3 +435,110 @@ class TestDvcYamlIntegration:
         assert "build_teaching_canon.py" in cmd
         # yaml must come before canon
         assert cmd.index("build_teaching_yaml.py") < cmd.index("build_teaching_canon.py")
+
+
+class TestFuzzyTitleDedup:
+    """Tests for fuzzy title grouping in build_teaching_yaml.py."""
+
+    def test_fuzzy_title_groups(self, tmp_path):
+        """Variant titles for the same work should aggregate their course counts.
+
+        Given titles that are clearly the same work but with different phrasing
+        (edition years, word reordering), fuzzy dedup should group them so their
+        combined n_courses passes the filter threshold (>= MIN_COURSES_NO_DOI).
+        """
+        from build_teaching_yaml import load_scraped
+
+        # Three variant titles for the CPI Global Landscape report, each
+        # from a different course.  Without fuzzy dedup: each has n_courses=1,
+        # all filtered out (need >= 3).  With fuzzy dedup: they merge into
+        # one group with n_courses=3, passing the filter.
+        rows = [
+            {"doi": "", "title": "Global Landscape of Climate Finance 2021",
+             "authors": "CPI", "year": 2021,
+             "journal_or_publisher": "CPI", "type": "report",
+             "courses": "Climate Economics 101",
+             "institutions": "Uni A", "countries": "UK",
+             "n_courses": 1, "in_corpus": False},
+            {"doi": "", "title": "Global landscape of climate finance in 2019",
+             "authors": "CPI", "year": 2019,
+             "journal_or_publisher": "CPI", "type": "report",
+             "courses": "Environmental Finance",
+             "institutions": "Uni B", "countries": "France",
+             "n_courses": 1, "in_corpus": False},
+            {"doi": "",
+             "title": "Global Landscape of Climate Finance: A Decade of Data",
+             "authors": "CPI", "year": 2023,
+             "journal_or_publisher": "CPI", "type": "report",
+             "courses": "Green Finance Masters",
+             "institutions": "Uni C", "countries": "Germany",
+             "n_courses": 1, "in_corpus": False},
+        ]
+
+        cols = ["doi", "title", "authors", "year", "journal_or_publisher",
+                "type", "courses", "institutions", "countries", "n_courses",
+                "in_corpus"]
+        df = pd.DataFrame(rows, columns=cols)
+        csv_path = str(tmp_path / "reading_lists.csv")
+        df.to_csv(csv_path, index=False)
+
+        records = load_scraped(csv_path)
+        # All three variants should survive the filter (aggregated n_courses >= 3)
+        assert len(records) >= 3, (
+            f"Expected >= 3 records from fuzzy-grouped CPI report variants, "
+            f"got {len(records)}"
+        )
+
+    def test_fuzzy_groups_function(self):
+        """fuzzy_title_groups should cluster similar titles together."""
+        from build_teaching_yaml import fuzzy_title_groups
+
+        titles = [
+            "Global Landscape of Climate Finance 2021",
+            "Global landscape of climate finance in 2019",
+            "Global Landscape of Climate Finance: A Decade of Data",
+            "Principles of Sustainable Finance",
+            "Principes de la finance durable",  # translation — should NOT match
+        ]
+        groups = fuzzy_title_groups(titles)
+
+        # The three CPI Global Landscape variants should be in the same group
+        cpi_group = groups[0]
+        assert groups[1] == cpi_group, "CPI 2019 edition should group with 2021"
+        assert groups[2] == cpi_group, "CPI Decade edition should group with 2021"
+
+        # The French translation is too different — should be a separate group
+        assert groups[3] != cpi_group, "Unrelated title should not group with CPI"
+
+    def test_fuzzy_dedup_does_not_over_merge(self):
+        """Genuinely different works should remain separate groups."""
+        from build_teaching_yaml import fuzzy_title_groups
+
+        titles = [
+            "Climate Change 2022: Mitigation of Climate Change",
+            "Climate Change 2014: Mitigation of Climate Change",
+            "Global Landscape of Climate Finance 2021",
+            "Principles of Sustainable Finance",
+        ]
+        groups = fuzzy_title_groups(titles)
+        # The two IPCC reports (2022 vs 2014) are similar enough to merge
+        # (same series, different edition)
+        assert groups[0] == groups[1], "Same-series IPCC reports should merge"
+        # Unrelated titles should not merge with each other
+        assert groups[2] != groups[0], "CPI report should not merge with IPCC"
+        assert groups[3] != groups[0], "Sustainable finance should not merge with IPCC"
+        assert groups[2] != groups[3], "CPI should not merge with sustainable finance"
+
+    def test_fuzzy_skips_short_titles(self):
+        """Very short titles (< 4 words) should not participate in fuzzy matching."""
+        from build_teaching_yaml import fuzzy_title_groups
+
+        titles = [
+            "Climate Change",          # Too short — would match everything
+            "Climate Change 2022: Mitigation of Climate Change",
+            "The Economics of Climate Change",
+        ]
+        groups = fuzzy_title_groups(titles)
+        # "Climate Change" is too short to fuzzy-match anything
+        assert groups[0] != groups[1], "Short generic title should not merge with IPCC"
+        assert groups[0] != groups[2], "Short generic title should not merge with Nordhaus"

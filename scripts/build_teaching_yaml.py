@@ -35,6 +35,8 @@ MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (>=3 syllabi)
 MIN_READINGS_DETAILED = 20  # Courses with >=20 DOI readings are "detailed syllabi"
 OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
 MIN_SHARED_READINGS = 10  # Require >=10 shared readings to consider dedup
+FUZZY_THRESHOLD = 75  # rapidfuzz token_sort_ratio threshold for title grouping
+FUZZY_MIN_WORDS = 4   # titles shorter than this skip fuzzy matching (too generic)
 
 
 def _clean(val):
@@ -91,6 +93,132 @@ def _infer_region(countries_str):
     if not regions or len(regions) > 1:
         return "Global"
     return regions.pop()
+
+
+def fuzzy_title_groups(titles, threshold=FUZZY_THRESHOLD,
+                       min_words=FUZZY_MIN_WORDS):
+    """Group similar titles using rapidfuzz token_sort_ratio.
+
+    Returns a list of group IDs (ints), one per input title. Titles that
+    match above *threshold* share the same group ID. Uses single-linkage
+    clustering: if A matches B and B matches C, all three are in one group,
+    even if A and C don't directly match.
+
+    Titles with fewer than *min_words* words are excluded from fuzzy
+    matching to avoid false positives from short generic phrases like
+    "Climate Change" matching many longer titles.
+
+    Token sort ratio is symmetric and handles word reordering, making it
+    effective for edition variants ("Global Landscape of Climate Finance
+    2021" vs "Global landscape of climate finance in 2019").
+    """
+    from rapidfuzz.fuzz import token_sort_ratio
+
+    n = len(titles)
+    # Union-Find for single-linkage clustering
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    # Compare all pairs — O(n^2) but n is small (~900 title-only readings)
+    normalized = [t.lower().strip() for t in titles]
+    word_counts = [len(t.split()) for t in normalized]
+    for i in range(n):
+        if not normalized[i] or word_counts[i] < min_words:
+            continue
+        for j in range(i + 1, n):
+            if not normalized[j] or word_counts[j] < min_words:
+                continue
+            score = token_sort_ratio(normalized[i], normalized[j])
+            if score >= threshold:
+                union(i, j)
+
+    return [find(i) for i in range(n)]
+
+
+def _fuzzy_dedup_title_only(df):
+    """Merge title-only rows with fuzzy-matching titles.
+
+    For rows without DOIs, group similar titles using fuzzy matching,
+    then merge their course lists and recompute n_courses. This lets
+    variant titles ("The Stern Review" vs "The Economics of Climate
+    Change: The Stern Review") aggregate their course counts.
+
+    Returns a new DataFrame with merged rows.
+    """
+    has_doi = df["doi"].notna() & (df["doi"].str.strip() != "")
+    doi_rows = df[has_doi].copy()
+    nodoi_rows = df[~has_doi].copy()
+
+    if nodoi_rows.empty:
+        return df
+
+    titles = nodoi_rows["title"].fillna("").tolist()
+    groups = fuzzy_title_groups(titles)
+    nodoi_rows["_fuzzy_group"] = groups
+
+    # Merge rows within each fuzzy group
+    merged_rows = []
+    for _group_id, group_df in nodoi_rows.groupby("_fuzzy_group"):
+        if len(group_df) == 1:
+            row = group_df.iloc[0].to_dict()
+            row.pop("_fuzzy_group", None)
+            merged_rows.append(row)
+            continue
+
+        # Pick the longest title as representative (most informative)
+        rep_idx = group_df["title"].str.len().idxmax()
+        merged = group_df.loc[rep_idx].to_dict()
+
+        # Merge course lists from all rows in the group
+        all_courses = set()
+        all_institutions = set()
+        all_countries = set()
+        for _, row in group_df.iterrows():
+            for c in str(row.get("courses", "")).split(";"):
+                c = c.strip()
+                if c:
+                    all_courses.add(c)
+            for inst in str(row.get("institutions", "")).split(";"):
+                inst = inst.strip()
+                if inst:
+                    all_institutions.add(inst)
+            for country in str(row.get("countries", "")).split(";"):
+                country = country.strip()
+                if country:
+                    all_countries.add(country)
+
+        merged["courses"] = " ; ".join(sorted(all_courses))
+        merged["institutions"] = " ; ".join(sorted(all_institutions))
+        merged["countries"] = " ; ".join(sorted(all_countries))
+        merged["n_courses"] = len(all_courses)
+        merged.pop("_fuzzy_group", None)
+        merged_rows.append(merged)
+
+        if len(group_df) > 1:
+            sample_titles = group_df["title"].tolist()[:3]
+            log.info("  Fuzzy merge (%d variants, %d courses): %s",
+                     len(group_df), len(all_courses),
+                     " | ".join(t[:40] for t in sample_titles))
+
+    merged_df = pd.DataFrame(merged_rows)
+    result = pd.concat([doi_rows, merged_df], ignore_index=True)
+
+    n_merged = len(nodoi_rows) - len(merged_rows)
+    if n_merged > 0:
+        log.info("  Fuzzy title dedup: merged %d title-only variants into %d groups",
+                 len(nodoi_rows), len(merged_rows))
+
+    return result
 
 
 def _dedup_course_names(df):
@@ -193,6 +321,11 @@ def load_scraped(csv_path):
 
     # Clean DOIs: strip URL prefixes (https://doi.org/..., publisher URLs)
     df["doi"] = df["doi"].apply(lambda x: clean_doi(x) if pd.notna(x) else "")
+
+    # Fuzzy dedup title-only readings before course dedup and filtering.
+    # Variant titles ("The Stern Review" vs "The Economics of Climate Change:
+    # The Stern Review") are merged so their course counts aggregate.
+    df = _fuzzy_dedup_title_only(df)
 
     df = _dedup_course_names(df)
 
