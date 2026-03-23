@@ -6,7 +6,7 @@ Five-stage pipeline:
   2. fetch    — Download page content (HTML/PDF)
   3. classify — LLM classifies pages as syllabi or not
   4. extract  — LLM extracts bibliographic references
-  5. normalize — Deduplicate + enrich via CrossRef
+  5. normalize — Deduplicate + enrich via OpenAlex (cached)
 
 Each stage reads the previous stage's output and writes JSONL checkpoints.
 Interruptible: re-run any stage to resume from checkpoint.
@@ -35,6 +35,7 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
+from enrich_dois import find_doi
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
 from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
                    get_logger, normalize_title, polite_get, save_csv)
@@ -504,6 +505,9 @@ def stage_classify():
         log.error("Neither OLLAMA nor OPENROUTER_API_KEY available.")
         sys.exit(1)
 
+    classify_model = os.environ.get("CLASSIFY_MODEL") or os.environ.get(
+        "OPENROUTER_MODEL", "google/gemma-2-27b-it")
+
     pages = load_jsonl(PAGES_PATH)
     pages_with_text = [p for p in pages if p.get("text") and not p.get("error")]
 
@@ -514,8 +518,8 @@ def stage_classify():
     # Ollama: limit concurrency to avoid GPU contention; OpenRouter: go wide
     ollama_mode = os.environ.get("OLLAMA_MODEL") is not None or _ollama_available()
     max_workers = 2 if (ollama_mode and not os.environ.get("OLLAMA_MODEL") == "") else 20
-    log.info("Classify: %d already done, %d pending, %d workers",
-             len(done_urls), len(pending), max_workers)
+    log.info("Classify: %d already done, %d pending, %d workers (model=%s)",
+             len(done_urls), len(pending), max_workers, classify_model)
 
     counter = {"done": 0}
     counter_lock = threading.Lock()
@@ -525,7 +529,7 @@ def stage_classify():
         text_snippet = page["text"][:2000]
 
         prompt = CLASSIFY_PROMPT.format(text=text_snippet)
-        response = llm_call(prompt, api_key)
+        response = llm_call(prompt, api_key, model=classify_model)
 
         rec = {
             "url": url,
@@ -602,6 +606,9 @@ def stage_extract():
         log.error("Neither OLLAMA nor OPENROUTER_API_KEY available.")
         sys.exit(1)
 
+    extract_model = os.environ.get("EXTRACT_MODEL") or os.environ.get(
+        "OPENROUTER_MODEL", "google/gemma-2-27b-it")
+
     classified = load_jsonl(CLASSIFIED_PATH)
     syllabi = [c for c in classified if c["is_syllabus"] and c["has_reading_list"]]
 
@@ -615,8 +622,8 @@ def stage_extract():
     pending = [s for s in syllabi if s["url"] not in done_urls]
     ollama_mode = os.environ.get("OLLAMA_MODEL") is not None or _ollama_available()
     max_workers = 2 if (ollama_mode and not os.environ.get("OLLAMA_MODEL") == "") else 10
-    log.info("Extract: %d already done, %d pending, %d workers",
-             len(done_urls), len(pending), max_workers)
+    log.info("Extract: %d already done, %d pending, %d workers (model=%s)",
+             len(done_urls), len(pending), max_workers, extract_model)
 
     total_refs_lock = threading.Lock()
     total_refs = [0]
@@ -642,7 +649,7 @@ def stage_extract():
 
         for chunk in chunks:
             prompt = EXTRACT_PROMPT.format(text=chunk)
-            response = llm_call(prompt, api_key, max_tokens=4000)
+            response = llm_call(prompt, api_key, model=extract_model, max_tokens=4000)
 
             parsed = extract_json_from_text(response)
             if parsed and isinstance(parsed, list):
@@ -697,43 +704,8 @@ def stage_extract():
 # Stage 5: Normalize
 # ============================================================
 
-def crossref_lookup(title, authors=""):
-    """Look up a reference on CrossRef by title. Returns DOI or empty string."""
-    query = title
-    authors = str(authors) if authors and authors == authors else ""  # handle NaN
-    if authors:
-        first_author = authors.split(",")[0].split(";")[0].strip()
-        if first_author:
-            query = f"{first_author} {title}"
-
-    try:
-        resp = polite_get(
-            "https://api.crossref.org/works",
-            params={"query": query[:200], "rows": 1},
-            delay=0.3,
-        )
-        data = resp.json()
-        items = data.get("message", {}).get("items", [])
-        if items:
-            item = items[0]
-            cr_title = " ".join(item.get("title", []))
-            # Check title similarity
-            if normalize_title(cr_title) == normalize_title(title):
-                return item.get("DOI", "")
-            # Looser match: check if most words overlap
-            t1_words = set(normalize_title(title).split())
-            t2_words = set(normalize_title(cr_title).split())
-            if t1_words and t2_words:
-                overlap = len(t1_words & t2_words) / max(len(t1_words), 1)
-                if overlap > 0.7:
-                    return item.get("DOI", "")
-    except Exception as e:
-        log.warning("CrossRef error: %s", e)
-    return ""
-
-
 def stage_normalize():
-    """Deduplicate and enrich references via CrossRef."""
+    """Deduplicate and enrich references via OpenAlex (cached)."""
     extracted = load_jsonl(REFERENCES_PATH)
 
     # Flatten all references with course metadata
@@ -763,18 +735,18 @@ def stage_normalize():
     df = pd.DataFrame(flat)
     df["title_norm"] = df["title"].apply(normalize_title)
 
-    # CrossRef DOI lookup for references without DOIs
+    # DOI lookup via OpenAlex (cached) for references without DOIs
     no_doi = df[df["doi"] == ""]
-    log.info("%d references without DOIs, looking up on CrossRef...", len(no_doi))
+    log.info("%d references without DOIs, resolving via OpenAlex...", len(no_doi))
 
     lookup_count = 0
     for idx in no_doi.index:
         title = df.at[idx, "title"]
-        authors = df.at[idx, "authors"]
+        year = df.at[idx, "year"]
         if not title or len(title) < 10:
             continue
 
-        doi = crossref_lookup(title, authors)
+        doi = find_doi(title, year)
         if doi:
             df.at[idx, "doi"] = doi.lower()
             lookup_count += 1
@@ -785,7 +757,7 @@ def stage_normalize():
             log.info("... %d/%d looked up, %d DOIs found",
                      idx + 1, len(no_doi), lookup_count)
 
-    log.info("CrossRef: found %d DOIs", lookup_count)
+    log.info("OpenAlex: found %d DOIs", lookup_count)
 
     # Deduplicate: group by DOI (if available) or normalized title
     df["dedup_key"] = df.apply(
