@@ -62,7 +62,7 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 | ISTEX | Automated (public API) | French national archive (Springer, Elsevier, Wiley) |
 | Grey literature | Hybrid (curated seed + World Bank API) | 16 curated reports (OECD, UNFCCC, CPI, UN) + World Bank repository |
 | Teaching canon | AI-assisted (scraping + LLM extraction) | Syllabus readings from university courses worldwide |
-| bibCNRS | Hand-harvested (CNRS credentials) | Non-English literature (FR, ZH, JA) via WoS/EconLit |
+| bibCNRS | Hand-harvested (CNRS credentials) | Non-English news & grey sources (Gale, Wanfang, NewsBank) in FR, ZH, JA, DE |
 | SciSpace | AI-collected, hand-exported | SciSpace systematic review tool exports |
 
 : Sources, automation level, and coverage scope. {#tbl-sources}

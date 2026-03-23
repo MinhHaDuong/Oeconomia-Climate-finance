@@ -32,7 +32,7 @@ SOURCE_META = {
     },
     "bibcnrs": {
         "label": "bibCNRS",
-        "query": "FR, ZH, JA queries via WoS/EconLit/FRANCIS (CNRS portal)",
+        "query": "FR, ZH, JA, DE queries via Gale/Wanfang/NewsBank (CNRS legacy portal)",
     },
     "scispsace": {
         "label": "SciSpace",
