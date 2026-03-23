@@ -42,7 +42,10 @@ from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
 log = get_logger("collect_syllabi")
 
 # --- Constants ---
-# No text truncation — make_chunks() handles splitting for LLM calls
+# No text truncation — make_chunks() handles splitting for LLM calls.
+# Tested: 20K chunks cause 0 extractions with gemma-2-27b-it on dense
+# bibliographies (Harvard FECS). 8K works. Model-dependent — recalibrate
+# if switching models (see #289).
 CHUNK_SIZE = 8000       # ~2K tokens per chunk — proven to work with gemma-2-27b-it
 CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
 MAX_TEXT_CHARS = 500000 # Skip pages over 500K chars (misclassified books/reports, not syllabi)
@@ -652,7 +655,10 @@ def stage_extract():
                             counter["done"], len(pending), url[:60], len(text))
             return
 
-        # Pass 1: regex DOI extraction — catches all explicit DOIs in text
+        # Pass 1: regex DOI extraction — catches all explicit DOIs in text.
+        # Essential: LLM (gemma-2-27b-it) only extracts ~24% of DOIs visible
+        # in PDF text (tested on Harvard FECS: 22/92). Regex catches 100%.
+        # The LLM is still needed for title-only references without DOIs.
         regex_dois = set()
         for m in re.finditer(r'(10\.\d{4,}/[^\s,);]+)', text):
             doi = clean_doi(m.group(1).rstrip('.'))
@@ -823,7 +829,13 @@ def stage_normalize():
     df = pd.DataFrame(flat)
     df["title_norm"] = df["title"].apply(normalize_title)
 
-    # DOI lookup via CrossRef (cached) for references without DOIs
+    # DOI lookup: CrossRef primary, OpenAlex fallback.
+    # CrossRef is better for bibliographic title matching (~33% hit rate).
+    # OpenAlex search= queries title+abstract+fulltext, which returns wrong
+    # matches for short titles. Tried: appending author to OpenAlex search
+    # (broke results), year filter (excluded correct matches with date
+    # mismatch). Title-only search with similarity threshold works best.
+    # CrossRef cached in JSONL (append-only), OpenAlex via find_doi() cache.
     no_doi = df[df["doi"] == ""]
     log.info("%d references without DOIs, looking up on CrossRef...", len(no_doi))
 
