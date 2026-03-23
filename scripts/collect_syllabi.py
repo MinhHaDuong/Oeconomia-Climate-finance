@@ -42,8 +42,9 @@ from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
 log = get_logger("collect_syllabi")
 
 # --- Constants ---
-TEXT_LIMIT = 200000  # Max chars from PDF text (200KB covers Harvard FECS 12-class structure)
-CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
+# No text truncation — make_chunks() handles splitting for LLM calls
+CHUNK_SIZE = 20000      # ~5K tokens per chunk — fits any 8K+ context model
+CHUNK_OVERLAP = 1000    # Overlap between chunks to avoid splitting references at boundaries
 
 # --- Paths ---
 SYLLABI_DIR = os.path.join(DATA_DIR, "syllabi")
@@ -101,10 +102,10 @@ def extract_pdf_text(pdf_path, page_cap=50):
             t = page.extract_text()
             if t:
                 text_parts.append(t)
-    return "\n\n".join(text_parts)[:TEXT_LIMIT]
+    return "\n\n".join(text_parts)
 
 
-def make_chunks(text, chunk_size=8000, overlap=None):
+def make_chunks(text, chunk_size=CHUNK_SIZE, overlap=None):
     """Split text into overlapping chunks for LLM extraction.
 
     Overlap prevents references from being split across chunk boundaries.
@@ -384,7 +385,7 @@ def _fetch_one(url):
             for tag in soup(["script", "style", "nav", "footer", "header"]):
                 tag.decompose()
             text = soup.get_text(separator="\n", strip=True)
-            page_rec["text"] = text[:TEXT_LIMIT]
+            page_rec["text"] = text
             page_rec["content_type"] = "text/html"
 
     except Exception as e:
@@ -644,7 +645,7 @@ def stage_extract():
 
         # For long texts, chunk with overlap to avoid splitting references
         all_refs = []
-        chunks = make_chunks(text, chunk_size=8000)
+        chunks = make_chunks(text)
 
         for chunk in chunks:
             prompt = EXTRACT_PROMPT.format(text=chunk)
