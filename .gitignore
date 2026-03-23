@@ -52,3 +52,6 @@ output/
 
 # Claude Code config
 .claude/
+
+/.quarto/
+_variables.yml
