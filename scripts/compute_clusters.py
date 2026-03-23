@@ -48,8 +48,14 @@ parser.add_argument("--v1-only", action="store_true",
 args = parser.parse_args()
 
 # Output naming depends on mode
-TAB_AL = "tab_alluvial_core.csv" if args.core_only else "tab_alluvial.csv"
-LABEL_FILE = "cluster_labels_core.json" if args.core_only else "cluster_labels.json"
+if args.core_only:
+    _suffix = "_core"
+elif args.v1_only:
+    _suffix = "_v1"
+else:
+    _suffix = ""
+TAB_AL = f"tab_alluvial{_suffix}.csv"
+LABEL_FILE = f"cluster_labels{_suffix}.json"
 
 
 # ============================================================
@@ -160,8 +166,9 @@ if not args.core_only:
     for c in alluvial_data.columns:
         if c not in core_crosstab.columns:
             core_crosstab[c] = 0
-    core_crosstab.to_csv(os.path.join(TABLES_DIR, "tab_core_shares.csv"))
-    log.info("Saved core shares table -> tables/tab_core_shares.csv")
+    core_shares_file = f"tab_core_shares{_suffix}.csv"
+    core_crosstab.to_csv(os.path.join(TABLES_DIR, core_shares_file))
+    log.info("Saved core shares table -> tables/%s", core_shares_file)
 
 
 # ============================================================

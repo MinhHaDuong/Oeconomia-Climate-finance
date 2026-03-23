@@ -41,6 +41,13 @@ def main():
     csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     usecols = ["year", "title", "abstract"]
     if args.v1_only:
+        # Check column exists before loading
+        header = pd.read_csv(csv_path, nrows=0).columns
+        if "in_v1" not in header:
+            raise RuntimeError(
+                "--v1-only requires 'in_v1' column in refined_works.csv. "
+                "Re-run: uv run python scripts/corpus_filter.py --apply"
+            )
         usecols.append("in_v1")
     df = pd.read_csv(csv_path, usecols=usecols, dtype={"year": "Int64"})
     if args.v1_only:

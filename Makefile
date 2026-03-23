@@ -242,10 +242,10 @@ content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py sc
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf --v1-only
 
-# Fig 2 (composition): thematic clusters across periods — uses v1 clustering
+# Fig 2 (composition): thematic clusters across periods — v1 clustering for manuscript
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
-		content/tables/tab_alluvial.csv
-	uv run python $< --no-pdf
+		content/tables/tab_alluvial_v1.csv content/tables/cluster_labels_v1.json
+	uv run python $< --no-pdf --alluvial content/tables/tab_alluvial_v1.csv --labels content/tables/cluster_labels_v1.json
 
 # -- Data paper --
 # Semantic UMAP maps (3 co-produced figures)
@@ -259,10 +259,15 @@ content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv 
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Clustering + alluvial flow tables (independent of break detection)
-# --v1-only ensures manuscript cluster labels match submission
+# Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
+		scripts/compute_clusters.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+# Clustering — v1 subset only (manuscript stability)
+content/tables/tab_alluvial_v1.csv content/tables/cluster_labels_v1.json \
+content/tables/tab_core_shares_v1.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf --v1-only
 
