@@ -435,3 +435,92 @@ class TestDvcYamlIntegration:
         assert "build_teaching_canon.py" in cmd
         # yaml must come before canon
         assert cmd.index("build_teaching_yaml.py") < cmd.index("build_teaching_canon.py")
+
+
+class TestFuzzyTitleDedup:
+    """Tests for fuzzy title grouping in build_teaching_yaml.py."""
+
+    def test_fuzzy_title_groups(self, tmp_path):
+        """Variant titles for the same work should aggregate their course counts.
+
+        Given titles that are clearly the same work but with different phrasing,
+        fuzzy dedup should group them so their combined n_courses passes the
+        filter threshold (>= MIN_COURSES_NO_DOI).
+        """
+        from build_teaching_yaml import load_scraped
+
+        # Three variant titles for the Stern Review, each from a different course.
+        # Without fuzzy dedup: each has n_courses=1, all filtered out (need >=3).
+        # With fuzzy dedup: they merge → n_courses=3, passes the filter.
+        rows = [
+            {"doi": "", "title": "The Stern Review",
+             "authors": "Stern", "year": 2006,
+             "journal_or_publisher": "", "type": "report",
+             "courses": "Climate Economics 101",
+             "institutions": "Uni A", "countries": "UK",
+             "n_courses": 1, "in_corpus": False},
+            {"doi": "", "title": "The Economics of Climate Change: The Stern Review",
+             "authors": "Stern", "year": 2006,
+             "journal_or_publisher": "", "type": "report",
+             "courses": "Environmental Finance",
+             "institutions": "Uni B", "countries": "France",
+             "n_courses": 1, "in_corpus": False},
+            {"doi": "", "title": "stern review economics climate change",
+             "authors": "Stern", "year": 2006,
+             "journal_or_publisher": "", "type": "report",
+             "courses": "Green Finance Masters",
+             "institutions": "Uni C", "countries": "Germany",
+             "n_courses": 1, "in_corpus": False},
+        ]
+
+        cols = ["doi", "title", "authors", "year", "journal_or_publisher",
+                "type", "courses", "institutions", "countries", "n_courses",
+                "in_corpus"]
+        df = pd.DataFrame(rows, columns=cols)
+        csv_path = str(tmp_path / "reading_lists.csv")
+        df.to_csv(csv_path, index=False)
+
+        records = load_scraped(csv_path)
+        # All three variants should survive the filter (aggregated n_courses >= 3)
+        assert len(records) >= 3, (
+            f"Expected >= 3 records from fuzzy-grouped Stern Review variants, "
+            f"got {len(records)}"
+        )
+
+    def test_fuzzy_groups_function(self):
+        """fuzzy_title_groups should cluster similar titles together."""
+        from build_teaching_yaml import fuzzy_title_groups
+
+        titles = [
+            "The Stern Review",
+            "The Economics of Climate Change: The Stern Review",
+            "stern review economics climate change",
+            "Principles of Sustainable Finance",
+            "Principes de la finance durable",  # translation — should NOT match
+        ]
+        groups = fuzzy_title_groups(titles)
+
+        # The three Stern Review variants should be in the same group
+        stern_group = groups[0]  # group of "The Stern Review"
+        assert groups[1] == stern_group, "Stern Review full title should group with short title"
+        assert groups[2] == stern_group, "Stern Review normalized should group with short title"
+
+        # The French translation is too different — should be a separate group
+        assert groups[3] != stern_group, "Unrelated title should not group with Stern Review"
+
+    def test_fuzzy_dedup_does_not_over_merge(self):
+        """Genuinely different works should remain separate groups."""
+        from build_teaching_yaml import fuzzy_title_groups
+
+        titles = [
+            "Climate Change 2022: Mitigation of Climate Change",
+            "Climate Change 2014: Mitigation of Climate Change",
+            "The Economics of Climate Change",
+            "Global Landscape of Climate Finance 2021",
+        ]
+        groups = fuzzy_title_groups(titles)
+        # The two IPCC reports (2022 vs 2014) are similar enough to merge
+        # (same series, different edition)
+        assert groups[0] == groups[1], "Same-series IPCC reports should merge"
+        # "The Economics of Climate Change" is distinct
+        assert groups[2] != groups[3], "Unrelated titles should not merge"
