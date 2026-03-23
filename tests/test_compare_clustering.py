@@ -89,13 +89,16 @@ class TestClusterMethods:
 
         # Each method vs ground truth — should be very high on clean blobs
         assert adjusted_rand_score(true, km) > 0.9
-        # HDBSCAN: compare only non-noise points
+        # HDBSCAN: compare only non-noise points (must find most of them)
         non_noise = [i for i in range(len(hdb)) if hdb[i] >= 0]
-        if len(non_noise) > 50:
-            assert adjusted_rand_score(
-                [true[i] for i in non_noise],
-                [hdb[i] for i in non_noise]
-            ) > 0.9
+        assert len(non_noise) > 50, (
+            f"HDBSCAN should cluster most well-separated points, "
+            f"got {len(non_noise)} non-noise out of {len(hdb)}"
+        )
+        assert adjusted_rand_score(
+            [true[i] for i in non_noise],
+            [hdb[i] for i in non_noise]
+        ) > 0.9
         assert adjusted_rand_score(true, sp) > 0.9
 
 
@@ -181,3 +184,42 @@ class TestMultiSpace:
         assert X.shape[0] == 40
         assert X.shape[1] <= 100
         assert len(valid_idx) == 40
+
+    def test_citation_space(self, tmp_path):
+        from compare_clustering import build_citation_space
+        # 6 works: A,B cite refs 1,2; C,D cite refs 2,3; E,F cite ref 4
+        # → A-B coupled, C-D coupled, E-F coupled (3 groups)
+        df = pd.DataFrame({
+            "doi": ["10.1/a", "10.1/b", "10.1/c", "10.1/d", "10.1/e", "10.1/f"],
+            "title": ["A", "B", "C", "D", "E", "F"],
+        })
+        cit_path = tmp_path / "citations.csv"
+        cit_path.write_text(
+            "source_doi,ref_doi\n"
+            "10.1/a,10.99/r1\n10.1/a,10.99/r2\n"
+            "10.1/b,10.99/r1\n10.1/b,10.99/r2\n"
+            "10.1/c,10.99/r2\n10.1/c,10.99/r3\n"
+            "10.1/d,10.99/r2\n10.1/d,10.99/r3\n"
+            "10.1/e,10.99/r4\n"
+            "10.1/f,10.99/r4\n"
+        )
+        X, valid_idx = build_citation_space(df, citations_path=str(cit_path))
+        assert X is not None
+        assert len(X) == len(valid_idx)
+        assert len(valid_idx) <= 6
+        # Vectors should be L2-normalized
+        norms = np.linalg.norm(X, axis=1)
+        np.testing.assert_allclose(norms, 1.0, atol=1e-6)
+
+    def test_spectral_subsampling_preserves_sample_labels(self):
+        """Spectral subsampling: sample points keep spectral labels."""
+        from compare_clustering import cluster_spectral
+        rng = np.random.RandomState(42)
+        # Create 3 well-separated blobs with enough points to trigger subsampling
+        centers = [rng.randn(5) * 10 for _ in range(3)]
+        X = np.vstack([c + rng.randn(20, 5) * 0.3 for c in centers])
+        labels = cluster_spectral(X, k=3, random_state=42, max_n=30)
+        assert len(labels) == 60
+        assert len(set(labels)) == 3
+        # All 60 points should be assigned (no -1 or uninitialized)
+        assert all(0 <= l < 3 for l in labels)

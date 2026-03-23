@@ -95,9 +95,10 @@ def cluster_spectral(X, k=6, random_state=42, max_n=5000):
         )
         return sc.fit_predict(X)
 
-    # Subsample + assign remaining via nearest centroid
+    # Subsample + assign out-of-sample via nearest centroid
     rng = np.random.RandomState(random_state)
     sample_idx = rng.choice(n, max_n, replace=False)
+    sample_set = set(sample_idx)
     X_sample = X[sample_idx]
 
     sc = SpectralClustering(
@@ -109,10 +110,19 @@ def cluster_spectral(X, k=6, random_state=42, max_n=5000):
     )
     sample_labels = sc.fit_predict(X_sample)
 
-    # Compute centroids from sample, assign all points
+    # Compute centroids, assign only out-of-sample points
     centroids = np.array([X_sample[sample_labels == c].mean(axis=0)
                           for c in range(k)])
-    all_labels, _ = pairwise_distances_argmin_min(X, centroids)
+    oos_idx = np.array([i for i in range(n) if i not in sample_set])
+    oos_labels, _ = pairwise_distances_argmin_min(X[oos_idx], centroids)
+
+    all_labels = np.empty(n, dtype=int)
+    # Preserve spectral labels for sampled points
+    for pos, orig_i in enumerate(sample_idx):
+        all_labels[orig_i] = sample_labels[pos]
+    # Assign nearest-centroid labels for out-of-sample
+    for pos, orig_i in enumerate(oos_idx):
+        all_labels[orig_i] = oos_labels[pos]
     return all_labels
 
 
@@ -567,9 +577,13 @@ def build_citation_space(df, citations_path=None):
     cit["source_doi"] = cit["source_doi"].str.lower()
     cit["ref_doi"] = cit["ref_doi"].str.lower()
 
-    # Map corpus DOIs to indices
+    # Map corpus DOIs to indices (exclude empty strings)
     doi_lower = df["doi"].fillna("").str.lower()
-    corpus_dois = set(doi_lower)
+    doi_to_df_idx = {}
+    for i, d in enumerate(doi_lower):
+        if d:  # skip empty DOIs
+            doi_to_df_idx[d] = i
+    corpus_dois = set(doi_to_df_idx.keys())
     # Only keep citations from corpus works
     cit = cit[cit["source_doi"].isin(corpus_dois)]
 
@@ -596,28 +610,34 @@ def build_citation_space(df, citations_path=None):
     svd = TruncatedSVD(n_components=n_components, random_state=42)
     X_coupling = svd.fit_transform(coupling)
     explained = svd.explained_variance_ratio_.sum()
-    log.info("Citation SVD: %d components explain %.1f%% of variance",
+    log.info("Citation SVD: %d components explain %.1f%% of variance "
+             "(high value reflects matrix sparsity, not rich structure)",
              n_components, explained * 100)
 
     # L2 normalize to prevent hub-dominated outlier clusters
     norms = np.linalg.norm(X_coupling, axis=1, keepdims=True)
     non_zero = norms.flatten() > 1e-10
-    X_coupling = np.where(norms > 1e-10, X_coupling / norms, 0)
 
-    # Map back to df indices — keep only non-zero-norm works
-    doi_to_df_idx = {d: i for i, d in enumerate(doi_lower)}
-    all_valid = [doi_to_df_idx[d] for d in sources if d in doi_to_df_idx]
-    source_order = [source_to_idx[doi_lower.iloc[i]]
-                    for i in all_valid if doi_lower.iloc[i] in source_to_idx]
-    X_coupling = X_coupling[source_order]
-    keep = non_zero[source_order]
-    valid_idx = np.array(all_valid)[keep]
-    X_coupling = X_coupling[keep]
+    # Map sources → df indices, filter to non-zero-norm works.
+    # sources[i] ↔ X_coupling[i] ↔ non_zero[i] — all aligned by source_to_idx.
+    df_indices = []
+    source_positions = []
+    for i, doi in enumerate(sources):
+        if doi in doi_to_df_idx and non_zero[i]:
+            df_indices.append(doi_to_df_idx[doi])
+            source_positions.append(i)
 
+    valid_idx = np.array(df_indices)
+    X_out = X_coupling[source_positions]
+    # Normalize the selected rows
+    out_norms = np.linalg.norm(X_out, axis=1, keepdims=True)
+    X_out = X_out / out_norms  # safe: we filtered non_zero above
+
+    n_dropped = len(sources) - len(valid_idx)
     log.info("Citation space: %d works with coupling data "
-             "(%d dropped: zero coupling)", len(valid_idx),
-             len(all_valid) - len(valid_idx))
-    return X_coupling, valid_idx
+             "(%d dropped: zero coupling or no DOI match)",
+             len(valid_idx), n_dropped)
+    return X_out, valid_idx
 
 
 def multi_space_silhouette(df, embeddings, k_range=range(3, 13)):
