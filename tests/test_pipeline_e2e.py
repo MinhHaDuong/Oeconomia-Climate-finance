@@ -325,7 +325,7 @@ class TestEnrichDois:
 # Stage 3: corpus_filter --extend
 # ============================================================
 
-class TestCorpusRefineExtend:
+class TestCorpusFilterExtend:
     def test_extend_preserves_all_rows(self, pipeline_workspace):
         """--extend adds flag columns without removing any rows."""
         ws = pipeline_workspace
@@ -390,7 +390,7 @@ class TestCorpusRefineExtend:
 # Stage 4: corpus_filter --filter
 # ============================================================
 
-class TestCorpusRefineFilter:
+class TestCorpusFilterApply:
     def test_filter_removes_flagged(self, pipeline_workspace):
         """--filter removes flagged non-protected papers and produces audit."""
         ws = pipeline_workspace

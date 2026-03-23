@@ -48,7 +48,7 @@ def monkeypatch_env(monkeypatch, tmp_path):
 
 
 class TestPhase1Integration:
-    """Test Phase 1 refining workflow end-to-end."""
+    """Test Phase 1 filtering workflow end-to-end."""
 
     def test_corpus_filter_apply_works(self, temp_catalogs, monkeypatch):
         """corpus_filter.py --apply produces refined_works.csv and corpus_audit.csv."""

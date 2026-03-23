@@ -58,7 +58,7 @@ DVC workflow and corpus-building targets. Thin shim — most logic lives in `dvc
 | `corpus-enrich` | 148–149 | Alias for `dvc repro enrich_works ...` |
 | `corpus-extend` | 151–152 | Alias for `dvc repro extend` |
 | `corpus-filter` | 154–155 | Alias for `dvc repro filter` |
-| `corpus-refine` | 157–158 | Alias for `dvc repro extend filter` |
+| `corpus-filter-all` | 157–158 | Alias for `dvc repro extend filter` |
 | `corpus-align` | 160–161 | Alias for `dvc repro align` |
 | `deploy-corpus` | 164–165 | `dvc push` |
 | `content/tables/qa_citations_report.json` | 168–170 | Corpus diagnostic (reads enrichment caches) |

@@ -109,7 +109,7 @@ def reranker_cache():
 
 
 @pytest.fixture(scope="module")
-def refine_config():
+def filter_config():
     return _load_config()
 
 
@@ -737,10 +737,10 @@ class TestBlacklistValidation:
             return []
         return [f.strip().split(":")[0] for f in s.split("|")]
 
-    def test_blacklist_terms_caught(self, audit, refine_config):
+    def test_blacklist_terms_caught(self, audit, filter_config):
         """For each noise term, all title matches are either flagged or have safe words."""
-        noise_title = refine_config["noise_title"]
-        safe_title = refine_config["safe_title"]
+        noise_title = filter_config["noise_title"]
+        safe_title = filter_config["safe_title"]
 
         missed_report = []
         for term in noise_title:
@@ -767,10 +767,10 @@ class TestBlacklistValidation:
                 "Irrelevant papers (blockchain, deep learning, etc.) remain in corpus",
             )
 
-    def test_blacklist_summary(self, audit, refine_config, capsys):
+    def test_blacklist_summary(self, audit, filter_config, capsys):
         """Print blacklist coverage summary (always passes)."""
-        noise_title = refine_config["noise_title"]
-        safe_title = refine_config["safe_title"]
+        noise_title = filter_config["noise_title"]
+        safe_title = filter_config["safe_title"]
 
         lines = ["\n  Blacklist coverage:"]
         for term in noise_title:
