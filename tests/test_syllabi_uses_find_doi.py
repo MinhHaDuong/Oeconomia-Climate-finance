@@ -1,8 +1,8 @@
-"""Tests for crossref_lookup removal and find_doi integration.
+"""Tests for DOI lookup in the teaching pipeline.
 
 Verifies:
-- crossref_lookup is no longer defined in collect_syllabi.py
-- stage_normalize uses find_doi from enrich_dois (not CrossRef)
+- collect_syllabi uses crossref_lookup with cache for teaching DOI resolution
+- enrich_dois provides find_doi for the main corpus pipeline
 - CLASSIFY_MODEL and EXTRACT_MODEL env vars are wired at call sites
 """
 
@@ -13,30 +13,37 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 
-class TestCrossrefRemoval:
-    """Verify crossref_lookup is removed from collect_syllabi.py."""
+class TestTeachingDOILookup:
+    """Verify teaching pipeline uses CrossRef with cache."""
 
-    def test_no_crossref_lookup_function(self):
-        """crossref_lookup should not be defined in collect_syllabi.py."""
+    def test_crossref_lookup_exists(self):
+        """collect_syllabi.py should have crossref_lookup for teaching DOI resolution."""
         import collect_syllabi
-        assert not hasattr(collect_syllabi, "crossref_lookup"), \
-            "crossref_lookup should be removed — find_doi replaces it"
+        assert hasattr(collect_syllabi, "crossref_lookup"), \
+            "crossref_lookup should exist — teaching pipeline uses CrossRef"
 
-    def test_no_crossref_api_reference(self):
-        """collect_syllabi.py should not reference api.crossref.org."""
+    def test_crossref_cache_exists(self):
+        """collect_syllabi.py should have CrossRef cache infrastructure."""
         import collect_syllabi
-        source = inspect.getsource(collect_syllabi)
-        assert "crossref.org" not in source, \
-            "CrossRef API reference should be removed — OpenAlex is the sole resolver"
+        assert hasattr(collect_syllabi, "_load_crossref_cache"), \
+            "CrossRef cache loader should exist"
 
-    def test_normalize_stage_uses_find_doi(self):
-        """stage_normalize should call find_doi, not crossref_lookup."""
+    def test_normalize_stage_uses_crossref(self):
+        """stage_normalize should call crossref_lookup."""
         import collect_syllabi
         source = inspect.getsource(collect_syllabi.stage_normalize)
-        assert "find_doi" in source, \
-            "stage_normalize should call find_doi from enrich_dois"
-        assert "crossref_lookup" not in source, \
-            "stage_normalize should not reference crossref_lookup"
+        assert "crossref_lookup" in source, \
+            "stage_normalize should call crossref_lookup for DOI resolution"
+
+
+class TestMainCorpusDOILookup:
+    """Verify main corpus pipeline has find_doi."""
+
+    def test_find_doi_exists(self):
+        """enrich_dois.py should have find_doi for main corpus."""
+        import enrich_dois
+        assert hasattr(enrich_dois, "find_doi"), \
+            "find_doi should exist in enrich_dois for the main corpus pipeline"
 
 
 class TestModelEnvVars:

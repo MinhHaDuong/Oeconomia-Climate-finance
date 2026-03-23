@@ -201,8 +201,12 @@ class TestResolveDoi:
 
         _title_cache.clear()
 
-    def test_search_doi_appends_author(self):
-        """search_doi includes author in the OpenAlex search string."""
+    def test_search_doi_title_only_search(self):
+        """search_doi uses title-only search — author is NOT appended to query.
+
+        Author appended to OpenAlex fulltext search pollutes results.
+        Author is only used for cache keying in find_doi(), not in the API call.
+        """
         from enrich_dois import search_doi
 
         with patch("enrich_dois.polite_get") as mock_get:
@@ -210,11 +214,11 @@ class TestResolveDoi:
 
             search_doi("Climate Finance Overview", year=2023, author="Stern")
 
-            # Check that the search param includes the author (lowercased)
             call_kwargs = mock_get.call_args
             params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
             search_str = params["search"]
-            assert "stern" in search_str
+            assert "stern" not in search_str.lower(), \
+                "Author should NOT be in search string — it breaks OpenAlex fulltext search"
 
     def test_search_doi_no_author(self):
         """search_doi without author uses title-only search (backward compatible)."""

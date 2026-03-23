@@ -30,23 +30,52 @@ TITLE_SIM_THRESHOLD = 0.85
 OPENALEX_SEARCH_URL = "https://api.openalex.org/works"
 
 
+_disk_cache = None
+_disk_cache_dirty = 0  # count of unsaved writes
+
+
 def load_cache():
-    """Load {source_id: doi_or_empty} cache."""
+    """Load {source_id: doi_or_empty} cache. Cached in memory after first load."""
+    global _disk_cache
+    if _disk_cache is not None:
+        return _disk_cache
     if not os.path.exists(CACHE_FILE):
-        return {}
+        _disk_cache = {}
+        return _disk_cache
     try:
         df = pd.read_csv(CACHE_FILE, dtype=str, keep_default_na=False)
     except pd.errors.EmptyDataError:
         log.warning("Cache file empty or corrupt: %s — starting fresh", CACHE_FILE)
-        return {}
-    return dict(zip(df["source_id"], df["doi"]))
+        _disk_cache = {}
+        return _disk_cache
+    _disk_cache = dict(zip(df["source_id"], df["doi"]))
+    return _disk_cache
 
 
-def save_cache(cache):
-    """Persist cache to CSV."""
+def save_cache(cache=None):
+    """Persist cache to CSV. Batches writes — flushes every 50 updates."""
+    global _disk_cache, _disk_cache_dirty
+    if cache is not None:
+        _disk_cache = cache
+    _disk_cache_dirty += 1
+    if _disk_cache_dirty < 50:
+        return
+    flush_cache()
+
+
+def flush_cache():
+    """Force-write cache to disk."""
+    global _disk_cache_dirty
+    if _disk_cache is None or _disk_cache_dirty == 0:
+        return
     os.makedirs(CACHE_DIR, exist_ok=True)
-    rows = [{"source_id": k, "doi": v} for k, v in cache.items()]
+    rows = [{"source_id": k, "doi": v} for k, v in _disk_cache.items()]
     pd.DataFrame(rows).to_csv(CACHE_FILE, index=False)
+    _disk_cache_dirty = 0
+
+
+import atexit
+atexit.register(flush_cache)
 
 
 def title_similarity(a, b):
@@ -68,32 +97,24 @@ def _normalize_author(author):
 
 
 def search_doi(title, year=None, author=None):
-    """Search OpenAlex for a work by title, optionally filtered by year.
+    """Search OpenAlex for a work by title.
 
-    When author is provided, appends the first author name to the search
-    string for better precision on generic titles.
+    Title-only search with similarity ranking. Year and author are accepted
+    for API compatibility but not used in the query — year filters exclude
+    correct matches when OpenAlex's year differs from the source, and author
+    appended to search pollutes fulltext matching. Both are still used for
+    cache keying in find_doi().
 
     Returns (doi, openalex_id, similarity) or (None, None, 0).
     """
-    search_str = title[:200]
-    first_author = _normalize_author(author)
-    if first_author:
-        search_str = f"{search_str} {first_author}"
-
     params = {
-        "search": search_str,
+        "search": title[:200],
         "select": "id,doi,title,publication_year",
         "per_page": 5,
         "mailto": MAILTO,
     }
     if OPENALEX_API_KEY:
         params["api_key"] = OPENALEX_API_KEY
-    try:
-        year_int = int(float(year)) if year and pd.notna(year) else None
-    except (ValueError, TypeError):
-        year_int = None
-    if year_int:
-        params["filter"] = f"publication_year:{year_int}"
 
     try:
         resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=1.0)

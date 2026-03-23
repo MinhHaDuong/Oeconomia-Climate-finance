@@ -6,7 +6,7 @@ Five-stage pipeline:
   2. fetch    — Download page content (HTML/PDF)
   3. classify — LLM classifies pages as syllabi or not
   4. extract  — LLM extracts bibliographic references
-  5. normalize — Deduplicate + enrich via OpenAlex (cached)
+  5. normalize — Deduplicate + enrich via CrossRef (cached)
 
 Each stage reads the previous stage's output and writes JSONL checkpoints.
 Interruptible: re-run any stage to resume from checkpoint.
@@ -35,7 +35,6 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from enrich_dois import find_doi
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
 from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
                    get_logger, normalize_title, polite_get, save_csv)
@@ -704,8 +703,73 @@ def stage_extract():
 # Stage 5: Normalize
 # ============================================================
 
+CROSSREF_CACHE_PATH = os.path.join(SYLLABI_DIR, "crossref_cache.jsonl")
+_crossref_cache = None
+
+
+def _load_crossref_cache():
+    """Load title→DOI cache from disk (once)."""
+    global _crossref_cache
+    if _crossref_cache is not None:
+        return _crossref_cache
+    _crossref_cache = {}
+    for rec in load_jsonl(CROSSREF_CACHE_PATH):
+        _crossref_cache[rec["title_norm"]] = rec.get("doi", "")
+    log.info("CrossRef cache: %d entries loaded", len(_crossref_cache))
+    return _crossref_cache
+
+
+def _save_crossref_cache_entry(title_norm, doi):
+    """Append one lookup result to the cache file."""
+    _crossref_cache[title_norm] = doi
+    append_jsonl([{"title_norm": title_norm, "doi": doi}], CROSSREF_CACHE_PATH)
+
+
+def crossref_lookup(title, authors=""):
+    """Look up a DOI on CrossRef by title. Cached to avoid redundant queries."""
+    cache = _load_crossref_cache()
+    tnorm = normalize_title(title)
+    if tnorm in cache:
+        return cache[tnorm]
+
+    query = title
+    authors = str(authors) if authors and authors == authors else ""
+    if authors:
+        first_author = authors.split(",")[0].split(";")[0].strip()
+        if first_author:
+            query = f"{first_author} {title}"
+
+    try:
+        resp = polite_get(
+            "https://api.crossref.org/works",
+            params={"query": query[:200], "rows": 1},
+            delay=0.3,
+        )
+        data = resp.json()
+        items = data.get("message", {}).get("items", [])
+        if items:
+            item = items[0]
+            cr_title = " ".join(item.get("title", []))
+            if normalize_title(cr_title) == normalize_title(title):
+                doi = item.get("DOI", "")
+                _save_crossref_cache_entry(tnorm, doi)
+                return doi
+            t1_words = set(normalize_title(title).split())
+            t2_words = set(normalize_title(cr_title).split())
+            if t1_words and t2_words:
+                overlap = len(t1_words & t2_words) / max(len(t1_words), 1)
+                if overlap > 0.7:
+                    doi = item.get("DOI", "")
+                    _save_crossref_cache_entry(tnorm, doi)
+                    return doi
+    except Exception as e:
+        log.warning("CrossRef error: %s", e)
+    _save_crossref_cache_entry(tnorm, "")
+    return ""
+
+
 def stage_normalize():
-    """Deduplicate and enrich references via OpenAlex (cached)."""
+    """Deduplicate and enrich references via CrossRef (cached)."""
     extracted = load_jsonl(REFERENCES_PATH)
 
     # Flatten all references with course metadata
@@ -735,9 +799,9 @@ def stage_normalize():
     df = pd.DataFrame(flat)
     df["title_norm"] = df["title"].apply(normalize_title)
 
-    # DOI lookup via OpenAlex (cached) for references without DOIs
+    # DOI lookup via CrossRef (cached) for references without DOIs
     no_doi = df[df["doi"] == ""]
-    log.info("%d references without DOIs, resolving via OpenAlex...", len(no_doi))
+    log.info("%d references without DOIs, looking up on CrossRef...", len(no_doi))
 
     lookup_count = 0
     for idx in no_doi.index:
@@ -747,7 +811,7 @@ def stage_normalize():
         if not title or len(title) < 10:
             continue
 
-        doi = find_doi(title, year, author=authors)
+        doi = crossref_lookup(title, authors)
         if doi:
             df.at[idx, "doi"] = doi.lower()
             lookup_count += 1
@@ -758,7 +822,7 @@ def stage_normalize():
             log.info("... %d/%d looked up, %d DOIs found",
                      idx + 1, len(no_doi), lookup_count)
 
-    log.info("OpenAlex: found %d DOIs", lookup_count)
+    log.info("CrossRef: found %d DOIs", lookup_count)
 
     # Deduplicate: group by DOI (if available) or normalized title
     df["dedup_key"] = df.apply(
