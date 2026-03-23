@@ -57,6 +57,7 @@ SEARCH_PATH = os.path.join(SYLLABI_DIR, "search_results.jsonl")
 PAGES_PATH = os.path.join(SYLLABI_DIR, "pages.jsonl")
 CLASSIFIED_PATH = os.path.join(SYLLABI_DIR, "classified.jsonl")
 REFERENCES_PATH = os.path.join(SYLLABI_DIR, "raw_references.jsonl")
+EXTRACT_CACHE_PATH = os.path.join(SYLLABI_DIR, "extract_cache.jsonl")
 OUTPUT_CSV = os.path.join(SYLLABI_DIR, "reading_lists.csv")
 
 
@@ -88,6 +89,31 @@ def append_jsonl(records, path):
     with _jsonl_lock, open(path, "a", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _extract_cache_key(text, model):
+    """Build cache key: sha256(page_text):model_name."""
+    return f"{hashlib.sha256(text.encode()).hexdigest()}:{model}"
+
+
+def _load_extract_cache(path):
+    """Load extraction cache from JSONL. Returns {key: refs_list}."""
+    cache = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    rec = json.loads(line)
+                    cache[rec["key"]] = rec["refs"]
+    return cache
+
+
+def _save_extract_cache_entry(path, key, refs):
+    """Append one cache entry to JSONL (thread-safe)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with _jsonl_lock, open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps({"key": key, "refs": refs}, ensure_ascii=False) + "\n")
 
 
 def extract_pdf_text(pdf_path, page_cap=50):
@@ -629,6 +655,9 @@ def stage_extract():
     log.info("Extract: %d already done, %d pending, %d workers (model=%s)",
              len(done_urls), len(pending), max_workers, extract_model)
 
+    extract_cache = _load_extract_cache(EXTRACT_CACHE_PATH)
+    log.info("Extract cache: %d entries loaded", len(extract_cache))
+
     total_refs_lock = threading.Lock()
     total_refs = [0]
     counter = {"done": 0}
@@ -666,18 +695,28 @@ def stage_extract():
                 regex_dois.add(doi)
 
         # Pass 2: LLM extraction — gets title/author/year + refs without DOIs
-        all_refs = []
-        chunks = make_chunks(text)
+        cache_key = _extract_cache_key(text, extract_model)
+        cached = extract_cache.get(cache_key)
+        if cached is not None:
+            all_refs = cached
+            with counter_lock:
+                log.debug("Cache hit for %s", url[:60])
+        else:
+            all_refs = []
+            chunks = make_chunks(text)
 
-        for chunk in chunks:
-            prompt = EXTRACT_PROMPT.format(text=chunk)
-            response = llm_call(prompt, api_key, model=extract_model, max_tokens=4000)
+            for chunk in chunks:
+                prompt = EXTRACT_PROMPT.format(text=chunk)
+                response = llm_call(prompt, api_key, model=extract_model, max_tokens=4000)
 
-            parsed = extract_json_from_text(response)
-            if parsed and isinstance(parsed, list):
-                all_refs.extend(parsed)
-            elif parsed and isinstance(parsed, dict):
-                all_refs.append(parsed)
+                parsed = extract_json_from_text(response)
+                if parsed and isinstance(parsed, list):
+                    all_refs.extend(parsed)
+                elif parsed and isinstance(parsed, dict):
+                    all_refs.append(parsed)
+
+            _save_extract_cache_entry(EXTRACT_CACHE_PATH, cache_key, all_refs)
+            extract_cache[cache_key] = all_refs
 
         # Merge: add regex DOIs not found by LLM
         llm_dois = {clean_doi(r.get("doi", "")) for r in all_refs if r.get("doi")}
