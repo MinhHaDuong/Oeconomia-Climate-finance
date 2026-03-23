@@ -1,0 +1,2766 @@
+- institution: AEA
+  course: Climate Change Economics
+  level: other
+  region: Global
+  readings:
+  - doi: 10.2139/ssrn.3374942
+- institution: Agile4training
+  course: 'Mastering Carbon Offset Programs: A Complete Carbon Trading Course'
+  level: masters
+  region: Global
+  readings:
+  - doi: 10.5860/choice.48-1588
+    title: 'The Handbook of Carbon Offset Programs: Trading Systems, Funds, Protocols and Standards'
+    authors: Anja Kollmuss, Michael Lazarus and Carrie Lee
+    year: 2020
+  - doi: 10.1057/9781137485830.0009
+    title: Gold Standard
+  - doi: 10.64628/aa.pgek7cy6e
+    title: Climate Action Reserve
+- institution: CFA Institute
+  course: Certificate in ESG Investing
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1007/springerreference_32910
+    title: Regulatory Environment
+  - doi: 10.1080/09638180.2021.2000458
+    title: Case Study - ESG Integration in the Investment Decision
+  - doi: 10.9774/gleaf.9781783535637_11
+    title: Responsible Investing Across Asset Classes
+  - doi: 10.55669/oa080313
+    title: ESG Integration in Valuation
+  - title: An online Study Guide – Principles and Practice of Green and Sustainable Finance
+    year: 2023
+- institution: CFA Institute
+  course: 'Sustainable finance: an introduction'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1201/9781032636252-1
+    title: 'Sustainable finance: an introduction'
+- institution: Cegos
+  course: Finance verte et durable
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.2307/j.ctv1n35c76.8
+    title: Donner du sens à ses actions
+- institution: Cnam
+  course: FINANCE DURABLE
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/20430795.2020.1717241
+    title: Principles of Sustainable Finance
+    authors: Dirk Schoenmaker, Willem Schramade
+    year: 2019
+- institution: Cnam
+  course: Finance durable
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.4324/9781315772578
+    title: Handbook of Social and Sustainable Finance
+    authors: Othmar M. LEHNER
+  - doi: 10.4324/9781315576510
+    title: Demystifying Social Finance and Social Investment
+    authors: Mark SALWAY, Paul PALMER, Peter GRANT, Jim CLIFFORD
+    year: 2020
+- institution: Columbia University
+  course: La Finanza Sostenibile
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1093/obo/9780199363445-0117
+    title: Sustainable Finance
+    authors: J. Hoffmann, G. Scherhorn, T. Bush
+    year: 2004
+- institution: Columbia University
+  course: MS in Sustainability Management
+  level: other
+  region: North America
+  readings:
+  - doi: 10.3403/30430567
+    title: 'Sustainability Metrics: Data, Construction and Use'
+  - doi: 10.3390/books978-3-03943-321-6
+    title: Energy and Sustainable Development
+  - doi: 10.1515/9783110733488-017
+    title: Climate Finance and Sustainable Development
+  - doi: 10.1596/30912
+    title: Sustainable Investing and Economic Growth
+  - doi: 10.1007/springerreference_6874
+    title: Decision Models & Management
+  - doi: 10.4337/9781839109690.00007
+    title: Sustainable Entrepreneurship
+  - doi: 10.4324/9781351029780
+    title: Cost Benefit Analysis
+  - doi: 10.1007/1-4020-3518-7_1
+    title: Economics of Sustainability Management
+  - doi: 10.1007/978-3-030-78044-9_7
+    title: Theory & Practice of Life Cycle Assessment
+  - doi: 10.1016/j.crm.2017.01.003
+    title: Climate Risk & Scenario Analysis
+  - doi: 10.2172/1406107
+    title: Data Analysis and Visualization in Sustainability Management
+  - doi: 10.57030/23364890.cemj.31.1.61
+    title: Geographic Information Systems for Sustainability Management
+  - doi: 10.3390/books978-3-7258-6843-8
+    title: Analysis for Energy Efficiency
+- institution: Columbia University
+  course: Sustainable Finance
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1007/978-3-319-99076-7_11
+    title: Sustainable Agriculture
+  - doi: 10.1787/888933969810
+    title: Sustainable Management of Forests
+  - doi: 10.1016/b978-0-12-823813-4.00023-3
+    title: Energy Markets and Innovation
+- institution: Corso di Laurea in Economia e Finanza
+  course: La Finanza Sostenibile
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.7551/mitpress/9780262035620.003.0009
+    title: Sustainable Development Goals
+    authors: United Nations (UN)
+    year: 2015
+  - doi: 10.57590/1120-5032-202203-11
+    title: La finanza sostenibile
+    authors: Del Giudice A.
+    year: 2019
+  - doi: 10.1142/10846
+    title: Megatrends
+    authors: John Naisbitt
+    year: 1982
+  - doi: 10.2139/ssrn.3251731
+    title: Action Plan Financing Sustainable Growth
+    year: 2018
+  - doi: 10.1016/b978-0-443-15936-7.00016-5
+    title: Green Finance
+    authors: Hoepner et al.
+    year: 2019
+  - doi: 10.2307/1337486
+    title: Securities Exchange Act
+    year: 1934
+  - doi: 10.2139/ssrn.5474749
+    title: Sustainable Finance Disclosure Regulation
+  - doi: 10.2139/ssrn.4940677
+    title: Sustainability-Linked Bonds
+    year: 2020
+  - doi: 10.64628/aai.6k7avvggx
+    title: Inflation Reduction Act
+    year: 2022
+- institution: DIPARTIMENTO DI IMPRESA E MANAGEMENT
+  course: La Finanza Sostenibile
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.24201/fi.v63i4.2961
+    title: The European Parliament
+    authors: Parlamento Europeo
+    year: 2015
+  - doi: 10.4337/9781788972727.00010
+    title: Economy Circular
+    authors: Korhonen et al.
+    year: 2018
+  - doi: 10.4324/9780203117668-8
+    title: The Economics of Climate Change
+    authors: De Coninck et al.
+    year: 2018
+- institution: DIPARTIMENTO DI IMPRESA E MANAGEMENT
+  course: Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1093/obo/9780199363445-0117
+    title: Sustainable Finance
+    authors: J. Hoffmann, G. Scherhorn, T. Bush
+    year: 2004
+- institution: Dipartimento di Management
+  course: FINANZA SOSTENIBILE E MERCATI FINANZIARI
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/20430795.2020.1717241
+    title: Principles of Sustainable Finance
+    authors: Dirk Schoenmaker, Willem Schramade
+    year: 2019
+- institution: Dipartimento di Scienze Economiche e Aziendali
+  course: 'EVOLUZIONE DELLA FINANZA SOSTENIBILE: STRUMENTI, STRATEGIE DI INVESTIMENTO E IMPATTI SULLE IMPRESE'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.26668/indexlawjournals/2358-1352/2024.v38i14.11093
+    title: L’evoluzione del concetto di sostenibilità
+  - doi: 10.2139/ssrn.3916225
+    title: I Development Impact Bonds (DIBs)
+  - doi: 10.62140/asvz1502025
+    title: Il Regolamento (UE) 2020/852
+    year: 2020
+  - doi: 10.57590/1120-5032-202203-12
+    title: Il rischio di reputazione ESG
+  - doi: 10.4000/books.psn.7391
+    title: La nuvola di smog
+    authors: Italo Calvino
+    year: 1958
+  - doi: 10.4324/9781315483375-3
+    title: The Limits to Growth
+    authors: Club of Rome
+    year: 1972
+  - doi: 10.4324/9781003546986-21
+    title: I Social Impact Bonds (SIBs)
+- institution: Dipartimento di Scienze Economiche e Aziendali
+  course: Introduction to Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.4337/9781786432636.00019
+    title: Green Bond Principles
+    authors: International Capital Market Association
+    year: 2021
+- institution: Dipartimento di Scienze Economiche e Aziendali
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1016/b978-0-7506-1049-0.50009-5
+    title: Our Common Future
+    year: 1987
+- institution: Dipartimento di Scienze Economiche e Aziendali
+  course: 'Sustainable finance: an introduction'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.4324/9781351278881-34
+    title: Principles for Responsible Investment
+    authors: United Nations Principles for Responsible Investment (UNPRI)
+    year: 2006
+- institution: Donau University
+  course: Sustainable Finance and Investments
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1007/978-3-540-70818-6_14
+    title: Responsibility of business is to increase its profits
+    authors: Friedman, M.
+    year: 1970
+  - doi: 10.1108/jaar-04-2021-0114
+    title: 'Double materiality and the shift from non-financial to European sustainability reporting: Review, outlook and
+      implications'
+    authors: Baumüller, J., & Sopp, K.
+    year: 2022
+  - doi: 10.1080/1351847x.2023.2251532
+    title: Overview of sustainable finance
+    authors: European Commission
+  - doi: 10.2139/ssrn.3945635
+    title: A taxonomy of sustainable finance taxonomies
+    authors: Ehlers, T., Gao, D., & Pack, F.
+    year: 2021
+  - doi: 10.5771/9783748945253-117
+    title: EU taxonomy for sustainable activities
+    authors: European Commission
+  - doi: 10.4324/9781003274735
+    title: Sustainable Finance Fundamentals
+    year: 2020
+- institution: EDHEC BUSINESS SCHOOL
+  course: The Finance of Climate Change
+  level: other
+  region: Global
+  readings:
+  - doi: 10.4324/9781315060743
+    title: Economics and Policies of Climate Change
+    authors: EDHEC Business School
+- institution: ENSAE Paris - École d'ingénieurs pour l'économie, la data science, la finance et l'actuariat
+  course: Finance du climat
+  level: other
+  region: Global
+  readings:
+  - doi: 10.2139/ssrn.3438533
+    title: 'Aggregate Confusion: The Divergence of ESG Ratings'
+    authors: Berg, F., Koëlbel, J. F., and Rigobon, R.
+    year: 2022
+- institution: ENSAE Paris - École d'ingénieurs pour l'économie, la data science, la finance et l'actuariat
+  course: 'Green Finance: Core Notions'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1016/j.jfineco.2020.11.001
+    title: 'Responsible investing: The ESG efficient frontier'
+    authors: Pedersen, L. H., Fitzgibbons, S., and Pomorski, L.
+    year: 2021
+  - doi: 10.2307/2676219
+    title: The effect of green investment on corporate behaviour
+    authors: Heinkel, R., Kraus, A., and Zechner, J.
+    year: 2001
+  - doi: 10.3386/w26549
+    title: Sustainable investing in equilibrium
+    authors: Pastor, L., Stambaugh, R. F., and Taylor, L. A.
+    year: 2021
+  - doi: 10.2139/ssrn.3440301
+    title: Pricing uncertainty induced by climate change
+    authors: Barnett, Michael, William Brock, and Lars Peter Hansen
+    year: 2020
+  - doi: 10.2139/ssrn.3467644
+    title: A Theory of Socially Responsible Investment
+    authors: Oehmke, M. and Opp, M.
+    year: 2023
+  - doi: 10.2139/ssrn.3508938
+    title: 'ESG Investing: How to Optimize Impact?'
+    authors: Landier, A. and Lovo, S.
+    year: 2020
+  - doi: 10.2139/ssrn.3765659
+    title: Do Investors Care about Impact?
+    authors: Heeb, Florian, and Julian Kölbel, Falko Paetzold, Stefan Zeisberger
+    year: 2023
+  - doi: 10.2139/ssrn.3235190
+    title: The importance of climate risk for institutional investors
+    authors: Krüger, Philipp, Sautner, Zacharias, and Starks, Laura
+    year: 2020
+  - doi: 10.2139/ssrn.3737772
+    title: The Allocation of Socially Responsible Capital
+    authors: Green, D. and Roth, B.
+    year: 2021
+  - doi: 10.1201/9781032636252-7
+    title: Climate Impact Investing
+    authors: De Angelis, T., Tankov, P., and Zerbib, O. D.
+    year: 2022
+  - doi: 10.1201/9781032636252-16
+    title: 'The effect of pro-environmental preferences on bond prices: Evidence from green bonds'
+    authors: Zerbib, Olivier David
+    year: 2019
+  - doi: 10.1111/jofi.12547
+    title: Why do investors hold socially responsible mutual funds?
+    authors: Riedl, Arno, and Smeets, Paul
+    year: 2017
+  - doi: 10.2139/ssrn.1677653
+    title: Environmental externalities and cost of capital
+    authors: Chava, S.
+    year: 2014
+  - doi: 10.1016/j.jfineco.2014.09.008
+    title: Corporate goodness and shareholder wealth
+    authors: Krüger, P.
+    year: 2015
+  - doi: 10.1016/j.jfineco.2021.09.009
+    title: Sustainable investing with ESG rating uncertainty
+    authors: Avramov, Doron, Si Cheng, Abraham Lioui, and Andrea Tarelli
+    year: 2022
+  - doi: 10.1038/s41893-024-01455-y
+    title: Impacts of climate litigation on firm value
+    authors: Sato, Misato, Gostlow, Glen, Higham, Catherine, Setzer, Joana and Venmans, Frank
+    year: 2023
+  - doi: 10.2139/ssrn.766465
+    title: 'The price of sin: the effects of social norms on markets'
+    authors: Hong, H. and Kacperczyk, M.
+    year: 2009
+  - doi: 10.3386/w27710
+    title: Exit vs. Voice
+    authors: Broccardo, E., Hart, O., and Zingales, L.
+    year: 2022
+  - doi: 10.3386/w26968
+    title: Do investors care about carbon risk?
+    authors: Bolton, P. and Kacperczyk, M. T.
+    year: 2021
+  - doi: 10.2139/ssrn.3909166
+    title: The impact of impact investing
+    authors: Berk, Jonathan B., and Jules H. van Binsbergen
+    year: 2021
+  - doi: 10.2139/ssrn.3853969
+    title: Firm-level Climate Change Exposure
+    authors: Sautner, Z., van Lent, L., Vilkov, G., and Zhang, R.
+    year: 2023
+  - doi: 10.2139/ssrn.3717722
+    title: Climate change concerns and the performance of green versus brown stocks
+    authors: Ardia, D., Bluteau, K., Boudt, K., and Inghelbrecht, K.
+    year: 2022
+  - doi: 10.2139/ssrn.3455090
+    title: 'A Sustainable Capital Asset Pricing Model (S-CAPM): evidence from green investing and sin stock exclusion'
+    authors: Zerbib, Olivier David
+    year: 2021
+  - doi: 10.2139/ssrn.3578215
+    title: The pollution premium
+    authors: Hsu, P.-H., Li, K., and Tsou, C.-Y.
+    year: 2023
+  - doi: 10.2139/ssrn.4359282
+    title: 'Counterproductive sustainable investing: The impact elasticity of brown and green firms'
+    authors: Hartzmark, Samuel and Kelly Shue
+    year: 2023
+  - doi: 10.2139/ssrn.4007629
+    title: Who pays for sustainability? An analysis of sustainability-linked bonds
+    authors: Kölbel, Julian and Adrien-Paul Lambillon
+    year: 2022
+  - doi: 10.3386/w28510
+    title: Global Pricing of Carbon-Transition Risk
+    authors: Bolton, P. and Kacperczyk, M.
+- institution: ENSAE Paris - École d'ingénieurs pour l'économie, la data science, la finance et l'actuariat
+  course: 'Sustainable finance: an introduction'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.3386/w28940
+    title: Dissecting Green Returns
+    authors: Pastor, L., Stambaugh, R., and Taylor, L.
+    year: 2022
+- institution: Florida International University
+  course: Advanced Environmental Data Analysis for Environmental Finance
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1007/978-3-030-05252-2
+    title: 'Decision Making under Deep Uncertainty: From Theory to Practice'
+    authors: Vincent A. W. J. Marchau, Warren E. Walker, Pieter J. T. M. Bloemen, Steven W. Popper
+  - doi: 10.1007/978-3-030-
+- institution: Harvard University
+  course: FINANCIAL ECONOMICS OF CLIMATE AND SUSTAINABILITY
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1017/cbo9780511817434
+    title: 'The Economics of Climate Change: The Stern Review'
+    authors: Stern, Nicholas Herbert
+    year: 2007
+  - doi: 10.1146/annurev-financial-111620-
+  - doi: 10.1126/science.add6815
+    title: Mandatory disclosure would reveal corporate carbon damages
+    authors: Greenstone, Michael, Christian Leuz, and Patricia Breuer
+    year: 2023
+  - doi: 10.18356/9789210022262
+    title: Emissions Gap Report
+    year: 2024
+  - doi: 10.1016/j.ecolecon.2023.107792
+    title: 'Investigating the role of passive funds in carbon-intensive capital markets: Evidence from U.S. bonds'
+    authors: Wilson, C., & Caldecott, B.
+    year: 2023
+  - doi: 10.1007/s43546-020-00033-6
+  - doi: 10.1016/j.jfineco.2025.104129
+    title: Measurement and effects of bank exit policies
+    authors: Green, D., & Vallee, B.
+    year: 2024
+  - doi: 10.1016/j.jfineco.2025.104076
+    title: 'CRISK: Measuring the climate risk exposure of the financial system'
+    authors: Jung, H., Engle, R., & Berner, R.
+    year: 2023
+  - doi: 10.1007/s11142-024-00000-0
+    title: 'Corporate Carbon Accounting: Balance Sheets and Flow Statements'
+    authors: Reichelstein, Stefan
+    year: 2024
+  - doi: 10.1007/s10640-012-0612-0
+    title: Scientific Ambiguity and Climate Policy
+    authors: Millner, Antony, Simon Dietz, and Geoffrey Heal
+    year: 2013
+  - doi: 10.1017/cbo9780511628375
+    title: Economic Theory and Exhaustible Resources
+    authors: Dasgupta, Partha S., and Geoffrey M. Heal
+    year: 1979
+  - doi: 10.1038/d41586-022-00366-2
+  - doi: 10.2307/j.ctt1ht4vw6.33
+    title: The Tragedy of the Commons
+    authors: Hardin, Garrett
+    year: 1968
+  - doi: 10.2307/3146384
+    title: 'Governing the Commons: The Evolution of Institutions for Collective Action'
+    authors: Ostrom, Elinor
+    year: 1990
+  - doi: 10.2139/ssrn.3915486
+    title: Carbon emissions and the bank lending channel
+    authors: Kacperczyk, M., & Peydro J.L.
+    year: 2024
+  - doi: 10.2139/ssrn.5230061
+    title: Climate risk, bank lending and monetary policy
+    authors: Altavilla, C., Boucinha, M., Pagano, M.,Polo, M.
+    year: 2024
+  - doi: 10.2139/ssrn.4398110
+  - doi: 10.2139/ssrn.4097202
+    title: 'Executive Compensation Tied to ESG Performance: International Evidence'
+    authors: Cohen, S., Kadach, I., Ormazabal, G. and S. Reichelstein
+    year: 2023
+  - doi: 10.48558/jfwq-gz70
+    title: When Can Impact Investing Create Real Impact?
+    authors: Born, K., & Brest, P.
+    year: 2013
+  - doi: 10.5860/choice.51-4560
+    title: 'The climate casino: Risk, uncertainty, and economics for a warming world'
+    authors: Nordhaus, William
+    year: 2013
+  - doi: 10.3386/w33148
+    title: The economics of net-zero banking
+    authors: Morse, A., and Sastry, P.
+    year: 2024
+  - doi: 10.4159/9780674286597
+    title: Sustainability for a warming planet
+    authors: Llavador, Humberto, John E. Roemer, and Joaquim Silvestre
+    year: 2015
+- institution: Harvard University
+  course: Financial Economics of Climate and Sustainability
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1080/20430795.2020.1813478
+    title: Transition Finance and Transition Planning
+    authors: Ben Caldecott
+    year: 2022
+  - doi: 10.2139/ssrn.3896511
+    title: Impact Investing in Private Markets
+    authors: Deeksha Gupta, Jan Starmans
+  - doi: 10.3386/w27766
+    title: The Economics of the Energy Transition
+    authors: Geoff Heal
+- institution: Harvard University
+  course: 'Green Finance: Core Notions'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.2139/ssrn.3438533
+    title: 'Aggregate Confusion: The Divergence of ESG Ratings'
+    authors: Berg, F., Koëlbel, J. F., and Rigobon, R.
+    year: 2022
+- institution: Heinrich Böll Stiftung
+  course: 'Climate Finance Fundamentals 10: Gender and Climate Finance'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1021/cen112310085848
+    title: Cancun Agreements
+    year: 2011
+- institution: IEB
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.18356/e5a72957-en
+    title: Agenda 2030
+    authors: United Nations, Department of Economic and Social Affairs, Sustainable Development
+    year: 2015
+- institution: INCAE Business School
+  course: Financiamiento para la adaptación y resiliencia ante el cambio climático en América Latina
+  level: other
+  region: Global
+  readings:
+  - doi: 10.18235/0009876
+    title: Financiamiento para la adaptación y resiliencia ante el cambio climático en América Latina
+- institution: Institute for Sustainability Leadership, Cambridge
+  course: Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.17549/gbfr.2026.31.3.191
+    title: The role of the public sector in sustainable finance
+  - doi: 10.1596/32767
+    title: Creating impact
+  - doi: 10.1016/b978-0-12-362340-9.50006-9
+    title: The Scope of Artificial Intelligence in India
+  - doi: 10.1039/2752-7808
+    title: Professional Guides
+  - doi: 10.2139/ssrn.5633571
+    title: Sustainable finance solutions
+- institution: LDC University Consortium on Climate Change
+  course: Basics of Climate Finance in the LDC Context
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1080/01436597.2015.1086263
+    title: Climate Finance
+    authors: Third World Network, Earth in Brackets, ActionAid, LDC Watch, and others
+    year: 2015
+  - doi: 10.18356/9789280738346
+    title: Adaptation Gap Report
+    authors: UNEP
+    year: 2023
+  - doi: 10.1201/9781003396949-21
+    title: Global Landscape of Climate Finance 2023
+    authors: CPI
+    year: 2023
+  - doi: 10.1163/9789004322714_cclc_2019-0221-761
+    title: World Energy Transition Outlook
+    authors: IEA
+    year: 2023
+  - doi: 10.1163/9789004322714_cclc_2023-0257-1189
+    title: Climate Change Fund (SCCF)
+    year: 2001
+  - doi: 10.1163/9789004322714_cclc_2021-0234-829
+    title: What Is Climate Finance?
+  - doi: 10.21236/ada184295
+    title: Second Assessment Report (SAR)
+    year: 1995
+  - doi: 10.21201/2018.2388
+    title: Oxfam climate finance shadow report on assessing the USD 100 billion commitment
+    authors: Oxfam
+    year: 2023
+  - doi: 10.1787/9789264274204-en
+    title: Progress of the USD 100 billion goal
+    authors: OECD
+    year: 2022
+  - doi: 10.1515/9783110733488-019
+    title: Adaptation Fund (AF)
+    year: 2001
+  - doi: 10.1596/8709
+    title: Second Assessment Report
+    year: 1995
+  - doi: 10.1596/16074
+    title: Medium-term strategy
+    year: 2023
+  - doi: 10.2172/763057
+    title: Climate Policy Initiative Report
+    authors: Climate Policy Initiative
+    year: 2023
+  - doi: 10.2172/4251667
+    title: Programming Manual
+  - doi: 10.46830/wrien.23.00114
+    title: Outcome of the first global stocktake
+  - doi: 10.4324/9781315147024-21
+    title: Kyoto Protocol
+    year: 2001
+  - title: CPI Webinar The Global Landscape of Climate Finance 2019
+    year: 2019
+- institution: MIT
+  course: ECON 383 A01 Climate Economics
+  level: other
+  region: North America
+  readings:
+  - doi: 10.4337/9781035365944
+    title: Environmental Economics
+    authors: Kolstad, C.
+    year: 2010
+- institution: MIT
+  course: 'Global Climate Change: Economics, Science, and Policy'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1017/9781009325844
+    title: 'Climate Change 2022: Impacts, Adaptation and Vulnerability'
+    authors: IPCC
+    year: 2022
+  - doi: 10.1126/science.310.5747.432
+    title: Confronting the Bogeyman of the Climate System
+    authors: Kerr, Richard
+    year: 2005
+  - doi: 10.1126/science.305.5692.1897
+    title: A Bit of Icy Antarctica Is Sliding Toward the Sea
+    authors: Kerr, Richard
+    year: 2004
+  - doi: 10.1163/9789004475748_015
+    title: 'Economic Models: How They Work and Why Their Results Differ'
+    authors: Weyant, J.
+    year: 2001
+  - doi: 10.1126/science.1154580
+    title: Impact of Artificial Reservoir Water Impoundment on Global Sea Level
+    authors: Chao, B. F., Y. H. Wu, and Y. S. Li.
+    year: 2008
+  - doi: 10.1126/science.1090228
+    title: Modern Global Climate Change
+    authors: Karl, Thomas R., and Kevin E. Trenberth
+    year: 2003
+  - doi: 10.1126/science.1090004
+    title: Whither Antarctic Sea Ice?
+    authors: Wolff, Eric
+    year: 2003
+  - doi: 10.1126/science.1063699
+    title: Climate Warming and Disease Risks for Terrestrial and Marine Biota
+    authors: Harvell, C. Drew, et al.
+    year: 2002
+  - doi: 10.1111/j.1539-6924.2005.00687.x
+    title: 'Defining Dangerous Anthropogenic Interference: The Role of Science, the Limits of Science'
+    authors: Oppenheimer, Michael
+    year: 2005
+  - doi: 10.1111/1468-2346.00193
+    title: 'Getting Climate on Track after The Hague: An Update'
+    authors: Jacoby, Henry, and David Reiner
+    year: 2005
+  - doi: 10.2139/ssrn.198829
+    title: 'Energy-Efficient Technologies and Climate Change Policies: Issues and Evidence'
+    authors: Jaffe, Adam, Richard Newell, and Robert Stavins
+  - doi: 10.1016/j.gloenvcha.2005.10.002
+    title: 'Island Abandoment and Sea-Level Rise: An Historical Analog from the Chesapeake Bay, USA'
+    authors: Gibbons, Sheila J. Arenstam, and Robert J. Nicholls
+    year: 2006
+  - doi: 10.1016/s0301-4215(00)00033-1
+    title: The Kyoto Protocol and Developing Countries
+    authors: Babiker, Mustafa, John Reilly, and Henry Jacoby
+    year: 1999
+  - doi: 10.1007/s10584-008-9406-0
+    title: Learning about Climate Change and Implications for Near-Term Policy
+    authors: Webster, Mort, Lisa Jakobovitz, and James Norton
+    year: 2008
+  - doi: 10.1080/00139150209605787
+    title: 'Exploring Options for Global Climate Policy: A New Analytical Framework'
+    authors: Toth, Ferenc, et al.
+    year: 2002
+  - doi: 10.1029/2005gl023977
+    title: Estimated PDFs of Climate System Properties Including Natural and Anthropogenic Forcings
+    authors: Forest, Chris, Peter Stone, and Andrei Sokolov
+    year: 2006
+  - doi: 10.1023/b:clim.0000004564.09961.9f
+    title: Uncertainty Analysis of Climate Change and Policy Response
+    authors: Webster, Mort, et al.
+    year: 2003
+  - doi: 10.1023/a:1026351131038
+    title: Communicating Climate Change Uncertainty to Policy-Makers and the Public
+    authors: Webster, Mort
+    year: 2003
+  - doi: 10.1023/a:1005326126726
+    title: 'Integrated Global System Model for Climate Policy Assessment: Feedbacks and Sensitivity Studies'
+    authors: Prinn, Ronald, et al.
+    year: 1999
+  - doi: 10.1017/cbo9780511802027.002
+    title: 'Introduction: International Policy Architecture for Global Climate Change'
+    authors: Aldy, Joseph, and Robert Stavins
+    year: 2007
+  - doi: 10.1057/9781137447104.0008
+    title: Regulation
+    year: 2007
+  - doi: 10.1029/2007eo340001
+    title: Northern High-Latitude Ecosystems Respond to Climate Change
+    authors: Bunn, Andrew, et al.
+    year: 2007
+  - doi: 10.1038/nature03906
+    title: Increasing Destructiveness of Tropical Cyclones Over the Past 30 Years
+    authors: Emanuel, Kerry
+    year: 2005
+  - doi: 10.1038/nature03671
+    title: Strong Present-Day Aerosol Cooling Implies a Hot Future
+    authors: Andreae, Meinrat, Chris Jones, and Peter Cox
+    year: 2005
+  - doi: 10.1038/447132a
+    title: Is This What it Takes to Save the World?
+    authors: Morton, Oliver
+    year: 2007
+  - doi: 10.1038/4351142b
+    title: Clear Skies Raise Global-Warming Estimates
+    authors: Schiermeier, Quirin
+    year: 2005
+  - doi: 10.1029/2008eo020001
+    title: Arctic Sea Ice Extent Plummets in 2007
+    authors: Stroeve, Julienne, et al.
+    year: 2008
+  - doi: 10.1029/2007eo390003
+    title: A New Record in 2007 for Melting in Greenland
+    authors: Tedesco, Marco
+    year: 2007
+  - doi: 10.1029/2007eo360002
+    title: Atlantic Tropical Cyclones Revisited
+    authors: Mann, Michael, et al.
+    year: 2007
+  - doi: 10.7930/j06h4fbf
+    title: Climate Change Impacts on the United States
+    authors: National Assessment Synthesis Team, U.S. Global Change Research Program
+    year: 2001
+  - doi: 10.2307/4003253
+    title: 'Warming the World: Economic Models of Global Warming'
+    authors: Nordhaus, William, and Joseph Boyer
+    year: 2003
+  - doi: 10.3386/w13176
+    title: Assessment of U.S. GHG Cap-and-Trade Proposals
+    authors: Paltsev, Sergey, et al.
+    year: 2008
+  - doi: 10.59876/a-8wvp-j2y5
+    title: 'Environmental Economics and Management: Theory, Policy and Applications'
+    authors: Callan, Scott, and Janet Thomas
+    year: 2006
+- institution: MIT
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1017/cbo9780511546013.003
+    title: Summary for Policymakers
+    authors: Intergovernmental Panel on Climate Change (IPCC)
+    year: 2007
+- institution: MUFG ファースト センティア サステナブル投資研究所
+  course: 気候とサステナブルファイナンス
+  level: other
+  region: Asia
+  readings:
+  - doi: 10.1017/cbo9780511546013.003
+    title: Summary for Policymakers
+    authors: Intergovernmental Panel on Climate Change (IPCC)
+    year: 2007
+  - doi: 10.1787/c8328405-en
+    title: Net Zero by 2050
+    authors: International Energy Agency (IEA)
+    year: 2021
+  - doi: 10.1163/9789004322714_cclc_2021-0210-695
+    title: FSOC Report on Climate-Related Financial Risk 2021
+    year: 2021
+  - doi: 10.1596/978-1-4648-1728-1
+    title: State and Trends of Carbon Pricing 2021
+    authors: The World Bank
+    year: 2021
+  - doi: 10.1596/40002
+    title: Minerals for Climate Action - The Mineral Intensity of the Clean Energy Transition
+    authors: The World Bank
+    year: 2020
+  - doi: 10.2139/ssrn.3912349
+    title: Breaking the tragedy of the horizon - climate change and financial stability
+    authors: Mark Carney
+- institution: MÁSTER UNIVERSITARIO EN DIRECCIÓN FINANCIERA Y CONTABLE DE LA EMPRESA
+  course: Finance durable
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/20430795.2020.1717241
+    title: Principles of Sustainable Finance
+    authors: Dirk Schoenmaker, Willem Schramade
+    year: 2019
+- institution: MÁSTER UNIVERSITARIO EN DIRECCIÓN FINANCIERA Y CONTABLE DE LA EMPRESA
+  course: Finanzas Sostenibles
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1007/978-3-032-03333-8_5
+    title: Sustainable Finance trends
+    year: 2024
+  - doi: 10.1787/b4f71091-en
+    title: 'ESG Investing: Practices, Progress and Challenges'
+    authors: Boffo, R., & Patalano, R.
+    year: 2020
+  - doi: 10.4018/978-1-5225-7619-8
+    title: Corporate Social Responsibility and Opportunities for Sustainable Financial Success
+    authors: Puaschunder, J.
+    year: 2019
+  - title: An online Study Guide – Principles and Practice of Green and Sustainable Finance
+    year: 2023
+- institution: New York University Stern School of Business
+  course: 'Climate Finance: An Economic and Financial Approach to Climate Change'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1163/9789004322714_cclc_2022-0053-0191
+    title: Climate Change, Cities, and Green Infrastructure
+  - doi: 10.18235/0005994
+    title: Climate Risk and the Energy Sector
+  - doi: 10.15396/eres2016_282
+    title: Climate Risk in Real Estate Markets I
+    authors: Joe Davis
+  - doi: 10.1016/j.resourpol.2022.102681
+    title: Climate Risks and other risks
+  - doi: 10.1016/j.jfs.2021.100867
+    title: Climate Risk and Financial Stability
+  - doi: 10.2139/ssrn.6115887
+    title: Physical and Transition Climate Risks
+- institution: ODI, HBS
+  course: Climate Finance Course
+  level: other
+  region: Global
+  readings:
+  - title: CPI Webinar The Global Landscape of Climate Finance 2019
+    year: 2019
+- institution: ODI, HBS
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1017/9781108886246.018
+    title: Paris Agreement
+    authors: UNFCCC
+    year: 2015
+- institution: ODI, HBS
+  course: The Global Climate Finance Architecture Fundamentals
+  level: other
+  region: Global
+  readings:
+  - doi: 10.4337/9781035362042.00008
+    title: Green Climate Fund
+  - doi: 10.1163/2210-7975_hrd-9705-2014001
+    title: Climate Investment Funds
+    year: 2020
+  - doi: 10.1163/9789004322714_cclc_2021-0169-540
+    title: Report of the Conference of the Parties on its twenty-first session, held in Paris from 30 November to 13 December
+      2015
+    authors: UNFCCC
+    year: 2016
+  - doi: 10.18235/0013685
+    title: 2019 Joint report on multilateral development banks’ climate finance
+    authors: EBRD, AfDB, ADB, EIB, IDB and WB
+    year: 2020
+  - doi: 10.1787/9789264249424-en
+    title: Climate finance in 2013-14 and the USD 100 billion goal
+    authors: OECD and Climate Policy Initiative
+    year: 2015
+  - doi: 10.1787/39faf4a7-en
+    title: Climate finance provided and mobilized by developed countries in 2013-2017
+    authors: OECD
+    year: 2019
+  - doi: 10.13140/2.1.4859.4728
+    title: 'Mobilising international climate finance: lessons from the fast-start finance period'
+    authors: Nakhooda, S., Fransen, T., Caravani, A., Kuramochi, T., Prizzon, A., Shimizu, N., Halimanjaya, A., Tilley, H.
+      and Welham, B.
+    year: 2013
+  - doi: 10.1787/19150727-en
+    title: Climate finance provided and mobilised by developed countries in 2013-2018
+    authors: OECD
+    year: 2020
+  - doi: 10.1596/978-1-60244-223-8
+    title: Forest Carbon Partnership Facility
+  - doi: 10.1596/35460
+    title: Partnership for Market Readiness
+  - doi: 10.2172/762814
+    title: Biennial Assessment
+    year: 2021
+- institution: One UN Climate Change Learning Partnership
+  course: Principles and Practice of Green and Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.4337/9781786432636.00019
+    title: Green Bond Principles
+    authors: International Capital Market Association
+    year: 2021
+- institution: Pontificia Universidad Javeriana
+  course: Klimafinanzierung - Berufszertifikat
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1553/aar14s707
+    title: Klimawandel
+  - doi: 10.25368/2022.412
+    title: Klimafinanzierung
+- institution: Programa de Pós-graduação Stricto Sensu em Direito da Regulação
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/9789264273528-en
+    title: Investing In Climate, Investing In Growth
+    authors: OECD
+    year: 2017
+- institution: Programa de Pós-graduação Stricto Sensu em Direito da Regulação
+  course: Regulação Climática
+  level: other
+  region: Latin America
+  readings:
+  - doi: 10.1017/cbo9780511817434
+    title: 'The Economics of Climate Change: The Stern Review'
+    authors: Stern, Nicholas Herbert
+    year: 2007
+  - doi: 10.1163/9789004322714_cclc_2015-0136-001
+    title: Urgenda Foundation v. State of the Netherlands
+  - doi: 10.11606/t.2.2016.tde-27102016-092601
+    title: Responsabilidade Civil Preventiva
+    authors: Thaís G P. Venturi
+    year: 2014
+  - doi: 10.1093/rfs/hhz146
+  - doi: 10.1111/reel.12162
+    title: 'The Paris Agreement: A New Step in the Gradual Evolution of Differential Treatment in the Climate Regime?'
+    authors: Maljean-Dubois, S.
+    year: 2016
+  - doi: 10.2139/ssrn.3264764
+    title: 'The Legal Character of Due Diligence: Standards, Obligations or Both?'
+    authors: K.L.H. S.
+    year: 2018
+  - doi: 10.12957/rdc.2020.50890
+  - doi: 10.12660/rda.v272
+  - doi: 10.17771/pucrio.acad.72371
+    title: Emergência climática e a emergência da litigância climática
+    authors: Setzer, J.; Cunha, K.; Botter-Fabbri, A.
+    year: 2019
+  - doi: 10.17771/pucrio.acad.61812
+    title: Guia de litigância climática
+    authors: Borges, C.; Mantelli, G.; Nabuco, J.
+    year: 2019
+  - doi: 10.17104/9783406779237-410
+    title: Lliuya v. RWE AG
+  - doi: 10.1007/s11027-018-9837-5
+  - doi: 10.1007/s10784-020-09515-2
+    title: Future proofing the principle of no significant harm
+    authors: Gupta, J.; Schmeier, S.
+    year: 2020
+  - doi: 10.1080/17565529.2015.1064811
+  - doi: 10.1080/15693430701742669
+  - doi: 10.1080/14693062.2020.1871313
+  - doi: 10.1080/14693062.2013.822661
+    title: 'The UNFCCC as a negotiation forum: towards common but more differentiated responsibilities'
+    authors: Brunnée, J.; Streck, C.
+    year: 2013
+  - doi: 10.1080/10406020802671914
+    title: 'Natural Resource Damages for Climate Change—An Idea Whose Time Is Not Yet Come, Part II: Climate Change NRD Claims—Get
+      Coverage'
+    authors: Donald, J.; Gottlieb, I.; Hill, J.
+    year: 2009
+  - doi: 10.1073/pnas.2004093117
+  - doi: 10.1093/law/9780199664290.003.0002
+    title: International Climate Change Law
+    authors: Bodansky, D.; Brunnée, J.; Rajamani, L.
+    year: 2017
+  - doi: 10.1093/jel/eqw015
+    title: 'The 2015 Paris Agreement: Interplay Between Hard, Soft and Non-Obligations'
+    authors: Rajamani, Lavanya
+    year: 2016
+  - doi: 10.1093/acrefore/9780190228620.013.648
+    title: Climate change liability
+    authors: Faure, M.; Peeters, Marjan
+    year: 2011
+  - doi: 10.1017/s1365100518001001
+  - doi: 10.1017/s0020589319000320
+    title: 'The Paris rulebook: balancing international prescriptiveness with national discretion'
+    authors: Rajamani, Lavanya; Bodansky, Daniel
+    year: 2019
+  - doi: 10.1017/s0020589316000130
+    title: 'Ambition and Differentiation in the 2015 Paris Agreement: Interpretative possibilities and Underlying Politics'
+    authors: Rajamani, L.
+    year: 2016
+  - doi: 10.1017/9781108879064.006
+    title: In Defense of the Principle of Common but Differentiated Responsibilities and Respective Capabilities
+    authors: Shapovalova, D.
+    year: 2021
+  - doi: 10.1017/9781108304368
+    title: The International Law on Climate Change
+    authors: Mayer, B.
+    year: 2018
+  - doi: 10.1017/9781108284646.002
+  - doi: 10.1016/s2542-5196(20)30196-0
+    title: 'Quantifying national responsibility for climate breakdown: an equality-based attribution approach for carbon dioxide
+      emissions in excess of the planetary boundary'
+    authors: Hickel, J.
+    year: 2020
+  - doi: 10.1057/s41599-019-0298-6
+    title: Subtle differentiation of countries’ responsibilities under the Paris Agreement
+    authors: Pauw, P.; Mbeva, K.; van Asselt, H.
+    year: 2019
+  - doi: 10.1038/s41558-021-00990-2
+  - doi: 10.7916/d8n29wv0
+    title: Climate change and sustainable development in brazilian law
+    authors: Wedy, Gabriel
+    year: 2016
+  - doi: 10.2307/40041386
+    title: 'Liability for Climate Change: The Benefits, the Costs, and the Transaction Costs'
+    authors: Schwarze, Reimund
+    year: 2007
+  - doi: 10.21875/tjc.v3i1.17547
+    title: 'Justiça ambiental no direito brasileiro: fundamentos constitucionais para combater as desigualdades e discriminações
+      ambientais'
+    authors: Guimarães, Virgínia Totti
+    year: 2018
+  - doi: 10.22456/2178-8839.49014
+    title: O que há de errado com os litígios climáticos?
+    authors: Mendes, C.H.; Moraes, M.A.
+    year: 2019
+  - doi: 10.2778/584899
+  - doi: 10.5216/teri.v1i2.17842
+    title: 'Justiça climática e eventos climáticos extremos: uma análise da percepção social no Brasil'
+    authors: Milanez, Bruno; Fonseca, Igor Ferraz
+    year: 2011
+  - doi: 10.5102/rbpp.v7i2.4633
+    title: 'Direitos de Propriedade e Instrumentos Econômicos de Regulação Ambiental: Uma Análise das Atribuições Implícitas'
+    authors: Laura Meneghel Santos, Antonio Maristrello Porto, R. S. R. Sampaio
+    year: 2017
+  - doi: 10.4337/apjel.2016.01.04
+    title: The Relevance of the No-Harm Principle to Climate Change Law and Politics
+    authors: Mayer, B.
+    year: 2016
+  - doi: 10.3390/su13126913
+  - doi: 10.4324/9781315070490-26
+    title: The Precautionary Principle
+    authors: Bazurco, J.
+    year: 2020
+- institution: SOAS University of London
+  course: MSc Climate Change Finance and Investment
+  level: masters
+  region: Global
+  readings:
+  - title: CPI Webinar The Global Landscape of Climate Finance 2019
+    year: 2019
+- institution: SOAS University of London
+  course: Sustainable Finance and Climate Change
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1163/9789004322714_cclc_2021-0148-461
+    title: 'Net-zero Central Banking: A New Phase in Greening the Financial System'
+    authors: Dikau, S., et al.
+    year: 2021
+  - doi: 10.1177/2233865917743357
+    title: 'Towards Implementation of Sustainable Development Goals in Developing Nations: A Useful Funding Framework'
+    authors: Akenroye, T.O., et al.
+    year: 2018
+  - doi: 10.18235/0002046
+    title: 'Climate Risk and Financial Systems of Latin America: Regulatory, Supervisory and Industry Practices in the Region
+      and Beyond'
+    authors: Frisari, G., et al.
+    year: 2020
+  - doi: 10.2139/ssrn.2362154
+    title: 'Science and the Stock Market: Investor’s Recognition of Unburnable Carbon'
+    authors: Griffin, P.A., et al.
+    year: 2015
+  - doi: 10.2139/ssrn.2223008
+    title: Connecting the Dots between Climate Goals, Portfolio Allocation and Financial Regulation
+    authors: Dupré, S. and H. Chenet
+    year: 2013
+  - doi: 10.1016/j.worlddev.2020.105131
+    title: The Impact of Climate Vulnerability on Firms’ Cost of Capital and Access to Finance
+    authors: Kling, G., et al.
+    year: 2021
+  - doi: 10.1002/sd.2199
+    title: Climate Change and Sovereign Risk
+    authors: Volz, U., et al.
+    year: 2020
+  - doi: 10.1002/wcc.678
+    title: Low-carbon Transition Risks for Finance
+    authors: Semieniuk, G., et al.
+    year: 2021
+  - doi: 10.1007/s10784-016-9345-6
+    title: What is Adaptation to Climate Change? Epistemic Ambiguity in the Climate Finance System
+    authors: Hall, N.
+    year: 2017
+  - doi: 10.1007/978-981-10-8710-3_17-1
+    title: Central Banking, Climate Change and Green Finance
+    authors: Dikau, S. and U. Volz
+    year: 2019
+  - doi: 10.1038/nature14016
+    title: The Geographical Distribution of Fossil Fuels Unused When Limiting Global Warming to 2°C
+    authors: McGlade, C. and P. Ekins
+    year: 2015
+  - doi: 10.2139/ssrn.5261794
+    title: Case Studies of Environmental Risk Analysis Methodologies
+    authors: Ma, J., et al.
+    year: 2020
+  - doi: 10.6027/na2018-914
+    title: Greening China’s Financial System
+    authors: IISD and DRC
+    year: 2015
+  - doi: 10.4324/9781315543222-27
+    title: Fostering Green Finance for Sustainable Development in Asia
+    authors: Volz, U.
+    year: 2019
+- institution: SOAS University of London
+  course: 'Sustainable Finance: Hoax or Necessity?'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1016/j.ecolecon.2021.107022
+    title: Central Bank Mandates, Sustainability Objectives and the Promotion of Green Finance
+    authors: Dikau, S. & Volz, U.
+    year: 2021
+- institution: Sauder School of Business, UBC
+  course: Climate Economics and Markets
+  level: other
+  region: North America
+  readings:
+  - doi: 10.5822/978-1-61091-608-0
+    title: Markets and the Environment
+    authors: Nathaniel Keohane and Sheila Olmstead
+    year: 2020
+  - doi: 10.1126/science.adv7917
+    title: Climate change is coming for America’s property market
+    year: 2023
+- institution: Sauder School of Business, UBC
+  course: Climate Finance
+  level: other
+  region: North America
+  readings:
+  - doi: 10.7312/ushe20088
+    title: Investing in the Era of Climate Change
+    authors: Usher, B.
+    year: 2022
+  - doi: 10.2139/ssrn.4331891
+    title: 'Apple Inc.: The Second Green Bond'
+    authors: O’Brien, R., & Lipson, M. L.
+    year: 2023
+- institution: Sauder School of Business, UBC
+  course: MSc Climate Change Finance and Investment
+  level: masters
+  region: North America
+  readings:
+  - doi: 10.12737/textbook_5b742ef92eda62.57813862
+    title: Fundamentals of Corporate Finance
+    authors: Richard A. Brealey, Stewart C. Myers, and Alan J. Marcus
+    year: 2023
+- institution: Singapore Green Finance Centre
+  course: Introduction to Sustainability & Sustainable Finance
+  level: other
+  region: Asia
+  readings:
+  - doi: 10.1007/978-1-4020-4974-3_30
+    title: Sustainability Reporting
+  - doi: 10.1093/hesc/9780198754831.003.001
+    title: Introduction and Background
+  - doi: 10.2139/ssrn.3627858
+    title: Blended and Transition Finance
+  - doi: 10.4337/9781800883727.00024
+    title: Sustainable Debt
+  - doi: 10.4324/9781315886985-8
+    title: Carbon Markets
+- institution: Strategic Alliance on Green Bond Market Development in G20 Emerging Economies (STA)
+  course: Introduction to Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1108/s2051-503020160000019005
+    title: 2030 Agenda for Sustainable Development
+    year: 2020
+  - doi: 10.1016/b978-0-12-803615-0.00015-7
+    title: Environmental Finance
+  - doi: 10.1057/9781137014825.0010
+    title: Global Capital
+- institution: Strategic Alliance on Green Bond Market Development in G20 Emerging Economies (STA)
+  course: Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.7551/mitpress/9780262035620.003.0009
+    title: Sustainable Development Goals
+    authors: United Nations (UN)
+    year: 2015
+- institution: Strategic Alliance on Green Bond Market Development in G20 Emerging Economies (STA)
+  course: The Global Climate Finance Architecture Fundamentals
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1017/9781108886246.018
+    title: Paris Agreement
+    authors: UNFCCC
+    year: 2015
+- institution: UNESCO-IESALC
+  course: Programa de fortalecimiento de proyectos de cambio climático (PFPCC)
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1007/978-3-030-11352-0_300128
+    title: Greening Higher Education
+  - doi: 10.36677/contextohumano.v1i1.20421
+    title: Universidades Verdes
+- institution: UNITAR & UNDP
+  course: Asia-Pacific Climate Finance Course
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1163/9789004322714_cclc_2023-0169-0823
+    title: New Collective Quantified Goal
+    year: 2022
+  - doi: 10.1163/9789004322714_cclc_2023-0020-0147
+    title: Loss and Damage Fund
+    year: 2022
+  - doi: 10.2139/ssrn.4728216
+    title: Just Energy Transition Partnerships
+  - doi: 10.55317/9781784136727
+    title: How the Middle East and North Africa can benefit from adaptive climate governance
+    authors: Karim Elgendy
+    year: 2023
+- institution: UNITAR and the Climate Finance Network of the Asia-Pacific of UNDP
+  course: Scaling Climate Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.14198/xcongresoaecalicante2016-56
+    title: Integración del cambio climático en la planificación y programación de UNICEF
+  - doi: 10.24135/10292/17992
+    title: Scaling Climate Finance
+- institution: Unive
+  course: Climate Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1038/nclimate3255
+    title: A Climate stress-test of the financial system
+    authors: Battiston, S., Mandel, A., Monasterolo, I., Schütze, F., & Visentin, G.
+    year: 2017
+- institution: Universitat Pompeu Fabra
+  course: Finanzas Sostenibles
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/20430795.2020.1717241
+    title: Principles of Sustainable Finance
+    authors: Dirk Schoenmaker, Willem Schramade
+    year: 2019
+- institution: University of Cambridge
+  course: MPhil in Engineering for Sustainable Development
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1007/978-3-319-70585-9
+    title: Systems Thinking for Sustainable Development
+    authors: Sanneh E.S
+    year: 2018
+- institution: University of Edinburgh
+  course: International Climate Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.18235/0000876
+    title: DFI Working Group on Blended Concessional Finance for Private Sector Projects
+    authors: DFI Working Group
+    year: 2019
+  - doi: 10.1596/30475
+    title: 'Strategic Use of Climate Finance to Maximize Climate Action: A Guiding Framework'
+    year: 2018
+- institution: University of Edinburgh
+  course: Regulação Climática
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/9789264273528-en
+    title: Investing In Climate, Investing In Growth
+    authors: OECD
+    year: 2017
+- institution: University of Michigan
+  course: 'EAS 575: Climate Economics and Policy'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.5822/978-1-61091-608-0
+    title: Markets and the Environment
+    authors: Nathaniel Keohane and Sheila Olmstead
+    year: 2020
+  - doi: 10.1163/9789004322714_cclc_2020-0173-0861
+    title: MI Healthy Climate Plan
+    authors: Michigan Department of Environment, Great Lakes, and Energy
+    year: 2022
+  - doi: 10.1163/9789004322714_cclc_2022-0267-0966
+    title: 'Soil: The Dirty Climate Solution'
+    authors: Johnson, Ayana Elizabeth and Alex Blumberg
+    year: 2021
+  - doi: 10.1111/gcb.16380
+    title: Using remote sensing to quantify the additional climate benefits of California forest carbon offset projects
+    authors: Coffield, Shane R., Cassandra D. Vo, Jonathan A. Wang, Grasyon Badgley, Michael L. Goulden, Danny Cullenward,
+      William R.L. Anderegg, and James T. Randerson
+    year: 2022
+  - doi: 10.1371/journal.pone.0006802
+    title: Natural climate solutions for the United States
+    authors: Fargione, Joseph E. et al.
+    year: 2018
+  - doi: 10.1016/j.enpol.2016.07.048
+    title: 'Targeting energy justice: Exploring spatial, racial/ethnic, and socioeconomic disparities in urban residential
+      heating energy efficiency'
+    authors: Reames, Tony
+    year: 2016
+  - doi: 10.1086/715549
+    title: 'It’s Not Easy Being “Green”: Lessons from Norway’s Experience with Incentives for Electric Vehicle Infrastructure'
+    authors: Springel, Katalin
+  - doi: 10.1086/720988
+    title: A Guide to Updating the US Government’s Social Cost of Carbon
+    authors: Carleton, Tamma and Michael Greenstone
+    year: 2022
+  - doi: 10.7551/mitpress/9780262037952.001.0001
+    title: Can We Price Carbon?
+    authors: Rabe, Barry G.
+    year: 2018
+  - doi: 10.2172/1440405
+    title: Energy Data Explorer
+    year: 2021
+  - doi: 10.3386/w27205
+    title: Do Environmental Markets Cause Environmental Injustice? Evidence from California’s Carbon Market
+    authors: Hernández-Cortés, Danae and Kyle C. Meng
+    year: 2022
+  - doi: 10.3386/w16703
+    title: Six Distributional Effects of Environmental Policy
+    authors: Fullerton, Don
+    year: 2011
+  - doi: 10.32747/2023.8134358.ers
+    title: Estimating Economic Damage from Climate Change in the United States
+    authors: Hsiang, Solomon, Robert Kopp, Amir Jina, James Rising, Michael Delgado, Shashank Mohan, D.J.Rasmussen, Robert
+      Muir-Wood, Paul Wilson, Michael Oppenheimer, Kate Larsen, and Trevor Houser
+    year: 2017
+  - doi: 10.5038/2375-0901.21.1.11
+    title: 'Transit in the 2000s: Where Does It Stand and Where Is It Headed?'
+    authors: Manville, Michael, Brian D. Taylor, and Evelyn Blumenberg
+    year: 2018
+  - doi: 10.3410/f.741185337.793591265
+    title: Mapping the irrecoverable carbon in Earth’s ecosystems
+    authors: Noon, Monica L., Allie Goldstein, Juan Carlos Ledezma, Patrick R. Roehrdanz, Susan C. Cook-Patton, Seth A. Spawn-Lee,
+      Timothy Maxwell Wright, Mariano Gonzalez-Roglich, David G. Hole, Johan Rockstrom, and Will R. Turner
+    year: 2022
+  - doi: 10.3386/w28955
+    title: Who Will Pay for Legacy Utility Costs?
+    authors: Davis, Lucas and Catherine Hausman
+    year: 2021
+- institution: University of Michigan
+  course: 'Environmental Finance: Financial Innovation for Green Growth'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1201/9781003481652-2
+    title: Alternative Investments
+  - doi: 10.1016/0167-7799(88)90054-6
+    title: Facts, figures, and trends
+    authors: Bloomberg NEF
+    year: 2018
+  - doi: 10.61557/zcow6716
+    title: What is a blockchain
+    authors: Deloitte
+  - doi: 10.4324/9781849773959-11
+    title: 'Sustainable Equity Investing: The Market Beating Strategy'
+- institution: University of Texas at Dallas
+  course: ECON 383 A01 Climate Economics
+  level: other
+  region: North America
+  readings:
+  - doi: 10.5860/choice.188270
+    title: 'Climate Economics: Economic Analysis of Climate, Climate Change and Climate Policy'
+    authors: Tol, R. S.
+    year: 2019
+- institution: University of Texas at Dallas
+  course: Economics of Climate Change
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1007/978-3-030-17740-9_1
+    title: 'Mostly Harmless Econometrics: An Empiricist’s Companion'
+    authors: Angrist, J. D. and J.-S. Pischke
+    year: 2008
+  - doi: 10.1146/annurev-economics-080217-053402
+    title: Econometric methods for program evaluation
+    authors: Abadie, A. and M. D. Cattaneo
+    year: 2018
+  - doi: 10.1016/j.jeem.2023.102890
+  - doi: 10.3386/w25189
+    title: An economist’s guide to climate change science
+    authors: Hsiang, S. and R. E. Kopp
+    year: 2018
+  - doi: 10.4337/9780857939067.00005
+    title: Handbook of the Economics of Climate Change
+    authors: Barrage, L. and S. Hsiang
+    year: 2024
+- institution: University of Victoria
+  course: ECON 383 A01 Climate Economics
+  level: other
+  region: North America
+  readings:
+  - doi: 10.5040/9781350924291
+    title: What is Plagiarism
+  - doi: 10.4324/9781003447177-4
+    title: Student Code of Conduct
+- institution: University of Victoria
+  course: Economics of Climate Change
+  level: other
+  region: North America
+  readings:
+  - doi: 10.5860/choice.188270
+    title: 'Climate Economics: Economic Analysis of Climate, Climate Change and Climate Policy'
+    authors: Tol, R. S.
+    year: 2019
+- institution: University of Victoria
+  course: 'Global Climate Change: Economics, Science, and Policy'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.4337/9781035365944
+    title: Environmental Economics
+    authors: Kolstad, C.
+    year: 2010
+- institution: Universität Passau
+  course: Green and Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1007/978-3-319-71062-4_75-1
+    title: Green and Sustainable Finance
+- institution: Universität Zürich
+  course: Climate Economics
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.5194/egusphere-egu26-11680
+    title: The choice of historical data product dominates climate uncertainty in projections of climate impacts in a 2-degree
+      world
+    authors: Kevin Schwarzwald, Nathan Lenssen, Radley Horton, Alia Bonanno, and Gernot Wagner
+    year: 2026
+  - doi: 10.64628/aam.jf4cf4kau
+    title: How to Measure Climate Progress
+    year: 2025
+- institution: Université Paris - Dauphine
+  course: Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/20430795.2020.1717241
+    title: Principles of Sustainable Finance
+    authors: Dirk Schoenmaker, Willem Schramade
+    year: 2019
+- institution: Unknown
+  course: Bases du Financement Climatique dans le Contexte des PMA
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/01436597.2015.1086263
+    title: Climate Finance
+    authors: Third World Network, Earth in Brackets, ActionAid, LDC Watch, and others
+    year: 2015
+  - doi: 10.18356/9789280738346
+    title: Adaptation Gap Report
+    authors: UNEP
+    year: 2023
+- institution: Unknown
+  course: 'Carbon Finance: Fundamentals and Practices'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.5860/choice.48-1588
+    title: 'The Handbook of Carbon Offset Programs: Trading Systems, Funds, Protocols and Standards'
+    authors: Anja Kollmuss, Michael Lazarus and Carrie Lee
+    year: 2020
+- institution: Unknown
+  course: Certificate in ESG Investing
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1201/9781032636252-1
+    title: 'Sustainable finance: an introduction'
+- institution: Unknown
+  course: Climate Finance
+  level: other
+  region: North America
+  readings:
+  - doi: 10.12737/textbook_5b742ef92eda62.57813862
+    title: Fundamentals of Corporate Finance
+    authors: Richard A. Brealey, Stewart C. Myers, and Alan J. Marcus
+    year: 2023
+- institution: Unknown
+  course: 'EVOLUZIONE DELLA FINANZA SOSTENIBILE: STRUMENTI, STRATEGIE DI INVESTIMENTO E IMPATTI SULLE IMPRESE'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.4337/9781786432636.00019
+    title: Green Bond Principles
+    authors: International Capital Market Association
+    year: 2021
+  - doi: 10.1016/b978-0-7506-1049-0.50009-5
+    title: Our Common Future
+    year: 1987
+  - doi: 10.4324/9781351278881-34
+    title: Principles for Responsible Investment
+    authors: United Nations Principles for Responsible Investment (UNPRI)
+    year: 2006
+- institution: Unknown
+  course: Einführung in die Klimafinanzierung
+  level: other
+  region: Global
+  readings:
+  - doi: 10.4337/9781035362042.00008
+    title: Green Climate Fund
+- institution: Unknown
+  course: 'F1ES 4525 - Urban Climate Finance : Initial Notions and Practice of Local Climate Investment'
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1017/9781009325844
+    title: 'Climate Change 2022: Impacts, Adaptation and Vulnerability'
+    authors: IPCC
+    year: 2022
+- institution: Unknown
+  course: F1IP 5000 - Introduction to Green Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/20430795.2020.1717241
+    title: Principles of Sustainable Finance
+    authors: Dirk Schoenmaker, Willem Schramade
+    year: 2019
+- institution: Unknown
+  course: FINANCIAL ECONOMICS OF CLIMATE AND SUSTAINABILITY
+  level: other
+  region: North America
+  readings:
+  - doi: 10.2139/ssrn.3438533
+    title: 'Aggregate Confusion: The Divergence of ESG Ratings'
+    authors: Berg, F., Koëlbel, J. F., and Rigobon, R.
+    year: 2022
+  - doi: 10.1016/j.jfineco.2020.11.001
+    title: 'Responsible investing: The ESG efficient frontier'
+    authors: Pedersen, L. H., Fitzgibbons, S., and Pomorski, L.
+    year: 2021
+  - doi: 10.2307/2676219
+    title: The effect of green investment on corporate behaviour
+    authors: Heinkel, R., Kraus, A., and Zechner, J.
+    year: 2001
+  - doi: 10.1080/20430795.2020.1813478
+    title: Transition Finance and Transition Planning
+    authors: Ben Caldecott
+    year: 2022
+  - doi: 10.2139/ssrn.3440301
+    title: Pricing uncertainty induced by climate change
+    authors: Barnett, Michael, William Brock, and Lars Peter Hansen
+    year: 2020
+  - doi: 10.2139/ssrn.3896511
+    title: Impact Investing in Private Markets
+    authors: Deeksha Gupta, Jan Starmans
+  - doi: 10.2139/ssrn.3467644
+    title: A Theory of Socially Responsible Investment
+    authors: Oehmke, M. and Opp, M.
+    year: 2023
+  - doi: 10.2139/ssrn.3508938
+    title: 'ESG Investing: How to Optimize Impact?'
+    authors: Landier, A. and Lovo, S.
+    year: 2020
+  - doi: 10.2139/ssrn.3765659
+    title: Do Investors Care about Impact?
+    authors: Heeb, Florian, and Julian Kölbel, Falko Paetzold, Stefan Zeisberger
+    year: 2023
+  - doi: 10.2139/ssrn.3235190
+    title: The importance of climate risk for institutional investors
+    authors: Krüger, Philipp, Sautner, Zacharias, and Starks, Laura
+    year: 2020
+  - doi: 10.2139/ssrn.3737772
+    title: The Allocation of Socially Responsible Capital
+    authors: Green, D. and Roth, B.
+    year: 2021
+  - doi: 10.1146/annurev-financial-111620-014802
+  - doi: 10.1146/annurev-financial-102620-103311
+  - doi: 10.1257/aer.104.5.544
+  - doi: 10.1093/rof/rfac033
+  - doi: 10.1093/rof/rfac029
+  - doi: 10.1093/rfs/hhz144
+  - doi: 10.1093/rfs/hhz143
+  - doi: 10.1093/rfs/hhz137
+  - doi: 10.1093/rfs/hhz134
+  - doi: 10.1093/rfs/hhz079
+  - doi: 10.1093/rfs/hhz073
+  - doi: 10.1093/rfs/hhz072
+  - doi: 10.1093/rfs/hhv044
+  - doi: 10.1093/rfs/hhad085
+    title: 'Banking on carbon: Corporate lending and cap-and-trade policy'
+    authors: Ivanov, I., Kruttli, M., & Watugala, S.
+    year: 2024
+  - doi: 10.1093/rfs/hhz126
+  - doi: 10.1111/jofi.13272
+  - doi: 10.1111/jofi.13255
+  - doi: 10.1111/jofi.13219
+  - doi: 10.1111/jacf.12502
+  - doi: 10.1111/1475-679x.12481
+  - doi: 10.1111/1475-679x.12473
+    title: Greenhouse Gas Disclosure and Emissions Benchmarking
+    authors: Tomar, S.
+    year: 2023
+  - doi: 10.1111/jacf.12560
+  - doi: 10.2139/ssrn.3398441
+  - doi: 10.2139/ssrn.3317570
+  - doi: 10.2139/ssrn.3287430
+  - doi: 10.2139/ssrn.3240200
+  - doi: 10.2139/ssrn.3167379
+  - doi: 10.2139/ssrn.3125518
+  - doi: 10.2139/ssrn.3073842
+  - doi: 10.2139/ssrn.2708589
+  - doi: 10.2139/ssrn.2680296
+  - doi: 10.2139/ssrn.2146282
+  - doi: 10.2139/ssrn.2776962
+  - doi: 10.1287/mnsc.2022.4472
+  - doi: 10.1287/mnsc.2014.2038
+  - doi: 10.1257/jep.32.4.33
+    title: Quantifying economic damages from climate change
+    authors: Auffhammer, Maximilian
+    year: 2018
+  - doi: 10.1257/jel.45.3.703
+    title: A review of the Stern Review on the economics of climate change
+    authors: Weitzman, Martin L.
+    year: 2007
+  - doi: 10.1257/jel.20211675
+    title: 'Choosing the Future: Markets, Ethics and Rapprochement in Social Discounting'
+    authors: Millner, Antony, and Geoffrey Heal
+    year: 2023
+  - doi: 10.1257/jel.20151335
+    title: The Economics of the Climate
+    authors: Heal, Geoffrey
+    year: 2017
+  - doi: 10.1016/j.jeem.2019.02.003
+    title: The Social Cost of Carbon Revisited
+    authors: Pindyck, Robert S.
+    year: 2019
+  - doi: 10.1016/j.jeconom.2018.09.015
+  - doi: 10.1016/j.jbankfin.2018.10.012
+  - doi: 10.1016/j.jacceco.2020.101312
+  - doi: 10.1016/j.jacceco.2017.08.001
+    title: 'The Real Effects of Mandated Information on Social Responsibility in Financial Reports: Evidence from Mine-safety
+      Records'
+    authors: Christensen, H.B., Floyd, E. L.Y. Liu, and M.G. Maffett
+    year: 2017
+  - doi: 10.1093/rfs/hhad041
+  - doi: 10.1016/j.jfineco.2022.07.007
+  - doi: 10.1016/j.jfineco.2022.03.004
+  - doi: 10.1016/j.jfineco.2021.05.008
+  - doi: 10.1016/j.jfineco.2021.01.010
+  - doi: 10.1016/j.jfineco.2020.12.011
+  - doi: 10.1016/j.jfineco.2019.06.006
+  - doi: 10.1016/j.jfineco.2019.03.013
+  - doi: 10.1016/j.jfineco.2018.08.013
+  - doi: 10.1007/978-1-349-12486-2_4
+    title: The Problem of Social Cost
+    authors: Coase, Ronald H.
+    year: 1960
+  - doi: 10.1007/s11142-024-09830-y
+  - doi: 10.1002/smj.3313
+  - doi: 10.1007/s11142-021-09611-x
+    title: The impact of carbon disclosure mandates on emissions and financial operating performance
+    authors: Downar, Benedikt, Jürgen Ernstberger, Stefan Reichelstein, Sebastian Schwenen, and Aleksandar Zaklan
+    year: 2021
+  - doi: 10.1007/s10640-012-9612-0
+    year: 2013
+  - doi: 10.1007/s10290-024-00541-9
+    title: 'How sustainable finance creates impact: transmission mechanisms to the real economy'
+    authors: E., & Liu, F.
+    year: 2024
+  - doi: 10.1086/706794
+  - doi: 10.1080/14693062.2021.2013155
+  - doi: 10.1080/0015198x.2022.2033105
+  - doi: 10.1093/rfs/hhad002
+  - doi: 10.1093/rfs/hhab037
+  - doi: 10.1093/rfs/hhab032
+  - doi: 10.1093/reep/ret023
+    title: Uncertainty and Decision-Making in Climate Change Economics
+    authors: Heal, Geoffrey, and Antony Millner
+    year: 2014
+  - doi: 10.1093/reep/ren014
+    title: 'Climate Economics: A Meta-Review and Some Suggestions for Further Research'
+    authors: Heal, Geoffrey
+    year: 2009
+  - doi: 10.1073/pnas.1817444116
+    title: Declining CO2 Paths
+    authors: Daniel, Kent, Robert Litterman, and Gernot Wagner
+    year: 2019
+  - doi: 10.2139/ssrn.3409455
+  - doi: 10.2139/ssrn.3864502
+  - doi: 10.2139/ssrn.3853935
+  - doi: 10.2139/ssrn.3712665
+  - doi: 10.2139/ssrn.3562534
+  - doi: 10.2139/ssrn.3550233
+  - doi: 10.2139/ssrn.3498354
+  - doi: 10.2139/ssrn.3468896
+  - doi: 10.2139/ssrn.3466417
+  - doi: 10.2139/ssrn.3448904
+  - doi: 10.2139/ssrn.3437178
+  - doi: 10.2139/ssrn.34279030
+  - doi: 10.2139/ssrn.4672099
+  - doi: 10.5089/9798400210532.001
+    title: The Great Carbon Arbitrage
+    authors: Adrian, Tobias, Patrick Bolton, and Anouk Kleinnijenhuis
+    year: 2023
+- institution: Unknown
+  course: FINANZA SOSTENIBILE
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.57590/1120-5032-202203-11
+    title: La finanza sostenibile
+    authors: Del Giudice A.
+    year: 2019
+- institution: Unknown
+  course: Finance du climat
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.3386/w26549
+    title: Sustainable investing in equilibrium
+    authors: Pastor, L., Stambaugh, R. F., and Taylor, L. A.
+    year: 2021
+- institution: Unknown
+  course: 'Finance: Climate and Sustainable Finance'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/01436597.2015.1086263
+    title: Climate Finance
+    authors: Third World Network, Earth in Brackets, ActionAid, LDC Watch, and others
+    year: 2015
+- institution: Unknown
+  course: Finanzas Sostenibles
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.18356/e5a72957-en
+    title: Agenda 2030
+    authors: United Nations, Department of Economic and Social Affairs, Sustainable Development
+    year: 2015
+- institution: Unknown
+  course: Fundamentals in Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/141500306758
+    title: World Energy Outlook
+    authors: International Energy Agency
+    year: 2023
+- institution: Unknown
+  course: 'Global Climate Change: Economics, Science, and Policy'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1017/cbo9780511546013.003
+    title: Summary for Policymakers
+    authors: Intergovernmental Panel on Climate Change (IPCC)
+    year: 2007
+- institution: Unknown
+  course: 'Green Finance: Core Notions'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.3386/w28940
+    title: Dissecting Green Returns
+    authors: Pastor, L., Stambaugh, R., and Taylor, L.
+    year: 2022
+- institution: Unknown
+  course: International Climate Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/9789264273528-en
+    title: Investing In Climate, Investing In Growth
+    authors: OECD
+    year: 2017
+- institution: Unknown
+  course: Introduction to Sustainable Finance
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.7551/mitpress/9780262035620.003.0009
+    title: Sustainable Development Goals
+    authors: United Nations (UN)
+    year: 2015
+  - doi: 10.1017/9781108886246.018
+    title: Paris Agreement
+    authors: UNFCCC
+    year: 2015
+- institution: Unknown
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: North America
+  readings:
+  - doi: 10.1017/9781009325844
+    title: 'Climate Change 2022: Impacts, Adaptation and Vulnerability'
+    authors: IPCC
+    year: 2022
+- institution: Unknown
+  course: MSc Climate Change Finance and Investment
+  level: masters
+  region: Asia
+  readings:
+  - doi: 10.1787/c8328405-en
+    title: Net Zero by 2050
+    authors: International Energy Agency (IEA)
+    year: 2021
+- institution: Unknown
+  course: Principles and Practice of Green and Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.59117/20.500.11822/43406
+    title: Principles for Responsible Banking
+- institution: Unknown
+  course: Sustainable Finance
+  level: other
+  region: North America
+  readings:
+  - doi: 10.3403/30430567
+    title: 'Sustainability Metrics: Data, Construction and Use'
+  - doi: 10.3390/books978-3-03943-321-6
+    title: Energy and Sustainable Development
+  - doi: 10.1515/9783110733488-017
+    title: Climate Finance and Sustainable Development
+  - doi: 10.1596/30912
+    title: Sustainable Investing and Economic Growth
+  - doi: 10.1007/springerreference_6874
+    title: Decision Models & Management
+  - doi: 10.4337/9781839109690.00007
+    title: Sustainable Entrepreneurship
+  - doi: 10.4324/9781351029780
+    title: Cost Benefit Analysis
+  - doi: 10.1007/1-4020-3518-7_1
+    title: Economics of Sustainability Management
+- institution: Unknown
+  course: Sustainable Finance and Climate Change
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1016/j.ecolecon.2021.107022
+    title: Central Bank Mandates, Sustainability Objectives and the Promotion of Green Finance
+    authors: Dikau, S. & Volz, U.
+    year: 2021
+  - title: CPI Webinar The Global Landscape of Climate Finance 2019
+    year: 2019
+- institution: Unknown
+  course: 'Sustainable finance: an introduction'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.7551/mitpress/9780262035620.003.0009
+    title: Sustainable Development Goals
+    authors: United Nations (UN)
+    year: 2015
+- institution: Unknown
+  course: The Global Climate Finance Architecture Fundamentals
+  level: other
+  region: Global
+  readings:
+  - title: CPI Webinar The Global Landscape of Climate Finance 2019
+    year: 2019
+- institution: Vrije Universiteit Amsterdam
+  course: Finance & Debt | Climate Justice Syllabus
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1080/01436597.2015.1086263
+    title: Climate Finance
+    authors: Third World Network, Earth in Brackets, ActionAid, LDC Watch, and others
+    year: 2015
+- institution: Vrije Universiteit Amsterdam
+  course: 'Finance: Climate and Sustainable Finance'
+  level: other
+  region: Europe
+  readings:
+  - doi: 10.1108/01437739710168454
+    title: The Future of Capitalism
+  - doi: 10.15396/eres2019_79
+    title: Real Estate Finance and Investment
+  - doi: 10.1016/s0927-5398(04)00074-x
+    title: Empirical Finance
+  - doi: 10.1093/hebz/9780198797753.003.0009
+    title: Corporate Social Responsibility and Governance
+  - doi: 10.7551/mitpress/9780262027977.003.0001
+    title: Financial Sector Regulation
+- institution: nan
+  course: Bases du Financement Climatique dans le Contexte des PMA
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/141500306758
+    title: World Energy Outlook
+    authors: International Energy Agency
+    year: 2023
+  - doi: 10.1787/2bf47c90-fr
+    title: Paysage du Financement Climatique
+  - doi: 10.1522/cla.mam.not3
+    title: Convention-Cadre des Nations Unies sur les Changements Climatiques
+    year: 1992
+  - doi: 10.64628/aak.t9v4htfst
+    title: Bilan Mondial de l’Accord de Paris
+  - doi: 10.6027/9789289349291-5-en
+    title: Global Landscape Climate Finance
+    authors: CPI
+    year: 2023
+  - doi: 10.4095/330164
+    title: Plan Stratégique du FVC
+    year: 2024
+- institution: nan
+  course: 'CURSO DE ESPECIALIZAÇÃO EM FINANÇAS SUSTENTÁVEIS: ABORDAGEM À NORMA ISO 32210 SUSTAINABLE FINANCE'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.3403/30421510
+    title: ISO/FDIS 32210 – Sustainable Finance – Principles and guidance
+    year: 2020
+- institution: nan
+  course: 'Carbon Finance: Fundamentals and Practices'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1201/b18929
+    title: The Carbon Footprint Handbook
+    authors: Ian Martin and Paul McKeigue
+  - doi: 10.1201/9781420052848-4
+    title: ISO Standards
+  - doi: 10.1063/pt.5.024765
+    title: IPCC Guidelines
+  - doi: 10.2139/ssrn.5749302
+    title: Carbon Offsetting and Reduction Scheme for International Aviation (CORSIA)
+    authors: International Civil Aviation Organization (ICAO)
+- institution: nan
+  course: Carbon Markets and Climate Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.7551/mitpress/11423.003.0007
+    title: Carbon Capture, Utilization, and Storage
+    year: 2027
+  - doi: 10.4324/9780203895634-33
+    title: Behavioural Finance
+    year: 2026
+- institution: nan
+  course: Climate Finance Course
+  level: other
+  region: Global
+  readings:
+  - doi: 10.12774/eod_hd.june2016.battyew
+    title: Climate Finance for Green Growth
+    year: 2023
+- institution: nan
+  course: 'Cours Abrégé 1 : Bases du Financement Climatique dans le contexte des PMA'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/annrep-2007-fr
+    title: Rapport de l'OCDE
+    authors: OCDE
+  - doi: 10.1787/a311f02e-fr
+    title: Financement Climatique et Objectif de 100 milliards de dollars
+    year: 2022
+  - doi: 10.1787/9789264249967-fr
+    title: Financement Climatique et Objectif de 100 milliards d'USD
+    year: 2023
+  - doi: 10.64628/aak.ts7efwqnv
+    title: Fonds Vert Climat (FVC)
+  - doi: 10.64628/aak.rfjh56mpy
+    title: Rapport d’Oxfam
+    authors: Oxfam
+    year: 2020
+- institution: nan
+  course: Einführung in die Klimafinanzierung
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1007/978-3-642-58682-8_2
+    title: UN-Klimarahmenkonvention
+    year: 1992
+- institution: nan
+  course: 'F1ES 4525 - Urban Climate Finance : Initial Notions and Practice of Local Climate Investment'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1017/9781009157926
+    title: 'Climate Change 2022: Mitigation of Climate Change'
+    authors: IPCC
+    year: 2022
+- institution: nan
+  course: FINANCIAL ECONOMICS OF CLIMATE AND SUSTAINABILITY
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1162/qjec.2010.125.3.877
+  - doi: 10.1146/annurev-financial-112923-021641
+  - doi: 10.1257/aer.20121036
+  - doi: 10.1093/rof/rfaf063
+  - doi: 10.1093/rof/rfaf050
+  - doi: 10.1093/rfs/hhy068
+  - doi: 10.1093/rfs/hhaf083
+  - doi: 10.1093/rfs/hhaf035
+  - doi: 10.1093/rfs/hhae055
+    title: 'Socially Responsible Finance: How to Optimize Impact'
+    authors: Landier, Augustin, and Stefano Lovo
+    year: 2025
+  - doi: 10.1093/rfs/hhad097
+  - doi: 10.1093/rfs/hhad094
+  - doi: 10.1111/jofi.13425
+    title: The Allocation of Socially Responsible Capital
+    authors: Green, Daniel, and Benjamin N. Roth
+    year: 2025
+  - doi: 10.1111/jofi.13412
+  - doi: 10.1111/jems.12100
+    title: Doing Well by Doing Good? Community Development Venture Capital
+    authors: Kovner, Anna, and Josh Lerner
+    year: 2015
+  - doi: 10.1257/aer.20230016
+  - doi: 10.2139/ssrn.3159731
+  - doi: 10.2139/ssrn.2150365
+  - doi: 10.1257/pol.20200378
+  - doi: 10.1257/jep.22.3.173
+    title: Probability and Uncertainty in Economic Modeling
+    authors: Gilboa, Itzhak, Andrew W. Postlewaite, and David Schmeidler
+    year: 2008
+  - doi: 10.1561/1400000080-3
+  - doi: 10.1016/j.jenvman.2025.127062
+    title: 'Decoding corporate climate transition plans: A comparative analysis of 14 frameworks'
+    authors: Nicolajsen, Astrid B., Anders Bjørn, Tim C. McAloone, and Daniela CA Pigosso
+    year: 2025
+  - doi: 10.1016/j.iscience.2025.1001001
+    title: A Framework for Assessing and Managing Dependencies in Corporate Transition Plans
+    authors: Rose, Adrien, Gireesh Shrimali, and Krista Halttunen
+    year: 2025
+  - doi: 10.1016/j.jfineco.2024.103987
+  - doi: 10.1016/j.jfineco.2024.103955
+  - doi: 10.1016/j.jfineco.2021.01.006
+    title: 'Contracts with (Social) Benefits: The Implementation of Impact Investing'
+    authors: Jeffers, Jessica S., David K. Musto, and Anne M. Tucker
+    year: 2021
+  - doi: 10.1016/j.jfineco.2020.07.008
+  - doi: 10.1016/j.jfineco.2024.103928
+  - doi: 10.1002/smj.3674
+  - doi: 10.1007/s10640-022-00647-4
+  - doi: 10.1007/s1007/024-00541-9
+    title: 'How Sustainable Finance Creates Impact: Transmission Mechanisms to the Real Economy'
+    authors: Caldecott, Ben, Alex Clark, Elizabeth Harnett, and Felicia Liu
+    year: 2024
+  - doi: 10.1093/rfs/hhac066
+  - doi: 10.1093/restud/rdae048
+    title: A Theory of Socially Responsible Investment
+    authors: Oehmke, Martin, and Marcus M. Opp
+    year: 2025
+  - doi: 10.2139/ssrn.5990256
+  - doi: 10.2139/ssrn.5755203
+  - doi: 10.2139/ssrn.3604360
+  - doi: 10.2139/ssrn.3458447
+  - doi: 10.2139/ssrn.5178368
+  - doi: 10.2139/ssrn.3949530
+  - doi: 10.3386/w33611
+    title: Impact Investing and Worker Outcomes
+    authors: Lerner, Josh, Markus Lithell, and Gordon M. Phillips
+    year: 2025
+  - doi: 10.3386/w32678
+  - doi: 10.3386/w32625
+  - doi: 10.3386/w32579
+  - doi: 10.3386/w32287
+- institution: nan
+  course: FINANZAS POR EL CLIMA
+  level: other
+  region: Global
+  readings:
+  - doi: 10.14201/gredos.115607
+    title: Regulación prudencial – Reino Unido
+  - doi: 10.1080/20430795.2022.2057405
+    title: The Role of ESMA in Sustainable Finance
+    authors: Finance Watch et al.
+    year: 2017
+  - doi: 10.1038/nclimate2972
+    title: Climate value at risk’ of global financial assets
+    authors: Dietz S., Bowen A., Dixon C. y Gradwell P.
+    year: 2016
+  - doi: 10.2307/j.ctv2zp4wzn.7
+    title: Anteproyecto de Ley de Cambio Climático y Transición Energética
+    authors: Ministerio para la Transición Ecológica
+    year: 2019
+  - doi: 10.54648/eucl2018032
+    title: Commission action plan on financing sustainable growth
+    authors: European Commission
+    year: 2018
+  - doi: 10.5334/glo.32
+    title: Disclosure task force on climate-related risks
+    authors: FSB
+    year: 2015
+  - doi: 10.5194/egusphere-egu25-7026
+    title: Climate Asset Risk
+    year: 2015
+  - doi: 10.4060/cd7509es
+    title: 'Plan de Acción: Financiar el desarrollo sostenible'
+    authors: Comisión Europea
+    year: 2018
+- institution: nan
+  course: Finance du climat
+  level: other
+  region: Global
+  readings:
+  - doi: 10.2139/ssrn.2726076
+    title: A Climate Stress-test of the Financial System
+    authors: Battiston, S., Mandel, A., Monasterolo, I., Schütz, F., and Visentin, G.
+    year: 2017
+  - doi: 10.1016/j.jfs.2022.101061
+    title: 'Climate Change Financial Risks: Implications for Asset Pricing and Interest Rates'
+    authors: Karydas, C., and Xepapadeas, A.
+    year: 2022
+  - doi: 10.2139/ssrn.4283998
+    title: Net Zero Investment Portfolios
+    authors: Barahhou, I., Ben Slimane, M., Oulid Azouz, N., and Roncalli, T.
+    year: 2022
+  - doi: 10.2139/ssrn.3999971
+    title: Portfolio Construction and Climate Risk Measures
+    authors: Le Guenedal, T., and Roncalli, T.
+    year: 2022
+- institution: nan
+  course: 'Financiamiento Climático: Estrategias y Oportunidades'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.18800/9786123172343
+    title: Introducción al derecho ambiental
+  - doi: 10.17345/2412
+    title: Gobernanza del Acuerdo de Escazú en América Latina y el Caribe
+- institution: nan
+  course: Finanzas Climáticas
+  level: other
+  region: Global
+  readings:
+  - doi: 10.32796/bice.2019.3109.6776
+    title: Financiación climática
+- institution: nan
+  course: FinanÃ§as SustentÃ¡veis
+  level: other
+  region: Global
+  readings:
+  - doi: 10.17771/pucrio.acad.33200
+    title: Financiamento Colaborativo para Projetos Sustentáveis
+- institution: nan
+  course: Finanças climáticas
+  level: other
+  region: Global
+  readings:
+  - doi: 10.2139/ssrn.5339252
+    title: Ratings and Capital Constraints on IBRD and IDA
+    authors: Risk Control Limited
+    year: 2023
+- institution: nan
+  course: Fundamentals in Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.59117/20.500.11822/43406
+    title: Principles for Responsible Banking
+  - doi: 10.1007/978-3-030-05624-7_1
+    title: 'The Financial Ecosystem: The Role of Finance in Achieving Sustainability'
+    authors: Satyajit Bose, Dong Guo, Anne Simpson
+    year: 2019
+  - doi: 10.1163/9789004322714_cclc_2020-0104-0521
+    title: The state of the climate
+  - doi: 10.12987/9780300213942-014
+    title: Natural capital & finance
+  - doi: 10.1016/b978-0-443-15955-8.00015-3
+    title: Renewable energy finance
+  - doi: 10.33774/coe-2021-wk54l
+    title: Physical risks & adaptation finance (1&2)
+  - doi: 10.3790/vjh.90.4.5
+    title: Sustainability meets finance
+- institution: nan
+  course: Internationale Klimafinanzierung
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1007/978-3-663-05476-4_9
+    title: Richtlinien für die internationale Klimafinanzierung
+  - doi: 10.1093/oso/9780190851828.003.0006
+    title: Climate Finance to Developing Countries
+  - doi: 10.4337/9781800377288.00010
+    title: Introduction to Climate Finance
+- institution: nan
+  course: Journey to Law
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1163/9789004422582_002
+    title: PowerShift
+- institution: nan
+  course: 'K6ET 2160 - Urban Climate Finance: initial notions and practice of local climate investment'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1596/32769
+    title: Addressing Constraints to Private Financing of Urban (Climate) Infrastructure in Developing Countries
+    authors: White Roland. Wahba Sameh
+    year: 2019
+  - doi: 10.24943/supsv310.2022
+    title: What the latest science on climate change mitigation means for cities and urban areas
+    authors: Babiker, M. (and all)
+    year: 2022
+  - doi: 10.24943/supsv209.2022
+    title: What the latest science on impacts, adaptation and vulnerability means for cities and urban areas
+    authors: Adelekan, I. (and all)
+    year: 2022
+- institution: nan
+  course: Klimaschutz global gerecht gestalten
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1163/9789004322714_cclc_2015-0095-001
+    title: United Nations Framework Convention on Climate Change
+    authors: United Nations
+    year: 1992
+  - doi: 10.1146/annurev-environ-110615-090052
+    title: 'Trends and Directions in Environmental Justice: From Inequity to Everyday Life, Community, and Just Sustainabilities'
+    authors: Agyeman, Julian / Schlosberg, David / Craven, Luke / Matthews, Caitlin
+    year: 2016
+  - doi: 10.1126/science.aab0031
+    title: 'Planetary boundaries: Guiding human development on a changing planet'
+    authors: Will Steffen u.a.
+    year: 2015
+  - doi: 10.1177/0305829818775817
+    title: 'Petro-masculinity: Fossil Fuels and Authoritarian Desire'
+    authors: Daggett, Cara
+    year: 2018
+  - doi: 10.1097/ede.0b013e31819776a1
+    title: Global geographies of injustice in traffic-related air pollution
+    authors: Jerrett, Michael
+    year: 2009
+  - doi: 10.1111/j.1467-8330.2009.00726.x
+    title: Who Counts? Dilemmas of Justice in a Postwestphalian World
+    authors: Fraser, Nancy
+    year: 2010
+  - doi: 10.1111/dpr.12214
+    title: 'Inequality and economic growth: Trickle-down effect revisited'
+    authors: Akinci, Merter
+    year: 2018
+  - doi: 10.1515/9783839457191-010
+    title: 'Die Ära der Entwicklung: Das Ende eines Mythos'
+    authors: Wolfgang Sachs
+    year: 2020
+  - doi: 10.1515/9781503620919-011
+    title: A Theory of Justice
+    authors: Rawls, John
+    year: 1975
+  - doi: 10.1515/9781400858521.1
+    title: The Concept of Needs
+    authors: Daly
+    year: 1996
+  - doi: 10.1515/9781400839902
+    title: Justice and the Politics of Difference
+    authors: Young, Iris Marion
+    year: 1990
+  - doi: 10.1515/9780295743707-055
+    title: Siting of hazardous waste landfills and their correlation with racial and economic status of surrounding communities
+    authors: General Accounting Office
+    year: 1983
+  - doi: 10.12987/9780300188479-042
+    title: A safe operating space for humanity
+    authors: Johan Rockström u.a.
+    year: 2009
+  - doi: 10.1007/s13147-014-0284-9
+    title: Ethik des Klimawandels. Eine Einführung
+    authors: Dominic Roser / Christian Seidel
+    year: 2015
+  - doi: 10.1007/978-3-8274-2242-2_8
+    title: IPCC-Bericht
+    year: 1990
+  - doi: 10.1080/13698230903326331
+  - doi: 10.1016/s0928-7655(01)00060-4
+    title: 'The locality of waste sites within the city of Chicago: a demographic, social, and economic analysis'
+    authors: Baden, Brett M. / Coursey, Don L.
+    year: 2002
+  - doi: 10.1080/09644016.2023.2172869
+    title: 'Intersectionality & Climate Justice: A call for synergy in climate change scholarship'
+    authors: Mikulewicz, Michael / Caretta, Martina Angela / Sultana, Farhana / J. W. Crawford, Neil
+    year: 2023
+  - doi: 10.1080/09644016.2013.835203
+    title: Climate change through the lens of intersectionality
+    authors: Kaijser, Anna / Kronsell, Annica
+    year: 2014
+  - doi: 10.1080/089419200279027
+    title: 'Warren County, NC, and the Emergence of the Environmental Justice Movement: Unlikely Coalitions and Shared Meanings
+      in Local Collective Action'
+    authors: McGurty, Eileen Maura
+    year: 2000
+  - doi: 10.1093/oso/9780195399622.003.0021
+    title: Subsistence Emissions and Luxury Emissions
+    authors: Henry Shue
+    year: 1993
+  - doi: 10.1093/oso/9780195399622.003.0020
+    title: One Atmosphere
+    authors: Peter Singer
+    year: 2010
+  - doi: 10.1093/oso/9780195399622.003.0015
+    title: Energy Policy and the Further Future. The Identity Problem
+    authors: Derek Parfit
+    year: 2010
+  - doi: 10.1093/acprof:oso/9780199286294.001.0001
+    title: Defining environmental justice. Theories, movements, and nature
+    authors: Schlosberg, David
+    year: 2007
+  - doi: 10.1093/0198287976.001.0001
+    title: The Quality of Life
+    authors: Nussbaum, Martha; Sen, Amartya
+    year: 1993
+  - doi: 10.1088/1748-9326/ac991a
+    title: Hydrogen justice
+    authors: Müller, Franziska / Tunn, Johanna / Kalt, Tobias
+    year: 2022
+  - doi: 10.1088/1748-9326/ab842a
+    title: 'A systematic review of the evidence on decoupling of GDP, resource use and GHG emissions, part II: synthesizing
+      the insights'
+    authors: Haberl, Helmut / Wiedenhofer, Dominik / Virág, Doris / Kalt, Gerald / Plank, Barbara / Brockway, Paul et al.
+    year: 2020
+  - doi: 10.1093/oso/9780195399622.003.0014
+    title: Global environment and international inequality
+    authors: Henry Shue
+    year: 2010
+  - doi: 10.1017/s0376892900031647
+    title: Report of the United Nations Conference on Environment and Development (Rio de Janeiro, 3-14 June 1992). Annex
+      I Rio Declaration on Environment And Development
+    authors: United Nations
+    year: 1992
+  - doi: 10.1017/s0020782900014765
+    title: Rio Declaration on Environment and Development
+    authors: United Nations
+    year: 1992
+  - doi: 10.1017/cbo9781107415416
+    title: 'Climate Change 2014: Mitigation of Climate Change'
+    authors: Intergovernmental Panel on Climate Change
+    year: 2014
+  - doi: 10.1017/9781009157940
+    title: Global Warming of 1.5°C. IPCC Special Report on the impacts of global warming of 1.5°C above pre-industrial levels
+      and related global greenhouse gas emission pathways, in the context of strengthening the global response to the threat
+      of climate change, sustainable development, and efforts to eradicate poverty
+    authors: IPCC
+    year: 2018
+  - doi: 10.1017/9781009157896
+    title: 'Climate Change 2021: The Physical Science Basis'
+    authors: IPCC
+    year: 2021
+  - doi: 10.1017/cbo9781107415324
+    title: 'Climate Change 2013: The Physical Science Basis'
+    authors: Intergovernmental Panel on Climate Change
+    year: 2013
+  - doi: 10.1068/a35240
+    title: An Environmental Justice Analysis of British Air Quality
+    authors: Mitchell, Gordon / Dorling, Danny
+    year: 2003
+  - doi: 10.1038/nclimate3345
+    title: Importance of the pre-industrial baseline for likelihood of exceeding Paris goals
+    authors: Andrew P. Schurer u.a.
+    year: 2017
+  - doi: 10.2307/j.ctt9qgvs3.18
+    title: Understanding Environmental Justice
+    authors: Walker, Gordon
+    year: 2012
+  - doi: 10.2307/j.ctt7rvrw.12
+    title: Climate Change and Global Justice
+    authors: Baer, Peter
+    year: 2010
+  - doi: 10.2307/j.ctt1ht4vw6.45
+    title: 'Theorising environmental justice: the expanding sphere of a discourse'
+    authors: Schlosberg, David
+    year: 2013
+  - doi: 10.2307/280254
+    title: General Accounting Office
+    authors: General Accounting Office
+    year: 1983
+  - doi: 10.32387/prokla.v51i202.1931
+    title: Kein Ende des grünen Kolonialismus
+    authors: Claar, Simone
+    year: 2021
+  - doi: 10.2139/ssrn.4391197
+    title: Green Finance and Inequality
+    authors: Mahmoud, Ola / Tschan, Lea
+    year: 2023
+  - doi: 10.5194/acp-2020-1192-rc1
+    title: Anderson et al.
+    authors: Anderson et al.
+    year: 1994
+  - doi: 10.5860/choice.47-5888
+    title: When the people speak. Deliberative democracy and public consultation
+    authors: Fishkin, James S.
+    year: 2009
+  - doi: 10.5840/monist201194321
+    title: 'Climatic justice and the fair distribution of atmospheric burdens: A conjunctive account'
+    authors: Edward Page
+    year: 2011
+  - doi: 10.5771/9783495998045-29
+    title: Moralische Grundlagen
+    authors: David Gauthier
+    year: 1986
+  - doi: 10.3726/b22325
+    title: Der Klimawandel als gesellschaftliche Herausforderung
+    authors: Jochen Ostheimer
+  - doi: 10.3390/su10082812
+  - doi: 10.4324/9781351179522-6
+    title: Dilemmas in a general theory of planning
+    authors: Rittel, Horst W. J. / Webber, Melvin M.
+    year: 1973
+  - doi: 10.4324/9781315680675-68
+    title: 'Situated Knowledges: the Science Question in Feminism and the Privilege of Partial Perspective'
+    authors: Haraway, Donna
+    year: 1988
+  - doi: 10.4324/9781315269177
+    title: Sustainable Development
+    authors: Hauff
+    year: 1987
+  - doi: 10.4324/9781315256306-18
+    title: 'Reconceiving Environmental Justice: Global Movements And Political Theories'
+    authors: Schlosberg, David
+    year: 2004
+  - doi: 10.4324/9781315199795-18
+    title: Equality and Priority
+    authors: Derek Parfit
+    year: 1997
+  - doi: 10.4324/9781315150505-1
+    title: Climate Change and the Common Good
+    authors: Page, Edward
+    year: 2011
+  - doi: 10.4324/9780429499142-5
+    title: 'Demarginalizing the Intersection of Race and Sex: A Black Feminist Critique of Antidiscirmination Doctrine'
+    authors: Crenshaw, Kimberle
+    year: 1989
+- institution: nan
+  course: M2 RISQUES FINANCIERS ET FINANCE DURABLE (R2FD) / M2 FINANCIAL RISKS AND SUSTAINABLE FINANCE (R2FD)
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1257/aer.109.6.1991
+    title: 'Climate change: The ultimate challenge for economics'
+    authors: Nordhaus, W.
+    year: 2019
+  - doi: 10.1201/b19649
+    title: Stochastic Volatility Modeling
+    authors: Lorenzo Bergomi
+    year: 2016
+  - doi: 10.1111/1468-0297.13917
+    title: 'Strategic asset allocation: portfolio choice for long-term investors'
+    authors: Campbell, J. Y., & Viceira, L. M.
+  - doi: 10.2139/ssrn.1669317
+    title: The black swan
+    authors: Taleb N.
+    year: 2007
+  - doi: 10.2139/ssrn.1517146
+    title: How unlucky is 25-Sigma?
+    authors: Dowd K., Cotter J., Humphrey C. and Woods M.
+    year: 2008
+  - doi: 10.2139/ssrn.2499628
+    title: Hedging climate risk
+    authors: Andersson, M., Bolton, P., & Samama, F.
+    year: 2016
+  - doi: 10.2139/ssrn.2044825
+    title: Backtesting
+    authors: Christoffersen P.
+    year: 2008
+  - doi: 10.2139/ssrn.169449
+    title: Risk Management Lessons from LTCM
+    authors: Jorion P.
+    year: 2000
+  - doi: 10.1016/j.reaurg.2007.05.012
+    title: Liste des fonds labellisés
+    authors: Label ISR
+  - doi: 10.1002/9781119205869
+    title: Financial Risk Forecasting
+    authors: Danielsson J.
+    year: 2011
+  - doi: 10.1002/9781119186229.ch17
+    title: Probability of loss on loan portfolio
+    authors: Vasicek
+    year: 1987
+  - doi: 10.1002/9781119161233
+    title: 'XVA: Credit, Funding and Capital Valuation Adjustments'
+    authors: Andrew Green
+    year: 2015
+  - doi: 10.1002/9781118266915
+    title: Frontiers in Quantitative Finance
+    authors: Cont, R.
+    year: 2008
+  - doi: 10.1007/b98874
+    title: Numerical Optimization
+    authors: Nocedal, J. and Wright, S.J.
+    year: 2006
+  - doi: 10.1007/978-3-662-04553-4
+    title: Interest Rate Models - Theory and Practice
+    authors: Brigo, D. and Mercurio, F.
+    year: 1998
+  - doi: 10.1080/10618600.1996.10474713
+    title: 'R: a language for data analysis and graphics'
+    authors: Ihaka, R., & Gentleman, R.
+    year: 1996
+  - doi: 10.1080/09332480.2012.685374
+    title: 'The art of R programming: A tour of statistical software design'
+    authors: Matloff, N.
+    year: 2011
+  - doi: 10.1017/9781108524872
+    title: Introductory Econometrics for Finance
+    authors: Brooks C.
+    year: 2008
+  - doi: 10.1057/978-1-137-44133-1_4
+    title: Risk assessment in practice
+    authors: Curtis P. and Carey M.
+    year: 2012
+  - doi: 10.3386/w26582
+    title: Impact investing
+    authors: Barber, B. M., Morse, A., & Yasuda, A.
+    year: 2021
+  - doi: 10.2469/dig.v40.n1.51
+    title: The six mistakes executives make in risk management
+    authors: Taleb N., Goldstein D. and Spitznagel
+    year: 2009
+  - doi: 10.2139/ssrn.3790098
+    title: Climate Change Valuation Adjustment (CCVA) Using Parameterized Climate Change Impacts
+    authors: Chris Kenyon, Mourad Berrahoui
+    year: 2021
+  - doi: 10.2139/ssrn.4796556
+    title: The Complete Guide to Portfolio Performance
+    authors: François, P., and G. Hübner
+    year: 2024
+  - doi: 10.2139/ssrn.4277875
+    title: Handbook of sustainable finance
+    authors: Roncalli, T.
+    year: 2024
+  - doi: 10.2139/ssrn.4136710
+    title: 'CO2eVA: Pricing the transition of carbon externalities'
+    authors: Chris Kenyon, Andrea Macrina, Mourad Berrahoui
+    year: 2022
+  - doi: 10.2139/ssrn.3922686
+    title: Net-zero carbon portfolio alignment
+    authors: Bolton, P., Kacperczyk, M., & Samama, F.
+    year: 2022
+- institution: nan
+  course: MSc Climate Change Finance and Investment
+  level: masters
+  region: Global
+  readings:
+  - doi: 10.1596/32362
+    title: 'Adapt Now: A Global Call for Leadership on Climate'
+    authors: Global Commission on Adaptation
+  - doi: 10.1596/40700
+    title: State and Trends of Carbon Pricing
+    year: 2023
+  - doi: 10.1093/oso/9780198786108.003.0012
+    title: '''Double materiality'': what is it and why does it matter?'
+- institution: nan
+  course: O7IM 2105A - Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1787/9789264272323-en
+    title: Mobilising bond markets for a low-carbon transition
+    year: 2017
+  - doi: 10.1007/s10668-015-9750-y
+    title: "Financing the green transformationâ\x80¯: how to make green finance work in Indonesia"
+    authors: Ulrich Volz
+    year: 2015
+  - doi: 10.1017/cbo9780511751905
+    title: The economics of sustainable development
+    authors: Jean-Michel Lasry
+    year: 2010
+  - doi: 10.4000/regulation.11892
+    title: "La finance autrementâ\x80¯?â\x80¯: rÃ©flexions critiques et perspectives sur la finance moderne"
+    authors: Bernard Paranque
+    year: 2015
+  - title: CPI Webinar The Global Landscape of Climate Finance 2019
+    year: 2019
+- institution: nan
+  course: PROGRAMA DE CAPACITACIÓN EN ECONOMÍA CIRCULAR PARA INSTITUCIONES FINANCIERAS
+  level: other
+  region: Global
+  readings:
+  - doi: 10.18239/jornadas_2021.28.07
+    title: La esencia del desarrollo sostenible y la economía circular
+  - doi: 10.5821/siiu.6203
+    title: Integración en la operación
+- institution: nan
+  course: Principles and Practice of Green and Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1163/9789004322714_cclc_2016-0002-007
+    title: Climate risk protection gap
+  - doi: 10.2139/ssrn.3421219
+    title: WEF Global Risks Report
+  - doi: 10.4337/9781803926681.00027
+    title: UN Principles for Sustainable Insurance
+  - doi: 10.4135/9781483381503.n1201
+    title: UN Principles for Responsible Investment
+  - title: An online Study Guide – Principles and Practice of Green and Sustainable Finance
+    year: 2023
+- institution: nan
+  course: 'Productos Financieros Verdes: oportunidad de negocios para las Cooperativas en las Finanzas Sostenibles'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.18235/0003608
+    title: Sistema de Administración de Riesgos Ambientales y Sociales (SARAS)
+    authors: Miguel Herrera
+  - doi: 10.22198/rys.2009.46.a477
+    title: 'Retos: intermediación de recursos'
+    authors: Miguel Herrera
+  - doi: 10.2307/jj.1866723.13
+    title: Actuemos contra el cambio climático
+  - doi: 10.64628/aao.s47rruax9
+    title: Inversiones verdes
+    authors: Miguel Herrera
+  - doi: 10.59814/resofro.2026.6(1)1020
+    title: Ruta hacia las Finanzas Sostenibles
+    authors: Miguel Herrera
+  - doi: 10.3997/2214-4609-pdb.313.283
+    title: Inversiones elegibles para construcción
+    authors: Miguel Herrera
+  - doi: 10.37417/fintech-en-espana/2025_resumen_ejecutivo
+    title: 'RESUMEN: OPORTUNIDADES'
+    authors: Miguel Herrera
+- institution: nan
+  course: Sustainable Finance
+  level: other
+  region: Global
+  readings:
+  - doi: 10.9774/gleaf.978-1-907643-44-6_12
+    title: The Brundtland Report
+    authors: World Commission on Environment and Development
+    year: 1987
+- institution: nan
+  course: 'Sustainable Finance: Hoax or Necessity?'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.1007/978-3-030-38858-4
+    title: 'Climate change: Macroeconomic impact and implications for monetary policy'
+    authors: Batten, S., Sowerbutts, R. and Tanaka, M.
+    year: 2020
+  - doi: 10.1007/978-3-030-38858-4_2
+    title: 'Climate change: Macroeconomic impact and implications for monetary policy'
+    authors: Batten, S., Sowerbutts, R. and Tanaka, M.
+    year: 2020
+  - doi: 10.1007/978-3-031-24478-0_4
+    title: Independently green? An integrated strategy for a transformative ECB
+    authors: Klüh, U.; Urban, J.
+    year: 2022
+  - doi: 10.1787/134a2dbe-en
+    title: Sustainable finance definitions and taxonomies in China in Developing Sustainable Finance Definitions and Taxonomies
+    authors: OECD
+    year: 2021
+  - doi: 10.1016/j.econmod.2019.05.009
+    title: 'More effective than we thought: Central bank independence and inflation in developing countries'
+    authors: Garrigaa Ana, C. and Rodriguez, Cesar M.
+    year: 2020
+  - doi: 10.1007/978-981-13-0227-5_17
+    title: Central Banking, Climate Change, and Green Finance
+    authors: Dikau, S. & Volz, U.
+    year: 2019
+  - doi: 10.1080/20430795.2020.1715095
+    title: The Role Of Central Banks In Scaling Up Sustainable Finance- What Do Monetary Authorities In Asia And The Pacific
+      Think?
+    authors: Durrani, A., Volz, U., & Rosmin, M.
+    year: 2020
+  - doi: 10.1080/01603477.2022.2084630
+    title: Climate change and macroeconomic policy autonomy in developing and emerging economies
+    authors: Löscher, A., Kaltenbrunner, A.
+    year: 2022
+  - doi: 10.1057/9780230280854_3
+    title: Central Bank Independence
+    authors: Walsh Carl,E,
+    year: 2010
+  - doi: 10.2307/2534619
+    title: What Does Monetary Policy Do?
+    authors: Leeper, E. M., Christopher A. Sims, Tao Zha, Robert E. Hall and Ben S. Bernanke.
+    year: 1996
+  - doi: 10.31235/osf.io/2bx8h
+    title: Targeting a sustainable recovery with Green TLTROs
+    authors: van't Kloster,J., van Tilburg, R.
+    year: 2020
+  - doi: 10.31235/osf.io/ja9bk
+    title: Revolution without Revolutionaries - Interrogating the return of monetary financing
+    authors: Gabor, D.
+    year: 2021
+  - doi: 10.4337/9781802202533.00021
+    title: The Role of Central Banks for Green Finance
+    authors: Cipollone, P.
+    year: 2022
+  - doi: 10.4337/9781800372238.00007
+    title: Monetary Policy and Central Banking
+    authors: IMF
+    year: 2022
+- institution: nan
+  course: 'Sustainable finance: an introduction'
+  level: other
+  region: Global
+  readings:
+  - doi: 10.3410/f.739438728.793582273
+    title: Peoples’ Climate Vote
+    authors: Oxford - United Nations Development Programme (UNDP)
+- institution: 北京大学国家发展研究院宏观与绿色金融实验室
+  course: 气候金融系列研究
+  level: other
+  region: Asia
+  readings:
+  - doi: 10.5040/9781350981812
+    title: Convergence
+    year: 2023
+  - doi: 10.4060/cd2312en
+    title: Investor One
+- institution: 慶應義塾大学
+  course: 気候変動対策・生物多様性保全のためのファイナンス
+  level: other
+  region: Asia
+  readings:
+  - doi: 10.1201/9781003396949-21
+    title: Global Landscape of Climate Finance 2023
+    authors: CPI
+    year: 2023
+  - doi: 10.1163/9789004322714_cclc_2023-0252-1159
+    title: State of Finance for Nature 2023
+    authors: UNEP
+    year: 2023
+  - doi: 10.5281/zenodo.4923212
+    title: Scientific outcome of the IPBES-IPCC co-sponsored workshop on biodiversity and climate change
+    year: 2021
+- institution: 調査部
+  course: 気候変動問題に対処するファイナンスの課題とASEAN 諸国の事例
+  level: other
+  region: Asia
+  readings:
+  - doi: 10.1163/9789004322714_cclc_2021-0255-856
+    title: Nationally Determined Contribution
+  - doi: 10.1177/014459878900700615
+    title: Statistical Review of World Energy
+    authors: BP p.l.c.
+    year: 2021
+  - doi: 10.1093/cmlj/kmad005
+    title: EU Sustainable Finance Disclosure Regulation
+    year: 2021
+  - doi: 10.59425/eabc.1695247211
+    title: Green Finance Industry Taskforce
+    year: 2021
