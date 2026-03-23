@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import gzip
 import os
 
 import numpy as np
@@ -36,6 +37,56 @@ log = get_logger("corpus_refine")
 
 # --- Paths ---
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
+CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config")
+V1_IDENTIFIERS_PATH = os.path.join(CONFIG_DIR, "v1_identifiers.txt.gz")
+
+# ============================================================
+# v1 provenance (#283)
+# ============================================================
+
+def load_v1_identifiers(path=None):
+    """Load v1.0-submission identifiers from gzipped text file.
+
+    Returns (doi_set, source_id_set). Lines starting with 'sid:' are
+    source_id fallbacks for rows without DOIs; all others are normalized DOIs.
+    """
+    path = path or V1_IDENTIFIERS_PATH
+    if not os.path.exists(path):
+        log.warning("v1 identifier file not found: %s — skipping in_v1 column", path)
+        return set(), set()
+    dois, sids = set(), set()
+    with gzip.open(path, "rt") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("sid:"):
+                sids.add(line[4:])
+            else:
+                dois.add(line)
+    log.info("  Loaded v1 identifiers: %d DOIs + %d source_ids", len(dois), len(sids))
+    return dois, sids
+
+
+def add_in_v1_column(df, v1_dois, v1_sids):
+    """Add boolean in_v1 column: True if the row existed in the v1.0 corpus.
+
+    Matching strategy: normalized DOI first, source_id fallback for no-DOI rows.
+    """
+    doi_norm = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+    doi_match = doi_norm.isin(v1_dois) & (doi_norm != "")
+
+    sid_match = pd.Series(False, index=df.index)
+    if v1_sids and "source_id" in df.columns:
+        no_doi = doi_norm == ""
+        sid_match = no_doi & df["source_id"].isin(v1_sids)
+
+    df["in_v1"] = doi_match | sid_match
+    n_v1 = df["in_v1"].sum()
+    log.info("  in_v1 provenance: %d / %d rows (%.1f%%)",
+             n_v1, len(df), 100 * n_v1 / len(df) if len(df) else 0)
+    return df
+
 
 # Flag column names (order matters for merging)
 FLAG_COLUMNS = [
@@ -200,8 +251,8 @@ def print_summary(df):
 # Apply filter
 # ============================================================
 
-def apply_filter(df, output_path=None, audit_path=None):
-    """Remove flagged non-protected papers."""
+def apply_filter(df, output_path=None, audit_path=None, v1_identifiers_path=None):
+    """Remove flagged non-protected papers and add v1 provenance column."""
     if output_path is None:
         output_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     if audit_path is None:
@@ -274,6 +325,11 @@ def apply_filter(df, output_path=None, audit_path=None):
                      n_dropped)
 
     keep_df = keep_df.drop(columns=["doi_norm"], errors="ignore")
+
+    # Add v1 provenance column (#283)
+    v1_dois, v1_sids = load_v1_identifiers(v1_identifiers_path)
+    if v1_dois or v1_sids:
+        keep_df = add_in_v1_column(keep_df, v1_dois, v1_sids)
 
     # Save audit — after deduplication so that action=keep count matches refined_works.csv.
     # Rows dropped by deduplication get action="deduped" to distinguish from filter removes.
@@ -478,6 +534,8 @@ def main():
                         help="Skip citation isolation flag")
     parser.add_argument("--cheap", action="store_true",
                         help="Cheap filter: only flags 1-3 (metadata, no-abstract, blacklist)")
+    parser.add_argument("--v1-identifiers", default=None,
+                        help="Path to v1 identifiers file (default: config/v1_identifiers.txt.gz)")
     args = parser.parse_args()
 
     if args.cheap:
@@ -498,13 +556,16 @@ def main():
     works_input = args.works_input or default_input
     works_output = args.works_output or default_output
 
+    v1_path = args.v1_identifiers
+
     # ── Filter mode: read existing extended artifact, apply policy ─────────
     if args.filter:
         log.info("=== FILTER MODE: %s → %s ===", works_input, works_output)
         df = pd.read_csv(works_input)
         log.info("  Loaded: %d rows from %s", len(df), works_input)
         audit_path = os.path.join(os.path.dirname(works_output), "corpus_audit.csv")
-        apply_filter(df, output_path=works_output, audit_path=audit_path)
+        apply_filter(df, output_path=works_output, audit_path=audit_path,
+                     v1_identifiers_path=v1_path)
         return
 
     # ── Extend / apply modes: run flagging pipeline ────────────────────────
@@ -526,7 +587,8 @@ def main():
     elif args.apply:
         check_apply_gates(df, args, has_embeddings)
         audit_path = os.path.join(os.path.dirname(works_output), "corpus_audit.csv")
-        apply_filter(df, output_path=works_output, audit_path=audit_path)
+        apply_filter(df, output_path=works_output, audit_path=audit_path,
+                     v1_identifiers_path=v1_path)
     else:
         log.info("=== DRY RUN: use --extend / --filter / --apply to write output ===")
         save_dry_run_audit(df)

@@ -100,7 +100,7 @@ class TestAddInV1Column:
             "source_id": ["WNEW"],
         })
         result = add_in_v1_column(df, {"10.1/a"}, set())
-        assert result["in_v1"].iloc[0] is True
+        assert result["in_v1"].iloc[0] == True
 
 
 # ---------------------------------------------------------------------------
