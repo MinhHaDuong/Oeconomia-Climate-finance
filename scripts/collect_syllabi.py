@@ -848,6 +848,22 @@ def stage_normalize():
 
     log.info("CrossRef: found %d DOIs", lookup_count)
 
+    # Pass 2: OpenAlex fallback for remaining no-DOI refs
+    from enrich_dois import find_doi
+    still_no_doi = df[df["doi"] == ""]
+    oa_count = 0
+    for idx in still_no_doi.index:
+        title = df.at[idx, "title"]
+        if not title or len(title) < 10:
+            continue
+        doi = find_doi(title)
+        if doi:
+            df.at[idx, "doi"] = doi.lower()
+            oa_count += 1
+            log.info("Found DOI (OpenAlex): %s <- %s", doi, title[:60])
+    if oa_count:
+        log.info("OpenAlex fallback: found %d additional DOIs", oa_count)
+
     # Deduplicate: group by DOI (if available) or normalized title
     df["dedup_key"] = df.apply(
         lambda r: r["doi"] if r["doi"] else r["title_norm"], axis=1)
