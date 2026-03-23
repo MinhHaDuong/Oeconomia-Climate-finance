@@ -242,10 +242,10 @@ content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py sc
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf --v1-only
 
-# Fig 2 (composition): thematic clusters across periods — v1 clustering for manuscript
+# Fig 2 (composition): frozen v1 archive data + corrected labels
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
-		content/tables/tab_alluvial_v1.csv content/tables/cluster_labels_v1.json
-	uv run python $< --no-pdf --alluvial content/tables/tab_alluvial_v1.csv --labels content/tables/cluster_labels_v1.json
+		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
+	uv run python $< --no-pdf --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 # -- Data paper --
 # Semantic UMAP maps (3 co-produced figures)
@@ -265,11 +265,11 @@ content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Clustering — v1 subset only (manuscript stability)
-content/tables/tab_alluvial_v1.csv content/tables/cluster_labels_v1.json \
-content/tables/tab_core_shares_v1.csv &: \
-		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf --v1-only
+# Clustering — v1 frozen from reproducibility archive (not re-clustered).
+# KMeans is unstable to small corpus perturbations; re-clustering the v1
+# subset produces different assignments. These checked-in files are the
+# source of truth for manuscript Figure 2.
+# To update: copy from the reproducibility archive and commit.
 
 # Breakpoints figure
 content/figures/fig_breakpoints.png: \
