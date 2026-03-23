@@ -599,16 +599,24 @@ def build_citation_space(df, citations_path=None):
     log.info("Citation SVD: %d components explain %.1f%% of variance",
              n_components, explained * 100)
 
-    # Map back to df indices
-    doi_to_df_idx = {d: i for i, d in enumerate(doi_lower)}
-    valid_idx = np.array([doi_to_df_idx[d] for d in sources
-                          if d in doi_to_df_idx])
-    # Reorder coupling matrix to match valid_idx
-    source_order = [source_to_idx[doi_lower.iloc[i]]
-                    for i in valid_idx if doi_lower.iloc[i] in source_to_idx]
-    X_coupling = X_coupling[source_order]
+    # L2 normalize to prevent hub-dominated outlier clusters
+    norms = np.linalg.norm(X_coupling, axis=1, keepdims=True)
+    non_zero = norms.flatten() > 1e-10
+    X_coupling = np.where(norms > 1e-10, X_coupling / norms, 0)
 
-    log.info("Citation space: %d works with coupling data", len(valid_idx))
+    # Map back to df indices — keep only non-zero-norm works
+    doi_to_df_idx = {d: i for i, d in enumerate(doi_lower)}
+    all_valid = [doi_to_df_idx[d] for d in sources if d in doi_to_df_idx]
+    source_order = [source_to_idx[doi_lower.iloc[i]]
+                    for i in all_valid if doi_lower.iloc[i] in source_to_idx]
+    X_coupling = X_coupling[source_order]
+    keep = non_zero[source_order]
+    valid_idx = np.array(all_valid)[keep]
+    X_coupling = X_coupling[keep]
+
+    log.info("Citation space: %d works with coupling data "
+             "(%d dropped: zero coupling)", len(valid_idx),
+             len(all_valid) - len(valid_idx))
     return X_coupling, valid_idx
 
 
