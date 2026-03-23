@@ -1,5 +1,5 @@
 ---
-title: "A Multilingual Corpus of Climate Finance Literature, 1990--2024"
+title: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Eight Languages"
 author:
   - name: "Minh Ha-Duong"
     orcid: "0000-0003-2398-9009"
@@ -21,7 +21,8 @@ abstract: |
   filtering, and cross-encoder relevance scoring produces a curated
   dataset with full audit trail. An internal citation network of
   {{< meta cite_refined_rows >}} links, extracted via Crossref and OpenAlex,
-  supports co-citation analysis and bibliographic coupling within the field. Pre-computed
+  supports co-citation analysis and bibliographic coupling for the
+  most-cited segment of the field (80% coverage for core works). Pre-computed
   384-dimensional multilingual sentence-transformer embeddings enable
   clustering, topic modelling, and cross-lingual analysis without
   re-encoding. The corpus, embeddings, citation network, and audit log
@@ -46,9 +47,9 @@ Climate finance---the financial flows directed at mitigating and adapting to cli
 
 A growing scholarly literature addresses this contested object, spanning economics, political science, international relations, development studies, and environmental governance. Yet researchers face a fragmented bibliographic terrain. Academic publications are scattered across databases with different coverage profiles. Institutional reports from the OECD, UNFCCC, World Bank, and Climate Policy Initiative, documents that have shaped the very categories of the debate, are absent from standard academic databases. The literature is also multilingual: while English dominates, French, Chinese, Japanese, and German traditions contribute perspectives that monolingual corpora miss entirely.
 
-Recent bibliometric work has begun to map this literature. @care_weber2023 survey sustainable finance bibliometrics using Scopus; @shang_jin2023 analyse climate finance publications from Web of Science; @maria_etal2023 map green finance using Scopus with network analysis. While valuable, these studies rely on a single database each and cover English-language publications only. @shang_jin2023 lacks a data availability statement, @maria_etal2023 mentions a GitHub repository but provides no URL, and @care_weber2023 is behind a restrictive licence (CC-BY-NC-ND) with no public deposit. We verified these observations against each journal's data sharing policy and searched Zenodo, GitHub, and Dataverse for associated deposits.
+Pioneering bibliometric work has begun to map this terrain, though the terms "climate finance," "green finance," and "sustainable finance" denote overlapping but distinct literatures with different disciplinary centres of gravity. @care_weber2023 survey sustainable finance bibliometrics using Scopus; @shang_jin2023 analyse climate finance publications from Web of Science; @maria_etal2023 map green finance using Scopus with network analysis. These studies established the field's bibliometric contours but rely on a single database each, cover English-language publications only, and do not publish reusable datasets (verified against each journal's data sharing policy and public repositories).
 
-Our dataset addresses these limitations by assembling a multilingual corpus from {{< meta corpus_sources >}} complementary sources, applying a documented quality-filtering pipeline with full audit trail, and providing pre-computed sentence-transformer embeddings that place all works in a shared semantic space regardless of language. The dataset was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance [Ha-Duong, under review]. However, its scope and documentation make it reusable for a range of applications across the humanities and social sciences: topic modelling, citation network analysis, bibliometric mapping, temporal analysis of concept emergence, and cross-lingual studies of how climate finance is discussed in different linguistic and institutional traditions.
+Our dataset addresses these limitations by casting a wide net across {{< meta corpus_sources >}} complementary sources, applying a documented quality-filtering pipeline with full audit trail, and providing pre-computed sentence-transformer embeddings that place all works in a shared semantic space regardless of language. Because "climate finance" is a contested category whose boundaries are themselves an object of study [@weikmans_roberts2019], we deliberately err on the side of inclusion and publish the full corpus with quality flags, letting users draw their own boundary. The dataset was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance [Ha-Duong, under review]. However, its scope and documentation make it reusable for a range of applications across the humanities and social sciences: topic modelling, citation network analysis, bibliometric mapping, temporal analysis of concept emergence, and cross-lingual studies of how climate finance is discussed in different linguistic and institutional traditions.
 
 ## 2. Method {#sec-method}
 
@@ -58,9 +59,9 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 
 | Source | Automation | Coverage |
 |--------|------------|----------|
-| OpenAlex | Automated (free API) | Primary academic source: tiered keyword search |
+| OpenAlex [@priem_etal2022] | Automated (free API) | Primary academic source: tiered keyword search |
 | ISTEX | Automated (public API) | French national archive (Springer, Elsevier, Wiley) |
-| Grey literature | Hybrid (curated seed + World Bank API) | 16 curated reports (OECD, UNFCCC, CPI, UN) + World Bank repository |
+| Grey literature | Hybrid (curated seed + World Bank API) | 16 curated reports [e.g., @buchner2013] + World Bank repository |
 | Teaching canon | AI-assisted (scraping + LLM extraction) | Syllabus readings from university courses worldwide |
 | bibCNRS | Hand-harvested (CNRS credentials) | Non-English news & grey sources (Gale, Wanfang, NewsBank) in FR, ZH, JA, DE |
 | SciSpace | AI-collected, hand-exported | SciSpace systematic review tool exports |
@@ -89,7 +90,7 @@ The pipeline removes flagged works unless they meet one of four protection crite
 
 The merge pipeline reduces {{< meta corpus_raw >}} raw records to {{< meta corpus_total >}} refined works ({{< meta corpus_removal_pct >}}% removal rate). As @tbl-quality shows, OpenAlex contributes 96.6% of refined works; the five smaller sources add non-English, institutional, and pedagogical coverage that OpenAlex alone does not provide. Citation graph verification against Crossref on a stratified sample of 30 papers yielded precision = 1.0 and recall = 1.0, though this small sample size limits the generalisability of the estimate. The citation network contains {{< meta cite_refined_rows >}} rows covering 45% of corpus DOIs; coverage reaches 80% for core papers (cited $\geq$ 50).
 
-Relevance filtering (flag 6) uses a cross-encoder reranker (BAAI/bge-reranker-v2-m3, 568M parameters) rather than a generative LLM, ensuring deterministic, reproducible scores without API costs. Calibration proceeded in two stages. First, we selected the best query from 100 candidates evaluated on a stratified sample of 200 weak-labeled papers (100 positive, 100 negative), achieving AUC = 0.766. Second, human validation on a separate stratified sample of 100 works (20 per score quintile, blinded to scores) yielded AUC = 0.818 and 81% accuracy (precision 74%, recall 76%); we coded an additional 100 boundary cases near the initial threshold to refine the final cutoff. An independent LLM audit provides a second check. These methods serve as independent checks on the flagging pipeline, not as ground truth, since what counts as "climate finance" is itself a contested category. The Zenodo deposit includes all calibration and validation tables.
+Relevance filtering (flag 6) uses a cross-encoder reranker (BAAI/bge-reranker-v2-m3, 568M parameters) rather than a generative LLM, ensuring deterministic, reproducible scores without API costs. Calibration proceeded in two stages. First, we selected the best query from 20 candidates evaluated on a stratified sample of 200 weak-labeled papers (100 positive, 100 negative), achieving AUC = 0.766. The chosen query, "climate policy and financial mechanisms," privileges instrumental framing; works centred on climate justice or equity without financial mechanisms vocabulary may score lower. Second, human validation on a separate stratified sample of 100 works (20 per score quintile, blinded to scores) yielded AUC = 0.818 and 81% accuracy (precision 74%, recall 76%); we coded an additional 100 boundary cases near the initial threshold to refine the final cutoff. An independent LLM audit provides a second check. These methods serve as independent checks on the flagging pipeline, not as ground truth, since what counts as "climate finance" is itself a contested category. The Zenodo deposit includes all calibration and validation tables.
 
 Users should be aware of several potential biases. Non-English coverage remains limited: English accounts for {{< meta lang_english_pct >}}%, followed by Portuguese (1.1%), German (0.9%), Spanish (0.8%), and French (0.7%), with 6.8% unclassified. ISTEX yields only 4 records after filtering, reflecting limited overlap between its archive holdings and climate-finance vocabulary; it is retained as a source because it provides independent confirmation of records found elsewhere and its automated API makes future re-harvesting costless. Citation counts reflect OpenAlex data as of the collection date and favour older, English-language works. The teaching-canon component reflects a harvesting bias toward institutions that publish syllabi on public websites rather than behind learning management systems.
 
@@ -114,6 +115,8 @@ The dataset consists of five files deposited in Zenodo, also reproducible from s
 
 ![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
 
+Citation coverage is unevenly distributed over time: approximately 27% for works published before 2007 versus 47% for post-2015 works. Users conducting temporal citation-network analyses should account for this systematic undercount of early-period connectivity.
+
 The dataset is released under CC BY 4.0. The pipeline is organised in three phases: corpus building (API harvesting, merging, enrichment, and filtering), analysis (embedding projection, clustering, and derived statistics), and document rendering. DVC (Data Version Control) tracks the pipeline DAG (directed acyclic graph) and ensures reproducibility. API queries use fixed year bounds (1990--2024), and raw responses are archived for re-extraction. The four automated or hybrid-automated sources can be re-harvested with an internet connection; the two restricted sources (bibCNRS, SciSpace) have their raw exports included in the Zenodo deposit.
 
 ## 4. Concluding Remarks {#sec-concluding}
@@ -122,7 +125,7 @@ By combining {{< meta corpus_sources >}} complementary sources into a curated, m
 
 Several research directions can build on this dataset. First, it provides an empirical base for quantitative studies of climate finance as a scholarly field, including history-of-economics analyses of how economists, policy institutions, and financial actors co-produced this contested concept. Second, the provenance columns support methodological studies of how different databases define the boundaries of "climate finance," a question with implications for systematic review methodology in the social sciences. Third, the citation network supports genealogical analyses: tracing how foundational concepts (carbon markets, green bonds, adaptation finance) propagated across disciplinary communities. Finally, the 35-year temporal span enables diachronic analyses of concept emergence and field dynamics, from the early UNFCCC negotiations through the post-Paris proliferation of green finance instruments.
 
-The provenance architecture, with boolean flags per source and a documented merge pipeline, makes it straightforward to add new databases or extend the temporal window while preserving backward compatibility.
+The provenance architecture, with boolean flags per source and a documented merge pipeline, makes it straightforward to add new databases or extend the temporal window while preserving backward compatibility. The corpus does not currently include author affiliation or country data; while OpenAlex provides institutional metadata, resolving author identities to ORCID records and normalising institutional names across sources is a substantial task left for future work.
 
 ## Data Availability {.unnumbered}
 
