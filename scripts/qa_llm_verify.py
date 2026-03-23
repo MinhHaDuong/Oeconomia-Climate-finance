@@ -115,7 +115,7 @@ def main():
     # Stratified sample: oversample rare sources for better coverage
     PRIMARY_SOURCES = [
         "openalex", "openalex_historical", "istex", "bibcnrs",
-        "scispsace", "grey", "teaching",
+        "scispace", "grey", "teaching",
     ]
     # Allocate samples proportional to sqrt(N) for each source
     source_masks = {}

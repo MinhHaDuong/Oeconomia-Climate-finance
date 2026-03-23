@@ -160,7 +160,7 @@ def pipeline_workspace(tmp_path):
     _make_source_csv(grey_path, "grey", grey_rows)
 
     # Empty source files (with headers) for remaining required sources
-    for name in ["bibcnrs", "teaching", "scispsace"]:
+    for name in ["bibcnrs", "teaching", "scispace"]:
         empty_path = catalogs_dir / f"{name}_works.csv"
         # Write header-only CSV so pandas can parse it (no EmptyDataError)
         header_cols = WORKS_COLUMNS + FROM_COLS
@@ -171,7 +171,7 @@ def pipeline_workspace(tmp_path):
         str(oa_path), str(istex_path), str(grey_path),
         str(catalogs_dir / "bibcnrs_works.csv"),
         str(catalogs_dir / "teaching_works.csv"),
-        str(catalogs_dir / "scispsace_works.csv"),
+        str(catalogs_dir / "scispace_works.csv"),
     ]
     _make_dvc_yaml(str(tmp_path), source_files)
 

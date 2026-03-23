@@ -71,7 +71,7 @@ WORKS_COLUMNS = [
 
 # Source provenance — boolean columns indicating which sources contributed each work.
 # These replace the old pipe-separated `source` column for multi-source tracking.
-SOURCE_NAMES = ["openalex", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
+SOURCE_NAMES = ["openalex", "istex", "bibcnrs", "scispace", "grey", "teaching"]
 FROM_COLS = [f"from_{s}" for s in SOURCE_NAMES]
 
 REFS_COLUMNS = [

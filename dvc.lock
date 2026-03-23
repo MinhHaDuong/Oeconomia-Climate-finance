@@ -23,7 +23,7 @@ stages:
       hash: md5
       md5: aad79a049076761e7943646c5e732feb
       size: 53677
-    - path: data/catalogs/scispsace_works.csv
+    - path: data/catalogs/scispace_works.csv
       hash: md5
       md5: 21be3cfd3e0947eb03385134f1826e14
       size: 1060524
@@ -394,7 +394,7 @@ stages:
       hash: md5
       md5: 0fa29aa8aae593ab0d797a363afef0fb
       size: 78397849
-    - path: data/catalogs/scispsace_works.csv
+    - path: data/catalogs/scispace_works.csv
       hash: md5
       md5: 21be3cfd3e0947eb03385134f1826e14
       size: 1060524

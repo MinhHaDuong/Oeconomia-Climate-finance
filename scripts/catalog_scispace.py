@@ -6,10 +6,10 @@ Reads from AI tech reports/SciSpace 1/ and AI tech reports/SciSpace 2/:
   - SciSpace 1 combined CSV (primary research compilation)
   - SciSpace 1 paper_table CSV (systematic literature review)
 
-Produces: data/catalogs/scispsace_works.csv
+Produces: data/catalogs/scispace_works.csv
 
 Usage:
-    python scripts/catalog_scispsace.py
+    python scripts/catalog_scispace.py
 """
 
 import argparse
@@ -21,7 +21,7 @@ import pandas as pd
 
 from utils import BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv
 
-log = get_logger("catalog_scispsace")
+log = get_logger("catalog_scispace")
 
 SCISPSACE_DIR = os.path.join(BASE_DIR, "AI tech reports")
 SCISPSACE1_DIR = os.path.join(SCISPSACE_DIR, "SciSpace 1")
@@ -64,7 +64,7 @@ def _ris_to_record(c):
     if isinstance(authors, str):
         authors = [authors]
     return {
-        "source": "scispsace",
+        "source": "scispace",
         "source_id": c.get("DO", ""),
         "doi": normalize_doi(c.get("DO", "")),
         "title": c.get("TI", c.get("T1", "")),
@@ -81,7 +81,7 @@ def _ris_to_record(c):
     }
 
 
-def parse_scispsace_csv(path):
+def parse_scispace_csv(path):
     """Parse SciSpace CSV export (paper_table or combined format)."""
     try:
         df = pd.read_csv(path, encoding="utf-8", dtype=str, keep_default_na=False)
@@ -108,7 +108,7 @@ def parse_scispsace_csv(path):
             categories = row.get("Relevance", "")
 
         records.append({
-            "source": "scispsace",
+            "source": "scispace",
             "source_id": row.get("Paper Link", ""),
             "doi": normalize_doi(doi_raw),
             "title": title,
@@ -145,7 +145,7 @@ def main():
     for path in csv_files:
         if os.path.exists(path):
             log.info("Parsing CSV: %s", os.path.basename(path))
-            recs = parse_scispsace_csv(path)
+            recs = parse_scispace_csv(path)
             log.info("  %d records", len(recs))
             all_records.extend(recs)
 
@@ -167,8 +167,8 @@ def main():
     with_doi = (df["doi"] != "").sum()
     log.info("With DOI: %d, without DOI: %d", with_doi, len(df) - with_doi)
 
-    save_csv(df, os.path.join(CATALOGS_DIR, "scispsace_works.csv"))
-    log.info("Saved %d works to scispsace_works.csv", len(df))
+    save_csv(df, os.path.join(CATALOGS_DIR, "scispace_works.csv"))
+    log.info("Saved %d works to scispace_works.csv", len(df))
 
 
 if __name__ == "__main__":

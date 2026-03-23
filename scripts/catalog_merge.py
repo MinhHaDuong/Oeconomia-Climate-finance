@@ -5,7 +5,7 @@ Reads the 7 declared per-source catalogs from data/catalogs/ and produces:
   data/catalogs/unified_works.csv
 
 Only these files are loaded (matching dvc.yaml catalog_merge deps):
-  bibcnrs, istex, openalex, grey, teaching, scispsace
+  bibcnrs, istex, openalex, grey, teaching, scispace
 
 Deduplication: DOI-based (primary), then normalized title+year match (fallback).
 Priority for field values follows SOURCE_PRIORITY list.
@@ -25,7 +25,7 @@ from utils import (BASE_DIR, CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS,
 
 log = get_logger("catalog_merge")
 
-SOURCE_PRIORITY = ["openalex", "scopus", "istex", "bibcnrs", "scispsace", "grey", "teaching"]
+SOURCE_PRIORITY = ["openalex", "scopus", "istex", "bibcnrs", "scispace", "grey", "teaching"]
 
 
 SOURCE_RANK = {s: i for i, s in enumerate(SOURCE_PRIORITY)}

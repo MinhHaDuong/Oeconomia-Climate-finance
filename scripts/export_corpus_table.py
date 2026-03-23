@@ -34,7 +34,7 @@ SOURCE_META = {
         "label": "bibCNRS",
         "query": "FR, ZH, JA, DE queries via Gale/Wanfang/NewsBank (CNRS legacy portal)",
     },
-    "scispsace": {
+    "scispace": {
         "label": "SciSpace",
         "query": "AI-curated systematic review (RIS + CSV exports)",
     },

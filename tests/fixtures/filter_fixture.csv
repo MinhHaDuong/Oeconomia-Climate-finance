@@ -1,4 +1,4 @@
-doi,title,first_author,year,abstract,cited_by_count,source_count,journal,source,source_id,from_openalex,from_semanticscholar,from_istex,from_bibcnrs,from_scispsace,from_grey,from_teaching
+doi,title,first_author,year,abstract,cited_by_count,source_count,journal,source,source_id,from_openalex,from_semanticscholar,from_istex,from_bibcnrs,from_scispace,from_grey,from_teaching
 ,,,,,0,1,,openalex,W001,1,0,0,0,0,0,0
 10.1000/safe-no-author,Climate change adaptation finance overview,,2018,,5,1,Nature Climate Change,openalex,W002,1,0,0,0,0,0,0
 10.1000/complete,Climate finance flows in developing countries,Smith,2015,This paper examines climate finance and investment flows in developing countries with adaptation and mitigation strategies discussed at length for policy purposes,100,2,World Development,openalex,W003,1,1,0,0,0,0,0
