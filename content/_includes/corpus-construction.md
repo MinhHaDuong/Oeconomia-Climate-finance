@@ -114,5 +114,5 @@ filter step then applies the retention policy and writes the final
 `refined_works.csv` together with `corpus_audit.csv`. The align step then
 produces the Phase 2 canonical inputs (`refined_embeddings.npz`,
 `refined_citations.csv`) from full enrichment caches. See §2 (Corpus
-Enrichment) and §3 (Corpus Refinement) for details.
+Enrichment) and §3 (Corpus Filtering) for details.
 

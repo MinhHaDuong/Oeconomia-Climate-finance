@@ -26,7 +26,7 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 ---
 
-{{< include _includes/corpus-refinement.md >}}
+{{< include _includes/corpus-filtering.md >}}
 
 ---
 

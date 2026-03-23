@@ -44,7 +44,7 @@ MANUSCRIPT_INCLUDES := content/tables/tab_venues.md
 
 TECHREP_INCLUDES := content/_includes/corpus-construction.md \
 		content/_includes/corpus-enrichment.md \
-		content/_includes/corpus-refinement.md \
+		content/_includes/corpus-filtering.md \
 		content/_includes/core-vs-full.md \
 		content/_includes/structural-breaks.md \
 		content/_includes/alluvial-diagram.md \
@@ -57,7 +57,7 @@ TECHREP_INCLUDES := content/_includes/corpus-construction.md \
 		content/tables/tab_citation_coverage.md
 
 DATAPAPER_INCLUDES := content/_includes/corpus-construction.md \
-		content/_includes/corpus-refinement.md \
+		content/_includes/corpus-filtering.md \
 		content/_includes/embedding-generation.md \
 		content/_includes/reproducibility.md \
 		content/tables/tab_corpus_sources.md
@@ -92,7 +92,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-refine corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -155,7 +155,7 @@ corpus-extend:
 corpus-filter:
 	uv run dvc repro filter
 
-corpus-refine:
+corpus-filter-all:
 	uv run dvc repro extend filter
 
 corpus-align:

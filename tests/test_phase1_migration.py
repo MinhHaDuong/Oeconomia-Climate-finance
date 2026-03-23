@@ -3,7 +3,7 @@
 Integration, incrementality, and compatibility tests ensuring that:
 1. Phase 1 on a sample dataset produces valid outputs
 2. Incremental reruns respect checkpoints/caches
-3. corpus_refine.py --apply remains the stable endpoint
+3. corpus_filter.py --apply remains the stable endpoint
 """
 
 import os
@@ -25,7 +25,7 @@ def temp_catalogs(tmp_path):
     
     # Load fixture
     unified_df = pd.read_csv(
-        os.path.join(os.path.dirname(__file__), "fixtures", "refine_fixture.csv")
+        os.path.join(os.path.dirname(__file__), "fixtures", "filter_fixture.csv")
     )
     (catalogs_dir / "unified_works.csv").write_text(unified_df.to_csv(index=False))
     
@@ -50,8 +50,8 @@ def monkeypatch_env(monkeypatch, tmp_path):
 class TestPhase1Integration:
     """Test Phase 1 refining workflow end-to-end."""
 
-    def test_corpus_refine_apply_works(self, temp_catalogs, monkeypatch):
-        """corpus_refine.py --apply produces refined_works.csv and corpus_audit.csv."""
+    def test_corpus_filter_apply_works(self, temp_catalogs, monkeypatch):
+        """corpus_filter.py --apply produces refined_works.csv and corpus_audit.csv."""
         import subprocess
         
         # Set env and run
@@ -60,7 +60,7 @@ class TestPhase1Integration:
         
         result = subprocess.run(
             [
-                "python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+                "python", os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
                 "--apply", "--skip-llm", "--skip-citation-flag",
                 "--works-input", str(temp_catalogs / "unified_works.csv"),
                 "--works-output", str(temp_catalogs / "refined_works.csv"),
@@ -72,7 +72,7 @@ class TestPhase1Integration:
         )
 
         assert result.returncode == 0, (
-            f"corpus_refine.py --apply failed:\nstdout: {result.stdout}\n"
+            f"corpus_filter.py --apply failed:\nstdout: {result.stdout}\n"
             f"stderr: {result.stderr}"
         )
         
@@ -87,15 +87,15 @@ class TestPhase1Integration:
 class TestIncrementiality:
     """Test cache/checkpoint behavior."""
 
-    def test_corpus_refine_idempotent(self, temp_catalogs, monkeypatch):
-        """Running corpus_refine --apply twice produces identical refined_works.csv."""
+    def test_corpus_filter_idempotent(self, temp_catalogs, monkeypatch):
+        """Running corpus_filter --apply twice produces identical refined_works.csv."""
         import subprocess
         
         env = os.environ.copy()
         env["CLIMATE_FINANCE_DATA"] = str(temp_catalogs.parent)
         
         cmd = [
-            "python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            "python", os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
             "--apply", "--skip-llm", "--skip-citation-flag",
             "--works-input", str(temp_catalogs / "unified_works.csv"),
             "--works-output", str(temp_catalogs / "refined_works.csv"),
@@ -109,7 +109,7 @@ class TestIncrementiality:
         subprocess.run(cmd, cwd=str(temp_catalogs), capture_output=True, text=True, env=env)
         run2 = (temp_catalogs / "refined_works.csv").read_text()
         
-        assert run1 == run2, "corpus_refine --apply is not idempotent"
+        assert run1 == run2, "corpus_filter --apply is not idempotent"
 
     def test_checkpoint_structure_preserved(self, temp_catalogs):
         """Checkpoint files have expected structure (backwards compatible)."""
@@ -136,11 +136,11 @@ class TestIncrementiality:
 class TestBackwardCompatibility:
     """Verify old entrypoints maintain API."""
 
-    def test_corpus_refine_apply_flag(self):
-        """corpus_refine.py --apply flag exists."""
+    def test_corpus_filter_apply_flag(self):
+        """corpus_filter.py --apply flag exists."""
         import subprocess
         result = subprocess.run(
-            ["python", os.path.join(SCRIPTS_DIR, "corpus_refine.py"), "--help"],
+            ["python", os.path.join(SCRIPTS_DIR, "corpus_filter.py"), "--help"],
             capture_output=True,
             text=True,
         )

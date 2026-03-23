@@ -1,4 +1,4 @@
-"""Tests for #54: Split corpus_refine into extend mode and filter mode.
+"""Tests for #54: Split corpus_filter into extend mode and filter mode.
 
 Tests verify:
 - --extend mode: reads input, adds flag/protection columns, writes output with SAME row count
@@ -23,16 +23,16 @@ FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
 
 def run_script(*args, cwd=None):
-    """Run corpus_refine.py with args, return (returncode, stdout+stderr)."""
+    """Run corpus_filter.py with args, return (returncode, stdout+stderr)."""
     result = subprocess.run(
-        [PYTHON, os.path.join(SCRIPTS_DIR, "corpus_refine.py"), *args],
+        [PYTHON, os.path.join(SCRIPTS_DIR, "corpus_filter.py"), *args],
         capture_output=True, text=True, cwd=cwd or os.path.dirname(SCRIPTS_DIR)
     )
     return result.returncode, result.stdout + result.stderr
 
 
 def help_output():
-    """Return --help output of corpus_refine.py."""
+    """Return --help output of corpus_filter.py."""
     _, out = run_script("--help")
     return out
 
@@ -44,31 +44,31 @@ def help_output():
 class TestCLIArgs:
     def test_accepts_extend_flag(self):
         out = help_output()
-        assert "--extend" in out, "corpus_refine.py must accept --extend"
+        assert "--extend" in out, "corpus_filter.py must accept --extend"
 
     def test_accepts_filter_flag(self):
         out = help_output()
-        assert "--filter" in out, "corpus_refine.py must accept --filter"
+        assert "--filter" in out, "corpus_filter.py must accept --filter"
 
     def test_accepts_works_input(self):
         out = help_output()
-        assert "--works-input" in out, "corpus_refine.py must accept --works-input"
+        assert "--works-input" in out, "corpus_filter.py must accept --works-input"
 
     def test_accepts_works_output(self):
         out = help_output()
-        assert "--works-output" in out, "corpus_refine.py must accept --works-output"
+        assert "--works-output" in out, "corpus_filter.py must accept --works-output"
 
     def test_works_input_default_for_extend(self):
         """--extend mode default input should be enriched_works.csv."""
         out = help_output()
         assert "enriched_works.csv" in out, \
-            "corpus_refine.py --works-input default should reference enriched_works.csv"
+            "corpus_filter.py --works-input default should reference enriched_works.csv"
 
     def test_works_input_default_for_filter(self):
         """--filter mode default input should be extended_works.csv."""
         out = help_output()
         assert "extended_works.csv" in out, \
-            "corpus_refine.py --works-input default should reference extended_works.csv"
+            "corpus_filter.py --works-input default should reference extended_works.csv"
 
 
 # ---------------------------------------------------------------------------

@@ -22,7 +22,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from refine_flags import _load_config, flag_missing_metadata, flag_no_abstract, flag_title_blacklist
+from filter_flags import _load_config, flag_missing_metadata, flag_no_abstract, flag_title_blacklist
 from utils import CATALOGS_DIR, get_logger, normalize_doi
 
 log = get_logger("calibrate_reranker")
@@ -365,7 +365,7 @@ def calibrate(args):
     log.info("Saved calibration data -> %s", out_path)
 
     # Save recommended config
-    log.info("=== Recommended config for corpus_refine.yaml ===")
+    log.info("=== Recommended config for corpus_filter.yaml ===")
     log.info("  reranker_model: %s", model_name)
     log.info("  reranker_query: >")
     log.info("    %s", best_query)

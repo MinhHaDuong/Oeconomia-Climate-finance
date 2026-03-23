@@ -22,7 +22,7 @@ import pytest
 pytestmark = [pytest.mark.slow, pytest.mark.timeout(120)]
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-from refine_flags import _has_safe_words, _load_config
+from filter_flags import _has_safe_words, _load_config
 from utils import (
     CATALOGS_DIR,
     EMBEDDINGS_PATH,
@@ -128,8 +128,8 @@ class TestFileExistence:
     def test_refined_works_exists(self):
         assert os.path.isfile(REFINED_PATH), \
             f"refined_works.csv missing at {REFINED_PATH}" + _diagnosis(
-                "corpus_refine.py --apply was not run, or ran on a different machine",
-                "uv run python scripts/corpus_refine.py --apply",
+                "corpus_filter.py --apply was not run, or ran on a different machine",
+                "uv run python scripts/corpus_filter.py --apply",
                 "5-30 min (depends on reranker cache)",
                 "No corpus for Phase 2 — all analysis blocked",
             )
@@ -137,8 +137,8 @@ class TestFileExistence:
     def test_corpus_audit_exists(self):
         assert os.path.isfile(AUDIT_PATH), \
             f"corpus_audit.csv missing at {AUDIT_PATH}" + _diagnosis(
-                "corpus_refine.py did not write the audit trail",
-                "uv run python scripts/corpus_refine.py --apply",
+                "corpus_filter.py did not write the audit trail",
+                "uv run python scripts/corpus_filter.py --apply",
                 "5-30 min",
                 "No provenance for removed papers — irreproducible",
             )
@@ -165,7 +165,7 @@ class TestFileExistence:
         assert os.path.isfile(CACHE_PATH), \
             f"llm_relevance_cache.csv missing at {CACHE_PATH}" + _diagnosis(
                 "Reranker scoring was not run (Flag 6)",
-                "uv run python scripts/corpus_refine.py --apply (with reranker backend)",
+                "uv run python scripts/corpus_filter.py --apply (with reranker backend)",
                 "~10 min on GPU, ~2 hours on CPU",
                 "Flag 6 will score from scratch on next run — slow but not broken",
             )
@@ -210,7 +210,7 @@ class TestCorpusSize:
         assert CORPUS_MIN <= n <= CORPUS_MAX, \
             f"Corpus has {n:,} papers (expected {CORPUS_MIN:,}–{CORPUS_MAX:,})" + _diagnosis(
                 f"{'Filter too aggressive' if n < CORPUS_MIN else 'Filter not running or new sources added'}",
-                "Review corpus_refine.py flags and thresholds; compare corpus_audit.csv",
+                "Review corpus_filter.py flags and thresholds; compare corpus_audit.csv",
                 "1-2 hours to diagnose",
                 "Wrong corpus size invalidates all quantitative claims in manuscript",
             )
@@ -254,7 +254,7 @@ class TestSchema:
         assert not missing, \
             f"Missing columns: {missing}" + _diagnosis(
                 "Pipeline script changed column names or order",
-                "Check corpus_refine.py and enriched_works.csv schema",
+                "Check corpus_filter.py and enriched_works.csv schema",
                 "15 min",
                 "Phase 2 scripts will crash on missing columns",
             )
@@ -264,7 +264,7 @@ class TestSchema:
         assert year.min() >= YEAR_MIN, \
             f"Earliest year {year.min()} < {YEAR_MIN}" + _diagnosis(
                 "Stale papers from pre-1990 not filtered",
-                "Add year filter to corpus_refine.py",
+                "Add year filter to corpus_filter.py",
                 "15 min",
                 "Minor — pre-1990 papers may dilute analysis",
             )
@@ -295,7 +295,7 @@ class TestSchema:
         assert pct < 1.0, \
             f"{null_titles} papers ({pct:.1f}%) have null titles" + _diagnosis(
                 "Flag 1 (missing_metadata) not catching title-less papers",
-                "Review flag_missing_metadata in refine_flags.py",
+                "Review flag_missing_metadata in filter_flags.py",
                 "15 min",
                 "Papers without titles cannot be identified by readers",
             )
@@ -311,8 +311,8 @@ class TestAuditTrail:
     def test_audit_covers_enriched(self, audit, enriched):
         assert len(audit) == len(enriched), \
             f"Audit has {len(audit):,} rows but enriched has {len(enriched):,}" + _diagnosis(
-                "corpus_refine.py crashed mid-run or was interrupted",
-                "Re-run: uv run python scripts/corpus_refine.py --apply",
+                "corpus_filter.py crashed mid-run or was interrupted",
+                "Re-run: uv run python scripts/corpus_filter.py --apply",
                 "5-30 min",
                 "Cannot verify which papers were removed or why",
             )
@@ -320,8 +320,8 @@ class TestAuditTrail:
     def test_audit_has_action_column(self, audit):
         assert "action" in audit.columns, \
             "'action' column missing from audit" + _diagnosis(
-                "corpus_refine.py schema changed",
-                "Check corpus_refine.py audit output logic",
+                "corpus_filter.py schema changed",
+                "Check corpus_filter.py audit output logic",
                 "15 min",
                 "Audit trail is useless without keep/remove decisions",
             )
@@ -333,7 +333,7 @@ class TestAuditTrail:
         assert not invalid, \
             f"Invalid audit actions: {invalid}" + _diagnosis(
                 "New action type introduced without updating test",
-                "Update valid set or fix corpus_refine.py",
+                "Update valid set or fix corpus_filter.py",
                 "5 min",
                 "Audit analysis may miscount kept/removed papers",
             )
@@ -343,7 +343,7 @@ class TestAuditTrail:
         assert n_keep == len(refined), \
             f"Audit says {n_keep:,} kept but refined has {len(refined):,}" + _diagnosis(
                 "Mismatch between audit and actual filtering",
-                "Re-run corpus_refine.py --apply from clean state",
+                "Re-run corpus_filter.py --apply from clean state",
                 "5-30 min",
                 "Audit trail disagrees with actual corpus — irreproducible",
             )
@@ -363,7 +363,7 @@ class TestFlagSanity:
             f"Flag rate {rate:.1%} exceeds {FLAG_RATE_MAX:.0%} " \
             f"({n_flagged:,} of {len(enriched):,})" + _diagnosis(
                 "Reranker threshold too aggressive or new flags over-triggering",
-                "Review threshold in corpus_refine.yaml; inspect corpus_audit.csv",
+                "Review threshold in corpus_filter.yaml; inspect corpus_audit.csv",
                 "1-2 hours",
                 "Corpus too small — quantitative claims become unreliable",
             )
@@ -373,7 +373,7 @@ class TestFlagSanity:
         assert n_flagged > 100, \
             f"Only {n_flagged} papers flagged — filter may not be running" + _diagnosis(
                 "All flags disabled or reranker cache empty",
-                "Check config/corpus_refine.yaml backend and flags",
+                "Check config/corpus_filter.yaml backend and flags",
                 "30 min",
                 "Corpus contains noise — irrelevant papers dilute analysis",
             )
@@ -397,7 +397,7 @@ class TestFlagSanity:
         assert not missing_flags, \
             f"Flags never triggered: {missing_flags}" + _diagnosis(
                 "Flag function disabled, data changed, or config key missing",
-                "Run corpus_refine.py in dry-run mode and check flag breakdown",
+                "Run corpus_filter.py in dry-run mode and check flag breakdown",
                 "15 min",
                 "Silent filter failure — some noise categories not caught",
             )
@@ -424,7 +424,7 @@ class TestRerankerCache:
         assert "score" in reranker_cache.columns, \
             "Cache missing 'score' column" + _diagnosis(
                 "Old LLM-only cache format without continuous scores",
-                "Re-run corpus_refine.py with backend: reranker",
+                "Re-run corpus_filter.py with backend: reranker",
                 "~10 min on GPU",
                 "No threshold tuning possible without continuous scores",
             )
@@ -533,7 +533,7 @@ class TestCorpusAlign:
     def test_refined_embeddings_exist(self):
         assert os.path.isfile(REFINED_EMBEDDINGS_PATH), \
             f"refined_embeddings.npz missing at {REFINED_EMBEDDINGS_PATH}" + _diagnosis(
-                "corpus_align.py was not run after corpus_refine.py",
+                "corpus_align.py was not run after corpus_filter.py",
                 "uv run python scripts/corpus_align.py",
                 "~2 min",
                 "Phase 2 scripts will crash or use the wrong (unaligned) embeddings",
@@ -542,7 +542,7 @@ class TestCorpusAlign:
     def test_refined_citations_exist(self):
         assert os.path.isfile(REFINED_CITATIONS_PATH), \
             f"refined_citations.csv missing at {REFINED_CITATIONS_PATH}" + _diagnosis(
-                "corpus_align.py was not run after corpus_refine.py",
+                "corpus_align.py was not run after corpus_filter.py",
                 "uv run python scripts/corpus_align.py",
                 "~2 min",
                 "Phase 2 citation/co-citation scripts will crash",
@@ -762,7 +762,7 @@ class TestBlacklistValidation:
         assert not missed_report, \
             "Blacklist terms not properly caught:\n" + "\n".join(missed_report) + _diagnosis(
                 "Noise terms in titles not matched by flag_title_blacklist",
-                "Review noise_title list in config/corpus_refine.yaml",
+                "Review noise_title list in config/corpus_filter.yaml",
                 "15 min",
                 "Irrelevant papers (blockchain, deep learning, etc.) remain in corpus",
             )

@@ -1,7 +1,7 @@
-"""Flag functions and protection for corpus refinement.
+"""Flag functions and protection for corpus filtering.
 
 Each flag function takes (df, config, **kwargs) and returns pd.Series[bool].
-The orchestrator (corpus_refine.py) calls each directly — no registry, no loop.
+The orchestrator (corpus_filter.py) calls each directly — no registry, no loop.
 Exceptions signal genuine errors; the orchestrator catches them.
 """
 
@@ -20,7 +20,7 @@ import yaml
 
 from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi
 
-log = get_logger("refine_flags")
+log = get_logger("filter_flags")
 
 
 # ============================================================
@@ -28,9 +28,9 @@ log = get_logger("refine_flags")
 # ============================================================
 
 def _load_config(path=None):
-    """Load config from YAML. Defaults to config/corpus_refine.yaml."""
+    """Load config from YAML. Defaults to config/corpus_filter.yaml."""
     if path is None:
-        path = os.path.join(CONFIG_DIR, "corpus_refine.yaml")
+        path = os.path.join(CONFIG_DIR, "corpus_filter.yaml")
     with open(path) as f:
         return yaml.safe_load(f)
 

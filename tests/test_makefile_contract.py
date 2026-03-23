@@ -67,7 +67,7 @@ class TestTargetPresence:
 
 class TestNoCheapPrefilter:
     def test_corpus_discover_does_not_call_cheap(self):
-        """corpus-discover must not invoke corpus_refine.py --cheap."""
+        """corpus-discover must not invoke corpus_filter.py --cheap."""
         mk = read_makefile()
         # Find the corpus-discover recipe (lines after the target until next target)
         m = re.search(
@@ -77,10 +77,10 @@ class TestNoCheapPrefilter:
         assert m, "corpus-discover target not found"
         recipe = m.group(1)
         assert "--cheap" not in recipe, \
-            "corpus-discover still invokes corpus_refine.py --cheap (remove it)"
+            "corpus-discover still invokes corpus_filter.py --cheap (remove it)"
 
-    def test_corpus_discover_does_not_call_corpus_refine(self):
-        """corpus-discover must not call corpus_refine.py at all."""
+    def test_corpus_discover_does_not_call_corpus_filter(self):
+        """corpus-discover must not call corpus_filter.py at all."""
         mk = read_makefile()
         m = re.search(
             r"^corpus-discover\s*:.*?\n((?:\t.*\n?)*)",
@@ -88,8 +88,8 @@ class TestNoCheapPrefilter:
         )
         assert m, "corpus-discover target not found"
         recipe = m.group(1)
-        assert "corpus_refine.py" not in recipe, \
-            "corpus-discover must not run corpus_refine.py; refinement belongs in corpus-extend/corpus-filter"
+        assert "corpus_filter.py" not in recipe, \
+            "corpus-discover must not run corpus_filter.py; filtering belongs in corpus-extend/corpus-filter"
 
 
 # ---------------------------------------------------------------------------

@@ -18,7 +18,7 @@ make figures     # Phase 2: analysis & figures (fast, deterministic)
 make manuscript  # Phase 3: render PDF + DOCX
 ```
 
-The Phase 1 to Phase 2 contract is three aligned files in `$CLIMATE_FINANCE_DATA/catalogs/`: `refined_works.csv`, `refined_embeddings.npz`, `refined_citations.csv`. The intermediate artifacts are `unified_works.csv` (discover), `enriched_works.csv` (enrich), and `extended_works.csv` (extend). The refine step uses `corpus_refine.py` in two modes: `--extend` to compute quality flags on all works (producing `extended_works.csv`), then `--filter` to apply the retention policy (producing `refined_works.csv` and `corpus_audit.csv`). Full details of each step are in Part I (§§1--3); Phase 2 script inputs and outputs are in each analysis section (§§5--11).
+The Phase 1 to Phase 2 contract is three aligned files in `$CLIMATE_FINANCE_DATA/catalogs/`: `refined_works.csv`, `refined_embeddings.npz`, `refined_citations.csv`. The intermediate artifacts are `unified_works.csv` (discover), `enriched_works.csv` (enrich), and `extended_works.csv` (extend). The filter step uses `corpus_filter.py` in two modes: `--extend` to compute quality flags on all works (producing `extended_works.csv`), then `--filter` to apply the retention policy (producing `refined_works.csv` and `corpus_audit.csv`). Full details of each step are in Part I (§§1--3); Phase 2 script inputs and outputs are in each analysis section (§§5--11).
 
 See the `Makefile` for the full dependency graph and `dvc.yaml` for the DVC pipeline stages.
 
