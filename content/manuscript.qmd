@@ -181,7 +181,7 @@ The publication ecology of the most-cited works confirms the institutional chara
 
 Critically, the most influential papers show remarkable thematic stability across the 2005--2020 period. The categories through which economists analysed climate finance---carbon markets, green bonds, adaptation, accountability---were established by the mid-2000s. The vocabulary shift visible in the full corpus is driven by the influx of new, lower-cited scholarship, not by a reorientation of influential works. This finding supports the thesis that crystallization was a categorical event: the concepts were set once and have structured all subsequent debate.
 
-![Thematic recomposition of climate finance scholarship across three periods. Six clusters were fitted by k-means (k=6) on text embeddings of the full corpus; each panel shows one cluster's share per period. Bold labels are author interpretations; italic terms are the top TF-IDF distinctive words. Kyoto mechanisms and GHG markets decline while green bonds and ESG, Paris Agreement governance, and renewable energy grow; no cluster disappears entirely.](figures/fig_composition.png){#fig-composition}
+![Thematic recomposition of climate finance scholarship across three periods. Six clusters were fitted by k-means (k=6) on text embeddings of the full corpus; each panel shows one cluster's share per period. Bold labels are author interpretations; italic terms are the top TF-IDF distinctive words. Kyoto mechanisms and GHG markets decline while green bonds and ESG, Paris Agreement governance, and energy and resources grow; no cluster disappears entirely.](figures/fig_composition.png){#fig-composition}
 
 \newpage
 
