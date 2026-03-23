@@ -42,7 +42,7 @@ from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
 log = get_logger("collect_syllabi")
 
 # --- Constants ---
-TEXT_LIMIT = 50000  # Max chars from PDF text extraction (was 20KB, increased for completeness)
+TEXT_LIMIT = 200000  # Max chars from PDF text (200KB covers Harvard FECS 12-class structure)
 CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
 
 # --- Paths ---
@@ -86,27 +86,21 @@ def append_jsonl(records, path):
 
 
 def extract_pdf_text(pdf_path, page_cap=50):
-    """Extract text from a PDF, combining body text and table content.
+    """Extract text from a PDF using pdfplumber's extract_text().
 
-    Uses pdfplumber to get both extract_text() and extract_tables(),
-    merging table cells into the output so tabular reading lists aren't lost.
+    Table extraction (extract_tables) was removed because it duplicates
+    reading list text as pipe-separated rows alongside the normal body text,
+    confusing the LLM in overlapping chunks. pdfplumber's extract_text()
+    already captures table content in most PDFs.
     """
     import pdfplumber
 
     text_parts = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages[:page_cap]:
-            # Body text
             t = page.extract_text()
             if t:
                 text_parts.append(t)
-            # Table content — cells that may not appear in extract_text()
-            tables = page.extract_tables()
-            for table in (tables or []):
-                for row in table:
-                    cells = [str(c).strip() for c in row if c and str(c).strip()]
-                    if cells:
-                        text_parts.append(" | ".join(cells))
     return "\n\n".join(text_parts)[:TEXT_LIMIT]
 
 

@@ -112,4 +112,12 @@ SEED_URLS = [
     {"url": "https://macchub.co.uk/wp-content/uploads/2025/02/English-Workbook-Short-Course-1-.pdf",
      "title": "MACC Hub - Basics of Climate Finance",
      "source_tier": "known_program", "language": "en"},
+    # MIT OCW — Global Climate Change: Economics, Science, and Policy
+    {"url": "https://ocw.mit.edu/courses/15-023j-global-climate-change-economics-science-and-policy-spring-2008/pages/readings/",
+     "title": "MIT OCW 15-023J - Global Climate Change Readings",
+     "source_tier": "known_program", "language": "en"},
+    # Stanford — Ivo Welch Climate Change course
+    {"url": "https://www.ivo-welch.info/teaching/climate-change/stanford/",
+     "title": "Stanford - Ivo Welch Climate Change Course",
+     "source_tier": "known_program", "language": "en"},
 ]
