@@ -59,10 +59,14 @@ def _format_tfidf_line(terms_str, max_terms=9, line_width=35):
 def main():
     parser = argparse.ArgumentParser(description="Figure 2: thematic recomposition")
     parser.add_argument("--no-pdf", action="store_true", help="skip PDF output")
+    parser.add_argument("--alluvial", type=str, default=None,
+                        help="Path to alluvial CSV (default: tab_alluvial.csv)")
+    parser.add_argument("--labels", type=str, default=None,
+                        help="Path to cluster labels JSON (default: cluster_labels.json)")
     args = parser.parse_args()
 
     # Load data
-    csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_alluvial.csv")
+    csv_path = args.alluvial or os.path.join(BASE_DIR, "content", "tables", "tab_alluvial.csv")
     df = pd.read_csv(csv_path, index_col=0)
 
     # Convert to percentages
@@ -70,7 +74,12 @@ def main():
     pct = df.div(totals, axis=0) * 100
 
     # Load TF-IDF labels for subtitles
-    raw_labels = load_cluster_labels()
+    if args.labels:
+        import json
+        with open(args.labels) as f:
+            raw_labels = {int(k): v for k, v in json.load(f).items()}
+    else:
+        raw_labels = load_cluster_labels()
 
     # Order clusters: declining first (top-left), growing last (bottom-right)
     share_change = pct.iloc[-1] - pct.iloc[0]

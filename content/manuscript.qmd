@@ -36,7 +36,7 @@ format:
 ---
 
 <!-- Phase 2→3 contract: this manuscript consumes
-     - figures/fig_bars.png            (@fig-bars)
+     - figures/fig_bars_v1.png            (@fig-bars)
      - figures/fig_composition.png     (@fig-composition)
      - tables/tab_venues.md             (@tbl-venues)
      Any change to these outputs requires rebuilding the manuscript. -->
@@ -69,7 +69,7 @@ We ground this historical argument in a computational analysis of approximately 
 
 A reflexive note is warranted. Our own method, transforming heterogeneous texts into vector representations and detecting statistical patterns, is itself an act of commensuration in @espeland_stevens1998's sense. The embedding space renders comparable what was written in different languages, disciplines, and institutional contexts. We treat its outputs as one more measurement apparatus whose conventions shape what it makes visible, not as objective descriptions of an independent intellectual landscape.
 
-![Growth of climate finance scholarship, 1990–2023. The field was negligible *Before* (1990–2006), surged after the Copenhagen 2009 conference during the *Crystallisation* period (2007–2014), and expanded further in the *Disputes* period (2015–2023).](figures/fig_bars.png){#fig-bars}
+![Growth of climate finance scholarship, 1990–2023. The field was negligible *Before* (1990–2006), surged after the Copenhagen 2009 conference during the *Crystallisation* period (2007–2014), and expanded further in the *Disputes* period (2015–2023).](figures/fig_bars_v1.png){#fig-bars}
 
 \newpage
 

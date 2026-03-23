@@ -43,18 +43,27 @@ parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--breaks", type=str, default=None,
                     help="Comma-separated period break years (default: from config/analysis.yaml)")
+parser.add_argument("--v1-only", action="store_true",
+                    help="Restrict to v1.0-submission corpus (in_v1==1)")
 args = parser.parse_args()
 
 # Output naming depends on mode
-TAB_AL = "tab_alluvial_core.csv" if args.core_only else "tab_alluvial.csv"
-LABEL_FILE = "cluster_labels_core.json" if args.core_only else "cluster_labels.json"
+if args.core_only:
+    _suffix = "_core"
+elif args.v1_only:
+    _suffix = "_v1"
+else:
+    _suffix = ""
+TAB_AL = f"tab_alluvial{_suffix}.csv"
+LABEL_FILE = f"cluster_labels{_suffix}.json"
 
 
 # ============================================================
 # Step 1: Load data + embeddings
 # ============================================================
 
-df, embeddings = load_analysis_corpus(core_only=args.core_only)
+df, embeddings = load_analysis_corpus(core_only=args.core_only,
+                                      v1_only=args.v1_only)
 log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
 
 
@@ -157,8 +166,9 @@ if not args.core_only:
     for c in alluvial_data.columns:
         if c not in core_crosstab.columns:
             core_crosstab[c] = 0
-    core_crosstab.to_csv(os.path.join(TABLES_DIR, "tab_core_shares.csv"))
-    log.info("Saved core shares table -> tables/tab_core_shares.csv")
+    core_shares_file = f"tab_core_shares{_suffix}.csv"
+    core_crosstab.to_csv(os.path.join(TABLES_DIR, core_shares_file))
+    log.info("Saved core shares table -> tables/%s", core_shares_file)
 
 
 # ============================================================

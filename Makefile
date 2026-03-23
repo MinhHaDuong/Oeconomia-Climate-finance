@@ -75,7 +75,7 @@ PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
 		$(DATAPAPER_INCLUDES) $(COMPANION_INCLUDES)
 
 # ── Per-document figure sets ─────────────────────────────
-MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
+MANUSCRIPT_FIGS := content/figures/fig_bars_v1.png content/figures/fig_composition.png
 
 DATAPAPER_FIGS  := content/figures/fig_bars.png content/figures/fig_dag.png
 
@@ -238,10 +238,14 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Fig 2 (composition): thematic clusters across periods
+# Fig 1 v1 variant: restricted to submission corpus for manuscript stability
+content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf --v1-only
+
+# Fig 2 (composition): thematic clusters across periods — v1 clustering for manuscript
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
-		content/tables/tab_alluvial.csv
-	uv run python $< --no-pdf
+		content/tables/tab_alluvial_v1.csv content/tables/cluster_labels_v1.json
+	uv run python $< --no-pdf --alluvial content/tables/tab_alluvial_v1.csv --labels content/tables/cluster_labels_v1.json
 
 # -- Data paper --
 # Semantic UMAP maps (3 co-produced figures)
@@ -255,11 +259,17 @@ content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv 
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Clustering + alluvial flow tables (independent of break detection)
+# Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
+
+# Clustering — v1 subset only (manuscript stability)
+content/tables/tab_alluvial_v1.csv content/tables/cluster_labels_v1.json \
+content/tables/tab_core_shares_v1.csv &: \
+		scripts/compute_clusters.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf --v1-only
 
 # Breakpoints figure
 content/figures/fig_breakpoints.png: \
@@ -394,7 +404,7 @@ output/content/companion-paper.pdf: content/companion-paper.qmd $(PROJECT_INCLUD
 SHELL            := /bin/bash
 ANALYSIS_ARCHIVE := climate-finance-analysis
 ANALYSIS_TMP     := /tmp/$(ANALYSIS_ARCHIVE)
-ANALYSIS_OUTPUTS := content/figures/fig_bars.png \
+ANALYSIS_OUTPUTS := content/figures/fig_bars_v1.png \
                     content/figures/fig_composition.png \
                     content/tables/tab_venues.md \
                     content/tables/tab_alluvial.csv \
@@ -459,7 +469,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 	         $(MANU_TMP)/content/tables \
 	         $(MANU_TMP)/content/figures
 	@# Pre-built figures (validated, not regenerated)
-	cp content/figures/fig_bars.png         $(MANU_TMP)/content/figures/
+	cp content/figures/fig_bars_v1.png      $(MANU_TMP)/content/figures/
 	cp content/figures/fig_composition.png  $(MANU_TMP)/content/figures/
 	@# Manuscript content
 	cp content/manuscript.qmd               $(MANU_TMP)/content/

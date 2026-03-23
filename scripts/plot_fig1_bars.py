@@ -33,12 +33,25 @@ def main():
     parser = argparse.ArgumentParser(description="Plot Fig 1 bar chart")
     parser.add_argument("--no-pdf", action="store_true",
                         help="Skip PDF output")
+    parser.add_argument("--v1-only", action="store_true",
+                        help="Restrict to v1.0-submission corpus (in_v1==1)")
     args = parser.parse_args()
 
     # --- Load corpus ---
     csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
-    df = pd.read_csv(csv_path, usecols=["year", "title", "abstract"],
-                     dtype={"year": "Int64"})
+    usecols = ["year", "title", "abstract"]
+    if args.v1_only:
+        # Check column exists before loading
+        header = pd.read_csv(csv_path, nrows=0).columns
+        if "in_v1" not in header:
+            raise RuntimeError(
+                "--v1-only requires 'in_v1' column in refined_works.csv. "
+                "Re-run: uv run python scripts/corpus_filter.py --apply"
+            )
+        usecols.append("in_v1")
+    df = pd.read_csv(csv_path, usecols=usecols, dtype={"year": "Int64"})
+    if args.v1_only:
+        df = df[df["in_v1"] == 1]
     df = df[(df["year"] >= 1992) & (df["year"] <= 2023)].copy()
 
     # Flag papers mentioning "climate finance" in title or abstract
@@ -119,7 +132,8 @@ def main():
     fig.tight_layout()
 
     # --- Save ---
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_bars")
+    stem = "fig_bars_v1" if args.v1_only else "fig_bars"
+    out_path = os.path.join(BASE_DIR, "content", "figures", stem)
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 
