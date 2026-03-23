@@ -32,12 +32,12 @@ import matplotlib.pyplot as plt
 # --- Human-curated short labels (keyed by cluster id string) ---
 # Derived from TF-IDF terms in cluster_labels.json; update if clusters change.
 SHORT_LABELS = {
-    "0": "Green bonds & ESG",             # green, bonds, financing, sustainable, innovation
-    "1": "$100bn pledge & fund flows",     # 100 billion, funds, GCF, funding, private
-    "2": "GHG markets & trading",          # greenhouse gas, kyoto protocol, cap trade, ETS
-    "3": "Ecosystems & land use",          # ecosystem services, forest, water, land, REDD
-    "4": "CDM & renewable energy",         # kyoto protocol, CDM, energy, renewable, electricity
-    "5": "Paris Agreement & governance",   # paris agreement, human rights, loss damage
+    "0": "Ecosystems & land use",          # ecosystem services, forest, REDD, land, water
+    "1": "CDM & renewable energy",         # fossil fuels, energy, renewable, electricity, power
+    "2": "GHG markets & trading",          # kyoto protocol, technology transfer, CDM, projects
+    "3": "Green bonds & ESG",              # green, bonds, financing, banks, investors
+    "4": "$100bn pledge & fund flows",     # greenhouse gas, cap trade, trading, ETS, china
+    "5": "Paris Agreement & governance",   # paris agreement, loss damage, human rights
 }
 
 _ACRONYMS = {"gcf", "cop", "unfccc", "ets", "cdm", "redd", "sdgs", "ndcs", "esg", "co2", "ghg"}

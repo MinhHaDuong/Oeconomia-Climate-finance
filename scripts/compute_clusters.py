@@ -75,8 +75,17 @@ K_DEFAULT = 6
 _cfg = load_analysis_config()
 CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
-log.info("Fitting global KMeans (k=%d) on full corpus...", K_DEFAULT)
-kmeans = KMeans(n_clusters=K_DEFAULT, random_state=42, n_init=20)
+V1_CENTROIDS_PATH = os.path.join(BASE_DIR, "config", "v1_cluster_centroids.npy")
+
+if args.v1_only and os.path.exists(V1_CENTROIDS_PATH):
+    # Seed with reference centroids so cluster IDs stay consistent
+    # with the v1.0-submission figures (no post-hoc remapping needed)
+    ref_centroids = np.load(V1_CENTROIDS_PATH)
+    log.info("Fitting KMeans (k=%d) seeded with v1 reference centroids...", K_DEFAULT)
+    kmeans = KMeans(n_clusters=K_DEFAULT, init=ref_centroids, n_init=1)
+else:
+    log.info("Fitting global KMeans (k=%d)...", K_DEFAULT)
+    kmeans = KMeans(n_clusters=K_DEFAULT, random_state=42, n_init=20)
 df["cluster"] = kmeans.fit_predict(embeddings)
 
 log.info("Cluster sizes:")
