@@ -315,6 +315,12 @@ def load_cluster_labels(n_clusters=6):
 # - Load speed: numpy reads the array in one shot; no parsing of 11M float strings
 EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
 
+# Incremental embedding cache lives in enrich_cache/ — NOT a DVC output.
+# DVC deletes stage outputs before re-running; keeping the cache separate
+# means re-runs skip already-computed vectors instead of starting from scratch.
+EMBEDDINGS_CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
+EMBEDDINGS_CACHE_PATH = os.path.join(EMBEDDINGS_CACHE_DIR, "embeddings_cache.npz")
+
 # Phase 1 → Phase 2 aligned canonical artifacts (produced by corpus-align step).
 # refined_embeddings.npz rows are 1:1 with refined_works.csv rows.
 # refined_citations.csv source_doi values are a subset of refined_works.csv DOIs.
