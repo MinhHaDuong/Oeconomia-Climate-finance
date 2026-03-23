@@ -27,6 +27,8 @@ log = get_logger("enrich_citations_batch")
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_batch_checkpoint.csv")
+CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
+DONE_CACHE_PATH = os.path.join(CACHE_DIR, "citations_done.csv")
 URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 
@@ -76,6 +78,44 @@ def fetch_batch(dois, delay=0.2, counters=None,
     found_dois = {normalize_doi(it.get("DOI", ""))
                   for it in resp.json()["message"]["items"]}
     return rows, found_dois
+
+
+def load_done_dois(citations_path, done_cache_path):
+    """Load the set of source DOIs already fetched.
+
+    Reads from the persistent cache (enrich_cache/citations_done.csv) which
+    survives DVC stage re-runs, unlike citations.csv which DVC deletes before
+    re-running. Falls back to citations.csv for backward compatibility.
+    """
+    done = set()
+    # Primary source: persistent cache (not a DVC output)
+    if os.path.exists(done_cache_path):
+        try:
+            df = pd.read_csv(done_cache_path, dtype=str, keep_default_na=False)
+            done |= set(df["source_doi"]) - {"", "nan", "none"}
+            log.info("Done cache: %d DOIs from %s", len(done), done_cache_path)
+        except (pd.errors.EmptyDataError, KeyError):
+            log.warning("Done cache corrupt or empty: %s", done_cache_path)
+    # Fallback: citations.csv (present on first migration, absent after DVC clean)
+    if os.path.exists(citations_path):
+        try:
+            df = pd.read_csv(citations_path, usecols=["source_doi"],
+                             dtype=str, keep_default_na=False)
+            csv_dois = set(df["source_doi"].apply(normalize_doi)) - {"", "nan", "none"}
+            done |= csv_dois
+            log.info("citations.csv: %d unique source DOIs", len(csv_dois))
+        except (pd.errors.EmptyDataError, KeyError):
+            pass
+    return done
+
+
+def save_done_cache(done_dois, done_cache_path):
+    """Persist the set of processed source DOIs to the cache file."""
+    os.makedirs(os.path.dirname(done_cache_path), exist_ok=True)
+    pd.DataFrame(sorted(done_dois), columns=["source_doi"]).to_csv(
+        done_cache_path, index=False
+    )
+    log.info("Done cache updated: %d DOIs → %s", len(done_dois), done_cache_path)
 
 
 def print_resume_preview(done_dois, all_dois, missing):
@@ -128,6 +168,8 @@ def main():
     citations_path = args.citations_input
     checkpoint_path = os.path.join(os.path.dirname(citations_path),
                                    ".citations_batch_checkpoint.csv")
+    done_cache_path = os.path.join(os.path.dirname(citations_path),
+                                   "enrich_cache", "citations_done.csv")
 
     run_id = args.run_id or make_run_id()
     t0 = time.time()
@@ -147,16 +189,15 @@ def main():
     if not args.resume and os.path.exists(checkpoint_path):
         os.remove(checkpoint_path)
 
-    # Load existing citations to find already-fetched DOIs
+    # Load already-fetched DOIs from persistent cache (survives DVC re-runs)
+    done_dois = load_done_dois(citations_path, done_cache_path)
+
+    # Load existing citations.csv for merging later (may be absent after DVC clean)
     if os.path.exists(citations_path):
         existing = pd.read_csv(citations_path, low_memory=False)
         existing["source_doi"] = existing["source_doi"].apply(normalize_doi)
-        done_dois = set(existing["source_doi"].dropna()) - {"", "nan", "none"}
-        log.info("Existing citations.csv: %d rows, %d unique source DOIs",
-                 len(existing), len(done_dois))
     else:
         existing = pd.DataFrame(columns=REFS_COLUMNS)
-        done_dois = set()
 
     # Also count DOIs from checkpoint (partial run)
     if args.resume and os.path.exists(checkpoint_path):
@@ -276,6 +317,12 @@ def main():
         log.info("No new data to merge.")
         new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
         combined = existing
+
+    # Persist done-set so it survives DVC re-runs (citations.csv gets deleted)
+    all_done = (done_dois
+                | set(combined["source_doi"].apply(normalize_doi).dropna())
+                - {"", "nan", "none"})
+    save_done_cache(all_done, done_cache_path)
 
     elapsed = time.time() - t0
     log.info("Done in %.0fs: %d DOIs found, %d refs, %d errors",
