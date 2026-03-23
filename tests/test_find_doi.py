@@ -6,6 +6,8 @@ Verifies:
 - Disk cache: second call after clearing in-memory cache still skips OpenAlex
 - Empty/whitespace titles return empty string without querying
 - Titles below similarity threshold cache empty string
+- author parameter: author-keyed cache takes priority, falls back to title-only
+- search_doi passes author to OpenAlex search string when provided
 """
 
 import os
@@ -94,6 +96,140 @@ class TestResolveDoi:
             assert result == ""  # Below threshold → empty
 
         _title_cache.clear()
+
+    def test_find_doi_author_cache_key(self):
+        """find_doi with author+year checks precise key first, then title-only."""
+        from enrich_dois import find_doi, _title_cache, normalize_title
+
+        _title_cache.clear()
+
+        title = "Climate Risk and Financial Markets"
+        author = "John Smith"
+        tnorm = normalize_title(title)
+        precise_key = f"title+meta:{tnorm}|john smith|2023"
+        title_key = f"title:{tnorm}"
+
+        # Scenario: precise cache has a different DOI than title-only cache
+        disk = {
+            precise_key: "10.1234/author-match",
+            title_key: "10.1234/title-only-match",
+        }
+
+        with patch("enrich_dois.search_doi") as mock_search, \
+             patch("enrich_dois.load_cache", return_value=disk), \
+             patch("enrich_dois.save_cache"):
+
+            result = find_doi(title, 2023, author=author)
+            assert result == "10.1234/author-match"
+            assert mock_search.call_count == 0  # Cache hit, no API call
+
+        _title_cache.clear()
+
+    def test_find_doi_author_falls_back_to_title_only(self):
+        """When no author-keyed entry exists, fall back to title-only cache."""
+        from enrich_dois import find_doi, _title_cache, normalize_title
+
+        _title_cache.clear()
+
+        title = "Green Bond Pricing Dynamics"
+        author = "Jane Doe"
+        tnorm = normalize_title(title)
+        title_key = f"title:{tnorm}"
+
+        # Only title-only key exists — no author key
+        disk = {title_key: "10.5678/title-fallback"}
+
+        with patch("enrich_dois.search_doi") as mock_search, \
+             patch("enrich_dois.load_cache", return_value=disk), \
+             patch("enrich_dois.save_cache"):
+
+            result = find_doi(title, 2022, author=author)
+            assert result == "10.5678/title-fallback"
+            assert mock_search.call_count == 0
+
+        _title_cache.clear()
+
+    def test_find_doi_author_writes_both_cache_keys(self):
+        """When author is provided, find_doi writes to both author and title keys."""
+        from enrich_dois import find_doi, _title_cache
+
+        _title_cache.clear()
+
+        disk_cache = {}
+        with patch("enrich_dois.search_doi") as mock_search, \
+             patch("enrich_dois.load_cache", return_value=disk_cache), \
+             patch("enrich_dois.save_cache") as mock_save:
+            mock_search.return_value = ("10.1234/dual-key", "W789", 0.95)
+
+            find_doi("Carbon Markets and Policy", 2021, author="Alice Brown")
+
+            mock_save.assert_called_once()
+            saved = mock_save.call_args[0][0]
+            # Both keys should be present
+            precise_keys = [k for k in saved if k.startswith("title+meta:")]
+            title_keys = [k for k in saved if k.startswith("title:")]
+            assert len(precise_keys) == 1
+            assert len(title_keys) == 1
+            assert saved[precise_keys[0]] == "10.1234/dual-key"
+            assert saved[title_keys[0]] == "10.1234/dual-key"
+
+        _title_cache.clear()
+
+    def test_find_doi_no_author_still_works(self):
+        """find_doi without author but with year writes precise + title keys."""
+        from enrich_dois import find_doi, _title_cache
+
+        _title_cache.clear()
+
+        disk_cache = {}
+        with patch("enrich_dois.search_doi") as mock_search, \
+             patch("enrich_dois.load_cache", return_value=disk_cache), \
+             patch("enrich_dois.save_cache") as mock_save:
+            mock_search.return_value = ("10.1234/no-author", "W111", 0.90)
+
+            result = find_doi("Basic Climate Paper", 2020)
+            assert result == "10.1234/no-author"
+
+            mock_save.assert_called_once()
+            saved = mock_save.call_args[0][0]
+            # Year alone creates a precise key (title+meta:..||2020)
+            precise_keys = [k for k in saved if k.startswith("title+meta:")]
+            title_keys = [k for k in saved if k.startswith("title:")]
+            assert len(precise_keys) == 1
+            assert len(title_keys) == 1
+            assert "||2020" in precise_keys[0]
+
+        _title_cache.clear()
+
+    def test_search_doi_appends_author(self):
+        """search_doi includes author in the OpenAlex search string."""
+        from enrich_dois import search_doi
+
+        with patch("enrich_dois.polite_get") as mock_get:
+            mock_get.return_value.json.return_value = {"results": []}
+
+            search_doi("Climate Finance Overview", year=2023, author="Stern")
+
+            # Check that the search param includes the author (lowercased)
+            call_kwargs = mock_get.call_args
+            params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
+            search_str = params["search"]
+            assert "stern" in search_str
+
+    def test_search_doi_no_author(self):
+        """search_doi without author uses title-only search (backward compatible)."""
+        from enrich_dois import search_doi
+
+        with patch("enrich_dois.polite_get") as mock_get:
+            mock_get.return_value.json.return_value = {"results": []}
+
+            search_doi("Climate Finance Overview", year=2023)
+
+            call_kwargs = mock_get.call_args
+            params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
+            search_str = params["search"]
+            # Should only contain the title, no author
+            assert search_str == "Climate Finance Overview"[:200]
 
     def test_find_doi_saves_to_disk_cache(self):
         """find_doi saves result to disk cache after OpenAlex query."""

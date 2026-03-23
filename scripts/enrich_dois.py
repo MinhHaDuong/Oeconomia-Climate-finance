@@ -57,13 +57,31 @@ def title_similarity(a, b):
     return SequenceMatcher(None, na, nb).ratio()
 
 
-def search_doi(title, year=None):
+def _normalize_author(author):
+    """Normalize author string: lowercase, strip, first author only.
+
+    Used both for cache keys and for appending author to OpenAlex search.
+    """
+    if not author:
+        return ""
+    return str(author).split(";")[0].split(",")[0].strip().lower()
+
+
+def search_doi(title, year=None, author=None):
     """Search OpenAlex for a work by title, optionally filtered by year.
+
+    When author is provided, appends the first author name to the search
+    string for better precision on generic titles.
 
     Returns (doi, openalex_id, similarity) or (None, None, 0).
     """
+    search_str = title[:200]
+    first_author = _normalize_author(author)
+    if first_author:
+        search_str = f"{search_str} {first_author}"
+
     params = {
-        "search": title[:200],
+        "search": search_str,
         "select": "id,doi,title,publication_year",
         "per_page": 5,
         "mailto": MAILTO,
@@ -99,37 +117,58 @@ def search_doi(title, year=None):
 
 # --- Cache-transparent DOI resolver for external callers ---
 
-_title_cache = {}  # in-memory: normalized_title → doi or ""
+_title_cache = {}  # in-memory: cache_key → doi or ""
 
 
-def find_doi(title, year=None):
+def find_doi(title, year=None, author=None):
     """Cached DOI lookup. Returns DOI string or empty string.
 
     Two-level cache (in-memory + on-disk) makes repeated lookups free.
     Callers never touch cache directly — just call find_doi(title, year).
+
+    When author or year is provided, checks a precise title+meta cache key
+    (title|author|year) first, then falls back to the title-only key.
+    New lookups write to both keys so existing cache entries remain valid
+    (zero blast radius).
     """
     tnorm = normalize_title(title) if title else ""
     if not tnorm:
         return ""
 
+    anorm = _normalize_author(author)
+    try:
+        ynorm = str(int(float(year))) if year and pd.notna(year) else ""
+    except (ValueError, TypeError):
+        ynorm = ""
+    title_key = f"title:{tnorm}"
+    precise_parts = [tnorm, anorm, ynorm]
+    has_precise = anorm or ynorm
+    precise_key = f"title+meta:{tnorm}|{anorm}|{ynorm}" if has_precise else None
+
+    # Build ordered list of cache keys to check: author-keyed first, then title-only
+    check_keys = [precise_key, title_key] if precise_key else [title_key]
+
     # Level 1: in-memory cache
-    if tnorm in _title_cache:
-        return _title_cache[tnorm]
+    for key in check_keys:
+        if key in _title_cache:
+            return _title_cache[key]
 
     # Level 2: on-disk cache (shared across runs)
     cache = load_cache()
-    disk_key = f"title:{tnorm}"
-    if disk_key in cache:
-        _title_cache[tnorm] = cache[disk_key]
-        return cache[disk_key]
+    for key in check_keys:
+        if key in cache:
+            _title_cache[key] = cache[key]
+            return cache[key]
 
     # Level 3: query OpenAlex
-    doi, _oa_id, sim = search_doi(title, year)
+    doi, _oa_id, sim = search_doi(title, year, author=author)
     result = doi if doi and sim >= TITLE_SIM_THRESHOLD else ""
 
-    # Store in both caches
-    _title_cache[tnorm] = result
-    cache[disk_key] = result
+    # Store in both caches — write to all applicable keys
+    write_keys = [precise_key, title_key] if precise_key else [title_key]
+    for key in write_keys:
+        _title_cache[key] = result
+        cache[key] = result
     save_cache(cache)
 
     return result
@@ -186,12 +225,14 @@ def main():
     # Process
     resolved = 0
     not_found = 0
+    has_author_col = "first_author" in to_process.columns
     for i, (idx, row) in enumerate(to_process.iterrows()):
         title = str(row["title"])
         year = row.get("year")
         sid = row["source_id"]
+        author = str(row["first_author"]) if has_author_col else None
 
-        doi, oa_id, sim = search_doi(title, year)
+        doi, oa_id, sim = search_doi(title, year, author=author)
 
         if doi and sim >= TITLE_SIM_THRESHOLD:
             cache[sid] = doi

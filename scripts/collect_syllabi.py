@@ -743,10 +743,11 @@ def stage_normalize():
     for idx in no_doi.index:
         title = df.at[idx, "title"]
         year = df.at[idx, "year"]
+        authors = df.at[idx, "authors"]
         if not title or len(title) < 10:
             continue
 
-        doi = find_doi(title, year)
+        doi = find_doi(title, year, author=authors)
         if doi:
             df.at[idx, "doi"] = doi.lower()
             lookup_count += 1
