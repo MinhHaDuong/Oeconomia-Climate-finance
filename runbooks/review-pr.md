@@ -14,23 +14,28 @@ A review means spinning multiple agents in parallel, each with a distinct perspe
 | **Consistency** | Style, naming, docs, stale references | Does this fit the rest of the codebase? |
 | **Scope** | Over-engineering, unrelated changes, feature creep | Does this change *only* what the ticket asks? |
 | **Red team** | Adversarial inputs, broken invariants, failure modes | How can this break? |
+| **Doc propagation** | Downstream text accuracy | Do docs, papers, and configs still match the code? |
 
-Add more perspectives when warranted (e.g., **Security** for auth changes, **Performance** for data pipeline changes, **Historiography** for manuscript claims, **Documentation propagation** for pipeline or methodology changes — see below).
+The **Doc propagation** agent is **mandatory** whenever the PR touches pipeline scripts (`scripts/`), configuration, methodology, or data contracts. It is not optional — omitting it is a review defect. Add more perspectives when warranted (e.g., **Security** for auth changes, **Performance** for data pipeline changes, **Historiography** for manuscript claims).
 
 ### Documentation propagation agent
 
-Triggered for substantial+ PRs that touch pipeline code, configuration, or methodology. This agent asks: **"What docs, configs, and downstream reports reference the changed behavior — are they still accurate?"**
+This agent asks: **"What docs, configs, and downstream reports reference the changed behavior — are they still accurate?"**
+
+A PR that changes pipeline behavior without updating the docs that describe it is **incomplete**. The doc propagation agent's verdict carries the same weight as correctness — a stale doc that misleads a reader is a bug.
 
 Checklist:
 1. **Trace references** — search for mentions of changed functions, parameters, file names, or concepts in:
    - `content/technical-report.qmd` (pipeline methodology for replicators)
+   - `content/data-paper.qmd` (dataset description for journal readers)
    - `content/manuscript.qmd` and its `_includes/` (claims for Oeconomia readers)
    - `content/*-vars.yml` (per-document computed values cited in prose)
    - `docs/` (coding/writing guidelines, style guides)
    - `README.md`, `STATE.md`, `ROADMAP.md`
    - Configuration files (`corpus_collect.yaml`, `dvc.yaml`, `Makefile`)
 2. **Flag stale references** — any doc that describes the old behavior is a finding.
-3. **Verdict**: request-changes if a downstream doc would mislead a reader; comment if the staleness is cosmetic.
+3. **Check hardcoded numbers** — search for counts, percentages, or statistics in prose that may have changed (e.g., "15 institutions", "87 readings", "130 courses").
+4. **Verdict**: request-changes if a downstream doc would mislead a reader; comment if the staleness is cosmetic.
 
 ### Proportional depth
 
@@ -41,8 +46,9 @@ Not every PR needs every agent. Scale to risk:
 | Trivial + user present | **Skip PR entirely** — branch → commit → `git merge --no-ff -m` → push main |
 | Trivial (typo, comment, config) | Correctness only |
 | Standard (single-file logic, prose edits) | Correctness + Consistency |
-| Substantial (multi-file, new feature, pipeline change) | All four core agents + Documentation propagation |
-| High-risk (schema change, methodology change) | All four + Documentation propagation + domain-specific agents |
+| Standard + touches `scripts/` | Correctness + Consistency + **Doc propagation** |
+| Substantial (multi-file, new feature, pipeline change) | All five agents (Correctness + Consistency + Scope + Red team + **Doc propagation**) |
+| High-risk (schema change, methodology change) | All five + domain-specific agents (Historiography, Performance, etc.) |
 
 ## Each agent runs
 
