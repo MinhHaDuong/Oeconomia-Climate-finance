@@ -32,6 +32,8 @@ log = get_logger("enrich_citations_openalex")
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
+# TODO(#307): move to enrich_cache/citations_oa_done.txt (consistent with
+# enrich_cache/ pattern used by enrich_citations_batch.py and enrich_embeddings.py)
 DONE_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_done.txt")
 
 OA_BASE = "https://api.openalex.org/works"
