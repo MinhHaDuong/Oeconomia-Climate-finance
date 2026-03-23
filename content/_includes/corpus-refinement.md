@@ -74,6 +74,10 @@ Enrichment steps can reintroduce duplicates from source JSONs that the merge ste
 
 An audit trail (`corpus_audit.csv`) records the decision for every paper: `keep`, `remove` (flagged), or `deduped` (dropped by deduplication).
 
+### Phase F: Version provenance
+
+After deduplication, a provenance column (`in_v1`) marks works that were present in the v1.0 submission corpus (git tag `v1.0-submission`). Matching uses normalized DOIs as primary identifiers, with source\_id fallback for works without DOIs. The reference identifier set is stored in `config/v1_identifiers.txt.gz`. This enables exact reproduction of v1 figures and stability checks across corpus versions.
+
 **Result:** The refined corpus contains {{< meta corpus_total >}} papers in `refined_works.csv`.
 
 ### Venue-cleaning decisions
