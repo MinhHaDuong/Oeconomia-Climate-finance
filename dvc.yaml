@@ -47,14 +47,10 @@ stages:
       - data/catalogs/openalex_works.csv
       - data/catalogs/openalex_citations.csv
 
-  catalog_s2:
-    cmd: uv run python scripts/catalog_semanticscholar.py --resume
-    deps:
-      - scripts/catalog_semanticscholar.py
-      - scripts/utils.py
-      - config/openalex_queries.yaml
-    outs:
-      - data/catalogs/semanticscholar_works.csv
+  # catalog_s2: disconnected — keyword search on S2 is ineffective
+  # (wrong endpoint, no phrase matching, 1000-result cap, 2M noise results).
+  # Pool data preserved in data/pool/semanticscholar/ for future
+  # citation-graph-based harvest. See ticket for redesign.
 
   catalog_grey:
     cmd: uv run python scripts/catalog_grey.py
@@ -87,7 +83,6 @@ stages:
       - data/catalogs/bibcnrs_works.csv
       - data/catalogs/istex_works.csv
       - data/catalogs/openalex_works.csv
-      - data/catalogs/semanticscholar_works.csv
       - data/catalogs/grey_works.csv
       - data/catalogs/teaching_works.csv
       # Hand-curated input (pre-placed, not produced by pipeline)
