@@ -28,7 +28,7 @@ SOURCE_META = {
     },
     "semanticscholar": {
         "label": "Semantic Scholar",
-        "query": "Same keyword taxonomy via S2 Academic Graph API (1000/query cap)",
+        "query": "4-tier keyword taxonomy via S2 Academic Graph API (1000/query cap)",
     },
     "istex": {
         "label": "ISTEX",
