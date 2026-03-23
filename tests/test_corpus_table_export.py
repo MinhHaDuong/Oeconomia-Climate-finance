@@ -1,12 +1,16 @@
-"""Tests for export_corpus_table.py — ticket #252.
+"""Tests for export_corpus_table.py — ticket #252, #270.
 
 Verifies that the exported CSV has correct columns and that Raw counts
 use from_* columns (not the source column fallback).
 """
 
 import os
+import sys
+
 import pandas as pd
 import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 TABLES_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -61,3 +65,13 @@ def test_total_row_present(corpus_table):
     """A TOTAL row must exist."""
     total = corpus_table[corpus_table["Source"] == "TOTAL"]
     assert len(total) == 1, "Missing TOTAL row"
+
+
+def test_source_meta_matches_source_names():
+    """SOURCE_META keys must match utils.SOURCE_NAMES (single source of truth)."""
+    from export_corpus_table import SOURCE_META
+    from utils import SOURCE_NAMES
+    assert set(SOURCE_META.keys()) == set(SOURCE_NAMES), (
+        f"SOURCE_META keys {set(SOURCE_META.keys())} != "
+        f"SOURCE_NAMES {set(SOURCE_NAMES)}"
+    )
