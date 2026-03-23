@@ -390,11 +390,16 @@ def load_refined_citations():
     return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 
 
-def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=None):
+def load_analysis_corpus(core_only=False, with_embeddings=True,
+                         cite_threshold=None, v1_only=False):
     """Load refined_works.csv with standard filtering + optional embeddings.
 
     Applies: year coercion, title-present filter, year in [year_min, year_max]
     (from config/analysis.yaml), optional core filtering (cited_by_count >= cite_threshold).
+
+    If v1_only=True, restricts to rows with in_v1==1 (the v1.0-submission
+    corpus). Use this for manuscript figures to ensure stability against
+    corpus expansion.
 
     If cite_threshold is None, the value is read from config/analysis.yaml
     (clustering.cite_threshold) so there is a single source of truth.
@@ -414,7 +419,13 @@ def load_analysis_corpus(core_only=False, with_embeddings=True, cite_threshold=N
 
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
     in_range = (works["year"] >= year_min) & (works["year"] <= year_max)
-    keep_mask = (has_title & in_range).values
+    keep_mask = has_title & in_range
+    if v1_only:
+        v1_col = works.get("in_v1", pd.Series(False, index=works.index))
+        keep_mask = keep_mask & (v1_col == 1)
+        _utils_log.info("v1_only: restricting to %d / %d rows",
+                        keep_mask.sum(), len(works))
+    keep_mask = keep_mask.values
     df = works[keep_mask].copy().reset_index(drop=True)
 
     embeddings = None

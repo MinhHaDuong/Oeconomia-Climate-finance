@@ -234,11 +234,11 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 # ── Figures ──────────────────────────────────────────────
 
 # -- Manuscript (Oeconomia article) --
-# Fig 1 (bars): corpus growth per year
+# Fig 1 (bars): corpus growth per year — v1 subset for submission stability
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
+	uv run python $< --no-pdf --v1-only
 
-# Fig 2 (composition): thematic clusters across periods
+# Fig 2 (composition): thematic clusters across periods — uses v1 clustering
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_alluvial.csv
 	uv run python $< --no-pdf
@@ -256,10 +256,11 @@ content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv 
 	uv run python $< --no-pdf
 
 # Clustering + alluvial flow tables (independent of break detection)
+# --v1-only ensures manuscript cluster labels match submission
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
+	uv run python $< --no-pdf --v1-only
 
 # Breakpoints figure
 content/figures/fig_breakpoints.png: \

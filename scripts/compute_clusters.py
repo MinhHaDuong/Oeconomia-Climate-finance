@@ -43,6 +43,8 @@ parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--breaks", type=str, default=None,
                     help="Comma-separated period break years (default: from config/analysis.yaml)")
+parser.add_argument("--v1-only", action="store_true",
+                    help="Restrict to v1.0-submission corpus (in_v1==1)")
 args = parser.parse_args()
 
 # Output naming depends on mode
@@ -54,7 +56,8 @@ LABEL_FILE = "cluster_labels_core.json" if args.core_only else "cluster_labels.j
 # Step 1: Load data + embeddings
 # ============================================================
 
-df, embeddings = load_analysis_corpus(core_only=args.core_only)
+df, embeddings = load_analysis_corpus(core_only=args.core_only,
+                                      v1_only=args.v1_only)
 log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
 
 

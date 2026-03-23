@@ -33,12 +33,18 @@ def main():
     parser = argparse.ArgumentParser(description="Plot Fig 1 bar chart")
     parser.add_argument("--no-pdf", action="store_true",
                         help="Skip PDF output")
+    parser.add_argument("--v1-only", action="store_true",
+                        help="Restrict to v1.0-submission corpus (in_v1==1)")
     args = parser.parse_args()
 
     # --- Load corpus ---
     csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
-    df = pd.read_csv(csv_path, usecols=["year", "title", "abstract"],
-                     dtype={"year": "Int64"})
+    usecols = ["year", "title", "abstract"]
+    if args.v1_only:
+        usecols.append("in_v1")
+    df = pd.read_csv(csv_path, usecols=usecols, dtype={"year": "Int64"})
+    if args.v1_only:
+        df = df[df["in_v1"] == 1]
     df = df[(df["year"] >= 1992) & (df["year"] <= 2023)].copy()
 
     # Flag papers mentioning "climate finance" in title or abstract
