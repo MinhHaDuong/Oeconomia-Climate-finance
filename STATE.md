@@ -53,10 +53,12 @@ None.
 
 ## Active PRs
 
-None.
+- #292: Unify DOI lookup — replace syllabi CrossRef with cached OpenAlex resolve_doi (#291)
 
 ## Recent merges (2026-03-23)
 
+- #274/#270: Add Semantic Scholar to corpus table SOURCE_META + sync test
+- #276/#271: Add Semantic Scholar to data paper (7th source in prose, table, provenance flags)
 - #290/#283: Add `in_v1` provenance column — marks v1.0-submission rows in refined_works.csv
 - #268/#265: Parallelize syllabi fetch stage (100 workers, per-host 1 req/s rate limiting, ~10-15x speedup)
 - #259: Teaching scraper: improved PDF parsing (table extraction, 50KB limit, chunk overlap), removed manual catalog — scraper is now sole source
@@ -77,7 +79,11 @@ None.
 
 ## Open tickets
 
+- ~~#270: Add S2 to SOURCE_META~~ (merged #274)
+- ~~#271: Add S2 to data paper~~ (merged #276)
 - ~~#283: Add in_v1 provenance column~~ (merged #290)
+- #288: Add progress bars, ETA, stuck detection, and desktop notifications to pipeline scripts
+- #291: Unify DOI lookup — replace syllabi CrossRef with cached OpenAlex resolve_doi
 - #213: Add export_citation_coverage.py to archive-analysis recipe
 - #236: Harness extraction — split workflow harness into its own repo
 - #237: Harness — offline file-based ticket system (gh-optional)
