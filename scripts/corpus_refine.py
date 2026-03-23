@@ -54,15 +54,19 @@ def load_v1_identifiers(path=None):
         log.warning("v1 identifier file not found: %s — skipping in_v1 column", path)
         return set(), set()
     dois, sids = set(), set()
-    with gzip.open(path, "rt") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith("sid:"):
-                sids.add(line[4:])
-            else:
-                dois.add(line)
+    try:
+        with gzip.open(path, "rt") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("sid:"):
+                    sids.add(line[4:])
+                else:
+                    dois.add(normalize_doi(line))
+    except (EOFError, gzip.BadGzipFile, OSError) as e:
+        log.warning("v1 identifier file corrupted: %s — skipping in_v1 column", e)
+        return set(), set()
     log.info("  Loaded v1 identifiers: %d DOIs + %d source_ids", len(dois), len(sids))
     return dois, sids
 
@@ -325,10 +329,9 @@ def apply_filter(df, output_path=None, audit_path=None, v1_identifiers_path=None
 
     keep_df = keep_df.drop(columns=["doi_norm"], errors="ignore")
 
-    # Add v1 provenance column (#283)
+    # Add v1 provenance column (#283) — always present for schema consistency
     v1_dois, v1_sids = load_v1_identifiers(v1_identifiers_path)
-    if v1_dois or v1_sids:
-        keep_df = add_in_v1_column(keep_df, v1_dois, v1_sids)
+    keep_df = add_in_v1_column(keep_df, v1_dois, v1_sids)
 
     # Save audit — after deduplication so that action=keep count matches refined_works.csv.
     # Rows dropped by deduplication get action="deduped" to distinguish from filter removes.
