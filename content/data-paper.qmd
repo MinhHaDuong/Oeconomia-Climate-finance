@@ -25,8 +25,8 @@ abstract: |
   most-cited segment of the field (80% coverage for core works). Pre-computed
   384-dimensional multilingual sentence-transformer embeddings enable
   clustering, topic modelling, and cross-lingual analysis without
-  re-encoding. The corpus, embeddings, citation network, and audit log
-  are deposited in Zenodo under CC BY 4.0.
+  re-encoding. The full corpus with quality flags, embeddings, and
+  citation network are deposited in Zenodo under CC BY 4.0.
 keywords: |
   climate finance -- bibliometric corpus -- multilingual --
   sentence-transformer embeddings -- scientometrics -- history of economic thought
@@ -99,19 +99,15 @@ Users should be aware of several potential biases. Non-English coverage remains 
 - Climate finance corpus --- DOI: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)
 - Temporal coverage: 1990--2024
 
-The dataset consists of five files deposited in Zenodo, also reproducible from source via the pipeline scripts. All CSV files use UTF-8 encoding with standard comma-separated dialect (RFC 4180); identifiers are opaque string keys.
+The Zenodo deposit is a reproducibility archive in two parts: the pipeline source code (scripts, configuration, and DVC definitions) and the v1.1 corpus data files described below. All CSV files use UTF-8 encoding with standard comma-separated dialect (RFC 4180); identifiers are opaque string keys.
 
-**refined_works.csv** ({{< meta corpus_total >}} rows). The primary corpus file. Each row is one deduplicated work with columns for: identifier (string), DOI, title, first author, year (integer), abstract, citation count (integer), publication venue, work type, language code (ISO 639-1), source provenance flags (one boolean column per source: `from_openalex`, `from_istex`, `from_bibcnrs`, `from_scispace`, `from_grey`, `from_teaching`), a version-tracking flag (`in_v1`), and quality-filtering metadata (`is_flagged`, `flag_reason`, `is_protected`). Of these, {{< meta corpus_core >}} core works (cited $\geq$ {{< meta corpus_core_threshold >}} times) form the field's most-cited core. @fig-bars shows the temporal distribution.
+**climate_finance_corpus.csv** ({{< meta corpus_raw >}} rows). The complete, unfiltered corpus. Each row is one deduplicated work with columns for: identifier (string), DOI, title, first author, year (integer), citation count (integer), publication venue, work type, language code (ISO 639-1), source provenance flags (one boolean per source: `from_openalex`, `from_istex`, `from_bibcnrs`, `from_scispace`, `from_grey`, `from_teaching`), and quality-filtering metadata (`is_flagged`, `flag_reason`, `is_protected`). The quality flags are the audit trail: users reproduce our refined subset ({{< meta corpus_total >}} works) with `df[~df['is_flagged'] | df['is_protected']]`. A version-tracking flag (`in_v1`) marks works present in the v1.0 submission corpus. Abstracts are not included in the deposited file due to publisher redistribution restrictions; they can be retrieved programmatically via the DOI or OpenAlex identifier. @fig-bars shows the temporal distribution.
 
-**embeddings.npz.** Compressed NumPy archive (keys: `vectors` as float32 array, `ids` as string array) containing L2-normalised (unit-length) {{< meta emb_dimensions >}}-dimensional vectors for {{< meta corpus_with_embeddings >}} works, computed by the multilingual sentence-transformer *paraphrase-multilingual-MiniLM-L12-v2*. Row *i* of `vectors` corresponds to `ids[i]`. The count exceeds the refined corpus size because embeddings are computed before quality filtering; the full cache supports alternative filtering strategies. Each vector encodes the concatenation of title, abstract (if longer than 20 characters), and keywords, truncated to the model's 128-token context window. The model maps texts in English, French, Chinese, Japanese, and German into a shared semantic space: non-English works cluster with thematically similar English-language works rather than forming language-specific clusters. These vectors serve as direct input for BERTopic, top2vec, or other embedding-based topic models, and support cosine-similarity search.
+**embeddings.npz.** Compressed NumPy archive (keys: `vectors` as float32 array, `ids` as string array) containing L2-normalised (unit-length) {{< meta emb_dimensions >}}-dimensional vectors for {{< meta corpus_with_embeddings >}} works, computed by the multilingual sentence-transformer *paraphrase-multilingual-MiniLM-L12-v2*. Row *i* of `vectors` corresponds to `ids[i]`. Each vector encodes the concatenation of title, abstract, and keywords, truncated to the model's 128-token context window. The model maps texts in English, French, Chinese, Japanese, and German into a shared semantic space: non-English works cluster with thematically similar English-language works rather than forming language-specific clusters. These vectors serve as direct input for BERTopic, top2vec, or other embedding-based topic models, and support cosine-similarity search.
 
-**corpus_audit.csv.** Complete audit trail. Columns: `id`, `decision` (kept/removed/protected), `flag_reason`, `protection_reason`. Every work in unified_works.csv receives a row.
+**citations.csv.** Citation network ({{< meta cite_total_rows >}} rows). Columns: `source_doi`, `ref_doi` (both normalised, lowercased DOIs). Each row records a (citing, cited) pair where the citing work belongs to the corpus; the cited work may or may not. For corpus-internal citations only, join on the corpus identifiers.
 
-**citations.csv.** Internal citation network ({{< meta cite_refined_rows >}} rows). Columns: `source_doi`, `ref_doi` (both normalised, lowercased DOIs). Each row records a (citing, cited) pair where both works belong to the corpus, supporting co-citation analysis, bibliographic coupling, and citation genealogy studies.
-
-**Source catalogs.** Individual per-source catalogs (`openalex_works.csv`, `istex_works.csv`, etc.) are preserved in the deposit, enabling provenance tracking back to individual databases before merge and deduplication.
-
-**Backward compatibility with v1.0.** The `in_v1` boolean column marks works present in the v1.0 submission corpus (git tag `v1.0-submission`). Of the 29,875 v1.0 identifiers, 29,697 match the current corpus (99.4%); the 178 unmatched works reflect strengthened quality filters and improved deduplication. For exact replication of v1.0 results, retrieve the original files from the Zenodo deposit.
+**Source catalogs.** Per-source catalogs (`openalex_works.csv`, `istex_works.csv`, etc.) enable provenance tracking back to individual databases before merge and deduplication.
 
 ![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
 
@@ -129,11 +125,11 @@ The provenance architecture, with boolean flags per source and a documented merg
 
 ## Data Availability {.unnumbered}
 
-The dataset is deposited in Zenodo at <https://doi.org/10.5281/zenodo.19097045> under CC BY 4.0. The deposit includes refined_works.csv, embeddings.npz, corpus_audit.csv, citations.csv, and per-source catalogs. Total download size is approximately 430 MB. Suggested citation:
+The reproducibility archive is deposited in Zenodo at <https://doi.org/10.5281/zenodo.19097045> under CC BY 4.0. It contains the pipeline source code and the v1.1 corpus data files (climate_finance_corpus.csv, embeddings.npz, citations.csv, and per-source catalogs). Suggested citation:
 
-> Ha-Duong, M. (2026). A Multilingual Corpus of Climate Finance Literature, 1990–2024 (Version 1.1) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19097045>
+> Ha-Duong, M. (2026). A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Eight Languages (Version 1.1) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19097045>
 
-New versions will retain the same concept DOI; version-specific DOIs are minted automatically by Zenodo. The `in_v1` column in refined_works.csv enables backward compatibility with analyses performed on earlier versions.
+New versions retain the same concept DOI; version-specific DOIs are minted automatically by Zenodo. The `in_v1` column enables backward compatibility with analyses performed on earlier versions.
 
 ## Code Availability {.unnumbered}
 

@@ -78,6 +78,7 @@ DOC_VARS = {
         # direct + includes: corpus-construction, corpus-filtering,
         #   embedding-generation
         "cite_refined_rows",
+        "cite_total_rows",
         "corpus_core",
         "corpus_core_threshold",
         "corpus_multi_source",
