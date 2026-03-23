@@ -1,8 +1,8 @@
-"""Tests for crossref_lookup removal and resolve_doi integration.
+"""Tests for crossref_lookup removal and find_doi integration.
 
 Verifies:
 - crossref_lookup is no longer defined in collect_syllabi.py
-- stage_normalize uses resolve_doi from enrich_dois (not CrossRef)
+- stage_normalize uses find_doi from enrich_dois (not CrossRef)
 - CLASSIFY_MODEL and EXTRACT_MODEL env vars are wired at call sites
 """
 
@@ -20,7 +20,7 @@ class TestCrossrefRemoval:
         """crossref_lookup should not be defined in collect_syllabi.py."""
         import collect_syllabi
         assert not hasattr(collect_syllabi, "crossref_lookup"), \
-            "crossref_lookup should be removed — resolve_doi replaces it"
+            "crossref_lookup should be removed — find_doi replaces it"
 
     def test_no_crossref_api_reference(self):
         """collect_syllabi.py should not reference api.crossref.org."""
@@ -29,12 +29,12 @@ class TestCrossrefRemoval:
         assert "crossref.org" not in source, \
             "CrossRef API reference should be removed — OpenAlex is the sole resolver"
 
-    def test_normalize_stage_uses_resolve_doi(self):
-        """stage_normalize should call resolve_doi, not crossref_lookup."""
+    def test_normalize_stage_uses_find_doi(self):
+        """stage_normalize should call find_doi, not crossref_lookup."""
         import collect_syllabi
         source = inspect.getsource(collect_syllabi.stage_normalize)
-        assert "resolve_doi" in source, \
-            "stage_normalize should call resolve_doi from enrich_dois"
+        assert "find_doi" in source, \
+            "stage_normalize should call find_doi from enrich_dois"
         assert "crossref_lookup" not in source, \
             "stage_normalize should not reference crossref_lookup"
 

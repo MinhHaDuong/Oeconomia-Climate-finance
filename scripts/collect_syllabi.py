@@ -35,7 +35,7 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from enrich_dois import resolve_doi
+from enrich_dois import find_doi
 from syllabi_config import SEARCH_QUERIES, SEED_URLS
 from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,
                    get_logger, normalize_title, polite_get, save_csv)
@@ -746,7 +746,7 @@ def stage_normalize():
         if not title or len(title) < 10:
             continue
 
-        doi = resolve_doi(title, year)
+        doi = find_doi(title, year)
         if doi:
             df.at[idx, "doi"] = doi.lower()
             lookup_count += 1

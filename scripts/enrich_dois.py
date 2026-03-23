@@ -102,11 +102,11 @@ def search_doi(title, year=None):
 _title_cache = {}  # in-memory: normalized_title → doi or ""
 
 
-def resolve_doi(title, year=None):
+def find_doi(title, year=None):
     """Cached DOI lookup. Returns DOI string or empty string.
 
     Two-level cache (in-memory + on-disk) makes repeated lookups free.
-    Callers never touch cache directly — just call resolve_doi(title, year).
+    Callers never touch cache directly — just call find_doi(title, year).
     """
     tnorm = normalize_title(title) if title else ""
     if not tnorm:
