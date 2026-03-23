@@ -128,13 +128,13 @@ class TestReproducibilityMd:
         assert "enriched_works.csv" in text, \
             "reproducibility.md artifact table missing enriched_works.csv"
 
-    def test_corpus_refine_shows_split_modes(self):
-        """reproducibility.md must show corpus_refine.py --extend and --filter modes."""
+    def test_corpus_filter_shows_split_modes(self):
+        """reproducibility.md must show corpus_filter.py --extend and --filter modes."""
         text = read(REPRODUCIBILITY_MD)
         assert "--extend" in text or "extend" in text, \
-            "reproducibility.md must document corpus_refine.py --extend mode"
-        assert "--filter" in text or ("corpus_refine" in text and "filter" in text), \
-            "reproducibility.md must document corpus_refine.py --filter mode"
+            "reproducibility.md must document corpus_filter.py --extend mode"
+        assert "--filter" in text or ("corpus_filter" in text and "filter" in text), \
+            "reproducibility.md must document corpus_filter.py --filter mode"
 
 
 # ---------------------------------------------------------------------------

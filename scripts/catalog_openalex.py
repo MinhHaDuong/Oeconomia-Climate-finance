@@ -384,7 +384,7 @@ def extract_from_pool(config):
     # Default: use the least restrictive tier (min_concept_groups=0)
     # Since we can't easily track which pool file a record came from
     # when records are merged, we apply the most lenient filter.
-    # Stricter filtering happens in corpus_refine.py.
+    # Stricter filtering happens in corpus_filter.py.
     default_min = 0
 
     records = []

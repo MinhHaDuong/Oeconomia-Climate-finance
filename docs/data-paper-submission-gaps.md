@@ -12,7 +12,7 @@ format. This document lists what remains before submission.
 - [x] Title (descriptive, includes corpus scope and methods)
 - [x] Abstract (123 words, under 170 limit, no refs, no findings)
 - [x] Background & Summary (395 words, under 700 limit)
-- [x] Methods (via includes: corpus-construction.md, corpus-refinement.md, embedding-generation.md)
+- [x] Methods (via includes: corpus-construction.md, corpus-filtering.md, embedding-generation.md)
 - [x] Data Records (5 file descriptions with column schemas)
 - [x] Technical Validation (deduplication, relevance validation, coverage, embedding quality)
 - [x] Usage Notes (reproducibility + reuse potential + limitations)

@@ -1,7 +1,7 @@
 """End-to-end pipeline smoke test with mini CSV fixtures (#156).
 
 Exercises each Phase 1 script in sequence with tiny synthetic data:
-  catalog_merge → enrich_dois → corpus_refine --extend → --filter → corpus_align
+  catalog_merge → enrich_dois → corpus_filter --extend → --filter → corpus_align
 
 Runs in < 10 seconds, no network calls.
 Would have caught: glob loading wrong files, missing from_* columns.
@@ -102,7 +102,7 @@ def pipeline_workspace(tmp_path):
     Directory layout mirrors the repo:
         tmp_path/
             data/catalogs/  (source CSVs + outputs)
-            config/corpus_refine.yaml
+            config/corpus_filter.yaml
             dvc.yaml
     """
     data_dir = tmp_path / "data"
@@ -175,7 +175,7 @@ def pipeline_workspace(tmp_path):
     ]
     _make_dvc_yaml(str(tmp_path), source_files)
 
-    # Note: corpus_refine subprocess reads config from the repo's config/ dir,
+    # Note: corpus_filter subprocess reads config from the repo's config/ dir,
     # not from this workspace. Tests depend on the repo's production config
     # (which blacklists "deep learning", etc.). This is intentional — the smoke
     # test validates the real pipeline, not a synthetic config.
@@ -322,10 +322,10 @@ class TestEnrichDois:
 
 
 # ============================================================
-# Stage 3: corpus_refine --extend
+# Stage 3: corpus_filter --extend
 # ============================================================
 
-class TestCorpusRefineExtend:
+class TestCorpusFilterExtend:
     def test_extend_preserves_all_rows(self, pipeline_workspace):
         """--extend adds flag columns without removing any rows."""
         ws = pipeline_workspace
@@ -338,7 +338,7 @@ class TestCorpusRefineExtend:
         n_input = len(pd.read_csv(unified_path))
 
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--extend", "--cheap",
              "--works-input", str(unified_path),
              "--works-output", str(extended_path)],
@@ -346,7 +346,7 @@ class TestCorpusRefineExtend:
             cwd=REPO_ROOT,
         )
         assert result.returncode == 0, \
-            f"corpus_refine --extend failed:\n{result.stdout}\n{result.stderr}"
+            f"corpus_filter --extend failed:\n{result.stdout}\n{result.stderr}"
         assert extended_path.exists()
 
         ext_df = pd.read_csv(extended_path)
@@ -373,7 +373,7 @@ class TestCorpusRefineExtend:
         extended_path = catalogs_dir / "extended_works.csv"
 
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--extend", "--cheap",
              "--works-input", str(unified_path),
              "--works-output", str(extended_path)],
@@ -387,10 +387,10 @@ class TestCorpusRefineExtend:
 
 
 # ============================================================
-# Stage 4: corpus_refine --filter
+# Stage 4: corpus_filter --filter
 # ============================================================
 
-class TestCorpusRefineFilter:
+class TestCorpusFilterApply:
     def test_filter_removes_flagged(self, pipeline_workspace):
         """--filter removes flagged non-protected papers and produces audit."""
         ws = pipeline_workspace
@@ -405,7 +405,7 @@ class TestCorpusRefineFilter:
 
         # Extend
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--extend", "--cheap",
              "--works-input", str(unified_path),
              "--works-output", str(extended_path)],
@@ -416,14 +416,14 @@ class TestCorpusRefineFilter:
 
         # Filter
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--filter",
              "--works-input", str(extended_path),
              "--works-output", str(refined_path)],
             capture_output=True, text=True, cwd=REPO_ROOT,
         )
         assert result.returncode == 0, \
-            f"corpus_refine --filter failed:\n{result.stdout}\n{result.stderr}"
+            f"corpus_filter --filter failed:\n{result.stdout}\n{result.stderr}"
         assert refined_path.exists()
 
         refined_df = pd.read_csv(refined_path)
@@ -469,14 +469,14 @@ class TestCorpusAlign:
         refined_path = catalogs_dir / "refined_works.csv"
 
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--extend", "--cheap",
              "--works-input", str(unified_path),
              "--works-output", str(extended_path)],
             capture_output=True, text=True, cwd=REPO_ROOT,
         )
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--filter",
              "--works-input", str(extended_path),
              "--works-output", str(refined_path)],
@@ -581,7 +581,7 @@ class TestFullPipeline:
         # Stage 3: extend
         extended_path = catalogs_dir / "extended_works.csv"
         r = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--extend", "--cheap",
              "--works-input", str(enriched_path),
              "--works-output", str(extended_path)],
@@ -594,7 +594,7 @@ class TestFullPipeline:
         # Stage 4: filter
         refined_path = catalogs_dir / "refined_works.csv"
         r = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_refine.py"),
+            [sys.executable, os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
              "--filter",
              "--works-input", str(extended_path),
              "--works-output", str(refined_path)],

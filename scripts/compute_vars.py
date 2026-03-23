@@ -34,7 +34,7 @@ DOC_VARS = {
     "technical-report": [
         # direct: corpus_sources, corpus_total
         # includes: bimodality-analysis, citation-quality, core-vs-full,
-        #   corpus-construction, corpus-enrichment, corpus-refinement,
+        #   corpus-construction, corpus-enrichment, corpus-filtering,
         #   pca-scatter, structural-breaks, alluvial-diagram
         "bim_bic1",
         "bim_bic2",
@@ -77,7 +77,7 @@ DOC_VARS = {
         "pca_emb_pc4_var_pct",
     ],
     "data-paper": [
-        # direct + includes: corpus-construction, corpus-refinement,
+        # direct + includes: corpus-construction, corpus-filtering,
         #   embedding-generation
         "corpus_core",
         "corpus_core_threshold",

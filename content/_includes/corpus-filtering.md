@@ -1,6 +1,6 @@
-## 3. Corpus Refinement
+## 3. Corpus Filtering
 
-The full refinement pass (`corpus_refine.py --apply`) runs after enrichment (§2) has populated abstracts, citations, and embeddings. It implements a four-phase pipeline applying six flags — three cheap flags that need no external data, and three that depend on enrichment outputs.
+The full filtering pass (`corpus_filter.py --apply`) runs after enrichment (§2) has populated abstracts, citations, and embeddings. It implements a four-phase pipeline applying six flags — three cheap flags that need no external data, and three that depend on enrichment outputs.
 
 ### Phase A: Flagging
 
@@ -18,9 +18,9 @@ Six flags are applied to each paper:
 | 1. Missing metadata | None | Cheap filter |
 | 2. No abstract | None (re-evaluated after abstract enrichment) | Cheap filter |
 | 3. Title blacklist | None | Cheap filter |
-| 4. Citation isolation | `citations.csv` | Full refine only |
-| 5. Semantic outlier | `embeddings.npz` | Full refine only |
-| 6. Cross-encoder relevance | Abstracts | Full refine only |
+| 4. Citation isolation | `citations.csv` | Full filter only |
+| 5. Semantic outlier | `embeddings.npz` | Full filter only |
+| 6. Cross-encoder relevance | Abstracts | Full filter only |
 
 ### 3.1 Cross-encoder calibration {#sec-reranker-calibration}
 

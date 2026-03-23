@@ -1,6 +1,6 @@
 # Phase 2 analysis parameters
 # These control the analysis & figure pipeline (scripts/compute_*, scripts/plot_*)
-# Phase 1 (corpus building) parameters live in corpus_refine.yaml and friends.
+# Phase 1 (corpus building) parameters live in corpus_filter.yaml and friends.
 
 periodization:
   year_min: 1990

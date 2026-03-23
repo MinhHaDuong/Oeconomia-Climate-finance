@@ -1,4 +1,4 @@
-"""Tests for refine_flags.py — per-rule parity tests with fixed fixture."""
+"""Tests for filter_flags.py — per-rule parity tests with fixed fixture."""
 
 import os
 import sys
@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# Add scripts/ to path so we can import refine_flags
+# Add scripts/ to path so we can import filter_flags
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
-from refine_flags import (
+from filter_flags import (
     _cache_key,
     _has_safe_words,
     _load_config,
@@ -29,13 +29,13 @@ FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
 @pytest.fixture
 def config():
-    return _load_config(os.path.join(FIXTURE_DIR, "corpus_refine_test.yaml"))
+    return _load_config(os.path.join(FIXTURE_DIR, "corpus_filter_test.yaml"))
 
 
 @pytest.fixture
 def fixture_df():
     """~20 rows covering every flag and protection case."""
-    return pd.read_csv(os.path.join(FIXTURE_DIR, "refine_fixture.csv"))
+    return pd.read_csv(os.path.join(FIXTURE_DIR, "filter_fixture.csv"))
 
 
 # ============================================================
@@ -258,7 +258,7 @@ class TestFlagLLMIrrelevant:
             call_count += 1
             return '{"1": true}'
 
-        monkeypatch.setattr("refine_flags._llm_call", counting_llm_call)
+        monkeypatch.setattr("filter_flags._llm_call", counting_llm_call)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         already_flagged = pd.Series(True, index=fixture_df.index)
@@ -269,7 +269,7 @@ class TestFlagLLMIrrelevant:
     def test_returns_series_aligned(self, fixture_df, config, monkeypatch):
         """Result is aligned with input df index."""
         monkeypatch.setattr(
-            "refine_flags._llm_call",
+            "filter_flags._llm_call",
             lambda p, b, a, m: '{"1": true}',
         )
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
@@ -381,7 +381,7 @@ class TestApplyGates:
         from types import SimpleNamespace
 
         # Import the gate functions from the orchestrator
-        # We test the logic inline since corpus_refine.py may not be importable yet
+        # We test the logic inline since corpus_filter.py may not be importable yet
         def expected_flag_columns(args, has_embeddings):
             cols = ["missing_metadata", "no_abstract_irrelevant", "title_blacklist"]
             if not args.skip_citation_flag:

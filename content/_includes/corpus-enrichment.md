@@ -1,10 +1,10 @@
 ## 2. Corpus Enrichment
 
-After discovery and merge, the pipeline enriches metadata and computes derived features before full refinement. A cheap pre-filter runs first to avoid wasting API calls on obviously irrelevant records.
+After discovery and merge, the pipeline enriches metadata and computes derived features before full filtering. A cheap pre-filter runs first to avoid wasting API calls on obviously irrelevant records.
 
 ### Cheap pre-filter (flags 1–3)
 
-Before enrichment, `corpus_refine.py --apply --cheap` removes papers that fail basic quality checks without needing any external data:
+Before enrichment, `corpus_filter.py --apply --cheap` removes papers that fail basic quality checks without needing any external data:
 
 1. **Missing metadata:** No title, or missing author/year with irrelevant title.
 2. **No abstract + irrelevant title:** Abstract shorter than 50 characters and title lacks domain-specific safe words.

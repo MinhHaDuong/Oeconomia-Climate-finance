@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Corpus refinement: flag noise -> verify flags -> filter.
+"""Corpus filtering: flag noise -> verify flags -> filter.
 
-Orchestrator that loads data, calls flag functions from refine_flags.py,
+Orchestrator that loads data, calls flag functions from filter_flags.py,
 computes protection, verifies, and optionally applies the filter.
 
 Reads:  data/catalogs/unified_works.csv, citations.csv, embeddings.npz
 Writes: data/catalogs/refined_works.csv, data/catalogs/corpus_audit.csv
 
 Usage:
-    python scripts/corpus_refine.py              # flag + verify (dry run)
-    python scripts/corpus_refine.py --apply      # flag + verify + apply filter
-    python scripts/corpus_refine.py --skip-llm   # skip LLM scoring + audit
-    python scripts/corpus_refine.py --cheap      # flags 1-3 only
+    python scripts/corpus_filter.py              # flag + verify (dry run)
+    python scripts/corpus_filter.py --apply      # flag + verify + apply filter
+    python scripts/corpus_filter.py --skip-llm   # skip LLM scoring + audit
+    python scripts/corpus_filter.py --cheap      # flags 1-3 only
 """
 
 import argparse
@@ -21,7 +21,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from refine_flags import (
+from filter_flags import (
     _load_config,
     compute_protection,
     flag_citation_isolated,
@@ -33,7 +33,7 @@ from refine_flags import (
 )
 from utils import CATALOGS_DIR, CONFIG_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv, load_analysis_config
 
-log = get_logger("corpus_refine")
+log = get_logger("corpus_filter")
 
 # --- Paths ---
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
@@ -186,7 +186,7 @@ def merge_flags(df, flag_columns):
 
 def verify_blacklist(df, config):
     """Check that every noise term in corpus titles is caught by flag 3."""
-    from refine_flags import _has_safe_words
+    from filter_flags import _has_safe_words
 
     noise_title = config["noise_title"]
     safe_title = config["safe_title"]
@@ -505,7 +505,7 @@ def run_flagging(df, args, config, citations_df, embeddings, emb_df, has_embeddi
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Corpus refinement: flag → verify → extend → filter",
+        description="Corpus filtering: flag → verify → extend → filter",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Modes:\n"

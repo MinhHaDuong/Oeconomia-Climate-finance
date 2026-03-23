@@ -150,30 +150,30 @@ stages:
 
   # Phase 1c: Extend → extended_works.csv
   # Adds diagnostic flags and protection columns; no rows removed.
-  # corpus_refine.py loads config/corpus_refine.yaml via refine_flags.py.
+  # corpus_filter.py loads config/corpus_filter.yaml via filter_flags.py.
   extend:
     cmd: >-
-      uv run python scripts/corpus_refine.py --extend --works-input data/catalogs/enriched_works.csv --works-output data/catalogs/extended_works.csv
+      uv run python scripts/corpus_filter.py --extend --works-input data/catalogs/enriched_works.csv --works-output data/catalogs/extended_works.csv
     deps:
-      - scripts/corpus_refine.py
-      - scripts/refine_flags.py
+      - scripts/corpus_filter.py
+      - scripts/filter_flags.py
       - scripts/utils.py
-      - config/corpus_refine.yaml
+      - config/corpus_filter.yaml
       - data/catalogs/enriched_works.csv
     outs:
       - data/catalogs/extended_works.csv
 
   # Phase 1d: Filter → refined_works.csv + corpus_audit.csv
   # Applies keep/remove policy based on flags set in extend stage.
-  # Also loads config/corpus_refine.yaml for retention policy parameters.
+  # Also loads config/corpus_filter.yaml for retention policy parameters.
   filter:
     cmd: >-
-      uv run python scripts/corpus_refine.py --filter --works-input data/catalogs/extended_works.csv --works-output data/catalogs/refined_works.csv
+      uv run python scripts/corpus_filter.py --filter --works-input data/catalogs/extended_works.csv --works-output data/catalogs/refined_works.csv
     deps:
-      - scripts/corpus_refine.py
-      - scripts/refine_flags.py
+      - scripts/corpus_filter.py
+      - scripts/filter_flags.py
       - scripts/utils.py
-      - config/corpus_refine.yaml
+      - config/corpus_filter.yaml
       - config/v1_identifiers.txt.gz
       - data/catalogs/extended_works.csv
     outs:
