@@ -61,7 +61,7 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 | OpenAlex | Automated (free API) | Primary academic source: tiered keyword search |
 | ISTEX | Automated (public API) | French national archive (Springer, Elsevier, Wiley) |
 | Grey literature | Hybrid (curated seed + World Bank API) | 16 curated reports (OECD, UNFCCC, CPI, UN) + World Bank repository |
-| Teaching canon | AI-assisted (scraping + LLM extraction) | Syllabus readings from ~130 courses |
+| Teaching canon | AI-assisted (scraping + LLM extraction) | Syllabus readings from university courses worldwide |
 | bibCNRS | Hand-harvested (CNRS credentials) | Non-English literature (FR, ZH, JA) via WoS/EconLit |
 | SciSpace | AI-collected, hand-exported | SciSpace systematic review tool exports |
 
@@ -79,7 +79,7 @@ The merge pipeline combines records from all sources through two deduplication p
 
 A six-flag refinement pipeline then evaluates every work. Three flags require no external data: (1) missing metadata (no title), (2) absent abstract combined with an irrelevant title (lacking domain-specific terms in any of the target languages), and (3) title blacklist matches (noise terms such as "blockchain" or "deep learning" without climate-finance context). Three flags depend on enrichment outputs: (4) citation isolation (pre-2020 works neither cited by nor citing any other corpus work), (5) semantic outlier detection (embedding distance from corpus centroid exceeding mean + 2 standard deviations), and (6) cross-encoder relevance scoring against the query "climate policy and financial mechanisms."
 
-Flagged works are removed unless protected by one of four conditions: citation count $\geq$ 50, presence in 2+ sources, within-corpus citations, or appearance in 2+ teaching syllabi. The teaching canon itself was constructed from two independent efforts: an automated scraper harvesting approximately 130 course syllabi (948 unique readings) and a manual catalog of readings from 15 specific syllabi (Harvard, NYU Stern, Stanford, and others). Every inclusion/exclusion decision is recorded in the audit trail.
+Flagged works are removed unless protected by one of four conditions: citation count $\geq$ 50, presence in 2+ sources, within-corpus citations, or appearance in 2+ teaching syllabi. The teaching canon is constructed by an automated scraper that harvests university course syllabi worldwide via DuckDuckGo search and curated seed URLs, classifies pages with an LLM, and extracts bibliographic references. DOIs are cleaned (URL prefixes stripped) and title-only references undergo fuzzy deduplication so that edition variants aggregate their course counts. A two-tier convergence filter distinguishes detailed syllabi (doctoral seminars with 20+ DOI readings, passing at one course) from standard readings (requiring cross-course corroboration). Every inclusion/exclusion decision is recorded in the audit trail.
 
 ### 2.3 Quality, Completeness, and Potential Biases {#sec-quality}
 
