@@ -94,6 +94,17 @@ Phase 1 modifies `data/`. Run only when explicitly requested.
 | 2 | `content/figures/`, `content/tables/`, `content/_includes/`, `content/*-vars.yml` | gitignored (like figures) |
 | 3 | `output/` | not tracked (gitignored) |
 
+## Incremental caches vs DVC outputs
+
+DVC deletes stage outputs before re-running a stage. Enrichment scripts that build results incrementally (API calls, GPU encoding) must separate the **incremental cache** from the **DVC output**:
+
+- **`enrich_cache/`** — persistent cache directory (gitignored, not a DVC output). Stores intermediate state that survives `dvc repro`. Each script owns its own file(s) inside this directory.
+- **DVC output** — the final artifact declared in `dvc.yaml` `outs:`. Ephemeral — DVC may delete it. Scripts regenerate it from the cache on each run.
+
+Scripts using this pattern: `enrich_abstracts.py`, `enrich_dois.py`, `enrich_embeddings.py`.
+
+When adding a new enrichment script: put incremental state in `enrich_cache/<name>.csv` (or `.npz`), write the DVC output separately.
+
 ## Script reference
 
 ```bash
