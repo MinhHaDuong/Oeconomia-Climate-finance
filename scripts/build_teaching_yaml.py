@@ -30,7 +30,7 @@ log = get_logger("build_teaching_yaml")
 INPUT_CSV = os.path.join(DATA_DIR, "syllabi", "reading_lists.csv")
 OUTPUT_YAML = os.path.join(DATA_DIR, "teaching_sources.yaml")
 
-MIN_COURSES = 2  # DOI entries: keep if appearing on >=2 syllabi
+MIN_COURSES = 1  # DOI entries: keep all — DOI from a classified syllabus is reliable
 MIN_COURSES_NO_DOI = 3  # Title-only entries: higher bar (>=3 syllabi)
 MIN_READINGS_DETAILED = 20  # Courses with >=20 DOI readings are "detailed syllabi"
 OVERLAP_THRESHOLD = 0.8  # Course pairs sharing >80% readings are duplicates
