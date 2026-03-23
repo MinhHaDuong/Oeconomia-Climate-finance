@@ -228,6 +228,8 @@ def main():
 
     if not missing:
         log.info("Nothing to fetch.")
+        # Persist done-set on early exit (ensures migration from citations.csv)
+        save_done_cache(done_dois - {"", "nan", "none"}, done_cache_path)
         return
 
     # Write checkpoint header once upfront
@@ -319,8 +321,8 @@ def main():
         combined = existing
 
     # Persist done-set so it survives DVC re-runs (citations.csv gets deleted)
-    all_done = (done_dois
-                | set(combined["source_doi"].apply(normalize_doi).dropna())
+    all_done = ((done_dois
+                 | set(combined["source_doi"].apply(normalize_doi).dropna()))
                 - {"", "nan", "none"})
     save_done_cache(all_done, done_cache_path)
 

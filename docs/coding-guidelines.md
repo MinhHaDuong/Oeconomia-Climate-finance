@@ -143,7 +143,7 @@ The OpenAlex enrichment uses a two-phase approach:
 1. Batch-fetch `referenced_works` (list of OpenAlex IDs) for each corpus DOI via filter endpoint
 2. Batch-resolve OpenAlex IDs → DOIs + title/year/journal via `openalex:W1|W2|...` filter
 
-Both scripts are resumable: Crossref uses `.citations_batch_checkpoint.csv`, OpenAlex uses `.citations_oa_done.txt`.
+Both scripts are resumable: Crossref uses `.citations_batch_checkpoint.csv` for mid-run crash recovery and `enrich_cache/citations_done.csv` for the persistent done-set (survives DVC re-runs), OpenAlex uses `.citations_oa_done.txt`.
 
 ## Intellectual traditions (Table 1)
 
