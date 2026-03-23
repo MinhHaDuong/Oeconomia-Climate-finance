@@ -421,8 +421,12 @@ def load_analysis_corpus(core_only=False, with_embeddings=True,
     in_range = (works["year"] >= year_min) & (works["year"] <= year_max)
     keep_mask = has_title & in_range
     if v1_only:
-        v1_col = works.get("in_v1", pd.Series(False, index=works.index))
-        keep_mask = keep_mask & (v1_col == 1)
+        if "in_v1" not in works.columns:
+            raise RuntimeError(
+                "v1_only=True but 'in_v1' column missing from refined_works.csv. "
+                "Re-run: uv run python scripts/corpus_filter.py --apply"
+            )
+        keep_mask = keep_mask & (works["in_v1"] == 1)
         _utils_log.info("v1_only: restricting to %d / %d rows",
                         keep_mask.sum(), len(works))
     keep_mask = keep_mask.values

@@ -75,7 +75,7 @@ PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
 		$(DATAPAPER_INCLUDES) $(COMPANION_INCLUDES)
 
 # ── Per-document figure sets ─────────────────────────────
-MANUSCRIPT_FIGS := content/figures/fig_bars.png content/figures/fig_composition.png
+MANUSCRIPT_FIGS := content/figures/fig_bars_v1.png content/figures/fig_composition.png
 
 DATAPAPER_FIGS  := content/figures/fig_bars.png content/figures/fig_dag.png
 
@@ -234,8 +234,12 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 # ── Figures ──────────────────────────────────────────────
 
 # -- Manuscript (Oeconomia article) --
-# Fig 1 (bars): corpus growth per year — v1 subset for submission stability
+# Fig 1 (bars): corpus growth per year
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
+	uv run python $< --no-pdf
+
+# Fig 1 v1 variant: restricted to submission corpus for manuscript stability
+content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf --v1-only
 
 # Fig 2 (composition): thematic clusters across periods — uses v1 clustering
@@ -395,7 +399,7 @@ output/content/companion-paper.pdf: content/companion-paper.qmd $(PROJECT_INCLUD
 SHELL            := /bin/bash
 ANALYSIS_ARCHIVE := climate-finance-analysis
 ANALYSIS_TMP     := /tmp/$(ANALYSIS_ARCHIVE)
-ANALYSIS_OUTPUTS := content/figures/fig_bars.png \
+ANALYSIS_OUTPUTS := content/figures/fig_bars_v1.png \
                     content/figures/fig_composition.png \
                     content/tables/tab_venues.md \
                     content/tables/tab_alluvial.csv \
@@ -460,7 +464,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 	         $(MANU_TMP)/content/tables \
 	         $(MANU_TMP)/content/figures
 	@# Pre-built figures (validated, not regenerated)
-	cp content/figures/fig_bars.png         $(MANU_TMP)/content/figures/
+	cp content/figures/fig_bars_v1.png      $(MANU_TMP)/content/figures/
 	cp content/figures/fig_composition.png  $(MANU_TMP)/content/figures/
 	@# Manuscript content
 	cp content/manuscript.qmd               $(MANU_TMP)/content/

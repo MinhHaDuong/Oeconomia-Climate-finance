@@ -125,7 +125,8 @@ def main():
     fig.tight_layout()
 
     # --- Save ---
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_bars")
+    stem = "fig_bars_v1" if args.v1_only else "fig_bars"
+    out_path = os.path.join(BASE_DIR, "content", "figures", stem)
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 
