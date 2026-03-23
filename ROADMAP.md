@@ -17,6 +17,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Waiting for referee reports (~3 mo
 - [x] Split embeddings encoding (Phase 1) from UMAP+clustering (Phase 2) (#189)
 - [ ] Split remaining enrich stages into independent DVC stages
 - [x] Re-enable Semantic Scholar with API key (#263)
+- [x] Add `in_v1` provenance column for v1.0 backward compatibility (#283)
 - [ ] JETP query: add concept filter to exclude physics journal noise
 
 ## Completed
