@@ -17,7 +17,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR, get_logger, load_analysis_periods
+from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR, SOURCE_NAMES, get_logger, load_analysis_periods
 
 log = get_logger("compute_vars")
 
@@ -203,7 +203,7 @@ def corpus_stats(v):
         en_count = lang.str.lower().isin(["en", "english"]).sum()
         v["lang_english_pct"] = _pct(100 * en_count / n)
 
-    v["corpus_sources"] = "7"
+    v["corpus_sources"] = str(len(SOURCE_NAMES))
 
 
 def embedding_stats(v):
