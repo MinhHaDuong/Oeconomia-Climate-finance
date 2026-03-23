@@ -652,7 +652,14 @@ def stage_extract():
                             counter["done"], len(pending), url[:60], len(text))
             return
 
-        # For long texts, chunk with overlap to avoid splitting references
+        # Pass 1: regex DOI extraction — catches all explicit DOIs in text
+        regex_dois = set()
+        for m in re.finditer(r'(10\.\d{4,}/[^\s,);]+)', text):
+            doi = clean_doi(m.group(1).rstrip('.'))
+            if doi:
+                regex_dois.add(doi)
+
+        # Pass 2: LLM extraction — gets title/author/year + refs without DOIs
         all_refs = []
         chunks = make_chunks(text)
 
@@ -666,15 +673,22 @@ def stage_extract():
             elif parsed and isinstance(parsed, dict):
                 all_refs.append(parsed)
 
-        # Deduplicate within this syllabus by normalized title
-        seen_titles = set()
+        # Merge: add regex DOIs not found by LLM
+        llm_dois = {clean_doi(r.get("doi", "")) for r in all_refs if r.get("doi")}
+        for doi in regex_dois - llm_dois:
+            all_refs.append({"title": "", "authors": "", "year": None,
+                             "doi": doi, "type": "other"})
+
+        # Deduplicate within this syllabus by DOI or normalized title
+        seen_keys = set()
         unique_refs = []
         for ref in all_refs:
             if not isinstance(ref, dict):
                 continue
-            t = normalize_title(ref.get("title", ""))
-            if t and t not in seen_titles:
-                seen_titles.add(t)
+            doi = clean_doi(ref.get("doi", ""))
+            key = doi if doi else normalize_title(ref.get("title", ""))
+            if key and key not in seen_keys:
+                seen_keys.add(key)
                 unique_refs.append(ref)
 
         rec = {
