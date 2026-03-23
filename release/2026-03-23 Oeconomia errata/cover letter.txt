@@ -1,0 +1,22 @@
+**To:** Francesco Sergi, Managing Editor, Oeconomia
+**From:** Minh Ha-Duong, CIRED/CNRS
+**Re:** Errata — "Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity" (Varia submission of 2026-03-18)
+
+Dear Professor Sergi,
+
+During post-submission verification of the replication archive, I identified a labelling error in Figure 2 of my manuscript submitted on March 18. The data and percentages in the figure are unchanged; only the panel titles were incorrectly assigned to cluster panels.
+
+**What was wrong.** The bold panel titles (author interpretations of each thematic cluster) were mapped to the wrong cluster identifiers. Five of the six panels had titles that did not correspond to their italic TF-IDF descriptors. For example, the panel titled "CDM & renewable energy" displayed terms related to the Paris Agreement, and vice versa. The figure caption stated "CDM and renewable energy loses share," which contradicted the displayed data.
+
+**What is corrected.** The corrected Figure 2 assigns each panel title to the cluster whose TF-IDF terms it describes. The six clusters are now labelled: Kyoto mechanisms, GHG markets & trading, Paris Agreement & governance, Renewable energy & power, Green bonds & ESG, and $100bn pledge & fund flows. The caption is rewritten to accurately describe the trends: "Kyoto mechanisms nearly vanish while GHG markets decline; green bonds and ESG, Paris Agreement governance, and renewable energy grow."
+
+**What is unchanged.** The underlying clustering (k-means, k=6, on sentence-transformer embeddings), the numerical percentages in each panel, the corpus data, and all other text in the manuscript are identical to the March 18 submission. The error was purely in the mapping from cluster identifiers to human-readable labels.
+
+Please find attached the corrected manuscript (header marked "Errata 1"). I apologise for the inconvenience and am happy to provide any additional clarification.
+
+Respectfully,
+
+Minh Ha-Duong
+CIRED (Centre International de Recherche sur l'Environnement et le Développement)
+CNRS / ENPC / AgroParisTech
+minh.ha-duong@cnrs.fr
