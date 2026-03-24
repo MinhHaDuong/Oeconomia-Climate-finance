@@ -1,4 +1,5 @@
 ## 8. Temporal Structure Analysis
+<!-- WARNING: AI-generated, not human-reviewed -->
 
 **Script:** `scripts/compare_clustering.py` (multi-space silhouette), `scripts/analyze_space_interactions.py`
 
