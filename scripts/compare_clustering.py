@@ -28,8 +28,6 @@ from sklearn.metrics import adjusted_rand_score, silhouette_score
 from utils import (
     BASE_DIR,
     CATALOGS_DIR,
-    REFINED_EMBEDDINGS_PATH,
-    REFINED_WORKS_PATH,
     get_logger,
     load_analysis_config,
     load_analysis_corpus,
