@@ -27,7 +27,8 @@ import requests
 
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, OPENALEX_API_KEY,
                    save_csv, reconstruct_abstract, normalize_doi,
-                   retry_get, save_run_report, make_run_id, get_logger)
+                   retry_get, save_run_report, make_run_id, get_logger,
+                   WatchedProgress)
 
 log = get_logger("enrich_abstracts")
 
@@ -438,6 +439,10 @@ def main():
                         help="Max random jitter added to backoff (default: 1.0)")
     parser.add_argument("--log-jsonl", default=None,
                         help="Path to write JSONL event log (optional)")
+    parser.add_argument("--stuck-timeout", type=float, default=300,
+                        help="Seconds without progress before stuck alert (default: 300)")
+    parser.add_argument("--no-progress", action="store_true",
+                        help="Disable progress bar (for non-TTY / CI)")
     args = parser.parse_args()
 
     run_id = args.run_id or make_run_id()
@@ -485,33 +490,52 @@ def main():
     }
     step_results = {}
 
-    for step_num in sorted(steps):
-        name, func = steps[step_num]
-        before = int(df["_missing"].sum())
-        log.info("Step %d: %s (%d still missing)", step_num, name, before)
-        _log_event("step_start", step=step_num, name=name, missing_before=before)
+    def _flush_checkpoint():
+        """Emergency save: write current state to disk."""
+        log.info("Flushing checkpoint — saving current state to %s", path)
+        out = df.drop(columns=["_missing", "_has_doi"], errors="ignore")
+        save_csv(out, path)
 
-        # Steps 2 and 4 accept checkpoint_every; others accept just counters
-        if step_num in (2, 4):
-            filled = func(
-                df,
-                counters,
-                args.checkpoint_every,
-                args.request_timeout,
-                args.max_retries,
-                args.retry_backoff,
-                args.retry_jitter,
-            )
-        else:
-            filled = func(df, counters)
+    with WatchedProgress(
+        stuck_timeout=args.stuck_timeout,
+        flush_checkpoint=_flush_checkpoint,
+        disable=args.no_progress,
+    ) as wp:
+        overall = wp.add_task(
+            "Enriching abstracts", total=total_missing_before,
+        )
 
-        after = int(df["_missing"].sum())
-        step_results[f"step{step_num}_name"] = name
-        step_results[f"step{step_num}_before"] = before
-        step_results[f"step{step_num}_after"] = after
-        step_results[f"step{step_num}_filled"] = filled
-        log.info("→ filled %d, remaining: %d", filled, after)
-        _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
+        for step_num in sorted(steps):
+            name, func = steps[step_num]
+            before = int(df["_missing"].sum())
+            log.info("Step %d: %s (%d still missing)", step_num, name, before)
+            _log_event("step_start", step=step_num, name=name, missing_before=before)
+
+            # Steps 2 and 4 accept checkpoint_every; others accept just counters
+            if step_num in (2, 4):
+                filled = func(
+                    df,
+                    counters,
+                    args.checkpoint_every,
+                    args.request_timeout,
+                    args.max_retries,
+                    args.retry_backoff,
+                    args.retry_jitter,
+                )
+            else:
+                filled = func(df, counters)
+
+            # Advance overall progress by the number of abstracts filled
+            if filled > 0:
+                wp.advance(overall, filled)
+
+            after = int(df["_missing"].sum())
+            step_results[f"step{step_num}_name"] = name
+            step_results[f"step{step_num}_before"] = before
+            step_results[f"step{step_num}_after"] = after
+            step_results[f"step{step_num}_filled"] = filled
+            log.info("→ filled %d, remaining: %d", filled, after)
+            _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
 
     # Save
     final_missing = int(df["_missing"].sum())

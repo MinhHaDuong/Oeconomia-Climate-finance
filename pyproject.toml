@@ -19,6 +19,7 @@ dependencies = [
     "requests-mock",
     "python-dotenv>=1.2.2",
     "litellm>=1.30.0",
+    "rich>=13.0",
 ]
 
 [project.optional-dependencies]
