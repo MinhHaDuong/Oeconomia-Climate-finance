@@ -300,14 +300,12 @@ def main():
     # Merge checkpoint into existing citations.csv
     log.info("Merging checkpoint into citations.csv...")
     if os.path.exists(checkpoint_path):
-        new_refs = pd.read_csv(checkpoint_path, low_memory=False)
-        # Drop sentinel rows (all fields empty except source_doi)
-        is_sentinel = (
-            (new_refs["ref_doi"].isna() | (new_refs["ref_doi"] == ""))
-            & (new_refs["ref_title"].isna() | (new_refs["ref_title"] == ""))
-            & (new_refs["ref_first_author"].isna()
-               | (new_refs["ref_first_author"] == ""))
-        )
+        new_refs = pd.read_csv(checkpoint_path, dtype=str,
+                               keep_default_na=False)
+        # Drop sentinel rows: every field except source_doi is empty string.
+        # Sentinels are written with all non-key fields as "" (line ~279).
+        non_key_cols = [c for c in REFS_COLUMNS if c != "source_doi"]
+        is_sentinel = new_refs[non_key_cols].eq("").all(axis=1)
         new_refs_real = new_refs[~is_sentinel]
         combined = pd.concat([existing, new_refs_real], ignore_index=True)
         combined.to_csv(citations_path, index=False)
