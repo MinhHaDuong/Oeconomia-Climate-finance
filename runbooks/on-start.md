@@ -17,20 +17,11 @@ export GH_TOKEN="$AGENT_GH_TOKEN"
 
 Read `STATE.md` and `ROADMAP.md`.
 
-## 3. Housekeeping (last action on main)
-
-If `STATE.md` is not dated today, refresh it:
-  a. `gh pr list --state open` → update "Active PRs" section.
-  b. `git log --oneline -5` → update "Recent" section.
-  c. Commit on `main`: `housekeeping: refresh STATE YYYY-MM-DD`
-
-This is the **only** commit allowed on main. Everything after this step
-happens on a branch.
-
-## 4. Branch and announce phase
+## 3. Branch and announce phase
 
 Infer the DD phase from context, create or checkout the working branch,
-then announce. **Never edit files while on main.**
+then announce. **Never edit files while on main** — the pre-commit hook
+blocks all commits on main, no exceptions.
 
 | Context | Phase | Branch |
 |---------|-------|--------|
@@ -40,3 +31,12 @@ then announce. **Never edit files while on main.**
 
 If the conversation turns out to be a quick question with no file edits,
 the branch is harmless — delete it at session end if empty.
+
+## 4. Housekeeping (first commit on the branch)
+
+If `STATE.md` is not dated today, refresh it:
+  a. `gh pr list --state open` → update "Active PRs" section.
+  b. `git log --oneline -5` → update "Recent" section.
+  c. Commit on the branch: `housekeeping: refresh STATE YYYY-MM-DD`
+
+This merges to main with the rest of the conversation's work.
