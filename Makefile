@@ -381,7 +381,7 @@ figures: check-corpus $(ALL_FIGS) corpus-tables
 
 manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
-papers: output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
+papers: check-corpus output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
 output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to pdf
