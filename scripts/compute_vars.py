@@ -87,7 +87,6 @@ DOC_VARS = {
         "corpus_removal_pct",
         "corpus_sources",
         "corpus_total",
-        "corpus_total_approx",
         "corpus_with_embeddings",
         "emb_dimensions",
         "lang_english_pct",
