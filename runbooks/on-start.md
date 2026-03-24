@@ -22,6 +22,8 @@ Read `STATE.md` and `ROADMAP.md`.
 
 Infer the DD phase from context, create or checkout the working branch,
 then announce. The pre-commit hook blocks all commits on main, no exceptions.
+**Branch immediately** — even for "small" fixes. Don't start editing files
+on main and discover the hook at commit time.
 
 | Context | Phase | Branch |
 |---------|-------|--------|
