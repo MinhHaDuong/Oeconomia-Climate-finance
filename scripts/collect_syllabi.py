@@ -531,6 +531,35 @@ def stage_classify():
 # Stage 4: Extract
 # ============================================================
 
+def _extract_cache_key(text: str, model: str) -> str:
+    """Build cache key from page text hash and model name."""
+    return f"{hashlib.sha256(text.encode()).hexdigest()}:{model}"
+
+
+def _load_extract_cache(path: str) -> dict:
+    """Load extract cache from JSONL file. Returns dict mapping key → refs."""
+    cache = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    rec = json.loads(line)
+                    cache[rec["key"]] = rec["references"]
+    return cache
+
+
+_extract_cache_lock = threading.Lock()
+
+
+def _save_extract_cache_entry(key: str, refs: list, path: str) -> None:
+    """Append one extraction result to the cache JSONL file (thread-safe)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with _extract_cache_lock:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"key": key, "references": refs}, ensure_ascii=False) + "\n")
+
+
 EXTRACT_PROMPT = """Extract ALL bibliographic references (reading list, required readings, recommended readings, bibliography) from this course syllabus text.
 
 Return ONLY a JSON array of references (no other text). Each reference:
@@ -564,6 +593,10 @@ def stage_extract():
     max_workers = 2 if extract_model.startswith("ollama/") else 10
     log.info("Extract: %d already done, %d pending, %d workers (model=%s)",
              len(done_urls), len(pending), max_workers, extract_model)
+
+    # Load extract cache (survives DVC re-runs via enrich_cache/ pattern)
+    extract_cache = _load_extract_cache(EXTRACT_CACHE_PATH)
+    log.info("Extract cache: %d entries loaded", len(extract_cache))
 
     total_refs_lock = threading.Lock()
     total_refs = [0]
@@ -602,18 +635,30 @@ def stage_extract():
                 regex_dois.add(doi)
 
         # Pass 2: LLM extraction — gets title/author/year + refs without DOIs
+        # Uses per-chunk cache to avoid redundant LLM calls across runs.
         all_refs = []
         chunks = make_chunks(text)
 
         for chunk in chunks:
+            cache_key = _extract_cache_key(chunk, extract_model)
+            if cache_key in extract_cache:
+                all_refs.extend(extract_cache[cache_key])
+                continue
+
             prompt = EXTRACT_PROMPT.format(text=chunk)
             response = llm_call(prompt, model=extract_model, max_tokens=4000)
 
+            chunk_refs = []
             parsed = extract_json_from_text(response)
             if parsed and isinstance(parsed, list):
-                all_refs.extend(parsed)
+                chunk_refs = parsed
             elif parsed and isinstance(parsed, dict):
-                all_refs.append(parsed)
+                chunk_refs = [parsed]
+
+            # Cache the result for this chunk+model combination
+            _save_extract_cache_entry(cache_key, chunk_refs, EXTRACT_CACHE_PATH)
+            extract_cache[cache_key] = chunk_refs
+            all_refs.extend(chunk_refs)
 
         # Merge: add regex DOIs not found by LLM
         llm_dois = {clean_doi(r.get("doi", "")) for r in all_refs if r.get("doi")}
@@ -668,6 +713,8 @@ def stage_extract():
 # ============================================================
 # Stage 5: Normalize
 # ============================================================
+
+EXTRACT_CACHE_PATH = os.path.join(BASE_DIR, "enrich_cache", "extract_cache.jsonl")
 
 CROSSREF_CACHE_PATH = os.path.join(SYLLABI_DIR, "crossref_cache.jsonl")
 _crossref_cache = None
