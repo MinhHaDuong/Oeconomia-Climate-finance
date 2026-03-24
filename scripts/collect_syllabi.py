@@ -24,7 +24,6 @@ import hashlib
 import json
 import os
 import re
-import sys
 import threading
 import time
 from collections import defaultdict
