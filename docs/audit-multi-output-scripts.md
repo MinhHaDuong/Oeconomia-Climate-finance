@@ -3,7 +3,7 @@
 Date: 2026-03-19
 Status: diagnostic only (no edits made)
 
-Reference: `docs/braindump-harness-extraction.md`, idea #5 — "1 figure = 1 script file. 1 table = 1 script file."
+Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1 figure = 1 script file. 1 table = 1 script file."
 
 ## Method
 

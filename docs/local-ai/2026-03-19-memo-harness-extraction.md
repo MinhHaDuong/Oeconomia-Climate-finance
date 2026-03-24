@@ -1,10 +1,12 @@
-# Brain dump: Extract harness into its own repo
+# Memo: Extract harness into its own repo
 
+Author: Claude (overnight autonomous session)
 Date: 2026-03-19
+Method: Codebase audit (63 scripts, ~19K lines) + design brainstorm against 16 SE books
 
 **Status (2026-03-20):** Implementation started. Contents transferred to
 [MinhHaDuong/agentic-harness](https://github.com/MinhHaDuong/agentic-harness)
-(`docs/braindump-harness-extraction.md`). Telemetry is the first module.
+(`docs/local-ai/2026-03-19-memo-harness-extraction.md`). Telemetry is the first module.
 Git history of this file has the full original text.
 
 ## Ideas transferred
