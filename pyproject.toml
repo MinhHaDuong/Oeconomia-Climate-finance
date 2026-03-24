@@ -47,9 +47,6 @@ corpus = [
     "bibtexparser",
     "rapidfuzz",
 ]
-dev = [
-    "fpdf2>=2.8.7",
-]
 
 [tool.pytest.ini_options]
 markers = [
@@ -76,23 +73,3 @@ torch = [
     { index = "pytorch-cpu", extra = "cpu" },
     { index = "pytorch-cu130", extra = "cu130" },
 ]
-
-[tool.ruff]
-target-version = "py310"
-
-[tool.ruff.lint]
-select = [
-    "C901",    # McCabe complexity
-    "PLR0912", # too many branches
-    "PLR0915", # too many statements
-    "UP006",   # use builtin types (list[] not List[])
-    "UP007",   # use X | Y not Union[X, Y]
-    "UP035",   # deprecated typing imports
-]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 15
-
-[tool.ruff.lint.pylint]
-max-branches = 15
-max-statements = 80
