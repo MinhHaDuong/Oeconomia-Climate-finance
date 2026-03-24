@@ -1,4 +1,4 @@
-"""QA verification of corpus metadata using a strong LLM on OpenRouter.
+"""QA verification of corpus metadata using LLM via litellm.
 
 Samples records and asks the LLM to verify: language, document type,
 DOI validity, and whether references should be available.
@@ -9,8 +9,9 @@ Target: 99% reliability on the corpus table's numbers.
 Usage:
     uv run python scripts/qa_llm_verify.py [--sample N] [--model MODEL]
 
-Requires:
-    OPENROUTER_API_KEY environment variable
+Env vars:
+    QA_MODEL — provider-prefixed model string (default: openrouter/google/gemini-2.5-flash)
+    OPENROUTER_API_KEY — required when using openrouter/ models (read by litellm)
 
 Outputs:
     - content/tables/qa_llm_verification.csv: per-record verdicts
@@ -23,15 +24,14 @@ import os
 import sys
 import time
 
+import litellm
 import pandas as pd
-import requests
 
 from utils import CATALOGS_DIR, save_csv, BASE_DIR, get_logger
 
 log = get_logger("qa_llm_verify")
 
-DEFAULT_MODEL = "google/gemini-2.5-flash"
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+DEFAULT_MODEL = "openrouter/google/gemini-2.5-flash"
 
 
 def build_prompt(row):
@@ -71,21 +71,19 @@ JSON only, no markdown, no explanation."""
     return text
 
 
-def call_llm(prompt, api_key, model):
-    """Call OpenRouter API and return parsed JSON response."""
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.0,
-        "max_tokens": 300,
-    }
-    resp = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=30)
-    resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"].strip()
+def call_llm(prompt, model):
+    """Call LLM via litellm and return parsed JSON response.
+
+    Model string encodes the provider (e.g. openrouter/google/gemini-2.5-flash).
+    litellm reads OPENROUTER_API_KEY from env automatically.
+    """
+    response = litellm.completion(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.0,
+        max_tokens=300,
+    )
+    content = response.choices[0].message.content.strip()
     # Strip markdown fences if present
     if content.startswith("```"):
         content = content.split("\n", 1)[1] if "\n" in content else content[3:]
@@ -103,10 +101,7 @@ def main():
                         help=f"OpenRouter model (default: {DEFAULT_MODEL})")
     args = parser.parse_args()
 
-    api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not api_key:
-        log.error("OPENROUTER_API_KEY not set")
-        sys.exit(1)
+    qa_model = os.environ.get("QA_MODEL", args.model)
 
     path = os.path.join(CATALOGS_DIR, "refined_works.csv")
     df = pd.read_csv(path)
@@ -152,7 +147,7 @@ def main():
             log.info("  Verifying %d/%d...", i + 1, len(sample_df))
         prompt = build_prompt(row)
         try:
-            verdict = call_llm(prompt, api_key, args.model)
+            verdict = call_llm(prompt, qa_model)
             verdict["_idx"] = idx
             verdict["_source"] = row.get("source", "")
             verdict["_title"] = str(row.get("title", ""))[:100]
