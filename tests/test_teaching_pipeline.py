@@ -146,8 +146,8 @@ class TestScraperPdfExtraction:
 
     def test_text_limit_increased(self):
         """Text truncation should allow at least 200KB to cover long PDFs like Harvard FECS."""
-        from collect_syllabi import TEXT_LIMIT
-        assert TEXT_LIMIT >= 200000
+        from collect_syllabi import MAX_TEXT_CHARS
+        assert MAX_TEXT_CHARS >= 200000
 
     def test_extract_pdf_text_no_table_duplication(self, tmp_path):
         """PDF extraction should not duplicate content via table extraction.
@@ -356,7 +356,7 @@ class TestTwoTierFilter:
 
     def test_detailed_syllabus_readings_pass_at_one_course(self, tmp_path):
         """Readings from detailed syllabi (>=MIN_READINGS_DETAILED DOIs) pass at n_courses=1."""
-        from build_teaching_yaml import load_scraped, MIN_READINGS_DETAILED
+        from build_teaching_yaml import load_scraped, MIN_READINGS_DETAILED, MIN_COURSES
 
         # Create a CSV: one detailed course with many readings + one small course
         rows = []
@@ -370,10 +370,19 @@ class TestTwoTierFilter:
                 "institutions": "Top University",
                 "countries": "USA", "n_courses": 1, "in_corpus": False,
             })
-        # Small course reading (should be filtered at n_courses=1)
+        # Small course DOI reading — passes tier2 since MIN_COURSES=1
         rows.append({
             "doi": "10.1234/small", "title": "Small Paper",
             "authors": "Nobody", "year": 2023,
+            "journal_or_publisher": "Journal", "type": "article",
+            "courses": "Intro Course",
+            "institutions": "Small College",
+            "countries": "USA", "n_courses": 1, "in_corpus": False,
+        })
+        # Title-only reading from small course — should be filtered (needs >=3 courses)
+        rows.append({
+            "doi": "", "title": "Title Only Paper",
+            "authors": "Anonymous", "year": 2023,
             "journal_or_publisher": "Journal", "type": "article",
             "courses": "Intro Course",
             "institutions": "Small College",
@@ -392,16 +401,27 @@ class TestTwoTierFilter:
         # All detailed course readings should pass (have DOI + from detailed course)
         detailed_records = [r for r in records if r["course"] == "Advanced Climate Finance"]
         assert len(detailed_records) >= MIN_READINGS_DETAILED
-        # Small course reading should NOT pass (n_courses=1, not from detailed course)
-        small_records = [r for r in records if r["course"] == "Intro Course"]
-        assert len(small_records) == 0
+        # Small course DOI reading passes tier2 (MIN_COURSES=1 trusts DOI provenance)
+        small_doi_records = [r for r in records if r["course"] == "Intro Course"
+                            and r.get("doi")]
+        assert len(small_doi_records) == 1, (
+            f"DOI reading from small course should pass tier2 (MIN_COURSES={MIN_COURSES})"
+        )
+        # Title-only reading from small course should be filtered out
+        small_title_records = [r for r in records if r["course"] == "Intro Course"
+                               and not r.get("doi")]
+        assert len(small_title_records) == 0, (
+            "Title-only reading at n_courses=1 should be filtered (needs >=3)"
+        )
 
     def test_standard_filter_still_applies(self, tmp_path):
-        """Non-detailed course readings still need n_courses>=2 for DOI."""
-        from build_teaching_yaml import load_scraped
+        """Title-only readings still need n_courses>=3 to pass the filter."""
+        from build_teaching_yaml import load_scraped, MIN_COURSES
 
+        # DOI reading at n_courses=1 — passes because MIN_COURSES=1
+        # (DOI from a classified syllabus is reliable provenance)
         rows = [{
-            "doi": "10.1234/alone", "title": "Lonely Paper",
+            "doi": "10.1234/alone", "title": "DOI Paper",
             "authors": "Solo", "year": 2023,
             "journal_or_publisher": "Journal", "type": "article",
             "courses": "Small Course",
@@ -418,7 +438,27 @@ class TestTwoTierFilter:
         df.to_csv(csv_path, index=False)
 
         records = load_scraped(csv_path)
-        assert len(records) == 0  # filtered out
+        assert len(records) == 1, (
+            f"DOI reading should pass tier2 (MIN_COURSES={MIN_COURSES})"
+        )
+
+        # Title-only reading at n_courses=1 — should be filtered out
+        rows_title = [{
+            "doi": "", "title": "Title Only Paper",
+            "authors": "Solo", "year": 2023,
+            "journal_or_publisher": "Journal", "type": "article",
+            "courses": "Small Course",
+            "institutions": "College",
+            "countries": "USA", "n_courses": 1, "in_corpus": False,
+        }]
+        df_title = pd.DataFrame(rows_title, columns=cols)
+        csv_path_title = str(tmp_path / "reading_lists_title.csv")
+        df_title.to_csv(csv_path_title, index=False)
+
+        records_title = load_scraped(csv_path_title)
+        assert len(records_title) == 0, (
+            "Title-only reading at n_courses=1 should be filtered out"
+        )
 
 
 class TestBuildTeachingCanonPath:
