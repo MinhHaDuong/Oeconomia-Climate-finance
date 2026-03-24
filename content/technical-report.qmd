@@ -48,6 +48,11 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 ---
 
+<!-- WARNING: AI-generated include, not human-reviewed -->
+{{< include _includes/temporal-structure.md >}}
+
+---
+
 {{< include _includes/bimodality-analysis.md >}}
 
 ---
