@@ -16,14 +16,14 @@
 
 ### 1.1 What data does the project produce or reuse?
 
-The project produces a **multilingual bibliometric corpus** of climate finance
-literature (1990–2024). Three categories of data:
+The project produces a **multilingual bibliometric corpus** of scholarship
+around climate finance (1990–2024). Three categories of data:
 
 | Dataset | Format | Size | Origin |
 |---------|--------|------|--------|
-| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 42,368 rows | Merged from 6 sources |
+| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 45,740 rows (31,012 after filtering) | Merged from 6 sources; deposit artifact via `prepare_deposit.py` |
 | embeddings.npz | NumPy compressed archive | 37,928 × 384 float32 | Computed (sentence-transformers) |
-| citations.csv | CSV | 744,464 rows | Extracted via Crossref + OpenAlex |
+| citations.csv | CSV | 722,979 rows (637,444 refined) | Extracted via Crossref + OpenAlex |
 | Per-source catalogs (×6) | CSV | Variable | API harvests + manual exports |
 | Raw API responses | Gzipped JSONL | ~2 GB | OpenAlex, ISTEX, Crossref, World Bank |
 | Pipeline source code | Python, YAML, Makefile | ~150 files | Original |
@@ -94,11 +94,14 @@ deposit to ensure reproducibility.
 ### 4.1 What legal issues apply to data management?
 
 **Loi pour une République numérique (2016)**:
-- Art. 30 (Code de la recherche L.533-4): accepted manuscript may be deposited in
-  open access after 12-month embargo (SHS). This project deposits immediately.
-- Art. 30 al. II: research data linked to a publication, once public, are freely
-  reusable. The corpus CSV is published under CC BY 4.0.
+- Art. 30 (Code de la recherche L.533-4): the accepted manuscript may be deposited
+  in open access after a 12-month embargo (SHS). This applies to the Oeconomia
+  manuscript; this project deposits immediately (preprint on HAL).
+- Art. 30 al. II: research data associated with a publication are freely reusable
+  once made public. This is the primary legal basis for the corpus deposit.
+  The corpus CSV is published under CC BY 4.0.
 - Art. 38 (TDM exception): text and data mining for public research is authorised.
+  This covers the API harvesting and NLP processing in the pipeline.
 
 **Publisher redistribution restrictions**:
 - **Abstracts are excluded** from the deposited CSV. Publisher terms prohibit bulk
@@ -168,22 +171,21 @@ deposit to ensure reproducibility.
 
 ### 5.2 How will data be preserved for the long term?
 
-**Primary archive**: Zenodo (CERN-hosted, indefinite preservation commitment,
-CoreTrustSeal-equivalent). Files are stored in CERN's EOS storage infrastructure
-with geographic redundancy.
+**Primary archive**: Zenodo (CERN-hosted, indefinite preservation commitment).
+Files are stored in CERN's EOS storage infrastructure with geographic redundancy.
 
 **Why Zenodo over Recherche Data Gouv?** CNRS recommends its institutional space
 on Recherche Data Gouv as the primary data repository. However, Zenodo was chosen
 for international visibility and because the dataset targets a global audience
-(8 languages, 6 sources across institutional traditions). Per Recherche Data Gouv
-guidelines, a duplicate deposit is unnecessary when the primary repository already
-assigns a DOI. The Zenodo DOI is linked from the HAL record for institutional
-discoverability.
+(8 languages, 6 sources across institutional traditions). The Zenodo DOI is linked
+from the HAL record via "Ressource associée" metadata, ensuring institutional
+discoverability within the French open-science ecosystem. A pointer record on
+Recherche Data Gouv may be added if required by CNRS evaluation.
 
 **Secondary archives**:
-- HAL (French national open-science archive, CCSD/CNRS, CoreTrustSeal since 2025) — manuscript and data paper
+- HAL (French national open-science archive, CCSD/CNRS, CoreTrustSeal since 2021) — manuscript and data paper
 - GitHub (code) — not a preservation repository, but provides redundancy
-- Software Heritage: pipeline code should be archived (action pending)
+- Software Heritage: pipeline code to be archived via `save code now` upon repository publication
 
 **Format longevity**: all data files use plain-text, non-proprietary formats
 (CSV, NPZ/NumPy, JSONL). No specialised software is required to read the data
@@ -202,13 +204,12 @@ beyond standard scientific Python libraries.
 | GitHub repository | Free (public) | Microsoft/GitHub |
 | OpenAlex API | Free (Premium key donated) | OurResearch |
 | Compute (embedding generation) | ~2h GPU time | Existing workstation (NVIDIA RTX A4000) |
-| Data paper APC (RDJ4HSS) | €2,390 | CNRS DIST / CIRED budget (to confirm) |
+| Data paper publication (RDJ4HSS) | Free (diamond OA) | No APC |
 | Author time | Permanent position | CNRS |
 
 No dedicated data management budget is required. All infrastructure costs are
-covered by existing institutional resources. The APC funding source for the data
-paper requires confirmation (CNRS DIST agreements, CIRED laboratory budget, or
-alternative diamond-OA venue).
+covered by existing institutional resources. The data paper targets RDJ4HSS,
+a diamond open-access journal with no author-facing charges.
 
 ## 6. Data management responsibilities
 
