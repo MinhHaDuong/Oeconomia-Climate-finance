@@ -384,12 +384,12 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 		content/tables/tab_k_sensitivity.csv
 	uv run python $< --no-pdf
 
-# Lexical TF-IDF figures (one per detected break year; .PHONY because output
-# filenames are dynamic — they depend on detected break years, so make cannot
-# declare them as static targets)
-.PHONY: lexical-figures
-lexical-figures: content/tables/tab_lexical_tfidf.csv
-	uv run python scripts/plot_fig_lexical_tfidf.py --no-pdf
+# Lexical TF-IDF figures (one per detected break year; output filenames are
+# dynamic, so we use a sentinel file to track freshness).
+.lexical_tfidf.stamp: scripts/plot_fig_lexical_tfidf.py scripts/plot_style.py \
+		content/tables/tab_lexical_tfidf.csv
+	uv run python $< --no-pdf
+	@touch $@
 
 # DVC pipeline DAG (data paper)
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
@@ -415,7 +415,7 @@ output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT
 output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to docx
 
-output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(TECHREP_FIGS) $(COMPANION_FIGS) lexical-figures
+output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(TECHREP_FIGS) $(COMPANION_FIGS) .lexical_tfidf.stamp
 	quarto render $< --to pdf
 
 output/content/data-paper.pdf: content/data-paper.qmd $(PROJECT_INCLUDES) $(BIB) content/data-paper-vars.yml

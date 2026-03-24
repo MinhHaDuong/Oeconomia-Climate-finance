@@ -18,6 +18,9 @@ data/raw/
 data/teaching_sources.yaml
 data/catalogs/.citations_batch_checkpoint.csv
 
+# Make sentinel files (dynamic-output targets)
+*.stamp
+
 # Generated figures, tables, and stats (regenerate with: make figures / make stats)
 content/figures/
 content/tables/
