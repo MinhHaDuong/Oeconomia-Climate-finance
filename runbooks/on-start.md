@@ -26,7 +26,7 @@ blocks all commits on main, no exceptions.
 | Context | Phase | Branch |
 |---------|-------|--------|
 | Active feature branch + open PR | `[→ Doing]` | Checkout existing branch |
-| Ticket reference but no branch | `[→ Planning]` | Stay on `explore-{topic}`; `start-ticket` creates the `t{N}` branch when Doing begins |
+| Ticket reference but no branch | `[→ Planning]` | Create `explore-{topic}`; `start-ticket` creates the `t{N}` branch when Doing begins |
 | Fresh conversation, no ticket | `[→ Dreaming]` | Create `explore-{topic}` (name inferred from user's opening message) |
 
 If the conversation turns out to be a quick question with no file edits,
