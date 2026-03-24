@@ -13,7 +13,7 @@ Git history of this file has the full original text.
 
 1. Split the harness into its own repo → **done** (`agentic-harness`)
 2. Review harness against seminal SE books → transferred
-3. Offline ticket system (file-based, gh-optional) → transferred
+3. Offline ticket system (file-based, gh-optional) → split out as PR #385 (dogfooding)
 4. Skill-based agent coordination → transferred
 5. Background ticket poller → transferred
 6. Type assertion guidelines → transferred
