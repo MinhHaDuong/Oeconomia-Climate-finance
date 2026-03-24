@@ -1,70 +1,74 @@
-## 10. UNFCCC Negotiation Topics and Academic Field Structure
+## 10. UNFCCC Negotiation Architecture and Academic Field Structure
 
 ### 10.1 The co-production hypothesis
 
-The manuscript argues that climate finance was "invented" --- its categories co-produced by economists and institutions. If true, the organizational structure of UNFCCC negotiations should be reflected in the academic literature's internal organization. This section tests whether the diplomatic division of climate finance into negotiating tracks corresponds to identifiable sub-literatures.
+The manuscript argues that climate finance was "invented" --- its categories co-produced by economists and institutions. If true, the organizational structure of UNFCCC negotiations should be reflected in the academic literature's internal organization. This section maps the evolution of negotiating bodies, tracks, and workstreams, then tests whether these diplomatic structures created measurable academic sub-literatures.
 
-### 10.2 UNFCCC finance architecture: a timeline
+### 10.2 UNFCCC finance architecture: four eras
 
-The UNFCCC organized climate finance discussions into progressively more differentiated institutional structures:
+**Era 1: Single-track finance (1992--2006).** The Convention (1992) embedded "agreed full incremental costs" (Article 4.3) and "new and additional" resources as core financial obligations. The GEF served as the sole operating entity. No dedicated finance body existed; SBI handled guidance. The CDM (Kyoto Protocol Article 12, operational from 2005) generated \$15--24 billion in carbon revenues over 2001--2012, constituting a de facto private finance channel years before that concept entered negotiation language. Academic output was concentrated in carbon market economics (additionality, baselines, CDM methodology) with almost no connection to development economics.
 
-**Phase 1: Protocol-era (1997--2006).** Finance was primarily discussed under the Kyoto Protocol mechanisms:
+**Era 2: Four-pillar differentiation (2007--2009).** The Bali Action Plan (COP-13, 2007) reorganized negotiations around four explicit pillars: mitigation, adaptation, technology, and finance. This was not rhetorical --- it determined how rooms were organized, which expert groups convened, and which academic communities were invited. Two negotiating tracks (AWG-LCA for Convention-track, AWG-KP for Protocol-track) each had dedicated finance subgroups. The MRV principle ("measurable, reportable, verifiable") was introduced. The Copenhagen Accord (COP-15, 2009) created the \$100 billion pledge, fast-start finance, and proposed the Green Climate Fund --- three institutions that each generated distinct research programmes.
 
-- *Clean Development Mechanism (CDM)*: project-based emission reductions in developing countries. Generated a substantial economics literature on baseline setting, additionality, transaction costs, and sustainable development co-benefits.
-- *Joint Implementation (JI)*: similar mechanisms between Annex I countries.
-- *Adaptation Fund*: established in 2001, funded by a 2% levy on CDM credits. Early instance of climate finance for adaptation (not mitigation).
-- *Global Environment Facility (GEF)*: operating entity of the financial mechanism since 1994. Managed incremental-cost funding for developing countries.
+**Era 3: Institutional proliferation (2010--2014).** The Cancún Agreements (COP-16, 2010) created three simultaneous institutions: the Green Climate Fund (equal developed/developing governance), the Standing Committee on Finance (biennial assessments of climate finance flows), and the Long-term Finance workstream (tracking progress toward \$100 billion). COP-17 Durban (2011) added the ADP with two workstreams negotiating what became the Paris Agreement. COP-18 Doha (2012) formalized the LTF workstream and reporting guidelines. By 2012, climate finance negotiations ran on three parallel tracks: ADP finance pillar, LTF workshops, and GCF operationalization.
 
-The academic literature in this phase is tightly organized around these mechanisms --- the field's structure mirrors the Protocol's institutional architecture.
+**Era 4: Implementation and expansion (2015--present).** The Paris Agreement (2015) introduced Article 9 (finance obligations), Article 13 (enhanced transparency), Article 6 (carbon markets), and Article 2.1(c) (aligning all finance flows). The post-Paris agenda expanded to include the loss and damage fund (COP-27 Sharm el-Sheikh 2022, operationalized COP-28 Dubai 2023) and the New Collective Quantified Goal (NCQG, concluded COP-29 Baku 2024 at \$300 billion core, \$1.3 trillion aspirational). Each institution generated corresponding research: GCF evaluation, transparency methodology, Article 6 market design, loss attribution, and NCQG accounting.
 
-**Phase 2: Bali to Copenhagen (2007--2009).** The Bali Action Plan (COP-13, 2007) created four pillars: mitigation, adaptation, technology, and finance. This expansion:
+### 10.3 Five academic traditions mapped to negotiating tracks
 
-- Separated "finance" as a standalone negotiating topic (previously embedded in mechanism design)
-- Created the $100 billion per year pledge (Copenhagen, 2009)
-- Triggered debate about what "counts" as climate finance (ODA, private, public)
-- Generated new academic sub-fields: climate finance accounting, green bonds, climate risk
+| Negotiating track | Academic tradition | Institutional intermediaries | Peak period |
+|-------------------|-------------------|------|-------------|
+| CDM/JI → Article 6 | Carbon market economics | CDM Executive Board, methodology panels | 2005--2012, revival post-2021 |
+| Adaptation Fund, LDCF, SCCF | Development/adaptation economics | UNDP, IIED, World Bank development divisions | 2010--present |
+| \$100bn → NCQG | Public finance accounting | OECD-DAC, SCF, Oxfam counter-analyses | 2012--present |
+| Green bonds, Art. 2.1(c) | Financial economics | World Bank (first green bond 2008), TCFD, FSB | 2016--present |
+| WIM, Santiago Network, L\&D Fund | Climate justice / loss attribution | WIM ExCom, attribution science | 2019--present |
 
-The data detect 2007 as a structural break (Section 9) precisely because the Bali reorganization expanded the field's scope.
+### 10.4 UNFCCC-guided topic classification: results
 
-**Phase 3: Building institutions (2010--2014).** The Cancún Agreements (COP-16, 2010) and subsequent decisions established:
+We classify 27,315 works into eight UNFCCC negotiation tracks using keyword matching on titles, abstracts, and keywords. 21,430 works (78.5%) receive a topic; 5,885 remain unclassified.
 
-- *Green Climate Fund (GCF)*: new multilateral fund with equal governance between developed and developing countries. Board design, programming, direct access --- each generated academic attention.
-- *Standing Committee on Finance (SCF)*: mandated biennial assessments of climate finance flows, creating a recurring demand for accounting and tracking research.
-- *Long-term Finance (LTF) workstream*: 2012--2015, focused on scaling up finance toward the $100bn goal.
-- *Loss and Damage*: Warsaw International Mechanism (COP-19, 2013) --- a new category distinct from adaptation.
+| UNFCCC track | Works | Share |
+|-------------|-------|-------|
+| Development finance | 5,674 | 26.5% |
+| CDM/carbon markets | 4,852 | 22.6% |
+| Mitigation finance | 4,321 | 20.2% |
+| Adaptation | 3,454 | 16.1% |
+| Governance | 1,653 | 7.7% |
+| Green finance | 993 | 4.6% |
+| GCF/funds | 384 | 1.8% |
+| Loss and damage | 99 | 0.5% |
 
-The data detect 2012 as a structural break (Section 9). This aligns with the GCF becoming operational and the ADP beginning negotiations toward Paris.
+**Topic evolution mirrors institutional calendar:**
 
-**Phase 4: Paris and beyond (2015--present).** The Paris Agreement (COP-21, 2015) introduced:
+| Period | CDM | Development | Mitigation | Adaptation | Green fin. | Governance |
+|--------|-----|-------------|------------|------------|------------|------------|
+| 2000--04 | **70.9%** | 16.4% | 7.6% | 2.7% | 0.2% | 1.9% |
+| 2005--09 | **63.2%** | 16.0% | 11.9% | 5.6% | 0.2% | 2.7% |
+| 2010--14 | **40.9%** | 23.7% | 16.6% | 10.7% | 0.4% | 4.9% |
+| 2015--19 | 19.1% | **26.9%** | 20.9% | 17.5% | 2.2% | 10.0% |
+| 2020--24 | 9.1% | **29.4%** | **23.0%** | **19.8%** | **7.7%** | 8.9% |
 
-- *Article 9*: finance provisions (developed countries "shall" provide, developing countries "may" provide)
-- *Enhanced Transparency Framework (ETF)*: reporting on finance provided and received
-- *Nationally Determined Contributions (NDCs)*: finance needs embedded in national plans
-- *New Collective Quantified Goal (NCQG)*: post-2025 finance target, negotiated 2021--2024, concluded at COP-29 Baku (2024) at $300 billion per year
+CDM dominance collapses after Bali 2007. Development, mitigation, and adaptation rise in parallel as their negotiating tracks are formalized. Green finance explodes from 0.4% to 7.7% after Paris Article 2.1(c). Governance grows 5× after the transparency framework is established.
 
-The data do NOT detect 2015 as a structural break. The research community had already expanded beyond its pre-2007 boundaries; Paris influenced content but not community structure.
+### 10.5 The anti-clustering test
 
-### 10.3 Mapping negotiation tracks to academic sub-literatures
+If UNFCCC categories correspond to natural intellectual boundaries, works within the same category should be closer to each other than to works in other categories. We test this by computing the silhouette score of UNFCCC topic assignments in each representation space:
 
-We define eight topic categories based on UNFCCC negotiating tracks and test whether they create measurable structure in the corpus:
+| Space | Silhouette of UNFCCC topics |
+|-------|---------------------------|
+| Semantic (384D embeddings) | **-0.011** |
+| Citation (bibliographic coupling) | **-0.010** |
+| Lexical (TF-IDF) | **+0.007** |
 
-| UNFCCC track | Academic sub-literature | Key indicators |
-|-------------|----------------------|----------------|
-| CDM/carbon markets | Carbon market economics | CDM, ETS, cap and trade, offset, allowance |
-| Adaptation | Adaptation economics | Vulnerability, resilience, adaptive capacity |
-| Mitigation finance | Energy transition economics | REDD+, renewable energy, low-carbon |
-| Green finance | Financial economics | Green bonds, ESG, TCFD, stranded assets |
-| Development finance | Development economics | ODA, aid, equity, North-South |
-| Loss and damage | Climate justice | Non-economic losses, Warsaw mechanism |
-| Governance | Political science | Accountability, MRV, transparency, compliance |
-| GCF/climate funds | Institutional analysis | GCF, GEF, Adaptation Fund, direct access |
+All three scores are near zero or negative. **The UNFCCC categories are anti-clustered** --- works labelled "CDM" are no more similar to each other than to works labelled "adaptation" or "green finance." The diplomatic room assignments do not correspond to natural topic boundaries in any representation.
 
-### 10.4 Results
+The ARI between UNFCCC topics and KMeans (k=6) on semantic embeddings is 0.126 (k=8: 0.128) --- weak but non-trivial agreement, suggesting that while the categorizations are not the same, they share some broad structure.
 
-*(To be filled with UNFCCC taxonomy analysis results from Branch 1)*
+### 10.6 Discussion
 
-### 10.5 Discussion
+**The negotiation organized the field, not the other way around.** The topic evolution table (§10.4) shows that academic attention followed institutional creation with a lag of 1--3 years: CDM papers peaked after CDM operational rules were finalized (2005), adaptation papers rose after dedicated funds were created (2001--2010), green finance papers exploded after Article 2.1(c) created demand for "alignment" research (2015). Each negotiating room generated its academic constituency.
 
-The UNFCCC's progressive differentiation of finance topics --- from a single CDM mechanism to eight or more distinct workstreams --- parallels the academic literature's expansion from a tight cluster of carbon-market economists to a diffuse multi-disciplinary field. The temporal coincidence between institutional turning points (Bali 2007, Doha 2012) and structural breaks in the bibliometric data supports the co-production hypothesis: diplomatic categories shaped academic categories, and academic analysis in turn informed diplomatic design.
+**But the categories don't separate.** Despite this institutional co-production, the categories are anti-clustered in the literature's natural structure. A paper about "CDM baseline methodology" is semantically, lexically, and bibliographically close to papers about "adaptation project evaluation" and "green bond verification" --- because they share analytical frameworks (cost-benefit analysis, monitoring protocols, institutional design), vocabulary (developing countries, climate risk, financial flows), and reference lists (IPCC, Stern Review, UNFCCC decisions).
 
-The key asymmetry is between the 2007 and 2015 breaks. The 2007 Bali reorganization (creating "finance" as a standalone topic) produced a detectable structural change in the academic field. The 2015 Paris Agreement, despite being a larger diplomatic achievement, did not reorganize the research community because the field had already become a continuum. This suggests that institutional co-production is strongest when a field is young and its boundaries are forming, and weakens as the field matures and disciplinary identities solidify.
+**Implication for the manuscript.** The co-production thesis is supported in its strong form: institutions did not merely label pre-existing categories --- they created categories that the academic community populated. But the categories remain artificial subdivisions of a continuous field. The field's real structure is temporal (pre-2007 tight communities dissolving into a continuum) rather than topical (UNFCCC tracks that overlap completely in conceptual space). The 2007 structural break (Section 9) marks not a change in topics but a change in organization --- from specialized communities to a cross-cutting field.
