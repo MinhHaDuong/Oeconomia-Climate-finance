@@ -31,7 +31,7 @@ DONE_CACHE_PATH = os.path.join(CACHE_DIR, "citations_done.csv")
 URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 SENTINEL_REF_DOI = "__NO_REFS__"  # Marker for DOIs found but with no references
-MAX_CONSECUTIVE_ERRORS = 5
+MAX_CONSECUTIVE_ERRORS = 5  # Stop after this many consecutive failures
 
 
 def fetch_batch(dois, delay=0.2, counters=None,
@@ -63,6 +63,9 @@ def fetch_batch(dois, delay=0.2, counters=None,
     data = resp.json()  # Parse once (#3)
     items = data.get("message", {}).get("items", [])
 
+    # Validate that the row template matches REFS_COLUMNS (caught once, not per-ref)
+    _expected_keys = set(REFS_COLUMNS)
+
     rows = []
     for item in items:
         source_doi = normalize_doi(item.get("DOI", ""))
@@ -79,10 +82,12 @@ def fetch_batch(dois, delay=0.2, counters=None,
                 "ref_journal": ref.get("journal-title", ""),
                 "ref_raw": json.dumps(ref, ensure_ascii=False),
             }
-            assert set(row.keys()) == set(REFS_COLUMNS), (  # (#9)
-                f"fetch_batch keys {set(row.keys())} != REFS_COLUMNS {set(REFS_COLUMNS)}"
-            )
             rows.append(row)
+
+    if rows:
+        assert set(rows[0].keys()) == _expected_keys, (
+            f"fetch_batch keys {set(rows[0].keys())} != REFS_COLUMNS {_expected_keys}"
+        )
     found_dois = {normalize_doi(it.get("DOI", "")) for it in items}
     return rows, found_dois
 
@@ -204,7 +209,7 @@ def main():
                                keep_default_na=False)
         existing["source_doi"] = existing["source_doi"].apply(normalize_doi)
     else:
-        existing = pd.DataFrame(columns=REFS_COLUMNS)
+        existing = pd.DataFrame({c: pd.Series(dtype=str) for c in REFS_COLUMNS})
 
     # Also count DOIs from checkpoint (partial run)
     if args.resume and os.path.exists(checkpoint_path):
@@ -215,7 +220,7 @@ def main():
         log.info("Checkpoint: %d rows, %d DOIs already fetched",
                  len(ckpt), len(ckpt_dois))
     else:
-        ckpt = pd.DataFrame(columns=REFS_COLUMNS)
+        ckpt = pd.DataFrame({c: pd.Series(dtype=str) for c in REFS_COLUMNS})
 
     # All DOIs in works input
     works = pd.read_csv(args.works_input,
@@ -242,7 +247,7 @@ def main():
 
     # Write checkpoint header once upfront
     if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) == 0:
-        pd.DataFrame(columns=REFS_COLUMNS).to_csv(checkpoint_path, index=False)
+        pd.DataFrame({c: pd.Series(dtype=str) for c in REFS_COLUMNS}).to_csv(checkpoint_path, index=False)
 
     # Process in batches
     total_refs = 0
@@ -268,7 +273,7 @@ def main():
             log.error("Batch %d: %s", batch_num, e)
             _log_event("batch_error", batch=batch_num, error=str(e))
             consecutive_errors += 1
-            if consecutive_errors > MAX_CONSECUTIVE_ERRORS:
+            if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
                 log.error("Too many consecutive errors (%d), stopping.",
                           consecutive_errors)
                 break
@@ -328,7 +333,7 @@ def main():
                  int(is_sentinel.sum()), len(combined))
     else:
         log.info("No new data to merge.")
-        new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
+        new_refs_real = pd.DataFrame({c: pd.Series(dtype=str) for c in REFS_COLUMNS})
         combined = existing
 
     # Persist done-set so it survives DVC re-runs (citations.csv gets deleted)
