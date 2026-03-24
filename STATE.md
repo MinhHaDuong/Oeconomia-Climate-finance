@@ -46,7 +46,9 @@ None.
 
 ## Active PRs
 
-- #264: docs: landscape analysis of distributed issue trackers (#237) — stale
+- #385: docs: landscape analysis of distributed issue trackers (#237)
+- #386: ✅ merged — data management plan (CNRS/Science Europe model)
+- #387: ✅ merged — eager branching workflow (Dreaming on a branch)
 
 ## Recent (2026-03-24 rally loop)
 
@@ -62,6 +64,7 @@ None.
 
 ## Next actions
 
+- Finalize DMP on OPIDoR (after v1.1 counts stabilize)
 - Send Errata 1 to Oeconomia editor
 - Data paper submission (RDJ4HSS) — PDF ready at `output/content/data-paper.pdf`
 - ESHET-HES conference slides (Nice, May 26–29)
