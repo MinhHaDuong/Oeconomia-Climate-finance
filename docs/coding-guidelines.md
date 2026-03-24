@@ -17,6 +17,18 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 - House style: `docs/oeconomia-style.md` (eyeballed from 15-4 samples)
 - **Logging, not print.** All scripts MUST use `from utils import get_logger; log = get_logger("script_name")` — never bare `print()`. The `get_logger()` factory configures a shared `pipeline` root logger with `StreamHandler` (auto-flush to stderr, `HH:MM:SS LEVEL message` format). Use `log.info()` for progress, `log.warning()` for retries/rate-limits, `log.error()` for failures.
 
+## Makefile conventions
+
+- **One output per rule.** Each Make target should produce a known file so timestamps work.
+- **Sentinel stamps for dynamic outputs.** When a script produces filenames that depend on data (e.g., one figure per detected break year), Make can't declare them as static targets. Use a stamp file instead:
+  ```makefile
+  .my_target.stamp: scripts/my_script.py input.csv
+  	uv run python $< --no-pdf
+  	@touch $@
+  ```
+  Add `*.stamp` to `.gitignore`. The stamp sits at the repo root (not under `content/figures/` which is gitignored).
+- **No `.PHONY` for real work.** `.PHONY` targets always re-run — use them only for aliases (`figures`, `stats`, `clean`), never for recipes that produce files.
+
 ## Script hygiene
 
 - **No `sys.path` hacks.** Never `sys.path.insert(0, ...)`. Make scripts importable through proper packaging (`pyproject.toml`), not path manipulation in every file.
