@@ -29,6 +29,8 @@ import pytest
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(REPO, "scripts")
 MAKEFILE = os.path.join(REPO, "Makefile")
+# Archived scripts are preserved for reference but not subject to hygiene checks.
+ARCHIVE_DIR = os.path.join(SCRIPTS_DIR, "archive")
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -39,9 +41,18 @@ def _all_scripts():
 
     Returns paths relative to SCRIPTS_DIR (e.g. "utils.py",
     "archive_traditions/detect_traditions_v1.py").
+
+    Scripts under scripts/archive/ are excluded — they are superseded
+    experimental scripts preserved for reference only, not active code.
     """
     result = []
-    for dirpath, _dirnames, filenames in os.walk(SCRIPTS_DIR):
+    for dirpath, dirnames, filenames in os.walk(SCRIPTS_DIR):
+        # Skip the archive/ subdirectory entirely — archived scripts are
+        # preserved for reference and not subject to hygiene enforcement.
+        rel_dir = os.path.relpath(dirpath, SCRIPTS_DIR)
+        if rel_dir == "archive" or rel_dir.startswith("archive" + os.sep):
+            dirnames.clear()
+            continue
         for f in filenames:
             if f.endswith(".py") and not f.startswith("__"):
                 rel = os.path.relpath(os.path.join(dirpath, f), SCRIPTS_DIR)
@@ -204,6 +215,7 @@ class TestRuffModernPython:
         """No legacy typing imports (List, Dict, Tuple, Optional, Union)."""
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "UP006,UP007,UP035",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
@@ -249,6 +261,7 @@ class TestFunctionComplexity:
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "C901",
              "--config", "lint.mccabe.max-complexity = 25",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
@@ -262,6 +275,7 @@ class TestFunctionComplexity:
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "PLR0915",
              "--config", "lint.pylint.max-statements = 120",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
@@ -276,6 +290,7 @@ class TestFunctionComplexity:
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "PLR0912",
              "--config", "lint.pylint.max-branches = 25",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
@@ -292,6 +307,7 @@ class TestFunctionComplexity:
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "C901",
              "--config", "lint.mccabe.max-complexity = 15",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
@@ -305,6 +321,7 @@ class TestFunctionComplexity:
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "PLR0915",
              "--config", "lint.pylint.max-statements = 80",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
@@ -318,6 +335,7 @@ class TestFunctionComplexity:
         result = subprocess.run(
             ["uv", "run", "ruff", "check", "--select", "PLR0912",
              "--config", "lint.pylint.max-branches = 15",
+             "--exclude", ARCHIVE_DIR,
              "--no-fix", SCRIPTS_DIR],
             capture_output=True, text=True,
         )
