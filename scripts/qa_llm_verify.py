@@ -1,4 +1,4 @@
-"""QA verification of corpus metadata using a strong LLM on OpenRouter.
+"""QA verification of corpus metadata using LLM via litellm.
 
 Samples records and asks the LLM to verify: language, document type,
 DOI validity, and whether references should be available.
@@ -9,8 +9,9 @@ Target: 99% reliability on the corpus table's numbers.
 Usage:
     uv run python scripts/qa_llm_verify.py [--sample N] [--model MODEL]
 
-Requires:
-    OPENROUTER_API_KEY environment variable
+Env vars:
+    QA_MODEL — provider-prefixed model string (default: openrouter/google/gemini-2.5-flash)
+    OPENROUTER_API_KEY — required when using openrouter/ models (read by litellm)
 
 Outputs:
     - content/tables/qa_llm_verification.csv: per-record verdicts
