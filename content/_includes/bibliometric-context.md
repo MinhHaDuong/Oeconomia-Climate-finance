@@ -2,44 +2,44 @@
 
 ### 11.1 Prior bibliometric studies of climate finance
 
-Several systematic literature reviews and bibliometric analyses have mapped the climate finance field. Our study differs from these in scope, methods, and findings.
+Several studies have mapped the climate finance literature bibliometrically. Our study differs from these in scope, methods, and — crucially — in reporting cluster validity.
 
-**Comprehensive reviews.** @pauw2022 survey climate finance definitions and accounting controversies, providing a qualitative typology. @steckel2017 trace the evolution from CDM-centered project finance to the broader sustainable development finance paradigm. @buchner2023 (Climate Policy Initiative) provides the most-cited quantitative tracking of climate finance flows, though this is a practitioner report, not a bibliometric study.
+**Direct climate finance bibliometrics.** Carè and Weber (2023, *Research in International Business and Finance*) analyze 315 papers (2004--2021) using co-word analysis and VOSviewer, identifying 7 clusters and finding the field "not finance-based" — top finance journals are largely absent. Deb (2024, *Journal of Sustainable Finance & Investment*) applies co-citation and bibliographic coupling to 621 Web of Science papers, finding research started meaningfully in 2010 with China, US, and UK dominant. Singhania et al. (2023, *Environmental Science and Pollution Research*) map 657 WoS papers (1995--2020) using CiteSpace. Baran et al. (2024) classify 1,051 Scopus articles into 5 clusters: economic effects, governance, implementation, financing issues, and city-level finance. None of these studies report silhouette scores or cluster validity metrics.
 
-**Bibliometric mapping.** @zhang2019 apply co-citation analysis and keyword co-occurrence to Web of Science records on "green finance," identifying five clusters (green bonds, carbon markets, sustainable banking, ESG, environmental policy). They use VOSviewer, a standard bibliometric visualization tool. Their corpus of ~3,000 records is substantially smaller than ours (~31,000), and their focus on "green finance" excludes adaptation and development dimensions. @wang2020 conduct a similar bibliometric analysis on "climate finance" specifically, finding growth acceleration after 2015 and identifying dominant authors and journals. Both studies report cluster visualizations but do not assess cluster validity (no silhouette analysis).
+**Topic modeling on adjacent fields.** Alonso-Robisco, Carbó, and Marqués (2024, *Journal of Sustainable Finance & Investment*) apply LDA to 217 ML-for-climate-finance papers, extracting 7 topics (natural hazards, carbon markets, ESG, energy economics, etc.). Reis Maria, Ballini, and Fraga Souza (2023, *Sustainability*) use Structural Topic Modeling on 3,275 RePec articles, finding 3 groups (international/UNFCCC framing, climate risk/green bonds, energy-emissions-economics models) with a temporal shift from international to national framing. This is methodologically the closest to our approach.
 
-**Topic modeling approaches.** To our knowledge, no published study has applied dynamic topic modeling (LDA, STM, or BERTopic) specifically to the climate finance literature. Several studies apply these methods to adjacent fields: @callaghan2021 use machine learning to classify the IPCC Working Group contributions, and @lamb2021 map the climate policy literature using topic modeling on ~70,000 abstracts. The latter finds 16 topics with clear temporal evolution, though they do not report silhouette scores or cluster validity measures.
+**Corpus sizes in context.** Our corpus of ~31,000 works is 10--100× larger than any previous climate finance bibliometric study (315--3,275 papers). This matters: small corpora may produce artificially well-separated clusters by undersampling the boundary-spanning works that create continuity.
 
 ### 11.2 How our approach differs
 
 Our study is, to our knowledge, the first to:
 
-1. **Compare clustering across multiple representation spaces** (semantic embeddings, lexical TF-IDF, bibliographic coupling). Previous bibliometric studies typically use a single representation (keyword co-occurrence or co-citation).
+1. **Compare clustering across multiple representation spaces** (semantic embeddings, lexical TF-IDF, bibliographic coupling). Previous bibliometric studies typically use a single representation. The hybrid approach has precedent in general bibliometrics: Yu et al. (2017, *PLoS One*) combine citation and text signals for 7,303 papers, finding optimal weights of α=0.55 (citation) and β=0.45 (text). Our contribution is to compare the spaces rather than fuse them, revealing their independence (ARI 0.06--0.22).
 
-2. **Report silhouette scores** for bibliometric clustering. The near-zero values we find (0.025--0.108) are rarely disclosed in the bibliometric literature, where cluster visualizations (VOSviewer, CiteSpace) are typically presented without validity metrics. This raises the question of whether the well-defined clusters reported in other studies would survive silhouette analysis.
+2. **Report silhouette scores.** The near-zero values we find (0.025--0.108) are never reported in the climate finance bibliometric literature, where cluster visualizations (VOSviewer, CiteSpace) are presented without validity metrics. Silhouette analysis is well-established in the topic modeling literature — Mäntylä, Claes, and Farooq (2018, ACM ESEM) show that single-run LDA is "dangerous" and recommend stability metrics including silhouette. Krasnov et al. use silhouette-based cluster quality to select the number of topics rather than perplexity alone.
 
-3. **Test temporal structure with formal change-point detection.** Previous studies report publication counts over time but do not apply change-point methods to structural properties of the field.
+3. **Test whether UNFCCC categories are natural clusters** (negative silhouette = anti-clustered). No previous study has tested whether the field's conventional categories correspond to empirical structure.
 
-4. **Map UNFCCC negotiation organization onto academic sub-literatures.** The co-production hypothesis (diplomatic categories shaped academic categories) has been argued qualitatively but not tested bibliometrically.
+4. **Apply formal change-point detection** to structural properties of the field, as opposed to counting publications over time.
 
 ### 11.3 Contextualizing near-zero silhouette scores
 
-Are near-zero silhouette scores typical in bibliometric studies? The question is difficult to answer because most bibliometric studies do not report silhouette scores. However, we can compare with related methods literature:
+Are near-zero silhouette scores typical or exceptional?
 
-**In machine learning.** Silhouette scores below 0.25 are generally interpreted as "no substantial structure" [@rousseeuw1987]. Values above 0.50 indicate "reasonable structure" and above 0.70 "strong structure." Our semantic-space scores (0.025--0.038) fall well below any threshold for meaningful clustering.
+**In bibliometrics.** Bascur, Verberne, van Eck, and Waltman (2024, *Scientometrics*) provide the most relevant benchmark. Analyzing 2.94 million PubMed documents with Leiden clustering on both citation and text networks, they find that **cross-disciplinary and methodological topics cluster poorly** in both networks, while diseases, psychology, and anatomy cluster well. Climate finance — spanning environmental science, economics, political science, and finance — is precisely the kind of boundary-spanning field that resists clean clustering. Our low silhouette scores are consistent with this finding.
 
-**In text clustering.** Studies clustering news articles or academic abstracts typically report silhouette scores in the 0.05--0.20 range for topic models, higher for narrowly defined corpora and lower for broad, interdisciplinary collections. Our lexical-space scores (0.032--0.062) are at the low end of this range, consistent with a broad, multi-disciplinary corpus.
+**In machine learning.** Rousseeuw (1987) interprets silhouette scores below 0.25 as "no substantial structure." Our semantic-space scores (0.025--0.038) fall far below this threshold.
 
-**In citation analysis.** Bibliographic coupling and co-citation studies rarely report silhouette scores. When they do, values tend to be higher (0.10--0.40) because citation networks have inherent community structure (researchers cite within their community). Our citation-space scores (0.052--0.108) are consistent with this range.
+**In clustering method comparisons.** Šubelj, van Eck, and Waltman (2016, *PLoS One*) compare 30 clustering methods on WoS networks, finding that spectral methods are the least stable (instability ~0.4) and Infomap/map-equation methods perform best. This corroborates our finding that Spectral clustering is the least stable method in our comparison.
 
-**Interpretation.** The near-zero silhouette scores in the semantic space are not an artifact of our method but a genuine property of the climate finance literature. The field is topically diffuse --- works about "green bonds" are semantically close to works about "carbon markets," which are close to works about "climate risk." This continuous topical landscape contrasts with the more structured citation landscape, where researchers form identifiable communities based on shared reference lists.
+**Interpretation.** The near-zero silhouette is not an artifact but a genuine property of the field. It places climate finance among the "boundary-spanning" domains identified by Bascur et al. (2024) that inherently resist bibliometric clustering. This is itself a finding about the field's intellectual structure.
 
 ### 11.4 Methodological contributions
 
-Our multi-space analysis contributes three methodological insights to the bibliometric toolkit:
+Our multi-space temporal analysis contributes three methodological insights:
 
-**1. Representation space matters more than clustering method.** The choice between KMeans, HDBSCAN, and Spectral clustering matters far less than the choice between semantic, lexical, and citation representations. Future bibliometric studies should consider multiple spaces rather than optimizing a single clustering method.
+**1. Representation space matters more than clustering method.** The choice between KMeans, HDBSCAN, and Spectral matters less than the choice between semantic, lexical, and citation representations (Section 7.8). Yu et al. (2017) show that hybrid citation+text outperforms either alone; we extend this by showing that the spaces are largely independent and capture different structural dimensions.
 
-**2. Silhouette scores should be reported.** The bibliometric community's reliance on visual cluster maps (which always look well-structured due to force-directed layouts) may overstate the separability of sub-fields. Reporting silhouette scores alongside cluster visualizations would improve methodological transparency.
+**2. Silhouette scores should be standard in bibliometrics.** VOSviewer and CiteSpace produce compelling cluster visualizations that always appear well-structured due to force-directed layouts. Reporting silhouette scores alongside visualizations would reveal which clusters are genuine and which are artifacts of the layout algorithm. The Mäntylä et al. (2018) stability framework for LDA should be extended to embedding-based methods.
 
-**3. Temporal silhouette analysis detects structural transitions.** Annual silhouette time series, combined with change-point detection, can identify when a field transitions from structured to diffuse --- a methodological contribution beyond simple publication-count trends.
+**3. Temporal silhouette analysis detects structural transitions.** Our change-point detection on annual silhouette series (Section 9) identifies when a field transitions from structured to diffuse — a contribution beyond publication-count trends or keyword-frequency tracking, which are the standard temporal methods in the climate finance bibliometric literature.
