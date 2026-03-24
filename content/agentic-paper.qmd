@@ -234,7 +234,7 @@ Several failure modes were encountered:
 - **Log flushing**: long-running scripts on the remote machine (`padme`) did not flush output logs in real time, making it impossible to monitor progress. The fix was to set `PYTHONUNBUFFERED=1` in the Makefile.
 - **Context window exhaustion**: long conversations with the agent degraded performance as the context window filled with stale information. The "one ticket per conversation" rule was introduced to mitigate this.
 - **Proportionality misjudgment**: early in the project, the agent created full PRs with multi-perspective reviews for trivial changes (a typo fix, a comment update). This wasted time and created noise in the issue tracker. The workflow was updated with a proportionality rule: trivial changes could be merged locally without a PR. This feedback was recorded as a persistent memory entry.
-- **SciSpace typo preservation**: one data source file was named `scispace_works.csv` (a typo of "SciSpace"). Rather than rename and break all references, the typo was preserved and documented in `MEMORY.md`. This illustrates a recurring pattern: the agent preferred correctness, the researcher preferred pragmatism, and the resolution was documented for future conversations.
+- **SciSpace typo preservation**: one data source file was originally named `scispsace_works.csv` (transposed letters). The typo was initially preserved for pragmatic reasons, and corrected during editorial review. This illustrates a recurring pattern: the agent preferred correctness, the researcher preferred pragmatism, and the resolution was documented for future conversations.
 
 ### 5.7 Limitations
 
