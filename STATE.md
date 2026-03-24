@@ -85,6 +85,6 @@ None.
 - #26: Human proofread of full manuscript
 - #158: Third paper (agentic workflow)
 - #223: Worktrees start without DVC data
-- #236–240: Harness extraction
+- #391: Harness extraction (prior art: PR #224)
 - #253: LLM audit on Padme
 - #262: Continuous relevance score
