@@ -35,7 +35,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - `make manuscript` is Phase 3 pure: only `quarto render` (no Python, no stats, no API)
 - `make figures-manuscript` uses frozen v1 archive data (`config/v1_tab_alluvial.csv`, `config/v1_cluster_labels.json`)
 - `make figures` regenerates full-corpus figures for data paper / companion
-- `make papers` idempotent: each paper depends on its own vars file, not the full STATS group
+- `make papers` idempotent: each paper depends on its own vars file; lexical figures use sentinel stamp
 - `corpus_sources` derived from `SOURCE_NAMES` length (not hardcoded)
 - Syllabi fetch parallelized: 100 workers, per-host rate limiting
 - Pipeline progress bars with stuck detection via WatchedProgress (#288)
