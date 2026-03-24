@@ -206,7 +206,7 @@ check-manuscript-data:
 	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
 
 corpus-validate: $(REFINED)
-	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
+	PYTEST_ADDOPTS="" uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
 
 # ── Corpus reporting (Phase 2 — reads only refined data) ──
 content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
@@ -571,11 +571,11 @@ archive-datapaper: check-corpus
 
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose
-	uv run pytest tests/ -v --tb=short
+	PYTEST_ADDOPTS="" uv run pytest tests/ -v --tb=short
 
 # Fast subset: unit tests only (no corpus data or network needed, < 30s).
 check-fast: lint-prose
-	uv run pytest tests/ -v --tb=short -m "not slow"
+	PYTEST_ADDOPTS="" uv run pytest tests/ -v --tb=short -m "not slow"
 
 # ── Prose linting (AI-tell detection) ─────────────────────
 lint-prose:
