@@ -256,8 +256,8 @@ stages:
       size: 6262
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/bibcnrs_works.csv
       hash: md5
@@ -282,8 +282,8 @@ stages:
       size: 16293
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/teaching_works.csv
       hash: md5
@@ -298,8 +298,8 @@ stages:
       size: 848
     - path: data/pool/istex
       hash: md5
-      md5: bc0c94fc113fb046a68b6f91afc74999.dir
-      size: 3331611
+      md5: 04883af560b2ca58eb51a16381514599.dir
+      size: 3351529
       nfiles: 1
     - path: scripts/catalog_istex.py
       hash: md5
@@ -307,8 +307,8 @@ stages:
       size: 8786
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/istex_refs.csv
       hash: md5
@@ -340,8 +340,8 @@ stages:
       size: 22095
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/openalex_citations.csv
       hash: md5
@@ -368,8 +368,8 @@ stages:
       size: 9378
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/grey_works.csv
       hash: md5
@@ -408,8 +408,8 @@ stages:
       size: 6672
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/unified_works.csv
       hash: md5
@@ -427,16 +427,16 @@ stages:
       size: 79886511
     - path: scripts/enrich_abstracts.py
       hash: md5
-      md5: 65d2e79f00489954313211e778aca45f
-      size: 19402
+      md5: 0236a652497890dbcccde272cecf4295
+      size: 20507
     - path: scripts/enrich_dois.py
       hash: md5
       md5: 9817a911bd77b7c6771cd3f6c0a00cbe
       size: 10475
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/enriched_works.csv
       hash: md5
@@ -454,21 +454,21 @@ stages:
       size: 81975609
     - path: scripts/enrich_citations_batch.py
       hash: md5
-      md5: 51a511051d803fcfc097389ef05fdf1e
-      size: 15022
+      md5: cb47405e73fa970604b15c8851d1e023
+      size: 16230
     - path: scripts/enrich_citations_openalex.py
       hash: md5
       md5: 6df7fdedfcd4c1369ea79e2fe37ed9d8
       size: 18977
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/citations.csv
       hash: md5
-      md5: 35e05f885332345fbf14f69f87bfcb06
-      size: 4480529
+      md5: 2e3c5e6e8364a8dde770c5d96d01ccae
+      size: 354925050
   qc_citations:
     cmd: uv run python scripts/qc_citations.py --works-input 
       data/catalogs/enriched_works.csv
