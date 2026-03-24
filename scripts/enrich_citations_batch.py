@@ -31,6 +31,7 @@ CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 DONE_CACHE_PATH = os.path.join(CACHE_DIR, "citations_done.csv")
 URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
+SENTINEL_REF_DOI = "__NO_REFS__"  # Marker for DOIs found but with no references
 
 
 def fetch_batch(dois, delay=0.2, counters=None,
@@ -277,7 +278,7 @@ def main():
         # Record DOIs found but with no refs (so we skip on resume)
         for d in found_dois - {r["source_doi"] for r in refs}:
             sentinel = pd.DataFrame([{
-                "source_doi": d, "source_id": "", "ref_doi": "__NO_REFS__",
+                "source_doi": d, "source_id": "", "ref_doi": SENTINEL_REF_DOI,
                 "ref_title": "", "ref_first_author": "", "ref_year": "",
                 "ref_journal": "", "ref_raw": "",
             }])
@@ -302,9 +303,9 @@ def main():
     if os.path.exists(checkpoint_path):
         new_refs = pd.read_csv(checkpoint_path, dtype=str,
                                keep_default_na=False)
-        # Drop sentinel rows (marker: ref_doi == "__NO_REFS__").
+        # Drop sentinel rows (marker: ref_doi == SENTINEL_REF_DOI).
         # Also drop legacy sentinels (all non-key fields empty).
-        is_sentinel = (new_refs["ref_doi"] == "__NO_REFS__")
+        is_sentinel = (new_refs["ref_doi"] == SENTINEL_REF_DOI)
         non_key_cols = [c for c in REFS_COLUMNS if c != "source_doi"]
         is_sentinel = is_sentinel | new_refs[non_key_cols].eq("").all(axis=1)
         new_refs_real = new_refs[~is_sentinel]
