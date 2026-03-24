@@ -96,6 +96,10 @@ def main():
         works[["doi_norm", "source"]], on="doi_norm", how="left"
     ).dropna(subset=["source"])
     n = min(args.sample_n, len(merged))
+    if n == 0:
+        log.error("No fetched DOIs with references — cannot verify. "
+                  "Check that enrich_citations produced a non-empty citations.csv.")
+        sys.exit(1)
     samples = []
     for src in merged["source"].unique():
         sub = merged[merged["source"] == src]
