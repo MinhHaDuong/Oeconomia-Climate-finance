@@ -105,6 +105,11 @@ concept_groups:
 # Papers must hit climate/energy + finance/policy to pass, not just climate + ecology.
 min_concept_groups: 2
 
+# Works before this year are removed regardless of protection.
+# Climate finance as a concept postdates 1990; 1960 allows foundational
+# economics works but excludes noise (e.g., Securities Exchange Act 1934).
+year_floor: 1960
+
 citation_isolation:
   max_year: 2019
 
