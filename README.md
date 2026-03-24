@@ -39,6 +39,17 @@ All four are Quarto documents sharing fragments via `{{< include >}}` from `cont
 - **History of economic thought:** Development economics + environmental economics genealogy
 - **STS:** Boundary work, infrastructures of knowledge
 
+## North star
+
+The ideal state the project works towards:
+
+1. All tests pass (`make check` is green)
+2. No code smells
+3. `make corpus` is idempotent — completes doing nothing when already up to date
+4. `make papers` is idempotent — completes doing nothing when already up to date
+5. All open PRs pass review without defects or nits
+6. All open issues explored and well defined, ready to tackle
+
 ## Prerequisites
 
 - **[Quarto](https://quarto.org/docs/get-started/)** (≥ 1.4) — document rendering

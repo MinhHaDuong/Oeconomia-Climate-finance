@@ -46,15 +46,32 @@ you attempted anyway.
 The session is a loop of Dragon Dreaming cycles, not a single pass.
 Each cycle: Dream (explore) → Plan (outline/ticket) → Do (draft/code/PR)
 → Celebrate (braindump what you learned). Then start the next cycle,
-informed by what the previous one revealed. A full overnight (8h) should
-produce 2-3 complete DD cycles. The mid-session checkpoint (step 5b)
-is between cycles, not at the end.
+informed by what the previous one revealed. Keep cycling until wrap-up
+time (06:00) — there is no fixed cycle count. The mid-session checkpoint
+(step 5b) runs between cycles, not at the end.
+
+### Picking a target for each cycle
+
+At the Dreaming phase of each cycle, choose a target with high benefit / risk ratio. Benefits priorities are:
+
+1. **The scientific deliverable is paramount**
+2. **Resolve gaps with the north star** (`README.md` § North star) —
+   red tests, non-idempotent pipelines, PR defects, under-specified issues.
+3. **Fix tickets** — pick the ripest open issue (dependencies met, blockers
+   cleared) and work it through Plan → Do.
+4. **Sweep for inline markers** — scan code and prose for `FIXME`, `TODO`,
+   `HACK`, `IMPROVEMENT`, `XXX` comments. Turn each into a ticket if none
+   exists yet.
+
 
 ### 0. Bootstrap
 
 Run `on-start.md` trigger. Record start time (`date`). Then read all
 territory files listed in the prompt. Note the start time in the overnight
 log immediately — don't wait until wrap-up to start the log.
+
+**Baseline test run:** run `make check` and record results in the overnight
+log. This is the baseline — the session must leave things no worse.
 
 **Usage tracking:** every Agent tool task notification includes
 `<usage>` with `total_tokens`, `tool_uses`, and `duration_ms`.
@@ -72,41 +89,37 @@ Prefer internal Agent-tool subagents over CLI — they share the parent's
 cached context (4x cheaper in measured tests: 29K vs 126K tokens for
 the same review task).
 
-### 1. Forward on the next deliverable
+### Reference procedures
 
-Do this first, while context is fresh.
+The target picker (above) selects what to work on each cycle. These
+procedures describe *how* to execute each type of work.
 
-The overnight session must push forward on what matters most — the next
-paper, slides, or reading notes. For a paper deliverable, the full cycle:
+#### Deliverable work
+
+For a paper deliverable, the full cycle:
 
 1. **Analyze findings**: what research outputs are available?
    Read scripts, figures, tables, stats. What story do they tell?
-
 2. **Survey target journals**: scope, audience, ambitions, recent articles.
    Download author guidelines and sample articles (use WebFetch).
    Check word limits, figure policies, reference style, open data requirements.
-
 3. **Match findings to journals**: which findings fit which audience?
    Which journal's scope aligns with the contribution?
-
 4. **Formalize constraints**: format template, word count, figure count,
    section structure, reference style, submission requirements.
-
 5. **Outline**: structure the argument for each target journal.
    Use `docs/writing-guidelines.md` for prose style.
-
 6. **Draft**: write sections, adjusting framing per journal.
    Look for writing skills on disk (`skills/`, `docs/`, other repos under `~/`).
    If not found, search the web for method papers and author resources.
-
 7. **Review literature**: fill gaps, strengthen positioning.
    Use available corpus data and bibliography.
-
 8. **Iterate**: cycle through steps 5-7, refining.
 
-Run up to 3 journal targets in parallel (competing PRs per step 3 below).
+Run up to 3 journal targets in parallel (competing PRs per § Competing
+explorations below).
 
-### 2. Tooling tickets (capped)
+#### Tooling tickets
 
 Fix red tests, hygiene issues, and technical debt — but only within the
 40% budget. Work them through the full lifecycle:
@@ -117,12 +130,15 @@ Fix red tests, hygiene issues, and technical debt — but only within the
 4. **Self-review**: single review agent in a fresh worktree (lightweight —
    focus on correctness and behavioral preservation, not full multi-reviewer).
 5. **Fix**: address review findings, push fixes.
-6. **PR**: open for morning review.
+6. **PR & celebrate**: open PR for morning review. Run `runbooks/celebrate.md`
+   to close the cycle before starting the next one.
+7. **Verify**: run `make check-fast` after opening the PR to confirm no
+   regressions. If tests fail, fix before moving on.
 
 Parallelize independent tickets across worktrees (max 4 active at once —
 more causes git/disk contention and token waste).
 
-### 3. Competing explorations (up to 3)
+#### Competing explorations (up to 3 at a time)
 
 For each braindump idea or strategic choice, brainstorm alternative
 implementations, assess them, then try up to 3 promising candidates
@@ -141,24 +157,34 @@ trade-offs, then implement the 2-3 most promising in parallel PRs.
 This applies to code (competing implementations) and prose
 (competing paper framings, journal targets, outlines).
 
-### 4. Recursive braindump
+### 1. Memos (per cycle)
 
-When you finish working the current ideas:
+After completing each cycle's work, write a memo
+(`docs/local-ai/YYYY-MM-DD-memo-topic.md`) reflecting what you learned,
+what new ideas emerged, and what surprised you. Commit it on the cycle's
+branch. Work the memo's actionable ideas in subsequent cycles — but only
+if they advance a deliverable (not more tooling, unless within the 40%
+budget). Each memo is dated and committed — they form a trail of the
+exploration.
 
-1. Write a new braindump (`docs/braindump-YYYY-MM-DD-topic.md`) reflecting what you
-   learned, what new ideas emerged, and what surprised you.
-2. Commit it on a branch.
-3. Work the new braindump's actionable ideas — but only if they advance
-   a deliverable (not more tooling, unless within the 40% budget).
-4. Loop until ideas dry up or all ideas are post-submission/blocked.
+### 2. Mid-session checkpoint
 
-Each braindump is dated and committed — they form a trail of the exploration.
+After roughly half of available effort, pause and check:
 
-### 5. Keep reflection notes
+- [ ] Have I opened at least one deliverable-forward PR?
+- [ ] Is my tooling/deliverable ratio within bounds?
+- [ ] Have I self-reviewed at least one PR?
+- [ ] Have I written or updated the overnight log?
+- [ ] Does `make check` pass on main? (full suite, not just check-fast)
 
-Write `docs/overnight-log-YYYY-MM-DD.md` on a dedicated branch
-(`overnight-log-YYYY-MM-DD`). This branch carries only the log and
-braindumps — never mixed into a feature branch.
+If any box is unchecked, pause tooling and address it.
+
+### 3. Overnight log (one per session)
+
+Write `docs/local-ai/YYYY-MM-DD-log.md` on a dedicated branch
+(`overnight-log-YYYY-MM-DD`). This branch carries only the log —
+never mixed into a feature branch. Start writing at bootstrap, update
+throughout.
 
 Include a balance and time summary:
 
@@ -182,27 +208,18 @@ Also include:
 - Open questions for the author
 - Token usage if available (total tokens, number of tool calls)
 
-### Mid-session checkpoint
-
-After roughly half of available effort, pause and check:
-
-- [ ] Have I opened at least one deliverable-forward PR?
-- [ ] Is my tooling/deliverable ratio within bounds?
-- [ ] Have I self-reviewed at least one PR?
-- [ ] Have I written or updated the overnight log?
-
-If any box is unchecked, pause tooling and address it.
-
-### 6. Wrap up
+### 4. Wrap up
 
 Before the session ends:
 
-1. Ensure all worktrees are cleaned up.
-2. All work is pushed and PRs are open.
-3. Write the morning briefing (overnight log + PR list).
+1. Run `make check` on main — compare against baseline from bootstrap.
+   New failures get ticketed (tag `bug`).
+2. Ensure all worktrees are cleaned up.
+3. All work is pushed and PRs are open.
+4. Write the morning briefing (overnight log + PR list, including test delta).
    Do NOT run `celebrate-day.md` — that would re-trigger overnight
    exploration (step 10). The overnight log IS the celebration artifact.
-4. Final PR list in the last message — the author's morning briefing.
+5. Final PR list in the last message — the author's morning briefing.
 
 ## Time and budget management
 
@@ -211,9 +228,9 @@ Before the session ends:
 Check the wall clock (`date`) at bootstrap and periodically. Plan work
 backwards from the morning review:
 
-- **Before 02:00** — deep work: deliverable drafting, competing explorations.
-- **02:00–06:00** — lighter work: braindumps, literature notes, self-reviews.
-- **06:00–07:30** — wrap-up: push all branches, write overnight log, clean worktrees.
+- **Before 06:00** — deep work: deliverable drafting, competing explorations.
+- **06:00–07:00** — lighter work: braindumps, literature notes, self-reviews.
+- **07:00–07:30** — wrap-up: push all branches, write overnight log, clean worktrees.
 - **By 08:00** — session must be complete. Final message is the morning briefing.
 
 Don't start a new multi-file refactoring or paper section after 06:00.
@@ -230,13 +247,11 @@ console output (CLI `claude -p`).
   and cost ~4x less (measured: 29K vs 126K tokens for same review).
   Use CLI only when OTEL cost measurement is specifically needed.
 - **Default to sequential.** Parallel agents multiply token consumption.
-- **One subagent at a time** — never more than 2 concurrent.
+- **Max 3 subagents at a time**.
 - **Cap subagent scope** — give focused prompts with pre-summarized
   context. Don't let subagents re-read files you've already read.
-- **Use Sonnet for subagents** — cheaper and has a separate usage
-  bucket on Max plans. Reserve Opus for the main thread.
-- **Braindumps are cheap** — writing reflection notes costs few tokens
-  and produces high value. Prefer braindumping over launching agents.
+- **Memos are cheap** — writing reflection notes costs few tokens
+  and produces high value. Prefer writing memos over launching agents.
 - **Monitor throttling** — if responses get slower, tool calls are
   declined, or you see rate-limit errors, enter wrap-up immediately.
 - **Log usage** — record each task notification's `total_tokens`,
@@ -245,18 +260,16 @@ console output (CLI `claude -p`).
 
 ## Invariants
 
-- **Never merge to main.** All changes as PRs.
+- **Never merge to main.** All changes as PRs for morning review.
 - **Archive bit-identical.** Verify: `make archive-analysis && make -C /tmp/climate-finance-analysis verify`
 - **One ticket per worktree.** Independent work stays independent.
 - **Commit messages explain why.** Overnight work must be reviewable.
-- **No unattended long-running tasks.** Don't launch processes that may run
-  for hours (full `make`, API harvesting, model training). Quick checks
-  (`make check-fast`, `uv run pytest`, `uv run ruff`) are fine.
+- **Manage long-running tasks.** Overnight autonomous mode is ideal to launch long running processes (full `make`, API harvesting, model training). Babysit them with TLC. Learn from failures, fix and retry.
 
 ## Anti-patterns from first session (2026-03-19)
 
 - Spent entire session on code tooling (red tests), zero forward progress on deliverables.
 - Did not self-review PRs in fresh worktrees.
-- Did not recurse into new braindumps after completing existing ones.
+- Did not recurse into new dreams after completing existing ones.
 - Did not explore competing approaches.
 - STATE.md refresh blocked by pre-commit hook on main — use a branch.
