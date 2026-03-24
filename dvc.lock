@@ -161,17 +161,17 @@ stages:
       size: 25958
     - path: scripts/filter_flags.py
       hash: md5
-      md5: 1199ba9092fcffd4a95c79a8612d8bab
-      size: 25506
+      md5: 80529326b0d8cd1859ecd53a9689e57b
+      size: 24731
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/extended_works.csv
       hash: md5
-      md5: 82715aa39f0aa86419817902b83b2b8b
-      size: 84646602
+      md5: a6faebc66e305aead4b7da0cd10ac160
+      size: 84645266
   filter:
     cmd: uv run python scripts/corpus_filter.py --filter --works-input 
       data/catalogs/extended_works.csv --works-output 
@@ -187,61 +187,61 @@ stages:
       size: 186713
     - path: data/catalogs/extended_works.csv
       hash: md5
-      md5: 82715aa39f0aa86419817902b83b2b8b
-      size: 84646602
+      md5: a6faebc66e305aead4b7da0cd10ac160
+      size: 84645266
     - path: scripts/corpus_filter.py
       hash: md5
       md5: 68695ce96204ee156447c0efc30fc55a
       size: 25958
     - path: scripts/filter_flags.py
       hash: md5
-      md5: 1199ba9092fcffd4a95c79a8612d8bab
-      size: 25506
+      md5: 80529326b0d8cd1859ecd53a9689e57b
+      size: 24731
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/corpus_audit.csv
       hash: md5
-      md5: d815b35dcb90556bef4a6e11884fbf01
-      size: 6215798
+      md5: 9f38069c41f8020f0811c1ebaecbedd4
+      size: 6211819
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: dac6141b6fdf80fad310fead155a5f55
-      size: 62108834
+      md5: fcec1236cba84bb9599737bf813379d1
+      size: 62349169
   align:
     cmd: uv run python scripts/corpus_align.py
     deps:
     - path: data/catalogs/citations.csv
       hash: md5
-      md5: 35e05f885332345fbf14f69f87bfcb06
-      size: 4480529
+      md5: 2e3c5e6e8364a8dde770c5d96d01ccae
+      size: 354925050
     - path: data/catalogs/embeddings.npz
       hash: md5
       md5: 5b2cbc15cfde88bef3d6652d676535f4
       size: 54377130
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: dac6141b6fdf80fad310fead155a5f55
-      size: 62108834
+      md5: fcec1236cba84bb9599737bf813379d1
+      size: 62349169
     - path: scripts/corpus_align.py
       hash: md5
       md5: 008408f74f140d192fdcbbf4b34bf11d
       size: 9072
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/refined_citations.csv
       hash: md5
-      md5: 10d63fbcdc84d4fbd7ea8849a2467b1f
-      size: 4123850
+      md5: 34d62d6d7ac1d41a03d7c1ca941b12a4
+      size: 304387262
     - path: data/catalogs/refined_embeddings.npz
       hash: md5
-      md5: 1c0c0ca6087774fb10cf0b290b587401
-      size: 38788523
+      md5: 7210f3c205729f52e72c45685509952c
+      size: 38986053
   catalog_bibcnrs:
     cmd: uv run python scripts/catalog_bibcnrs.py
     deps:
@@ -503,8 +503,8 @@ stages:
       size: 7433
     - path: scripts/utils.py
       hash: md5
-      md5: 4f808161fb46113417390aadb9a06078
-      size: 30165
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/embeddings.npz
       hash: md5
@@ -516,42 +516,42 @@ stages:
     deps:
     - path: data/catalogs/embeddings.npz
       hash: md5
-      md5: 3c099aa0cbf2d0223e5097b0bace6013
-      size: 54377190
+      md5: 5b2cbc15cfde88bef3d6652d676535f4
+      size: 54377130
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 9e3be34b66644ccd545bf2a139bb3be6
-      size: 81975610
+      md5: dffc539524bb7fbad37644831bb5b7b8
+      size: 81975609
     - path: scripts/analyze_embeddings.py
       hash: md5
       md5: a28dc485467f98e0ad36665acc73b355
       size: 11616
     - path: scripts/utils.py
       hash: md5
-      md5: 9463fd423dc3ed72e1aed0b76085c903
-      size: 29787
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
     outs:
     - path: data/catalogs/semantic_clusters.csv
       hash: md5
-      md5: f0fda81f82922472fe8f7d10536b7be7
-      size: 6313669
+      md5: 9a4a5da3b921594a8bb366603ccbcba0
+      size: 6381277
   qa_citations:
     cmd: uv run python scripts/qa_citations.py --works-input 
       data/catalogs/enriched_works.csv
     deps:
     - path: data/catalogs/citations.csv
       hash: md5
-      md5: ff792d1ccbba01ae9275dcccb339c61a
-      size: 304889595
+      md5: 2e3c5e6e8364a8dde770c5d96d01ccae
+      size: 354925050
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 9e3be34b66644ccd545bf2a139bb3be6
-      size: 81975610
+      md5: dffc539524bb7fbad37644831bb5b7b8
+      size: 81975609
     - path: scripts/qa_citations.py
       hash: md5
-      md5: 8a083608bd4a3e94230826e24f41cbff
-      size: 9979
+      md5: 878cbe12c2ad9b6131cd53f4b0f313cf
+      size: 10182
     - path: scripts/utils.py
       hash: md5
-      md5: 9463fd423dc3ed72e1aed0b76085c903
-      size: 29787
+      md5: 325a7bd3cba2f59967efe4eff5a89065
+      size: 36971
