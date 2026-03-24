@@ -297,45 +297,24 @@ def _save_llm_cache(cache, config):
     pd.DataFrame(rows).to_csv(LLM_CACHE_PATH, index=False)
 
 
-def _llm_call(prompt, backend, api_key, model):
-    """Send prompt to LLM backend. Returns parsed response text."""
-    import urllib.request
+def _llm_call(prompt, model):
+    """Send prompt to LLM via litellm. Model string encodes the provider.
 
-    if backend == "ollama":
-        body = json.dumps({
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-            "options": {"temperature": 0},
-        }).encode()
-        url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-        req = urllib.request.Request(
-            f"{url}/api/chat",
-            data=body,
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=300) as resp:
-            result = json.loads(resp.read())
-        return result["message"]["content"].strip()
-    else:
-        # OpenRouter
-        body = json.dumps({
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 200,
-            "temperature": 0,
-        }).encode()
-        req = urllib.request.Request(
-            "https://openrouter.ai/api/v1/chat/completions",
-            data=body,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"].strip()
+    Examples:
+        ollama/qwen3.5:27b          → routes to local Ollama
+        openrouter/google/gemma-2-27b-it → routes to OpenRouter
+
+    litellm reads OPENROUTER_API_KEY from env automatically.
+    """
+    import litellm
+
+    response = litellm.completion(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=200,
+        temperature=0,
+    )
+    return response.choices[0].message.content.strip()
 
 
 def _is_relevant(cache_val, threshold):
@@ -531,17 +510,19 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
         log.info("  Flag 6: no candidates (all papers pass concept-group check)")
         return
 
+    # Build provider-prefixed model string from config
+    # New-style: REFINE_MODEL env var or config "model" key with prefix
+    # Legacy: backend + ollama_model/openrouter_model keys
+    model = os.environ.get("REFINE_MODEL", "")
+    if not model:
+        if backend == "ollama":
+            model = f"ollama/{llm_cfg['ollama_model']}"
+        else:
+            model = f"openrouter/{llm_cfg['openrouter_model']}"
     if backend == "ollama":
-        model = llm_cfg["ollama_model"]
-        api_key = ""
         batch_size = llm_cfg.get("ollama_batch_size", 5)
     else:
-        api_key = os.environ.get("OPENROUTER_API_KEY", "")
-        model = llm_cfg["openrouter_model"]
         batch_size = llm_cfg.get("batch_size", 15)
-        if not api_key:
-            log.warning("    no OPENROUTER_API_KEY, skipping LLM scoring")
-            return
 
     title_max = llm_cfg.get("title_max_chars", 150)
     abstract_max = llm_cfg.get("abstract_max_chars", 250)
@@ -587,7 +568,7 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
         prompt = llm_cfg["prompt_template"] + "\n\n".join(papers)
 
         try:
-            answer = _llm_call(prompt, backend, api_key, model)
+            answer = _llm_call(prompt, model)
             answer = re.sub(r"```json?\s*", "", answer)
             answer = re.sub(r"```", "", answer)
             scores = json.loads(answer)

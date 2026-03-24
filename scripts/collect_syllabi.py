@@ -27,7 +27,6 @@ import re
 import sys
 import threading
 import time
-import urllib.request
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -129,84 +128,32 @@ def make_chunks(text, chunk_size=CHUNK_SIZE, overlap=None):
     return chunks
 
 
-def llm_call(prompt, api_key, model="google/gemma-2-27b-it", max_tokens=2000):
-    """Call LLM via local Ollama if available, else OpenRouter.
+def llm_call(prompt, model="openrouter/google/gemma-2-27b-it", max_tokens=2000):
+    """Call LLM via litellm. Model string encodes the provider.
 
-    Ollama backend: set OLLAMA_MODEL env var (default: qwen3.5:27b).
-    OpenRouter backend: uses api_key and model params.
+    Examples:
+        ollama/qwen3.5:27b          → routes to local Ollama
+        openrouter/google/gemma-2-27b-it → routes to OpenRouter
+
+    litellm reads OPENROUTER_API_KEY from env automatically.
     """
-    # OLLAMA_MODEL unset → auto-detect; set to "" → force OpenRouter; set to name → use that model
-    ollama_model = os.environ.get("OLLAMA_MODEL")
-    if ollama_model is not None:
-        if ollama_model:
-            return _llm_call_ollama(prompt, ollama_model, max_tokens)
-        # Explicit empty string: skip Ollama, use OpenRouter
-    elif _ollama_available():
-        return _llm_call_ollama(prompt, "qwen3.5:27b", max_tokens)
-    return _llm_call_openrouter(prompt, api_key, model, max_tokens)
+    import litellm
 
-
-def _ollama_available():
-    """Check if Ollama server is reachable."""
-    try:
-        req = urllib.request.Request("http://localhost:11434/api/tags")
-        with urllib.request.urlopen(req, timeout=2):
-            return True
-    except Exception:
-        return False
-
-
-def _llm_call_ollama(prompt, model, max_tokens):
-    """Call local Ollama server (OpenAI-compatible API)."""
-    if "qwen" in model.lower():
-        prompt = "/no_think\n" + prompt
-    body = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-        "temperature": 0,
-        "stream": False,
-    }).encode()
-
-    req = urllib.request.Request(
-        "http://localhost:11434/v1/chat/completions",
-        data=body,
-        headers={"Content-Type": "application/json"},
-    )
+    # Prepend /no_think for Qwen models on Ollama to suppress chain-of-thought
+    actual_prompt = prompt
+    if model.startswith("ollama/") and "qwen" in model.lower():
+        actual_prompt = "/no_think\n" + prompt
 
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"].strip()
+        response = litellm.completion(
+            model=model,
+            messages=[{"role": "user", "content": actual_prompt}],
+            max_tokens=max_tokens,
+            temperature=0,
+        )
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        log.error("Ollama error: %s", e)
-        return None
-
-
-def _llm_call_openrouter(prompt, api_key, model, max_tokens):
-    """Call OpenRouter API."""
-    body = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-        "temperature": 0,
-    }).encode()
-
-    req = urllib.request.Request(
-        "https://openrouter.ai/api/v1/chat/completions",
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        log.error("LLM error: %s", e)
+        log.error("LLM error (%s): %s", model, e)
         return None
 
 
@@ -504,13 +451,9 @@ TEXT (first 2000 chars):
 
 def stage_classify():
     """LLM classifies fetched pages as syllabi or not."""
-    api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key.strip() and not _ollama_available():
-        log.error("Neither OLLAMA nor OPENROUTER_API_KEY available.")
-        sys.exit(1)
-
-    classify_model = os.environ.get("CLASSIFY_MODEL") or os.environ.get(
-        "OPENROUTER_MODEL", "google/gemma-2-27b-it")
+    classify_model = os.environ.get(
+        "CLASSIFY_MODEL", "openrouter/google/gemma-2-27b-it"
+    )
 
     pages = load_jsonl(PAGES_PATH)
     pages_with_text = [p for p in pages if p.get("text") and not p.get("error")]
@@ -520,8 +463,7 @@ def stage_classify():
 
     pending = [p for p in pages_with_text if p["url"] not in done_urls]
     # Ollama: limit concurrency to avoid GPU contention; OpenRouter: go wide
-    ollama_mode = os.environ.get("OLLAMA_MODEL") is not None or _ollama_available()
-    max_workers = 2 if (ollama_mode and not os.environ.get("OLLAMA_MODEL") == "") else 20
+    max_workers = 2 if classify_model.startswith("ollama/") else 20
     log.info("Classify: %d already done, %d pending, %d workers (model=%s)",
              len(done_urls), len(pending), max_workers, classify_model)
 
@@ -533,7 +475,7 @@ def stage_classify():
         text_snippet = page["text"][:2000]
 
         prompt = CLASSIFY_PROMPT.format(text=text_snippet)
-        response = llm_call(prompt, api_key, model=classify_model)
+        response = llm_call(prompt, model=classify_model)
 
         rec = {
             "url": url,
@@ -605,13 +547,9 @@ SYLLABUS TEXT:
 
 def stage_extract():
     """LLM extracts bibliographic references from confirmed syllabi."""
-    api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not api_key.strip() and not _ollama_available():
-        log.error("Neither OLLAMA nor OPENROUTER_API_KEY available.")
-        sys.exit(1)
-
-    extract_model = os.environ.get("EXTRACT_MODEL") or os.environ.get(
-        "OPENROUTER_MODEL", "google/gemma-2-27b-it")
+    extract_model = os.environ.get(
+        "EXTRACT_MODEL", "openrouter/google/gemma-2-27b-it"
+    )
 
     classified = load_jsonl(CLASSIFIED_PATH)
     syllabi = [c for c in classified if c["is_syllabus"] and c["has_reading_list"]]
@@ -624,8 +562,7 @@ def stage_extract():
     done_urls = {r["url"] for r in extracted}
 
     pending = [s for s in syllabi if s["url"] not in done_urls]
-    ollama_mode = os.environ.get("OLLAMA_MODEL") is not None or _ollama_available()
-    max_workers = 2 if (ollama_mode and not os.environ.get("OLLAMA_MODEL") == "") else 10
+    max_workers = 2 if extract_model.startswith("ollama/") else 10
     log.info("Extract: %d already done, %d pending, %d workers (model=%s)",
              len(done_urls), len(pending), max_workers, extract_model)
 
@@ -671,7 +608,7 @@ def stage_extract():
 
         for chunk in chunks:
             prompt = EXTRACT_PROMPT.format(text=chunk)
-            response = llm_call(prompt, api_key, model=extract_model, max_tokens=4000)
+            response = llm_call(prompt, model=extract_model, max_tokens=4000)
 
             parsed = extract_json_from_text(response)
             if parsed and isinstance(parsed, list):
