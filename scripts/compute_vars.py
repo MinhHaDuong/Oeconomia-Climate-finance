@@ -211,7 +211,7 @@ def corpus_stats(v):
     # Raw (pre-filter) count from unified_works.csv
     unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
     if os.path.isfile(unified_path):
-        unified_n = len(pd.read_csv(unified_path, usecols=["id"]))
+        unified_n = len(pd.read_csv(unified_path, usecols=["source"]))
         v["corpus_raw"] = _int(unified_n)
         v["corpus_removal_pct"] = _pct(100 * (unified_n - n) / unified_n)
 

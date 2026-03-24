@@ -87,7 +87,16 @@ COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluv
 
 TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
                    content/figures/fig_bimodality_core.png \
-                   content/figures/fig_kde.png
+                   content/figures/fig_bimodality_lexical_core.png \
+                   content/figures/fig_bimodality_keywords_core.png \
+                   content/figures/fig_bimodality_lexical.png \
+                   content/figures/fig_bimodality_keywords.png \
+                   content/figures/fig_kde.png \
+                   content/figures/fig_traditions.png \
+                   content/figures/fig_communities.png \
+                   content/figures/fig_semantic.png \
+                   content/figures/fig_semantic_lang.png \
+                   content/figures/fig_semantic_period.png
 
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
@@ -291,6 +300,8 @@ content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.p
 
 # Bimodality tests (co-produced)
 content/figures/fig_bimodality.png \
+content/figures/fig_bimodality_lexical.png \
+content/figures/fig_bimodality_keywords.png \
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
 content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
@@ -334,10 +345,22 @@ content/figures/fig_alluvial_core.png: \
 
 # Bimodality core variant (co-produced)
 content/figures/fig_bimodality_core.png \
+content/figures/fig_bimodality_lexical_core.png \
+content/figures/fig_bimodality_keywords_core.png \
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
 content/tables/tab_pole_papers_core.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only --no-pdf
+
+# Pre-2007 co-citation traditions network
+content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)
+	uv run python $<
+
+# Co-citation communities (network + community assignments)
+content/figures/fig_communities.png \
+content/tables/tab_community_summary.csv &: \
+		scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
+	uv run python $<
 
 # KDE supplementary
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
@@ -389,7 +412,7 @@ output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT
 output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to docx
 
-output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) $(STATS)
+output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) $(STATS) $(TECHREP_FIGS) $(COMPANION_FIGS) lexical-figures
 	quarto render $< --to pdf
 
 output/content/data-paper.pdf: content/data-paper.qmd $(PROJECT_INCLUDES) $(BIB) $(STATS)
