@@ -1,4 +1,4 @@
-## 9. Citation Genealogy
+## 10. Citation Genealogy
 
 **Script:** `scripts/analyze_genealogy.py`
 

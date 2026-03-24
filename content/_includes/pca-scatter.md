@@ -1,4 +1,4 @@
-## 8. PCA Scatter Plots
+## 9. PCA Scatter Plots
 
 **Script:** `scripts/plot_fig45_pca_scatter.py`
 
