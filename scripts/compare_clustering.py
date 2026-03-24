@@ -413,9 +413,23 @@ def save_results(ari_table, perturbation_table, optimal_k):
         log.info("Saved optimal-k results → %s", path)
 
 
-def generate_figures(ari_table, perturbation_table, optimal_k):
-    """Generate comparison figures for the technical report."""
+def generate_figures(ari_table, perturbation_table, optimal_k, no_pdf=False):
+    """Generate comparison figures for the technical report.
+
+    Always produces PNG. Skips PDF when no_pdf=True, matching the --no-pdf
+    convention used by all plot_* scripts in this project.
+    """
     import matplotlib.pyplot as plt
+
+    def _save(fig, stem):
+        """Save PNG always; PDF unless no_pdf."""
+        png_path = os.path.join(FIGURES_DIR, f"{stem}.png")
+        fig.savefig(png_path, dpi=150, bbox_inches="tight")
+        log.info("Saved %s → %s", stem, png_path)
+        if not no_pdf:
+            pdf_path = os.path.join(FIGURES_DIR, f"{stem}.pdf")
+            fig.savefig(pdf_path, dpi=300, bbox_inches="tight")
+            log.info("Saved %s → %s", stem, pdf_path)
 
     # Figure 1: ARI heatmap (method × snapshot pair)
     if ari_table:
@@ -440,11 +454,8 @@ def generate_figures(ari_table, perturbation_table, optimal_k):
         plt.colorbar(im, ax=ax, label="Adjusted Rand Index")
         ax.set_title("Cross-snapshot clustering stability (ARI)")
         plt.tight_layout()
-        path = os.path.join(FIGURES_DIR, "fig_clustering_ari.pdf")
-        fig.savefig(path, dpi=300, bbox_inches="tight")
-        fig.savefig(path.replace(".pdf", ".png"), dpi=150, bbox_inches="tight")
+        _save(fig, "fig_clustering_ari")
         plt.close()
-        log.info("Saved ARI heatmap → %s", path)
 
     # Figure 2: Perturbation stability bar chart
     if perturbation_table:
@@ -463,11 +474,8 @@ def generate_figures(ari_table, perturbation_table, optimal_k):
                     f"{row['mean_ari']:.3f}±{row['std_ari']:.3f}",
                     ha="center", fontsize=9)
         plt.tight_layout()
-        path = os.path.join(FIGURES_DIR, "fig_clustering_perturbation.pdf")
-        fig.savefig(path, dpi=300, bbox_inches="tight")
-        fig.savefig(path.replace(".pdf", ".png"), dpi=150, bbox_inches="tight")
+        _save(fig, "fig_clustering_perturbation")
         plt.close()
-        log.info("Saved perturbation chart → %s", path)
 
     # Figure 3: Silhouette scores
     if optimal_k:
@@ -512,11 +520,8 @@ def generate_figures(ari_table, perturbation_table, optimal_k):
             ax.grid(True, alpha=0.3)
 
         plt.tight_layout()
-        path = os.path.join(FIGURES_DIR, "fig_clustering_optimal_k.pdf")
-        fig.savefig(path, dpi=300, bbox_inches="tight")
-        fig.savefig(path.replace(".pdf", ".png"), dpi=150, bbox_inches="tight")
+        _save(fig, "fig_clustering_optimal_k")
         plt.close()
-        log.info("Saved optimal-k figure → %s", path)
 
 
 # ============================================================
@@ -671,6 +676,70 @@ def multi_space_silhouette(df, embeddings, k_range=range(3, 13)):
     return results
 
 
+def plot_multi_space_figure(space_results, no_pdf=False):
+    """Bar chart comparing silhouette scores across representation spaces.
+
+    Reads the multi-space silhouette results (semantic, lexical, citation)
+    and produces a grouped bar chart showing silhouette at each k value.
+    Output: fig_clustering_spaces.png (and .pdf unless no_pdf).
+    """
+    import matplotlib.pyplot as plt
+
+    if not space_results:
+        log.warning("No multi-space results to plot")
+        return
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    space_colors = {
+        "semantic": "#2196F3",
+        "lexical": "#FF9800",
+        "citation": "#4CAF50",
+    }
+    space_labels = {
+        "semantic": "Semantic (384D embeddings)",
+        "lexical": "Lexical (TF-IDF → 100D SVD)",
+        "citation": "Citation (bib. coupling → 100D SVD)",
+    }
+
+    spaces = [s for s in ["semantic", "lexical", "citation"]
+              if s in space_results]
+    if not spaces:
+        log.warning("No recognized spaces in results")
+        return
+
+    # All spaces share the same k values
+    ks = [r["k"] for r in space_results[spaces[0]]]
+    n_k = len(ks)
+    n_spaces = len(spaces)
+    bar_width = 0.8 / n_spaces
+    x = np.arange(n_k)
+
+    for i, space in enumerate(spaces):
+        scores = [r["silhouette"] for r in space_results[space]]
+        offset = (i - (n_spaces - 1) / 2) * bar_width
+        ax.bar(x + offset, scores, bar_width, label=space_labels.get(space, space),
+               color=space_colors.get(space, "#999999"), alpha=0.85)
+
+    ax.set_xlabel("Number of clusters (k)", fontsize=11)
+    ax.set_ylabel("Silhouette score", fontsize=11)
+    ax.set_title("Silhouette scores across representation spaces (KMeans)")
+    ax.set_xticks(x)
+    ax.set_xticklabels(ks)
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3, axis="y")
+
+    plt.tight_layout()
+    png_path = os.path.join(FIGURES_DIR, "fig_clustering_spaces.png")
+    fig.savefig(png_path, dpi=150, bbox_inches="tight")
+    log.info("Saved multi-space figure → %s", png_path)
+    if not no_pdf:
+        pdf_path = os.path.join(FIGURES_DIR, "fig_clustering_spaces.pdf")
+        fig.savefig(pdf_path, dpi=300, bbox_inches="tight")
+        log.info("Saved multi-space figure → %s", pdf_path)
+    plt.close()
+
+
 # ============================================================
 # Entry point
 # ============================================================
@@ -681,7 +750,7 @@ def main():
         description="Compare clustering methods across corpus snapshots"
     )
     parser.add_argument("--no-pdf", action="store_true",
-                        help="Skip figure generation")
+                        help="Skip PDF generation (PNG only)")
     parser.add_argument("--no-perturbation", action="store_true",
                         help="Skip perturbation stability (saves time)")
     parser.add_argument("--n-perturbation", type=int, default=10,
@@ -722,9 +791,10 @@ def main():
     # Save results
     save_results(ari_table, perturbation_table, optimal_k)
 
-    # Generate figures
-    if not args.no_pdf:
-        generate_figures(ari_table, perturbation_table, optimal_k)
+    # Generate figures (always produce PNG; skip PDF if --no-pdf)
+    generate_figures(ari_table, perturbation_table, optimal_k,
+                     no_pdf=args.no_pdf)
+    plot_multi_space_figure(space_results, no_pdf=args.no_pdf)
 
     log.info("Comparison complete.")
 
