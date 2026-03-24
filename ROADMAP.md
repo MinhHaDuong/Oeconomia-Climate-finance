@@ -12,6 +12,19 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Waiting for referee reports (~3 mo
 - [ ] Continue Tier 1 reading plan (defence against reviewer questions)
 - [ ] Companion methods paper (Scientometrics/QSS): parked for post-acceptance
 
+## Next milestone: Data paper
+
+Submit data paper to RDJ4HSS (diamond OA). Immediate priority.
+
+- [ ] Finalize and submit data paper (PDF ready at `output/content/data-paper.pdf`)
+
+## Then: Transfer to AEDIST
+
+Before this repo can serve the AEDIST project, the reusable harness must be split out.
+
+- [ ] Extract harness into standalone repo (#391)
+- [ ] Offline ticket system — good to have (PR #385)
+
 ## Post-submission improvements
 
 - [x] Split embeddings encoding (Phase 1) from UMAP+clustering (Phase 2) (#189)
