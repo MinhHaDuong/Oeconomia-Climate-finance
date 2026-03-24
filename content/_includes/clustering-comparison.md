@@ -1,4 +1,5 @@
 ## 7. Clustering Method and Representation Space Comparison
+<!-- WARNING: AI-generated, not human-reviewed -->
 
 **Script:** `scripts/compare_clustering.py`
 
