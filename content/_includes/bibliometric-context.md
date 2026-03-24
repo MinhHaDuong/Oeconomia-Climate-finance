@@ -1,4 +1,5 @@
 ## 11. Bibliometric Context: Positioning in the Literature
+<!-- WARNING: AI-generated, not human-reviewed -->
 
 ### 11.1 Prior bibliometric studies of climate finance
 
