@@ -1,4 +1,5 @@
 ## 9. Change-Point Detection in Field Structure
+<!-- WARNING: AI-generated, not human-reviewed -->
 
 **Script:** `scripts/compare_clustering.py` (annual silhouette), BIC piecewise-constant model
 
