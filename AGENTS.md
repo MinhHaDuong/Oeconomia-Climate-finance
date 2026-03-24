@@ -21,11 +21,16 @@
 Every task passes through four phases. Announce transitions inline: `[Phase → Phase] reason`.
 
 ### Dreaming
-Interactive discussion with the user. No code, no commits. Deliverable: a shared vision.
-Imagine specs, gather information, brainstorm freely. Ask questions, surface motivations, explore what success looks like.
+Interactive discussion with the user on an `explore-{topic}` branch. Imagine specs, gather information, brainstorm freely. Ask questions, surface motivations, explore what success looks like.
 Generate portfolio of options with their probabilities. Go beyond conventional habits to explore new approaches. Take the high road.
 Act as my high-level advisor. Challenge my thinking, question my assumptions, and expose blind spots. Stop defaulting to agreement. If my reasoning is weak, break it down and show me why.
- 
+
+Commits are workspace artifacts (notes, analysis, braindumps) unless the conversation produces a small fix (see below). Deliverable: a shared vision, plus one of:
+
+- **Tickets** — non-trivial work gets one ticket per action item, for future Doing conversations.
+- **Small fix** — if the fix fits in one red/green/refactor cycle and doesn't need a fresh context, do it on the explore branch. TDD still applies. Rationale goes in the commit message (why this change) and the PR description (the Dreaming context that led to it). If during the fix you realize it's bigger than expected, stop — open a ticket, start fresh.
+- **Nothing actionable** — delete the branch at session end.
+
 ### Planning
 Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet. Deliverable: a ticket with test spec.
 
@@ -80,7 +85,7 @@ The agent must always know and declare its current DD phase.
 
 ## Git discipline
 
-- **Always work on a branch.** Branch naming: `t{N}-short-description`.
+- **Always work on a branch.** Branch naming: `t{N}-short-description` (Doing) or `explore-{topic}` (Dreaming). Main is read-only except for STATE housekeeping (see `runbooks/on-start.md`).
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically by `on-start` trigger.
@@ -114,4 +119,6 @@ The wave ends with a global verification pass across all changes merged in this 
 - See `docs/writing-guidelines.md` for manuscript-specific guidance.
 
 ## Conversation scope
-One ticket per conversation. The agent stops when the ticket's exit criteria are met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.
+**Doing conversations**: one ticket per conversation. The agent stops when the ticket's exit criteria are met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.
+
+**Dreaming conversations**: may produce zero or many tickets, or inline small fixes. The explore branch is the workspace; the tickets (or PR) are the deliverables.
