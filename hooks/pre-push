@@ -1,0 +1,23 @@
+#!/bin/sh
+# Pre-push guard: warn if dvc.lock changed but DVC data may not be pushed.
+
+# Compare what we're about to push against what the remote already has.
+# $1 = remote name, $2 = remote URL (provided by git)
+remote="$1"
+
+while read local_ref local_oid remote_ref remote_oid; do
+    # Skip deletes
+    [ "$local_oid" = "0000000000000000000000000000000000000000" ] && continue
+
+    # Check if dvc.lock changed in the commits being pushed
+    range="$remote_oid..$local_oid"
+    [ "$remote_oid" = "0000000000000000000000000000000000000000" ] && range="$local_oid"
+
+    if git diff --name-only "$range" 2>/dev/null | grep -q '^dvc\.lock$'; then
+        echo "WARNING: dvc.lock changed in this push." >&2
+        echo "  Did you run 'dvc push' (or 'make corpus' which does it automatically)?" >&2
+        echo "  Without it, other machines cannot pull the pipeline data." >&2
+        echo "" >&2
+        # Warning only — don't block the push
+    fi
+done
