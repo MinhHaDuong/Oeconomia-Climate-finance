@@ -172,9 +172,18 @@ deposit to ensure reproducibility.
 CoreTrustSeal-equivalent). Files are stored in CERN's EOS storage infrastructure
 with geographic redundancy.
 
+**Why Zenodo over Recherche Data Gouv?** CNRS recommends its institutional space
+on Recherche Data Gouv as the primary data repository. However, Zenodo was chosen
+for international visibility and because the dataset targets a global audience
+(8 languages, 6 sources across institutional traditions). Per Recherche Data Gouv
+guidelines, a duplicate deposit is unnecessary when the primary repository already
+assigns a DOI. The Zenodo DOI is linked from the HAL record for institutional
+discoverability.
+
 **Secondary archives**:
-- HAL (French national open-science archive, CCSD/CNRS) — manuscript and data paper
+- HAL (French national open-science archive, CCSD/CNRS, CoreTrustSeal since 2025) — manuscript and data paper
 - GitHub (code) — not a preservation repository, but provides redundancy
+- Software Heritage: pipeline code should be archived (action pending)
 
 **Format longevity**: all data files use plain-text, non-proprietary formats
 (CSV, NPZ/NumPy, JSONL). No specialised software is required to read the data
