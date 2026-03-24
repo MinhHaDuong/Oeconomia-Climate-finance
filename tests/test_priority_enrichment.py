@@ -75,7 +75,7 @@ class TestDeterminism:
             "from_semanticscholar": [1, 0, 1, 1, 0],
             "from_istex": [1, 0, 0, 1, 0],
             "from_bibcnrs": [0, 0, 0, 1, 0],
-            "from_scispsace": [0, 0, 0, 0, 0],
+            "from_scispace": [0, 0, 0, 0, 0],
             "from_grey": [0, 0, 0, 0, 0],
             "from_teaching": [0, 0, 0, 0, 0],
         })
@@ -145,7 +145,7 @@ class TestSortDoisByPriority:
             "from_semanticscholar": [0, 1, 0],
             "from_istex": [0, 1, 0],
             "from_bibcnrs": [0, 0, 0],
-            "from_scispsace": [0, 0, 0],
+            "from_scispace": [0, 0, 0],
             "from_grey": [0, 0, 0],
             "from_teaching": [0, 0, 0],
         })

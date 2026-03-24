@@ -17,7 +17,7 @@
 /corpus_manifest.json
 # Hand-curated inputs (tracked by individual .dvc files)
 /bibcnrs_works.csv
-/scispsace_works.csv
+/scispace_works.csv
 # Caches and auxiliary files (tracked by individual .dvc files)
 /llm_relevance_cache.csv
 /communities.csv

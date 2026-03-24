@@ -12,7 +12,7 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 | Grey literature | `catalog_grey.py` | Hybrid (YAML seed + World Bank API) | OECD, UNFCCC, World Bank, CPI reports |
 | Teaching canon | `build_teaching_canon.py` | Automated (YAML extraction) | Syllabus readings from 15 institutions |
 | bibCNRS | `catalog_bibcnrs.py` | **Hand-harvested** (CNRS Janus auth) | Non-English literature (FR, ZH, JA) via WoS/EconLit/FRANCIS |
-| SciSpace | `catalog_scispsace.py` | **Hand-harvested** (commercial tool) | AI-curated thematic corpus (RIS + CSV exports) |
+| SciSpace | `catalog_scispace.py` | **Hand-harvested** (commercial tool) | AI-curated thematic corpus (RIS + CSV exports) |
 
 The two hand-harvested sources cannot currently be automated: bibCNRS requires CNRS institutional credentials with no public API, and SciSpace is a commercial AI research tool requiring manual export. Together they contribute ~900 works before deduplication (~3% of the unified corpus), primarily filling gaps in non-English coverage and AI-curated seed papers. Their inclusion is justified by multi-source overlap validation: over 500 works appear in both a hand-harvested and an automated source, confirming retrieval consistency.
 
@@ -74,7 +74,7 @@ This imbalance likely reflects a harvesting bias. Business schools (Harvard, NYU
 
 The merge script (`scripts/catalog_merge.py`) applies two deduplication passes:
 
-1. **DOI-based deduplication:** DOIs are normalized (lowercased, URL prefix stripped). Records sharing the same DOI are merged using a source priority order: openalex > semanticscholar > scopus > istex > bibcnrs > scispsace > grey > teaching. The maximum `cited_by_count` across duplicates is retained; other fields use the best non-empty value following source priority.
+1. **DOI-based deduplication:** DOIs are normalized (lowercased, URL prefix stripped). Records sharing the same DOI are merged using a source priority order: openalex > semanticscholar > scopus > istex > bibcnrs > scispace > grey > teaching. The maximum `cited_by_count` across duplicates is retained; other fields use the best non-empty value following source priority.
 2. **Title+year deduplication:** Records without DOIs are grouped by normalized title (lowercased, punctuation stripped) and year. Groups are merged using the same priority logic.
 
 Boolean `from_*` columns (one per source) track which databases contributed to each record, and `source_count` is their sum. The `source` column retains the primary source (highest in the priority order). The output is `unified_works.csv`.

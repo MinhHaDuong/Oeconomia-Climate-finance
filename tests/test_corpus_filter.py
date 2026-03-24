@@ -95,7 +95,7 @@ class TestExtendMode:
             "from_semanticscholar": [0] * 10,
             "from_istex": [0] * 10,
             "from_bibcnrs": [0] * 10,
-            "from_scispsace": [0] * 10,
+            "from_scispace": [0] * 10,
             "from_grey": [0] * 10,
             "from_teaching": [0] * 10,
         })
@@ -200,7 +200,7 @@ class TestFilterMode:
             "from_semanticscholar": [0] * 10,
             "from_istex": [0] * 10,
             "from_bibcnrs": [0] * 10,
-            "from_scispsace": [0] * 10,
+            "from_scispace": [0] * 10,
             "from_grey": [0] * 10,
             "from_teaching": [0] * 10,
             # Flag 3 rows as noise (boolean columns only, no derived 'flags')

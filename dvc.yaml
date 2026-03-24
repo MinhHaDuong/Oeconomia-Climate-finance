@@ -86,7 +86,7 @@ stages:
       - data/catalogs/grey_works.csv
       - data/catalogs/teaching_works.csv
       # Hand-curated input (pre-placed, not produced by pipeline)
-      - data/catalogs/scispsace_works.csv
+      - data/catalogs/scispace_works.csv
     outs:
       - data/catalogs/unified_works.csv
 

@@ -509,28 +509,30 @@ DPAPER_TMP       := /tmp/$(DPAPER_ARCHIVE)
 archive-datapaper: check-corpus
 	@echo "=== Building data paper archive ==="
 	rm -rf $(DPAPER_TMP)
-	mkdir -p $(DPAPER_TMP)
-	@# Start with everything git tracks (excludes .git, respects .gitignore)
-	git archive HEAD | tar -x -C $(DPAPER_TMP)
-	@# Copy all DVC-managed data (dereference symlinks)
-	@echo "  Copying DVC-managed data (this may take a while)..."
-	cp -rL data/ $(DPAPER_TMP)/data/
-	@# Copy generated figures if they exist
+	mkdir -p $(DPAPER_TMP)/code $(DPAPER_TMP)/data
+	@# Part 1: Code (pipeline source via git archive)
+	git archive HEAD | tar -x -C $(DPAPER_TMP)/code
+	rm -rf $(DPAPER_TMP)/code/.dvc $(DPAPER_TMP)/code/attic $(DPAPER_TMP)/code/.claude
+	@# Part 2: v1.1 corpus data files
+	@echo "  Preparing deposit CSV (dropping abstracts)..."
+	uv run python scripts/prepare_deposit.py --out-dir $(DPAPER_TMP)/data
+	@echo "  Copying embeddings, citations, and source catalogs..."
+	cp -L $(DATA_DIR)/embeddings.npz $(DPAPER_TMP)/data/
+	cp -L $(DATA_DIR)/citations.csv $(DPAPER_TMP)/data/
+	for src in openalex istex bibcnrs scispace grey teaching; do \
+		cp -L $(DATA_DIR)/$${src}_works.csv $(DPAPER_TMP)/data/ 2>/dev/null || true; \
+	done
+	@# Copy figures and tables for rendering
 	@if ls content/figures/*.png >/dev/null 2>&1; then \
-		mkdir -p $(DPAPER_TMP)/content/figures; \
-		cp content/figures/*.png $(DPAPER_TMP)/content/figures/; \
+		mkdir -p $(DPAPER_TMP)/code/content/figures; \
+		cp content/figures/*.png $(DPAPER_TMP)/code/content/figures/; \
 	fi
-	@# Copy generated tables if they exist
 	@if ls content/tables/* >/dev/null 2>&1; then \
-		mkdir -p $(DPAPER_TMP)/content/tables; \
-		cp -r content/tables/* $(DPAPER_TMP)/content/tables/; \
+		mkdir -p $(DPAPER_TMP)/code/content/tables; \
+		cp -r content/tables/* $(DPAPER_TMP)/code/content/tables/; \
 	fi
-	@# Copy per-document vars files (gitignored, like figures/tables)
-	cp content/*-vars.yml $(DPAPER_TMP)/content/ 2>/dev/null || true
-	@# .env template
-	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/.env
-	@# Remove items that should not ship
-	rm -rf $(DPAPER_TMP)/.dvc $(DPAPER_TMP)/attic $(DPAPER_TMP)/.claude
+	cp content/*-vars.yml $(DPAPER_TMP)/code/content/ 2>/dev/null || true
+	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/code/.env
 	@echo "=== Creating tarball ==="
 	tar czf $(DPAPER_ARCHIVE).tar.gz -C /tmp \
 		--exclude='__pycache__' --exclude='.venv' \

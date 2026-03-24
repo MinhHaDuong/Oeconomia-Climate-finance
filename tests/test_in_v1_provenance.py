@@ -138,7 +138,7 @@ class TestFilterModeInV1:
             "from_semanticscholar": [0] * 6,
             "from_istex": [0] * 6,
             "from_bibcnrs": [0] * 6,
-            "from_scispsace": [0] * 6,
+            "from_scispace": [0] * 6,
             "from_grey": [0] * 6,
             "from_teaching": [0] * 6,
             "missing_metadata": [False] * 6,

@@ -243,7 +243,7 @@ def main():
         "openalex_historical",
         "istex",
         "bibcnrs",
-        "scispsace",
+        "scispace",
         "grey",
         "teaching",
     ]
