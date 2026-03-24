@@ -28,6 +28,7 @@ FLAG_COLUMNS = [
     "no_abstract_irrelevant",
     "title_blacklist",
     "citation_isolated_old",
+    "semantic_outlier",
     "llm_irrelevant",
 ]
 
