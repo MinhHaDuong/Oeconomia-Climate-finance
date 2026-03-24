@@ -32,9 +32,9 @@ log = get_logger("enrich_citations_openalex")
 
 CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
 CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
-# TODO(#307): move to enrich_cache/citations_oa_done.txt (consistent with
-# enrich_cache/ pattern used by enrich_citations_batch.py and enrich_embeddings.py)
-DONE_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_done.txt")
+DONE_PATH = os.path.join(CATALOGS_DIR, "enrich_cache", "citations_oa_done.txt")
+# Migrate from old location if needed
+_OLD_DONE_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_done.txt")
 
 OA_BASE = "https://api.openalex.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
@@ -266,6 +266,12 @@ def main():
                   "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kwargs}
         with open(args.log_jsonl, "a") as _f:
             _f.write(_json.dumps(record) + "\n")
+
+    # Migrate done-set from old location (.citations_oa_done.txt → enrich_cache/)
+    if os.path.exists(_OLD_DONE_PATH) and not os.path.exists(DONE_PATH):
+        os.makedirs(os.path.dirname(DONE_PATH), exist_ok=True)
+        os.rename(_OLD_DONE_PATH, DONE_PATH)
+        log.info("Migrated done-set: %s → %s", _OLD_DONE_PATH, DONE_PATH)
 
     # If explicitly starting fresh, discard done-set and unmerged checkpoint.
     if not args.resume:
