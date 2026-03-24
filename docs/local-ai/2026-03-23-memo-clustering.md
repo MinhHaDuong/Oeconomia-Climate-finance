@@ -1,4 +1,8 @@
-# Braindump: Clustering reveals field structure (not method limitations)
+# Memo: Clustering reveals field structure (not method limitations)
+
+Author: Claude (overnight autonomous session)
+Date: 2026-03-23
+Method: KMeans/HDBSCAN/Spectral clustering across semantic, lexical, and citation spaces (27K works, 384D embeddings)
 
 ## The insight
 
