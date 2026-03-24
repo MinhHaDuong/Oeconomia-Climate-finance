@@ -753,8 +753,10 @@ def main():
                         help="Skip perturbation stability (saves time)")
     parser.add_argument("--n-perturbation", type=int, default=10,
                         help="Number of perturbation repeats (default: 10)")
-    parser.add_argument("--k", type=int, default=6,
-                        help="Number of clusters for KMeans/Spectral (default: 6)")
+    cfg_k = load_analysis_config()["clustering"]["k"]
+    parser.add_argument("--k", type=int, default=cfg_k,
+                        help=f"Number of clusters for KMeans/Spectral "
+                             f"(default: {cfg_k} from analysis.yaml)")
     parser.add_argument("--k-range", type=str, default="3,12",
                         help="k range for optimal-k sweep (default: 3,12)")
     args = parser.parse_args()
