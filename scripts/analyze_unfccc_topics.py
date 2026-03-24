@@ -1,3 +1,4 @@
+# WARNING: AI-generated, not human-reviewed
 """UNFCCC-guided topic taxonomy analysis of the climate finance literature.
 
 Hypothesis: the academic climate finance literature mirrors the organizational structure
