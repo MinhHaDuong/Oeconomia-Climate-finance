@@ -116,6 +116,8 @@ Report %identified (DOI or handle or URL) instead of just %DOI.
 | Task | When |
 |------|------|
 | Zenodo v1.1 deposit (upload new files, keep concept DOI) | Day 1 |
+| Finalize DMP (`docs/data-management-plan.md`): update counts to v1.1, register on DMP OPIDoR | Day 1 |
+| Archive pipeline code on Software Heritage (`save code now`) | Day 1 |
 | Final proofread of data paper | Day 1 |
 | Submit to RDJ4HSS via openjournals.nl | Day 1 |
 | Update STATE.md and ROADMAP.md | Day 1 |
