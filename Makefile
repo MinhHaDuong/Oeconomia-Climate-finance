@@ -143,7 +143,9 @@ all: manuscript papers
 corpus:
 	@[ "$$(hostname)" = "padme" ] || { echo "error: make corpus runs on padme only. Use 'make corpus-sync' on $$(hostname)."; exit 1; }
 	@uv run dvc version >/dev/null 2>&1 || { echo "error: dvc not found. Install with: uv tool install 'dvc[ssh]'"; exit 1; }
-	uv run dvc repro; ret=$$?; uv run dvc push; exit $$ret
+	uv run dvc repro; ret=$$?; uv run dvc push; \
+	echo ""; echo "DVC lock and pool files staged, ready to commit."; \
+	exit $$ret
 
 # Sync data from padme — run on doudou (never pushes).
 corpus-sync:
