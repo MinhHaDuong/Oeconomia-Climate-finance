@@ -13,11 +13,9 @@ Usage:
 
 import argparse
 import os
-import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("prepare_deposit")
