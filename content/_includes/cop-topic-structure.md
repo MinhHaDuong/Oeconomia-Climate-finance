@@ -1,4 +1,5 @@
 ## 10. UNFCCC Negotiation Architecture and Academic Field Structure
+<!-- WARNING: AI-generated, not human-reviewed -->
 
 ### 10.1 The co-production hypothesis
 
