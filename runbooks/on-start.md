@@ -1,6 +1,6 @@
 # On start — conversation start trigger
 
-Run at the start of every conversation, before the first response.
+Runs after the user's first message, before the agent's first response.
 
 ## 1. Setup
 
@@ -35,8 +35,8 @@ then announce. **Never edit files while on main.**
 | Context | Phase | Branch |
 |---------|-------|--------|
 | Active feature branch + open PR | `[→ Doing]` | Checkout existing branch |
-| Ticket reference but no branch | `[→ Planning]` | Create `t{N}-short-description` |
-| Fresh conversation, no ticket | `[→ Dreaming]` | Create `explore-{topic}` from first user message |
+| Ticket reference but no branch | `[→ Planning]` | Stay on `explore-{topic}`; `start-ticket` creates the `t{N}` branch when Doing begins |
+| Fresh conversation, no ticket | `[→ Dreaming]` | Create `explore-{topic}` (name inferred from user's opening message) |
 
 If the conversation turns out to be a quick question with no file edits,
 the branch is harmless — delete it at session end if empty.

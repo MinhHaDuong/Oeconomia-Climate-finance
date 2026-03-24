@@ -25,7 +25,7 @@ Interactive discussion with the user on an `explore-{topic}` branch. Imagine spe
 Generate portfolio of options with their probabilities. Go beyond conventional habits to explore new approaches. Take the high road.
 Act as my high-level advisor. Challenge my thinking, question my assumptions, and expose blind spots. Stop defaulting to agreement. If my reasoning is weak, break it down and show me why.
 
-Commits are optional workspace artifacts (notes, analysis, braindumps) — not production code. Deliverable: a shared vision, plus one of:
+Commits are workspace artifacts (notes, analysis, braindumps) unless the conversation produces a small fix (see below). Deliverable: a shared vision, plus one of:
 
 - **Tickets** — non-trivial work gets one ticket per action item, for future Doing conversations.
 - **Small fix** — if the fix fits in one red/green/refactor cycle and doesn't need a fresh context, do it on the explore branch. TDD still applies. Rationale goes in the commit message (why this change) and the PR description (the Dreaming context that led to it). If during the fix you realize it's bigger than expected, stop — open a ticket, start fresh.
