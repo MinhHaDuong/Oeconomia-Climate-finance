@@ -277,7 +277,7 @@ def main():
         # Record DOIs found but with no refs (so we skip on resume)
         for d in found_dois - {r["source_doi"] for r in refs}:
             sentinel = pd.DataFrame([{
-                "source_doi": d, "source_id": "", "ref_doi": "",
+                "source_doi": d, "source_id": "", "ref_doi": "__NO_REFS__",
                 "ref_title": "", "ref_first_author": "", "ref_year": "",
                 "ref_journal": "", "ref_raw": "",
             }])
@@ -302,10 +302,11 @@ def main():
     if os.path.exists(checkpoint_path):
         new_refs = pd.read_csv(checkpoint_path, dtype=str,
                                keep_default_na=False)
-        # Drop sentinel rows: every field except source_doi is empty string.
-        # Sentinels are written with all non-key fields as "" (line ~279).
+        # Drop sentinel rows (marker: ref_doi == "__NO_REFS__").
+        # Also drop legacy sentinels (all non-key fields empty).
+        is_sentinel = (new_refs["ref_doi"] == "__NO_REFS__")
         non_key_cols = [c for c in REFS_COLUMNS if c != "source_doi"]
-        is_sentinel = new_refs[non_key_cols].eq("").all(axis=1)
+        is_sentinel = is_sentinel | new_refs[non_key_cols].eq("").all(axis=1)
         new_refs_real = new_refs[~is_sentinel]
         combined = pd.concat([existing, new_refs_real], ignore_index=True)
         combined.to_csv(citations_path, index=False)
