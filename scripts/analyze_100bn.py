@@ -1,3 +1,4 @@
+# WARNING: AI-generated, not human-reviewed
 """Analyze the $100bn climate finance accounting sub-literature.
 
 Tests whether the $100bn pledge sub-topic clusters in citation space
