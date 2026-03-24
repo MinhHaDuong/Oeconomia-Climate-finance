@@ -5,7 +5,7 @@ and pushes forward on deliverables. Author reviews results in the morning.
 
 ## Trigger
 
-Entry point is `runbooks/celebrate-day.md` step 8 — the end-of-day celebration
+Entry point is `runbooks/celebrate-day.md` step 10 — the end-of-day celebration
 hands off to overnight exploration when the user requests it.
 
 User prompt structured as:
@@ -201,7 +201,7 @@ Before the session ends:
 2. All work is pushed and PRs are open.
 3. Write the morning briefing (overnight log + PR list).
    Do NOT run `celebrate-day.md` — that would re-trigger overnight
-   exploration (step 8). The overnight log IS the celebration artifact.
+   exploration (step 10). The overnight log IS the celebration artifact.
 4. Final PR list in the last message — the author's morning briefing.
 
 ## Time and budget management

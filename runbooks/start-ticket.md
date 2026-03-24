@@ -14,4 +14,7 @@ When this trigger runs, the agent is about to start implementing a ticket.
 5. Write the first test from the **Test** section of the ticket.
 6. Run `make check-fast` — confirm the test fails (Red).
 7. `[Planning → Doing]` — announce the transition, then begin: Red → Green → Refactor.
-8. Run one up to three Review/Fix cycle(s), addressing all comments regardless of their apparent severity.
+8. Create the PR.
+9. Review according to the runbook.
+10. Fix, addressing all comments regardless of their apparent severity.
+11. Repeat 9–10 up to 3 times. If still not clean, escalate (see AGENTS.md).
