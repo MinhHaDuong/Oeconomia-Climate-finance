@@ -17,7 +17,6 @@ import os
 import time
 
 import pandas as pd
-import requests
 
 from utils import (CATALOGS_DIR, REFS_COLUMNS, MAILTO, normalize_doi,
                    sort_dois_by_priority, retry_get, save_run_report, make_run_id,
@@ -32,6 +31,7 @@ DONE_CACHE_PATH = os.path.join(CACHE_DIR, "citations_done.csv")
 URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 SENTINEL_REF_DOI = "__NO_REFS__"  # Marker for DOIs found but with no references
+MAX_CONSECUTIVE_ERRORS = 5
 
 
 def fetch_batch(dois, delay=0.2, counters=None,
@@ -60,11 +60,14 @@ def fetch_batch(dois, delay=0.2, counters=None,
     )
     resp.raise_for_status()
 
+    data = resp.json()  # Parse once (#3)
+    items = data.get("message", {}).get("items", [])
+
     rows = []
-    for item in resp.json().get("message", {}).get("items", []):
+    for item in items:
         source_doi = normalize_doi(item.get("DOI", ""))
         for ref in item.get("reference", []):
-            rows.append({
+            row = {
                 "source_doi": source_doi,
                 "source_id": "",
                 "ref_doi": normalize_doi(ref.get("DOI", "")),
@@ -75,9 +78,12 @@ def fetch_batch(dois, delay=0.2, counters=None,
                 "ref_year": ref.get("year", ""),
                 "ref_journal": ref.get("journal-title", ""),
                 "ref_raw": json.dumps(ref, ensure_ascii=False),
-            })
-    found_dois = {normalize_doi(it.get("DOI", ""))
-                  for it in resp.json()["message"]["items"]}
+            }
+            assert set(row.keys()) == set(REFS_COLUMNS), (  # (#9)
+                f"fetch_batch keys {set(row.keys())} != REFS_COLUMNS {set(REFS_COLUMNS)}"
+            )
+            rows.append(row)
+    found_dois = {normalize_doi(it.get("DOI", "")) for it in items}
     return rows, found_dois
 
 
@@ -180,11 +186,10 @@ def main():
         """Write a structured event to the optional JSONL log."""
         if not args.log_jsonl:
             return
-        import json as _json
         record = {"run_id": run_id, "event": event_type,
                   "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kwargs}
-        with open(args.log_jsonl, "a") as _f:
-            _f.write(_json.dumps(record) + "\n")
+        with open(args.log_jsonl, "a") as f:
+            f.write(json.dumps(record) + "\n")  # (#8) reuse top-level json
 
     # If explicitly starting fresh, discard any stale unmerged checkpoint.
     if not args.resume and os.path.exists(checkpoint_path):
@@ -195,14 +200,16 @@ def main():
 
     # Load existing citations.csv for merging later (may be absent after DVC clean)
     if os.path.exists(citations_path):
-        existing = pd.read_csv(citations_path, low_memory=False)
+        existing = pd.read_csv(citations_path, dtype=str,  # (#1)
+                               keep_default_na=False)
         existing["source_doi"] = existing["source_doi"].apply(normalize_doi)
     else:
         existing = pd.DataFrame(columns=REFS_COLUMNS)
 
     # Also count DOIs from checkpoint (partial run)
     if args.resume and os.path.exists(checkpoint_path):
-        ckpt = pd.read_csv(checkpoint_path, low_memory=False)
+        ckpt = pd.read_csv(checkpoint_path, dtype=str,  # (#2)
+                           keep_default_na=False)
         ckpt_dois = set(ckpt["source_doi"].apply(normalize_doi)) - {"", "nan", "none"}
         done_dois |= ckpt_dois
         log.info("Checkpoint: %d rows, %d DOIs already fetched",
@@ -240,7 +247,7 @@ def main():
     # Process in batches
     total_refs = 0
     total_found = 0
-    errors = 0
+    consecutive_errors = 0  # (#10) reset on success, not cumulative
     checkpoint_flushes = 0
     n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
     checkpoint_every = args.checkpoint_every if args.checkpoint_every > 0 else n_batches + 1
@@ -260,12 +267,14 @@ def main():
         except Exception as e:
             log.error("Batch %d: %s", batch_num, e)
             _log_event("batch_error", batch=batch_num, error=str(e))
-            errors += 1
-            if errors > 10:
-                log.error("Too many errors, stopping.")
+            consecutive_errors += 1
+            if consecutive_errors > MAX_CONSECUTIVE_ERRORS:
+                log.error("Too many consecutive errors (%d), stopping.",
+                          consecutive_errors)
                 break
             continue
 
+        consecutive_errors = 0  # (#10) reset on success
         total_refs += len(refs)
         total_found += len(found_dois)
 
@@ -275,15 +284,17 @@ def main():
             batch_df.to_csv(checkpoint_path, mode="a", header=False,
                             index=False)
 
-        # Record DOIs found but with no refs (so we skip on resume)
-        for d in found_dois - {r["source_doi"] for r in refs}:
-            sentinel = pd.DataFrame([{
+        # Record DOIs found but with no refs (so we skip on resume).
+        # Batch sentinels into one write instead of N file opens (#4).
+        no_ref_dois = found_dois - {r["source_doi"] for r in refs}
+        if no_ref_dois:
+            sentinel_rows = [{
                 "source_doi": d, "source_id": "", "ref_doi": SENTINEL_REF_DOI,
                 "ref_title": "", "ref_first_author": "", "ref_year": "",
                 "ref_journal": "", "ref_raw": "",
-            }])
-            sentinel.to_csv(checkpoint_path, mode="a", header=False,
-                            index=False)
+            } for d in no_ref_dois]
+            pd.DataFrame(sentinel_rows, columns=REFS_COLUMNS).to_csv(
+                checkpoint_path, mode="a", header=False, index=False)
 
         checkpoint_flushes += 1
         if checkpoint_flushes % checkpoint_every == 0:
@@ -321,14 +332,15 @@ def main():
         combined = existing
 
     # Persist done-set so it survives DVC re-runs (citations.csv gets deleted)
+    # (#6) normalize consistently — combined is already str dtype
     all_done = ((done_dois
-                 | set(combined["source_doi"].apply(normalize_doi).dropna()))
+                 | set(combined["source_doi"].apply(normalize_doi)))
                 - {"", "nan", "none"})
     save_done_cache(all_done, done_cache_path)
 
     elapsed = time.time() - t0
-    log.info("Done in %.0fs: %d DOIs found, %d refs, %d errors",
-             elapsed, total_found, total_refs, errors)
+    log.info("Done in %.0fs: %d DOIs found, %d refs, %d consecutive errors at exit",
+             elapsed, total_found, total_refs, consecutive_errors)
 
     counters.update({
         "dois_total": len(all_dois),
@@ -337,7 +349,7 @@ def main():
         "dois_found": total_found,
         "refs_written": total_refs,
         "checkpoint_flush_count": checkpoint_flushes,
-        "errors": errors,
+        "consecutive_errors_at_exit": consecutive_errors,
         "elapsed_seconds": round(elapsed, 1),
     })
     report_path = save_run_report(counters, run_id, "enrich_citations_batch")
