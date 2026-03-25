@@ -142,15 +142,13 @@ stages:
     outs:
       - data/catalogs/enriched_works.csv
 
-  # Phase 1b.3: Build citation graph (OpenAlex referenced_works only)
-  # Crossref batch pass disabled: without metadata-plus subscription,
-  # Crossref returns 0 references (empty reference arrays). OpenAlex
-  # referenced_works is free and complete. See enrich_citations_batch.py
-  # for the Crossref code if access is restored.
+  # Phase 1b.3: Build citation graph (Crossref batch + OpenAlex referenced_works)
   enrich_citations:
     cmd: >-
+      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &&
       uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv
     deps:
+      - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
       - scripts/utils.py
       - scripts/pipeline_io.py
@@ -162,19 +160,17 @@ stages:
       - data/catalogs/citations.csv
 
   # Phase 1b.4: Citation QC — verify against Crossref ground truth
-  # DISABLED: qa_citations verifies against Crossref, which requires
-  # metadata-plus subscription. Re-enable when Crossref access is restored.
-  # qa_citations:
-  #   cmd: uv run python scripts/qa_citations.py --works-input data/catalogs/enriched_works.csv
-  #   deps:
-  #     - scripts/qa_citations.py
-  #     - scripts/utils.py
-  #     - scripts/pipeline_io.py
-  #     - scripts/pipeline_loaders.py
-  #     - scripts/pipeline_progress.py
-  #     - scripts/pipeline_text.py
-  #     - data/catalogs/enriched_works.csv
-  #     - data/catalogs/citations.csv
+  qa_citations:
+    cmd: uv run python scripts/qa_citations.py --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/qa_citations.py
+      - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
+      - data/catalogs/enriched_works.csv
+      - data/catalogs/citations.csv
 
   # Phase 1b.5: Sentence embeddings (encoding only — no UMAP/clustering)
   # Requires uv sync --group corpus --extra cpu (or --extra cu130 on GPU)
