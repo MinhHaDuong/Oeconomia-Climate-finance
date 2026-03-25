@@ -47,10 +47,10 @@ def test_none_returns_unknown():
     assert normalise_language(float("nan")) == "unknown"
 
 
-def test_empty_string_returns_empty():
-    """Empty string is not NaN — it stays as an empty string after strip/lower."""
+def test_empty_string_returns_unknown():
+    """Empty string has no language — treated as unknown."""
     from export_language_table import normalise_language
-    assert normalise_language("") == ""
+    assert normalise_language("") == "unknown"
 
 
 def test_uppercase_lowercased():

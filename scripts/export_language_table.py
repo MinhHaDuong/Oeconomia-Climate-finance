@@ -3,7 +3,7 @@
 Produces:
 - content/tables/tab_languages.md: Quarto-includable markdown table
 
-Shows language distribution in the refined corpus with ISO 639-1 codes
+Shows language distribution in the full enriched corpus with ISO 639-1 codes
 normalised (e.g., en_US → en) and grouped into major languages + "Other".
 """
 
@@ -12,11 +12,11 @@ import os
 
 import pandas as pd
 
-from utils import CATALOGS_DIR, get_logger, BASE_DIR
+from utils import CATALOGS_DIR, get_logger, BASE_DIR, normalize_lang
 
 log = get_logger("export_language_table")
 
-REFINED_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
+ENRICHED_PATH = os.path.join(CATALOGS_DIR, "enriched_works.csv")
 OUTPUT_DIR = os.path.join(BASE_DIR, "content", "tables")
 OUTPUT_MD = os.path.join(OUTPUT_DIR, "tab_languages.md")
 
@@ -69,22 +69,26 @@ MIN_COUNT = 20
 
 
 def normalise_language(code: str) -> str:
-    """Normalise language codes: en_US → en, zh_CN → zh, etc."""
+    """Normalise language codes using the shared normalize_lang from utils.
+
+    Maps NaN/None to "unknown" for table display (normalize_lang returns None).
+    Also handles hyphenated codes (zh-CN) not covered by normalize_lang.
+    """
     if pd.isna(code):
         return "unknown"
-    code = str(code).strip().lower()
-    if "_" in code:
-        code = code.split("_")[0]
-    if "-" in code:
-        code = code.split("-")[0]
-    return code
+    # Handle hyphenated locale codes (zh-CN → zh) before normalize_lang
+    code_str = str(code).strip()
+    if "-" in code_str:
+        code_str = code_str.split("-")[0]
+    result = normalize_lang(code_str)
+    return result if result else "unknown"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.parse_args()
 
-    df = pd.read_csv(REFINED_PATH, usecols=["language"])
+    df = pd.read_csv(ENRICHED_PATH, usecols=["language"])
     df["lang"] = df["language"].apply(normalise_language)
 
     counts = df["lang"].value_counts()
@@ -146,7 +150,7 @@ def main() -> None:
         lines.append(f"| {' | '.join(str(v) for v in row)} |")
 
     lines.append("")
-    lines.append(": Language distribution in the refined corpus. {#tbl-languages}")
+    lines.append(": Language distribution in the enriched corpus. {#tbl-languages}")
 
     md = "\n".join(lines) + "\n"
     with open(OUTPUT_MD, "w", encoding="utf-8") as f:

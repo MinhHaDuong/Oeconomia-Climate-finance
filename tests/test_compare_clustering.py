@@ -223,3 +223,50 @@ class TestMultiSpace:
         assert len(set(labels)) == 3
         # All 60 points should be assigned (no -1 or uninitialized)
         assert all(0 <= l < 3 for l in labels)
+
+
+# ---------------------------------------------------------------------------
+# Test: architecture split — plot_fig_*.py naming convention (#430)
+# ---------------------------------------------------------------------------
+
+class TestClusteringArchitectureSplit:
+    """Verify the module split architecture from ticket #430.
+
+    Each figure lives in its own plot_fig_*.py script.
+    Algorithms live in clustering_methods.py.
+    No clustering_plots.py shared module (violates ONE FIGURE ONE SCRIPT).
+    """
+
+    def test_plot_multi_space_figure_in_plot_fig_clustering_spaces(self):
+        """plot_multi_space_figure must be importable from plot_fig_clustering_spaces."""
+        from plot_fig_clustering_spaces import plot_multi_space_figure
+        assert callable(plot_multi_space_figure)
+
+    def test_generate_figures_in_plot_fig_clustering_comparison(self):
+        """generate_figures must be importable from plot_fig_clustering_comparison."""
+        from plot_fig_clustering_comparison import generate_figures
+        assert callable(generate_figures)
+
+    def test_clustering_methods_has_algorithm_functions(self):
+        """Core algorithm functions must be importable from clustering_methods."""
+        from clustering_methods import (
+            cluster_kmeans,
+            cluster_hdbscan,
+            cluster_spectral,
+            silhouette_sweep,
+            hdbscan_sweep,
+            perturbation_stability,
+        )
+        assert all(callable(f) for f in [
+            cluster_kmeans, cluster_hdbscan, cluster_spectral,
+            silhouette_sweep, hdbscan_sweep, perturbation_stability,
+        ])
+
+    def test_no_clustering_plots_module(self):
+        """clustering_plots.py must not exist (superseded by plot_fig_*.py naming)."""
+        import importlib.util
+        spec = importlib.util.find_spec("clustering_plots")
+        assert spec is None, (
+            "clustering_plots.py must not exist: use plot_fig_clustering_spaces.py "
+            "and plot_fig_clustering_comparison.py instead (ONE FIGURE ONE SCRIPT)"
+        )

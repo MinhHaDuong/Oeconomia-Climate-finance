@@ -85,6 +85,7 @@ def _scripts_with_main_guard():
 # These are exempt from argparse checks (no __main__ guard).
 LIBRARY_SCRIPTS = {
     "utils.py", "plot_style.py", "filter_flags.py",
+    "clustering_methods.py",
     "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
     "syllabi_io.py", "syllabi_process.py",
 }
