@@ -61,6 +61,35 @@ def is_boilerplate_abstract(abstract, title=None):
     return False
 
 
+def is_boilerplate_abstract(abstract, title=None):
+    """Return True if abstract is boilerplate/junk that should be skipped.
+
+    Detects repository metadata strings, known boilerplate phrases,
+    title-as-abstract duplication, and short ALL CAPS fragments (truncated titles).
+    """
+    if not abstract or len(str(abstract).strip()) < 30:
+        return True
+    low = str(abstract).strip().lower()
+    # Known boilerplate phrases (exact match after lowering)
+    boilerplate = {"international audience", "editorial reviewed", "peer reviewed"}
+    if low in boilerplate:
+        return True
+    # Repository metadata URIs
+    if low.startswith("info:eu-repo/"):
+        return True
+    # Abstract is just the title repeated
+    if title and low == str(title).strip().lower():
+        return True
+    # Short ALL CAPS text — truncated title fragments
+    stripped = str(abstract).strip()
+    if len(stripped) < 50 and stripped == stripped.upper() and stripped.isalpha() is False:
+        # Check if it's actually all uppercase letters (allowing spaces/punctuation)
+        alpha_chars = [c for c in stripped if c.isalpha()]
+        if alpha_chars and all(c.isupper() for c in alpha_chars):
+            return True
+    return False
+
+
 def build_text(row):
     """Concatenate title, abstract, and keywords for embedding.
 
