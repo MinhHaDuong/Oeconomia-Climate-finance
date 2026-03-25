@@ -60,7 +60,13 @@ Three independent reviewers checked claims against code and analysis outputs.
 
 ## Action items
 
-- [ ] Fix all 12 WRONG items in the includes
-- [ ] Update stale numbers (re-run compute_vars.py or hardcode from fresh data)
-- [ ] Decide: should `corpus_with_embeddings` meta var be redefined to mean analysis corpus?
-- [ ] The tab_corpus_sources.md needs full regeneration from current data
+- [x] Fix all 12 WRONG items in the includes (commit 0d46458)
+- [x] Update stale numbers via compute_vars.py
+- [x] Created `analysis_corpus_n` var (27,506) for refined works with non-zero embeddings
+- [x] Regenerated tab_corpus_sources.md from current data
+- [x] Fixed clustering-comparison citation numbers with meta vars
+- [ ] Clustering-comparison stale snapshot numbers (27,315 → 27,509) need fresh compare_clustering run
+- [ ] HDBSCAN/Spectral ARI scores unverifiable without stored table
+
+Note: reviewer claim "grey lit Raw 278 → 4,882" was incorrect. Grey lit Raw
+is 278 in both old and new tables. The reviewer confused something.
