@@ -189,6 +189,70 @@ def build_citation_cooccurrence(df: pd.DataFrame, max_works: int = 10000) -> np.
     return dist
 
 
+def compute_silhouette_scores(
+    df, embeddings, classified_mask, topic_to_int, rng, *, skip_citation=False
+):
+    """Compute silhouette scores in semantic, lexical, and citation spaces."""
+    log.info("=== SILHOUETTE SCORES OF UNFCCC TOPIC ASSIGNMENTS ===")
+
+    MAX_SILHOUETTE = 10000
+    sil_mask = classified_mask.values
+    sil_df = df[sil_mask].copy()
+    sil_emb = embeddings[sil_mask]
+    sil_labels = sil_df["unfccc_topic"].map(topic_to_int).values
+
+    if len(sil_df) > MAX_SILHOUETTE:
+        rng_idx = rng.choice(len(sil_df), MAX_SILHOUETTE, replace=False)
+        sil_emb_sample = sil_emb[rng_idx]
+        sil_labels_sample = sil_labels[rng_idx]
+        log.info("Silhouette sample: %d works (from %d classified)", MAX_SILHOUETTE, len(sil_df))
+    else:
+        rng_idx = None
+        sil_emb_sample = sil_emb
+        sil_labels_sample = sil_labels
+
+    # Semantic space
+    log.info("Computing silhouette in semantic (embedding) space …")
+    sil_semantic = silhouette_score(sil_emb_sample, sil_labels_sample, metric="cosine")
+    log.info("Semantic (embedding cosine):  silhouette = %.4f", sil_semantic)
+
+    # Lexical space (TF-IDF 100D SVD)
+    log.info("Computing TF-IDF representation for lexical silhouette …")
+    texts_for_tfidf = sil_df["title"].fillna("") + " " + sil_df["abstract"].fillna("") + " " + sil_df["keywords"].fillna("")
+    if rng_idx is not None:
+        texts_sample = texts_for_tfidf.iloc[rng_idx].values
+    else:
+        texts_sample = texts_for_tfidf.values
+
+    tfidf = TfidfVectorizer(max_features=20000, stop_words="english",
+                            sublinear_tf=True, min_df=3)
+    tfidf_mat = tfidf.fit_transform(texts_sample)
+    svd = TruncatedSVD(n_components=100, random_state=42)
+    lex_vecs = svd.fit_transform(tfidf_mat)
+    lex_vecs_norm = normalize(lex_vecs, norm="l2")
+    sil_lexical = silhouette_score(lex_vecs_norm, sil_labels_sample, metric="cosine")
+    log.info("Lexical (TF-IDF 100D SVD cosine):  silhouette = %.4f", sil_lexical)
+
+    # Citation space
+    if skip_citation:
+        log.info("Skipping citation-space silhouette (--skip-citation-silhouette flag)")
+    else:
+        MAX_CIT = 3000
+        log.info("Building citation co-occurrence matrix (up to %d works) …", MAX_CIT)
+        cit_df_slice = sil_df.iloc[:MAX_CIT].reset_index(drop=True)
+        cit_labels_slice = sil_labels[:MAX_CIT]
+        dist_mat = build_citation_cooccurrence(cit_df_slice, max_works=MAX_CIT)
+        if dist_mat is not None:
+            unique_labels = np.unique(cit_labels_slice)
+            if len(unique_labels) >= 2:
+                sil_citation = silhouette_score(dist_mat, cit_labels_slice, metric="precomputed")
+                log.info("Citation (co-citation Jaccard distance):  silhouette = %.4f", sil_citation)
+            else:
+                log.info("Citation space:  silhouette = N/A (only one label class in sample)")
+        else:
+            log.info("Citation space:  silhouette = N/A (no citations data)")
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -233,33 +297,28 @@ def main() -> None:
     # ------------------------------------------------------------------
     # 3. Report: topic distribution and unclassified count
     # ------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print("UNFCCC TOPIC CLASSIFICATION RESULTS")
-    print("=" * 70)
+    log.info("=== UNFCCC TOPIC CLASSIFICATION RESULTS ===")
 
-    topic_counts = df["unfccc_topic"].value_counts(dropna=False)
     n_unclassified = df["unfccc_topic"].isna().sum()
     n_classified = len(df) - n_unclassified
 
-    print(f"\nTotal works analyzed: {len(df):,}")
-    print(f"Classified: {n_classified:,} ({100 * n_classified / len(df):.1f}%)")
-    print(f"Unclassified: {n_unclassified:,} ({100 * n_unclassified / len(df):.1f}%)")
-    print("\nWorks per UNFCCC topic:")
+    log.info("Total works analyzed: %d", len(df))
+    log.info("Classified: %d (%.1f%%)", n_classified, 100 * n_classified / len(df))
+    log.info("Unclassified: %d (%.1f%%)", n_unclassified, 100 * n_unclassified / len(df))
+    log.info("Works per UNFCCC topic:")
     for topic in TOPIC_NAMES:
         count = (df["unfccc_topic"] == topic).sum()
         pct = 100 * count / len(df)
-        print(f"  {topic:<30s}  {count:5d}  ({pct:.1f}%)")
-    print(f"  {'unclassified':<30s}  {n_unclassified:5d}  ({100 * n_unclassified / len(df):.1f}%)")
+        log.info("  %-30s  %5d  (%.1f%%)", topic, count, pct)
+    log.info("  %-30s  %5d  (%.1f%%)", "unclassified", n_unclassified, 100 * n_unclassified / len(df))
 
     multi_label_count = df["unfccc_secondary"].notna().sum()
-    print(f"\nMulti-label works (top-2 close): {multi_label_count:,} ({100 * multi_label_count / len(df):.1f}%)")
+    log.info("Multi-label works (top-2 close): %d (%.1f%%)", multi_label_count, 100 * multi_label_count / len(df))
 
     # ------------------------------------------------------------------
     # 4 & 5. ARI: UNFCCC labels vs KMeans k=6, k=8
     # ------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print("ADJUSTED RAND INDEX: UNFCCC TOPICS vs KMeans CLUSTERING")
-    print("=" * 70)
+    log.info("=== ADJUSTED RAND INDEX: UNFCCC TOPICS vs KMeans CLUSTERING ===")
 
     # Only evaluate on classified works
     classified_mask = df["unfccc_topic"].notna()
@@ -277,94 +336,31 @@ def main() -> None:
         km = KMeans(n_clusters=k, random_state=42, n_init=10)
         km_labels = km.fit_predict(emb_classified)
         ari = adjusted_rand_score(true_labels, km_labels)
-        print(f"\nKMeans k={k}  ARI = {ari:.4f}")
+        log.info("KMeans k=%d  ARI = %.4f", k, ari)
 
         # Confusion matrix: UNFCCC topic (rows) × KMeans cluster (cols)
-        print(f"\nConfusion matrix: UNFCCC topic × KMeans cluster (k={k})")
-        topic_labels = TOPIC_NAMES
-        cluster_labels = list(range(k))
+        log.info("Confusion matrix: UNFCCC topic × KMeans cluster (k=%d)", k)
         conf = pd.crosstab(
             df_classified["unfccc_topic"],
             km_labels,
             rownames=["UNFCCC topic"],
             colnames=[f"KMeans(k={k})"],
         )
-        # Ensure all topics are rows
-        conf = conf.reindex(topic_labels, fill_value=0)
-        print(conf.to_string())
+        conf = conf.reindex(TOPIC_NAMES, fill_value=0)
+        log.info("\n%s", conf.to_string())
 
     # ------------------------------------------------------------------
     # 6. Silhouette scores in semantic, lexical, and citation spaces
     # ------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print("SILHOUETTE SCORES OF UNFCCC TOPIC ASSIGNMENTS")
-    print("=" * 70)
-
-    # Limit to classified works with a reasonable sample for speed
-    MAX_SILHOUETTE = 10000
-    sil_mask = classified_mask.values
-    sil_df = df[sil_mask].copy()
-    sil_emb = embeddings[sil_mask]
-    sil_labels = sil_df["unfccc_topic"].map(topic_to_int).values
-
-    if len(sil_df) > MAX_SILHOUETTE:
-        rng_idx = rng.choice(len(sil_df), MAX_SILHOUETTE, replace=False)
-        sil_emb_sample = sil_emb[rng_idx]
-        sil_labels_sample = sil_labels[rng_idx]
-        log.info("Silhouette sample: %d works (from %d classified)", MAX_SILHOUETTE, len(sil_df))
-    else:
-        sil_emb_sample = sil_emb
-        sil_labels_sample = sil_labels
-
-    # 6a. Semantic space
-    log.info("Computing silhouette in semantic (embedding) space …")
-    sil_semantic = silhouette_score(sil_emb_sample, sil_labels_sample, metric="cosine")
-    print(f"\nSemantic (embedding cosine):  silhouette = {sil_semantic:.4f}")
-
-    # 6b. Lexical space (TF-IDF 100D SVD)
-    log.info("Computing TF-IDF representation for lexical silhouette …")
-    texts_for_tfidf = sil_df["title"].fillna("") + " " + sil_df["abstract"].fillna("") + " " + sil_df["keywords"].fillna("")
-    if len(sil_df) > MAX_SILHOUETTE:
-        texts_sample = texts_for_tfidf.iloc[rng_idx].values
-    else:
-        texts_sample = texts_for_tfidf.values
-
-    tfidf = TfidfVectorizer(max_features=20000, stop_words="english",
-                            sublinear_tf=True, min_df=3)
-    tfidf_mat = tfidf.fit_transform(texts_sample)
-    svd = TruncatedSVD(n_components=100, random_state=42)
-    lex_vecs = svd.fit_transform(tfidf_mat)
-    lex_vecs_norm = normalize(lex_vecs, norm="l2")
-    sil_lexical = silhouette_score(lex_vecs_norm, sil_labels_sample, metric="cosine")
-    print(f"Lexical (TF-IDF 100D SVD cosine):  silhouette = {sil_lexical:.4f}")
-
-    # 6c. Citation space
-    if args.skip_citation_silhouette:
-        log.info("Skipping citation-space silhouette (--skip-citation-silhouette flag)")
-        print("Citation space:  silhouette = SKIPPED (--skip-citation-silhouette)")
-    else:
-        MAX_CIT = 3000
-        log.info("Building citation co-occurrence matrix (up to %d works) …", MAX_CIT)
-        # Use the first MAX_CIT classified works for manageable memory
-        cit_df_slice = sil_df.iloc[:MAX_CIT].reset_index(drop=True)
-        cit_labels_slice = sil_labels[:MAX_CIT]
-        dist_mat = build_citation_cooccurrence(cit_df_slice, max_works=MAX_CIT)
-        if dist_mat is not None:
-            unique_labels = np.unique(cit_labels_slice)
-            if len(unique_labels) >= 2:
-                sil_citation = silhouette_score(dist_mat, cit_labels_slice, metric="precomputed")
-                print(f"Citation (co-citation Jaccard distance):  silhouette = {sil_citation:.4f}")
-            else:
-                print("Citation space:  silhouette = N/A (only one label class in sample)")
-        else:
-            print("Citation space:  silhouette = N/A (no citations data)")
+    compute_silhouette_scores(
+        df, embeddings, classified_mask, topic_to_int, rng,
+        skip_citation=args.skip_citation_silhouette,
+    )
 
     # ------------------------------------------------------------------
     # 7. Topic proportions over time (per-year %)
     # ------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print("UNFCCC TOPIC PROPORTIONS OVER TIME (per-year %)")
-    print("=" * 70)
+    log.info("=== UNFCCC TOPIC PROPORTIONS OVER TIME (per-year %%) ===")
 
     df_time = df[df["year"].between(1992, 2024)].copy()
     df_time["year"] = df_time["year"].astype(int)
@@ -373,18 +369,17 @@ def main() -> None:
     topic_year = df_time.groupby(["year", "unfccc_topic"]).size().unstack(fill_value=0)
     topic_year_pct = topic_year.div(topic_year.sum(axis=1), axis=0) * 100
 
-    # Print only topics with >1% average share
+    # Log only topics with >1% average share
     avg_shares = topic_year_pct.mean()
     notable_topics = avg_shares[avg_shares > 1].index.tolist()
-    # Always include unclassified if present as NaN column
     display_cols = [t for t in TOPIC_NAMES if t in topic_year_pct.columns and t in notable_topics]
 
-    print(f"\n{'Year':>6}" + "".join(f" {t[:14]:>15}" for t in display_cols))
+    log.info("%6s" + "".join(" %15s" % t[:14] for t in display_cols), "Year")
     for year, row in topic_year_pct[display_cols].iterrows():
-        print(f"{year:>6}" + "".join(f" {row[t]:>14.1f}%" for t in display_cols))
+        log.info("%6d" + "".join(" %14.1f%%" % row[t] for t in display_cols), year)
 
     # Summary: major trend lines
-    print("\nTopic with highest share per 5-year epoch:")
+    log.info("Topic with highest share per 5-year epoch:")
     for epoch_start in range(1990, 2025, 5):
         epoch_end = min(epoch_start + 4, 2024)
         mask = df_time["year"].between(epoch_start, epoch_end)
@@ -392,7 +387,7 @@ def main() -> None:
         if len(sub) > 0 and sub.iloc[0] > 0:
             top_t = sub.index[0]
             top_pct = 100 * sub.iloc[0] / mask.sum()
-            print(f"  {epoch_start}–{epoch_end}: {top_t} ({top_pct:.1f}%)")
+            log.info("  %d–%d: %s (%.1f%%)", epoch_start, epoch_end, top_t, top_pct)
 
     # ------------------------------------------------------------------
     # 8. Save topic assignments CSV
@@ -401,8 +396,7 @@ def main() -> None:
     out_df = df[out_cols].copy()
     out_df.to_csv(OUTPUT_CSV, index=False)
     log.info("Saved topic assignments → %s", OUTPUT_CSV)
-    print(f"\nTopic assignments saved to: {OUTPUT_CSV}")
-    print(f"Rows: {len(out_df):,} (all filtered works, with NaN where unclassified)")
+    log.info("Rows: %d (all filtered works, with NaN where unclassified)", len(out_df))
 
 
 if __name__ == "__main__":
