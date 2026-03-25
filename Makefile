@@ -219,7 +219,7 @@ content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFI
 content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md &: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/tables/tab_languages.md: scripts/export_language_table.py scripts/utils.py $(REFINED)
+content/tables/tab_languages.md: scripts/export_language_table.py scripts/utils.py $(ENRICHED)
 	uv run python $<
 
 corpus-tables: content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md \
