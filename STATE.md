@@ -31,6 +31,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - LLM extraction cache: sha256(chunk):model key, JSONL in enrich_cache/ (#298)
 - Language enrichment: two-pass (OpenAlex API + langdetect), folded into `enrich_works` DVC stage (#423)
 - Language utilities (`normalize_lang`, `detect_language`, `ISO_639_1_CODES`) shared via `utils.py`
+- litellm pinned <=1.82.6 (supply chain attack on 1.82.7–1.82.8, PR #447)
 - DVC clean, 18 files pushed
 
 ## Build system
@@ -53,43 +54,32 @@ None.
 - #385: docs: landscape analysis of distributed issue trackers (#237)
 - #453: ✅ merged — fix from_scispace flag never set (#452): source name derived from filename, not CSV content
 
-## Recent (2026-03-24 rally loop)
+## Recent (2026-03-25)
 
-- #289: ✅ litellm migration — all 3 LLM scripts use litellm.completion()
-- #288: ✅ WatchedProgress infrastructure — Rich progress bars + stuck detection
-- #299: ✅ Clustering comparison — KMeans/HDBSCAN/Spectral across 3 spaces
-- #311: ✅ Data paper editorial — 30+ sub-issues, scispace rename, computed vars
-- #298: ✅ LLM extraction cache — per-chunk cache survives DVC re-runs
-- #342: ✅ Extract cache tests (RED phase, subsumed by #298)
-- #382: ✅ Teaching pipeline test drift — 3 test fixes
-- #381: ✅ Script hygiene — archived experimental script, fixed sys.path hack
-- Test suite: 621 tests (unit + integration + slow). `check-fast` runs unit tests in ~18 s, `check` runs all.
+- #447: ✅ merged — security: pin litellm<=1.82.6 (supply chain attack)
+- #450: ✅ merged — variabilize hardcoded filter counts in data paper
+- #449: ✅ closed — embedding/filter mismatch resolved by corpus regen
+- Branch cleanup: 12 stale remote branches deleted
+- Test suite: 637 tests (547 unit, 90 integration/slow). `check-fast` runs unit tests in ~21 s, `check` runs all.
 
 ## Next actions
 
-- Finalize DMP on OPIDoR (after v1.1 counts stabilize)
+- Data paper submission (RDJ4HSS) — PDF ready; needs re-render after SciSpace fix (#452)
 - Send Errata 1 to Oeconomia editor
-- Data paper submission (RDJ4HSS) — PDF ready at `output/content/data-paper.pdf`; needs `make corpus` on padme to fix SciSpace counts (#452), then re-render
+- Finalize DMP on OPIDoR (after v1.1 counts stabilize)
 - ESHET-HES conference slides (Nice, May 26–29)
-- #310: Ship all rows (restructure Zenodo deposit)
+- Harness consolidation: move agentic-harness → ~/.agent/, reorganize project .agent/
 
 ## Open tickets (publication path)
 
-- #310: Ship all rows — restructure Zenodo deposit
+- #421: Create data paper submission branch (submission/rdj-data-paper)
+- #403: Make targets for reproducibility archive and archival datasets
+- #404: Document long-running submission branch workflow
 
 ## Open tickets (tooling)
 
-- #255: Metadata completeness (DOI backfill)
-- #297: Unix-style figure scripts
 - #376: Setup: rename repo, create oeconomia release branch
+- #391: Extract harness into standalone repo
+- #405: Makefile modularity: include modules instead of duplicating for archives
 - #428: Normalize enrichment tables (join stage instead of in-place mutation)
-- #432: Make save_csv atomic (write-then-rename)
-
-## Open tickets (backlog)
-
-- #26: Human proofread of full manuscript
-- #158: Third paper (agentic workflow)
-- #223: Worktrees start without DVC data
-- #391: Harness extraction (started; agentic-harness repo created, docs transferred; prior art: PR #224)
-- #253: LLM audit on Padme
-- #262: Continuous relevance score
+- #288: Add progress bars, ETA, stuck detection, and desktop notifications to pipeline scripts

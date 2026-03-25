@@ -21,9 +21,9 @@ abstract: |
   filtering, and cross-encoder relevance scoring produces a curated
   dataset with full audit trail. A citation network of
   {{< meta cite_total_rows >}} links, extracted via Crossref and OpenAlex,
-  supports co-citation analysis and bibliographic coupling (80%
+  supports co-citation analysis and bibliographic coupling ({{< meta cite_coverage_core_pct >}}%
   coverage for core works cited $\geq$ 50 times). Pre-computed
-  1024-dimensional multilingual sentence-transformer embeddings enable
+  {{< meta emb_dimensions >}}-dimensional multilingual sentence-transformer embeddings enable
   clustering, topic modelling, and cross-lingual analysis without
   re-encoding. The full corpus with quality flags, embeddings, and
   citation network is deposited in Zenodo under CC BY 4.0.
