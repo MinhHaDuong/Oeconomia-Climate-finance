@@ -209,3 +209,25 @@ class TestEdgeCases:
         """Groups smaller than min_group_size should not be flagged."""
         groups = detect_near_duplicate_groups(cop27_df, min_group_size=100)
         assert groups.isna().all()
+
+    def test_missing_abstract_column_returns_all_na(self):
+        """DataFrame without 'abstract' column returns all NA gracefully."""
+        df = pd.DataFrame({
+            "doi": [f"10.1000/x-{i}" for i in range(10)],
+            "title": ["Same title"] * 10,
+            "year": [2020] * 10,
+        })
+        groups = detect_near_duplicate_groups(df)
+        assert groups.isna().all()
+
+    def test_emdash_title_normalization(self):
+        """Em-dash and colon title variants normalize to the same key.
+
+        Regression test: em-dash was previously stripped without leaving a
+        space, producing 'conferenceurgent' instead of 'conference urgent'.
+        """
+        from detect_near_duplicates import _normalize_text
+
+        colon = _normalize_text("COP27 Conference: Urgent Action")
+        emdash = _normalize_text("COP27 Conference—Urgent Action")
+        assert colon == emdash, f"Colon '{colon}' != em-dash '{emdash}'"

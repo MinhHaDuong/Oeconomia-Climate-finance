@@ -21,6 +21,7 @@ import os
 import numpy as np
 import pandas as pd
 
+from detect_near_duplicates import detect_near_duplicate_groups
 from filter_flags import (
     _load_config,
     compute_protection,
@@ -491,6 +492,12 @@ def run_flagging(df, args, config, citations_df, embeddings, emb_df, has_embeddi
             log.info("  Flag 6: no candidates scored")
     else:
         log.info("  Flag 6: skipped (--skip-llm)")
+
+    # ── Near-duplicate annotation (not a filter flag) ──────────
+    df["near_duplicate_group"] = detect_near_duplicate_groups(df)
+    n_dup = df["near_duplicate_group"].notna().sum()
+    n_groups = df["near_duplicate_group"].nunique()
+    log.info("  Near-duplicate annotation: %d records in %d groups", n_dup, n_groups)
 
     log.info("=== Phase B: Protecting key papers ===")
     df["protected"], df["protect_reason"] = compute_protection(

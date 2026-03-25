@@ -43,11 +43,18 @@ DEFAULT_ABSTRACT_OVERLAP_THRESHOLD = 0.5
 
 
 def _normalize_text(text: str) -> str:
-    """Normalize text for comparison: lowercase, strip non-alphanumeric, collapse spaces."""
-    if not text or str(text) == "nan":
+    """Normalize text for comparison: lowercase, strip non-alphanumeric, collapse spaces.
+
+    Non-ASCII characters (CJK, Arabic, accented letters) are replaced with
+    spaces — intentional, since this corpus is English-language scholarship.
+    """
+    if not text or str(text).lower() == "nan":
         return ""
     t = str(text).lower()
-    t = re.sub(r"[^a-z0-9 ]", "", t)
+    # Replace non-alphanumeric with space (not empty string) so that
+    # punctuation like em-dashes preserves word boundaries:
+    # "Conference—Urgent" → "conference urgent" (not "conferenceurgent")
+    t = re.sub(r"[^a-z0-9 ]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
@@ -134,6 +141,10 @@ def detect_near_duplicate_groups(
     result = pd.Series(pd.NA, index=df.index, dtype="Int64", name="near_duplicate_group")
 
     if len(df) == 0:
+        return result
+
+    if "abstract" not in df.columns:
+        log.warning("No 'abstract' column — skipping near-duplicate detection")
         return result
 
     uf = _UnionFind(len(df))
