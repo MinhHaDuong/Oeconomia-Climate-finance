@@ -83,7 +83,7 @@ def _scripts_with_main_guard():
 
 # Scripts that are pure libraries (no __main__ guard, imported by others).
 # These are exempt from argparse checks (no __main__ guard).
-LIBRARY_SCRIPTS = {"utils.py", "plot_style.py", "filter_flags.py"}
+LIBRARY_SCRIPTS = {"utils.py", "plot_style.py", "filter_flags.py", "clustering_methods.py"}
 
 # Subdirectory scripts that legitimately need sys.path.insert to reach
 # the parent scripts/ directory for utils imports.
