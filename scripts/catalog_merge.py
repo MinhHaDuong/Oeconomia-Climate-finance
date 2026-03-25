@@ -31,6 +31,21 @@ SOURCE_PRIORITY = ["openalex", "scopus", "istex", "bibcnrs", "scispace", "grey",
 SOURCE_RANK = {s: i for i, s in enumerate(SOURCE_PRIORITY)}
 
 
+def _load_and_tag(path):
+    """Load a per-source catalog CSV and normalise the source column.
+
+    The canonical source name is derived from the filename (e.g.
+    ``scispace_works.csv`` → ``"scispace"``), overriding whatever the CSV
+    contains.  This prevents silent mismatches when the CSV's source column
+    has a legacy typo (e.g. ``"scispsace"``).
+    """
+    name = os.path.basename(path).replace("_works.csv", "")
+    df = pd.read_csv(path, encoding="utf-8", dtype=str, keep_default_na=False)
+    df["source"] = name
+    log.info("  %s: %d rows", name, len(df))
+    return df
+
+
 def _dedup_vectorized(df, group_col):
     """Vectorized dedup: sort by priority, pick first non-empty per group.
 
@@ -103,13 +118,10 @@ def main():
     log.info("Loading catalogs:")
     frames = []
     for f in files:
-        name = os.path.basename(f).replace("_works.csv", "")
         try:
-            df = pd.read_csv(f, encoding="utf-8", dtype=str, keep_default_na=False)
-            log.info("  %s: %d rows", name, len(df))
-            frames.append(df)
+            frames.append(_load_and_tag(f))
         except Exception as e:
-            log.error("  %s: ERROR - %s", name, e)
+            log.error("  %s: ERROR - %s", os.path.basename(f), e)
 
     if not frames:
         log.error("No data loaded.")
