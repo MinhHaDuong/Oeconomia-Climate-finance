@@ -2,15 +2,14 @@
 
 ### Sources
 
-The corpus assembles academic and grey literature from {{< meta corpus_sources >}} sources. Four are fully automated or hybrid-automated (reproducible from the repository and an internet connection); two require manual export and are documented below with justification.
+The corpus assembles academic and grey literature from {{< meta corpus_sources >}} sources. Three are fully automated (reproducible from the repository and an internet connection), one is hybrid-automated, and two require manual export.
 
 | Source | Script | Automation | Coverage |
 |---|---|---|---|
 | OpenAlex | `catalog_openalex.py` | Automated (free API) | Primary academic source: tiered keyword search (4 tiers, ~50 queries) |
-| Semantic Scholar | `catalog_semanticscholar.py` | Automated (API key) | Cross-database academic search: same tiered queries, 1000-per-query API cap |
 | ISTEX | `catalog_istex.py --api` | Automated (public API) | French national archive: `"climate finance" OR "finance climat" OR "finance climatique"` |
 | Grey literature | `catalog_grey.py` | Hybrid (YAML seed + World Bank API) | OECD, UNFCCC, World Bank, CPI reports |
-| Teaching canon | `build_teaching_canon.py` | Automated (YAML extraction) | Syllabus readings from 15 institutions |
+| Teaching canon | `build_teaching_canon.py` | Automated (scraping + LLM extraction) | Syllabus readings from 51 institutions |
 | bibCNRS | `catalog_bibcnrs.py` | **Hand-harvested** (CNRS Janus auth) | Non-English literature (FR, ZH, JA) via WoS/EconLit/FRANCIS |
 | SciSpace | `catalog_scispace.py` | **Hand-harvested** (commercial tool) | AI-curated thematic corpus (RIS + CSV exports) |
 
@@ -18,7 +17,7 @@ The two hand-harvested sources cannot currently be automated: bibCNRS requires C
 
 ### Search strategy: tiered keyword taxonomy
 
-The search strategy uses a four-tier query taxonomy reflecting the evolving vocabulary of climate finance scholarship. The taxonomy is defined in `config/openalex_queries.yaml` and was informed by keyword mining of 1,406 core papers (cited_by_count >= 50).
+The search strategy uses a four-tier query taxonomy reflecting the evolving vocabulary of climate finance scholarship. The taxonomy is defined in `config/openalex_queries.yaml` and was informed by keyword mining of {{< meta corpus_core >}} core papers (cited_by_count >= {{< meta corpus_core_threshold >}}).
 
 **Tier 1 — Core terms** (no post-filter): Unambiguous climate finance terminology in eight languages. English (`"climate finance"`, `"carbon finance"`), French (`"finance climat"`, `"finance climatique"`), German (`"Klimafinanzierung"`), Spanish, Portuguese, Arabic, Chinese, Japanese. Also includes institution names: `"green climate fund"`, `"adaptation fund"`.
 
@@ -34,7 +33,7 @@ All API queries are bounded to publication years 1990–2024, configured in `con
 
 ### Data architecture
 
-Raw API responses are stored in an append-only pool (`pool/openalex/`, `pool/semanticscholar/`, `pool/istex/`) as gzipped JSONL files — one file per query term. This preserves the complete API response for future re-extraction without re-downloading. Extracted records are derived reproducibly into `*_works.csv` catalog files. Citation links from OpenAlex's `referenced_works` field are extracted directly during the catalog build, reducing dependence on Crossref for citation enrichment.
+Raw API responses are stored in an append-only pool (`pool/openalex/`, `pool/istex/`) as gzipped JSONL files — one file per query term. This preserves the complete API response for future re-extraction without re-downloading. Extracted records are derived reproducibly into `*_works.csv` catalog files. Citation links from OpenAlex's `referenced_works` field are extracted directly during the catalog build, reducing dependence on Crossref for citation enrichment.
 
 ### Why not Crossref for discovery?
 
@@ -74,7 +73,7 @@ This imbalance likely reflects a harvesting bias. Business schools (Harvard, NYU
 
 The merge script (`scripts/catalog_merge.py`) applies two deduplication passes:
 
-1. **DOI-based deduplication:** DOIs are normalized (lowercased, URL prefix stripped). Records sharing the same DOI are merged using a source priority order: openalex > semanticscholar > scopus > istex > bibcnrs > scispace > grey > teaching. The maximum `cited_by_count` across duplicates is retained; other fields use the best non-empty value following source priority.
+1. **DOI-based deduplication:** DOIs are normalized (lowercased, URL prefix stripped). Records sharing the same DOI are merged using a source priority order: openalex > scopus > istex > bibcnrs > scispace > grey > teaching. The maximum `cited_by_count` across duplicates is retained; other fields use the best non-empty value following source priority.
 2. **Title+year deduplication:** Records without DOIs are grouped by normalized title (lowercased, punctuation stripped) and year. Groups are merged using the same priority logic.
 
 Boolean `from_*` columns (one per source) track which databases contributed to each record, and `source_count` is their sum. The `source` column retains the primary source (highest in the priority order). The output is `unified_works.csv`.
@@ -84,7 +83,7 @@ Boolean `from_*` columns (one per source) track which databases contributed to e
 The corpus building pipeline is managed by DVC (Data Version Control; see @fig-dag in §12). The five discovery stages run independently; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain. The five steps correspond to Makefile targets (`corpus-discover`, `corpus-enrich`, `corpus-extend`, `corpus-filter`, `corpus-align`):
 
 ```
-  7 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
+  6 sources ──→ merge ──→ unified_works.csv   [corpus-discover]
                                │
                                ▼
                         enrich DOIs / abstracts / citations

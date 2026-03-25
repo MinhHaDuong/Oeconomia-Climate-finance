@@ -53,12 +53,12 @@ Each candidate query was evaluated on a stratified sample of 200 papers (100 pos
 
 ### Phase B: Protection
 
-Papers are protected from removal if they meet any of: cited_by_count >= 50, appear in 2+ sources, are cited within the corpus, or appear in 2+ teaching syllabi.
+Papers are protected from removal if they meet any of: cited_by_count >= 50, appear in 2+ sources, are cited within the corpus, or appear in the teaching canon (`from_teaching` flag).
 
 ### Phase C: Verification
 
 - **Blacklist validation:** Confirms all noise-term matches in titles are properly caught.
-- **LLM audit:** A stratified random sample of 50 flagged and 50 unflagged papers is submitted to `google/gemma-2-27b-it` via OpenRouter. Each paper is classified as relevant or irrelevant to climate finance. Type I error rate (flagged but LLM-relevant) and Type II error rate (unflagged but LLM-irrelevant) are reported.
+- **LLM audit:** A stratified random sample of 50 flagged and 50 unflagged papers is submitted to a generative LLM via litellm (currently `google/gemini-2.5-flash` via OpenRouter). Each paper is classified as relevant or irrelevant to climate finance. Type I error rate (flagged but LLM-relevant) and Type II error rate (unflagged but LLM-irrelevant) are reported.
 
 ### Phase D: Filtering
 
