@@ -86,6 +86,7 @@ def _scripts_with_main_guard():
 LIBRARY_SCRIPTS = {
     "utils.py", "plot_style.py", "filter_flags.py",
     "clustering_methods.py",
+    "detect_near_duplicates.py",
     "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
     "syllabi_io.py", "syllabi_process.py",
     "pipeline_text.py",
