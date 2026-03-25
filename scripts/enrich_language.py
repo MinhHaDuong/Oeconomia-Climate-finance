@@ -118,7 +118,8 @@ def normalize_lang(code):
     if pd.isna(code) or not code:
         return None
     code = str(code).lower().strip()
-    if code in ("nan", "none", "", "unknown", "und", "un"):
+    if code in ("nan", "none", "", "unknown", "und", "un",
+                 "mis", "mul", "zxx"):
         return None
     # Already 2-letter?
     if len(code) == 2:
@@ -128,7 +129,7 @@ def normalize_lang(code):
         code = code.split("_")[0]
         if len(code) == 2:
             return code
-    return LANG_NORMALIZE.get(code, code[:2] if len(code) >= 2 else None)
+    return LANG_NORMALIZE.get(code)
 
 
 def is_valid_iso639_1(code):
