@@ -162,17 +162,19 @@ stages:
       - data/catalogs/citations.csv
 
   # Phase 1b.4: Citation QC — verify against Crossref ground truth
-  qa_citations:
-    cmd: uv run python scripts/qa_citations.py --works-input data/catalogs/enriched_works.csv
-    deps:
-      - scripts/qa_citations.py
-      - scripts/utils.py
-      - scripts/pipeline_io.py
-      - scripts/pipeline_loaders.py
-      - scripts/pipeline_progress.py
-      - scripts/pipeline_text.py
-      - data/catalogs/enriched_works.csv
-      - data/catalogs/citations.csv
+  # DISABLED: qa_citations verifies against Crossref, which requires
+  # metadata-plus subscription. Re-enable when Crossref access is restored.
+  # qa_citations:
+  #   cmd: uv run python scripts/qa_citations.py --works-input data/catalogs/enriched_works.csv
+  #   deps:
+  #     - scripts/qa_citations.py
+  #     - scripts/utils.py
+  #     - scripts/pipeline_io.py
+  #     - scripts/pipeline_loaders.py
+  #     - scripts/pipeline_progress.py
+  #     - scripts/pipeline_text.py
+  #     - data/catalogs/enriched_works.csv
+  #     - data/catalogs/citations.csv
 
   # Phase 1b.5: Sentence embeddings (encoding only — no UMAP/clustering)
   # Requires uv sync --group corpus --extra cpu (or --extra cu130 on GPU)
