@@ -28,8 +28,12 @@
 - [x] DVC pipeline documented
 - [x] pyproject.toml pins dependencies
 
-## Missing items
-- [ ] AI disclosure statement (required?)
-- [ ] Anonymized PDF for blind review (check if RDJ4HSS uses blind review)
-- [ ] DMP (OPIDoR or Zenodo-hosted)
-- [ ] release/release-journal.md entry for RDJ4HSS
+## Questions for author before submission
+- [ ] Does RDJ4HSS use blind review? (website unclear — check submission form)
+- [ ] AI disclosure: not mentioned in guidelines, but good practice to include
+- [ ] Word count scope: 2,500 limit applies to which sections? (body ~2,341)
+
+## Done
+- [x] DMP updated with v1.1 numbers (`docs/data-management-plan.md`)
+- [x] release/release-journal.md entry for RDJ4HSS
+- [x] ESHET-HES slides outline (`docs/eshet-hes-slides-outline.md`)
