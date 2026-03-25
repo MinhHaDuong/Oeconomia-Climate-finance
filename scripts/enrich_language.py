@@ -23,7 +23,6 @@ import pandas as pd
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY,
                    normalize_doi, retry_get, save_csv, save_run_report,
                    make_run_id, get_logger,
-                   ISO_639_1_CODES, LANG_NORMALIZE,
                    normalize_lang, is_valid_iso639_1, detect_language)
 
 log = get_logger("enrich_language")

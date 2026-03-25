@@ -21,6 +21,8 @@ import pandas as pd
 from utils import (CATALOGS_DIR, get_logger, save_csv, BASE_DIR,
                    normalize_lang, detect_language)
 
+log = get_logger("qa_detect_language")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Detect and fix language tags")
