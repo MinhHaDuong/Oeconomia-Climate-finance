@@ -180,11 +180,16 @@ class TestStageExtractUsesCache:
         assert collect_syllabi.EXTRACT_CACHE_PATH.endswith(".jsonl")
 
     def test_stage_extract_source_mentions_cache(self):
-        """stage_extract body must reference the extract cache."""
+        """stage_extract implementation must reference the extract cache.
+
+        After the harvest/process split, the implementation lives in
+        syllabi_process.stage_extract; collect_syllabi.stage_extract is a
+        thin wrapper that delegates to it.
+        """
         import inspect
 
-        import collect_syllabi
+        import syllabi_process
 
-        source = inspect.getsource(collect_syllabi.stage_extract)
+        source = inspect.getsource(syllabi_process.stage_extract)
         assert "_extract_cache_key" in source or "_load_extract_cache" in source, \
             "stage_extract must use extract cache functions"
