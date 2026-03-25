@@ -223,3 +223,15 @@ class TestMultiSpace:
         assert len(set(labels)) == 3
         # All 60 points should be assigned (no -1 or uninitialized)
         assert all(0 <= l < 3 for l in labels)
+
+
+# ---------------------------------------------------------------------------
+# Test: plot_multi_space_figure lives in clustering_plots (#430)
+# ---------------------------------------------------------------------------
+
+class TestClusteringPlotsModule:
+    """plot_multi_space_figure must be importable from clustering_plots."""
+
+    def test_import_from_clustering_plots(self):
+        from clustering_plots import plot_multi_space_figure
+        assert callable(plot_multi_space_figure)
