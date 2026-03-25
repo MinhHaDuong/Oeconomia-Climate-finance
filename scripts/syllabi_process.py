@@ -5,11 +5,15 @@ god-module 800-line threshold (see test_script_hygiene.py).
 
 Process = LLM calls + text parsing + DOI resolution.  No HTTP crawling here.
 
-Public API (all re-exported by collect_syllabi.py):
+Public API (available from this module directly):
   CLASSIFY_PROMPT, EXTRACT_PROMPT
   EXTRACT_CACHE_PATH
   _extract_cache_key, _load_extract_cache, _save_extract_cache_entry
   stage_classify, stage_extract, stage_normalize
+
+Re-exported by collect_syllabi.py (noqa F401):
+  EXTRACT_PROMPT, EXTRACT_CACHE_PATH
+  _extract_cache_key, _extract_cache_lock, _load_extract_cache, _save_extract_cache_entry
 """
 
 import hashlib

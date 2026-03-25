@@ -5,7 +5,7 @@ god-module 800-line threshold (see test_script_hygiene.py).
 
 Harvest = web crawling + HTTP + PDF download.  No LLM calls here.
 
-Public API (all re-exported by collect_syllabi.py):
+Public API (available from this module directly):
   FETCH_WORKERS, HOST_INTERVAL
   stage_search, stage_fetch
   _fetch_one
