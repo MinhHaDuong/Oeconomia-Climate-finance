@@ -176,10 +176,11 @@ def main():
         torch.set_num_threads(n_cpu)
         log.info("Loading %s (%d threads)...", MODEL_NAME, n_cpu)
         model = SentenceTransformer(MODEL_NAME)
+        # FP16 halves VRAM (~6.4 GB instead of ~12.8 GB), fits 16 GB GPUs
+        model.half()
 
         new_texts = df.loc[~hit_mask, "_text"].tolist()
         log.info("Encoding %d texts...", n_new)
-        # BGE-M3 (~12.8 GB on GPU) needs small batches on 16 GB cards
         embed_batch = int(os.environ.get("EMBED_BATCH_SIZE", 32))
         new_vecs = model.encode(
             new_texts,
