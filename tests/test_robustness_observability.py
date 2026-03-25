@@ -251,11 +251,8 @@ class TestCliFlags:
     def test_enrich_citations_batch_has_run_id_flag(self):
         assert "--run-id" in self._help("enrich_citations_batch.py")
 
-    def test_enrich_citations_batch_has_checkpoint_every_flag(self):
-        assert "--checkpoint-every" in self._help("enrich_citations_batch.py")
-
-    def test_enrich_citations_batch_has_resume_flag(self):
-        assert "--resume" in self._help("enrich_citations_batch.py")
+    # --checkpoint-every and --resume removed in #441 (cache-is-data:
+    # always resumable, append directly to cache — no checkpoint needed)
 
     def test_enrich_citations_batch_has_request_timeout_flag(self):
         assert "--request-timeout" in self._help("enrich_citations_batch.py")
@@ -275,11 +272,7 @@ class TestCliFlags:
     def test_enrich_citations_openalex_has_run_id_flag(self):
         assert "--run-id" in self._help("enrich_citations_openalex.py")
 
-    def test_enrich_citations_openalex_has_checkpoint_every_flag(self):
-        assert "--checkpoint-every" in self._help("enrich_citations_openalex.py")
-
-    def test_enrich_citations_openalex_has_resume_flag(self):
-        assert "--resume" in self._help("enrich_citations_openalex.py")
+    # --checkpoint-every and --resume removed in #441 (same as batch above)
 
     def test_enrich_citations_openalex_has_request_timeout_flag(self):
         assert "--request-timeout" in self._help("enrich_citations_openalex.py")
@@ -326,7 +319,6 @@ class TestResumePreview:
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_citations_batch.py"),
              "--works-input", works_path,
-             "--citations-input", citations_path,
              "--run-id", "test-preview"],
             capture_output=True, text=True, env=env, timeout=10,
         )

@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """Enrich citations from OpenAlex referenced_works.
 
-For every DOI in refined_works.csv, queries OpenAlex for its referenced_works
+For every DOI in the works input, queries OpenAlex for its referenced_works
 list and resolves each OpenAlex work ID to a DOI + bibliographic metadata.
-Appends new rows to citations.csv in the same format as enrich_citations_batch.py.
+
+Writes to enrich_cache/openalex_refs.csv (append-only, persistent).
+The cache IS the data — no separate done-file. A DOI is done if it has
+rows (real refs or sentinel) in the cache, OR if it already appears in
+openalex_citations.csv (catalog-stage harvest).
+
+The downstream merge_citations.py step reads this cache + the Crossref
+cache and produces the DVC-tracked citations.csv.
 
 Two-phase approach:
   Phase 1: batch-fetch source works → collect referenced_works OpenAlex IDs.
-  Phase 2: batch-resolve OpenAlex IDs → get DOIs, title, year, journal.
-
-Uses a persistent done-set (.citations_oa_done.txt) so runs are resumable.
+  Phase 2: batch-resolve OpenAlex IDs → get DOIs, title, first author, year, journal.
 
 Usage:
     uv run python scripts/enrich_citations_openalex.py [--batch-size 50] [--limit N]
-                                                        [--run-id ID]
 """
 
 import argparse
@@ -22,19 +26,21 @@ import os
 import time
 
 import pandas as pd
-import requests
 
-from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, REFS_COLUMNS,
-                   normalize_doi, sort_dois_by_priority, retry_get,
-                   save_run_report, make_run_id, get_logger)
+from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
+                   sort_dois_by_priority, retry_get, save_run_report,
+                   make_run_id, get_logger)
 
 log = get_logger("enrich_citations_openalex")
 
-CITATIONS_PATH = os.path.join(CATALOGS_DIR, "citations.csv")
-CHECKPOINT_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_checkpoint.csv")
-DONE_PATH = os.path.join(CATALOGS_DIR, "enrich_cache", "citations_oa_done.txt")
-# Migrate from old location if needed
-_OLD_DONE_PATH = os.path.join(CATALOGS_DIR, ".citations_oa_done.txt")
+CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
+CACHE_PATH = os.path.join(CACHE_DIR, "openalex_refs.csv")
+SENTINEL_REF_DOI = "__NO_REFS__"
+
+OA_REFS_COLUMNS = [
+    "source_doi", "ref_oa_id", "ref_doi", "ref_title",
+    "ref_first_author", "ref_year", "ref_journal",
+]
 
 OA_BASE = "https://api.openalex.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
@@ -100,9 +106,9 @@ def fetch_source_batch(dois, counters=None,
 def resolve_openalex_ids(oa_ids, counters=None,
                          request_timeout=60.0, max_retries=5,
                          retry_backoff=2.0, retry_jitter=1.0):
-    """Phase 2: resolve a list of OpenAlex IDs → (id, doi, title, year, journal).
+    """Phase 2: resolve OpenAlex IDs → (id, doi, title, first_author, year, journal).
 
-    Returns dict {oa_id: {doi, title, year, journal}}
+    Returns dict {oa_id: {doi, title, first_author, year, journal}}
     """
     if not oa_ids:
         return {}
@@ -112,7 +118,7 @@ def resolve_openalex_ids(oa_ids, counters=None,
     data = openalex_get(
         {
             "filter": f"openalex:{id_filter}",
-            "select": "id,doi,title,publication_year,primary_location",
+            "select": "id,doi,title,publication_year,primary_location,authorships",
             "per-page": len(oa_ids),
         },
         counters=counters,
@@ -130,97 +136,92 @@ def resolve_openalex_ids(oa_ids, counters=None,
         loc = item.get("primary_location") or {}
         source = loc.get("source") or {}
         journal = source.get("display_name", "") or ""
+        # Extract first author from authorships
+        authorships = item.get("authorships", []) or []
+        first_author = ""
+        if authorships:
+            author_obj = authorships[0].get("author", {}) or {}
+            first_author = author_obj.get("display_name", "") or ""
         result[oa_id] = {
             "doi": doi,
             "title": title,
+            "first_author": first_author,
             "year": year,
             "journal": journal,
         }
     return result
 
 
-def print_resume_preview(done_dois, all_dois, missing):
-    """Print a startup summary of done-set/checkpoint state and remaining workload."""
-    done_file_rows = 0
-    if os.path.exists(DONE_PATH):
+def load_done_dois(cache_path, oa_citations_path=None):
+    """Load done DOIs from the cache file + catalog-stage openalex_citations.csv.
+
+    A DOI is "done" if it has rows in the cache (real refs or sentinel),
+    or if it appears as source_doi in openalex_citations.csv (already harvested).
+    """
+    done = set()
+
+    # From cache file
+    if os.path.exists(cache_path):
         try:
-            done_file_rows = sum(1 for line in open(DONE_PATH) if line.strip())
-        except Exception:
-            pass
-    ckpt_rows = 0
-    if os.path.exists(CHECKPOINT_PATH):
+            df = pd.read_csv(cache_path, usecols=["source_doi"],
+                             dtype=str, keep_default_na=False)
+            done = set(df["source_doi"].apply(normalize_doi)) - {"", "nan", "none"}
+            log.info("Cache: %d unique source DOIs in %s", len(done), cache_path)
+        except (pd.errors.EmptyDataError, KeyError):
+            log.warning("Cache corrupt or empty: %s", cache_path)
+
+    # From catalog-stage harvest (these DOIs were already processed)
+    oa_citations_path = oa_citations_path or os.path.join(
+        CATALOGS_DIR, "openalex_citations.csv")
+    if os.path.exists(oa_citations_path):
         try:
-            ckpt_rows = max(0, sum(1 for _ in open(CHECKPOINT_PATH)) - 1)
-        except Exception:
+            oa_done = set(
+                pd.read_csv(oa_citations_path, usecols=["source_doi"],
+                            dtype=str, keep_default_na=False)["source_doi"]
+                .apply(normalize_doi).unique()
+            ) - {"", "nan", "none"}
+            log.info("Catalog citations: %d source DOIs in %s",
+                     len(oa_done), oa_citations_path)
+            done |= oa_done
+        except (pd.errors.EmptyDataError, KeyError):
             pass
-    log.info("Resume: %d DOIs total, %d done (file: %d), checkpoint: %d rows, "
-             "%d remaining",
-             len(all_dois), len(done_dois), done_file_rows, ckpt_rows, len(missing))
+
+    return done
 
 
 def _build_citation_rows(all_source_refs, id_metadata):
     """Convert source→ref_ids mapping into flat citation rows."""
-    log.info("Building citation rows...")
     rows = []
     for source_doi, ref_ids in all_source_refs.items():
+        if not ref_ids:
+            # Sentinel for DOIs found but with no refs
+            rows.append({
+                "source_doi": source_doi,
+                "ref_oa_id": "",
+                "ref_doi": SENTINEL_REF_DOI,
+                "ref_title": "",
+                "ref_first_author": "",
+                "ref_year": "",
+                "ref_journal": "",
+            })
+            continue
         for oa_id in ref_ids:
             meta = id_metadata.get(oa_id, {})
             rows.append({
                 "source_doi": source_doi,
-                "source_id": f"openalex:{oa_id}",
+                "ref_oa_id": oa_id,
                 "ref_doi": meta.get("doi", ""),
                 "ref_title": meta.get("title", ""),
-                "ref_first_author": "",
+                "ref_first_author": meta.get("first_author", ""),
                 "ref_year": meta.get("year", ""),
                 "ref_journal": meta.get("journal", ""),
-                "ref_raw": json.dumps({"openalex_id": oa_id}, ensure_ascii=False),
             })
     return rows
 
 
-def _merge_checkpoint():
-    """Merge checkpoint CSV into citations.csv, deduplicating. Returns (new_refs_df, deduped_count)."""
-    log.info("Merging into citations.csv...")
-    existing = pd.read_csv(CITATIONS_PATH, low_memory=False)
-
-    rows_deduped = 0
-    if os.path.exists(CHECKPOINT_PATH) and os.path.getsize(CHECKPOINT_PATH) > 0:
-        new_refs = pd.read_csv(CHECKPOINT_PATH, low_memory=False)
-        is_sentinel = (
-            (new_refs["ref_doi"].isna() | (new_refs["ref_doi"] == ""))
-            & (new_refs["ref_title"].isna() | (new_refs["ref_title"] == ""))
-        )
-        new_refs_real = new_refs[~is_sentinel].copy()
-
-        existing_keys = set(
-            zip(existing["source_doi"].apply(normalize_doi),
-                existing["ref_doi"].fillna("").apply(normalize_doi))
-        )
-        new_refs_real["_key"] = list(zip(
-            new_refs_real["source_doi"].apply(normalize_doi),
-            new_refs_real["ref_doi"].fillna("").apply(normalize_doi),
-        ))
-        dupes_mask = new_refs_real["_key"].isin(existing_keys)
-        rows_deduped = int(dupes_mask.sum())
-        new_refs_real = new_refs_real[~dupes_mask].drop(columns=["_key"])
-
-        combined = pd.concat([existing, new_refs_real], ignore_index=True)
-        combined.to_csv(CITATIONS_PATH, index=False)
-        os.remove(CHECKPOINT_PATH)
-        log.info("Merged: %d old + %d new (-%d sentinels, -%d dupes) = %d rows",
-                 len(existing), len(new_refs_real),
-                 int(is_sentinel.sum()), rows_deduped, len(combined))
-    else:
-        log.info("No new data to merge.")
-        new_refs_real = pd.DataFrame(columns=REFS_COLUMNS)
-
-    return new_refs_real, rows_deduped
-
-
 def main():
     parser = argparse.ArgumentParser(
-        description="Enrich citations from OpenAlex (DOIs processed in priority order: "
-                    "most-cited works first, deterministic)")
+        description="Enrich citations from OpenAlex (most-cited first)")
     parser.add_argument("--batch-size", type=int, default=50,
                         help="DOIs per OpenAlex request (max ~100)")
     parser.add_argument("--resolve-batch-size", type=int, default=100,
@@ -230,26 +231,14 @@ def main():
     parser.add_argument("--delay", type=float, default=0.15,
                         help="Delay between API requests (seconds)")
     parser.add_argument("--works-input",
-                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
-                        help="Works CSV to read DOIs from (default: unified_works.csv)")
-    parser.add_argument("--run-id", default=None,
-                        help="Unique run identifier for the run report (default: timestamp)")
-    parser.add_argument("--resume", action="store_true", default=True,
-                        help="Resume from existing done-set/checkpoint (default: True)")
-    parser.add_argument("--no-resume", dest="resume", action="store_false",
-                        help="Ignore existing done-set/checkpoint and start fresh")
-    parser.add_argument("--checkpoint-every", type=int, default=20,
-                        help="Log checkpoint event every N batches (default: 20)")
-    parser.add_argument("--request-timeout", type=float, default=60.0,
-                        help="Per-request timeout in seconds (default: 60)")
-    parser.add_argument("--max-retries", type=int, default=5,
-                        help="Maximum retries for transient failures (default: 5)")
-    parser.add_argument("--retry-backoff", type=float, default=2.0,
-                        help="Base for exponential backoff in seconds (default: 2.0)")
-    parser.add_argument("--retry-jitter", type=float, default=1.0,
-                        help="Max random jitter added to backoff (default: 1.0)")
-    parser.add_argument("--log-jsonl", default=None,
-                        help="Path to write JSONL event log (optional)")
+                        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
+                        help="Works CSV to read DOIs from (default: enriched_works.csv)")
+    parser.add_argument("--run-id", default=None)
+    parser.add_argument("--request-timeout", type=float, default=60.0)
+    parser.add_argument("--max-retries", type=int, default=5)
+    parser.add_argument("--retry-backoff", type=float, default=2.0)
+    parser.add_argument("--retry-jitter", type=float, default=1.0)
+    parser.add_argument("--log-jsonl", default=None)
     args = parser.parse_args()
 
     run_id = args.run_id or make_run_id()
@@ -258,71 +247,36 @@ def main():
     p2_counters = {}
 
     def _log_event(event_type, **kwargs):
-        """Write a structured event to the optional JSONL log."""
         if not args.log_jsonl:
             return
-        import json as _json
         record = {"run_id": run_id, "event": event_type,
                   "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kwargs}
-        with open(args.log_jsonl, "a") as _f:
-            _f.write(_json.dumps(record) + "\n")
+        with open(args.log_jsonl, "a") as f:
+            f.write(json.dumps(record) + "\n")
 
-    # Migrate done-set from old location (.citations_oa_done.txt → enrich_cache/)
-    if os.path.exists(_OLD_DONE_PATH) and not os.path.exists(DONE_PATH):
-        os.makedirs(os.path.dirname(DONE_PATH), exist_ok=True)
-        os.rename(_OLD_DONE_PATH, DONE_PATH)
-        log.info("Migrated done-set: %s → %s", _OLD_DONE_PATH, DONE_PATH)
+    # Ensure cache directory exists
+    os.makedirs(CACHE_DIR, exist_ok=True)
 
-    # If explicitly starting fresh, discard done-set and unmerged checkpoint.
-    if not args.resume:
-        if os.path.exists(DONE_PATH):
-            os.remove(DONE_PATH)
-        if os.path.exists(CHECKPOINT_PATH):
-            os.remove(CHECKPOINT_PATH)
+    # Initialize cache file with header if needed
+    if not os.path.exists(CACHE_PATH) or os.path.getsize(CACHE_PATH) == 0:
+        pd.DataFrame({c: pd.Series(dtype=str) for c in OA_REFS_COLUMNS}).to_csv(
+            CACHE_PATH, index=False)
 
-    # ── Load done-set (resumable) ─────────────────────────────────────────
-    if args.resume and os.path.exists(DONE_PATH):
-        with open(DONE_PATH) as f:
-            done_dois = set(line.strip() for line in f if line.strip())
-        log.info("Resuming: %d DOIs already fetched from OpenAlex", len(done_dois))
-    else:
-        done_dois = set()
+    # Load done DOIs from cache + catalog harvest (cache-is-data)
+    done_dois = load_done_dois(CACHE_PATH)
 
-    # Also count from checkpoint if a previous run crashed before merging
-    if args.resume and os.path.exists(CHECKPOINT_PATH):
-        ckpt_existing = pd.read_csv(CHECKPOINT_PATH, usecols=["source_doi"],
-                                     low_memory=False)
-        done_dois |= set(ckpt_existing["source_doi"].apply(normalize_doi).dropna())
-        log.info("(+%d rows in unmerged checkpoint)", len(ckpt_existing))
+    # Corpus DOIs
+    works = pd.read_csv(args.works_input, dtype=str, keep_default_na=False)
+    all_dois = [d for d in (normalize_doi(x) for x in works["doi"].unique())
+                if d not in ("", "nan", "none")]
 
-    # ── Corpus DOIs ───────────────────────────────────────────────────────
-    works = pd.read_csv(
-        args.works_input,
-        dtype=str, keep_default_na=False,
-    )
-    all_dois = [
-        normalize_doi(d) for d in works["doi"].unique()
-        if normalize_doi(d) not in ("", "nan", "none")
-    ]
-
-    # Skip DOIs already covered by openalex_citations.csv
-    oa_citations_path = os.path.join(CATALOGS_DIR, "openalex_citations.csv")
-    if os.path.exists(oa_citations_path):
-        oa_done = set(
-            pd.read_csv(oa_citations_path, usecols=["source_doi"],
-                        dtype=str, keep_default_na=False)["source_doi"]
-            .apply(normalize_doi).unique()
-        )
-        log.info("Skipping %d DOIs already in openalex_citations.csv", len(oa_done))
-        done_dois |= oa_done
-
-    # Sort by priority (most-cited works first) for deterministic ordering.
     all_dois_sorted = sort_dois_by_priority(all_dois, works)
     missing = [d for d in all_dois_sorted if d not in done_dois]
     if args.limit:
         missing = missing[:args.limit]
 
-    print_resume_preview(done_dois, all_dois, missing)
+    log.info("Resume: %d DOIs total, %d done, %d remaining",
+             len(all_dois), len(done_dois), len(missing))
     _log_event("start", dois_total=len(all_dois), dois_done_before=len(done_dois),
                dois_to_fetch=len(missing))
 
@@ -330,21 +284,26 @@ def main():
         log.info("Nothing to fetch.")
         return
 
-    # Write checkpoint header once
-    if not os.path.exists(CHECKPOINT_PATH) or os.path.getsize(CHECKPOINT_PATH) == 0:
-        pd.DataFrame(columns=REFS_COLUMNS).to_csv(CHECKPOINT_PATH, index=False)
-
-    # ── Phase 1: collect referenced_works IDs ────────────────────────────
-    log.info("Phase 1: fetching referenced_works from OpenAlex...")
-    all_source_refs = {}
+    # ── Process in waves: fetch refs → resolve IDs → write to cache ─────
+    # Each P1 batch is immediately resolved (P2) and written to cache,
+    # so a crash only loses the current batch, not hours of work.
+    log.info("Fetching referenced_works and resolving to DOIs...")
+    total_sources = 0
+    total_oa_ids = 0
+    total_resolved = 0
+    total_rows = 0
     p1_errors = 0
+    p2_errors = 0
     n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
+    id_metadata_cache = {}  # cross-batch cache to avoid re-resolving
 
     for i in range(0, len(missing), args.batch_size):
         batch = missing[i:i + args.batch_size]
         batch_num = i // args.batch_size + 1
+
+        # Phase 1: fetch referenced_works for this batch
         try:
-            result = fetch_source_batch(
+            source_refs = fetch_source_batch(
                 batch,
                 counters=p1_counters,
                 request_timeout=args.request_timeout,
@@ -352,93 +311,77 @@ def main():
                 retry_backoff=args.retry_backoff,
                 retry_jitter=args.retry_jitter,
             )
-            all_source_refs.update(result)
-            with open(DONE_PATH, "a") as f:
-                for d in batch:
-                    f.write(d + "\n")
         except Exception as e:
-            log.error("Batch %d/%d: %s", batch_num, n_batches, e)
+            log.error("P1 batch %d/%d: %s", batch_num, n_batches, e)
             _log_event("phase1_batch_error", batch=batch_num, error=str(e))
             p1_errors += 1
             if p1_errors > 10:
-                log.error("Too many errors, stopping.")
+                log.error("Too many P1 errors, stopping.")
                 break
             continue
 
-        if batch_num % args.checkpoint_every == 0 or batch_num == n_batches:
-            found_refs = sum(len(v) for v in all_source_refs.values())
+        total_sources += len(source_refs)
+
+        # Phase 2: resolve new OA IDs from this batch
+        new_oa_ids = list({
+            oa_id for ref_list in source_refs.values()
+            for oa_id in ref_list
+            if oa_id and oa_id not in id_metadata_cache
+        })
+        total_oa_ids += len(new_oa_ids)
+
+        for j in range(0, max(1, len(new_oa_ids)), args.resolve_batch_size):
+            resolve_batch = new_oa_ids[j:j + args.resolve_batch_size]
+            if not resolve_batch:
+                break
+            try:
+                resolved = resolve_openalex_ids(
+                    resolve_batch,
+                    counters=p2_counters,
+                    request_timeout=args.request_timeout,
+                    max_retries=args.max_retries,
+                    retry_backoff=args.retry_backoff,
+                    retry_jitter=args.retry_jitter,
+                )
+                id_metadata_cache.update(resolved)
+                total_resolved += len(resolved)
+            except Exception as e:
+                log.error("P2 resolve in batch %d: %s", batch_num, e)
+                p2_errors += 1
+                if p2_errors > 10:
+                    log.error("Too many P2 errors, stopping.")
+                    break
+                continue
+
+        # Build rows and append to cache immediately
+        rows = _build_citation_rows(source_refs, id_metadata_cache)
+        if rows:
+            batch_df = pd.DataFrame(rows, columns=OA_REFS_COLUMNS)
+            batch_df.to_csv(CACHE_PATH, mode="a", header=False, index=False)
+            total_rows += len(rows)
+
+        if batch_num % 20 == 0 or batch_num == n_batches:
             elapsed = time.time() - t0
             rate = (i + len(batch)) / elapsed if elapsed > 0 else 0
             eta = (len(missing) - i - len(batch)) / rate if rate > 0 else 0
-            log.info("P1 batch %d/%d: %d sources, %d ref-IDs, ETA %.0fs",
-                     batch_num, n_batches, len(all_source_refs), found_refs, eta)
-            _log_event("phase1_checkpoint", batch=batch_num, sources=len(all_source_refs),
-                       ref_ids=found_refs)
-
-    # ── Phase 2: resolve OpenAlex IDs → DOIs + metadata ─────────────────
-    all_oa_ids = list({
-        oa_id
-        for ref_list in all_source_refs.values()
-        for oa_id in ref_list
-        if oa_id
-    })
-    log.info("Phase 2: resolving %d unique OpenAlex IDs to DOIs...", len(all_oa_ids))
-
-    id_metadata = {}
-    p2_errors = 0
-    n_resolve_batches = (len(all_oa_ids) + args.resolve_batch_size - 1) // args.resolve_batch_size
-
-    for i in range(0, len(all_oa_ids), args.resolve_batch_size):
-        batch_ids = all_oa_ids[i:i + args.resolve_batch_size]
-        batch_num = i // args.resolve_batch_size + 1
-        try:
-            resolved = resolve_openalex_ids(
-                batch_ids,
-                counters=p2_counters,
-                request_timeout=args.request_timeout,
-                max_retries=args.max_retries,
-                retry_backoff=args.retry_backoff,
-                retry_jitter=args.retry_jitter,
-            )
-            id_metadata.update(resolved)
-        except Exception as e:
-            log.error("Resolve batch %d/%d: %s", batch_num, n_resolve_batches, e)
-            p2_errors += 1
-            if p2_errors > 10:
-                log.error("Too many errors, stopping resolution.")
-                break
-            continue
-
-        if batch_num % 20 == 0 or batch_num == n_resolve_batches:
-            log.info("P2 resolve %d/%d: %d IDs resolved",
-                     batch_num, n_resolve_batches, len(id_metadata))
-
-    # ── Build rows and write checkpoint ──────────────────────────────────
-    rows = _build_citation_rows(all_source_refs, id_metadata)
-
-    if rows:
-        batch_df = pd.DataFrame(rows, columns=REFS_COLUMNS)
-        batch_df.to_csv(CHECKPOINT_PATH, mode="a", header=False, index=False)
-
-    # ── Merge checkpoint into citations.csv ───────────────────────────────
-    new_refs_real, rows_deduped = _merge_checkpoint()
+            log.info("Batch %d/%d: %d sources, %d OA IDs, %d rows, ETA %.0fs",
+                     batch_num, n_batches, total_sources, total_oa_ids,
+                     total_rows, eta)
 
     elapsed = time.time() - t0
     log.info("Done in %.0fs: %d sources, %d OA IDs, %d resolved, "
              "%d rows, errors: %d fetch + %d resolve",
-             elapsed, len(all_source_refs), len(all_oa_ids),
-             len(id_metadata), len(rows), p1_errors, p2_errors)
+             elapsed, total_sources, total_oa_ids,
+             total_resolved, total_rows, p1_errors, p2_errors)
 
     counters = {
         "dois_total": len(all_dois),
         "dois_done_before": len(done_dois),
         "dois_to_fetch": len(missing),
-        "sources_processed": len(all_source_refs),
-        "openalex_ids_found": len(all_oa_ids),
-        "ids_resolved": len(id_metadata),
-        "rows_built": len(rows),
-        "rows_appended": len(new_refs_real),
-        "rows_deduped": rows_deduped,
+        "sources_processed": total_sources,
+        "openalex_ids_found": total_oa_ids,
+        "ids_resolved": total_resolved,
+        "rows_written": total_rows,
         "p1_errors": p1_errors,
         "p2_errors": p2_errors,
         "p1_retries": p1_counters.get("retries", 0),
@@ -452,7 +395,7 @@ def main():
     report_path = save_run_report(counters, run_id, "enrich_citations_openalex")
     log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
-               rows_appended=len(new_refs_real), report_path=report_path)
+               rows_written=total_rows, report_path=report_path)
 
 
 if __name__ == "__main__":
