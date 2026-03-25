@@ -51,11 +51,7 @@ None.
 ## Active PRs
 
 - #385: docs: landscape analysis of distributed issue trackers (#237)
-- #386: ✅ merged — data management plan (CNRS/Science Europe model)
-- #387: ✅ merged — eager branching workflow (Dreaming on a branch)
-- #425: ✅ merged — language enrichment via OpenAlex + langdetect (#423, #427)
-- #442: ✅ merged — citation pipeline: cache-is-data, parallel sources, merge view (#441)
-- #444: ✅ merged — near-duplicate detection for coordinated publications (#416)
+- #453: ✅ merged — fix from_scispace flag never set (#452): source name derived from filename, not CSV content
 
 ## Recent (2026-03-24 rally loop)
 
@@ -73,7 +69,7 @@ None.
 
 - Finalize DMP on OPIDoR (after v1.1 counts stabilize)
 - Send Errata 1 to Oeconomia editor
-- Data paper submission (RDJ4HSS) — PDF ready at `output/content/data-paper.pdf`
+- Data paper submission (RDJ4HSS) — PDF ready at `output/content/data-paper.pdf`; needs `make corpus` on padme to fix SciSpace counts (#452), then re-render
 - ESHET-HES conference slides (Nice, May 26–29)
 - #310: Ship all rows (restructure Zenodo deposit)
 
