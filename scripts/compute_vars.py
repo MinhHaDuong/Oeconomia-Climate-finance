@@ -342,7 +342,7 @@ def citation_stats(v):
     cite_path = os.path.join(CATALOGS_DIR, "citations.csv")
     if os.path.isfile(cite_path):
         # Read just the header + count rows efficiently
-        cite_df = pd.read_csv(cite_path, usecols=["source_doi", "ref_doi"])
+        cite_df = pd.read_csv(cite_path)[["source_doi", "ref_doi"]]
         v["cite_total_rows"] = _int(len(cite_df))
         doi_ref_rows = cite_df["ref_doi"].notna().sum()
         v["cite_doi_ref_rows"] = _int(doi_ref_rows)
@@ -359,7 +359,7 @@ def citation_stats(v):
     # Refined (corpus-internal) citations from refined_citations.csv
     from utils import REFINED_CITATIONS_PATH
     if os.path.isfile(REFINED_CITATIONS_PATH):
-        ref_cite_df = pd.read_csv(REFINED_CITATIONS_PATH, usecols=["source_doi"])
+        ref_cite_df = pd.read_csv(REFINED_CITATIONS_PATH)[["source_doi"]]
         v["cite_refined_rows"] = _int(len(ref_cite_df))
 
 
