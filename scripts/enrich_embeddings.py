@@ -179,9 +179,11 @@ def main():
 
         new_texts = df.loc[~hit_mask, "_text"].tolist()
         log.info("Encoding %d texts...", n_new)
+        # BGE-M3 (~12.8 GB on GPU) needs small batches on 16 GB cards
+        embed_batch = int(os.environ.get("EMBED_BATCH_SIZE", 32))
         new_vecs = model.encode(
             new_texts,
-            batch_size=256,
+            batch_size=embed_batch,
             show_progress_bar=False,
             normalize_embeddings=True,
         )
