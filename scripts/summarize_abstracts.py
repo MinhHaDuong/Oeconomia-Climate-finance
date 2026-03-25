@@ -79,10 +79,10 @@ def load_summary_cache(path: str) -> dict:
                 continue
             try:
                 entry = json.loads(line)
-            except json.JSONDecodeError:
+                doi = entry.pop("doi")
+            except (json.JSONDecodeError, KeyError):
                 log.warning("Skipping corrupted cache line %d in %s", lineno, path)
                 continue
-            doi = entry.pop("doi")
             cache[doi] = entry
     return cache
 
