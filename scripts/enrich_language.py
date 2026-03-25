@@ -19,138 +19,16 @@ import os
 import time
 
 import pandas as pd
-from langdetect import detect, LangDetectException
 
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY,
                    normalize_doi, retry_get, save_csv, save_run_report,
-                   make_run_id, get_logger)
+                   make_run_id, get_logger,
+                   ISO_639_1_CODES, LANG_NORMALIZE,
+                   normalize_lang, is_valid_iso639_1, detect_language)
 
 log = get_logger("enrich_language")
 
 CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
-
-# ISO 639-1 valid language codes (the 184 codes from the standard).
-# We include only the most common ones actually seen in bibliographic data;
-# langdetect itself only returns codes from this set.
-ISO_639_1_CODES = frozenset({
-    "aa", "ab", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az",
-    "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",
-    "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy",
-    "da", "de", "dv", "dz",
-    "ee", "el", "en", "eo", "es", "et", "eu",
-    "fa", "ff", "fi", "fj", "fo", "fr", "fy",
-    "ga", "gd", "gl", "gn", "gu", "gv",
-    "ha", "he", "hi", "ho", "hr", "ht", "hu", "hy", "hz",
-    "ia", "id", "ie", "ig", "ii", "ik", "io", "is", "it", "iu",
-    "ja", "jv",
-    "ka", "kg", "ki", "kj", "kk", "kl", "km", "kn", "ko", "kr", "ks", "ku", "kv", "kw", "ky",
-    "la", "lb", "lg", "li", "ln", "lo", "lt", "lu", "lv",
-    "mg", "mh", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my",
-    "na", "nb", "nd", "ne", "ng", "nl", "nn", "no", "nr", "nv", "ny",
-    "oc", "oj", "om", "or", "os",
-    "pa", "pi", "pl", "ps", "pt",
-    "qu",
-    "rm", "rn", "ro", "ru", "rw",
-    "sa", "sc", "sd", "se", "sg", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr", "ss", "st", "su", "sv", "sw",
-    "ta", "te", "tg", "th", "ti", "tk", "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty",
-    "ug", "uk", "ur", "uz",
-    "ve", "vi", "vo",
-    "wa", "wo",
-    "xh",
-    "yi", "yo",
-    "za", "zh", "zu",
-})
-
-# Normalize ISO 639 codes to 2-letter lowercase.
-# Extracted from qa_detect_language.py — maps 3-letter ISO 639-3 codes
-# and full language names to their 2-letter ISO 639-1 equivalents.
-LANG_NORMALIZE = {
-    "eng": "en", "en_us": "en", "en_gb": "en", "english": "en",
-    "fre": "fr", "fra": "fr", "french": "fr",
-    "ger": "de", "deu": "de", "german": "de",
-    "spa": "es", "spanish": "es",
-    "por": "pt", "portuguese": "pt",
-    "chi": "zh", "zho": "zh", "chinese": "zh",
-    "jpn": "ja", "japanese": "ja",
-    "kor": "ko", "korean": "ko",
-    "ara": "ar", "arabic": "ar",
-    "rus": "ru", "russian": "ru",
-    "ita": "it", "italian": "it",
-    "pol": "pl", "polish": "pl",
-    "tur": "tr", "turkish": "tr",
-    "ind": "id", "indonesian": "id",
-    "swe": "sv", "swedish": "sv",
-    "ukr": "uk", "ukrainian": "uk",
-    "hun": "hu", "hungarian": "hu",
-    "vie": "vi", "vietnamese": "vi",
-    "tha": "th", "thai": "th",
-    "nob": "no", "nor": "no", "norwegian": "no",
-    "dan": "da", "danish": "da",
-    "fin": "fi", "finnish": "fi",
-    "dut": "nl", "nld": "nl", "dutch": "nl",
-    "cat": "ca", "catalan": "ca",
-    "ron": "ro", "rum": "ro", "romanian": "ro",
-    "ces": "cs", "cze": "cs", "czech": "cs",
-    "slk": "sk", "slo": "sk", "slovak": "sk",
-    "hrv": "hr", "croatian": "hr",
-    "srp": "sr", "serbian": "sr",
-    "bul": "bg", "bulgarian": "bg",
-    "lit": "lt", "lithuanian": "lt",
-    "lav": "lv", "latvian": "lv",
-    "est": "et", "estonian": "et",
-    "may": "ms", "msa": "ms", "malay": "ms",
-    "fil": "tl", "tagalog": "tl",
-    "urd": "ur", "urdu": "ur",
-    "hin": "hi", "hindi": "hi",
-    "ben": "bn", "bengali": "bn",
-    "per": "fa", "fas": "fa", "persian": "fa",
-    "heb": "he", "hebrew": "he",
-}
-
-
-def normalize_lang(code):
-    """Normalize a language code to 2-letter ISO 639-1.
-
-    Handles: ISO 639-3 codes (eng→en), full names (english→en),
-    regional suffixes (en_US→en), and sentinel values (und, unknown, nan).
-    Returns None for null/unknown/unrecognizable inputs.
-    """
-    if pd.isna(code) or not code:
-        return None
-    code = str(code).lower().strip()
-    if code in ("nan", "none", "", "unknown", "und", "un",
-                 "mis", "mul", "zxx"):
-        return None
-    # Already 2-letter?
-    if len(code) == 2:
-        return code
-    # Strip regional suffix (en_US -> en)
-    if "_" in code:
-        code = code.split("_")[0]
-        if len(code) == 2:
-            return code
-    return LANG_NORMALIZE.get(code)
-
-
-def is_valid_iso639_1(code):
-    """Return True if code is a recognized ISO 639-1 two-letter language code."""
-    if not code or not isinstance(code, str):
-        return False
-    return code.lower().strip() in ISO_639_1_CODES
-
-
-def detect_language(text):
-    """Detect language from text using langdetect. Returns 2-letter code or None.
-
-    Requires at least 20 characters to attempt detection — shorter texts
-    produce unreliable results.
-    """
-    if not text or len(str(text).strip()) < 20:
-        return None
-    try:
-        return detect(str(text))
-    except LangDetectException:
-        return None
 
 
 # --- Cache I/O ---

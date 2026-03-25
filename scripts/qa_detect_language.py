@@ -17,83 +17,9 @@ import argparse
 import os
 
 import pandas as pd
-from langdetect import detect, LangDetectException
 
-from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR
-
-log = get_logger("qa_detect_language")
-
-# Normalize ISO 639 codes to 2-letter lowercase
-LANG_NORMALIZE = {
-    "eng": "en", "en_us": "en", "en_gb": "en", "english": "en",
-    "fre": "fr", "fra": "fr", "french": "fr",
-    "ger": "de", "deu": "de", "german": "de",
-    "spa": "es", "spanish": "es",
-    "por": "pt", "portuguese": "pt",
-    "chi": "zh", "zho": "zh", "chinese": "zh",
-    "jpn": "ja", "japanese": "ja",
-    "kor": "ko", "korean": "ko",
-    "ara": "ar", "arabic": "ar",
-    "rus": "ru", "russian": "ru",
-    "ita": "it", "italian": "it",
-    "pol": "pl", "polish": "pl",
-    "tur": "tr", "turkish": "tr",
-    "ind": "id", "indonesian": "id",
-    "swe": "sv", "swedish": "sv",
-    "ukr": "uk", "ukrainian": "uk",
-    "hun": "hu", "hungarian": "hu",
-    "vie": "vi", "vietnamese": "vi",
-    "tha": "th", "thai": "th",
-    "nob": "no", "nor": "no", "norwegian": "no",
-    "dan": "da", "danish": "da",
-    "fin": "fi", "finnish": "fi",
-    "dut": "nl", "nld": "nl", "dutch": "nl",
-    "cat": "ca", "catalan": "ca",
-    "ron": "ro", "rum": "ro", "romanian": "ro",
-    "ces": "cs", "cze": "cs", "czech": "cs",
-    "slk": "sk", "slo": "sk", "slovak": "sk",
-    "hrv": "hr", "croatian": "hr",
-    "srp": "sr", "serbian": "sr",
-    "bul": "bg", "bulgarian": "bg",
-    "lit": "lt", "lithuanian": "lt",
-    "lav": "lv", "latvian": "lv",
-    "est": "et", "estonian": "et",
-    "may": "ms", "msa": "ms", "malay": "ms",
-    "fil": "tl", "tagalog": "tl",
-    "urd": "ur", "urdu": "ur",
-    "hin": "hi", "hindi": "hi",
-    "ben": "bn", "bengali": "bn",
-    "per": "fa", "fas": "fa", "persian": "fa",
-    "heb": "he", "hebrew": "he",
-}
-
-
-def normalize_lang(code):
-    """Normalize a language code to 2-letter ISO 639-1."""
-    if pd.isna(code) or not code:
-        return None
-    code = str(code).lower().strip()
-    if code in ("nan", "none", "", "unknown", "und", "un"):
-        return None
-    # Already 2-letter?
-    if len(code) == 2:
-        return code
-    # Strip regional suffix (en_US -> en)
-    if "_" in code:
-        code = code.split("_")[0]
-        if len(code) == 2:
-            return code
-    return LANG_NORMALIZE.get(code, code[:2] if len(code) >= 2 else None)
-
-
-def detect_language(text):
-    """Detect language from text using langdetect. Returns 2-letter code or None."""
-    if not text or len(str(text).strip()) < 20:
-        return None
-    try:
-        return detect(str(text))
-    except LangDetectException:
-        return None
+from utils import (CATALOGS_DIR, get_logger, save_csv, BASE_DIR,
+                   normalize_lang, detect_language)
 
 
 def main():
