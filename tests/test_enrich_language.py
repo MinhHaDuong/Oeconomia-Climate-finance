@@ -57,6 +57,19 @@ class TestNormalizeLang:
         assert normalize_lang("und") is None
         assert normalize_lang("unknown") is None
 
+    def test_unrecognized_string_returns_none(self):
+        """Unknown strings must return None, not a truncated guess."""
+        from enrich_language import normalize_lang
+        assert normalize_lang("basque") is None  # not "ba" (Bashkir)
+        assert normalize_lang("xyzzy") is None
+
+    def test_iso639_3_miscellaneous_returns_none(self):
+        """ISO 639-3 special codes must not be truncated to valid 2-letter codes."""
+        from enrich_language import normalize_lang
+        assert normalize_lang("mis") is None  # miscellaneous, not "mi" (Māori)
+        assert normalize_lang("mul") is None  # multilingual
+        assert normalize_lang("zxx") is None  # no linguistic content
+
 
 # ---------- ISO 639-1 validation ----------
 
@@ -242,7 +255,13 @@ class TestPass2LocalDetect:
 # ---------- DVC pipeline integration ----------
 
 class TestDVCStage:
-    """dvc.yaml must declare enrich_language after enrich_works and before extend."""
+    """enrich_language.py must be folded into the enrich_works stage.
+
+    All three in-place enrichment scripts (DOIs, abstracts, language) are
+    bundled in one DVC stage to avoid a rerun loop: in-place modification
+    changes the tracked output hash, triggering false staleness.
+    See dvc.yaml comment at the enrich_works stage.
+    """
 
     @pytest.fixture(autouse=True)
     def _load_dvc(self):
@@ -251,32 +270,22 @@ class TestDVCStage:
         with open(dvc_path) as f:
             self.dvc = yaml.safe_load(f)
 
-    def test_stage_exists(self):
-        assert "enrich_language" in self.dvc["stages"]
+    def test_no_standalone_enrich_language_stage(self):
+        """A standalone stage would cause a DVC rerun loop (#427)."""
+        assert "enrich_language" not in self.dvc["stages"]
 
-    def test_depends_on_enriched_works(self):
-        deps = self.dvc["stages"]["enrich_language"]["deps"]
-        assert "data/catalogs/enriched_works.csv" in deps
-
-    def test_script_in_deps(self):
-        deps = self.dvc["stages"]["enrich_language"]["deps"]
+    def test_script_in_enrich_works_deps(self):
+        deps = self.dvc["stages"]["enrich_works"]["deps"]
         assert "scripts/enrich_language.py" in deps
 
-    def test_has_cmd(self):
-        """The stage must have a command that runs the script."""
-        stage = self.dvc["stages"]["enrich_language"]
-        assert "cmd" in stage
-        assert "enrich_language.py" in stage["cmd"]
+    def test_script_in_enrich_works_cmd(self):
+        cmd = self.dvc["stages"]["enrich_works"]["cmd"]
+        assert "enrich_language.py" in cmd
 
-    def test_no_enriched_works_in_outs(self):
-        """Stage modifies enriched_works.csv in-place — must not re-declare as output.
-
-        If it were declared as an output, DVC would delete it before running,
-        destroying the data produced by the upstream enrich_works stage.
-        """
-        stage = self.dvc["stages"]["enrich_language"]
-        outs = stage.get("outs", [])
-        assert "data/catalogs/enriched_works.csv" not in outs
+    def test_language_runs_after_abstracts(self):
+        """Language detection benefits from filled abstracts, so must run last."""
+        cmd = self.dvc["stages"]["enrich_works"]["cmd"]
+        assert cmd.index("enrich_abstracts.py") < cmd.index("enrich_language.py")
 
 
 # ---------- script structure ----------
