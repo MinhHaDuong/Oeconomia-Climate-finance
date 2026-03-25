@@ -9,9 +9,13 @@ on (source_doi, ref_doi).
 """
 
 import os
+import sys
 
 import pandas as pd
 import pytest
+
+SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
+sys.path.insert(0, SCRIPTS_DIR)
 
 
 # ---------------------------------------------------------------------------
