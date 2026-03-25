@@ -6,8 +6,8 @@ Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
 
 ## When this trigger runs
 
-- During `runbooks/celebrate.md` (step 5) — **save only**, no sweep
-- During `runbooks/celebrate-day.md` (step 8) — **full sweep** (stale check + runbook cross-reference)
+- During `.agent/runbooks/celebrate.md` (step 5) — **save only**, no sweep
+- During `.agent/runbooks/celebrate-day.md` (step 8) — **full sweep** (stale check + runbook cross-reference)
 - After a user correction (save feedback immediately)
 - After discovering a project quirk
 

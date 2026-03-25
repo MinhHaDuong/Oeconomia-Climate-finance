@@ -18,7 +18,7 @@ kind* of problem it is and *what refactoring pattern* fits. The agent
 ## Relevant files
 
 - `tests/test_script_hygiene.py` — the harness, smell/wall tests
-- `docs/coding-guidelines.md` — § Script hygiene (the "why" behind each check)
+- `.agent/guidelines/coding-guidelines.md` — § Script hygiene (the "why" behind each check)
 
 ## Actions
 

@@ -28,7 +28,7 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
 - All scripts support `--no-pdf`.
 - `make` builds all documents. `make manuscript` builds manuscript only. `make papers` builds the 3 companion documents. `make figures` regenerates all figures (byte-reproducible).
-- House style: `docs/oeconomia-style.md` (eyeballed from 15-4 samples)
+- House style: `.agent/guidelines/oeconomia-style.md` (eyeballed from 15-4 samples)
 - **Logging, not print.** All scripts MUST use `from utils import get_logger; log = get_logger("script_name")` — never bare `print()`. The `get_logger()` factory configures a shared `pipeline` root logger with `StreamHandler` (auto-flush to stderr, `HH:MM:SS LEVEL message` format). Use `log.info()` for progress, `log.warning()` for retries/rate-limits, `log.error()` for failures.
 
 ## Makefile conventions

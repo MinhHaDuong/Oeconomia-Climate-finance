@@ -5,7 +5,7 @@ and pushes forward on deliverables. Author reviews results when the session ends
 
 ## Trigger
 
-Entry point is `runbooks/celebrate-day.md` step 10 — the end-of-day celebration
+Entry point is `.agent/runbooks/celebrate-day.md` step 10 — the end-of-day celebration
 hands off to autonomous exploration when the user requests it.
 
 User prompt structured as:
@@ -108,7 +108,7 @@ For a paper deliverable, the full cycle:
 4. **Formalize constraints**: format template, word count, figure count,
    section structure, reference style, submission requirements.
 5. **Outline**: structure the argument for each target journal.
-   Use `docs/writing-guidelines.md` for prose style.
+   Use `.agent/guidelines/writing-guidelines.md` for prose style.
 6. **Draft**: write sections, adjusting framing per journal.
    Look for writing skills on disk (`skills/`, `docs/`, other repos under `~/`).
    If not found, search the web for method papers and author resources.
@@ -130,7 +130,7 @@ Fix red tests, hygiene issues, and technical debt — but only within the
 4. **Self-review**: single review agent in a fresh worktree (lightweight —
    focus on correctness and behavioral preservation, not full multi-reviewer).
 5. **Fix**: address review findings, push fixes.
-6. **PR & celebrate**: open PR for review. Run `runbooks/celebrate.md`
+6. **PR & celebrate**: open PR for review. Run `.agent/runbooks/celebrate.md`
    to close the cycle before starting the next one.
 7. **Verify**: run `make check-fast` after opening the PR to confirm no
    regressions. If tests fail, fix before moving on.
