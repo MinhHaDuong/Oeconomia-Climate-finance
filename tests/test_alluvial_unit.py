@@ -41,7 +41,7 @@ def _make_works(n=20):
     })
 
 
-def _make_embeddings(n=20, dim=384):
+def _make_embeddings(n=20, dim=1024):
     """Create synthetic embeddings aligned with _make_works()."""
     return np.random.RandomState(42).randn(n, dim).astype(np.float32)
 

@@ -33,7 +33,7 @@ def temp_catalogs(tmp_path):
     (catalogs_dir / "citations.csv").write_text("source_doi,ref_doi,ref_title\n")
     
     # Create dummy embeddings
-    np.savez(catalogs_dir / "embeddings.npz", embeddings=np.zeros((len(unified_df), 384)))
+    np.savez(catalogs_dir / "embeddings.npz", embeddings=np.zeros((len(unified_df), 1024)))
     
     return catalogs_dir
 
