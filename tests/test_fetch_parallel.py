@@ -71,7 +71,7 @@ class TestFetchParallelDifferentHosts:
         with patch("collect_syllabi.SEARCH_PATH", str(search_path)), \
              patch("collect_syllabi.PAGES_PATH", str(pages_path)), \
              patch("collect_syllabi.PDF_DIR", str(pdf_dir)), \
-             patch("collect_syllabi.polite_get", side_effect=slow_polite_get):
+             patch("syllabi_harvest.polite_get", side_effect=slow_polite_get):
 
             t0 = time.monotonic()
             stage_fetch()
@@ -115,7 +115,7 @@ class TestFetchPerHostPoliteness:
         with patch("collect_syllabi.SEARCH_PATH", str(search_path)), \
              patch("collect_syllabi.PAGES_PATH", str(pages_path)), \
              patch("collect_syllabi.PDF_DIR", str(pdf_dir)), \
-             patch("collect_syllabi.polite_get", side_effect=tracking_polite_get):
+             patch("syllabi_harvest.polite_get", side_effect=tracking_polite_get):
 
             t0 = time.monotonic()
             stage_fetch()
@@ -155,7 +155,7 @@ class TestFetchCheckpointIntegrity:
         with patch("collect_syllabi.SEARCH_PATH", str(search_path)), \
              patch("collect_syllabi.PAGES_PATH", str(pages_path)), \
              patch("collect_syllabi.PDF_DIR", str(pdf_dir)), \
-             patch("collect_syllabi.polite_get", side_effect=fast_polite_get):
+             patch("syllabi_harvest.polite_get", side_effect=fast_polite_get):
             stage_fetch()
 
         # Every line must be valid JSON
