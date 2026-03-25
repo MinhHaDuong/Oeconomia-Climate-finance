@@ -10,8 +10,6 @@ A ticket is "ready" when:
   - Every Blocked-by reference points to a closed ticket (or doesn't exist)
 """
 
-from __future__ import annotations
-
 import json
 import sys
 from pathlib import Path

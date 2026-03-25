@@ -28,6 +28,10 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+case "$days" in
+    ''|*[!0-9]*) echo "Error: --days must be a positive integer, got '$days'" >&2; exit 1 ;;
+esac
+
 if [ ! -d "$ticket_dir" ]; then
     echo "Directory not found: $ticket_dir"
     exit 1
@@ -67,7 +71,7 @@ cutoff_epoch=$(date -d "-${days} days" +%s 2>/dev/null || date -v-${days}d +%s 2
 #   NOTHING
 # ---------------------------------------------------------------------------
 # shellcheck disable=SC2086
-result=$(awk -v cutoff="$cutoff_epoch" -v dag_hdrs="Blocked-by,X-Discovered-from,X-Supersedes" '
+result=$(awk -v cutoff="$cutoff_epoch" -v dag_hdrs="Blocked-by,X-Discovered-from,X-Supersedes,X-Parent" '
 BEGIN {
     split(dag_hdrs, dh, ",")
     section = "headers"

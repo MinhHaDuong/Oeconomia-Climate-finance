@@ -52,6 +52,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
+pythonpath = ["tickets/tools"]
 markers = [
     "slow: marks tests that require network access or external data (deselect with '-m \"not slow\"')",
     "integration: marks tests that spawn subprocesses or use sleep-based timing (deselect with '-m \"not integration\"')",

@@ -1,5 +1,1 @@
-import sys
-from pathlib import Path
-
-# Make ticket tools importable in tests
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
+# Ticket tools are importable via pyproject.toml [tool.pytest.ini_options] pythonpath.

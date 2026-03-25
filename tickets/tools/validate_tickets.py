@@ -8,8 +8,6 @@ Usage:
 Exit 0 on success, exit 1 with diagnostics on failure.
 """
 
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 

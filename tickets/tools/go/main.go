@@ -529,7 +529,7 @@ func jsonEscape(s string) string {
 // Archive (mirrors archive_tickets.py)
 // ---------------------------------------------------------------------------
 
-var dagHeaders = []string{"Blocked-by", "X-Discovered-from", "X-Supersedes"}
+var dagHeaders = []string{"Blocked-by", "X-Discovered-from", "X-Supersedes", "X-Parent"}
 
 // parseLogTimestamp extracts YYYY-MM-DDTHH:MM(:SS)?Z? from a log line.
 func parseLogTimestamp(line string) (time.Time, bool) {

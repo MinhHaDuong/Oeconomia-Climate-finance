@@ -32,7 +32,7 @@ Commits are workspace artifacts (notes, analysis, braindumps) unless the convers
 - **Nothing actionable** — delete the branch at session end.
 
 ### Planning
-Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use GitHub Issues as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet. Deliverable: a ticket with test spec.
+Explore alternatives, design strategies, prototype approaches. Read code, research, draft plans. Use local tickets (or forge issues for cross-repo work) as the planning artifact — write tickets with full context (see below). **Specify the first test in the ticket** — the Doing phase enforces TDD. No production commits yet. Deliverable: a ticket with test spec.
 
 ### Doing
 Runs in a fresh context — the ticket is the only input. This prevents context window pollution from Dreaming/Planning conversations. Launch via `start-ticket` trigger.
@@ -74,11 +74,11 @@ The agent must always know and declare its current DD phase.
 | Event | When | Runbook |
 |-------|------|---------|
 | on-start | Beginning of every conversation | `.agent/runbooks/on-start.md` |
-| start-ticket | Starting work on a GitHub issue | `.agent/runbooks/start-ticket.md` |
+| start-ticket | Starting work on a ticket | `.agent/runbooks/start-ticket.md` |
 | pre-commit | Before every commit | `.agent/runbooks/pre-commit.md` |
 | post-task | After completing a ticket | `.agent/runbooks/celebrate.md` |
 | end-session | User ends a work session | `.agent/runbooks/celebrate-day.md` |
-| new-ticket | Creating a GitHub issue (issues are handoff documents) | `.agent/runbooks/new-ticket.md` |
+| new-ticket | Creating a ticket (tickets are handoff documents) | `.agent/runbooks/new-ticket.md` |
 | review-pr | Reviewing a pull request (code) | `.agent/runbooks/review-pr.md` |
 | review-pr-prose | Reviewing a pull request (prose/manuscript) | `.agent/runbooks/review-pr-prose.md` |
 | memory-write | Writing or sweeping persistent memory | `.agent/runbooks/memory.md` |

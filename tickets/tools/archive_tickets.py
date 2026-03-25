@@ -7,8 +7,6 @@ Usage:
 Default: dry-run. Pass --execute to actually move files and commit.
 """
 
-from __future__ import annotations
-
 import re
 import subprocess
 import sys
@@ -18,7 +16,7 @@ from pathlib import Path
 from ticket_parser import load_tickets, Ticket
 
 
-DAG_HEADERS = ("Blocked-by", "X-Discovered-from", "X-Supersedes")
+DAG_HEADERS = ("Blocked-by", "X-Discovered-from", "X-Supersedes", "X-Parent")
 
 
 def last_log_date(ticket: Ticket) -> datetime | None:
