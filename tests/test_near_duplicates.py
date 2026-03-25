@@ -20,53 +20,69 @@ from detect_near_duplicates import detect_near_duplicate_groups
 # Fixtures
 # ============================================================
 
+COP27_ABSTRACT_VARIANT_A = (
+    "The 2022 report of the Intergovernmental Panel on Climate Change (IPCC) "
+    "paints a dark picture of the future of life on earth, if meaningful action "
+    "is not taken to reverse current trends. Despite repeated warnings, the "
+    "world has not done enough."
+)
+
+COP27_ABSTRACT_VARIANT_B = (
+    "Wealthy nations must step up support for Africa and vulnerable countries "
+    "in addressing past, present, and future impacts of climate change. The "
+    "2022 report of the Intergovernmental Panel on Climate Change (IPCC) paints "
+    "a dark picture of the future of life on earth."
+)
+
+
 @pytest.fixture
 def cop27_df():
     """Synthetic DataFrame mimicking the COP27 coordinated publication.
 
-    62 records with near-identical abstracts (minor punctuation/truncation
-    differences), plus 5 unrelated papers.
+    62 records with the same normalized title but different abstract variants
+    (truncated, different starting paragraphs, minor punctuation differences),
+    plus 5 unrelated papers.
     """
-    cop27_abstract_base = (
-        "The 2022 report of the Intergovernmental Panel on Climate Change (IPCC) "
-        "paints a dark picture of the future of life on earth, if meaningful action "
-        "is not taken to reverse current trends. Despite repeated warnings, the "
-        "world has not done enough. The editorial is being published simultaneously "
-        "in over 50 journals to highlight the urgency of action needed."
-    )
     records = []
 
-    # 62 COP27 editorial variants
+    # 62 COP27 editorial variants — same title, varying abstracts
+    title_variants = [
+        "COP27 Climate Change Conference: urgent action needed for Africa and the world",
+        "COP27 Climate Change Conference: Urgent action needed for Africa and the world",
+        "COP27 Climate Change Conference: Urgent Action Needed for Africa and the World",
+        "COP27 Climate Change Conference—Urgent Action Needed for Africa and the World",
+    ]
     for i in range(62):
-        abstract = cop27_abstract_base
-        # Introduce minor variation: Oxford comma, truncation, punctuation
-        if i % 3 == 1:
-            abstract = abstract.replace("earth, if", "earth if")
-        if i % 5 == 0:
-            abstract = abstract[:250]  # truncated
-        if i % 7 == 0:
-            abstract = abstract.replace("50 journals", "fifty journals")
+        title = title_variants[i % len(title_variants)]
+        # Mix abstract variants: some have variant A, some B, some truncated
+        if i % 3 == 0:
+            abstract = COP27_ABSTRACT_VARIANT_A
+        elif i % 3 == 1:
+            abstract = COP27_ABSTRACT_VARIANT_B
+        else:
+            abstract = COP27_ABSTRACT_VARIANT_A[:150]  # truncated
+
         records.append({
             "doi": f"10.1000/cop27-{i:03d}",
-            "title": "COP27 Climate Change Conference: urgent action needed for Africa and the world",
+            "title": title,
             "abstract": abstract,
             "year": 2022,
             "first_author": "Atwoli",
             "journal": f"Journal {i}",
         })
 
-    # 5 unrelated papers with distinct abstracts
+    # 5 unrelated papers with distinct titles and abstracts
     unrelated = [
-        "Carbon pricing mechanisms in the European Union have evolved significantly.",
-        "Green bonds have emerged as a major financial instrument for climate.",
-        "Adaptation finance in sub-Saharan Africa remains critically under-resourced.",
-        "The Paris Agreement established a framework for international cooperation.",
-        "Renewable energy investment trends show accelerating growth worldwide.",
+        ("Carbon pricing mechanisms", "Carbon pricing mechanisms in the EU have evolved."),
+        ("Green bonds overview", "Green bonds have emerged as a major financial instrument."),
+        ("Adaptation finance gaps", "Adaptation finance in sub-Saharan Africa remains under-resourced."),
+        ("Paris Agreement framework", "The Paris Agreement established international cooperation."),
+        ("Renewable energy trends", "Renewable energy investment trends show accelerating growth."),
     ]
-    for i, abstract in enumerate(unrelated):
+    for i, (title, abstract) in enumerate(unrelated):
         records.append({
             "doi": f"10.1000/other-{i:03d}",
-            "title": f"Unrelated paper {i}",
+            "title": title,
             "abstract": abstract,
             "year": 2020 + i,
             "first_author": f"Author{i}",
@@ -141,30 +157,55 @@ class TestEdgeCases:
         groups = detect_near_duplicate_groups(df)
         assert len(groups) == 0
 
-    def test_missing_abstracts_excluded(self):
-        """Papers without abstracts should not be grouped together."""
+    def test_missing_abstracts_not_grouped(self):
+        """Papers without abstracts sharing a title should NOT be grouped.
+
+        Without abstract content to validate, we cannot confirm these are
+        true near-duplicates vs. generic front-matter (e.g., "References").
+        """
         df = pd.DataFrame({
             "doi": [f"10.1000/x-{i}" for i in range(10)],
-            "title": [f"Paper {i}" for i in range(10)],
+            "title": ["Same coordinated editorial title"] * 10,
             "abstract": [None] * 10,
             "year": [2020] * 10,
         })
         groups = detect_near_duplicate_groups(df)
-        assert groups.isna().all(), "Papers with no abstract should not form groups"
+        assert groups.isna().all(), "No-abstract title groups should not be flagged"
 
-    def test_short_abstracts_excluded(self):
-        """Very short abstracts should not trigger grouping."""
+    def test_short_identical_abstracts_grouped_by_title(self):
+        """Papers with short but IDENTICAL abstracts and same title are grouped.
+
+        The abstract prefix overlap check considers short normalized abstracts
+        as matching when they're identical.
+        """
         df = pd.DataFrame({
             "doi": [f"10.1000/s-{i}" for i in range(10)],
-            "title": [f"Paper {i}" for i in range(10)],
-            "abstract": ["Abstract."] * 10,
+            "title": ["COP27 editorial: urgent action needed"] * 10,
+            "abstract": ["Abstract content that is exactly the same in all ten copies of this paper."] * 10,
             "year": [2020] * 10,
         })
         groups = detect_near_duplicate_groups(df)
-        assert groups.isna().all(), "Very short abstracts should not form groups"
+        assert groups.notna().all(), "Identical abstracts + same title should be grouped"
+
+    def test_common_title_no_abstract_overlap_excluded(self):
+        """Papers with a generic shared title (e.g., 'Editorial') but completely
+        different abstracts should NOT be grouped."""
+        df = pd.DataFrame({
+            "doi": [f"10.1000/ed-{i}" for i in range(10)],
+            "title": ["Editorial"] * 10,
+            "abstract": [
+                f"This editorial discusses topic {i} which is entirely "
+                f"unique and unrelated to other editorials number {i * 37}."
+                for i in range(10)
+            ],
+            "year": [2020] * 10,
+        })
+        groups = detect_near_duplicate_groups(df)
+        assert groups.isna().all(), (
+            "Generic titles with diverse abstracts must not form a group"
+        )
 
     def test_min_group_size_respected(self, cop27_df):
         """Groups smaller than min_group_size should not be flagged."""
-        # With min_group_size=100, even 62 COP27 records won't form a group
         groups = detect_near_duplicate_groups(cop27_df, min_group_size=100)
         assert groups.isna().all()
