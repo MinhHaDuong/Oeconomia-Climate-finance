@@ -228,6 +228,68 @@ def test_summarize_too_long_abstracts_e2e(monkeypatch, sample_df, tmp_cache_dir)
     assert len(cache) == 2
 
 
+def test_nan_doi_skipped(monkeypatch, tmp_cache_dir):
+    """Records with NaN DOI are skipped (not cached) to avoid JSON corruption."""
+    df = pd.DataFrame({
+        "doi": [float("nan"), "10.1000/good"],
+        "title": ["No DOI paper", "Has DOI paper"],
+        "abstract": [LONG_ABSTRACT, LONG_ABSTRACT],
+    })
+
+    def mock_completion(**kwargs):
+        class Choice:
+            class Message:
+                content = "A summary."
+            message = Message()
+        class Response:
+            choices = [Choice()]
+        return Response()
+
+    monkeypatch.setattr("summarize_abstracts.litellm.completion", mock_completion)
+
+    cache_path = os.path.join(tmp_cache_dir, "cache.jsonl")
+    result_df = summarize_too_long_abstracts(df, model="test/model", cache_path=cache_path)
+
+    # NaN DOI record stays too_long (not summarized)
+    assert result_df.iloc[0]["abstract_status"] == "too_long"
+    # Good DOI record gets summarized
+    assert result_df.iloc[1]["abstract_status"] == "generated"
+    # Cache has only 1 entry (not the NaN one)
+    cache = load_summary_cache(cache_path)
+    assert len(cache) == 1
+
+
+def test_corrupted_cache_line_skipped(tmp_cache_dir):
+    """Corrupted JSONL lines are skipped, not crash the loader."""
+    path = os.path.join(tmp_cache_dir, "cache.jsonl")
+    with open(path, "w") as f:
+        f.write('{"doi": "10.1000/a", "summary": "Good.", "model": "m", "tokens_original": 1500, "error": null}\n')
+        f.write('CORRUPTED LINE\n')
+        f.write('{"doi": "10.1000/b", "summary": "Also good.", "model": "m", "tokens_original": 1200, "error": null}\n')
+    cache = load_summary_cache(path)
+    assert len(cache) == 2
+    assert "10.1000/a" in cache
+    assert "10.1000/b" in cache
+
+
+def test_empty_llm_response_is_error(monkeypatch):
+    """Empty LLM response is treated as an error, not a success."""
+    def mock_completion(**kwargs):
+        class Choice:
+            class Message:
+                content = "   "
+            message = Message()
+        class Response:
+            choices = [Choice()]
+        return Response()
+
+    monkeypatch.setattr("summarize_abstracts.litellm.completion", mock_completion)
+
+    result = generate_summary(LONG_ABSTRACT, model="test/model")
+    assert result["error"] is not None
+    assert result["summary"] == ""
+
+
 def test_cached_summaries_are_reused(monkeypatch, sample_df, tmp_cache_dir):
     """Pre-cached summaries skip LLM calls."""
     call_count = 0

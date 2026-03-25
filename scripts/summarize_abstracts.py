@@ -73,11 +73,15 @@ def load_summary_cache(path: str) -> dict:
         return {}
     cache = {}
     with open(path) as f:
-        for line in f:
+        for lineno, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
-            entry = json.loads(line)
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                log.warning("Skipping corrupted cache line %d in %s", lineno, path)
+                continue
             doi = entry.pop("doi")
             cache[doi] = entry
     return cache
@@ -104,6 +108,14 @@ def generate_summary(text: str, *, model: str) -> dict:
             temperature=0,
         )
         summary = response.choices[0].message.content.strip()
+        if not summary:
+            log.warning("LLM returned empty summary for %d-token abstract", tokens_original)
+            return {
+                "summary": "",
+                "model": model,
+                "tokens_original": tokens_original,
+                "error": "empty response",
+            }
         return {
             "summary": summary,
             "model": model,
@@ -153,42 +165,54 @@ def summarize_too_long_abstracts(
     cache = load_summary_cache(cache_path)
     cached_count = 0
     generated_count = 0
+    skipped_no_doi = 0
 
-    for i, idx in enumerate(result.index[too_long_mask]):
-        doi = result.at[idx, "doi"]
+    try:
+        for i, idx in enumerate(result.index[too_long_mask]):
+            doi = result.at[idx, "doi"]
 
-        # Check cache
-        if doi in cache and cache[doi]["error"] is None:
-            result.at[idx, "abstract"] = cache[doi]["summary"]
-            result.at[idx, "abstract_status"] = "generated"
-            cached_count += 1
-            continue
+            # Skip records without a usable DOI — NaN keys corrupt JSON cache
+            if pd.isna(doi):
+                skipped_no_doi += 1
+                result.at[idx, "abstract_status"] = "too_long"
+                continue
+            doi = str(doi)
 
-        # Generate summary
-        original_text = str(result.at[idx, "abstract"])
-        entry = generate_summary(original_text, model=model)
-        cache[doi] = entry
+            # Check cache
+            if doi in cache and cache[doi]["error"] is None:
+                result.at[idx, "abstract"] = cache[doi]["summary"]
+                result.at[idx, "abstract_status"] = "generated"
+                cached_count += 1
+                continue
 
-        if entry["error"] is None:
-            result.at[idx, "abstract"] = entry["summary"]
-            result.at[idx, "abstract_status"] = "generated"
-            generated_count += 1
-        else:
-            # Keep original on error — don't lose data
-            log.warning("Keeping original abstract for %s (LLM error)", doi)
-            result.at[idx, "abstract_status"] = "too_long"
+            # Generate summary
+            original_text = str(result.at[idx, "abstract"])
+            entry = generate_summary(original_text, model=model)
+            cache[doi] = entry
 
-        # Checkpoint
-        if (generated_count + 1) % checkpoint_every == 0:
-            save_summary_cache(cache, cache_path)
-            log.info("Checkpoint: %d generated, %d cached", generated_count, cached_count)
+            if entry["error"] is None:
+                result.at[idx, "abstract"] = entry["summary"]
+                result.at[idx, "abstract_status"] = "generated"
+                generated_count += 1
+            else:
+                # Keep original on error — don't lose data
+                log.warning("Keeping original abstract for %s (LLM error)", doi)
+                result.at[idx, "abstract_status"] = "too_long"
 
-        # Rate limit (skip in tests where model is test/*)
-        if not model.startswith("test/"):
-            time.sleep(0.5)
+            # Checkpoint
+            if (generated_count + 1) % checkpoint_every == 0:
+                save_summary_cache(cache, cache_path)
+                log.info("Checkpoint: %d generated, %d cached", generated_count, cached_count)
 
-    # Final save
-    save_summary_cache(cache, cache_path)
+            # Rate limit (skip in tests where model is test/*)
+            if not model.startswith("test/"):
+                time.sleep(0.5)
+    finally:
+        # Save cache even on interrupt so completed work isn't lost
+        save_summary_cache(cache, cache_path)
+
+    if skipped_no_doi:
+        log.warning("Skipped %d records with no DOI (cannot cache)", skipped_no_doi)
     log.info("Done: %d cached, %d generated, %d total too_long",
              cached_count, generated_count, n_too_long)
 
