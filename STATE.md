@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-24
+Last updated: 2026-03-25
 
 ## Status: SUBMITTED + ERRATA 1
 
@@ -28,6 +28,8 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - `in_v1` provenance column: 29,805 / 31,012 rows match v1.0-submission (96.1%)
 - Incremental caches in `enrich_cache/` survive DVC re-runs (#306, #307, #298)
 - LLM extraction cache: sha256(chunk):model key, JSONL in enrich_cache/ (#298)
+- Language enrichment: two-pass (OpenAlex API + langdetect), folded into `enrich_works` DVC stage (#423)
+- Language utilities (`normalize_lang`, `detect_language`, `ISO_639_1_CODES`) shared via `utils.py`
 - DVC clean, 18 files pushed
 
 ## Build system
@@ -50,6 +52,7 @@ None.
 - #385: docs: landscape analysis of distributed issue trackers (#237)
 - #386: ✅ merged — data management plan (CNRS/Science Europe model)
 - #387: ✅ merged — eager branching workflow (Dreaming on a branch)
+- #425: ✅ merged — language enrichment via OpenAlex + langdetect (#423, #427)
 
 ## Recent (2026-03-24 rally loop)
 
@@ -61,7 +64,7 @@ None.
 - #342: ✅ Extract cache tests (RED phase, subsumed by #298)
 - #382: ✅ Teaching pipeline test drift — 3 test fixes
 - #381: ✅ Script hygiene — archived experimental script, fixed sys.path hack
-- Test suite: 477 passed, 1 failed (god modules structural issue only)
+- Test suite: 517 passed, 2 failed (god modules + clustering plots, both pre-existing)
 
 ## Next actions
 
@@ -80,6 +83,8 @@ None.
 - #255: Metadata completeness (DOI backfill)
 - #297: Unix-style figure scripts
 - #376: Setup: rename repo, create oeconomia release branch
+- #428: Normalize enrichment tables (join stage instead of in-place mutation)
+- #432: Make save_csv atomic (write-then-rename)
 
 ## Open tickets (backlog)
 
