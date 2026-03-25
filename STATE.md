@@ -67,7 +67,7 @@ None.
 - #342: ✅ Extract cache tests (RED phase, subsumed by #298)
 - #382: ✅ Teaching pipeline test drift — 3 test fixes
 - #381: ✅ Script hygiene — archived experimental script, fixed sys.path hack
-- Test suite: 517 passed, 2 failed (god modules + clustering plots, both pre-existing)
+- Test suite: 621 tests (unit + integration + slow). `check-fast` runs unit tests in ~18 s, `check` runs all.
 
 ## Next actions
 

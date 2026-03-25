@@ -6,6 +6,9 @@ Covers:
 - Startup resume-preview output (stdout contains expected strings)
 - Run summary JSON is created with internally consistent counters
 - Step counter updates on abstract enrichment steps
+
+CLI flag presence is checked via source inspection (no subprocess).
+Integration tests that run scripts via subprocess are marked @integration.
 """
 
 import json
@@ -56,6 +59,18 @@ def make_mini_citations(tmp_path):
     path = tmp_path / "citations.csv"
     pd.DataFrame(columns=REFS_COLUMNS).to_csv(path, index=False)
     return str(path)
+
+
+def _read_script(script_name):
+    """Read script source text for flag inspection."""
+    path = os.path.join(SCRIPTS_DIR, script_name)
+    with open(path) as f:
+        return f.read()
+
+
+def _has_flag(source, flag):
+    """Check that the script source defines an argparse flag."""
+    return f'"{flag}"' in source or f"'{flag}'" in source
 
 
 # ---------------------------------------------------------------------------
@@ -180,6 +195,7 @@ class TestUtilsHelpers:
 # JSONL log file: created on real run and contains expected events
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 class TestJsonlLogging:
     def test_enrich_abstracts_dry_run_no_jsonl(self, tmp_path):
         """--dry-run exits before JSONL events are written (no start event)."""
@@ -213,87 +229,91 @@ class TestJsonlLogging:
 
 
 # ---------------------------------------------------------------------------
-# CLI flag tests: --run-id and --checkpoint-every
+# CLI flag tests: verify add_argument calls via source inspection (no subprocess)
 # ---------------------------------------------------------------------------
 
 class TestCliFlags:
-    def _help(self, script):
-        result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, script), "--help"],
-            capture_output=True, text=True,
-        )
-        return result.stdout + result.stderr
+    """Verify CLI flags are defined in argparse (source inspection, no subprocess)."""
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_sources(self, request):
+        request.cls._sources = {
+            "enrich_abstracts.py": _read_script("enrich_abstracts.py"),
+            "enrich_citations_batch.py": _read_script("enrich_citations_batch.py"),
+            "enrich_citations_openalex.py": _read_script("enrich_citations_openalex.py"),
+        }
 
     def test_enrich_abstracts_has_run_id_flag(self):
-        assert "--run-id" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--run-id")
 
     def test_enrich_abstracts_has_checkpoint_every_flag(self):
-        assert "--checkpoint-every" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--checkpoint-every")
 
     def test_enrich_abstracts_has_resume_flag(self):
-        assert "--resume" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--resume")
 
     def test_enrich_abstracts_has_request_timeout_flag(self):
-        assert "--request-timeout" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--request-timeout")
 
     def test_enrich_abstracts_has_max_retries_flag(self):
-        assert "--max-retries" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--max-retries")
 
     def test_enrich_abstracts_has_retry_backoff_flag(self):
-        assert "--retry-backoff" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--retry-backoff")
 
     def test_enrich_abstracts_has_retry_jitter_flag(self):
-        assert "--retry-jitter" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--retry-jitter")
 
     def test_enrich_abstracts_has_log_jsonl_flag(self):
-        assert "--log-jsonl" in self._help("enrich_abstracts.py")
+        assert _has_flag(self._sources["enrich_abstracts.py"], "--log-jsonl")
 
     def test_enrich_citations_batch_has_run_id_flag(self):
-        assert "--run-id" in self._help("enrich_citations_batch.py")
+        assert _has_flag(self._sources["enrich_citations_batch.py"], "--run-id")
 
     # --checkpoint-every and --resume removed in #441 (cache-is-data:
     # always resumable, append directly to cache — no checkpoint needed)
 
     def test_enrich_citations_batch_has_request_timeout_flag(self):
-        assert "--request-timeout" in self._help("enrich_citations_batch.py")
+        assert _has_flag(self._sources["enrich_citations_batch.py"], "--request-timeout")
 
     def test_enrich_citations_batch_has_max_retries_flag(self):
-        assert "--max-retries" in self._help("enrich_citations_batch.py")
+        assert _has_flag(self._sources["enrich_citations_batch.py"], "--max-retries")
 
     def test_enrich_citations_batch_has_retry_backoff_flag(self):
-        assert "--retry-backoff" in self._help("enrich_citations_batch.py")
+        assert _has_flag(self._sources["enrich_citations_batch.py"], "--retry-backoff")
 
     def test_enrich_citations_batch_has_retry_jitter_flag(self):
-        assert "--retry-jitter" in self._help("enrich_citations_batch.py")
+        assert _has_flag(self._sources["enrich_citations_batch.py"], "--retry-jitter")
 
     def test_enrich_citations_batch_has_log_jsonl_flag(self):
-        assert "--log-jsonl" in self._help("enrich_citations_batch.py")
+        assert _has_flag(self._sources["enrich_citations_batch.py"], "--log-jsonl")
 
     def test_enrich_citations_openalex_has_run_id_flag(self):
-        assert "--run-id" in self._help("enrich_citations_openalex.py")
+        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--run-id")
 
     # --checkpoint-every and --resume removed in #441 (same as batch above)
 
     def test_enrich_citations_openalex_has_request_timeout_flag(self):
-        assert "--request-timeout" in self._help("enrich_citations_openalex.py")
+        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--request-timeout")
 
     def test_enrich_citations_openalex_has_max_retries_flag(self):
-        assert "--max-retries" in self._help("enrich_citations_openalex.py")
+        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--max-retries")
 
     def test_enrich_citations_openalex_has_retry_backoff_flag(self):
-        assert "--retry-backoff" in self._help("enrich_citations_openalex.py")
+        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--retry-backoff")
 
     def test_enrich_citations_openalex_has_retry_jitter_flag(self):
-        assert "--retry-jitter" in self._help("enrich_citations_openalex.py")
+        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--retry-jitter")
 
     def test_enrich_citations_openalex_has_log_jsonl_flag(self):
-        assert "--log-jsonl" in self._help("enrich_citations_openalex.py")
+        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--log-jsonl")
 
 
 # ---------------------------------------------------------------------------
 # Resume preview: startup output contains expected labels
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 class TestResumePreview:
     def test_enrich_abstracts_dry_run_shows_preview(self, tmp_path):
         works_path = make_mini_works(tmp_path)
@@ -332,6 +352,7 @@ class TestResumePreview:
 # ---------------------------------------------------------------------------
 
 class TestRunReport:
+    @pytest.mark.integration
     def test_enrich_abstracts_dry_run_no_report(self, tmp_path):
         """--dry-run exits before writing the report."""
         works_path = make_mini_works(tmp_path)

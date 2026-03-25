@@ -4,6 +4,8 @@ Integration, incrementality, and compatibility tests ensuring that:
 1. Phase 1 on a sample dataset produces valid outputs
 2. Incremental reruns respect checkpoints/caches
 3. corpus_filter.py --apply remains the stable endpoint
+
+Subprocess tests are marked @integration. Unit tests remain unmarked.
 """
 
 import os
@@ -17,24 +19,31 @@ SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 sys.path.insert(0, SCRIPTS_DIR)
 
 
+def _read_script(script_name):
+    """Read script source text for flag inspection."""
+    path = os.path.join(SCRIPTS_DIR, script_name)
+    with open(path) as f:
+        return f.read()
+
+
 @pytest.fixture
 def temp_catalogs(tmp_path):
     """Create temporary catalogs dir with sample unified_works.csv."""
     catalogs_dir = tmp_path / "catalogs"
     catalogs_dir.mkdir(parents=True)
-    
+
     # Load fixture
     unified_df = pd.read_csv(
         os.path.join(os.path.dirname(__file__), "fixtures", "filter_fixture.csv")
     )
     (catalogs_dir / "unified_works.csv").write_text(unified_df.to_csv(index=False))
-    
+
     # Create empty citations
     (catalogs_dir / "citations.csv").write_text("source_doi,ref_doi,ref_title\n")
-    
+
     # Create dummy embeddings
     np.savez(catalogs_dir / "embeddings.npz", embeddings=np.zeros((len(unified_df), 1024)))
-    
+
     return catalogs_dir
 
 
@@ -47,17 +56,18 @@ def monkeypatch_env(monkeypatch, tmp_path):
     return tmp_path
 
 
+@pytest.mark.integration
 class TestPhase1Integration:
     """Test Phase 1 filtering workflow end-to-end."""
 
     def test_corpus_filter_apply_works(self, temp_catalogs, monkeypatch):
         """corpus_filter.py --apply produces refined_works.csv and corpus_audit.csv."""
         import subprocess
-        
+
         # Set env and run
         env = os.environ.copy()
         env["CLIMATE_FINANCE_DATA"] = str(temp_catalogs.parent)
-        
+
         result = subprocess.run(
             [
                 "python", os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
@@ -75,25 +85,26 @@ class TestPhase1Integration:
             f"corpus_filter.py --apply failed:\nstdout: {result.stdout}\n"
             f"stderr: {result.stderr}"
         )
-        
+
         # Check outputs
         assert (temp_catalogs / "refined_works.csv").exists(), "refined_works.csv missing"
         assert (temp_catalogs / "corpus_audit.csv").exists(), "corpus_audit.csv missing"
-        
+
         refined = pd.read_csv(temp_catalogs / "refined_works.csv", dtype=str)
         assert len(refined) > 0, "refined_works.csv is empty"
 
 
+@pytest.mark.integration
 class TestIncrementiality:
     """Test cache/checkpoint behavior."""
 
     def test_corpus_filter_idempotent(self, temp_catalogs, monkeypatch):
         """Running corpus_filter --apply twice produces identical refined_works.csv."""
         import subprocess
-        
+
         env = os.environ.copy()
         env["CLIMATE_FINANCE_DATA"] = str(temp_catalogs.parent)
-        
+
         cmd = [
             "python", os.path.join(SCRIPTS_DIR, "corpus_filter.py"),
             "--apply", "--skip-llm", "--skip-citation-flag",
@@ -108,13 +119,13 @@ class TestIncrementiality:
         # Second run
         subprocess.run(cmd, cwd=str(temp_catalogs), capture_output=True, text=True, env=env)
         run2 = (temp_catalogs / "refined_works.csv").read_text()
-        
+
         assert run1 == run2, "corpus_filter --apply is not idempotent"
 
     def test_checkpoint_structure_preserved(self, temp_catalogs):
         """Checkpoint files have expected structure (backwards compatible)."""
         checkpoint_path = temp_catalogs / ".citations_batch_checkpoint.csv"
-        
+
         # Create a test checkpoint (as if interrupted run)
         checkpoint = pd.DataFrame({
             "source_doi": ["10.1/test"],
@@ -127,34 +138,31 @@ class TestIncrementiality:
             "ref_raw": [""],
         })
         checkpoint.to_csv(checkpoint_path, index=False)
-        
+
         # Verify it can be read back (contract)
         reloaded = pd.read_csv(checkpoint_path)
         assert list(reloaded["source_doi"]) == ["10.1/test"]
 
 
 class TestBackwardCompatibility:
-    """Verify old entrypoints maintain API."""
+    """Verify old entrypoints maintain API (source inspection, no subprocess)."""
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_sources(self, request):
+        request.cls._sources = {
+            "corpus_filter.py": _read_script("corpus_filter.py"),
+            "enrich_citations_batch.py": _read_script("enrich_citations_batch.py"),
+        }
 
     def test_corpus_filter_apply_flag(self):
         """corpus_filter.py --apply flag exists."""
-        import subprocess
-        result = subprocess.run(
-            ["python", os.path.join(SCRIPTS_DIR, "corpus_filter.py"), "--help"],
-            capture_output=True,
-            text=True,
-        )
-        assert "--apply" in result.stdout, "Missing --apply flag"
+        src = self._sources["corpus_filter.py"]
+        assert '"--apply"' in src or "'--apply'" in src, "Missing --apply flag"
 
     def test_enrich_citation_limit_arg(self):
         """enrich_citations_batch.py --limit is available."""
-        import subprocess
-        result = subprocess.run(
-            ["python", os.path.join(SCRIPTS_DIR, "enrich_citations_batch.py"), "--help"],
-            capture_output=True,
-            text=True,
-        )
-        assert "--limit" in result.stdout, "Missing --limit arg"
+        src = self._sources["enrich_citations_batch.py"]
+        assert '"--limit"' in src or "'--limit'" in src, "Missing --limit arg"
 
 
 class TestPhase1OutputContract:
@@ -163,10 +171,10 @@ class TestPhase1OutputContract:
     def test_refined_works_csv_schema(self, temp_catalogs):
         """refined_works.csv has expected core columns."""
         refined_path = temp_catalogs / "refined_works.csv"
-        
+
         if not refined_path.exists():
             pytest.skip("refined_works.csv not yet created (OK for unit test)")
-        
+
         df = pd.read_csv(refined_path, dtype=str)
         # Core contract columns
         for col in ["source", "doi", "title"]:
@@ -176,7 +184,7 @@ class TestPhase1OutputContract:
         """embeddings.npz is valid numpy format."""
         npz_path = temp_catalogs / "embeddings.npz"
         assert npz_path.exists(), "embeddings.npz missing"
-        
+
         with np.load(npz_path) as data:
             assert "embeddings" in data.files, "Missing 'embeddings' key in .npz"
             emb = data["embeddings"]

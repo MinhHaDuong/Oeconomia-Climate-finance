@@ -7,6 +7,9 @@ Tests verify:
 - Row-count invariant: extend rows == input rows
 - Row-count invariant: filter rows <= extend rows
 - Backward-compat: --apply still works as combined extend+filter
+
+CLI flag presence is checked via source inspection (no subprocess).
+Extend/filter mode tests that run corpus_filter via subprocess are marked @integration.
 """
 
 import os
@@ -31,50 +34,53 @@ def run_script(*args, cwd=None):
     return result.returncode, result.stdout + result.stderr
 
 
-def help_output():
-    """Return --help output of corpus_filter.py."""
-    _, out = run_script("--help")
-    return out
-
-
 # ---------------------------------------------------------------------------
-# CLI argument presence
+# CLI argument presence (source inspection, no subprocess)
 # ---------------------------------------------------------------------------
+
+def _read_script(script_name):
+    """Read script source text for flag inspection."""
+    path = os.path.join(SCRIPTS_DIR, script_name)
+    with open(path) as f:
+        return f.read()
+
 
 class TestCLIArgs:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("corpus_filter.py")
+
+    def _has_flag(self, flag):
+        return f'"{flag}"' in self._source or f"'{flag}'" in self._source
+
     def test_accepts_extend_flag(self):
-        out = help_output()
-        assert "--extend" in out, "corpus_filter.py must accept --extend"
+        assert self._has_flag("--extend"), "corpus_filter.py must accept --extend"
 
     def test_accepts_filter_flag(self):
-        out = help_output()
-        assert "--filter" in out, "corpus_filter.py must accept --filter"
+        assert self._has_flag("--filter"), "corpus_filter.py must accept --filter"
 
     def test_accepts_works_input(self):
-        out = help_output()
-        assert "--works-input" in out, "corpus_filter.py must accept --works-input"
+        assert self._has_flag("--works-input"), "corpus_filter.py must accept --works-input"
 
     def test_accepts_works_output(self):
-        out = help_output()
-        assert "--works-output" in out, "corpus_filter.py must accept --works-output"
+        assert self._has_flag("--works-output"), "corpus_filter.py must accept --works-output"
 
     def test_works_input_default_for_extend(self):
         """--extend mode default input should be enriched_works.csv."""
-        out = help_output()
-        assert "enriched_works.csv" in out, \
+        assert "enriched_works.csv" in self._source, \
             "corpus_filter.py --works-input default should reference enriched_works.csv"
 
     def test_works_input_default_for_filter(self):
         """--filter mode default input should be extended_works.csv."""
-        out = help_output()
-        assert "extended_works.csv" in out, \
+        assert "extended_works.csv" in self._source, \
             "corpus_filter.py --works-input default should reference extended_works.csv"
 
 
 # ---------------------------------------------------------------------------
-# Extend mode: row-count invariant
+# Extend mode: row-count invariant (subprocess integration tests)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 class TestExtendMode:
     @pytest.fixture
     def enriched_csv(self, tmp_path):
@@ -177,9 +183,10 @@ class TestExtendMode:
 
 
 # ---------------------------------------------------------------------------
-# Filter mode: reduction behavior
+# Filter mode: reduction behavior (subprocess integration tests)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 class TestFilterMode:
     @pytest.fixture
     def extended_csv(self, tmp_path):

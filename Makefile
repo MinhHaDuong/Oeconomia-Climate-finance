@@ -578,9 +578,9 @@ archive-datapaper: check-corpus
 check: lint-prose
 	uv run pytest tests/ -v --tb=short
 
-# Fast subset: unit tests only (no corpus data or network needed, < 30s).
+# Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
 check-fast: lint-prose
-	uv run pytest tests/ -v --tb=short -m "not slow"
+	uv run pytest tests/ -v --tb=short -m "not slow and not integration"
 
 # ── Prose linting (AI-tell detection) ─────────────────────
 lint-prose:

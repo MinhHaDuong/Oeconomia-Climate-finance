@@ -6,29 +6,31 @@ Tests verify:
 - When --works-input is provided, the script reads from that path
 - Defaults are defined and backward-compatible (point to unified_works.csv)
 - Checkpoints are not invalidated when works path changes
+
+CLI flag presence is checked via source inspection (no subprocess).
+Integration tests that run scripts via subprocess are marked @integration.
 """
 
-import argparse
-import importlib
 import os
 import subprocess
 import sys
-import tempfile
 
-import pandas as pd
 import pytest
 
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 PYTHON = sys.executable
 
 
-def parse_script_args(script_name, extra_args=None):
-    """Run a script with --help and verify --works-input appears."""
-    result = subprocess.run(
-        [PYTHON, os.path.join(SCRIPTS_DIR, script_name), "--help"],
-        capture_output=True, text=True
-    )
-    return result.stdout + result.stderr
+def _read_script(script_name):
+    """Read script source text for flag inspection."""
+    path = os.path.join(SCRIPTS_DIR, script_name)
+    with open(path) as f:
+        return f.read()
+
+
+def _has_flag(source, flag):
+    """Check that the script source defines an argparse flag."""
+    return f'"{flag}"' in source or f"'{flag}'" in source
 
 
 # ---------------------------------------------------------------------------
@@ -36,26 +38,26 @@ def parse_script_args(script_name, extra_args=None):
 # ---------------------------------------------------------------------------
 
 class TestEnrichDoisCLI:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("enrich_dois.py")
+
     def test_accepts_works_input(self):
-        output = parse_script_args("enrich_dois.py")
-        assert "--works-input" in output, \
+        assert _has_flag(self._source, "--works-input"), \
             "enrich_dois.py must accept --works-input"
 
     def test_accepts_works_output(self):
-        output = parse_script_args("enrich_dois.py")
-        assert "--works-output" in output, \
+        assert _has_flag(self._source, "--works-output"), \
             "enrich_dois.py must accept --works-output"
 
     def test_works_input_default_is_unified(self):
         """Default --works-input should point to unified_works.csv."""
-        output = parse_script_args("enrich_dois.py")
-        assert "unified_works.csv" in output, \
+        assert "unified_works.csv" in self._source, \
             "enrich_dois.py --works-input default should be unified_works.csv"
 
     def test_works_output_default_is_enriched(self):
         """Default --works-output should point to enriched_works.csv."""
-        output = parse_script_args("enrich_dois.py")
-        assert "enriched_works.csv" in output, \
+        assert "enriched_works.csv" in self._source, \
             "enrich_dois.py --works-output default should be enriched_works.csv"
 
     @pytest.mark.slow
@@ -81,16 +83,17 @@ class TestEnrichDoisCLI:
 # ---------------------------------------------------------------------------
 
 class TestEnrichAbstractsCLI:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("enrich_abstracts.py")
+
     def test_accepts_works_input(self):
-        output = parse_script_args("enrich_abstracts.py")
-        assert "--works-input" in output, \
+        assert _has_flag(self._source, "--works-input"), \
             "enrich_abstracts.py must accept --works-input"
 
     def test_works_input_default_is_defined(self):
         """--works-input must have a default (not required)."""
-        output = parse_script_args("enrich_abstracts.py")
-        # Either unified_works or enriched_works is acceptable as default
-        assert "unified_works.csv" in output or "enriched_works.csv" in output, \
+        assert "unified_works.csv" in self._source or "enriched_works.csv" in self._source, \
             "enrich_abstracts.py --works-input must have a default path"
 
 
@@ -99,14 +102,16 @@ class TestEnrichAbstractsCLI:
 # ---------------------------------------------------------------------------
 
 class TestEnrichCitationsBatchCLI:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("enrich_citations_batch.py")
+
     def test_accepts_works_input(self):
-        output = parse_script_args("enrich_citations_batch.py")
-        assert "--works-input" in output, \
+        assert _has_flag(self._source, "--works-input"), \
             "enrich_citations_batch.py must accept --works-input"
 
     def test_works_input_default_is_defined(self):
-        output = parse_script_args("enrich_citations_batch.py")
-        assert "unified_works.csv" in output or "enriched_works.csv" in output, \
+        assert "unified_works.csv" in self._source or "enriched_works.csv" in self._source, \
             "enrich_citations_batch.py --works-input must have a default path"
 
 
@@ -115,15 +120,17 @@ class TestEnrichCitationsBatchCLI:
 # ---------------------------------------------------------------------------
 
 class TestEnrichCitationsOpenAlexCLI:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("enrich_citations_openalex.py")
+
     def test_accepts_works_input(self):
-        output = parse_script_args("enrich_citations_openalex.py")
-        assert "--works-input" in output, \
+        assert _has_flag(self._source, "--works-input"), \
             "enrich_citations_openalex.py must accept --works-input"
 
     def test_works_input_default_is_defined(self):
-        output = parse_script_args("enrich_citations_openalex.py")
-        assert "unified_works.csv" in output or "enriched_works.csv" in output \
-               or "refined_works.csv" in output, \
+        assert "unified_works.csv" in self._source or "enriched_works.csv" in self._source \
+               or "refined_works.csv" in self._source, \
             "enrich_citations_openalex.py --works-input must have a default path"
 
 
@@ -132,15 +139,17 @@ class TestEnrichCitationsOpenAlexCLI:
 # ---------------------------------------------------------------------------
 
 class TestQcCitationsCLI:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("qa_citations.py")
+
     def test_accepts_works_input(self):
-        output = parse_script_args("qa_citations.py")
-        assert "--works-input" in output, \
+        assert _has_flag(self._source, "--works-input"), \
             "qa_citations.py must accept --works-input"
 
     def test_works_input_default_is_defined(self):
-        output = parse_script_args("qa_citations.py")
-        assert "unified_works.csv" in output or "enriched_works.csv" in output \
-               or "refined_works.csv" in output, \
+        assert "unified_works.csv" in self._source or "enriched_works.csv" in self._source \
+               or "refined_works.csv" in self._source, \
             "qa_citations.py --works-input must have a default path"
 
 
@@ -149,22 +158,20 @@ class TestQcCitationsCLI:
 # ---------------------------------------------------------------------------
 
 class TestAnalyzeEmbeddingsCLI:
+    @pytest.fixture(autouse=True, scope="class")
+    def _load_source(self, request):
+        request.cls._source = _read_script("analyze_embeddings.py")
+
     def test_accepts_works_input(self):
-        output = parse_script_args("analyze_embeddings.py")
-        assert "--works-input" in output, \
+        assert _has_flag(self._source, "--works-input"), \
             "analyze_embeddings.py must accept --works-input"
 
     def test_works_input_default_is_defined(self):
-        output = parse_script_args("analyze_embeddings.py")
-        assert "unified_works.csv" in output or "enriched_works.csv" in output \
-               or "refined_works.csv" in output, \
+        assert "unified_works.csv" in self._source or "enriched_works.csv" in self._source \
+               or "refined_works.csv" in self._source, \
             "analyze_embeddings.py --works-input must have a default path"
 
     def test_has_main_guard(self):
         """analyze_embeddings.py must execute via main(), not module scope."""
-        # This checks that the script has an if __name__ == '__main__' block
-        script_path = os.path.join(SCRIPTS_DIR, "analyze_embeddings.py")
-        with open(script_path) as f:
-            content = f.read()
-        assert "__name__" in content and "__main__" in content, \
+        assert "__name__" in self._source and "__main__" in self._source, \
             "analyze_embeddings.py must have if __name__ == '__main__': guard"
