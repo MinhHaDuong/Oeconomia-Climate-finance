@@ -12,7 +12,7 @@ import os
 
 import pandas as pd
 
-from utils import CATALOGS_DIR, get_logger, BASE_DIR
+from utils import CATALOGS_DIR, get_logger, BASE_DIR, normalize_lang
 
 log = get_logger("export_language_table")
 
@@ -69,15 +69,19 @@ MIN_COUNT = 20
 
 
 def normalise_language(code: str) -> str:
-    """Normalise language codes: en_US → en, zh_CN → zh, etc."""
+    """Normalise language codes using the shared normalize_lang from utils.
+
+    Maps NaN/None to "unknown" for table display (normalize_lang returns None).
+    Also handles hyphenated codes (zh-CN) not covered by normalize_lang.
+    """
     if pd.isna(code):
         return "unknown"
-    code = str(code).strip().lower()
-    if "_" in code:
-        code = code.split("_")[0]
-    if "-" in code:
-        code = code.split("-")[0]
-    return code
+    # Handle hyphenated locale codes (zh-CN → zh) before normalize_lang
+    code_str = str(code).strip()
+    if "-" in code_str:
+        code_str = code_str.split("-")[0]
+    result = normalize_lang(code_str)
+    return result if result else "unknown"
 
 
 def main() -> None:
