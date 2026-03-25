@@ -33,19 +33,19 @@ CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 
 # --- Cache I/O ---
 
-def load_lang_cache(cache_dir, name):
+def load_cache(name):
     """Load a language cache CSV as {key: language} dict."""
-    path = os.path.join(cache_dir, f"{name}.csv")
+    path = os.path.join(CACHE_DIR, f"{name}.csv")
     if not os.path.exists(path):
         return {}
     df = pd.read_csv(path)
     return dict(zip(df["key"].astype(str), df["language"].fillna("")))
 
 
-def save_lang_cache(data, cache_dir, name):
+def save_cache(name, data):
     """Save {key: language} dict as CSV cache."""
-    os.makedirs(cache_dir, exist_ok=True)
-    path = os.path.join(cache_dir, f"{name}.csv")
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    path = os.path.join(CACHE_DIR, f"{name}.csv")
     df = pd.DataFrame([
         {"key": k, "language": v} for k, v in data.items()
     ])
@@ -307,7 +307,7 @@ def main():
 
     # --- Pass 1: OpenAlex API backfill ---
     log.info("Pass 1: OpenAlex API backfill")
-    cache = load_lang_cache(CACHE_DIR, "language_resolved")
+    cache = load_cache("language_resolved")
 
     # 1a: query by DOI
     dois_to_query = []
@@ -333,7 +333,7 @@ def main():
         args.retry_backoff, args.retry_jitter,
     )
 
-    save_lang_cache(cache, CACHE_DIR, "language_resolved")
+    save_cache("language_resolved", cache)
 
     # Apply cache results
     filled_pass1 = pass1_apply_cache(df, cache)

@@ -122,18 +122,22 @@ class TestCacheRoundTrip:
     """load_cache / save_cache must preserve key-value data."""
 
     def test_round_trip(self):
-        from enrich_language import load_lang_cache, save_lang_cache
+        from unittest.mock import patch
+        from enrich_language import load_cache, save_cache
         with tempfile.TemporaryDirectory() as tmpdir:
-            data = {"10.1234/abc": "en", "10.5678/def": "fr"}
-            save_lang_cache(data, tmpdir, "test_lang")
-            loaded = load_lang_cache(tmpdir, "test_lang")
-            assert loaded == data
+            with patch("enrich_language.CACHE_DIR", tmpdir):
+                data = {"10.1234/abc": "en", "10.5678/def": "fr"}
+                save_cache("test_lang", data)
+                loaded = load_cache("test_lang")
+                assert loaded == data
 
     def test_empty_cache(self):
-        from enrich_language import load_lang_cache
+        from unittest.mock import patch
+        from enrich_language import load_cache
         with tempfile.TemporaryDirectory() as tmpdir:
-            loaded = load_lang_cache(tmpdir, "test_lang")
-            assert loaded == {}
+            with patch("enrich_language.CACHE_DIR", tmpdir):
+                loaded = load_cache("test_lang")
+                assert loaded == {}
 
 
 # ---------- OpenAlex batch query building ----------
