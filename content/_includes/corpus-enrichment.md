@@ -35,7 +35,7 @@ Quality control (`qa_citations.py`) validates DOI formats, removes self-citation
 
 ### Embedding generation
 
-The script `enrich_embeddings.py` (Phase 1) computes 1024-dimensional sentence embeddings using `BAAI/bge-m3` (8192-token context) on title + abstract + keywords text. Only papers with non-empty titles (published 1990–2024) are embedded. UMAP projection and KMeans clustering are performed separately in `analyze_embeddings.py` (Phase 2).
+The script `enrich_embeddings.py` (Phase 1) computes 1024-dimensional sentence embeddings using `BAAI/bge-m3` (8192-token context) on title + abstract + keywords text. Boilerplate abstracts — repository metadata strings (`info:eu-repo/…`), known junk phrases ("International audience", "peer reviewed"), title-as-abstract duplications, and short ALL CAPS fragments — are detected and excluded so that only substantive text enters the embedding. Only papers with non-empty titles (published 1990–2024) are embedded. UMAP projection and KMeans clustering are performed separately in `analyze_embeddings.py` (Phase 2).
 
 Outputs:
 
