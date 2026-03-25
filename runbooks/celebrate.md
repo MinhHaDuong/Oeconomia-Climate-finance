@@ -32,9 +32,9 @@ Run this sequence after completing a task. Do not skip steps.
     - `git branch -a` → no stale remote branches from merged PRs
     - `gh issue list` → no orphan issues from completed work
     - `gh pr list` → no stale PRs from merged/superseded branches
-12. **Log celebration** — record structured session metrics:
+12. **Log celebration** — record structured session metrics (skip if harness not installed):
     ```bash
-    ~/CNRS/code/agentic-harness/telemetry/bin/log-celebration '{"project":"oeconomia","session_type":"task","commits":N,"prs_merged":N,"deliverables":[...],"surprises":[...],"next":[...]}'
+    ~/.agent/bin/log-celebration '{"project":"oeconomia","session_type":"task","commits":N,"prs_merged":N,"deliverables":[...],"surprises":[...],"next":[...]}'
     ```
 13. **Offer** to work on AGENTS.md if the workflow can be improved.
 
