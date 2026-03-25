@@ -77,6 +77,8 @@ DOC_VARS = {
     "data-paper": [
         # direct + includes: corpus-construction, corpus-filtering,
         #   embedding-generation
+        "cite_coverage_core_pct",
+        "cite_refined_coverage_pct",
         "cite_refined_rows",
         "cite_total_rows",
         "corpus_core",
@@ -89,7 +91,16 @@ DOC_VARS = {
         "corpus_total",
         "corpus_with_embeddings",
         "emb_dimensions",
+        "filter_citation_isolated",
+        "filter_flagged",
+        "filter_llm_irrelevant",
+        "filter_missing_metadata",
+        "filter_net_removals",
+        "filter_no_abstract",
+        "filter_protected",
+        "filter_title_blacklist",
         "lang_english_pct",
+        "openalex_pct",
     ],
     "companion-paper": [
         # direct + includes: bimodality-analysis, core-vs-full,
@@ -214,6 +225,46 @@ def corpus_stats(v):
         unified_n = len(pd.read_csv(unified_path, usecols=["source"]))
         v["corpus_raw"] = _int(unified_n)
         v["corpus_removal_pct"] = _pct(100 * (unified_n - n) / unified_n)
+
+
+def filter_stats(v):
+    """Flag counts from corpus_audit.csv for the data paper."""
+    audit_path = os.path.join(CATALOGS_DIR, "corpus_audit.csv")
+    if not os.path.isfile(audit_path):
+        warnings.warn(f"Missing: {audit_path}")
+        return
+    audit = pd.read_csv(audit_path, usecols=["action", "flags", "protected"])
+
+    # Flagged = non-empty flags column
+    flagged_mask = audit["flags"].fillna("").str.strip() != ""
+    v["filter_flagged"] = _int(flagged_mask.sum())
+
+    # Per-flag counts (non-exclusive, pipe-separated)
+    all_flags = audit["flags"].dropna().str.split("|").explode().str.strip()
+    all_flags = all_flags[all_flags != ""]
+    counts = all_flags.value_counts()
+
+    v["filter_citation_isolated"] = _int(counts.get("citation_isolated_old", 0))
+    v["filter_llm_irrelevant"] = _int(counts.get("llm_irrelevant", 0))
+    v["filter_no_abstract"] = _int(counts.get("no_abstract_irrelevant", 0))
+    v["filter_title_blacklist"] = _int(counts.get("title_blacklist", 0))
+    # missing_metadata has sub-types (missing_metadata:title, etc.)
+    missing = counts.filter(like="missing_metadata").sum()
+    v["filter_missing_metadata"] = _int(int(missing))
+
+    # Flagged but kept = protected from removal
+    flagged_kept = (flagged_mask & (audit["action"] == "keep")).sum()
+    v["filter_protected"] = _int(flagged_kept)
+
+    # Net removals
+    v["filter_net_removals"] = _int((audit["action"] == "remove").sum())
+
+    # OpenAlex share of refined works
+    from utils import REFINED_WORKS_PATH
+    if os.path.isfile(REFINED_WORKS_PATH):
+        refined = pd.read_csv(REFINED_WORKS_PATH, usecols=["from_openalex"])
+        oa_pct = 100 * refined["from_openalex"].sum() / len(refined)
+        v["openalex_pct"] = _pct(oa_pct)
 
 
 def embedding_stats(v):
@@ -357,10 +408,25 @@ def citation_stats(v):
             v["cite_never_fetched"] = _int(total_dois - fetched)
 
     # Refined (corpus-internal) citations from refined_citations.csv
-    from utils import REFINED_CITATIONS_PATH
+    from utils import REFINED_CITATIONS_PATH, REFINED_WORKS_PATH, normalize_doi
     if os.path.isfile(REFINED_CITATIONS_PATH):
         ref_cite_df = pd.read_csv(REFINED_CITATIONS_PATH)[["source_doi"]]
         v["cite_refined_rows"] = _int(len(ref_cite_df))
+
+        # Coverage: % of refined DOIs that appear as citation sources
+        if os.path.isfile(REFINED_WORKS_PATH):
+            refined_df = pd.read_csv(REFINED_WORKS_PATH, usecols=["doi", "cited_by_count"])
+            refined_dois = {normalize_doi(d) for d in refined_df["doi"].dropna()} - {""}
+            source_dois = {normalize_doi(d) for d in ref_cite_df["source_doi"].dropna()}
+            covered = len(source_dois & refined_dois)
+            if refined_dois:
+                v["cite_refined_coverage_pct"] = str(round(100 * covered / len(refined_dois)))
+            # Core coverage (cited >= 50)
+            core_mask = refined_df["cited_by_count"].fillna(0).astype(int) >= 50
+            core_dois = {normalize_doi(d) for d in refined_df.loc[core_mask, "doi"].dropna()} - {""}
+            if core_dois:
+                core_covered = len(source_dois & core_dois)
+                v["cite_coverage_core_pct"] = str(round(100 * core_covered / len(core_dois)))
 
 
 # ── Write YAML ───────────────────────────────────────────────
@@ -387,6 +453,7 @@ def main():
     bimodality_stats(v)
     pca_stats(v)
     citation_stats(v)
+    filter_stats(v)
 
     # Write per-document vars files
     all_missing = []
