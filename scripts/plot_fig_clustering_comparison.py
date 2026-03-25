@@ -20,12 +20,9 @@ import argparse
 import json
 import os
 
-import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 from utils import BASE_DIR, get_logger
 

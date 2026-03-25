@@ -14,11 +14,8 @@ import argparse
 import json
 import os
 
-import matplotlib
-import numpy as np
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 
 from utils import BASE_DIR, get_logger
 
