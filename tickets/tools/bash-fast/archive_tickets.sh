@@ -228,9 +228,8 @@ if [ "$execute" != true ]; then
 fi
 
 mkdir -p "$archive_dir"
-# Avoid subshell: extract filenames first, then loop without pipe.
-archivable_files=$(echo "$result" | grep "^ARCHIVABLE " | awk '{print $2}')
-for fname in $archivable_files; do
+# Use read loop instead of word-splitting to handle filenames safely.
+echo "$result" | grep "^ARCHIVABLE " | awk '{print $2}' | while IFS= read -r fname; do
     git mv "${ticket_dir}/${fname}" "${archive_dir}/${fname}" || {
         echo "error: git mv failed for ${fname}" >&2
         exit 1

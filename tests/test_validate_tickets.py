@@ -184,6 +184,42 @@ class TestValidation:
         errors = validate_ticket(t, {"afg"})
         assert any("invalid X-Phase" in e for e in errors)
 
+    def test_invalid_created_date(self, tmp_ticket):
+        t = _parse(
+            tmp_ticket,
+            "afg-test.ticket",
+            """\
+            Id: afg
+            Title: Test
+            Author: a
+            Status: open
+            Created: not-a-date
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        errors = validate_ticket(t, {"afg"})
+        assert any("not a valid ISO date" in e for e in errors)
+
+    def test_valid_created_date(self, tmp_ticket):
+        t = _parse(
+            tmp_ticket,
+            "afg-test.ticket",
+            """\
+            Id: afg
+            Title: Test
+            Author: a
+            Status: open
+            Created: 2026-01-15
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        errors = validate_ticket(t, {"afg"})
+        assert not any("ISO date" in e for e in errors)
+
     def test_blocked_by_unknown_id(self, tmp_ticket):
         t = _parse(
             tmp_ticket,
@@ -366,6 +402,25 @@ class TestExtraIds:
         # Without extra_ids, this would fail
         errors = validate_all([t], extra_ids={"archived"})
         assert not any("unknown ticket ID" in e for e in errors)
+
+    def test_live_id_collides_with_archived(self, tmp_ticket):
+        """A live ticket reusing an archived ticket's ID should be flagged."""
+        t = _parse(
+            tmp_ticket,
+            "afg-test.ticket",
+            """\
+            Id: afg
+            Title: Test
+            Author: a
+            Status: open
+            Created: 2026-01-01
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        errors = validate_all([t], extra_ids={"afg"})
+        assert any("collides with an archived ticket" in e for e in errors)
 
     def test_blocked_by_missing_without_extra_ids_fails(self, tmp_ticket):
         t = _parse(

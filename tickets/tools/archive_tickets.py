@@ -19,19 +19,29 @@ from ticket_parser import load_tickets, Ticket
 DAG_HEADERS = ("Blocked-by", "X-Discovered-from", "X-Supersedes", "X-Parent")
 
 
-def last_log_date(ticket: Ticket) -> datetime | None:
-    """Extract the timestamp from the last log entry."""
-    if not ticket.log_lines:
-        return None
-    # Log format: 2026-03-21T12:00Z agent event
-    last = ticket.log_lines[-1].strip()
-    m = re.match(r"(\d{4}-\d{2}-\d{2}T[\d:]+Z?)", last)
-    if not m:
-        return None
-    ts = m.group(1)
-    if not ts.endswith("Z"):
-        ts += "Z"
-    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+def ticket_age_date(ticket: Ticket) -> datetime | None:
+    """Determine when the ticket was last touched.
+
+    Uses the last log entry timestamp if available, otherwise falls back
+    to the Created header date.  Returns None only if neither is parseable.
+    """
+    # Try last log entry first (most accurate: records the close event)
+    if ticket.log_lines:
+        last = ticket.log_lines[-1].strip()
+        m = re.match(r"(\d{4}-\d{2}-\d{2}T[\d:]+Z?)", last)
+        if m:
+            ts = m.group(1)
+            if not ts.endswith("Z"):
+                ts += "Z"
+            return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+    # Fall back to Created header (validated as YYYY-MM-DD by the validator)
+    created = ticket.headers.get("Created", [""])[0]
+    m = re.match(r"(\d{4}-\d{2}-\d{2})$", created)
+    if m:
+        return datetime.fromisoformat(m.group(1) + "T00:00:00+00:00")
+
+    return None
 
 
 def find_archivable(
@@ -56,7 +66,7 @@ def find_archivable(
     for t in tickets:
         if t.status != "closed":
             continue
-        last_date = last_log_date(t)
+        last_date = ticket_age_date(t)
         if last_date is None or last_date >= cutoff:
             continue
         candidates.append(t)

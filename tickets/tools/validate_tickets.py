@@ -8,6 +8,7 @@ Usage:
 Exit 0 on success, exit 1 with diagnostics on failure.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from ticket_parser import Ticket, load_tickets, parse_ticket
 REQUIRED_HEADERS = ["Id", "Title", "Author", "Status", "Created"]
 VALID_STATUSES = {"open", "doing", "closed", "pending"}
 VALID_PHASES = {"dreaming", "planning", "doing", "celebrating"}
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def validate_ticket(ticket: Ticket, all_ids: set[str]) -> list[str]:
@@ -50,6 +52,13 @@ def validate_ticket(ticket: Ticket, all_ids: set[str]) -> list[str]:
                 f"{path}: invalid X-Phase '{phase}' "
                 f"(expected one of: {', '.join(sorted(VALID_PHASES))})"
             )
+
+    # Created must be ISO date (YYYY-MM-DD)
+    created = ticket.headers.get("Created", [""])[0]
+    if created and not _ISO_DATE_RE.match(created):
+        errors.append(
+            f"{path}: Created '{created}' is not a valid ISO date (YYYY-MM-DD)"
+        )
 
     # Blocked-by references exist
     for ref in ticket.blocked_by:
@@ -130,6 +139,15 @@ def validate_all(
                 f"duplicate Id '{tid}' in: {', '.join(files)} "
                 f"-- next available: {base}{next_num}"
             )
+
+    # Check for collisions with archived ticket IDs
+    if extra_ids:
+        for tid in id_to_files:
+            if tid in extra_ids:
+                errors.append(
+                    f"Id '{tid}' in {', '.join(id_to_files[tid])} "
+                    f"collides with an archived ticket"
+                )
 
     all_ids = set(id_to_files.keys())
     if extra_ids:

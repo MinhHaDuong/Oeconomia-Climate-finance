@@ -187,6 +187,8 @@ Auto-detection cascade: Go binary → awk available → Python via uv. All three
 
 The Python implementation uses a shared parser (`ticket_parser.py`) with three entry-point scripts. The Go implementation is a single binary with subcommands (`validate`, `ready`, `archive`). The sh implementation is three standalone scripts, each embedding its own awk program.
 
+**Portability exception.** Ticket tools intentionally diverge from two project conventions: they use `print()` instead of `utils.get_logger()`, and manual `sys.argv` parsing instead of `argparse`. This is a deliberate design choice — the tools are stdlib-only and portable to other repos. Adding project-specific imports (`utils.py`) or heavy argument parsing would defeat their purpose as drop-in scripts.
+
 ## Citation graph
 
 `citations.csv` (775,288 rows) was built from two sources:

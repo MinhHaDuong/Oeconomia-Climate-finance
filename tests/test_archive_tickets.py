@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from archive_tickets import find_archivable, last_log_date
+from archive_tickets import find_archivable, ticket_age_date
 from ticket_parser import parse_ticket
 
 
@@ -21,8 +21,8 @@ def ticket_dir(tmp_path):
     return _make
 
 
-class TestLastLogDate:
-    def test_parses_timestamp(self, tmp_path):
+class TestTicketAgeDate:
+    def test_parses_log_timestamp(self, tmp_path):
         p = tmp_path / "x-test.ticket"
         p.write_text(textwrap.dedent("""\
             Id: x
@@ -38,11 +38,47 @@ class TestLastLogDate:
             --- body ---
         """))
         t = parse_ticket(p)
-        dt = last_log_date(t)
+        dt = ticket_age_date(t)
         assert dt is not None
         assert dt.year == 2026
         assert dt.month == 1
         assert dt.day == 15
+
+    def test_falls_back_to_created(self, tmp_path):
+        p = tmp_path / "y-nolog.ticket"
+        p.write_text(textwrap.dedent("""\
+            Id: y
+            Title: No log
+            Author: a
+            Status: closed
+            Created: 2025-06-15
+
+            --- log ---
+
+            --- body ---
+        """))
+        t = parse_ticket(p)
+        dt = ticket_age_date(t)
+        assert dt is not None
+        assert dt.year == 2025
+        assert dt.month == 6
+        assert dt.day == 15
+
+    def test_returns_none_when_no_date(self, tmp_path):
+        p = tmp_path / "z-nodate.ticket"
+        p.write_text(textwrap.dedent("""\
+            Id: z
+            Title: No date
+            Author: a
+            Status: closed
+            Created: not-a-date
+
+            --- log ---
+
+            --- body ---
+        """))
+        t = parse_ticket(p)
+        assert ticket_age_date(t) is None
 
 
 class TestFindArchivable:

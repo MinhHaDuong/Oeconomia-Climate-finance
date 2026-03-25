@@ -38,10 +38,13 @@ if [ -n "$large" ]; then
 fi
 
 # 5. Validate staged .ticket files
+# Triggers only when .ticket files are staged, but validates the whole
+# directory because cross-file checks (duplicate IDs, reference integrity)
+# need all tickets. Cost: ~0.1s at <200 tickets.
 staged_tickets=$(git diff --cached --name-only --diff-filter=d | grep '\.ticket$' || true)
 if [ -n "$staged_tickets" ]; then
     if command -v uv >/dev/null 2>&1; then
-        if ! uv run python tickets/tools/validate_tickets.py tickets/ 2>&1; then
+        if ! uv run python tickets/tools/validate_tickets.py tickets/; then
             echo "ERROR: Ticket validation failed." >&2
             exit 1
         fi

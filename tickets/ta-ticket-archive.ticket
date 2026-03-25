@@ -21,12 +21,12 @@ closed ticket referenced by a live ticket's Blocked-by,
 X-Discovered-from, or X-Supersedes header.
 
 ## Relevant files
-- `scripts/validate_tickets.py` — reuse ticket parser from vt
-- `scripts/archive_tickets.py` — new script
+- `tickets/tools/validate_tickets.py` — reuse ticket parser from vt
+- `tickets/tools/archive_tickets.py` — new script
 - `Makefile` — add `ticket-archive` target
 
 ## Actions
-1. Write `scripts/archive_tickets.py`:
+1. Write `tickets/tools/archive_tickets.py`:
    - Parse all tickets in `tickets/` (not `tickets/archive/`)
    - Collect candidates: Status: closed, last log entry older
      than DAYS threshold (default 90)

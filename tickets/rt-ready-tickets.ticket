@@ -21,14 +21,14 @@ closure). This is the only query needing code beyond grep. No
 implementation exists.
 
 ## Relevant files
-- `scripts/validate_tickets.py` — reuse ticket parser from vt
-- `scripts/ready_tickets.py` — new script
+- `tickets/tools/validate_tickets.py` — reuse ticket parser from vt
+- `tickets/tools/ready_tickets.py` — new script
 - `Makefile` — add `ticket-ready` target
 
 ## Actions
 1. Extract ticket parser from `validate_tickets.py` into shared
-   module (`scripts/ticket_parser.py`) or reuse inline.
-2. Write `scripts/ready_tickets.py`:
+   module (`tickets/tools/ticket_parser.py`) or reuse inline.
+2. Write `tickets/tools/ready_tickets.py`:
    - Parse all tickets in `tickets/`
    - Build dependency graph from Blocked-by headers
    - Compute ready set: open tickets where every Blocked-by

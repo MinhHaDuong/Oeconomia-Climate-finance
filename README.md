@@ -77,6 +77,8 @@ The ideal state the project works towards:
 │   ├── catalogs/                    #   Corpus CSVs, embeddings, caches
 │   └── pool/                        #   Raw API responses (gzipped JSONL)
 ├── scripts/                          # Python analysis pipeline
+├── tickets/                          # Local ticket system (.ticket files + tools)
+│   └── tools/                       #   Validator, ready query, archive (Python/sh/Go)
 ├── docs/                             # Guidelines, journal info, book project notes
 ├── release/                          # Releases outside CIRED. Append-only.
 └── attic/                            # Old stuff to delete when paper is accepted
@@ -91,6 +93,7 @@ data is stored in the DVC remote on padme.
 ### Setup (first time after cloning)
 
 ```bash
+make setup                               # install git hooks (pre-commit, post-checkout)
 uv sync                                 # Phase 2/3 deps only
 uv sync --group corpus --extra cpu       # add Phase 1 deps (CPU torch)
 uv sync --group corpus --extra cu130     # ...or CUDA 13 torch on GPU machines

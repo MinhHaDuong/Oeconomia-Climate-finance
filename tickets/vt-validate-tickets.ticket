@@ -22,10 +22,10 @@ checks.
 ## Relevant files
 - `hooks/pre-commit` — add ticket validation call
 - `Makefile` — add `validate-tickets` to `check` and `check-fast`
-- `scripts/validate_tickets.py` — new script
+- `tickets/tools/validate_tickets.py` — new script
 
 ## Actions
-1. Write `scripts/validate_tickets.py`:
+1. Write `tickets/tools/validate_tickets.py`:
    - Parse all `tickets/*.ticket` files (RFC 822 headers + separators)
    - Check required headers: Id, Title, Author, Status, Created
    - Check Id matches filename pattern (`{id}-*.ticket`)
