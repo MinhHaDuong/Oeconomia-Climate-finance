@@ -35,8 +35,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", message=".*KMeans.*")
 
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
-os.makedirs(TABLES_DIR, exist_ok=True)
-
 OUTPUT_CSV = os.path.join(TABLES_DIR, "tab_unfccc_topics.csv")
 
 # ---------------------------------------------------------------------------
@@ -270,6 +268,8 @@ def main() -> None:
         help="Skip the expensive citation-space silhouette computation"
     )
     args = parser.parse_args()
+
+    os.makedirs(TABLES_DIR, exist_ok=True)
 
     # ------------------------------------------------------------------
     # 1. Load corpus with embeddings

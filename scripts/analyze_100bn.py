@@ -390,7 +390,7 @@ def main():
         description="Analyze the $100bn climate finance accounting sub-literature"
     )
     parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
-    parser.parse_args()
+    _args = parser.parse_args()
 
     os.makedirs(TABLES_DIR, exist_ok=True)
 
