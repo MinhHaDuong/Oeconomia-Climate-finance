@@ -2,10 +2,11 @@
 
 import textwrap
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
-from ready_tickets import find_ready
+from ready_tickets import find_ready, _load_wip
 
 
 @pytest.fixture
@@ -231,3 +232,29 @@ class TestReady:
         assert isinstance(ready, list)
         assert total >= 0
         assert open_count >= 0
+
+
+class TestWip:
+    """Tests for .wip signal loading."""
+
+    def test_load_wip_from_dir(self, tmp_path):
+        wip_dir = tmp_path / "ticket-wip"
+        wip_dir.mkdir()
+        (wip_dir / "abc.wip").write_text("agent-1 2026-03-25T10:00Z")
+        (wip_dir / "xyz.wip").write_text("agent-2 2026-03-25T11:00Z")
+        result = _load_wip(wip_dir)
+        assert result == {
+            "abc": "agent-1 2026-03-25T10:00Z",
+            "xyz": "agent-2 2026-03-25T11:00Z",
+        }
+
+    def test_load_wip_empty_dir(self, tmp_path):
+        wip_dir = tmp_path / "ticket-wip"
+        wip_dir.mkdir()
+        assert _load_wip(wip_dir) == {}
+
+    def test_load_wip_none(self):
+        assert _load_wip(None) == {}
+
+    def test_load_wip_missing_dir(self, tmp_path):
+        assert _load_wip(tmp_path / "nonexistent") == {}

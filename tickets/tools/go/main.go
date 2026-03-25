@@ -418,6 +418,32 @@ type readyEntry struct {
 	id, title, file string
 }
 
+// loadWip reads .wip files from the shared git ticket-wip directory.
+func loadWip() map[string]string {
+	wip := make(map[string]string)
+	cmd := exec.Command("git", "rev-parse", "--git-common-dir")
+	out, err := cmd.Output()
+	if err != nil {
+		return wip
+	}
+	wipDir := filepath.Join(strings.TrimSpace(string(out)), "ticket-wip")
+	entries, err := os.ReadDir(wipDir)
+	if err != nil {
+		return wip
+	}
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".wip" {
+			continue
+		}
+		tid := strings.TrimSuffix(e.Name(), ".wip")
+		data, err := os.ReadFile(filepath.Join(wipDir, e.Name()))
+		if err == nil {
+			wip[tid] = strings.TrimSpace(string(data))
+		}
+	}
+	return wip
+}
+
 func cmdReady(args []string) int {
 	useJSON := false
 	var rest []string
@@ -475,6 +501,8 @@ func cmdReady(args []string) int {
 		}
 	}
 
+	wip := loadWip()
+
 	for _, w := range warnings {
 		fmt.Fprintf(os.Stderr, "WARNING: %s\n", w)
 	}
@@ -492,7 +520,12 @@ func cmdReady(args []string) int {
 				fmt.Println("  {")
 				fmt.Printf("    \"id\": \"%s\",\n", jsonEscape(r.id))
 				fmt.Printf("    \"title\": \"%s\",\n", jsonEscape(r.title))
-				fmt.Printf("    \"file\": \"%s\"\n", jsonEscape(r.file))
+				fmt.Printf("    \"file\": \"%s\"", jsonEscape(r.file))
+				if w, ok := wip[r.id]; ok {
+					fmt.Printf(",\n    \"wip\": \"%s\"\n", jsonEscape(w))
+				} else {
+					fmt.Println()
+				}
 				fmt.Printf("  }%s\n", comma)
 			}
 			fmt.Println("]")
@@ -509,7 +542,11 @@ func cmdReady(args []string) int {
 		} else {
 			fmt.Printf("Ready tickets (%d):\n", len(ready))
 			for _, r := range ready {
-				fmt.Printf("  %-8s %-40s %s\n", r.id, r.file, r.title)
+				suffix := ""
+				if w, ok := wip[r.id]; ok {
+					suffix = "  (wip: " + w + ")"
+				}
+				fmt.Printf("  %-8s %-40s %s%s\n", r.id, r.file, r.title, suffix)
 			}
 		}
 	}

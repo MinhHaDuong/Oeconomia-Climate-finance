@@ -15,6 +15,10 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    - `git branch -a` → delete stale remote branches
    - `gh issue list` → no orphan issues
    - `gh pr list` → no stale PRs
+   - Garbage-collect stale `.wip` signals (crashed agents):
+     ```bash
+     find "$(git rev-parse --git-common-dir)/ticket-wip" -name "*.wip" -mtime +1 -delete 2>/dev/null
+     ```
 6. **Full test suite** — run `make check` on main. For each new failure:
    open a ticket with the error output (tag `bug`). Known failures already
    ticketed just get confirmed still open. Note test status in STATE blockers.

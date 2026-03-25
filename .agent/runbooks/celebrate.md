@@ -14,10 +14,14 @@ Run this sequence after completing a task. Do not skip steps.
 ## Close and clean up
 
 7. **Close the ticket** — set `Status: closed` in the header, append a log entry with the reason (`{ISO-timestamp} {agent-id} status closed — {reason}`), and commit on the branch (before merging — the pre-commit hook blocks direct commits on `main`).
-8. **Merge to main**: feature work goes through a PR in the ticket system. Chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
-9. **Push** and **clean up**: delete local and remote branch.
-10. **Close** the GitHub issue if one exists.
-11. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed:
+8. **Remove the `.wip` signal**:
+   ```bash
+   rm -f "$(git rev-parse --git-common-dir)/ticket-wip/{ticket-id}.wip"
+   ```
+9. **Merge to main**: feature work goes through a PR in the ticket system. Chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
+10. **Push** and **clean up**: delete local and remote branch.
+11. **Close** the GitHub issue if one exists.
+12. **Check for tracking ticket** (integration review): if the closed ticket has a parent, check whether all sibling sub-tickets are now closed:
     ```bash
     # Local tickets:
     grep -l "^X-Parent: <PARENT_ID>" tickets/*.ticket | xargs grep "^Status:" | grep -v closed
@@ -31,16 +35,16 @@ Run this sequence after completing a task. Do not skip steps.
       3. Check the tracking ticket's exit criteria — are they all met?
       4. If gaps remain: open new sub-tickets on the tracking ticket, leave it open.
       5. If all criteria met: close the tracking ticket with a summary comment.
-12. **Verify hygiene** — no stale artifacts left behind:
+13. **Verify hygiene** — no stale artifacts left behind:
     - `git worktree list` → only main (or active work)
     - `git branch -a` → no stale remote branches from merged PRs
     - No orphan tickets from completed work
     - `gh pr list` → no stale PRs from merged/superseded branches
-13. **Log celebration** — record structured session metrics (skip if harness not installed):
+14. **Log celebration** — record structured session metrics (skip if harness not installed):
     ```bash
     ~/.agent/log/log-celebration '{"project":"oeconomia","session_type":"task","commits":N,"prs_merged":N,"deliverables":[...],"surprises":[...],"next":[...]}'
     ```
-14. **Offer** to work on AGENTS.md if the workflow can be improved.
+15. **Offer** to work on AGENTS.md if the workflow can be improved.
 
 ## Merge message format
 

@@ -28,6 +28,24 @@ if [ ! -d "$ticket_dir" ]; then
     exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# Detect .wip signals (soft coordination across worktrees)
+# ---------------------------------------------------------------------------
+wip_dir=""
+git_common=$(git rev-parse --git-common-dir 2>/dev/null) && wip_dir="${git_common}/ticket-wip"
+
+# Build wip lookup: "id\tline" pairs
+wip_data=""
+if [ -n "$wip_dir" ] && [ -d "$wip_dir" ]; then
+    for w in "$wip_dir"/*.wip; do
+        [ -e "$w" ] || continue
+        wid=$(basename "$w" .wip)
+        wline=$(head -1 "$w")
+        wip_data="${wip_data}${wid}	${wline}
+"
+    done
+fi
+
 # Collect ticket files
 file_list=""
 for f in "$ticket_dir"/*.ticket; do
@@ -47,7 +65,19 @@ fi
 # Single awk program: parse all tickets, find ready ones, output results.
 # ---------------------------------------------------------------------------
 # shellcheck disable=SC2086
-awk -v use_json="$use_json" '
+awk -v use_json="$use_json" -v wip_raw="$wip_data" '
+BEGIN {
+    # Parse wip_raw (newline-separated "id\tline" pairs) into wip[] lookup
+    nw = split(wip_raw, wip_lines, "\n")
+    for (wi = 1; wi <= nw; wi++) {
+        if (wip_lines[wi] == "") continue
+        tab = index(wip_lines[wi], "\t")
+        if (tab > 0) {
+            wip_id = substr(wip_lines[wi], 1, tab - 1)
+            wip[wip_id] = substr(wip_lines[wi], tab + 1)
+        }
+    }
+}
 # --- Parser ---
 FNR == 1 {
     if (NR > 1) emit()
@@ -126,8 +156,10 @@ END {
             print "["
             for (i = 1; i <= nready; i++) {
                 comma = (i < nready) ? "," : ""
-                printf "  {\"id\": \"%s\", \"title\": \"%s\", \"file\": \"%s\"}%s\n", \
-                    json_esc(ready_id[i]), json_esc(ready_title[i]), json_esc(ready_file[i]), comma
+                wip_field = ""
+                if (ready_id[i] in wip) wip_field = sprintf(", \"wip\": \"%s\"", json_esc(wip[ready_id[i]]))
+                printf "  {\"id\": \"%s\", \"title\": \"%s\", \"file\": \"%s\"%s}%s\n", \
+                    json_esc(ready_id[i]), json_esc(ready_title[i]), json_esc(ready_file[i]), wip_field, comma
             }
             print "]"
         }
@@ -142,8 +174,11 @@ END {
             }
         } else {
             printf "Ready tickets (%d):\n", nready
-            for (i = 1; i <= nready; i++)
-                printf "  %-8s %-40s %s\n", ready_id[i], ready_file[i], ready_title[i]
+            for (i = 1; i <= nready; i++) {
+                suffix = ""
+                if (ready_id[i] in wip) suffix = "  (wip: " wip[ready_id[i]] ")"
+                printf "  %-8s %-40s %s%s\n", ready_id[i], ready_file[i], ready_title[i], suffix
+            }
         }
     }
 }

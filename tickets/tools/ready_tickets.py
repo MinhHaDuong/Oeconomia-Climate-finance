@@ -11,10 +11,36 @@ A ticket is "ready" when:
 """
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
 from ticket_parser import load_tickets
+
+
+def _wip_dir() -> Path | None:
+    """Return the shared .git/ticket-wip/ dir, or None outside a git repo."""
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0:
+            return Path(r.stdout.strip()) / "ticket-wip"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    return None
+
+
+def _load_wip(wip_dir: Path | None) -> dict[str, str]:
+    """Return {ticket_id: wip_line} for active .wip files."""
+    if wip_dir is None or not wip_dir.is_dir():
+        return {}
+    wip = {}
+    for f in wip_dir.glob("*.wip"):
+        tid = f.stem
+        wip[tid] = f.read_text().strip()
+    return wip
 
 
 def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str], int, int]:
@@ -59,11 +85,16 @@ def main() -> int:
         return 1
 
     ready, warnings, total, open_count = find_ready(ticket_dir)
+    wip = _load_wip(_wip_dir())
 
     for w in warnings:
         print(f"WARNING: {w}", file=sys.stderr)
 
     if use_json:
+        # Annotate with wip info if present
+        for r in ready:
+            if r["id"] in wip:
+                r["wip"] = wip[r["id"]]
         print(json.dumps(ready, indent=2))
     else:
         if not ready:
@@ -76,7 +107,8 @@ def main() -> int:
         else:
             print(f"Ready tickets ({len(ready)}):")
             for r in ready:
-                print(f"  {r['id']:<8s} {r['file']:<40s} {r['title']}")
+                suffix = f"  (wip: {wip[r['id']]})" if r["id"] in wip else ""
+                print(f"  {r['id']:<8s} {r['file']:<40s} {r['title']}{suffix}")
 
     return 0
 
