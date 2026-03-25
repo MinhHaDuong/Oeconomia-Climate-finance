@@ -1,18 +1,25 @@
-"""Shared utilities for the literature indexing pipeline."""
+"""Shared utilities for the literature indexing pipeline.
 
-import json
+Thin facade: owns logging setup and CSV schema constants, then re-exports
+all symbols from the four focused modules so existing imports work unchanged.
+
+    from utils import normalize_doi, get_logger, load_analysis_corpus  # still works
+
+Canonical homes for new code:
+    pipeline_text.py     — pure text transforms (DOI, title, abstract, language)
+    pipeline_io.py       — HTTP, CSV, checkpoint, pool, run reports, figures
+    pipeline_loaders.py  — paths, config YAMLs, corpus/embeddings/citations
+    pipeline_progress.py — WatchedProgress, priority scoring
+"""
+
 import logging
 import os
-import random
-import re
-import time
 
-import pandas as pd
-import requests
 from dotenv import load_dotenv
 
-
-# --- Logging ---
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
 
 def get_logger(name=None):
     """Return a configured logger for pipeline scripts.
@@ -45,22 +52,29 @@ def get_logger(name=None):
 
 _utils_log = get_logger("utils")
 
-# --- Paths ---
+# ---------------------------------------------------------------------------
+# Paths — re-exported from pipeline_loaders so callers need not change
+# ---------------------------------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from pipeline_loaders import (  # noqa: E402
+    BASE_DIR,
+    CATALOGS_DIR,
+    CONFIG_DIR,
+    DATA_DIR,
+    EMBEDDINGS_CACHE_DIR,
+    EMBEDDINGS_CACHE_PATH,
+    EMBEDDINGS_PATH,
+    EXPORTS_DIR,
+    POOL_DIR,
+    RAW_DIR,
+    REFINED_CITATIONS_PATH,
+    REFINED_EMBEDDINGS_PATH,
+    REFINED_WORKS_PATH,
+)
 
-# Load .env from repo root (secrets like API keys live here, gitignored).
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-CONFIG_DIR = os.path.join(BASE_DIR, "config")
-
-# Data lives in <repo>/data/ (managed by DVC).
-DATA_DIR = os.path.join(BASE_DIR, "data")
-CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
-EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
-RAW_DIR = os.path.join(DATA_DIR, "raw")
-POOL_DIR = os.path.join(DATA_DIR, "pool")
-
-# --- CSV schemas ---
+# ---------------------------------------------------------------------------
+# CSV schemas — constants used by many catalog scripts
+# ---------------------------------------------------------------------------
 
 WORKS_COLUMNS = [
     "source", "source_id", "doi", "title", "first_author", "all_authors",
@@ -78,822 +92,77 @@ REFS_COLUMNS = [
     "ref_year", "ref_journal", "ref_raw",
 ]
 
-# --- Polite pool ---
-
-MAILTO = "minh.ha-duong@cnrs.fr"
-OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")
-
-# Retry budgets — single source of truth for polite_get and retry_get defaults
-POLITE_MAX_RETRIES = 3   # catalog scrapers (quick, many URLs)
-RETRY_MAX_RETRIES = 5    # enrichment fetchers (heavy, fewer URLs)
-
-
-# --- Helpers ---
-
-def normalize_doi(doi_raw):
-    """Normalize a DOI: handle lists, strip URL prefix, lowercase, trim."""
-    if doi_raw is None:
-        return ""
-    if isinstance(doi_raw, list):
-        if not doi_raw:
-            return ""
-        doi_raw = doi_raw[0]
-    doi = str(doi_raw).strip()
-    for prefix in ("https://doi.org/", "http://doi.org/", "http://dx.doi.org/",
-                    "https://dx.doi.org/", "doi:"):
-        if doi.lower().startswith(prefix):
-            doi = doi[len(prefix):]
-            break
-    return doi.strip().lower()
-
-
-# --- Language normalization ---
-
-# ISO 639-1 valid language codes (the 184 codes from the standard).
-ISO_639_1_CODES = frozenset({
-    "aa", "ab", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az",
-    "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",
-    "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy",
-    "da", "de", "dv", "dz",
-    "ee", "el", "en", "eo", "es", "et", "eu",
-    "fa", "ff", "fi", "fj", "fo", "fr", "fy",
-    "ga", "gd", "gl", "gn", "gu", "gv",
-    "ha", "he", "hi", "ho", "hr", "ht", "hu", "hy", "hz",
-    "ia", "id", "ie", "ig", "ii", "ik", "io", "is", "it", "iu",
-    "ja", "jv",
-    "ka", "kg", "ki", "kj", "kk", "kl", "km", "kn", "ko", "kr", "ks", "ku", "kv", "kw", "ky",
-    "la", "lb", "lg", "li", "ln", "lo", "lt", "lu", "lv",
-    "mg", "mh", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my",
-    "na", "nb", "nd", "ne", "ng", "nl", "nn", "no", "nr", "nv", "ny",
-    "oc", "oj", "om", "or", "os",
-    "pa", "pi", "pl", "ps", "pt",
-    "qu",
-    "rm", "rn", "ro", "ru", "rw",
-    "sa", "sc", "sd", "se", "sg", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr", "ss", "st", "su", "sv", "sw",
-    "ta", "te", "tg", "th", "ti", "tk", "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty",
-    "ug", "uk", "ur", "uz",
-    "ve", "vi", "vo",
-    "wa", "wo",
-    "xh",
-    "yi", "yo",
-    "za", "zh", "zu",
-})
-
-# Map ISO 639-3 codes and full language names to 2-letter ISO 639-1.
-LANG_NORMALIZE = {
-    "eng": "en", "en_us": "en", "en_gb": "en", "english": "en",
-    "fre": "fr", "fra": "fr", "french": "fr",
-    "ger": "de", "deu": "de", "german": "de",
-    "spa": "es", "spanish": "es",
-    "por": "pt", "portuguese": "pt",
-    "chi": "zh", "zho": "zh", "chinese": "zh",
-    "jpn": "ja", "japanese": "ja",
-    "kor": "ko", "korean": "ko",
-    "ara": "ar", "arabic": "ar",
-    "rus": "ru", "russian": "ru",
-    "ita": "it", "italian": "it",
-    "pol": "pl", "polish": "pl",
-    "tur": "tr", "turkish": "tr",
-    "ind": "id", "indonesian": "id",
-    "swe": "sv", "swedish": "sv",
-    "ukr": "uk", "ukrainian": "uk",
-    "hun": "hu", "hungarian": "hu",
-    "vie": "vi", "vietnamese": "vi",
-    "tha": "th", "thai": "th",
-    "nob": "no", "nor": "no", "norwegian": "no",
-    "dan": "da", "danish": "da",
-    "fin": "fi", "finnish": "fi",
-    "dut": "nl", "nld": "nl", "dutch": "nl",
-    "cat": "ca", "catalan": "ca",
-    "ron": "ro", "rum": "ro", "romanian": "ro",
-    "ces": "cs", "cze": "cs", "czech": "cs",
-    "slk": "sk", "slo": "sk", "slovak": "sk",
-    "hrv": "hr", "croatian": "hr",
-    "srp": "sr", "serbian": "sr",
-    "bul": "bg", "bulgarian": "bg",
-    "lit": "lt", "lithuanian": "lt",
-    "lav": "lv", "latvian": "lv",
-    "est": "et", "estonian": "et",
-    "may": "ms", "msa": "ms", "malay": "ms",
-    "fil": "tl", "tagalog": "tl",
-    "urd": "ur", "urdu": "ur",
-    "hin": "hi", "hindi": "hi",
-    "ben": "bn", "bengali": "bn",
-    "per": "fa", "fas": "fa", "persian": "fa",
-    "heb": "he", "hebrew": "he",
-}
-
-
-def normalize_lang(code):
-    """Normalize a language code to 2-letter ISO 639-1.
-
-    Handles: ISO 639-3 codes (eng→en), full names (english→en),
-    regional suffixes (en_US→en), and sentinel values (und, unknown, nan).
-    Returns None for null/unknown/unrecognizable inputs.
-    """
-    if pd.isna(code) or not code:
-        return None
-    code = str(code).lower().strip()
-    if code in ("nan", "none", "", "unknown", "und", "un",
-                 "mis", "mul", "zxx"):
-        return None
-    # Already 2-letter?
-    if len(code) == 2:
-        return code
-    # Strip regional suffix (en_US -> en)
-    if "_" in code:
-        code = code.split("_")[0]
-        if len(code) == 2:
-            return code
-    return LANG_NORMALIZE.get(code)
-
-
-def is_valid_iso639_1(code):
-    """Return True if code is a recognized ISO 639-1 two-letter language code."""
-    if not code or not isinstance(code, str):
-        return False
-    return code.lower().strip() in ISO_639_1_CODES
-
-
-_langdetect_seeded = False
-
-
-def detect_language(text):
-    """Detect language from text using langdetect. Returns 2-letter code or None.
-
-    Requires at least 20 characters to attempt detection — shorter texts
-    produce unreliable results. Seeds the detector on first call for
-    reproducibility (langdetect is non-deterministic by default).
-    """
-    global _langdetect_seeded
-    if not text or len(str(text).strip()) < 20:
-        return None
-    try:
-        from langdetect import detect, LangDetectException
-        if not _langdetect_seeded:
-            from langdetect import DetectorFactory
-            DetectorFactory.seed = 0
-            _langdetect_seeded = True
-        return detect(str(text))
-    except LangDetectException:
-        return None
-
-
-def reconstruct_abstract(inverted_index):
-    """Rebuild plain text from an OpenAlex abstract_inverted_index dict."""
-    if not inverted_index:
-        return ""
-    word_positions = []
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            word_positions.append((pos, word))
-    word_positions.sort()
-    return " ".join(w for _, w in word_positions)
-
-
-def normalize_title(title):
-    """Normalize a title for fuzzy dedup: lowercase, strip punctuation, collapse spaces."""
-    if not title:
-        return ""
-    t = title.lower()
-    t = re.sub(r"[^\w\s]", "", t)
-    t = re.sub(r"\s+", " ", t).strip()
-    return t
-
-
-def clean_doi(raw):
-    """Extract a clean DOI (10.xxxx/...) from a raw string.
-
-    Handles URL-prefixed DOIs from LLM extraction:
-    - https://doi.org/10.xxx → 10.xxx
-    - http://dx.doi.org/10.xxx → 10.xxx
-    - https://doi.org/doi:10.xxx → 10.xxx
-    - https://publisher.com/doi/full/10.xxx → 10.xxx
-    - Already-clean 10.xxx → 10.xxx
-    - Non-DOI URLs (SSRN, HDL) → ""
-    - None / "" → ""
-    """
-    if not raw:
-        return ""
-    raw = str(raw).strip()
-    if not raw:
-        return ""
-    # Extract the 10.xxxx/... DOI pattern from anywhere in the string
-    m = re.search(r"(10\.\d{4,}[^\s]*)", raw)
-    if m:
-        return m.group(1).lower()
-    return ""
-
-
-def polite_get(url, params=None, headers=None, delay=0.2,
-               max_retries=POLITE_MAX_RETRIES):
-    """HTTP GET with polite delay, exponential backoff+jitter, retry on 429/5xx.
-
-    Delegates to retry_get. All callers (OpenAlex, ISTEX, World Bank, syllabi)
-    get POLITE_MAX_RETRIES retries with 5xx handling.
-    """
-    return retry_get(url, params=params, headers=headers, delay=delay,
-                     max_retries=max_retries, timeout=30)
-
-
-def retry_get(url, params=None, headers=None, delay=0.2,
-              max_retries=RETRY_MAX_RETRIES,
-              timeout=60, counters=None, backoff_base=2.0, jitter_max=1.0):
-    """HTTP GET with bounded exponential backoff+jitter and optional counter tracking.
-
-    Parameters
-    ----------
-    url:          Request URL.
-    params:       Query parameters dict.
-    headers:      HTTP headers dict.
-    delay:        Base polite delay before each attempt (seconds).
-    max_retries:  Maximum number of retry attempts for 429/5xx/timeout.
-    timeout:      Per-request timeout in seconds.
-    counters:     Optional dict to update with keys:
-                  ``retries``, ``rate_limited``, ``server_errors``, ``client_errors``.
-    backoff_base: Base for exponential backoff (seconds, default 2.0).
-    jitter_max:   Maximum random jitter added to each backoff (seconds, default 1.0).
-
-    Returns
-    -------
-    requests.Response on success.
-
-    Raises
-    ------
-    RuntimeError after all retries are exhausted.
-    """
-    if params is None:
-        params = {}
-    if "mailto" not in params and "mailto" not in url:
-        params["mailto"] = MAILTO
-    if headers is None:
-        headers = {}
-    headers.setdefault("User-Agent", f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})")
-    if counters is None:
-        counters = {}
-
-    last_exc = None
-    for attempt in range(max_retries):
-        try:
-            time.sleep(delay)
-            resp = requests.get(url, params=params, headers=headers, timeout=timeout)
-        except requests.exceptions.Timeout as exc:
-            last_exc = exc
-            counters["retries"] = counters.get("retries", 0) + 1
-            backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
-            _utils_log.warning("Timeout on attempt %d/%d, retrying in %.1fs...",
-                               attempt + 1, max_retries, backoff)
-            time.sleep(backoff)
-            continue
-        except requests.exceptions.RequestException as exc:
-            last_exc = exc
-            counters["retries"] = counters.get("retries", 0) + 1
-            backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
-            time.sleep(backoff)
-            continue
-
-        if resp.status_code == 429:
-            counters["rate_limited"] = counters.get("rate_limited", 0) + 1
-            counters["retries"] = counters.get("retries", 0) + 1
-            if attempt == max_retries - 1:
-                # Return the 429 response instead of raising — lets callers
-                # inspect budget headers and degrade gracefully.
-                _utils_log.warning("Rate limited (429) after %d attempts, returning response.", max_retries)
-                return resp
-            retry_after = min(int(resp.headers.get("Retry-After", backoff_base ** (attempt + 1))), 120)
-            jitter = random.uniform(0, min(jitter_max * 2, 2))
-            wait = retry_after + jitter
-            _utils_log.warning("Rate limited (429), waiting %.1fs...", wait)
-            time.sleep(wait)
-            continue
-        if resp.status_code >= 500:
-            counters["server_errors"] = counters.get("server_errors", 0) + 1
-            counters["retries"] = counters.get("retries", 0) + 1
-            backoff = min(backoff_base ** attempt + random.uniform(0, jitter_max), 60)
-            _utils_log.warning("Server error %d on attempt %d/%d, retrying in %.1fs...",
-                               resp.status_code, attempt + 1, max_retries, backoff)
-            time.sleep(backoff)
-            last_exc = resp.status_code
-            continue
-        if resp.status_code >= 400:
-            counters["client_errors"] = counters.get("client_errors", 0) + 1
-            resp.raise_for_status()
-        return resp
-
-    raise RuntimeError(
-        f"Failed after {max_retries} attempts: {url} "
-        f"(last error: {last_exc})"
-    )
-
-
-def save_run_report(data, run_id, script_name):
-    """Persist a structured run-summary dict as JSON in catalogs/run_reports/.
-
-    Parameters
-    ----------
-    data:        Dict of counters / metadata to save.
-    run_id:      Unique run identifier string (e.g. timestamp or ``--run-id`` value).
-    script_name: Short script name used as filename prefix.
-
-    Returns
-    -------
-    Path to the saved JSON file (str).
-    """
-    reports_dir = os.path.join(CATALOGS_DIR, "run_reports")
-    os.makedirs(reports_dir, exist_ok=True)
-    safe_run_id = re.sub(r"[^\w.-]", "_", run_id)
-    filename = f"{script_name}__{safe_run_id}.json"
-    path = os.path.join(reports_dir, filename)
-    payload = {"script": script_name, "run_id": run_id, **data}
-    with open(path, "w") as f:
-        json.dump(payload, f, indent=2, default=str)
-    return path
-
-
-def make_run_id():
-    """Return a UTC timestamp string suitable for use as a run-id."""
-    return time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-
-
-_CLUSTER_LABELS_PATH = os.path.join(BASE_DIR, "content", "tables", "cluster_labels.json")
-
-
-def load_cluster_labels(n_clusters=6):
-    """Load cluster labels from cluster_labels.json.
-
-    Returns dict with int keys: {0: "term1 / term2 / term3", ...}.
-    Falls back to generic "Cluster N" labels with a warning.
-    """
-    import warnings
-
-    if os.path.exists(_CLUSTER_LABELS_PATH):
-        with open(_CLUSTER_LABELS_PATH) as f:
-            raw = json.load(f)
-        return {int(k): v for k, v in raw.items()}
-
-    warnings.warn(
-        f"cluster_labels.json not found at {_CLUSTER_LABELS_PATH}. "
-        "Run: uv run python scripts/compute_clusters.py",
-        stacklevel=2,
-    )
-    return {i: f"Cluster {i}" for i in range(n_clusters)}
-
-
-# Embeddings live in a separate .npz rather than as columns in refined_works.csv:
-# - Size: 384 floats × 30k rows as CSV text ≈ 500 MB vs. ~45 MB compressed binary
-# - Incremental cache: stores keys + text hashes + model config so only new/changed
-#   works are re-encoded on each run (~16 min full, seconds incremental)
-# - Load speed: numpy reads the array in one shot; no parsing of 11M float strings
-EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "embeddings.npz")
-
-# Incremental embedding cache lives in enrich_cache/ — NOT a DVC output.
-# DVC deletes stage outputs before re-running; keeping the cache separate
-# means re-runs skip already-computed vectors instead of starting from scratch.
-EMBEDDINGS_CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
-EMBEDDINGS_CACHE_PATH = os.path.join(EMBEDDINGS_CACHE_DIR, "embeddings_cache.npz")
-
-# Phase 1 → Phase 2 aligned canonical artifacts (produced by corpus-align step).
-# refined_embeddings.npz rows are 1:1 with refined_works.csv rows.
-# refined_citations.csv source_doi values are a subset of refined_works.csv DOIs.
-REFINED_WORKS_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
-REFINED_EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "refined_embeddings.npz")
-REFINED_CITATIONS_PATH = os.path.join(CATALOGS_DIR, "refined_citations.csv")
-
-
-def work_key(row):
-    """Stable key for a work: DOI preferred, then source_id, then title hash.
-
-    Used by both enrich_embeddings.py and analyze_embeddings.py to align
-    works with their embedding vectors. Must be identical across scripts.
-    """
-    import hashlib
-
-    if pd.notna(row["doi"]):
-        return str(row["doi"])
-    if pd.notna(row["source_id"]):
-        return str(row["source_id"])
-    return "title:" + hashlib.md5(str(row["title"]).encode()).hexdigest()
-
-
-def load_embeddings():
-    """Load embedding vectors from the .npz cache.
-
-    Returns the (N, 384) float32 array. Raises FileNotFoundError if missing.
-    Also supports legacy .npy files for backwards compatibility.
-    """
-    import numpy as np
-
-    if os.path.exists(EMBEDDINGS_PATH):
-        return np.load(EMBEDDINGS_PATH)["vectors"]
-    # Legacy fallback
-    legacy = os.path.join(CATALOGS_DIR, "embeddings.npy")
-    if os.path.exists(legacy):
-        return np.load(legacy)
-    raise FileNotFoundError(f"No embeddings found at {EMBEDDINGS_PATH}")
-
-
-def load_refined_embeddings():
-    """Load embedding vectors aligned 1:1 with refined_works.csv rows.
-
-    Returns the (N, D) float32 array where N == len(refined_works.csv).
-    Raises FileNotFoundError with a remediation hint if the file is missing.
-    Run ``make corpus-align`` (or ``uv run python scripts/corpus_align.py``)
-    to produce this file.
-    """
-    import numpy as np
-
-    if not os.path.exists(REFINED_EMBEDDINGS_PATH):
-        raise FileNotFoundError(
-            f"refined_embeddings.npz not found at {REFINED_EMBEDDINGS_PATH}. "
-            "Run: uv run python scripts/corpus_align.py"
-        )
-    return np.load(REFINED_EMBEDDINGS_PATH)["vectors"]
-
-
-def load_refined_citations():
-    """Load citation edges restricted to refined_works.csv source DOIs.
-
-    Returns a DataFrame whose ``source_doi`` values are all members of
-    ``normalize_doi(refined_works.csv.doi)``.
-    Raises FileNotFoundError with a remediation hint if the file is missing.
-    Run ``make corpus-align`` (or ``uv run python scripts/corpus_align.py``)
-    to produce this file.
-    """
-    if not os.path.exists(REFINED_CITATIONS_PATH):
-        raise FileNotFoundError(
-            f"refined_citations.csv not found at {REFINED_CITATIONS_PATH}. "
-            "Run: uv run python scripts/corpus_align.py"
-        )
-    return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
-
-
-def load_analysis_corpus(core_only=False, with_embeddings=True,
-                         cite_threshold=None, v1_only=False):
-    """Load refined_works.csv with standard filtering + optional embeddings.
-
-    Applies: year coercion, title-present filter, year in [year_min, year_max]
-    (from config/analysis.yaml), optional core filtering (cited_by_count >= cite_threshold).
-
-    If v1_only=True, restricts to rows with in_v1==1 (the v1.0-submission
-    corpus). Use this for manuscript figures to ensure stability against
-    corpus expansion.
-
-    If cite_threshold is None, the value is read from config/analysis.yaml
-    (clustering.cite_threshold) so there is a single source of truth.
-
-    Returns (df, embeddings) where embeddings is None if with_embeddings=False.
-    """
-    import numpy as np
-
-    cfg = load_analysis_config()
-    if cite_threshold is None:
-        cite_threshold = cfg["clustering"]["cite_threshold"]
-    year_min = cfg["periodization"]["year_min"]
-    year_max = cfg["periodization"]["year_max"]
-
-    works = pd.read_csv(REFINED_WORKS_PATH)
-    works["year"] = pd.to_numeric(works["year"], errors="coerce")
-
-    has_title = works["title"].notna() & (works["title"].str.len() > 0)
-    in_range = (works["year"] >= year_min) & (works["year"] <= year_max)
-    keep_mask = has_title & in_range
-    if v1_only:
-        if "in_v1" not in works.columns:
-            raise RuntimeError(
-                "v1_only=True but 'in_v1' column missing from refined_works.csv. "
-                "Re-run: uv run python scripts/corpus_filter.py --apply"
-            )
-        keep_mask = keep_mask & (works["in_v1"] == 1)
-        _utils_log.info("v1_only: restricting to %d / %d rows",
-                        keep_mask.sum(), len(works))
-    keep_mask = keep_mask.values
-    df = works[keep_mask].copy().reset_index(drop=True)
-
-    embeddings = None
-    if with_embeddings:
-        all_embeddings = load_refined_embeddings()
-        if len(all_embeddings) != len(works):
-            raise RuntimeError(
-                f"Embedding/refined_works row count mismatch "
-                f"({len(all_embeddings)} vs {len(works)}). "
-                "Re-run: uv run python scripts/corpus_align.py"
-            )
-        embeddings = all_embeddings[keep_mask]
-
-    df["cited_by_count"] = pd.to_numeric(
-        df["cited_by_count"], errors="coerce"
-    ).fillna(0)
-
-    if core_only:
-        core_mask = df["cited_by_count"] >= cite_threshold
-        core_indices = df.index[core_mask].values
-        df = df.loc[core_mask].reset_index(drop=True)
-        if embeddings is not None:
-            embeddings = embeddings[core_indices]
-            assert len(df) == len(embeddings), \
-                "Embedding alignment error after core filtering"
-
-    return df, embeddings
-
-
-def load_collect_config():
-    """Load config/corpus_collect.yaml (Phase 1 collection parameters).
-
-    Returns dict with keys: year_min, year_max, queries.
-    Raises FileNotFoundError if the config is missing.
-    """
-    import yaml
-
-    path = os.path.join(CONFIG_DIR, "corpus_collect.yaml")
-    if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"corpus_collect.yaml not found at {path}. "
-            "This file defines year bounds for API queries."
-        )
-    with open(path) as f:
-        cfg = yaml.safe_load(f)
-    if not isinstance(cfg.get("year_min"), int) or not isinstance(cfg.get("year_max"), int):
-        raise ValueError("year_min and year_max must be integers in corpus_collect.yaml")
-    if cfg["year_min"] > cfg["year_max"]:
-        raise ValueError(
-            f"year_min ({cfg['year_min']}) > year_max ({cfg['year_max']}) "
-            "in corpus_collect.yaml"
-        )
-    return cfg
-
-
-def load_analysis_config():
-    """Load config/analysis.yaml (Phase 2 analysis parameters).
-
-    Returns dict with keys: periodization, clustering.
-    """
-    import yaml
-
-    path = os.path.join(CONFIG_DIR, "analysis.yaml")
-    if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"analysis.yaml not found at {path}. "
-            "This file defines Phase 2 analysis parameters."
-        )
-    with open(path) as f:
-        return yaml.safe_load(f)
-
-
-def load_analysis_periods(config_dir=None):
-    """Derive period tuples and labels from config/analysis.yaml.
-
-    Returns (periods, labels) where:
-      periods = [(1990, 2006), (2007, 2014), (2015, 2024)]
-      labels  = ["1990\u20132006", "2007\u20132014", "2015\u20132024"]
-
-    If config_dir is given, reads analysis.yaml (and optionally
-    corpus_collect.yaml) from that directory instead of CONFIG_DIR.
-
-    Emits a UserWarning if the analysis year range exceeds the collection
-    range defined in corpus_collect.yaml. Skips the check gracefully if
-    corpus_collect.yaml does not exist.
-    """
-    import warnings
-    import yaml
-
-    cdir = config_dir or CONFIG_DIR
-    analysis_path = os.path.join(cdir, "analysis.yaml")
-    with open(analysis_path) as f:
-        cfg = yaml.safe_load(f)
-
-    p = cfg["periodization"]
-    year_min = p["year_min"]
-    year_max = p["year_max"]
-    breaks = p["breaks"]
-
-    # Build period tuples: [year_min, break-1], [break, next_break-1], ..., [last_break, year_max]
-    boundaries = [year_min] + breaks + [year_max + 1]
-    periods = []
-    labels = []
-    for i in range(len(boundaries) - 1):
-        start = boundaries[i]
-        end = boundaries[i + 1] - 1
-        periods.append((start, end))
-        labels.append(f"{start}\u2013{end}")
-
-    # Check against collection range if corpus_collect.yaml exists
-    collect_path = os.path.join(cdir, "corpus_collect.yaml")
-    if os.path.exists(collect_path):
-        with open(collect_path) as f:
-            collect_cfg = yaml.safe_load(f)
-        c_min = collect_cfg.get("year_min")
-        c_max = collect_cfg.get("year_max")
-        msgs = []
-        if c_min is not None and year_min < c_min:
-            msgs.append(
-                f"analysis year_min ({year_min}) < collection year_min ({c_min})"
-            )
-        if c_max is not None and year_max > c_max:
-            msgs.append(
-                f"analysis year_max ({year_max}) > collection year_max ({c_max})"
-            )
-        if msgs:
-            warnings.warn(
-                "Analysis range exceeds collection range: "
-                + "; ".join(msgs),
-                UserWarning,
-                stacklevel=2,
-            )
-
-    return periods, labels
-
-
-def save_csv(df, path):
-    """Save DataFrame to CSV with UTF-8 encoding."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    df.to_csv(path, index=False, encoding="utf-8")
-    _utils_log.info("Saved %d rows to %s", len(df), path)
-
-
-def dedup_courses(grouped, course_col, overlap_threshold=0.8, min_shared=10):
-    """Merge near-duplicate courses and recount n_courses.
-
-    Two courses are considered duplicates if they share >= min_shared readings
-    AND > overlap_threshold of the smaller course's readings.  This prevents
-    false merges when courses share just 1-2 popular papers by coincidence.
-
-    Modifies the grouped DataFrame in place: updates courses, institutions,
-    and adds/updates n_courses.
-    """
-    from collections import defaultdict
-
-    # Build course -> set of reading keys (row indices)
-    course_readings = defaultdict(set)
-    for idx, row in grouped.iterrows():
-        courses = [c.strip() for c in row[course_col].split(" ; ")]
-        for c in courses:
-            if c:
-                course_readings[c].add(idx)
-
-    # Find courses that overlap significantly
-    course_list = list(course_readings.keys())
-    merged = {}  # course_name -> canonical_name
-    for i, c1 in enumerate(course_list):
-        if c1 in merged:
-            continue
-        for c2 in course_list[i + 1:]:
-            if c2 in merged:
-                continue
-            s1, s2 = course_readings[c1], course_readings[c2]
-            if not s1 or not s2:
-                continue
-            n_shared = len(s1 & s2)
-            overlap = n_shared / min(len(s1), len(s2))
-            if n_shared >= min_shared and overlap > overlap_threshold:
-                canonical = c1 if len(c1) <= len(c2) else c2
-                alias = c2 if canonical == c1 else c1
-                merged[alias] = canonical
-                _utils_log.info("Course dedup: '%s' -> '%s'",
-                                alias[:50], canonical[:50])
-
-    if not merged:
-        grouped["n_courses"] = grouped[course_col].apply(
-            lambda x: len(set(x.split(" ; "))) if x else 0)
-        return grouped
-
-    def apply_merge(courses_str):
-        courses = [c.strip() for c in courses_str.split(" ; ")]
-        deduped = []
-        seen = set()
-        for c in courses:
-            canonical = merged.get(c, c)
-            if canonical not in seen:
-                deduped.append(canonical)
-                seen.add(canonical)
-        return " ; ".join(sorted(deduped))
-
-    grouped[course_col] = grouped[course_col].apply(apply_merge)
-    grouped["n_courses"] = grouped[course_col].apply(
-        lambda x: len(set(x.split(" ; "))) if x else 0)
-
-    _utils_log.info("Merged %d duplicate course names", len(merged))
-    return grouped
-
-
-def load_checkpoint(path):
-    """Load records from a JSONL checkpoint file."""
-    records = []
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    records.append(json.loads(line))
-        _utils_log.info("Loaded %d records from checkpoint %s", len(records), path)
-    return records
-
-
-def append_checkpoint(records, path):
-    """Append records to a JSONL checkpoint file."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        for rec in records:
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-
-def delete_checkpoint(path):
-    """Remove checkpoint file after successful completion."""
-    if os.path.exists(path):
-        os.remove(path)
-
-
-# --- Pool helpers (append-only raw storage, gzipped JSONL) ---
-# Implementations live in utils_pool.py; re-exported here for backward compatibility.
-
-from utils_pool import (  # noqa: E402
-    append_to_pool,
-    load_pool_ids,
-    load_pool_records,
-    pool_path,
+# ---------------------------------------------------------------------------
+# HTTP constants — re-exported from pipeline_io
+# ---------------------------------------------------------------------------
+
+from pipeline_io import (  # noqa: E402
+    MAILTO,
+    OPENALEX_API_KEY,
+    POLITE_MAX_RETRIES,
+    RETRY_MAX_RETRIES,
 )
 
-# --- Progress monitoring ---
-# Implementations live in utils_progress.py; re-exported here for backward compatibility.
+# ---------------------------------------------------------------------------
+# Re-exports from pipeline_text
+# ---------------------------------------------------------------------------
 
-from utils_progress import EX_STUCK, WatchedProgress  # noqa: E402
+from pipeline_text import (  # noqa: E402
+    ISO_639_1_CODES,
+    LANG_NORMALIZE,
+    clean_doi,
+    detect_language,
+    is_valid_iso639_1,
+    normalize_doi,
+    normalize_lang,
+    normalize_title,
+    reconstruct_abstract,
+)
 
+# ---------------------------------------------------------------------------
+# Re-exports from pipeline_io
+# ---------------------------------------------------------------------------
 
-def save_figure(fig, path_stem, no_pdf=False, dpi=150):
-    """Save figure as PNG and optionally PDF.
+from pipeline_io import (  # noqa: E402
+    append_checkpoint,
+    append_to_pool,
+    dedup_courses,
+    delete_checkpoint,
+    load_checkpoint,
+    load_pool_ids,
+    load_pool_records,
+    make_run_id,
+    polite_get,
+    pool_path,
+    retry_get,
+    save_csv,
+    save_figure,
+    save_run_report,
+)
 
-    Produces byte-identical output across runs by stripping volatile
-    metadata (Software version, creation timestamps).
-    """
-    _meta = {"Software": None, "Creation Time": None}
-    fig.savefig(f"{path_stem}.png", dpi=dpi, bbox_inches="tight",
-                metadata=_meta, pil_kwargs={"optimize": False})
-    if not no_pdf:
-        fig.savefig(f"{path_stem}.pdf", dpi=max(dpi, 300), bbox_inches="tight")
-    _utils_log.info("Saved → %s.png%s", os.path.basename(path_stem),
-                     "" if no_pdf else " + .pdf")
+# ---------------------------------------------------------------------------
+# Re-exports from pipeline_loaders
+# ---------------------------------------------------------------------------
 
+from pipeline_loaders import (  # noqa: E402
+    load_analysis_config,
+    load_analysis_corpus,
+    load_analysis_periods,
+    load_cluster_labels,
+    load_collect_config,
+    load_embeddings,
+    load_refined_citations,
+    load_refined_embeddings,
+    work_key,
+)
 
-# --- Enrichment priority ---
+# ---------------------------------------------------------------------------
+# Re-exports from pipeline_progress
+# ---------------------------------------------------------------------------
 
-def compute_priority_scores(works_df: pd.DataFrame) -> pd.DataFrame:
-    """Return works_df with a deterministic ``_priority`` score column and
-    per-component ``_score_*`` columns (higher score = process first).
-
-    Priority is based on:
-    - ``_score_cited``   : raw ``cited_by_count`` (normalised: most-cited first)
-    - ``_score_sources`` : ``source_count`` × 10  (multi-source works first)
-    - ``_score_year``    : (year − 1990) × 0.01   (slight recency bonus)
-    - ``_score_tiebreak``: stable MD5 hash of DOI  (fully deterministic)
-
-    The function is pure: same input rows → same scores, regardless of row order.
-    """
-    import hashlib
-
-    df = works_df.copy()
-
-    cited = pd.to_numeric(df.get("cited_by_count", pd.Series(0, index=df.index)),
-                          errors="coerce").fillna(0).clip(lower=0)
-
-    sources = pd.to_numeric(df.get("source_count", pd.Series(1, index=df.index)),
-                            errors="coerce").fillna(1).clip(lower=0)
-
-    year = pd.to_numeric(df.get("year", pd.Series(1990, index=df.index)),
-                         errors="coerce").fillna(1990)
-
-    doi_str = df["doi"].fillna("").astype(str)
-    tiebreak = doi_str.apply(
-        lambda d: int(hashlib.md5(d.encode()).hexdigest(), 16) % 1_000_000 / 1_000_000
-    )
-
-    df["_score_cited"] = cited.values
-    df["_score_sources"] = (sources * 10).values
-    df["_score_year"] = ((year - 1990) * 0.01).values
-    df["_score_tiebreak"] = tiebreak.values
-    df["_priority"] = (
-        df["_score_cited"] + df["_score_sources"] + df["_score_year"] + df["_score_tiebreak"]
-    )
-
-    return df
-
-
-def sort_dois_by_priority(dois: list, works_df: pd.DataFrame) -> list:
-    """Return *dois* sorted by descending priority score.
-
-    DOIs absent from ``works_df`` are appended at the end (score = 0),
-    preserving their relative insertion order for stability.
-
-    Parameters
-    ----------
-    dois:      List of normalised DOI strings to sort.
-    works_df:  Works DataFrame with at minimum a ``doi`` column.
-
-    Returns
-    -------
-    Sorted list of DOIs (highest priority first).
-    """
-    scored = compute_priority_scores(works_df)
-    doi_to_priority = dict(zip(
-        scored["doi"].fillna("").astype(str),
-        scored["_priority"],
-    ))
-    return sorted(dois, key=lambda d: doi_to_priority.get(d, -1), reverse=True)
+from pipeline_progress import (  # noqa: E402
+    EX_STUCK,
+    WatchedProgress,
+    compute_priority_scores,
+    sort_dois_by_priority,
+)

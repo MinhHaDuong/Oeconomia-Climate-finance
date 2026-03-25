@@ -59,8 +59,8 @@ class TestLoadAnalysisCorpus:
 
         with_emb = kwargs.pop("with_embeddings", embeddings is not None)
 
-        with patch("utils.pd.read_csv", return_value=works_df), \
-             patch("utils.load_refined_embeddings",
+        with patch("pipeline_loaders.pd.read_csv", return_value=works_df), \
+             patch("pipeline_loaders.load_refined_embeddings",
                    return_value=embeddings):
             return load_analysis_corpus(with_embeddings=with_emb, **kwargs)
 
@@ -192,7 +192,7 @@ class TestLoadAnalysisConfig:
         config_file = tmp_path / "analysis.yaml"
         config_file.write_text(yaml_content)
 
-        with patch("utils.CONFIG_DIR", str(tmp_path)):
+        with patch("pipeline_loaders.CONFIG_DIR", str(tmp_path)):
             from utils import load_analysis_config
             cfg = load_analysis_config()
 
@@ -201,7 +201,7 @@ class TestLoadAnalysisConfig:
         assert cfg["clustering"]["cite_threshold"] == 50
 
     def test_missing_file_raises(self, tmp_path):
-        with patch("utils.CONFIG_DIR", str(tmp_path)):
+        with patch("pipeline_loaders.CONFIG_DIR", str(tmp_path)):
             from utils import load_analysis_config
             with pytest.raises(FileNotFoundError, match="analysis.yaml"):
                 load_analysis_config()
