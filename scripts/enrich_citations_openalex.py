@@ -328,11 +328,6 @@ def main():
 
     if not missing:
         log.info("Nothing to fetch.")
-        # Ensure citations.csv exists even when there's nothing to fetch —
-        # DVC expects the output file. Create empty with header if missing.
-        if not os.path.exists(CITATIONS_PATH):
-            pd.DataFrame(columns=REFS_COLUMNS).to_csv(CITATIONS_PATH, index=False)
-            log.info("Created empty %s (DVC output requirement)", CITATIONS_PATH)
         return
 
     # Write checkpoint header once
