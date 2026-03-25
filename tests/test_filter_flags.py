@@ -198,6 +198,43 @@ class TestFlagCitationIsolated:
         result = flag_citation_isolated(fixture_df, config, citations_df=citations_df)
         assert result.iloc[9] == False
 
+    def test_old_citing_no_doi_refs_not_flagged(self, fixture_df, config):
+        """Row 7: year 2010, cites books without DOIs -> NOT flagged.
+
+        Papers that cite books/reports (ref_doi empty but source_doi present
+        in citations) are participating in the citation graph and should not
+        be flagged as isolated. This relies on merge_citations keeping
+        no-DOI ref rows in citations.csv.
+        """
+        # This paper cites two books — no ref_doi, but it IS a citing paper
+        citations_df = pd.DataFrame({
+            "source_doi": ["10.1000/old-isolated", "10.1000/old-isolated"],
+            "ref_doi": ["", ""],
+        })
+        fixture_df["doi_norm"] = fixture_df["doi"].apply(
+            lambda x: str(x).strip().lower() if pd.notna(x) else ""
+        )
+        result = flag_citation_isolated(fixture_df, config, citations_df=citations_df)
+        assert result.iloc[7] == False, \
+            "Paper citing books (no-DOI refs) should not be flagged as isolated"
+
+    def test_old_truly_isolated_flagged(self, fixture_df, config):
+        """Row 7: year 2010, not in citations at all -> flagged.
+
+        When citations.csv has data but this paper's DOI doesn't appear
+        as source_doi or ref_doi, it IS isolated.
+        """
+        citations_df = pd.DataFrame({
+            "source_doi": ["10.1000/unrelated"],
+            "ref_doi": ["10.1000/also-unrelated"],
+        })
+        fixture_df["doi_norm"] = fixture_df["doi"].apply(
+            lambda x: str(x).strip().lower() if pd.notna(x) else ""
+        )
+        result = flag_citation_isolated(fixture_df, config, citations_df=citations_df)
+        assert result.iloc[7] == True, \
+            "Paper absent from citation graph should be flagged as isolated"
+
     def test_missing_citations_raises(self, fixture_df, config):
         with pytest.raises(ValueError, match="citations_df is required"):
             flag_citation_isolated(fixture_df, config, citations_df=None)
