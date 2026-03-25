@@ -22,7 +22,7 @@ import time
 import litellm
 import pandas as pd
 
-from utils import CATALOGS_DIR, get_logger
+from utils import CATALOGS_DIR, get_logger, save_csv, save_run_report, make_run_id
 
 log = get_logger("summarize_abstracts")
 
@@ -212,7 +212,15 @@ def main():
         action="store_true",
         help="Classify and report counts without calling LLM",
     )
+    parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Run identifier for report (default: UTC timestamp)",
+    )
     args = parser.parse_args()
+
+    run_id = args.run_id or make_run_id()
+    t0 = time.time()
 
     df = pd.read_csv(args.works_input, low_memory=False)
     log.info("Loaded %d works from %s", len(df), args.works_input)
@@ -226,13 +234,22 @@ def main():
     result = summarize_too_long_abstracts(df, model=args.model)
 
     # Report
-    for status, count in result["abstract_status"].value_counts().items():
+    status_counts = result["abstract_status"].value_counts().to_dict()
+    for status, count in status_counts.items():
         log.info("  %s: %d", status, count)
 
-    # Save back (same path, enrichment pattern)
-    output_path = args.works_input
-    result.to_csv(output_path, index=False)
-    log.info("Saved to %s", output_path)
+    # Save back (atomic write)
+    save_csv(result, args.works_input)
+
+    elapsed = time.time() - t0
+    counters = {
+        "total_works": len(df),
+        "model": args.model,
+        "elapsed_seconds": round(elapsed, 1),
+        **{f"status_{k}": v for k, v in status_counts.items()},
+    }
+    report_path = save_run_report(counters, run_id, "summarize_abstracts")
+    log.info("Run report: %s", report_path)
 
 
 if __name__ == "__main__":
