@@ -113,7 +113,7 @@ DVC deletes stage outputs before re-running a stage. Enrichment scripts that bui
 - **`enrich_cache/`** — persistent cache directory (gitignored, not a DVC output). Stores intermediate state that survives `dvc repro`. Each script owns its own file(s) inside this directory.
 - **DVC output** — the final artifact declared in `dvc.yaml` `outs:`. Ephemeral — DVC may delete it. Scripts regenerate it from the cache on each run.
 
-Scripts using this pattern: `enrich_abstracts.py`, `enrich_dois.py`, `enrich_embeddings.py`.
+Scripts using this pattern: `enrich_abstracts.py`, `enrich_dois.py`, `enrich_embeddings.py`, `enrich_language.py`.
 
 When adding a new enrichment script: put incremental state in `enrich_cache/<name>.csv` (or `.npz`), write the DVC output separately.
 
