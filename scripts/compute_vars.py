@@ -219,6 +219,11 @@ def corpus_stats(v):
 
     v["corpus_sources"] = str(len(SOURCE_NAMES))
 
+    # OpenAlex share of refined works
+    if "from_openalex" in df.columns:
+        oa_pct = 100 * df["from_openalex"].sum() / n
+        v["openalex_pct"] = _pct(oa_pct)
+
     # Raw (pre-filter) count from unified_works.csv
     unified_path = os.path.join(CATALOGS_DIR, "unified_works.csv")
     if os.path.isfile(unified_path):
@@ -258,13 +263,6 @@ def filter_stats(v):
 
     # Net removals
     v["filter_net_removals"] = _int((audit["action"] == "remove").sum())
-
-    # OpenAlex share of refined works
-    from utils import REFINED_WORKS_PATH
-    if os.path.isfile(REFINED_WORKS_PATH):
-        refined = pd.read_csv(REFINED_WORKS_PATH, usecols=["from_openalex"])
-        oa_pct = 100 * refined["from_openalex"].sum() / len(refined)
-        v["openalex_pct"] = _pct(oa_pct)
 
 
 def embedding_stats(v):
