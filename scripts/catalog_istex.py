@@ -253,8 +253,12 @@ def main():
     elif args.extract_only:
         raw_records = extract_from_pool()
     else:
-        raw_records = fetch_istex_api(base_query, year_min=year_min,
-                                      year_max=year_max)
+        try:
+            raw_records = fetch_istex_api(base_query, year_min=year_min,
+                                          year_max=year_max)
+        except RuntimeError:
+            log.warning("ISTEX API unreachable, falling back to pool extraction")
+            raw_records = extract_from_pool()
 
     works = []
     all_refs = []

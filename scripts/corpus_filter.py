@@ -268,7 +268,18 @@ def apply_filter(df, output_path=None, audit_path=None, v1_identifiers_path=None
     mask_remove = is_flagged & (~df["protected"].fillna(False))
     df.loc[mask_remove, "action"] = "remove"
 
-    n_remove = mask_remove.sum()
+    # Year floor: remove works before year_floor regardless of protection
+    config = _load_config()
+    year_floor = config.get("year_floor")
+    if year_floor is not None:
+        year_col = pd.to_numeric(df["year"], errors="coerce")
+        mask_too_old = year_col < year_floor
+        n_too_old = (mask_too_old & (df["action"] == "keep")).sum()
+        if n_too_old > 0:
+            df.loc[mask_too_old, "action"] = "remove"
+            log.info("  Year floor %d: removing %d additional works", year_floor, n_too_old)
+
+    n_remove = (df["action"] == "remove").sum()
     n_keep = len(df) - n_remove
     log.info("=== Applying filter ===")
     log.info("  Removing: %d", n_remove)
