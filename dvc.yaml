@@ -16,6 +16,10 @@ stages:
     deps:
       - scripts/catalog_bibcnrs.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/exports
     outs:
       - data/catalogs/bibcnrs_works.csv
@@ -29,6 +33,10 @@ stages:
     deps:
       - scripts/catalog_istex.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - config/corpus_collect.yaml
       - data/pool/istex
     outs:
@@ -40,6 +48,10 @@ stages:
     deps:
       - scripts/catalog_openalex.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - config/openalex_queries.yaml
       - config/corpus_collect.yaml
       - data/pool/openalex
@@ -57,6 +69,10 @@ stages:
     deps:
       - scripts/catalog_grey.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - config/grey_sources.yaml
       - config/corpus_collect.yaml
     outs:
@@ -70,6 +86,10 @@ stages:
       - scripts/build_teaching_yaml.py
       - scripts/build_teaching_canon.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/syllabi
     outs:
       - data/catalogs/teaching_works.csv
@@ -80,6 +100,10 @@ stages:
     deps:
       - scripts/catalog_merge.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/bibcnrs_works.csv
       - data/catalogs/istex_works.csv
       - data/catalogs/openalex_works.csv
@@ -110,6 +134,10 @@ stages:
       - scripts/enrich_abstracts.py
       - scripts/enrich_language.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
     outs:
       - data/catalogs/enriched_works.csv
@@ -123,6 +151,10 @@ stages:
       - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/enriched_works.csv
     outs:
       - data/catalogs/citations.csv
@@ -133,6 +165,10 @@ stages:
     deps:
       - scripts/qa_citations.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/enriched_works.csv
       - data/catalogs/citations.csv
 
@@ -143,6 +179,10 @@ stages:
     deps:
       - scripts/enrich_embeddings.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/enriched_works.csv
     outs:
       - data/catalogs/embeddings.npz
@@ -157,6 +197,10 @@ stages:
       - scripts/corpus_filter.py
       - scripts/filter_flags.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - config/corpus_filter.yaml
       - data/catalogs/enriched_works.csv
     outs:
@@ -172,6 +216,10 @@ stages:
       - scripts/corpus_filter.py
       - scripts/filter_flags.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - config/corpus_filter.yaml
       - config/v1_identifiers.txt.gz
       - data/catalogs/extended_works.csv
@@ -188,6 +236,10 @@ stages:
     deps:
       - scripts/corpus_align.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/refined_works.csv
       - data/catalogs/embeddings.npz
       - data/catalogs/citations.csv
@@ -203,6 +255,10 @@ stages:
     deps:
       - scripts/analyze_embeddings.py
       - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_loaders.py
+      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
       - data/catalogs/enriched_works.csv
       - data/catalogs/embeddings.npz
     outs:
