@@ -80,7 +80,7 @@ def main():
     bands = [
         ("Before", 1990, 2007, FILL, 1999),
         ("Crystallisation", 2007, 2015, "#E8E8E8", None),
-        ("Disputes", 2015, 2024, FILL, None),
+        ("Established field", 2015, 2024, FILL, None),
     ]
     for label, x0, x1, color, label_x in bands:
         ax.axvspan(x0, x1, color=color, alpha=0.7, zorder=0, linewidth=0)

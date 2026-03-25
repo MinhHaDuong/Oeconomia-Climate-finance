@@ -52,6 +52,7 @@ None.
 ## Active PRs
 
 - #385: docs: landscape analysis of distributed issue trackers (#237)
+- #453: ✅ merged — fix from_scispace flag never set (#452): source name derived from filename, not CSV content
 
 ## Recent (2026-03-25)
 
@@ -63,7 +64,7 @@ None.
 
 ## Next actions
 
-- Data paper submission (RDJ4HSS) — PDF ready at `output/content/data-paper.pdf`
+- Data paper submission (RDJ4HSS) — PDF ready; needs re-render after SciSpace fix (#452)
 - Send Errata 1 to Oeconomia editor
 - Finalize DMP on OPIDoR (after v1.1 counts stabilize)
 - ESHET-HES conference slides (Nice, May 26–29)
