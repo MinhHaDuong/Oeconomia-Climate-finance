@@ -19,17 +19,15 @@ relevant to the paper under review.
 
 ### 1. Sprout
 
-When ready to submit:
+**Gate**: run `runbooks/submission-readiness.md` checklist before proceeding.
+
+#### Create the branch
 
 ```bash
 git checkout -b submission/{journal}-{document} main
 ```
 
-Verify the paper builds cleanly:
-
-```bash
-make output/content/{document}.pdf
-```
+Verify the paper builds cleanly (use the actual target, e.g., `make output/content/manuscript.pdf`).
 
 Tag the submission point:
 
@@ -54,7 +52,14 @@ git push -u origin submission/{journal}-{document}
 
 ### 2. Freeze
 
-The submission branch is now frozen. No changes except:
+The submission branch is now frozen. What was frozen:
+
+- **Git tag** marks the exact submission commit
+- **Pinned vars** in `content/{document}-vars.yml` (counts, percentages cited in prose)
+- **Reference data** in `config/` (cluster labels, identifier lists, alluvial tables)
+- **Reproducibility archives** on Zenodo (code + data tarballs, tested on two machines)
+
+No changes on this branch except:
 
 - Errata (errors discovered after submission)
 - Reviewer responses
@@ -98,7 +103,7 @@ git checkout submission/{journal}-{document}
 
 After addressing all reviewer points:
 
-1. Rebuild the paper: `make output/content/{document}.pdf`
+1. Rebuild the paper (e.g., `make output/content/manuscript.pdf`)
 2. Prepare a diff/track-changes document if required
 3. Add resubmission artifacts to `release/`
 4. Commit: `release: resubmit {document} to {journal} (revision 1)`
@@ -129,24 +134,7 @@ If rejected:
    current one) or abandon (leave the branch as historical record)
 3. Cherry-pick any improvements worth keeping back to main
 
-## Catching up an existing submission
+## Apply tickets
 
-If a submission was made before this workflow existed (e.g., Oeconomia):
-
-```bash
-# Create the submission branch from the submission tag
-git checkout -b submission/oeconomia-manuscript v1.0-submission
-# Cherry-pick errata and post-submission fixes
-git cherry-pick <errata-commits>
-git push -u origin submission/oeconomia-manuscript
-```
-
-## Starting right (for data paper)
-
-Before submitting the data paper to RDJ4HSS:
-
-1. Ensure all data paper dependencies build cleanly on main
-2. Sprout: `git checkout -b submission/rdj-data-paper main`
-3. Freeze immediately after adding submission artifacts
-4. Main continues with corpus improvements — cherry-pick to the
-   submission branch only if they affect the data paper's claims
+- **Oeconomia catch-up**: #376 (create branch from `v1.0-submission`, cherry-pick errata)
+- **Data paper branch**: #421 (sprout `submission/rdj-data-paper` when ready)
