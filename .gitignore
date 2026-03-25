@@ -18,6 +18,7 @@ data/raw/
 data/teaching_sources.yaml
 data/catalogs/.citations_batch_checkpoint.csv
 data/catalogs/.citations_oa_done.txt
+data/catalogs/enrich_cache/citations_oa_done.txt
 
 # Make sentinel files (dynamic-output targets)
 *.stamp
