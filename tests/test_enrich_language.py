@@ -157,6 +157,31 @@ class TestPass1ApplyCache:
         # Already-set language not overwritten
         assert df.loc[1, "language"] == "en"
 
+    def test_fills_via_source_id(self):
+        """Falls back to source_id when DOI is missing."""
+        from enrich_language import pass1_apply_cache
+        df = pd.DataFrame({
+            "doi": [None],
+            "source_id": ["W12345"],
+            "language": [None],
+        })
+        cache = {"W12345": "de"}
+        filled = pass1_apply_cache(df, cache)
+        assert filled == 1
+        assert df.loc[0, "language"] == "de"
+
+    def test_rejects_invalid_cache_value(self):
+        """Cache values that are not valid ISO 639-1 codes should be skipped."""
+        from enrich_language import pass1_apply_cache
+        df = pd.DataFrame({
+            "doi": ["10.1234/a"],
+            "language": [None],
+        })
+        cache = {"10.1234/a": "xyzzy"}  # not a valid ISO code
+        filled = pass1_apply_cache(df, cache)
+        assert filled == 0
+        assert pd.isna(df.loc[0, "language"])
+
 
 # ---------- pass2 integration ----------
 
@@ -187,6 +212,32 @@ class TestPass2LocalDetect:
         assert filled == 0
         assert df.loc[0, "language"] == "fr"
 
+    def test_replaces_invalid_code(self):
+        """pass2 should replace nonsensical language codes with detected values."""
+        from enrich_language import pass2_local_detect
+        df = pd.DataFrame({
+            "language": ["xx"],  # invalid ISO 639-1 code
+            "title": ["Climate Finance"],
+            "abstract": ["Climate finance refers to local, national, or transnational "
+                         "financing that seeks to support mitigation and adaptation "
+                         "actions addressing climate change."],
+        })
+        filled = pass2_local_detect(df)
+        assert filled == 1
+        assert df.loc[0, "language"] == "en"
+
+    def test_uses_title_when_abstract_short(self):
+        """When abstract is too short, detection falls back to title."""
+        from enrich_language import pass2_local_detect
+        df = pd.DataFrame({
+            "language": [None],
+            "title": ["Climate finance refers to local national or transnational financing"],
+            "abstract": ["Short"],
+        })
+        filled = pass2_local_detect(df)
+        assert filled == 1
+        assert df.loc[0, "language"] == "en"
+
 
 # ---------- DVC pipeline integration ----------
 
@@ -211,14 +262,21 @@ class TestDVCStage:
         deps = self.dvc["stages"]["enrich_language"]["deps"]
         assert "scripts/enrich_language.py" in deps
 
-    def test_outs_enriched_works(self):
-        """The stage writes enriched_works.csv in-place (same as enrich_works)."""
-        # The stage should NOT have enriched_works.csv as an output —
-        # it modifies in place (same pattern as enrich_abstracts.py).
-        # Instead, the extend stage depends on enriched_works.csv.
+    def test_has_cmd(self):
+        """The stage must have a command that runs the script."""
         stage = self.dvc["stages"]["enrich_language"]
-        # The stage must exist and have a cmd
         assert "cmd" in stage
+        assert "enrich_language.py" in stage["cmd"]
+
+    def test_no_enriched_works_in_outs(self):
+        """Stage modifies enriched_works.csv in-place — must not re-declare as output.
+
+        If it were declared as an output, DVC would delete it before running,
+        destroying the data produced by the upstream enrich_works stage.
+        """
+        stage = self.dvc["stages"]["enrich_language"]
+        outs = stage.get("outs", [])
+        assert "data/catalogs/enriched_works.csv" not in outs
 
 
 # ---------- script structure ----------
