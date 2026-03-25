@@ -1,6 +1,22 @@
-# Release Journal — Oeconomia Submission
+# Release Journal
 
 Journal format, most recent first.
+
+---
+
+## [PENDING] — Data paper submission to RDJ4HSS
+
+**Target**: Research Data Journal for the Humanities and Social Sciences
+**Platform**: platform.openjournals.nl/RDJHSS
+**Document**: `content/data-paper.qmd`
+
+**Status**: Preparing for submission. Editorial review complete (2 rounds).
+
+**Cover letter**: `release/cover-letter-rdj.txt`
+**Checklist**: `release/rdj-submission-checklist.md`
+**Submission branch**: `submission/rdj-data-paper` (to be created)
+
+**Zenodo deposit**: https://doi.org/10.5281/zenodo.19097045 (update with v1.1 data)
 
 ---
 
