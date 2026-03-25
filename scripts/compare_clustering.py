@@ -32,7 +32,7 @@ from utils import (
     load_analysis_config,
     load_analysis_corpus,
 )
-from clustering_plots import plot_multi_space_figure  # noqa: E402
+from clustering_plots import plot_multi_space_figure
 
 log = get_logger("compare_clustering")
 
