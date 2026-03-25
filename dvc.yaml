@@ -142,14 +142,20 @@ stages:
     outs:
       - data/catalogs/enriched_works.csv
 
-  # Phase 1b.3: Build citation graph (Crossref batch + OpenAlex referenced_works)
+  # Phase 1b.3: Build citation graph (Crossref + OpenAlex in parallel, then merge)
+  # Crossref and OpenAlex write to enrich_cache/ (persistent, append-only).
+  # merge_citations.py concats both caches into citations.csv (the DVC output).
+  # DVC wipe of citations.csv is harmless — merge regenerates it in seconds.
   enrich_citations:
     cmd: >-
-      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv
+      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &
+      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv &
+      wait &&
+      uv run python scripts/merge_citations.py
     deps:
       - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
+      - scripts/merge_citations.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_loaders.py
