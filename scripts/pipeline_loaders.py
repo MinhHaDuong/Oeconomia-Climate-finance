@@ -58,7 +58,7 @@ RAW_DIR = os.path.join(DATA_DIR, "raw")
 POOL_DIR = os.path.join(DATA_DIR, "pool")
 
 # Embeddings live in a separate .npz rather than as columns in refined_works.csv:
-# - Size: 384 floats × 30k rows as CSV text ≈ 500 MB vs. ~45 MB compressed binary
+# - Size: 1024 floats × 30k rows as CSV text ≈ 1.3 GB vs. ~120 MB compressed binary
 # - Incremental cache: stores keys + text hashes + model config so only new/changed
 #   works are re-encoded on each run (~16 min full, seconds incremental)
 # - Load speed: numpy reads the array in one shot; no parsing of 11M float strings
@@ -234,7 +234,7 @@ def work_key(row):
 def load_embeddings():
     """Load embedding vectors from the .npz cache.
 
-    Returns the (N, 384) float32 array. Raises FileNotFoundError if missing.
+    Returns the (N, 1024) float32 array. Raises FileNotFoundError if missing.
     Also supports legacy .npy files for backwards compatibility.
     """
     import numpy as np

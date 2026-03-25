@@ -6,7 +6,7 @@ This analysis detects endogenous structural breaks in the temporal evolution of 
 
 ### Clustering
 
-KMeans (k=6, n_init=20, random_state=42) is fitted once on the full embedding space (384 dimensions, no dimensionality reduction). Each paper receives a cluster label. This global fit ensures that thematic categories are consistent across all time windows. The minimum sample size per window is N_MIN=30 for the full corpus, reduced to 20 for the core subset.
+KMeans (k=6, n_init=20, random_state=42) is fitted once on the full embedding space (1024 dimensions, no dimensionality reduction). Each paper receives a cluster label. This global fit ensures that thematic categories are consistent across all time windows. The minimum sample size per window is N_MIN=30 for the full corpus, reduced to 20 for the core subset.
 
 ### Sliding-window divergence
 

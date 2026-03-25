@@ -65,7 +65,7 @@ def cluster_spectral(X, k=6, random_state=42, max_n=5000):
     """Spectral clustering on nearest-neighbor affinity graph.
 
     When len(X) > max_n, subsample to max_n works (eigendecomposition is
-    O(n³), infeasible on >10K works with 384D input). Remaining points
+    O(n³), infeasible on >10K works with 1024D input). Remaining points
     are assigned to nearest cluster centroid.
     """
     from sklearn.cluster import SpectralClustering
@@ -333,7 +333,7 @@ def multi_space_silhouette(df, embeddings, k_range=range(3, 13)):
 
     # Semantic space (already have embeddings)
     log.info("=== Multi-space silhouette comparison ===")
-    log.info("--- Semantic space (384D embeddings) ---")
+    log.info("--- Semantic space (1024D embeddings) ---")
     results["semantic"] = silhouette_sweep(embeddings, k_range=k_range)
     for r in results["semantic"]:
         log.info("  k=%d: silhouette=%.4f", r["k"], r["silhouette"])

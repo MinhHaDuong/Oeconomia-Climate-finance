@@ -96,7 +96,7 @@ All three studies periodize the field exogenously, by reference to policy milest
 
 The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance (1990--2024), assembled from {{< meta corpus_sources >}} bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< meta corpus_core >}} constitute a "core" subset (cited $\geq$ {{< meta corpus_core_threshold >}} times) representing the field's intellectual backbone. Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions) are available for all works with titles and publication years in range.
 
-The corpus was designed for breadth ({{< meta corpus_sources >}} sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). The multilingual embedding model (`paraphrase-multilingual-MiniLM-L12-v2`) places works in English, French, Chinese, Japanese, and German into a shared semantic space.
+The corpus was designed for breadth ({{< meta corpus_sources >}} sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). The multilingual embedding model (`BAAI/bge-m3`) places works in English, French, Chinese, Japanese, and German into a shared semantic space.
 
 | Statistic | Value |
 |-----------|-------|
@@ -239,7 +239,7 @@ How does this embedding-based framework compare with the topic model approaches 
 
 *Endogenous break detection.* BERTopic's "Topics over Time" module and DTM both track topic proportions over pre-specified time bins, but neither tests for structural discontinuities. Our framework treats break detection as an explicit inference problem, with z-score normalisation and robustness voting across window sizes.
 
-*Multilingual coverage.* LDA and STM require language-specific stopword lists and tokenisation. Multilingual sentence-transformers (here `paraphrase-multilingual-MiniLM-L12-v2`) place documents in a shared semantic space regardless of language, enabling cross-lingual analysis without translation.
+*Multilingual coverage.* LDA and STM require language-specific stopword lists and tokenisation. Multilingual sentence-transformers (here `BAAI/bge-m3`) place documents in a shared semantic space regardless of language, enabling cross-lingual analysis without translation.
 
 Topic models retain advantages in interpretability: a topic defined by its top-*k* words is immediately readable, while an embedding cluster requires post hoc labelling (here via TF-IDF terms). For applications requiring human-readable topic labels or generative document modelling, LDA and BERTopic remain appropriate. Our framework is designed for a different task: detecting *when* and *whether* a field's structure changes, not *what* the topics are.
 
@@ -261,7 +261,7 @@ The two-level design requires a meaningful criterion for defining the "core" ---
 
 ### 6.4 Limitations
 
-*Embedding model choice.* We use `paraphrase-multilingual-MiniLM-L12-v2`, a general-purpose multilingual model. Domain-specific models (SciBERT, ClimateBERT) might produce different cluster structures. The framework's robustness to model choice has not been tested; future work should compare results across embedding models, as @constantino2025 and @puccetti2021 have done for physics.
+*Embedding model choice.* We use `BAAI/bge-m3`, a multilingual model with 8192-token context and 1024-dimensional output. Domain-specific models (SciBERT, ClimateBERT) might produce different cluster structures. The framework's robustness to model choice has not been tested; future work should compare results across embedding models, as @constantino2025 and @puccetti2021 have done for physics.
 
 *Clustering.* The k-means discretisation (k = 6, chosen for interpretability) is a necessary step for the JS divergence metric but introduces an arbitrary parameter. We report robustness checks with k = 4, 5, 7 in the technical report; the main breakpoints are stable. The cosine metric, which operates on continuous embedding centroids, does not depend on k and provides independent confirmation.
 

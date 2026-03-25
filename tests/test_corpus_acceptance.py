@@ -493,8 +493,8 @@ class TestEmbeddings:
             pytest.skip("embeddings.npz not found")
         data = np.load(EMBEDDINGS_PATH)
         dim = data["vectors"].shape[1]
-        assert dim == 384, \
-            f"Embedding dimension = {dim}, expected 384 (MiniLM-L12)" + _diagnosis(
+        assert dim == 1024, \
+            f"Embedding dimension = {dim}, expected 1024 (BGE-M3)" + _diagnosis(
                 "Different model used for embeddings",
                 "Delete embeddings.npz and re-run enrich_embeddings.py",
                 "~16 min",
