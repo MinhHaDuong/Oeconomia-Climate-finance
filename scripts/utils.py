@@ -1,29 +1,15 @@
 """Shared utilities for the literature indexing pipeline."""
 
-import gzip
 import json
 import logging
 import os
 import random
 import re
-import signal
-import subprocess
-import threading
 import time
 
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
 
 
 # --- Logging ---
@@ -685,262 +671,19 @@ def delete_checkpoint(path):
 
 
 # --- Pool helpers (append-only raw storage, gzipped JSONL) ---
+# Implementations live in utils_pool.py; re-exported here for backward compatibility.
 
-def pool_path(source, slug):
-    """Return path for a raw pool JSONL.gz file.
-
-    Example: pool_path("openalex", "climate_finance")
-      → ~/data/.../pool/openalex/climate_finance.jsonl.gz
-    """
-    d = os.path.join(POOL_DIR, source)
-    os.makedirs(d, exist_ok=True)
-    safe_slug = re.sub(r"[^\w\-]", "_", slug.lower())
-    return os.path.join(d, f"{safe_slug}.jsonl.gz")
-
-
-def append_to_pool(records, path):
-    """Append raw API response dicts to a gzipped JSONL pool file."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with gzip.open(path, "at", encoding="utf-8") as f:
-        for rec in records:
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-
-def load_pool_ids(source, id_field="id"):
-    """Scan all .jsonl.gz files in a source's pool dir, return set of IDs.
-
-    Args:
-        source: pool subdirectory name (e.g. "openalex")
-        id_field: JSON field to extract as ID (default: "id")
-
-    Returns:
-        set of ID strings already in the pool
-    """
-    source_dir = os.path.join(POOL_DIR, source)
-    ids = set()
-    if not os.path.isdir(source_dir):
-        return ids
-    for fname in os.listdir(source_dir):
-        if not fname.endswith(".jsonl.gz"):
-            continue
-        fpath = os.path.join(source_dir, fname)
-        with gzip.open(fpath, "rt", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                    val = obj.get(id_field, "")
-                    if val:
-                        ids.add(str(val))
-                except json.JSONDecodeError:
-                    continue
-    return ids
-
-
-def load_pool_records(source):
-    """Load all raw records from a source's pool directory.
-
-    Returns:
-        list of dicts (raw API responses)
-    """
-    source_dir = os.path.join(POOL_DIR, source)
-    records = []
-    if not os.path.isdir(source_dir):
-        return records
-    for fname in sorted(os.listdir(source_dir)):
-        if not fname.endswith(".jsonl.gz"):
-            continue
-        fpath = os.path.join(source_dir, fname)
-        with gzip.open(fpath, "rt", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        records.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        continue
-    return records
-
+from utils_pool import (  # noqa: E402
+    append_to_pool,
+    load_pool_ids,
+    load_pool_records,
+    pool_path,
+)
 
 # --- Progress monitoring ---
+# Implementations live in utils_progress.py; re-exported here for backward compatibility.
 
-# Exit code for stuck-detection abort (EX_TEMPFAIL from sysexits.h)
-EX_STUCK = 75
-
-
-class WatchedProgress:
-    """Rich progress bar with watchdog thread for stuck detection.
-
-    Wraps ``rich.progress.Progress`` with:
-    - Multi-task support, ETA column, throughput column
-    - A daemon thread that checks each task's time-since-last-advance
-    - If no advance for ``stuck_timeout`` seconds (default 300 = 5 min),
-      fires ``notify-send``, calls ``flush_checkpoint``, and sets the
-      ``on_stuck`` event (or raises SystemExit(75) if no event provided)
-    - Registers a SIGTERM handler that flushes checkpoint before exit
-
-    Parameters
-    ----------
-    stuck_timeout : float
-        Seconds without progress before declaring stuck (default: 300).
-    on_stuck : threading.Event | None
-        If provided, set this event when stuck is detected instead of
-        calling sys.exit(75). Useful for testing.
-    flush_checkpoint : callable | None
-        Called before exit on stuck detection or SIGTERM. Should save
-        any in-progress work to disk.
-    transient : bool
-        If True, the progress display disappears after completion.
-    disable : bool
-        If True, disable the progress display (for non-TTY / CI).
-    """
-
-    def __init__(
-        self,
-        stuck_timeout: float = 300,
-        on_stuck: threading.Event | None = None,
-        flush_checkpoint: callable = None,
-        transient: bool = False,
-        disable: bool = False,
-    ):
-        self.stuck_timeout = stuck_timeout
-        self.on_stuck = on_stuck
-        self.flush_checkpoint = flush_checkpoint
-        self._disable = disable
-
-        self._progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            MofNCompleteColumn(),
-            TimeElapsedColumn(),
-            TimeRemainingColumn(),
-            transient=transient,
-            disable=disable,
-        )
-
-        # Track last-advance time per task_id
-        self._last_advance: dict[int, float] = {}
-        self._lock = threading.Lock()
-        self._stop_event = threading.Event()
-        self._watchdog_thread: threading.Thread | None = None
-        self._prev_sigterm = None
-
-    def __enter__(self):
-        self._progress.__enter__()
-        self._install_sigterm_handler()
-        self._start_watchdog()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._stop_event.set()
-        if self._watchdog_thread is not None:
-            self._watchdog_thread.join(timeout=2)
-        self._restore_sigterm_handler()
-        return self._progress.__exit__(exc_type, exc_val, exc_tb)
-
-    def add_task(self, description: str, total: int = 100, **kwargs) -> int:
-        """Add a new task to the progress display."""
-        task_id = self._progress.add_task(description, total=total, **kwargs)
-        with self._lock:
-            self._last_advance[task_id] = time.monotonic()
-        return task_id
-
-    def advance(self, task_id: int, advance: float = 1):
-        """Advance a task and reset its stuck timer."""
-        self._progress.advance(task_id, advance)
-        with self._lock:
-            self._last_advance[task_id] = time.monotonic()
-
-    def update(self, task_id: int, **kwargs):
-        """Update task fields (description, total, etc.)."""
-        self._progress.update(task_id, **kwargs)
-        # If 'advance' or 'completed' changed, reset timer
-        if "advance" in kwargs or "completed" in kwargs:
-            with self._lock:
-                self._last_advance[task_id] = time.monotonic()
-
-    def _start_watchdog(self):
-        """Launch daemon thread that polls for stuck tasks."""
-        self._watchdog_thread = threading.Thread(
-            target=self._watchdog_loop, daemon=True, name="progress-watchdog"
-        )
-        self._watchdog_thread.start()
-
-    def _watchdog_loop(self):
-        """Check every second if any task exceeded stuck_timeout."""
-        while not self._stop_event.is_set():
-            self._stop_event.wait(timeout=1.0)
-            if self._stop_event.is_set():
-                return
-            now = time.monotonic()
-            with self._lock:
-                for task_id, last in self._last_advance.items():
-                    if now - last > self.stuck_timeout:
-                        self._handle_stuck(task_id)
-                        return
-
-    def _handle_stuck(self, task_id):
-        """React to a stuck task: notify, flush, signal."""
-        task = self._progress.tasks[task_id]
-        msg = (
-            f"Pipeline stuck: '{task.description}' has not advanced "
-            f"for {self.stuck_timeout}s"
-        )
-        _utils_log.warning(msg)
-
-        # Desktop notification only when no programmatic handler is set
-        if self.on_stuck is None:
-            try:
-                subprocess.run(
-                    ["notify-send", "--urgency=critical", "Pipeline stuck", msg],
-                    check=False,
-                    timeout=5,
-                )
-            except FileNotFoundError:
-                pass  # notify-send not installed
-
-        # Flush checkpoint
-        if self.flush_checkpoint is not None:
-            try:
-                self.flush_checkpoint()
-            except Exception as exc:
-                _utils_log.warning("Checkpoint flush failed: %s", exc)
-
-        # Signal stuck
-        if self.on_stuck is not None:
-            self.on_stuck.set()
-        else:
-            raise SystemExit(EX_STUCK)
-
-    def _install_sigterm_handler(self):
-        """Intercept SIGTERM to flush checkpoint before exit."""
-        try:
-            self._prev_sigterm = signal.getsignal(signal.SIGTERM)
-            signal.signal(signal.SIGTERM, self._sigterm_handler)
-        except (OSError, ValueError):
-            pass  # not main thread or signal not available
-
-    def _restore_sigterm_handler(self):
-        """Restore previous SIGTERM handler."""
-        try:
-            if self._prev_sigterm is not None:
-                signal.signal(signal.SIGTERM, self._prev_sigterm)
-        except (OSError, ValueError):
-            pass
-
-    def _sigterm_handler(self, signum, frame):
-        """Flush checkpoint on SIGTERM, then re-raise."""
-        _utils_log.info("SIGTERM received — flushing checkpoint before exit")
-        if self.flush_checkpoint is not None:
-            try:
-                self.flush_checkpoint()
-            except Exception as exc:
-                _utils_log.warning("Checkpoint flush on SIGTERM failed: %s", exc)
-        raise SystemExit(128 + signum)
+from utils_progress import EX_STUCK, WatchedProgress  # noqa: E402
 
 
 def save_figure(fig, path_stem, no_pdf=False, dpi=150):
