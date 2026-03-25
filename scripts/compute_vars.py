@@ -61,6 +61,8 @@ DOC_VARS = {
         "cite_never_fetched",
         "cite_total_dois",
         "cite_total_rows",
+        "cite_refined_rows",
+        "cite_refined_sources",
         "corpus_core",
         "corpus_core_threshold",
         "corpus_sources",
@@ -81,6 +83,7 @@ DOC_VARS = {
         "cite_coverage_core_pct",
         "cite_refined_coverage_pct",
         "cite_refined_rows",
+        "cite_refined_sources",
         "cite_total_rows",
         "corpus_core",
         "corpus_core_threshold",
@@ -127,6 +130,8 @@ DOC_VARS = {
         "bim_n_post2015",
         "bim_n_pre2007",
         "bim_var_pct",
+        "cite_refined_rows",
+        "cite_refined_sources",
         "corpus_core",
         "corpus_core_threshold",
         "corpus_sources",
@@ -419,6 +424,7 @@ def citation_stats(v):
     if os.path.isfile(REFINED_CITATIONS_PATH):
         ref_cite_df = pd.read_csv(REFINED_CITATIONS_PATH)[["source_doi"]]
         v["cite_refined_rows"] = _int(len(ref_cite_df))
+        v["cite_refined_sources"] = _int(ref_cite_df["source_doi"].nunique())
 
         # Coverage: % of refined DOIs that appear as citation sources
         if os.path.isfile(REFINED_WORKS_PATH):
