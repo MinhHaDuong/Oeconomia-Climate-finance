@@ -110,6 +110,16 @@ stages:
     outs:
       - data/catalogs/enriched_works.csv
 
+  # Phase 1b.2: Fill missing language tags (OpenAlex backfill + local detection)
+  # Modifies enriched_works.csv in-place — no separate output file.
+  # Cache in enrich_cache/language_resolved.csv survives DVC re-runs.
+  enrich_language:
+    cmd: uv run python scripts/enrich_language.py --works-input data/catalogs/enriched_works.csv
+    deps:
+      - scripts/enrich_language.py
+      - scripts/utils.py
+      - data/catalogs/enriched_works.csv
+
   # Phase 1b.3: Build citation graph (Crossref batch + OpenAlex referenced_works)
   enrich_citations:
     cmd: >-
