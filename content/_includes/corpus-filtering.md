@@ -9,7 +9,7 @@ Six flags are applied to each paper:
 1. **Missing metadata:** Papers lacking a title are always flagged. Papers missing only author or year are flagged only if the title also lacks "safe" domain words (a curated list of 30+ terms across English, French, German, Spanish, Chinese, and Japanese).
 2. **No abstract + irrelevant title:** Papers with abstracts shorter than 50 characters whose titles lack safe domain words. (Re-evaluated after abstract enrichment — papers that gained abstracts may be unflagged.)
 3. **Title blacklist:** Papers whose titles contain noise terms (e.g., "blockchain," "cryptocurrency," "deep learning," "metaverse") but no safe domain words.
-4. **Citation isolation:** Papers published before 2020 that are neither cited by nor citing any other paper in the corpus. Requires `citations.csv` from §2.3.
+4. **Citation isolation:** Papers published in 2019 or earlier that are neither cited by nor citing any other paper in the corpus. Requires `citations.csv` from §2.3.
 5. **Semantic outlier:** Papers whose embedding cosine distance from the corpus centroid exceeds mean + 2 standard deviations. Requires `embeddings.npz` from §2.4.
 6. **Cross-encoder relevance:** Papers with weak concept-group coverage (fewer than 2 of 4 groups: climate, finance, development, environment) are scored by a cross-encoder reranker model (`BAAI/bge-reranker-v2-m3`, 568M parameters) against the query "climate policy and financial mechanisms." Papers scoring below the calibrated threshold (0.002) are flagged as irrelevant. This replaced an earlier LLM-based classification (Gemini Flash via OpenRouter) for speed, cost, and reproducibility. See §3.1 for calibration details.
 
@@ -58,7 +58,7 @@ Papers are protected from removal if they meet any of: cited_by_count >= 50, app
 ### Phase C: Verification
 
 - **Blacklist validation:** Confirms all noise-term matches in titles are properly caught.
-- **LLM audit:** A stratified random sample of 50 flagged and 50 unflagged papers is submitted to a generative LLM via litellm (currently `google/gemini-2.5-flash` via OpenRouter). Each paper is classified as relevant or irrelevant to climate finance. Type I error rate (flagged but LLM-relevant) and Type II error rate (unflagged but LLM-irrelevant) are reported.
+- **LLM audit:** A stratified random sample of 100 papers (stratified by source) is submitted to a generative LLM via litellm (currently `google/gemini-2.5-flash` via OpenRouter). Each paper is classified as relevant or irrelevant to climate finance. Type I error rate (flagged but LLM-relevant) and Type II error rate (unflagged but LLM-irrelevant) are reported.
 
 ### Phase D: Filtering
 
