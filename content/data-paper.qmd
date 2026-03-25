@@ -94,7 +94,7 @@ Relevance filtering (flag 6) uses a cross-encoder reranker (BAAI/bge-reranker-v2
 
 {{< include tables/tab_languages.md >}}
 
-Users should be aware of several potential biases. Non-English coverage remains limited (@tbl-languages): English accounts for {{< meta lang_english_pct >}}%, with 19 other languages represented individually and 6.7% unclassified. ISTEX yields only 4 records after filtering, reflecting limited overlap between its archive holdings and climate-finance vocabulary; it is retained as a source because it provides independent confirmation of records found elsewhere and its automated API makes future re-harvesting costless. Citation counts reflect OpenAlex data as of the collection date and favour older, English-language works. The teaching-canon component reflects a harvesting bias toward institutions that publish syllabi on public websites rather than behind learning management systems.
+Users should be aware of several potential biases. Non-English coverage remains limited (@tbl-languages): English accounts for {{< meta lang_english_pct >}}%, with 18 other languages represented individually and 6.7% unclassified. ISTEX yields only 4 records after filtering, reflecting limited overlap between its archive holdings and climate-finance vocabulary; it is retained as a source because it provides independent confirmation of records found elsewhere and its automated API makes future re-harvesting costless. Citation counts reflect OpenAlex data as of the collection date and favour older, English-language works. The teaching-canon component reflects a harvesting bias toward institutions that publish syllabi on public websites rather than behind learning management systems.
 
 ## 3. Data {#sec-data}
 

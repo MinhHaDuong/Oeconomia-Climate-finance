@@ -140,7 +140,7 @@ def main() -> None:
 
     lines = [
         f"| {' | '.join(table.columns)} |",
-        f"| {' | '.join(['---'] * len(table.columns))} |",
+        "| :---------- | :---- | ----: | --------: |",
     ]
     for _, row in table.iterrows():
         lines.append(f"| {' | '.join(str(v) for v in row)} |")
