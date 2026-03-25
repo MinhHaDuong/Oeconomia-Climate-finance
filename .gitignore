@@ -56,6 +56,9 @@ output/
 *~
 *.swp
 
+# Local telemetry
+docs/local-ai/celebrations.jsonl
+
 # Claude Code config
 .claude/
 

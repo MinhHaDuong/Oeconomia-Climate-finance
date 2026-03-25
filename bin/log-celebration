@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Append a celebration record to docs/local-ai/celebrations.jsonl
+# Usage: bin/log-celebration '{"project":"oeconomia","session_type":"task",...}'
+set -euo pipefail
+
+REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+LOG_FILE="$REPO_ROOT/docs/local-ai/celebrations.jsonl"
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 '<json>'" >&2
+    exit 1
+fi
+
+json="$1"
+
+# Validate JSON
+if ! echo "$json" | python3 -m json.tool > /dev/null 2>&1; then
+    echo "Error: invalid JSON" >&2
+    exit 1
+fi
+
+# Add timestamp and write
+record=$(echo "$json" | python3 -c "
+import json, sys
+from datetime import datetime, timezone
+obj = json.load(sys.stdin)
+obj['timestamp'] = datetime.now(timezone.utc).isoformat()
+print(json.dumps(obj, ensure_ascii=False))
+")
+
+echo "$record" >> "$LOG_FILE"
+echo "Logged to $LOG_FILE"

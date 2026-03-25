@@ -34,7 +34,7 @@ Run this sequence after completing a task. Do not skip steps.
     - `gh pr list` → no stale PRs from merged/superseded branches
 12. **Log celebration** — record structured session metrics:
     ```bash
-    ~/CNRS/code/agentic-harness/telemetry/bin/log-celebration '{"project":"oeconomia","session_type":"task","commits":N,"prs_merged":N,"deliverables":[...],"surprises":[...],"next":[...]}'
+    bin/log-celebration '{"project":"oeconomia","session_type":"task","commits":N,"prs_merged":N,"deliverables":[...],"surprises":[...],"next":[...]}'
     ```
 13. **Offer** to work on AGENTS.md if the workflow can be improved.
 
