@@ -49,16 +49,23 @@ def test_litellm_model_string_routing():
 
 
 def test_collect_syllabi_no_hand_rolled_http():
-    """Verify collect_syllabi.py has no hand-rolled LLM HTTP code."""
+    """Verify collect_syllabi pipeline has no hand-rolled LLM HTTP code.
+
+    llm_call lives in syllabi_io (extracted to keep collect_syllabi ≤ 800L),
+    so we check both the main module and its io helper.
+    """
     import collect_syllabi
+    import syllabi_io
 
     source = inspect.getsource(collect_syllabi)
+    io_source = inspect.getsource(syllabi_io)
+    combined = source + io_source
     # Should not contain old backend functions
-    assert "_llm_call_ollama" not in source, "Old _llm_call_ollama still present"
-    assert "_llm_call_openrouter" not in source, "Old _llm_call_openrouter still present"
-    assert "_ollama_available" not in source, "Old _ollama_available still present"
-    # Should import litellm
-    assert "litellm" in source, "litellm not imported"
+    assert "_llm_call_ollama" not in combined, "Old _llm_call_ollama still present"
+    assert "_llm_call_openrouter" not in combined, "Old _llm_call_openrouter still present"
+    assert "_ollama_available" not in combined, "Old _ollama_available still present"
+    # litellm must be present somewhere in the pipeline (syllabi_io or collect_syllabi)
+    assert "litellm" in combined, "litellm not imported in collect_syllabi pipeline"
 
 
 def test_filter_flags_no_hand_rolled_http():
