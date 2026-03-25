@@ -977,3 +977,22 @@ class TestStatisticsSummary:
                 source_lines.append(f"    {src_name:<25s} {cnt:>6,}")
         print("\n".join(source_lines))
         print()
+
+
+# ── Language enrichment acceptance (#423) ────────────────────
+
+
+def test_language_null_rate_below_2_percent(enriched):
+    """After enrich_language, < 2% of records should have null language.
+
+    Exit criterion from #423. Before enrichment: ~6.7% null.
+    After two-pass enrichment (OpenAlex backfill + langdetect): ~1%.
+    """
+    null_count = enriched["language"].isna().sum()
+    total = len(enriched)
+    null_pct = null_count / total * 100
+    assert null_pct < 2.0, (
+        f"Language null rate is {null_pct:.1f}% ({null_count}/{total}). "
+        f"Expected < 2% after enrich_language. "
+        f"Run: uv run dvc repro enrich_works"
+    )
