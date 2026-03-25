@@ -88,6 +88,10 @@ LIBRARY_SCRIPTS = {
     "clustering_methods.py",
     "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
     "syllabi_io.py", "syllabi_process.py",
+    "pipeline_text.py",
+    "pipeline_io.py",
+    "pipeline_loaders.py",
+    "pipeline_progress.py",
 }
 
 # Subdirectory scripts that legitimately need sys.path.insert to reach
@@ -390,6 +394,26 @@ class TestModuleLength:
                 f"{len(smelly)} scripts exceed {self.SMELL_LINES} lines "
                 f"(consider splitting): "
                 + ", ".join(f"{n} ({l}L)" for n, l in smelly)
+            )
+
+    def test_utils_facade_under_500_lines(self):
+        """utils.py must be a thin facade: ≤ 500 lines (ticket #431 exit criterion)."""
+        path = os.path.join(SCRIPTS_DIR, "utils.py")
+        with open(path) as f:
+            lines = sum(1 for _ in f)
+        assert lines <= self.SMELL_LINES, (
+            f"utils.py is {lines} lines — must be a thin facade (≤ {self.SMELL_LINES}L). "
+            "Split remaining code into pipeline_text.py / pipeline_io.py / "
+            "pipeline_loaders.py / pipeline_progress.py"
+        )
+
+    def test_pipeline_modules_exist(self):
+        """pipeline_text/io/loaders/progress.py must exist after split."""
+        for name in ("pipeline_text.py", "pipeline_io.py",
+                     "pipeline_loaders.py", "pipeline_progress.py"):
+            path = os.path.join(SCRIPTS_DIR, name)
+            assert os.path.exists(path), (
+                f"{name} does not exist — create it as part of ticket #431 split"
             )
 
 

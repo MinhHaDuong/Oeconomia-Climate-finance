@@ -88,54 +88,56 @@ def _env_with_data(tmp_path):
 
 class TestLoaderErrors:
     def test_load_refined_embeddings_raises_when_missing(self, tmp_path):
-        import utils
-        orig = utils.CATALOGS_DIR
-        utils.CATALOGS_DIR = str(tmp_path)
-        utils.REFINED_EMBEDDINGS_PATH = os.path.join(str(tmp_path), "refined_embeddings.npz")
+        import pipeline_loaders
+        orig = pipeline_loaders.REFINED_EMBEDDINGS_PATH
+        pipeline_loaders.REFINED_EMBEDDINGS_PATH = os.path.join(
+            str(tmp_path), "refined_embeddings.npz"
+        )
         try:
             with pytest.raises(FileNotFoundError, match="refined_embeddings.npz"):
-                utils.load_refined_embeddings()
+                pipeline_loaders.load_refined_embeddings()
         finally:
-            utils.CATALOGS_DIR = orig
+            pipeline_loaders.REFINED_EMBEDDINGS_PATH = orig
 
     def test_load_refined_citations_raises_when_missing(self, tmp_path):
-        import utils
-        orig = utils.CATALOGS_DIR
-        utils.CATALOGS_DIR = str(tmp_path)
-        utils.REFINED_CITATIONS_PATH = os.path.join(str(tmp_path), "refined_citations.csv")
+        import pipeline_loaders
+        orig = pipeline_loaders.REFINED_CITATIONS_PATH
+        pipeline_loaders.REFINED_CITATIONS_PATH = os.path.join(
+            str(tmp_path), "refined_citations.csv"
+        )
         try:
             with pytest.raises(FileNotFoundError, match="refined_citations.csv"):
-                utils.load_refined_citations()
+                pipeline_loaders.load_refined_citations()
         finally:
-            utils.CATALOGS_DIR = orig
+            pipeline_loaders.REFINED_CITATIONS_PATH = orig
 
     def test_load_refined_embeddings_returns_array(self, tmp_path):
-        import utils
+        import pipeline_loaders
         # Create a valid refined_embeddings.npz
         vectors = np.eye(4, dtype=np.float32)
         npz_path = tmp_path / "refined_embeddings.npz"
         np.savez_compressed(str(npz_path), vectors=vectors)
-        orig = utils.REFINED_EMBEDDINGS_PATH
-        utils.REFINED_EMBEDDINGS_PATH = str(npz_path)
+        orig = pipeline_loaders.REFINED_EMBEDDINGS_PATH
+        pipeline_loaders.REFINED_EMBEDDINGS_PATH = str(npz_path)
         try:
-            arr = utils.load_refined_embeddings()
+            arr = pipeline_loaders.load_refined_embeddings()
             assert arr.shape == (4, 4)
         finally:
-            utils.REFINED_EMBEDDINGS_PATH = orig
+            pipeline_loaders.REFINED_EMBEDDINGS_PATH = orig
 
     def test_load_refined_citations_returns_dataframe(self, tmp_path):
-        import utils
+        import pipeline_loaders
         df = pd.DataFrame({"source_doi": ["10.1/a"], "ref_doi": ["10.1/b"]})
         csv_path = tmp_path / "refined_citations.csv"
         df.to_csv(csv_path, index=False)
-        orig = utils.REFINED_CITATIONS_PATH
-        utils.REFINED_CITATIONS_PATH = str(csv_path)
+        orig = pipeline_loaders.REFINED_CITATIONS_PATH
+        pipeline_loaders.REFINED_CITATIONS_PATH = str(csv_path)
         try:
-            result = utils.load_refined_citations()
+            result = pipeline_loaders.load_refined_citations()
             assert "source_doi" in result.columns
             assert len(result) == 1
         finally:
-            utils.REFINED_CITATIONS_PATH = orig
+            pipeline_loaders.REFINED_CITATIONS_PATH = orig
 
 
 # ---------------------------------------------------------------------------

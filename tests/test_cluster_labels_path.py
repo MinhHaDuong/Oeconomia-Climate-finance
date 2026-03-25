@@ -10,12 +10,13 @@ import warnings
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
+import pipeline_loaders
 import utils
 
 
 def test_cluster_labels_path_is_phase2():
     """_CLUSTER_LABELS_PATH must point to content/tables/, not data/catalogs/."""
-    path = utils._CLUSTER_LABELS_PATH
+    path = pipeline_loaders._CLUSTER_LABELS_PATH
     assert path.endswith(os.path.join("content", "tables", "cluster_labels.json")), (
         f"cluster_labels.json path should end with content/tables/cluster_labels.json, "
         f"got {path}"
@@ -29,9 +30,9 @@ def test_cluster_labels_path_is_phase2():
 def test_fallback_warning_references_compute_clusters():
     """When cluster_labels.json is missing, the warning must tell users to run compute_clusters.py."""
     # Temporarily override path to a non-existent location to trigger fallback
-    original = utils._CLUSTER_LABELS_PATH
+    original = pipeline_loaders._CLUSTER_LABELS_PATH
     try:
-        utils._CLUSTER_LABELS_PATH = "/nonexistent/cluster_labels.json"
+        pipeline_loaders._CLUSTER_LABELS_PATH = "/nonexistent/cluster_labels.json"
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             labels = utils.load_cluster_labels(n_clusters=4)
@@ -43,4 +44,4 @@ def test_fallback_warning_references_compute_clusters():
         # Verify fallback returns generic labels
         assert labels == {i: f"Cluster {i}" for i in range(4)}
     finally:
-        utils._CLUSTER_LABELS_PATH = original
+        pipeline_loaders._CLUSTER_LABELS_PATH = original
