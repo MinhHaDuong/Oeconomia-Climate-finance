@@ -23,7 +23,7 @@ sys.path.insert(0, SCRIPTS_DIR)
 # ---------------------------------------------------------------------------
 
 CROSSREF_COLS = [
-    "source_doi", "ref_doi", "ref_title", "ref_first_author",
+    "source_doi", "source_id", "ref_doi", "ref_title", "ref_first_author",
     "ref_year", "ref_journal", "ref_raw",
 ]
 OPENALEX_COLS = [
@@ -59,7 +59,7 @@ class TestMergeCitations:
     def test_concat_both_sources(self, tmp_path, cache_dir):
         """Merge should include rows from both sources."""
         _write_crossref(cache_dir, [
-            ["10.1/a", "10.2/x", "Title X", "Smith", "2020", "Nature", "{}"],
+            ["10.1/a", "", "10.2/x", "Title X", "Smith", "2020", "Nature", "{}"],
         ])
         _write_openalex(cache_dir, [
             ["10.1/b", "W123", "10.2/y", "Title Y", "Jones", "2021", "Science"],
@@ -76,7 +76,7 @@ class TestMergeCitations:
     def test_dedup_on_source_doi_ref_doi(self, tmp_path, cache_dir):
         """When both sources have the same (source_doi, ref_doi), keep one."""
         _write_crossref(cache_dir, [
-            ["10.1/a", "10.2/x", "Title X", "Smith", "2020", "Nature", "{}"],
+            ["10.1/a", "", "10.2/x", "Title X", "Smith", "2020", "Nature", "{}"],
         ])
         _write_openalex(cache_dir, [
             ["10.1/a", "W123", "10.2/x", "Title X OA", "Smith", "2020", "Nature"],
@@ -92,8 +92,8 @@ class TestMergeCitations:
     def test_sentinel_rows_excluded(self, tmp_path, cache_dir):
         """Sentinel rows (ref_doi == __NO_REFS__) should not appear in output."""
         _write_crossref(cache_dir, [
-            ["10.1/a", SENTINEL_REF_DOI, "", "", "", "", ""],
-            ["10.1/b", "10.2/x", "Title X", "Smith", "2020", "Nature", "{}"],
+            ["10.1/a", "", SENTINEL_REF_DOI, "", "", "", "", ""],
+            ["10.1/b", "", "10.2/x", "Title X", "Smith", "2020", "Nature", "{}"],
         ])
         _write_openalex(cache_dir, [])
         out = tmp_path / "citations.csv"
@@ -108,7 +108,7 @@ class TestMergeCitations:
     def test_no_doi_refs_kept(self, tmp_path, cache_dir):
         """Refs without ref_doi (books, reports) should be kept."""
         _write_crossref(cache_dir, [
-            ["10.1/a", "", "Climate Book", "Brown", "1996", "", '{"author":"Brown"}'],
+            ["10.1/a", "", "", "Climate Book", "Brown", "1996", "", '{"author":"Brown"}'],
         ])
         _write_openalex(cache_dir, [])
         out = tmp_path / "citations.csv"
@@ -133,7 +133,7 @@ class TestMergeCitations:
     def test_output_columns(self, tmp_path, cache_dir):
         """Output should have the standard REFS_COLUMNS schema."""
         _write_crossref(cache_dir, [
-            ["10.1/a", "10.2/x", "Title", "Smith", "2020", "Nature", "{}"],
+            ["10.1/a", "", "10.2/x", "Title", "Smith", "2020", "Nature", "{}"],
         ])
         _write_openalex(cache_dir, [
             ["10.1/b", "W123", "10.2/y", "Title Y", "Jones", "2021", "Science"],

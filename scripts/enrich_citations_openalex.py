@@ -118,7 +118,7 @@ def resolve_openalex_ids(oa_ids, counters=None,
     data = openalex_get(
         {
             "filter": f"openalex:{id_filter}",
-            "select": "id,doi,title,publication_year,primary_location,authorships,type,cited_by_count,ids",
+            "select": "id,doi,title,publication_year,primary_location,authorships",
             "per-page": len(oa_ids),
         },
         counters=counters,
@@ -267,10 +267,8 @@ def main():
 
     # Corpus DOIs
     works = pd.read_csv(args.works_input, dtype=str, keep_default_na=False)
-    all_dois = [
-        normalize_doi(d) for d in works["doi"].unique()
-        if normalize_doi(d) not in ("", "nan", "none")
-    ]
+    all_dois = [d for d in (normalize_doi(x) for x in works["doi"].unique())
+                if d not in ("", "nan", "none")]
 
     all_dois_sorted = sort_dois_by_priority(all_dois, works)
     missing = [d for d in all_dois_sorted if d not in done_dois]
@@ -286,17 +284,26 @@ def main():
         log.info("Nothing to fetch.")
         return
 
-    # ── Phase 1: collect referenced_works IDs ────────────────────────────
-    log.info("Phase 1: fetching referenced_works from OpenAlex...")
-    all_source_refs = {}
+    # ── Process in waves: fetch refs → resolve IDs → write to cache ─────
+    # Each P1 batch is immediately resolved (P2) and written to cache,
+    # so a crash only loses the current batch, not hours of work.
+    log.info("Fetching referenced_works and resolving to DOIs...")
+    total_sources = 0
+    total_oa_ids = 0
+    total_resolved = 0
+    total_rows = 0
     p1_errors = 0
+    p2_errors = 0
     n_batches = (len(missing) + args.batch_size - 1) // args.batch_size
+    id_metadata_cache = {}  # cross-batch cache to avoid re-resolving
 
     for i in range(0, len(missing), args.batch_size):
         batch = missing[i:i + args.batch_size]
         batch_num = i // args.batch_size + 1
+
+        # Phase 1: fetch referenced_works for this batch
         try:
-            result = fetch_source_batch(
+            source_refs = fetch_source_batch(
                 batch,
                 counters=p1_counters,
                 request_timeout=args.request_timeout,
@@ -304,92 +311,91 @@ def main():
                 retry_backoff=args.retry_backoff,
                 retry_jitter=args.retry_jitter,
             )
-            all_source_refs.update(result)
         except Exception as e:
-            log.error("Batch %d/%d: %s", batch_num, n_batches, e)
+            log.error("P1 batch %d/%d: %s", batch_num, n_batches, e)
             _log_event("phase1_batch_error", batch=batch_num, error=str(e))
             p1_errors += 1
             if p1_errors > 10:
-                log.error("Too many errors, stopping.")
+                log.error("Too many P1 errors, stopping.")
                 break
             continue
 
+        total_sources += len(source_refs)
+
+        # Phase 2: resolve new OA IDs from this batch
+        new_oa_ids = list({
+            oa_id for ref_list in source_refs.values()
+            for oa_id in ref_list
+            if oa_id and oa_id not in id_metadata_cache
+        })
+        total_oa_ids += len(new_oa_ids)
+
+        for j in range(0, max(1, len(new_oa_ids)), args.resolve_batch_size):
+            resolve_batch = new_oa_ids[j:j + args.resolve_batch_size]
+            if not resolve_batch:
+                break
+            try:
+                resolved = resolve_openalex_ids(
+                    resolve_batch,
+                    counters=p2_counters,
+                    request_timeout=args.request_timeout,
+                    max_retries=args.max_retries,
+                    retry_backoff=args.retry_backoff,
+                    retry_jitter=args.retry_jitter,
+                )
+                id_metadata_cache.update(resolved)
+                total_resolved += len(resolved)
+            except Exception as e:
+                log.error("P2 resolve in batch %d: %s", batch_num, e)
+                p2_errors += 1
+                if p2_errors > 10:
+                    log.error("Too many P2 errors, stopping.")
+                    break
+                continue
+
+        # Build rows and append to cache immediately
+        rows = _build_citation_rows(source_refs, id_metadata_cache)
+        if rows:
+            batch_df = pd.DataFrame(rows, columns=OA_REFS_COLUMNS)
+            batch_df.to_csv(CACHE_PATH, mode="a", header=False, index=False)
+            total_rows += len(rows)
+
         if batch_num % 20 == 0 or batch_num == n_batches:
-            found_refs = sum(len(v) for v in all_source_refs.values())
             elapsed = time.time() - t0
             rate = (i + len(batch)) / elapsed if elapsed > 0 else 0
             eta = (len(missing) - i - len(batch)) / rate if rate > 0 else 0
-            log.info("P1 batch %d/%d: %d sources, %d ref-IDs, ETA %.0fs",
-                     batch_num, n_batches, len(all_source_refs), found_refs, eta)
-
-    # ── Phase 2: resolve OpenAlex IDs → DOIs + metadata ─────────────────
-    all_oa_ids = list({
-        oa_id
-        for ref_list in all_source_refs.values()
-        for oa_id in ref_list
-        if oa_id
-    })
-    log.info("Phase 2: resolving %d unique OpenAlex IDs to DOIs...", len(all_oa_ids))
-
-    id_metadata = {}
-    p2_errors = 0
-    n_resolve_batches = (len(all_oa_ids) + args.resolve_batch_size - 1) // args.resolve_batch_size
-
-    for i in range(0, len(all_oa_ids), args.resolve_batch_size):
-        batch_ids = all_oa_ids[i:i + args.resolve_batch_size]
-        batch_num = i // args.resolve_batch_size + 1
-        try:
-            resolved = resolve_openalex_ids(
-                batch_ids,
-                counters=p2_counters,
-                request_timeout=args.request_timeout,
-                max_retries=args.max_retries,
-                retry_backoff=args.retry_backoff,
-                retry_jitter=args.retry_jitter,
-            )
-            id_metadata.update(resolved)
-        except Exception as e:
-            log.error("Resolve batch %d/%d: %s", batch_num, n_resolve_batches, e)
-            p2_errors += 1
-            if p2_errors > 10:
-                log.error("Too many errors, stopping resolution.")
-                break
-            continue
-
-        if batch_num % 20 == 0 or batch_num == n_resolve_batches:
-            log.info("P2 resolve %d/%d: %d IDs resolved",
-                     batch_num, n_resolve_batches, len(id_metadata))
-
-    # ── Build rows and append to cache ────────────────────────────────
-    rows = _build_citation_rows(all_source_refs, id_metadata)
-
-    if rows:
-        batch_df = pd.DataFrame(rows, columns=OA_REFS_COLUMNS)
-        batch_df.to_csv(CACHE_PATH, mode="a", header=False, index=False)
-        log.info("Appended %d rows to %s", len(rows), CACHE_PATH)
+            log.info("Batch %d/%d: %d sources, %d OA IDs, %d rows, ETA %.0fs",
+                     batch_num, n_batches, total_sources, total_oa_ids,
+                     total_rows, eta)
 
     elapsed = time.time() - t0
     log.info("Done in %.0fs: %d sources, %d OA IDs, %d resolved, "
              "%d rows, errors: %d fetch + %d resolve",
-             elapsed, len(all_source_refs), len(all_oa_ids),
-             len(id_metadata), len(rows), p1_errors, p2_errors)
+             elapsed, total_sources, total_oa_ids,
+             total_resolved, total_rows, p1_errors, p2_errors)
 
     counters = {
         "dois_total": len(all_dois),
         "dois_done_before": len(done_dois),
         "dois_to_fetch": len(missing),
-        "sources_processed": len(all_source_refs),
-        "openalex_ids_found": len(all_oa_ids),
-        "ids_resolved": len(id_metadata),
-        "rows_written": len(rows),
+        "sources_processed": total_sources,
+        "openalex_ids_found": total_oa_ids,
+        "ids_resolved": total_resolved,
+        "rows_written": total_rows,
         "p1_errors": p1_errors,
         "p2_errors": p2_errors,
+        "p1_retries": p1_counters.get("retries", 0),
+        "p1_rate_limited": p1_counters.get("rate_limited", 0),
+        "p1_server_errors": p1_counters.get("server_errors", 0),
+        "p2_retries": p2_counters.get("retries", 0),
+        "p2_rate_limited": p2_counters.get("rate_limited", 0),
+        "p2_server_errors": p2_counters.get("server_errors", 0),
         "elapsed_seconds": round(elapsed, 1),
     }
     report_path = save_run_report(counters, run_id, "enrich_citations_openalex")
     log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
-               rows_written=len(rows), report_path=report_path)
+               rows_written=total_rows, report_path=report_path)
 
 
 if __name__ == "__main__":

@@ -148,9 +148,9 @@ stages:
   # DVC wipe of citations.csv is harmless — merge regenerates it in seconds.
   enrich_citations:
     cmd: >-
-      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &
-      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv &
-      wait &&
+      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv & p1=$!;
+      uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv & p2=$!;
+      wait $p1 && wait $p2 &&
       uv run python scripts/merge_citations.py
     deps:
       - scripts/enrich_citations_batch.py

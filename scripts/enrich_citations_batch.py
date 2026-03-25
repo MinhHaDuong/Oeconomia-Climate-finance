@@ -34,7 +34,7 @@ CACHE_PATH = os.path.join(CACHE_DIR, "crossref_refs.csv")
 URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 SENTINEL_REF_DOI = "__NO_REFS__"  # Marker for DOIs found but with no references
-MAX_CONSECUTIVE_ERRORS = 3  # Stop after this many consecutive failures
+MAX_CONSECUTIVE_ERRORS = 5  # Stop after this many consecutive failures
 
 
 def fetch_batch(dois, delay=0.2, counters=None,

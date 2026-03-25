@@ -319,7 +319,6 @@ class TestResumePreview:
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_citations_batch.py"),
              "--works-input", works_path,
-             "--citations-input", citations_path,
              "--run-id", "test-preview"],
             capture_output=True, text=True, env=env, timeout=10,
         )
