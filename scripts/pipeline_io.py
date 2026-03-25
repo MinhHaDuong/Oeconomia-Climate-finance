@@ -166,9 +166,22 @@ def retry_get(url, params=None, headers=None, delay=0.2,
 # ---------------------------------------------------------------------------
 
 def save_csv(df, path):
-    """Save DataFrame to CSV with UTF-8 encoding."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    df.to_csv(path, index=False, encoding="utf-8")
+    """Save DataFrame to CSV with UTF-8 encoding (atomic write-then-rename)."""
+    import tempfile
+
+    target_dir = os.path.dirname(path) or "."
+    os.makedirs(target_dir, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(dir=target_dir, suffix=".tmp")
+    try:
+        os.close(fd)
+        df.to_csv(tmp_path, index=False, encoding="utf-8")
+        os.replace(tmp_path, path)
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
     _log.info("Saved %d rows to %s", len(df), path)
 
 
