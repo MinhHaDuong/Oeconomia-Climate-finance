@@ -107,7 +107,7 @@ def generate_summary(text: str, *, model: str) -> dict:
             max_tokens=MAX_RESPONSE_TOKENS,
             temperature=0,
         )
-        summary = response.choices[0].message.content.strip()
+        summary = (response.choices[0].message.content or "").strip()
         if not summary:
             log.warning("LLM returned empty summary for %d-token abstract", tokens_original)
             return {
@@ -199,10 +199,11 @@ def summarize_too_long_abstracts(
                 log.warning("Keeping original abstract for %s (LLM error)", doi)
                 result.at[idx, "abstract_status"] = "too_long"
 
-            # Checkpoint
-            if (generated_count + 1) % checkpoint_every == 0:
+            # Checkpoint every N LLM calls (successes + errors, not cache hits)
+            if (i + 1) % checkpoint_every == 0:
                 save_summary_cache(cache, cache_path)
-                log.info("Checkpoint: %d generated, %d cached", generated_count, cached_count)
+                log.info("Checkpoint at item %d: %d generated, %d cached",
+                         i + 1, generated_count, cached_count)
 
             # Rate limit (skip in tests where model is test/*)
             if not model.startswith("test/"):
