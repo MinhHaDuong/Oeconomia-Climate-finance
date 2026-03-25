@@ -26,7 +26,8 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 - Teaching expanded: 622 works from 52 institutions (scraper + LLM extraction)
 - Filtering pipeline renamed from "refinement" (#261)
 - `in_v1` provenance column: 29,805 / 31,012 rows match v1.0-submission (96.1%)
-- Incremental caches in `enrich_cache/` survive DVC re-runs (#306, #307, #298)
+- Citation pipeline: cache-is-data architecture (#441) — each source writes to `enrich_cache/` (crossref_refs.csv, openalex_refs.csv), `merge_citations.py` produces `citations.csv` as a view, Crossref + OpenAlex run in parallel
+- Incremental caches in `enrich_cache/` survive DVC re-runs (#306, #307, #298, #441)
 - LLM extraction cache: sha256(chunk):model key, JSONL in enrich_cache/ (#298)
 - Language enrichment: two-pass (OpenAlex API + langdetect), folded into `enrich_works` DVC stage (#423)
 - Language utilities (`normalize_lang`, `detect_language`, `ISO_639_1_CODES`) shared via `utils.py`
@@ -53,6 +54,7 @@ None.
 - #386: ✅ merged — data management plan (CNRS/Science Europe model)
 - #387: ✅ merged — eager branching workflow (Dreaming on a branch)
 - #425: ✅ merged — language enrichment via OpenAlex + langdetect (#423, #427)
+- #442: ✅ merged — citation pipeline: cache-is-data, parallel sources, merge view (#441)
 - #444: ✅ merged — near-duplicate detection for coordinated publications (#416)
 
 ## Recent (2026-03-24 rally loop)
