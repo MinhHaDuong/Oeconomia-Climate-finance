@@ -28,7 +28,7 @@ on main and discover the hook at commit time.
 | Context | Phase | Branch |
 |---------|-------|--------|
 | Fresh conversation, no ticket | `[→ Dreaming]` | Create `explore-{topic}` (name inferred from user's opening message) |
-| Ticket reference but no branch | `[→ Planning]` | Create `explore-{topic}`; the `start-ticket` runbook shall create the `t{N}` branch when Doing begins |
+| Ticket reference but no branch | `[→ Planning]` | Create `explore-{topic}`; the `start-ticket` runbook shall create the `t{N}` or `t/{id}-{slug}` branch when Doing begins |
 | Active feature branch + open PR | `[→ Doing]` | Checkout existing branch |
 
 If the conversation turns out to be a quick question with no file edits,

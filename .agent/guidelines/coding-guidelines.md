@@ -183,7 +183,7 @@ Three interchangeable implementations exist, auto-selected by the Makefile:
 | **POSIX sh+awk** (`tickets/tools/bash-fast/`) | Fallback — zero-install, runs on Alpine/Busybox | `TICKET_TOOL=sh` |
 | **Python** (`tickets/tools/`) | Final fallback — reference implementation, clearest to read | `TICKET_TOOL=python` |
 
-Auto-detection cascade: Go binary → awk available → Python via uv. All three produce identical output and are tested together.
+Auto-detection cascade: Go binary → awk available → Python via uv. All three produce identical text output, verified by cross-implementation smoke tests (`test_cross_impl_tickets.py`).
 
 The Python implementation uses a shared parser (`ticket_parser.py`) with three entry-point scripts. The Go implementation is a single binary with subcommands (`validate`, `ready`, `archive`). The sh implementation is three standalone scripts, each embedding its own awk program.
 

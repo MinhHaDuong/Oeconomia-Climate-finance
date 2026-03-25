@@ -61,13 +61,11 @@ def parse_ticket(path: Path) -> Ticket:
     body_lines: list[str] = []
 
     section = "headers"  # headers | gap | log | body
-    log_seen = False
     body_seen = False
 
     for line in lines:
         if not body_seen and line.strip() == "--- log ---":
             section = "log"
-            log_seen = True
             continue
         if not body_seen and line.strip() == "--- body ---":
             section = "body"
