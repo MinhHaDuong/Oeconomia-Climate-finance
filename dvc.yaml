@@ -142,13 +142,15 @@ stages:
     outs:
       - data/catalogs/enriched_works.csv
 
-  # Phase 1b.3: Build citation graph (Crossref batch + OpenAlex referenced_works)
+  # Phase 1b.3: Build citation graph (OpenAlex referenced_works only)
+  # Crossref batch pass disabled: without metadata-plus subscription,
+  # Crossref returns 0 references (empty reference arrays). OpenAlex
+  # referenced_works is free and complete. See enrich_citations_batch.py
+  # for the Crossref code if access is restored.
   enrich_citations:
     cmd: >-
-      uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv &&
       uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv
     deps:
-      - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
       - scripts/utils.py
       - scripts/pipeline_io.py
