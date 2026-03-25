@@ -118,6 +118,7 @@ def run_script(*args, cwd=None):
     return result.returncode, result.stdout + result.stderr
 
 
+@pytest.mark.integration
 class TestFilterModeInV1:
     @pytest.fixture
     def extended_csv_with_v1_ids(self, tmp_path):

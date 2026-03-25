@@ -2,17 +2,33 @@
 
 Verify that all three scripts use litellm for LLM calls with
 provider-prefixed model strings.
+
+Source inspection tests read files directly (no heavy imports).
+Integration tests that import+mock litellm are marked @integration.
 """
 
-import inspect
 import os
 import sys
 from unittest.mock import MagicMock, patch
 
-# Add scripts/ to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+import pytest
+
+SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
+# Add scripts/ to path (needed for integration tests that import modules)
+sys.path.insert(0, SCRIPTS_DIR)
 
 
+def _read_script(name):
+    """Read script source from disk (no import overhead)."""
+    with open(os.path.join(SCRIPTS_DIR, name)) as f:
+        return f.read()
+
+
+# ---------------------------------------------------------------------------
+# Integration: litellm routing (requires import + mock)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.integration
 def test_litellm_model_string_routing():
     """Verify provider-prefixed model strings route correctly via litellm.
 
@@ -48,49 +64,7 @@ def test_litellm_model_string_routing():
         assert call_kwargs[1]["model"] == "openrouter/google/gemma-2-27b-it"
 
 
-def test_collect_syllabi_no_hand_rolled_http():
-    """Verify collect_syllabi pipeline has no hand-rolled LLM HTTP code.
-
-    llm_call lives in syllabi_io (extracted to keep collect_syllabi ≤ 800L),
-    so we check both the main module and its io helper.
-    """
-    import collect_syllabi
-    import syllabi_io
-
-    source = inspect.getsource(collect_syllabi)
-    io_source = inspect.getsource(syllabi_io)
-    combined = source + io_source
-    # Should not contain old backend functions
-    assert "_llm_call_ollama" not in combined, "Old _llm_call_ollama still present"
-    assert "_llm_call_openrouter" not in combined, "Old _llm_call_openrouter still present"
-    assert "_ollama_available" not in combined, "Old _ollama_available still present"
-    # litellm must be present somewhere in the pipeline (syllabi_io or collect_syllabi)
-    assert "litellm" in combined, "litellm not imported in collect_syllabi pipeline"
-
-
-def test_filter_flags_no_hand_rolled_http():
-    """Verify filter_flags.py _llm_call uses litellm, not raw HTTP."""
-    import filter_flags
-
-    source = inspect.getsource(filter_flags)
-    # The _llm_call function should not use urllib.request for LLM calls
-    assert "urllib.request.Request" not in source, "Still using urllib for LLM calls"
-    assert "openrouter.ai/api/v1" not in source, "Still using raw OpenRouter URL"
-    assert "localhost:11434" not in source, "Still using raw Ollama URL"
-    # Should use litellm
-    assert "litellm" in source, "litellm not imported"
-
-
-def test_qa_llm_verify_no_hand_rolled_http():
-    """Verify qa_llm_verify.py uses litellm, not requests/urllib."""
-    import qa_llm_verify
-
-    source = inspect.getsource(qa_llm_verify)
-    assert "requests.post" not in source, "Still using requests.post for LLM"
-    assert "OPENROUTER_URL" not in source, "Still has hard-coded OPENROUTER_URL"
-    assert "litellm" in source, "litellm not imported"
-
-
+@pytest.mark.integration
 def test_env_var_model_config():
     """Verify scripts read model from env vars with provider prefix."""
     mock_response = MagicMock()
@@ -110,3 +84,35 @@ def test_env_var_model_config():
             "test", model="openrouter/google/gemini-2.5-flash"
         )
         assert result is not None
+
+
+# ---------------------------------------------------------------------------
+# Source inspection: no hand-rolled HTTP (file reads, no heavy imports)
+# ---------------------------------------------------------------------------
+
+def test_collect_syllabi_no_hand_rolled_http():
+    """Verify collect_syllabi pipeline has no hand-rolled LLM HTTP code."""
+    source = _read_script("collect_syllabi.py")
+    io_source = _read_script("syllabi_io.py")
+    combined = source + io_source
+    assert "_llm_call_ollama" not in combined, "Old _llm_call_ollama still present"
+    assert "_llm_call_openrouter" not in combined, "Old _llm_call_openrouter still present"
+    assert "_ollama_available" not in combined, "Old _ollama_available still present"
+    assert "litellm" in combined, "litellm not imported in collect_syllabi pipeline"
+
+
+def test_filter_flags_no_hand_rolled_http():
+    """Verify filter_flags.py _llm_call uses litellm, not raw HTTP."""
+    source = _read_script("filter_flags.py")
+    assert "urllib.request.Request" not in source, "Still using urllib for LLM calls"
+    assert "openrouter.ai/api/v1" not in source, "Still using raw OpenRouter URL"
+    assert "localhost:11434" not in source, "Still using raw Ollama URL"
+    assert "litellm" in source, "litellm not imported"
+
+
+def test_qa_llm_verify_no_hand_rolled_http():
+    """Verify qa_llm_verify.py uses litellm, not requests/urllib."""
+    source = _read_script("qa_llm_verify.py")
+    assert "requests.post" not in source, "Still using requests.post for LLM"
+    assert "OPENROUTER_URL" not in source, "Still has hard-coded OPENROUTER_URL"
+    assert "litellm" in source, "litellm not imported"

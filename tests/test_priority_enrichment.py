@@ -189,6 +189,7 @@ class TestSortDoisByPriority:
 # Enrich scripts use priority ordering
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 class TestScriptUsedPriority:
     def test_enrich_citations_batch_accepts_priority_flag(self):
         """enrich_citations_batch.py --help should mention priority."""

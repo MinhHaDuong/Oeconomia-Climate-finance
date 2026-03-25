@@ -5,9 +5,23 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 ## Testing
 
 - Tests live in `tests/`. A new script or changed behavior starts with a test in `tests/test_<module>.py`.
-- `make check-fast`: unit tests + prose lint, <30 s — run during development.
-- `make check`: full suite including slow tests — run before opening a PR.
+- `make check-fast`: unit tests + prose lint, < 20 s — run during development.
+- `make check`: full suite including integration + slow tests — run before opening a PR.
 - Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
+
+### Test markers
+
+| Marker | Meaning | Excluded from |
+|--------|---------|---------------|
+| *(none)* | Unit test — pure logic, no subprocess, no sleep | — |
+| `@pytest.mark.integration` | Spawns subprocesses or uses sleep-based timing | `check-fast` |
+| `@pytest.mark.slow` | Requires network access or real corpus data | `check-fast` |
+
+**When writing new tests:**
+- CLI flag presence → check via source inspection (`open().read()` + string match), not subprocess `--help`. This avoids ~1 s per Python startup.
+- Tests that run a script via `subprocess.run()` → mark `@pytest.mark.integration`.
+- Tests that use `time.sleep()` or threading timeouts → mark `@pytest.mark.integration`.
+- Tests that import heavy modules only for `inspect.getsource()` → read the file directly instead.
 
 ## Conventions
 

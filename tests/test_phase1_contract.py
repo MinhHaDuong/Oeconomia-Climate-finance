@@ -266,6 +266,7 @@ class TestAlignCitations:
 # Integration: corpus_align.py CLI
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 class TestCorpusAlignCLI:
     def test_dry_run_no_files_written(self, tmp_path):
         """--dry-run must not write any output files."""
