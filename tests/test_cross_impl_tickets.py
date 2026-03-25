@@ -101,6 +101,28 @@ class TestReadyCrossImpl:
         go_out = _normalize(_go("ready", str(TICKET_DIR)))
         assert py_out == go_out
 
+    # --- JSON mode cross-impl tests ---
+
+    def test_python_json_runs(self):
+        out = _py("ready_tickets.py", "--json", str(TICKET_DIR))
+        import json
+        parsed = json.loads(out)
+        assert isinstance(parsed, list)
+
+    @pytest.mark.skipif(
+        not shutil.which("awk"), reason="awk not available"
+    )
+    def test_bash_json_matches_python(self):
+        py_out = _normalize(_py("ready_tickets.py", "--json", str(TICKET_DIR)))
+        sh_out = _normalize(_sh("ready_tickets.sh", "--json", str(TICKET_DIR)))
+        assert py_out == sh_out
+
+    @pytest.mark.skipif(not GO_BIN.exists(), reason="Go binary not built")
+    def test_go_json_matches_python(self):
+        py_out = _normalize(_py("ready_tickets.py", "--json", str(TICKET_DIR)))
+        go_out = _normalize(_go("ready", "--json", str(TICKET_DIR)))
+        assert py_out == go_out
+
 
 class TestArchiveCrossImpl:
     """archive_tickets (dry-run): Python vs bash-fast (vs Go if available)."""

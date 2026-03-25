@@ -41,7 +41,7 @@ What problem or need this addresses. Why now.
 
 ## Forge tickets (big/coordinated work)
 
-For tickets that need coordination (`Coordination: forge#N`):
+For tickets that need cross-repo coordination or visibility, create both a GitHub issue and a local `.ticket` file linked via `Coordination: gh#N`:
 
 ```bash
 gh issue create --title "short title" --body "$(cat <<'EOF'

@@ -150,7 +150,7 @@ Example: braindump says "offline ticket system." You brainstorm:
 status tracking, (C) SQLite-backed with markdown export. Assess
 trade-offs, then implement the 2-3 most promising in parallel PRs.
 
-- Branch naming: `t/{id}-explore-A-desc`, `t/{id}-explore-B-desc`, `t/{id}-explore-C-desc`
+- Branch naming: `t{N}-explore-A-desc`, `t{N}-explore-B-desc`, `t{N}-explore-C-desc`
 - Each gets its own PR with a clear thesis statement in the description.
 - Review picks the winner; losers become reference material.
 

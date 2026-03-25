@@ -10,8 +10,9 @@ When this trigger runs, the agent is about to start implementing a ticket.
 2. Check the **Exit criteria** section (or body). If unclear, ask the author before writing code.
 3. Create a worktree and branch:
    ```bash
-   git worktree add ../t/{id}-{slug} -b t/{id}-{slug}
+   git worktree add ../t{N}-{slug} -b t{N}-{slug}
    ```
+   Where N is the ticket number (forge issue number for `Coordination: gh#N`, or a sequential local number).
 4. **Claim the ticket** — set `Status: doing` in the header, append a log entry (`{ISO-timestamp} {agent-id} status doing`), and commit immediately. This makes the claim visible to other agents across worktrees.
 5. **Signal work-in-progress** — create a `.wip` file visible to all local worktrees:
    ```bash

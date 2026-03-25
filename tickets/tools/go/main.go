@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -193,6 +194,7 @@ var (
 	requiredHeaders = []string{"Id", "Title", "Author", "Status", "Created"}
 	validStatuses   = map[string]bool{"closed": true, "doing": true, "open": true, "pending": true}
 	validPhases     = map[string]bool{"celebrating": true, "doing": true, "dreaming": true, "planning": true}
+	isoDateRE       = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 )
 
 func validateTicket(t *Ticket, allIDs map[string]bool) []string {
@@ -229,6 +231,14 @@ func validateTicket(t *Ticket, allIDs map[string]bool) []string {
 				errors = append(errors, fmt.Sprintf(
 					"%s: invalid X-Phase '%s' (expected one of: %s)", name, phase, strings.Join(keys, ", ")))
 			}
+		}
+	}
+
+	// Created must be ISO date (YYYY-MM-DD)
+	if created, ok := t.Headers["Created"]; ok && len(created) > 0 {
+		if created[0] != "" && !isoDateRE.MatchString(created[0]) {
+			errors = append(errors, fmt.Sprintf(
+				"%s: Created '%s' is not a valid ISO date (YYYY-MM-DD)", name, created[0]))
 		}
 	}
 
@@ -517,16 +527,12 @@ func cmdReady(args []string) int {
 				if i == len(ready)-1 {
 					comma = ""
 				}
-				fmt.Println("  {")
-				fmt.Printf("    \"id\": \"%s\",\n", jsonEscape(r.id))
-				fmt.Printf("    \"title\": \"%s\",\n", jsonEscape(r.title))
-				fmt.Printf("    \"file\": \"%s\"", jsonEscape(r.file))
+				wipField := ""
 				if w, ok := wip[r.id]; ok {
-					fmt.Printf(",\n    \"wip\": \"%s\"\n", jsonEscape(w))
-				} else {
-					fmt.Println()
+					wipField = fmt.Sprintf(",\n    \"wip\": \"%s\"", jsonEscape(w))
 				}
-				fmt.Printf("  }%s\n", comma)
+				fmt.Printf("  {\n    \"id\": \"%s\",\n    \"title\": \"%s\",\n    \"file\": \"%s\"%s\n  }%s\n",
+					jsonEscape(r.id), jsonEscape(r.title), jsonEscape(r.file), wipField, comma)
 			}
 			fmt.Println("]")
 		}

@@ -157,8 +157,8 @@ END {
             for (i = 1; i <= nready; i++) {
                 comma = (i < nready) ? "," : ""
                 wip_field = ""
-                if (ready_id[i] in wip) wip_field = sprintf(", \"wip\": \"%s\"", json_esc(wip[ready_id[i]]))
-                printf "  {\"id\": \"%s\", \"title\": \"%s\", \"file\": \"%s\"%s}%s\n", \
+                if (ready_id[i] in wip) wip_field = sprintf(",\n    \"wip\": \"%s\"", json_esc(wip[ready_id[i]]))
+                printf "  {\n    \"id\": \"%s\",\n    \"title\": \"%s\",\n    \"file\": \"%s\"%s\n  }%s\n", \
                     json_esc(ready_id[i]), json_esc(ready_title[i]), json_esc(ready_file[i]), wip_field, comma
             }
             print "]"

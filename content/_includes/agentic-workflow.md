@@ -10,7 +10,7 @@ The project adopted Dragon Dreaming --- a participatory project management metho
 
 1. **Dreaming.** Interactive discussion between human and agent. The human surfaces motivations, explores what success looks like, and brainstorms freely. No code, no commits. The deliverable is a shared vision.
 
-2. **Planning.** The agent reads code, researches alternatives, and drafts a plan. The artifact is a GitHub Issue written as a *handoff document*: full context, acceptance criteria, and a first test specification. The human reviews and refines the ticket.
+2. **Planning.** The agent reads code, researches alternatives, and drafts a plan. The artifact is a *ticket* written as a *handoff document*: full context, acceptance criteria, and a first test specification. Tickets are plain-text files with RFC 822 headers, stored in `tickets/` and tracked by git. For cross-repo coordination, a GitHub Issue is also created and linked via a `Coordination: gh#N` header. The human reviews and refines the ticket.
 
 3. **Doing.** The agent works autonomously in a fresh conversation context, using the ticket as its only input. This context isolation prevents "window pollution" --- the accumulation of stale assumptions from earlier phases. The inner cycle is strict test-driven development: write a failing test (Red), write the minimum code to pass it (Green), refactor, commit, open a pull request.
 
@@ -18,9 +18,9 @@ The project adopted Dragon Dreaming --- a participatory project management metho
 
 The key adaptation for AI agents is the *context boundary* between Planning and Doing. Human team members carry implicit knowledge across phases; an AI agent's context window is its only memory. By making the ticket a self-contained document, the Doing phase can run in a fresh conversation without loss. This also enables parallelism: multiple tickets can execute simultaneously in independent agent sessions.
 
-### GitHub Issues as handoff documents
+### Tickets as handoff documents
 
-Each issue follows a template: problem statement, relevant files, acceptance criteria, and a first test. The test specification is mandatory --- it anchors the Doing phase's TDD cycle. Issues are the project's primary planning artifact: 89 were opened, 93% were closed.
+Each ticket follows a template: problem statement, relevant files, acceptance criteria, and a first test. The test specification is mandatory --- it anchors the Doing phase's TDD cycle. During the initial sprint, GitHub Issues served as the planning artifact (89 opened, 93% closed). The project later migrated to local plain-text ticket files for offline-first operation and worktree compatibility, with GitHub Issues reserved for cross-repo coordination.
 
 ### Escalation protocol
 

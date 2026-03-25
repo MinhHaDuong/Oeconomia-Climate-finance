@@ -100,6 +100,7 @@ section == "headers" {
         hdrs = hdrs (hdrs ? "," : "") key
         if (key == "Id") tid = val
         else if (key == "Status") status = val
+        else if (key == "Created") created = val
         else if (key == "Blocked-by") blocked = blocked (blocked ? "," : "") val
         else if (key == "X-Phase") xphases = xphases (xphases ? "," : "") val
     }
@@ -118,10 +119,10 @@ section == "body" { next }
 
 function reset() {
     section = "headers"
-    tid = ""; status = ""; blocked = ""; xphases = ""; hdrs = ""
+    tid = ""; status = ""; created = ""; blocked = ""; xphases = ""; hdrs = ""
 }
 function emit() {
-    printf "%s\x01%s\x01%s\x01%s\x01%s\x01%s\x01%s\n", fname, tid, fn_id, status, blocked, xphases, hdrs
+    printf "%s\x01%s\x01%s\x01%s\x01%s\x01%s\x01%s\x01%s\n", fname, tid, fn_id, status, blocked, xphases, hdrs, created
 }
 END { if (NR > 0) emit() }
 ')
@@ -153,7 +154,7 @@ phase == "archive" {
 phase == "records" {
     ntickets++
     fname  = $1; tid = $2; fn_id = $3; status = $4
-    blocked = $5; xphases = $6; hdrs = $7
+    blocked = $5; xphases = $6; hdrs = $7; created = $8
 
     # Store ticket data for cycle detection
     ticket_fname[ntickets] = fname
@@ -163,6 +164,7 @@ phase == "records" {
     ticket_blocked[ntickets]= blocked
     ticket_xphases[ntickets]= xphases
     ticket_hdrs[ntickets]  = hdrs
+    ticket_created[ntickets] = created
 
     if (tid != "") {
         all_ids[tid] = 1
@@ -228,6 +230,11 @@ END {
                     error(fname ": invalid X-Phase '\''" parr[p] "'\'' (expected one of: celebrating, doing, dreaming, planning)")
             }
         }
+
+        # Created must be ISO date (YYYY-MM-DD)
+        created = ticket_created[i]
+        if (created != "" && created !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/)
+            error(fname ": Created '\''" created "'\'' is not a valid ISO date (YYYY-MM-DD)")
 
         # Blocked-by references exist
         if (blocked != "") {

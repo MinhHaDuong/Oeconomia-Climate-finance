@@ -455,5 +455,12 @@ class TestExistingTickets:
         tickets = load_tickets(ticket_dir)
         if not tickets:
             pytest.skip("No .ticket files found")
-        errors = validate_all(tickets)
+        # Load archived ticket IDs as valid Blocked-by targets
+        extra_ids: set[str] = set()
+        archive_dir = ticket_dir / "archive"
+        if archive_dir.is_dir():
+            for at in load_tickets(archive_dir):
+                if at.id:
+                    extra_ids.add(at.id)
+        errors = validate_all(tickets, extra_ids=extra_ids)
         assert errors == [], f"Validation errors:\n" + "\n".join(errors)
