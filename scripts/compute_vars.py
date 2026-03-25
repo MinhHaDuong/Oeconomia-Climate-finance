@@ -66,6 +66,7 @@ DOC_VARS = {
         "corpus_sources",
         "corpus_total",
         "corpus_with_embeddings",
+        "analysis_corpus_n",
         "lang_english_pct",
         "pca_emb_pc2_cosine",
         "pca_emb_pc2_dbic",
@@ -90,6 +91,7 @@ DOC_VARS = {
         "corpus_sources",
         "corpus_total",
         "corpus_with_embeddings",
+        "analysis_corpus_n",
         "emb_dimensions",
         "filter_citation_isolated",
         "filter_flagged",
@@ -131,6 +133,7 @@ DOC_VARS = {
         "corpus_total",
         "corpus_total_approx",
         "corpus_with_embeddings",
+        "analysis_corpus_n",
         "emb_dimensions",
         "lang_english_pct",
         "pca_emb_pc1_var_pct",
@@ -267,7 +270,7 @@ def filter_stats(v):
 
 def embedding_stats(v):
     """Embedding count and dimensions from embeddings.npz."""
-    from utils import EMBEDDINGS_PATH
+    from utils import EMBEDDINGS_PATH, REFINED_EMBEDDINGS_PATH
     if not os.path.isfile(EMBEDDINGS_PATH):
         warnings.warn(f"Missing: {EMBEDDINGS_PATH}")
         return
@@ -275,6 +278,12 @@ def embedding_stats(v):
     vectors = data["vectors"]
     v["corpus_with_embeddings"] = _int(vectors.shape[0])
     v["emb_dimensions"] = str(vectors.shape[1])
+    # Analysis corpus: refined works with non-zero embeddings
+    if os.path.isfile(REFINED_EMBEDDINGS_PATH):
+        ref_data = np.load(REFINED_EMBEDDINGS_PATH)
+        ref_vectors = ref_data["vectors"]
+        nonzero = int(np.any(ref_vectors != 0, axis=1).sum())
+        v["analysis_corpus_n"] = _int(nonzero)
 
 
 def _bimodality_period_keys():

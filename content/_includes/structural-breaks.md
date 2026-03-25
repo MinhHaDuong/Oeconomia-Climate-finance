@@ -46,7 +46,7 @@ Because the corpus grows rapidly over time, divergence peaks could be driven by 
 
 ![Breakpoints summary (manuscript figure variant).](figures/fig_breaks.png){#fig-breaks width=80%}
 
-### Results: full corpus (N = 27,509) <!-- TODO: create a meta var for refined works with embeddings; corpus_with_embeddings (37,928) counts the cache, not the analysis subset -->
+### Results: full corpus (N = {{< meta analysis_corpus_n >}})
 
 #### Baseline (*k* = 0)
 
@@ -123,7 +123,7 @@ The censored-gap analysis reinforces the main breakpoint at **2009** (Copenhagen
 
 | Corpus | *k* = 0 | *k* = 1 | *k* = 2 |
 |--------|---------|---------|---------|
-| Full (27,509) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** | <!-- TODO: use proper meta var -->
+| Full ({{< meta analysis_corpus_n >}}) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
 | Core ({{< meta corpus_core >}}) | 2023* | 2023* | 2023* |
 
 \* Boundary artifact only.
