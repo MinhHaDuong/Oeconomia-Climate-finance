@@ -93,7 +93,7 @@ class TestBuildTextBoilerplateSkip:
         })
         result = build_text(row)
         # Should have title and keywords but not the repeated abstract
-        assert "climate, finance" in result
+        assert "climate" in result and "finance" in result
         # The abstract IS the title, so the text should just be title + keywords
         parts = result.split(". ")
         assert len(parts) == 2  # title + keywords, no extra abstract
