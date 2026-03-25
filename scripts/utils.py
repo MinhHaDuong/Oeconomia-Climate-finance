@@ -229,16 +229,25 @@ def is_valid_iso639_1(code):
     return code.lower().strip() in ISO_639_1_CODES
 
 
+_langdetect_seeded = False
+
+
 def detect_language(text):
     """Detect language from text using langdetect. Returns 2-letter code or None.
 
     Requires at least 20 characters to attempt detection — shorter texts
-    produce unreliable results.
+    produce unreliable results. Seeds the detector on first call for
+    reproducibility (langdetect is non-deterministic by default).
     """
+    global _langdetect_seeded
     if not text or len(str(text).strip()) < 20:
         return None
     try:
         from langdetect import detect, LangDetectException
+        if not _langdetect_seeded:
+            from langdetect import DetectorFactory
+            DetectorFactory.seed = 0
+            _langdetect_seeded = True
         return detect(str(text))
     except LangDetectException:
         return None
