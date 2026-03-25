@@ -159,7 +159,7 @@ corpus-discover:
 	uv run dvc repro catalog_merge
 
 corpus-enrich:
-	uv run dvc repro enrich_works enrich_citations qa_citations enrich_embeddings
+	uv run dvc repro enrich_works enrich_citations enrich_embeddings
 
 corpus-extend:
 	uv run dvc repro extend
