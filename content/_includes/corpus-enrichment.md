@@ -34,6 +34,10 @@ Citation links are assembled from three sources:
 
 Quality control (`qa_citations.py`) validates DOI formats, removes self-citations, and reports coverage statistics. The merged `citations.csv` is needed for citation isolation detection (flag 4 in §3).
 
+### Abstract summarization
+
+Approximately 230 records have abstracts exceeding 1,000 whitespace tokens — full introductions, book reviews, or correction notices rather than true abstracts. These degrade embedding quality by injecting noise into the vector space. The script `summarize_abstracts.py` classifies each abstract by length and generates concise (~250-word) summaries via LLM (DeepSeek V3) for oversized records. Summaries are cached in `enrich_cache/abstract_summaries_cache.jsonl` (keyed by DOI) and survive DVC re-runs. The `abstract_status` column tracks provenance: `original` (unchanged), `generated` (LLM summary replaced the original), or `missing` (no abstract available).
+
 ### Embedding generation
 
 The script `enrich_embeddings.py` (Phase 1) computes 1024-dimensional sentence embeddings using `BAAI/bge-m3` (8192-token context) on title + abstract + keywords text. Boilerplate abstracts — repository metadata strings (`info:eu-repo/…`), known junk phrases ("International audience", "peer reviewed"), title-as-abstract duplications, and short ALL CAPS fragments — are detected and excluded so that only substantive text enters the embedding. Only papers with non-empty titles (published 1990–2024) are embedded. UMAP projection and KMeans clustering are performed separately in `analyze_embeddings.py` (Phase 2).
