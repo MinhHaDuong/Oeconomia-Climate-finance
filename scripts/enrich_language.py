@@ -229,6 +229,11 @@ def pass1_fetch_by_doi(dois, cache, counters,
                 jitter_max=retry_jitter,
                 counters=counters,
             )
+            if resp.status_code != 200:
+                log.warning("DOI batch %d: HTTP %d, skipping (not caching)",
+                            i, resp.status_code)
+                counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
+                continue  # don't cache — allow retry on next run
             for r in resp.json().get("results", []):
                 doi_raw = r.get("doi", "")
                 lang = r.get("language") or ""
@@ -238,8 +243,9 @@ def pass1_fetch_by_doi(dois, cache, counters,
         except Exception as e:
             log.warning("DOI batch %d failed: %s", i, e)
             counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
+            continue  # don't cache — allow retry on next run
 
-        # Mark queried-but-not-returned DOIs as empty
+        # Mark successfully-queried-but-not-returned DOIs as empty
         for d in batch:
             cache.setdefault(d, "")
 
@@ -291,6 +297,11 @@ def pass1_fetch_by_openalex_id(df, cache, counters,
                 jitter_max=retry_jitter,
                 counters=counters,
             )
+            if resp.status_code != 200:
+                log.warning("OA-ID batch %d: HTTP %d, skipping (not caching)",
+                            i, resp.status_code)
+                counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
+                continue  # don't cache — allow retry on next run
             for r in resp.json().get("results", []):
                 oa_id = r.get("id", "").replace("https://openalex.org/", "")
                 lang = r.get("language") or ""
@@ -299,6 +310,7 @@ def pass1_fetch_by_openalex_id(df, cache, counters,
         except Exception as e:
             log.warning("OA-ID batch %d failed: %s", i, e)
             counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
+            continue  # don't cache — allow retry on next run
 
         for sid in batch:
             cache.setdefault(sid, "")
