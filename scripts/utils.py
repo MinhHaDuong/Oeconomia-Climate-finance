@@ -1024,15 +1024,16 @@ class WatchedProgress:
         )
         _utils_log.warning(msg)
 
-        # Desktop notification (best-effort, ignore failures)
-        try:
-            subprocess.run(
-                ["notify-send", "--urgency=critical", "Pipeline stuck", msg],
-                check=False,
-                timeout=5,
-            )
-        except FileNotFoundError:
-            pass  # notify-send not installed
+        # Desktop notification only when no programmatic handler is set
+        if self.on_stuck is None:
+            try:
+                subprocess.run(
+                    ["notify-send", "--urgency=critical", "Pipeline stuck", msg],
+                    check=False,
+                    timeout=5,
+                )
+            except FileNotFoundError:
+                pass  # notify-send not installed
 
         # Flush checkpoint
         if self.flush_checkpoint is not None:
