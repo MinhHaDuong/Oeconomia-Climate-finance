@@ -64,16 +64,6 @@ docker run -v $(pwd)/rebuilt:/app/data climate-finance-corpus
 | bibCNRS | Pre-harvested (CNRS Janus credentials) | Included in `data/exports/` |
 | SciSpace | Pre-harvested (commercial tool) | Included in `data/exports/` |
 
-## Why no dedicated Dockerfile
-
-This archive describes a **dataset**, not an analysis. Reviewers verify the
-deposit (row counts, schemas, checksums), not rebuild it. A full rebuild
-from APIs is inherently non-reproducible in the strict sense: API responses
-evolve daily, and two sources (bibCNRS, SciSpace) require manual export from
-restricted platforms. The generic `Dockerfile` in the main repository covers
-Level 2 rebuild for those who want to try; containerising Level 1 checksum
-verification would add ceremony without substance.
-
 ## Non-reproducible steps
 
 - bibCNRS and SciSpace raw exports cannot be re-harvested without institutional
