@@ -14,13 +14,9 @@ Usage:
 """
 
 import os
-import shutil
 import sys
 
 import pandas as pd
-
-# Add scripts/ to path for imports
-sys.path.insert(0, os.path.dirname(__file__))
 
 from utils import CATALOGS_DIR, REFS_COLUMNS, get_logger, normalize_doi
 
@@ -53,6 +49,11 @@ OLD_DONE_FILES = [
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="One-time migration: split v1 citations.csv into source caches")
+    parser.parse_args()
+
     crossref_cache = os.path.join(CACHE_DIR, "crossref_refs.csv")
     openalex_cache = os.path.join(CACHE_DIR, "openalex_refs.csv")
 

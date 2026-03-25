@@ -232,7 +232,7 @@ def main():
                         help="Delay between API requests (seconds)")
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-                        help="Works CSV to read DOIs from")
+                        help="Works CSV to read DOIs from (default: enriched_works.csv)")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--request-timeout", type=float, default=60.0)
     parser.add_argument("--max-retries", type=int, default=5)

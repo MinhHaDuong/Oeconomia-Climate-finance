@@ -114,7 +114,8 @@ def load_done_dois(cache_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Batch-enrich citations from Crossref (most-cited first)")
+        description="Batch-enrich citations from Crossref (DOIs processed in priority order: "
+                    "most-cited works first, deterministic)")
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--limit", type=int, default=0,
                         help="Max DOIs to process (0=all)")
@@ -122,7 +123,7 @@ def main():
                         help="Delay between batch requests")
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-                        help="Works CSV to read DOIs from")
+                        help="Works CSV to read DOIs from (default: enriched_works.csv)")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--request-timeout", type=float, default=60.0)
     parser.add_argument("--max-retries", type=int, default=5)
