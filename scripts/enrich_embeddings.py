@@ -27,9 +27,9 @@ from utils import (CATALOGS_DIR, EMBEDDINGS_CACHE_DIR, EMBEDDINGS_CACHE_PATH,
 log = get_logger("enrich_embeddings")
 
 # --- Configuration ---
-MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_NAME = "BAAI/bge-m3"
 TEXT_FIELDS = "title+abstract+keywords"
-EMBEDDING_DIM = 384
+EMBEDDING_DIM = 1024
 
 
 def build_text(row):

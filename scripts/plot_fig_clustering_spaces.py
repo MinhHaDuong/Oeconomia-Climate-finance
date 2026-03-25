@@ -4,7 +4,7 @@ Reads:  content/tables/clustering_multi_space.json
 Writes: content/figures/fig_clustering_spaces.png (+ .pdf unless --no-pdf)
 
 Bar chart comparing KMeans silhouette scores across three representation
-spaces: semantic embeddings (384D), lexical TF-IDF (→ 100D SVD), and
+spaces: semantic embeddings (1024D), lexical TF-IDF (→ 100D SVD), and
 bibliographic coupling (→ 100D SVD). Used in technical report.
 
 Run compare_clustering.py first to generate the input JSON.
@@ -46,7 +46,7 @@ def plot_multi_space_figure(space_results, no_pdf=False):
         "citation": "#4CAF50",
     }
     space_labels = {
-        "semantic": "Semantic (384D embeddings)",
+        "semantic": "Semantic (1024D embeddings)",
         "lexical": "Lexical (TF-IDF → 100D SVD)",
         "citation": "Citation (bib. coupling → 100D SVD)",
     }

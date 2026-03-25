@@ -58,7 +58,7 @@ If UNFCCC categories correspond to natural intellectual boundaries, works within
 
 | Space | Silhouette of UNFCCC topics |
 |-------|---------------------------|
-| Semantic (384D embeddings) | **-0.011** |
+| Semantic (1024D embeddings) | **-0.011** |
 | Citation (bibliographic coupling) | **-0.010** |
 | Lexical (TF-IDF) | **+0.007** |
 

@@ -5,7 +5,7 @@
 
 ### 7.1 Motivation
 
-The manuscript partitions the corpus into six thematic clusters using KMeans on 384-dimensional multilingual sentence embeddings. After the v1.0 submission, adding 0.6% new works reshuffled cluster assignments qualitatively --- five of six cluster titles mapped to wrong panels (Errata 1). This incident raises three questions: (1) How stable is KMeans compared to alternative methods? (2) Does natural cluster structure exist in the data? (3) Which representation space best captures the field's intellectual organization?
+The manuscript partitions the corpus into six thematic clusters using KMeans on 1024-dimensional multilingual sentence embeddings. After the v1.0 submission, adding 0.6% new works reshuffled cluster assignments qualitatively --- five of six cluster titles mapped to wrong panels (Errata 1). This incident raises three questions: (1) How stable is KMeans compared to alternative methods? (2) Does natural cluster structure exist in the data? (3) Which representation space best captures the field's intellectual organization?
 
 We compare three clustering algorithms across three representation spaces and three corpus snapshots, producing a systematic evaluation that goes beyond method comparison to characterize the field's structure.
 
@@ -13,7 +13,7 @@ We compare three clustering algorithms across three representation spaces and th
 
 We construct three independent representations of the same corpus, each capturing a different dimension of similarity between works.
 
-**Semantic space** (384 dimensions). Sentence embeddings from `paraphrase-multilingual-MiniLM-L12-v2`, a 12-layer multilingual BERT producing L2-normalized vectors. Input: concatenation of title, abstract (if >20 characters), and keywords. This space captures *what works are about* --- topical and conceptual similarity across languages.
+**Semantic space** (1024 dimensions). Sentence embeddings from `BAAI/bge-m3`, a multilingual model with 8192-token context producing L2-normalized vectors. Input: concatenation of title, abstract (if >20 characters), and keywords. This space captures *what works are about* --- topical and conceptual similarity across languages.
 
 **Lexical space** (100 dimensions). TF-IDF vectors (unigrams + bigrams, max 5,000 features, sublinear term frequency, English stopwords removed, min_df=3, max_df=0.8) reduced to 100 dimensions via truncated SVD (explaining 19.2% of variance). This space captures *what words works use* --- vocabulary overlap, which is language-dependent and sensitive to disciplinary jargon.
 
@@ -40,7 +40,7 @@ Three corpus snapshots test clustering stability under perturbation:
 
 The v1_tagged and full snapshots overlap by 96.5% (960 works added in v1.1). This tests stability under the kind of marginal expansion that caused Errata 1.
 
-The Adjusted Rand Index (ARI) measures agreement between two clusterings on shared works. ARI = 1 means identical assignments; ARI ≈ 0 means random agreement. Results on semantic space (384D embeddings):
+The Adjusted Rand Index (ARI) measures agreement between two clusterings on shared works. ARI = 1 means identical assignments; ARI ≈ 0 means random agreement. Results on semantic space (1024D embeddings):
 
 | Method | v1_tagged → full (n=26,355 shared) |
 |--------|-------------------------------------|
@@ -78,7 +78,7 @@ We compute KMeans silhouette scores for k = 3 to 12 in each space. The silhouett
 
 **2. Citation ties create more structure than topical similarity.** The citation space shows 3× more cluster structure than semantic or lexical spaces. Works that cite similar literatures form tighter groups than works about similar topics. This means "traditions" are partly social structures (citation networks) rather than purely conceptual ones (topic similarity). The Louvain co-citation communities (Section 11) capture this citation-based structure directly, which is why the manuscript's k=6 was chosen to match those communities rather than to optimize silhouette.
 
-**Semantic space** (silhouette: 0.025--0.038). Near-zero across all k values. The trough at k=6 (0.025) is the worst value in the range. No natural cluster count exists --- the embedding space is essentially continuous. The multilingual sentence model maps all climate finance works into an overlapping region of the 384-dimensional space.
+**Semantic space** (silhouette: 0.025--0.038). Near-zero across all k values. The trough at k=6 (0.025) is the worst value in the range. No natural cluster count exists --- the embedding space is essentially continuous. The multilingual sentence model maps all climate finance works into an overlapping region of the 1024-dimensional space.
 
 **Lexical space** (silhouette: 0.032--0.062). Slightly more structure, monotonically increasing with k. No peak implies the field's vocabulary fragments into ever-finer sub-specializations without forming discrete groups. The TF-IDF SVD captures only 19.2% of total variance, confirming a highly dispersed lexicon.
 
@@ -90,7 +90,7 @@ HDBSCAN's noise classification provides insight into the density structure of ea
 
 | Space | Min cluster size | Clusters found | Noise fraction |
 |-------|-----------------|----------------|----------------|
-| Semantic (384D) | 50 | 3 | 97.7% |
+| Semantic (1024D) | 50 | 3 | 97.7% |
 | Citation (100D, L2) | 50 | 20 | 70.8% |
 
 The semantic space is almost uniformly dense --- no sparse separators between clusters. The citation space has moderate density variation: 20 communities emerge, but 70.8% of works sit in sparse boundary regions between them. This is consistent with a field where works increasingly cite across sub-communities.
@@ -109,7 +109,7 @@ The three spaces are **largely independent**. Semantic and lexical spaces show w
 
 ### 7.9 Language as a structuring variable
 
-The multilingual MiniLM model is designed to embed texts across languages in a shared space. We test whether language creates measurable clustering:
+The multilingual BGE-M3 model is designed to embed texts across languages in a shared space. We test whether language creates measurable clustering:
 
 | Test | Silhouette |
 |------|-----------|
