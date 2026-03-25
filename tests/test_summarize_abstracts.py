@@ -12,7 +12,6 @@ Exit criteria (from ticket):
 import json
 import os
 import sys
-import tempfile
 
 import pandas as pd
 import pytest
@@ -82,10 +81,11 @@ def test_classify_normal():
 
 
 def test_classify_missing():
-    """Missing/empty abstracts are classified as missing."""
+    """Missing/empty/whitespace-only abstracts are classified as missing."""
     assert classify_abstract_length(None) == "missing"
     assert classify_abstract_length("") == "missing"
     assert classify_abstract_length(float("nan")) == "missing"
+    assert classify_abstract_length("   ") == "missing"
 
 
 # ============================================================
