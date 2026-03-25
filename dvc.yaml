@@ -119,20 +119,23 @@ stages:
   # A failure in a late step (e.g. embeddings) won't force re-running
   # earlier steps (e.g. citations) on retry.
 
-  # Phase 1b.1: Resolve missing DOIs + fill abstracts + fill language → enriched_works.csv
-  # All three modify enriched_works.csv in-place. Splitting into separate stages
+  # Phase 1b.1: Resolve missing DOIs + fill abstracts + fill language + summarize oversized → enriched_works.csv
+  # All four modify enriched_works.csv in-place. Splitting into separate stages
   # would cause a DVC rerun loop (in-place modification changes the tracked
   # output hash, triggering false staleness). See #427 for design discussion.
-  # Language runs last because detection benefits from filled abstracts.
+  # Language runs after abstracts (detection benefits from filled text).
+  # Summarize runs last: replaces >1000-token abstracts with LLM summaries (#415).
   enrich_works:
     cmd: >-
       uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv --works-output data/catalogs/enriched_works.csv &&
       uv run python scripts/enrich_abstracts.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_language.py --works-input data/catalogs/enriched_works.csv
+      uv run python scripts/enrich_language.py --works-input data/catalogs/enriched_works.csv &&
+      uv run python scripts/summarize_abstracts.py --works-input data/catalogs/enriched_works.csv
     deps:
       - scripts/enrich_dois.py
       - scripts/enrich_abstracts.py
       - scripts/enrich_language.py
+      - scripts/summarize_abstracts.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_loaders.py

@@ -35,7 +35,7 @@ from summarize_abstracts import (
 
 LONG_ABSTRACT = (
     "Climate finance has emerged as a critical area of international "
-    "negotiations. " * 80  # ~960 words ≈ ~1200 tokens
+    "negotiations. " * 100  # >1000 whitespace tokens
 )
 
 SHORT_ABSTRACT = "This paper studies climate finance flows to developing countries."
