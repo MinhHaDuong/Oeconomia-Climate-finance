@@ -458,6 +458,10 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	cp -L $(DATA_DIR)/refined_embeddings.npz $(ANALYSIS_TMP)/data/catalogs/
 	@# Scripts needed to build figures + tables
 	cp scripts/utils.py                     $(ANALYSIS_TMP)/scripts/
+	cp scripts/pipeline_loaders.py          $(ANALYSIS_TMP)/scripts/
+	cp scripts/pipeline_io.py               $(ANALYSIS_TMP)/scripts/
+	cp scripts/pipeline_progress.py         $(ANALYSIS_TMP)/scripts/
+	cp scripts/pipeline_text.py             $(ANALYSIS_TMP)/scripts/
 	cp scripts/plot_style.py                $(ANALYSIS_TMP)/scripts/
 	cp scripts/plot_fig1_bars.py            $(ANALYSIS_TMP)/scripts/
 	cp scripts/plot_fig2_composition.py     $(ANALYSIS_TMP)/scripts/
@@ -468,8 +472,12 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	cp scripts/make_tab_venues.py           $(ANALYSIS_TMP)/scripts/
 	cp scripts/export_citation_coverage.py  $(ANALYSIS_TMP)/scripts/
 	cp scripts/analyze_bimodality.py        $(ANALYSIS_TMP)/scripts/
+	cp scripts/compute_clusters.py          $(ANALYSIS_TMP)/scripts/
 	@# Config + build infrastructure
 	cp config/analysis.yaml             $(ANALYSIS_TMP)/config/
+	cp config/v1_tab_alluvial.csv       $(ANALYSIS_TMP)/config/
+	cp config/v1_cluster_labels.json    $(ANALYSIS_TMP)/config/
+	cp config/v1_cluster_centroids.npy  $(ANALYSIS_TMP)/config/
 	cp Makefile.analysis-manuscript                $(ANALYSIS_TMP)/Makefile
 	cp pyproject.toml uv.lock           $(ANALYSIS_TMP)/
 	echo 'CLIMATE_FINANCE_DATA=data' > $(ANALYSIS_TMP)/.env
