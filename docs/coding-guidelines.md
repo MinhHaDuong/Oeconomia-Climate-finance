@@ -19,7 +19,7 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 
 **When writing new tests:**
 - CLI flag presence → check via source inspection (`open().read()` + string match), not subprocess `--help`. This avoids ~1 s per Python startup.
-- Tests that run a script via `subprocess.run()` → mark `@pytest.mark.integration`.
+- Tests that run a Python script via `subprocess.run()` → mark `@pytest.mark.integration`. Fast tool invocations (ruff, mypy) are exempt.
 - Tests that use `time.sleep()` or threading timeouts → mark `@pytest.mark.integration`.
 - Tests that import heavy modules only for `inspect.getsource()` → read the file directly instead.
 

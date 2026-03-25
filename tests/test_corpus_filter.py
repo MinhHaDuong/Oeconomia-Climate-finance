@@ -38,8 +38,9 @@ def run_script(*args, cwd=None):
 # CLI argument presence (source inspection, no subprocess)
 # ---------------------------------------------------------------------------
 
-def _corpus_filter_source():
-    path = os.path.join(SCRIPTS_DIR, "corpus_filter.py")
+def _read_script(script_name):
+    """Read script source text for flag inspection."""
+    path = os.path.join(SCRIPTS_DIR, script_name)
     with open(path) as f:
         return f.read()
 
@@ -47,7 +48,7 @@ def _corpus_filter_source():
 class TestCLIArgs:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _corpus_filter_source()
+        request.cls._source = _read_script("corpus_filter.py")
 
     def _has_flag(self, flag):
         return f'"{flag}"' in self._source or f"'{flag}'" in self._source

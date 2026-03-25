@@ -578,7 +578,7 @@ archive-datapaper: check-corpus
 check: lint-prose
 	uv run pytest tests/ -v --tb=short
 
-# Fast subset: unit tests only (no subprocess spawning, no sleeps, < 20s).
+# Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
 check-fast: lint-prose
 	uv run pytest tests/ -v --tb=short -m "not slow and not integration"
 

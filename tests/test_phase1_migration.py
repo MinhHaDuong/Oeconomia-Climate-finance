@@ -19,7 +19,7 @@ SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 sys.path.insert(0, SCRIPTS_DIR)
 
 
-def _script_source(script_name):
+def _read_script(script_name):
     """Read script source text for flag inspection."""
     path = os.path.join(SCRIPTS_DIR, script_name)
     with open(path) as f:
@@ -150,8 +150,8 @@ class TestBackwardCompatibility:
     @pytest.fixture(autouse=True, scope="class")
     def _load_sources(self, request):
         request.cls._sources = {
-            "corpus_filter.py": _script_source("corpus_filter.py"),
-            "enrich_citations_batch.py": _script_source("enrich_citations_batch.py"),
+            "corpus_filter.py": _read_script("corpus_filter.py"),
+            "enrich_citations_batch.py": _read_script("enrich_citations_batch.py"),
         }
 
     def test_corpus_filter_apply_flag(self):

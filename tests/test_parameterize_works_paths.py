@@ -21,7 +21,7 @@ SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 PYTHON = sys.executable
 
 
-def _script_source(script_name):
+def _read_script(script_name):
     """Read script source text for flag inspection."""
     path = os.path.join(SCRIPTS_DIR, script_name)
     with open(path) as f:
@@ -40,7 +40,7 @@ def _has_flag(source, flag):
 class TestEnrichDoisCLI:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _script_source("enrich_dois.py")
+        request.cls._source = _read_script("enrich_dois.py")
 
     def test_accepts_works_input(self):
         assert _has_flag(self._source, "--works-input"), \
@@ -85,7 +85,7 @@ class TestEnrichDoisCLI:
 class TestEnrichAbstractsCLI:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _script_source("enrich_abstracts.py")
+        request.cls._source = _read_script("enrich_abstracts.py")
 
     def test_accepts_works_input(self):
         assert _has_flag(self._source, "--works-input"), \
@@ -104,7 +104,7 @@ class TestEnrichAbstractsCLI:
 class TestEnrichCitationsBatchCLI:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _script_source("enrich_citations_batch.py")
+        request.cls._source = _read_script("enrich_citations_batch.py")
 
     def test_accepts_works_input(self):
         assert _has_flag(self._source, "--works-input"), \
@@ -122,7 +122,7 @@ class TestEnrichCitationsBatchCLI:
 class TestEnrichCitationsOpenAlexCLI:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _script_source("enrich_citations_openalex.py")
+        request.cls._source = _read_script("enrich_citations_openalex.py")
 
     def test_accepts_works_input(self):
         assert _has_flag(self._source, "--works-input"), \
@@ -141,7 +141,7 @@ class TestEnrichCitationsOpenAlexCLI:
 class TestQcCitationsCLI:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _script_source("qa_citations.py")
+        request.cls._source = _read_script("qa_citations.py")
 
     def test_accepts_works_input(self):
         assert _has_flag(self._source, "--works-input"), \
@@ -160,7 +160,7 @@ class TestQcCitationsCLI:
 class TestAnalyzeEmbeddingsCLI:
     @pytest.fixture(autouse=True, scope="class")
     def _load_source(self, request):
-        request.cls._source = _script_source("analyze_embeddings.py")
+        request.cls._source = _read_script("analyze_embeddings.py")
 
     def test_accepts_works_input(self):
         assert _has_flag(self._source, "--works-input"), \

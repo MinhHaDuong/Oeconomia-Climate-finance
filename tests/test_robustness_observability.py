@@ -61,7 +61,7 @@ def make_mini_citations(tmp_path):
     return str(path)
 
 
-def _script_source(script_name):
+def _read_script(script_name):
     """Read script source text for flag inspection."""
     path = os.path.join(SCRIPTS_DIR, script_name)
     with open(path) as f:
@@ -238,9 +238,9 @@ class TestCliFlags:
     @pytest.fixture(autouse=True, scope="class")
     def _load_sources(self, request):
         request.cls._sources = {
-            "enrich_abstracts.py": _script_source("enrich_abstracts.py"),
-            "enrich_citations_batch.py": _script_source("enrich_citations_batch.py"),
-            "enrich_citations_openalex.py": _script_source("enrich_citations_openalex.py"),
+            "enrich_abstracts.py": _read_script("enrich_abstracts.py"),
+            "enrich_citations_batch.py": _read_script("enrich_citations_batch.py"),
+            "enrich_citations_openalex.py": _read_script("enrich_citations_openalex.py"),
         }
 
     def test_enrich_abstracts_has_run_id_flag(self):
