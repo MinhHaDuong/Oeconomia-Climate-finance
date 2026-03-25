@@ -53,6 +53,7 @@ None.
 - #386: ✅ merged — data management plan (CNRS/Science Europe model)
 - #387: ✅ merged — eager branching workflow (Dreaming on a branch)
 - #425: ✅ merged — language enrichment via OpenAlex + langdetect (#423, #427)
+- #444: ✅ merged — near-duplicate detection for coordinated publications (#416)
 
 ## Recent (2026-03-24 rally loop)
 
