@@ -46,18 +46,23 @@ Because the corpus grows rapidly over time, divergence peaks could be driven by 
 
 ![Breakpoints summary (manuscript figure variant).](figures/fig_breaks.png){#fig-breaks width=80%}
 
-### Results: full corpus (N = {{< meta corpus_with_embeddings >}})
+### Results: full corpus (N = {{< meta analysis_corpus_n >}})
 
 #### Baseline (*k* = 0)
 
-Two robust breakpoints are detected:
+One robust breakpoint is detected; a second is suggestive but below the robustness threshold:
 
 | Year | JS mean z | Cosine mean z | Combined z | Support | Windows |
 |------|-----------|---------------|------------|---------|---------|
-| 2007 | 0.00 | 2.59 | 2.59 | cosine only | 3 of 3 |
-| 2013 | 1.59 | 0.00 | 1.59 | JS only | 3 of 3 |
+| 2007 | −0.15 | 1.51 | 1.51 | cosine only | 2 of 3 |
+| 2013 | 1.22 | 1.41 | 2.63 | both (weak) | 1 of 3 each |
 
-The 2007 break is driven by cosine distance — a shift in the *semantic centre of mass* of the field, consistent with climate finance emerging as a distinct topic around the Bali Action Plan and the Stern Review's influence. The 2013 break is driven by JS divergence — a *redistribution across clusters*, consistent with the diversification of the field into sub-specialties (green bonds, REDD+, adaptation finance) around the time of the Warsaw International Mechanism.
+<!-- NOTE: z-scores recomputed from tab_breakpoints.csv on 2026-03-26.
+     Previous values (2.59 / 1.59 / "3 of 3") were from an earlier corpus version.
+     The 2013 break no longer meets the 2-of-3 windows robustness criterion.
+     The author should decide whether to relax the criterion or downgrade the claim. -->
+
+The 2007 break is driven by cosine distance (2 of 3 windows exceed z > 1.5) — a shift in the *semantic centre of mass* of the field, consistent with climate finance emerging as a distinct topic around the Bali Action Plan and the Stern Review's influence. The 2013 signal appears in both metrics but is below the robustness threshold (1 of 3 windows each); it may reflect a gradual redistribution across clusters rather than a sharp break, consistent with diversification into sub-specialties (green bonds, REDD+, adaptation finance) around the Warsaw International Mechanism.
 
 No break is detected near 2015 (Paris Agreement) or 2021 (Glasgow). The COP milestones that dominate policy narrative do not correspond to discontinuities in the scholarly literature's structure.
 
@@ -123,7 +128,7 @@ The censored-gap analysis reinforces the main breakpoint at **2009** (Copenhagen
 
 | Corpus | *k* = 0 | *k* = 1 | *k* = 2 |
 |--------|---------|---------|---------|
-| Full ({{< meta corpus_with_embeddings >}}) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
+| Full ({{< meta analysis_corpus_n >}}) | **2007**, **2013** | **2008**, 2013, 2015 | **2009** |
 | Core ({{< meta corpus_core >}}) | 2023* | 2023* | 2023* |
 
 \* Boundary artifact only.

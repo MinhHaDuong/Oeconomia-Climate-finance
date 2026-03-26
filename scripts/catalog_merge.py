@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Merge all source catalogs into a unified, deduplicated catalog.
 
-Reads the 7 declared per-source catalogs from data/catalogs/ and produces:
+Reads the 6 declared per-source catalogs from data/catalogs/ and produces:
   data/catalogs/unified_works.csv
 
 Only these files are loaded (matching dvc.yaml catalog_merge deps):

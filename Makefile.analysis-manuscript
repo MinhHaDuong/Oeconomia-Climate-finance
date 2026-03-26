@@ -18,7 +18,11 @@ REFINED := $(DATA)/refined_works.csv
 .PHONY: figures verify
 
 figures: content/figures/fig_bars_v1.png content/figures/fig_composition.png \
-         content/tables/tab_venues.md
+         content/tables/tab_venues.md content/tables/tab_alluvial.csv
+
+content/tables/tab_alluvial.csv content/tables/tab_core_shares.csv content/tables/cluster_labels.json &: \
+		scripts/compute_clusters.py scripts/utils.py $(REFINED) $(DATA)/refined_embeddings.npz
+	uv run python $<
 
 # ── Figures ─────────────────────────────────────────────────
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)

@@ -51,6 +51,13 @@ def is_boilerplate_abstract(abstract, title=None):
     # Abstract is just the title repeated
     if title and low == str(title).strip().lower():
         return True
+    # Paywall / publisher stub abstracts (#455)
+    if low.startswith("no access"):
+        return True
+    if "10.5751/es-" in low and len(low) < 500:
+        return True
+    if "not available for this content" in low:
+        return True
     # Short ALL CAPS text — truncated title fragments (e.g. "AZRBAYCANDA YAIL")
     stripped = str(abstract).strip()
     if len(stripped) < 50 and stripped == stripped.upper() and not stripped.islower():

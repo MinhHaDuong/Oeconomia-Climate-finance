@@ -63,6 +63,19 @@ class TestIsBoilerplateAbstract:
         assert is_boilerplate_abstract(good, title="Climate finance flows") is False
 
 
+    @pytest.mark.parametrize("stub", [
+        # World Bank "No Access" stubs (#455)
+        "No AccessPolicy Research Working Papers are available to subscribers of the World Bank's research service.",
+        # Ecology & Society DOI-as-abstract (#455)
+        "Atwoli, L. et al. 2022. Ecology and Society 27(4). https://doi.org/10.5751/ES-13634-270418",
+        # Cambridge UP "not available" stubs (#455)
+        "A summary is not available for this content. Please visit the journal website for more information.",
+    ])
+    def test_paywall_stubs_detected(self, stub):
+        """Paywall/publisher stub abstracts must be detected as boilerplate (#455)."""
+        assert is_boilerplate_abstract(stub, title="Some title") is True
+
+
 class TestBuildTextBoilerplateSkip:
     """build_text should skip boilerplate abstracts, falling back to title only."""
 

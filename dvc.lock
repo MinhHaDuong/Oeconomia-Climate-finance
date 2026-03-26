@@ -251,8 +251,8 @@ stages:
       size: 353799719
     - path: data/catalogs/embeddings.npz
       hash: md5
-      md5: fb4029c348e1bc6df58bf1f33a011178
-      size: 91799090
+      md5: e2945492bdc94a25e9fe1612205bbc1a
+      size: 91799101
     - path: data/catalogs/refined_works.csv
       hash: md5
       md5: 5ae10301c49974db72572709e0d05726
@@ -288,8 +288,8 @@ stages:
       size: 303727393
     - path: data/catalogs/refined_embeddings.npz
       hash: md5
-      md5: 0e356b9d9b12bb44cab7cd0479bb03d5
-      size: 66392148
+      md5: 904d5519647251f1fb9fcc78f1d2d5dd
+      size: 66391476
   catalog_bibcnrs:
     cmd: uv run python scripts/catalog_bibcnrs.py
     deps:
@@ -575,8 +575,8 @@ stages:
       size: 79886231
     - path: scripts/enrich_abstracts.py
       hash: md5
-      md5: 0236a652497890dbcccde272cecf4295
-      size: 20507
+      md5: 6030389090ae3c01b20c8783da952b77
+      size: 20916
     - path: scripts/enrich_dois.py
       hash: md5
       md5: 9817a911bd77b7c6771cd3f6c0a00cbe
@@ -692,8 +692,8 @@ stages:
       size: 79907270
     - path: scripts/enrich_embeddings.py
       hash: md5
-      md5: 1fd31141e5714e850b19f38c4765fe52
-      size: 8809
+      md5: 052d46c7a776e364c3a3976ed916ee5f
+      size: 9049
     - path: scripts/pipeline_io.py
       hash: md5
       md5: 84b01ca9f4c570ae0aca643426076e86
@@ -717,16 +717,16 @@ stages:
     outs:
     - path: data/catalogs/embeddings.npz
       hash: md5
-      md5: fb4029c348e1bc6df58bf1f33a011178
-      size: 91799090
+      md5: e2945492bdc94a25e9fe1612205bbc1a
+      size: 91799101
   analyze_embeddings:
     cmd: uv run python scripts/analyze_embeddings.py --works-input 
       data/catalogs/enriched_works.csv
     deps:
     - path: data/catalogs/embeddings.npz
       hash: md5
-      md5: fb4029c348e1bc6df58bf1f33a011178
-      size: 91799090
+      md5: e2945492bdc94a25e9fe1612205bbc1a
+      size: 91799101
     - path: data/catalogs/enriched_works.csv
       hash: md5
       md5: 9b4bda8ff1cc66ffcf1fcbb1e36ceba0
@@ -758,8 +758,8 @@ stages:
     outs:
     - path: data/catalogs/semantic_clusters.csv
       hash: md5
-      md5: fa323b100d89c3d843794a1e6d70282b
-      size: 6354216
+      md5: 34c5ca738c0ebed841f1c662980d2f94
+      size: 6354668
   qa_citations:
     cmd: uv run python scripts/qa_citations.py --works-input 
       data/catalogs/enriched_works.csv

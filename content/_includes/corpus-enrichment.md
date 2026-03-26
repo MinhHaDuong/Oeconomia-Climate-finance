@@ -18,7 +18,7 @@ The script `enrich_abstracts.py` backfills missing abstracts through four source
 
 1. **Cross-source transfer:** If another source catalog has the abstract for the same DOI, copy it.
 2. **OpenAlex API:** Query by DOI to retrieve the inverted abstract index.
-3. **ISTEX API:** Query by DOI for French national archive abstracts.
+3. **ISTEX fulltext extraction:** Parse locally downloaded TEI XML files from the ISTEX pool for French national archive abstracts.
 4. **Semantic Scholar API:** Query by DOI or title for preprint and working paper abstracts.
 
 Abstracts are needed for embedding generation (§2.4) and LLM relevance scoring (flag 6 in §3).

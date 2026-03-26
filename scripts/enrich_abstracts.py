@@ -44,14 +44,28 @@ def is_missing(val):
     return s == "" or s.lower() in ("nan", "none")
 
 
+def _is_paywall_stub(text):
+    """Return True if text is a publisher paywall/stub abstract (#455)."""
+    low = text.lower()
+    if low.startswith("no access"):
+        return True
+    if "10.5751/es-" in low and len(low) < 500:
+        return True
+    if "not available for this content" in low:
+        return True
+    return False
+
+
 def clean_abstract(text):
-    """Strip HTML/XML/JATS tags, normalize whitespace."""
+    """Strip HTML/XML/JATS tags, normalize whitespace, nullify paywall stubs."""
     if not text:
         return ""
     text = re.sub(r"<[^>]+>", " ", text)  # strip tags
     text = re.sub(r"&[a-z]+;", " ", text)  # strip entities
     text = re.sub(r"\s+", " ", text).strip()
     if len(text) < MIN_ABSTRACT_LEN:
+        return ""
+    if _is_paywall_stub(text):
         return ""
     return text
 

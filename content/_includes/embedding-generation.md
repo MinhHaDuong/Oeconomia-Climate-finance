@@ -7,7 +7,7 @@
 **Input selection:** Papers from `refined_works.csv` with a non-empty title and a publication year between 1990 and 2024. For each work, the embedded text concatenates title, abstract (if longer than 20 characters), and keywords (if available).
 
 **Encoding parameters:**
-- Batch size: 256
+- Batch size: 32 (configurable via `EMBED_BATCH_SIZE` environment variable)
 - Normalization: L2-normalized embeddings
 - Runtime: approximately 16 minutes on CPU for a full corpus (~{{< meta corpus_total_approx >}} works); incremental runs encode only new additions
 

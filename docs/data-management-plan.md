@@ -3,7 +3,7 @@
 **Project**: A Curated Corpus of Climate Finance Literature, 1990–2024
 **Author**: Minh Ha-Duong (ORCID 0000-0003-2398-9009)
 **Affiliation**: CNRS, CIRED (UMR 8568 CNRS–ENPC–Cirad–AgroParisTech–EHESS)
-**Date**: 2026-03-24
+**Date**: 2026-03-26
 **Version**: 1.0
 
 > Structured following the CNRS template on DMP OPIDoR (Science Europe model).
@@ -21,9 +21,9 @@ around climate finance (1990–2024). Three categories of data:
 
 | Dataset | Format | Size | Origin |
 |---------|--------|------|--------|
-| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 45,740 rows (31,012 after filtering) | Merged from 6 sources; deposit artifact via `prepare_deposit.py` |
-| embeddings.npz | NumPy compressed archive | 37,928 × 384 float32 | Computed (sentence-transformers) |
-| citations.csv | CSV | 722,979 rows (637,444 refined) | Extracted via Crossref + OpenAlex |
+| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 42,368 rows raw (31,204 after filtering) | Merged from 6 sources; deposit artifact via `prepare_deposit.py` |
+| embeddings.npz | NumPy compressed archive | 37,928 × 1024 float32 | Computed (BGE-M3 sentence-transformer) |
+| citations.csv | CSV | 929,014 rows total (797,975 refined) | Extracted via Crossref + OpenAlex |
 | Per-source catalogs (×6) | CSV | Variable | API harvests + manual exports |
 | Raw API responses | Gzipped JSONL | ~2 GB | OpenAlex, ISTEX, Crossref, World Bank |
 | Pipeline source code | Python, YAML, Makefile | ~150 files | Original |
@@ -62,7 +62,7 @@ deposit to ensure reproducibility.
 2. **Protection criteria** override flags: citation count ≥50, multi-source presence,
    within-corpus citations, teaching syllabus appearance
 3. **Cross-validation**: stratified sample of 30 papers, precision = 1.0, recall = 1.0
-4. **Human validation**: 200 papers for relevance scoring calibration (AUC = 0.818)
+4. **Human validation**: 100 papers for relevance scoring calibration (AUC = 0.818)
 5. **Checksum verification**: MD5 checksums for bitwise reproducibility checks
 6. **Structural verification**: schema, row-count ±5%, statistical similarity on rebuild
 
