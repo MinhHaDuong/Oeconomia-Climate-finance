@@ -564,7 +564,7 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 DPAPER_ARCHIVE   := climate-finance-datapaper
 DPAPER_TMP       := /tmp/$(DPAPER_ARCHIVE)
 
-archive-datapaper: check-corpus
+archive-datapaper: check-corpus corpus-tables figures-datapaper
 	@echo "=== Building data paper archive ==="
 	rm -rf $(DPAPER_TMP)
 	mkdir -p $(DPAPER_TMP)/code $(DPAPER_TMP)/data
@@ -580,16 +580,12 @@ archive-datapaper: check-corpus
 	for src in openalex istex bibcnrs scispace grey teaching; do \
 		cp -L $(DATA_DIR)/$${src}_works.csv $(DPAPER_TMP)/data/ 2>/dev/null || true; \
 	done
-	@# Copy figures and tables for rendering
-	@if ls content/figures/*.png >/dev/null 2>&1; then \
-		mkdir -p $(DPAPER_TMP)/code/content/figures; \
-		cp content/figures/*.png $(DPAPER_TMP)/code/content/figures/; \
-	fi
-	@if ls content/tables/* >/dev/null 2>&1; then \
-		mkdir -p $(DPAPER_TMP)/code/content/tables; \
-		cp -r content/tables/* $(DPAPER_TMP)/code/content/tables/; \
-	fi
-	cp content/*-vars.yml $(DPAPER_TMP)/code/content/ 2>/dev/null || true
+	@# Copy figures, tables, and vars for rendering (hard fail if missing)
+	mkdir -p $(DPAPER_TMP)/code/content/figures $(DPAPER_TMP)/code/content/tables
+	cp content/figures/fig_bars.png $(DPAPER_TMP)/code/content/figures/
+	cp content/tables/tab_corpus_sources.md content/tables/tab_languages.md \
+	   $(DPAPER_TMP)/code/content/tables/
+	cp content/data-paper-vars.yml $(DPAPER_TMP)/code/content/
 	@echo "  Computing data checksums..."
 	cd $(DPAPER_TMP)/data && md5sum * > $(DPAPER_TMP)/code/checksums-data.md5
 	@echo "=== Creating tarball ==="
