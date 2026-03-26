@@ -1,0 +1,7 @@
+Source,Automation,Coverage
+"OpenAlex (Priem et al. 2022)",Automated (free API),"Primary academic source (indexes Crossref, DOAJ, PubMed, and more): tiered keyword search"
+ISTEX,Automated (public API),CNRS national text-mining platform (multi-publisher)
+Grey literature,Hybrid (curated seed + World Bank API),"16 curated reports (e.g., Buchner 2013) + World Bank repository"
+Teaching canon,AI-assisted (scraping + LLM extraction),Syllabus readings from university courses worldwide
+bibCNRS,Hand-harvested (CNRS credentials),"CNRS portal aggregating non-English news & discourse (Gale, Wanfang, NewsBank) in FR, ZH, JA, DE"
+SciSpace,"AI-collected, hand-exported",SciSpace systematic review tool exports
