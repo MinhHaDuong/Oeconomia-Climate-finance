@@ -91,8 +91,8 @@ The agent must always know and declare its current DD phase.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically by `on-start` trigger.
 - **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). Credentials (`AGENT_GH_TOKEN`, `AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`) are project-specific secrets, deployed per-machine in `.env` (gitignored).
-- **One change per commit.** Message explains *why this change and not another*: tactical-level details: alternatives considered, local design choices made.
-- **Merge commits** (`git merge --no-ff -m`): strategic-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
+- **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
+- **Merge commits**: strategic-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`. Feature merges go through PRs; chores (dvc.lock, housekeeping) merge locally via short-lived branch + fast-forward.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
 - **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`.
 - **Create PR** for each ticket to review changes before merging.

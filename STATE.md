@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-25
+Last updated: 2026-03-26
 
 ## Status: SUBMITTED + ERRATA 1
 
@@ -49,37 +49,9 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 
 None.
 
-## Active PRs
-
-- #385: docs: landscape analysis of distributed issue trackers (#237)
-- #453: ✅ merged — fix from_scispace flag never set (#452): source name derived from filename, not CSV content
-
-## Recent (2026-03-25)
-
-- #447: ✅ merged — security: pin litellm<=1.82.6 (supply chain attack)
-- #450: ✅ merged — variabilize hardcoded filter counts in data paper
-- #449: ✅ closed — embedding/filter mismatch resolved by corpus regen
-- Branch cleanup: 12 stale remote branches deleted
-- Test suite: 637 tests (547 unit, 90 integration/slow). `check-fast` runs unit tests in ~21 s, `check` runs all.
-
 ## Next actions
 
 - Data paper submission (RDJ4HSS) — PDF ready; needs re-render after SciSpace fix (#452)
 - Send Errata 1 to Oeconomia editor
 - Finalize DMP on OPIDoR (after v1.1 counts stabilize)
 - ESHET-HES conference slides (Nice, May 26–29)
-- Harness consolidation: move agentic-harness → ~/.agent/, reorganize project .agent/
-
-## Open tickets (publication path)
-
-- #421: Create data paper submission branch (submission/rdj-data-paper)
-- #403: Make targets for reproducibility archive and archival datasets
-- #404: Document long-running submission branch workflow
-
-## Open tickets (tooling)
-
-- #376: Setup: rename repo, create oeconomia release branch
-- #391: Extract harness into standalone repo
-- #405: Makefile modularity: include modules instead of duplicating for archives
-- #428: Normalize enrichment tables (join stage instead of in-place mutation)
-- #288: Add progress bars, ETA, stuck detection, and desktop notifications to pipeline scripts

@@ -42,6 +42,7 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - Œconomia house style, AI-tell sweep, code audit, PDF+ODT build clean
 - Doc restructuring: separated concerns (AGENTS → workflow only, domain guidance → docs/), added Dragon Dreaming + TDD + git hooks
 - Agent-agnostic skills: .agent/runbooks/, make check, AGENTS.md works with any AI assistant
+- Harness consolidation (#457): `docs/` guidelines + `runbooks/` → `.agent/guidelines/` + `.agent/runbooks/`
 - Agent identity (#109): machine user `HDMX-coding-agent`, classic PAT in `.env`, convention documented in AGENTS.md
 - DVC integration (#101–#104, #109): data versioning, pipeline DAG, repro archives, external cache, bidirectional sync
 - Source normalized to 1NF (#113): pipe-separated source → boolean from_* columns
