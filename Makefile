@@ -567,11 +567,34 @@ DPAPER_TMP       := /tmp/$(DPAPER_ARCHIVE)
 archive-datapaper: check-corpus
 	@echo "=== Building data paper archive ==="
 	rm -rf $(DPAPER_TMP)
-	mkdir -p $(DPAPER_TMP)/code $(DPAPER_TMP)/data
-	@# Part 1: Code (pipeline source via git archive)
-	git archive HEAD | tar -x -C $(DPAPER_TMP)/code
-	rm -rf $(DPAPER_TMP)/code/.dvc $(DPAPER_TMP)/code/attic $(DPAPER_TMP)/code/.claude
-	@# Part 2: v1.1 corpus data files
+	mkdir -p $(DPAPER_TMP)/code/content/bibliography \
+	         $(DPAPER_TMP)/code/content/figures \
+	         $(DPAPER_TMP)/code/content/tables \
+	         $(DPAPER_TMP)/code/scripts \
+	         $(DPAPER_TMP)/code/config \
+	         $(DPAPER_TMP)/data
+	@# ── code/: only what make test, make papers, and make corpus need ──
+	@# Build system
+	cp Makefile.datapaper $(DPAPER_TMP)/code/Makefile
+	cp pyproject.toml uv.lock $(DPAPER_TMP)/code/
+	cp dvc.yaml dvc.lock $(DPAPER_TMP)/code/
+	echo 'CLIMATE_FINANCE_DATA=../data' > $(DPAPER_TMP)/code/.env
+	@# Data paper rendering (make papers)
+	cp content/data-paper.qmd $(DPAPER_TMP)/code/content/
+	cp content/data-paper-vars.yml $(DPAPER_TMP)/code/content/
+	cp content/_quarto-datapaper.yml $(DPAPER_TMP)/code/content/_quarto.yml 2>/dev/null \
+		|| cp _quarto.yml $(DPAPER_TMP)/code/ 2>/dev/null || true
+	cp content/bibliography/main.bib $(DPAPER_TMP)/code/content/bibliography/
+	cp content/figures/fig_bars.png $(DPAPER_TMP)/code/content/figures/
+	@if ls content/tables/tab_corpus_sources.md content/tables/tab_languages.md >/dev/null 2>&1; then \
+		cp content/tables/tab_corpus_sources.md content/tables/tab_languages.md \
+		   $(DPAPER_TMP)/code/content/tables/; \
+	fi
+	@# Pipeline scripts (make corpus)
+	cp -r scripts/ $(DPAPER_TMP)/code/scripts/
+	cp -r config/ $(DPAPER_TMP)/code/config/
+	@if [ -d hooks/ ]; then cp -r hooks/ $(DPAPER_TMP)/code/hooks/; fi
+	@# ── data/: deposit files ──
 	@echo "  Preparing deposit CSV (dropping abstracts)..."
 	uv run python scripts/prepare_deposit.py --out-dir $(DPAPER_TMP)/data
 	@echo "  Copying embeddings, citations, and source catalogs..."
@@ -580,17 +603,10 @@ archive-datapaper: check-corpus
 	for src in openalex istex bibcnrs scispace grey teaching; do \
 		cp -L $(DATA_DIR)/$${src}_works.csv $(DPAPER_TMP)/data/ 2>/dev/null || true; \
 	done
-	@# Copy figures and tables for rendering
-	@if ls content/figures/*.png >/dev/null 2>&1; then \
-		mkdir -p $(DPAPER_TMP)/code/content/figures; \
-		cp content/figures/*.png $(DPAPER_TMP)/code/content/figures/; \
-	fi
-	@if ls content/tables/* >/dev/null 2>&1; then \
-		mkdir -p $(DPAPER_TMP)/code/content/tables; \
-		cp -r content/tables/* $(DPAPER_TMP)/code/content/tables/; \
-	fi
-	cp content/*-vars.yml $(DPAPER_TMP)/code/content/ 2>/dev/null || true
-	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/code/.env
+	@# ── checksums for make test ──
+	@echo "  Computing data checksums..."
+	cd $(DPAPER_TMP)/data && md5sum * > $(DPAPER_TMP)/code/checksums-data.md5
+	@# ── tarball ──
 	@echo "=== Creating tarball ==="
 	tar czf $(DPAPER_ARCHIVE).tar.gz -C /tmp \
 		--exclude='__pycache__' --exclude='.venv' \
