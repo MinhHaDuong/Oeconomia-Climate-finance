@@ -50,9 +50,16 @@ git commit -m "release: submit {document} to {journal}"
 git push -u origin submission/{journal}-{document}
 ```
 
+#### Enable branch protection
+
+```bash
+gh api repos/{owner}/{repo}/branches/submission/{journal}-{document}/protection \
+  --method PUT --input - <<< '{"enforce_admins":true,"required_pull_request_reviews":null,"required_status_checks":null,"restrictions":null,"allow_force_pushes":false,"allow_deletions":false}'
+```
+
 ### 2. Freeze
 
-The submission branch is now frozen. What was frozen:
+The submission branch is now frozen. Guards: pre-commit rejects merges (cherry-pick only), pre-push blocks deletion, GitHub branch protection prevents force-push. What was frozen:
 
 - **Git tag** marks the exact submission commit
 - **Pinned vars** in `content/{document}-vars.yml` (counts, percentages cited in prose)
@@ -97,7 +104,7 @@ git checkout submission/{journal}-{document}
    git cherry-pick <commit-hash>  # specific fixes from main
    ```
    Do NOT merge main into the submission branch — it would pull in
-   unrelated changes.
+   unrelated changes. (Enforced: pre-commit hook rejects merges on `submission/*` branches.)
 
 ### 5. Resubmission
 
