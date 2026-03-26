@@ -108,10 +108,8 @@ Example paths: `/home/user/data/projets/Oeconomia-Climate-finance/dvc-cache` (do
 fast network to APIs). Doudou only pulls data — never pushes.
 
 ```bash
-# On padme — run the corpus pipeline and push:
-make corpus                              # runs dvc repro (slow, API calls)
-uv run dvc push                          # upload results to shared store
-git add dvc.lock && git commit -m "data: update dvc.lock" && git push
+# On padme — run the corpus pipeline (auto-pushes data, auto-commits dvc.lock):
+make corpus
 
 # On doudou — sync and use:
 git pull                                 # get updated .dvc pointers

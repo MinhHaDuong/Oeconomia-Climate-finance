@@ -145,19 +145,20 @@ all: manuscript papers
 corpus:
 	@[ "$$(hostname)" = "padme" ] || { echo "error: make corpus runs on padme only. Use 'make corpus-sync' on $$(hostname)."; exit 1; }
 	@uv run dvc version >/dev/null 2>&1 || { echo "error: dvc not found. Install with: uv tool install 'dvc[ssh]'"; exit 1; }
+	@[ "$$(git rev-parse --abbrev-ref HEAD)" = "main" ] || { echo "error: make corpus must run on main (currently on $$(git rev-parse --abbrev-ref HEAD))."; exit 1; }
 	uv run dvc repro; ret=$$?; uv run dvc push; \
 	if [ $$ret -ne 0 ]; then exit $$ret; fi; \
-	changed=$$(git diff --name-only); \
+	changed=$$(git status --porcelain); \
 	if [ -z "$$changed" ]; then \
 		echo "dvc.lock unchanged, nothing to commit."; \
-	elif [ "$$changed" = "dvc.lock" ]; then \
+	elif [ "$$(echo "$$changed" | sed 's/^...//')" = "dvc.lock" ]; then \
 		echo "Auto-committing dvc.lock..."; \
 		branch="housekeeping-dvclock-$$(date +%Y%m%d-%H%M%S)"; \
 		git checkout -b "$$branch" && \
 		git add dvc.lock && \
 		git commit -m "data: update dvc.lock after pipeline re-run" && \
 		git checkout main && \
-		git merge --no-ff -m "Merge $$branch: DVC lock update" "$$branch" && \
+		git merge "$$branch" && \
 		git branch -d "$$branch" && \
 		git push origin main && \
 		echo "dvc.lock committed and pushed."; \
