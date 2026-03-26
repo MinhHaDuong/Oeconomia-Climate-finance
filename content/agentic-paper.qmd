@@ -125,7 +125,7 @@ The workflow is organized around seven triggers --- events that activate specifi
 - **review-pr**: reviewing a pull request (multi-perspective agent review).
 - **memory-write**: writing persistent memory (enforce TTL, list caps, staleness criteria).
 
-Each trigger is implemented as a markdown runbook in the `runbooks/` directory. The agent reads and follows the runbook when the trigger fires. This is not automated tooling --- it is a protocol that the agent is instructed to follow, and compliance depends on the instruction-following capability of the underlying language model.
+Each trigger is implemented as a markdown runbook in the `.agent/runbooks/` directory. The agent reads and follows the runbook when the trigger fires. This is not automated tooling --- it is a protocol that the agent is instructed to follow, and compliance depends on the instruction-following capability of the underlying language model.
 
 The trigger system creates a rhythm to the collaboration. A typical agent session begins with `on-start` (read project state, check for blockers), transitions to `start-ticket` (read the issue, create a worktree, write the first test), proceeds through the Doing cycle (with `pre-commit` firing before each commit), and ends with `post-task` (celebrate, update state, clean up). This sequence is documented but not enforced programmatically --- it relies on the agent's adherence to `AGENTS.md`. The pre-commit *hook*, by contrast, is enforced by git: it blocks commits to main, rejects files over 500KB, and checks for conflict markers and secrets.
 
