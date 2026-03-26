@@ -53,7 +53,7 @@ The corpus assembles academic and grey literature from {{< meta corpus_sources >
 | Source | Automation | Coverage |
 |--------|------------|----------|
 | OpenAlex [@priem_etal2022] | Automated (free API) | Primary academic source: tiered keyword search |
-| ISTEX | Automated (public API) | French national archive (Springer, Elsevier, Wiley) |
+| ISTEX | Automated (public API) | French national text-mining platform (multi-publisher) |
 | Grey literature | Hybrid (curated seed + World Bank API) | 16 curated reports [e.g., @buchner2013] + World Bank repository |
 | Teaching canon | AI-assisted (scraping + LLM extraction) | Syllabus readings from university courses worldwide |
 | bibCNRS | Hand-harvested (CNRS credentials) | Non-English news & grey sources (Gale, Wanfang, NewsBank) in FR, ZH, JA, DE |
@@ -75,7 +75,7 @@ A six-flag filtering pipeline then evaluates every work. Three flags require no 
 
 A separate annotation step detects near-duplicate content: coordinated multi-journal publications where the same text appears under different DOIs (e.g., the COP27 editorial published simultaneously in 60+ medical journals). Detection uses a two-pass approach (abstract prefix clustering followed by title clustering with abstract-similarity validation) and assigns a shared `near_duplicate_group` identifier. These records are kept, not removed: they are real publications, but flagging them supports transparency and enables users to control for content duplication in their analyses.
 
-The pipeline removes flagged works unless they meet one of four protection criteria: citation count $\geq$ 50, presence in 2+ sources, within-corpus citations, or appearance in teaching syllabi. The teaching canon was built by scraping university course syllabi worldwide and extracting bibliographic references through a combination of DOI regex matching and LLM-assisted extraction, followed by fuzzy deduplication and CrossRef enrichment (details in the companion technical report). Every inclusion/exclusion decision is recorded in the audit trail.
+The pipeline removes flagged works unless they meet one of four protection criteria: citation count $\geq$ 50, presence in 2+ sources, within-corpus citations, or appearance in teaching syllabi. The teaching canon was built by scraping university course syllabi worldwide and extracting bibliographic references through a combination of DOI regex matching and LLM-assisted extraction, followed by fuzzy deduplication and Crossref enrichment (details in the companion technical report). Every inclusion/exclusion decision is recorded in the audit trail.
 
 ### 2.3 Quality, Completeness, and Potential Biases {#sec-quality}
 
@@ -134,7 +134,7 @@ The pipeline source code is available at <https://github.com/MinhHaDuong/Oeconom
 
 ## Technical Environment {.unnumbered}
 
-API harvesting was last run on 2026-03-23. The pipeline was executed with Python 3.12.3, pandas 2.2, sentence-transformers 3.4 (model: *BAAI/bge-m3*), and BAAI/bge-reranker-v2-m3 for relevance scoring. Corpus building (API harvesting, enrichment, and filtering) runs on a single workstation; no GPU is required for harvesting or filtering. Embedding computation benefits from a GPU but completes in under two hours on a consumer GPU (NVIDIA RTX A4000, 16 GB).
+API harvesting was last run on 2026-03-23. The pipeline was executed with Python 3.12.3, pandas 2.2, sentence-transformers 3.4 (model: *BAAI/bge-m3*), and BAAI/bge-reranker-v2-m3 for relevance scoring. Corpus building (API harvesting, enrichment, and filtering) runs on a single workstation; no GPU is required for harvesting or filtering. Embedding computation benefits from a GPU but completes in under two hours on a workstation GPU (NVIDIA RTX A4000, 16 GB).
 
 ## Funding {.unnumbered}
 
