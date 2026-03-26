@@ -532,7 +532,7 @@ stages:
       size: 68391
     - path: scripts/catalog_merge.py
       hash: md5
-      md5: 8c41311efbc64a4d0159ec51e59ff530
+      md5: 113e539df0fc97b92e1a0b30cbb884eb
       size: 7094
     - path: scripts/pipeline_io.py
       hash: md5
