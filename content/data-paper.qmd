@@ -1,13 +1,11 @@
 ---
 title: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature"
 author:
-  - name: "Minh Ha-Duong"
+  - name: "Minh Ha-Duong\\thanks{Directeur de recherche, CIRED, CNRS. Correspondence: minh.ha-duong@cnrs.fr}"
     orcid: "0000-0003-2398-9009"
-    note: "Directeur de recherche at CIRED, CNRS"
     affiliation:
       - name: "CIRED"
       - name: "CNRS"
-    email: "minh.ha-duong@cnrs.fr"
 date: "2026-03-26"
 metadata-files: [data-paper-vars.yml]
 bibliography: bibliography/main.bib
@@ -140,7 +138,7 @@ API harvesting was last run on 2026-03-23. The pipeline was executed with Python
 
 ## Funding {.unnumbered}
 
-This work was supported by CNRS (Centre National de la Recherche Scientifique) through the author's permanent research position at CIRED (Centre International de Recherche sur l'Environnement et le Développement). The OpenAlex Premium API was provided by OurResearch.
+This work was supported by CNRS (Centre National de la Recherche Scientifique) through the author's permanent research position at CIRED (Centre International de Recherche sur l'Environnement et le Développement).
 
 ## Acknowledgements {.unnumbered}
 
