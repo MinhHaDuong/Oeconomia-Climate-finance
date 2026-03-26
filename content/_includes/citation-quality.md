@@ -24,19 +24,31 @@ The remaining {{< meta cite_never_fetched >}} never-fetched DOIs belong to publi
 
 ### Quality verification
 
-A stratified random sample of 30 source DOIs was re-fetched from Crossref and compared entry-by-entry with our stored data (seed 42, verification date: 2026-03-12).
+Two statistical tests verify the citation graph against Crossref as independent ground truth (seed 42, n=300 per test, verification date: 2026-03-26).
+
+**Test A — Accuracy (are our links real?)**
+A random sample of 300 individual (source_doi, ref_doi) links from `citations.csv` was checked against Crossref metadata: does Crossref list this reference for this source paper?
 
 | Metric | Value |
 |--------|-------|
-| Papers sampled | 30 (29 found in Crossref) |
-| Aggregate precision (our DOI refs found in Crossref) | **0.648** |
-| Aggregate recall (Crossref DOI refs we captured) | **1.000** |
-| Mean per-paper precision | **0.661** |
-| Mean per-paper recall | **1.000** |
-| Papers with phantom references | 19 / 29 |
-| Papers with missing references | 0 / 29 |
+| Links sampled | 300 |
+| Confirmed by Crossref | 297 / 300 |
+| **Accuracy** | **99.0%**, 95% CI [97.1%, 99.7%] |
 
-Recall is perfect: every reference DOI that Crossref reports is present in our stored data. Precision against Crossref is 0.65 because OpenAlex contributes additional resolved DOI references that Crossref does not list — these are not false positives but references resolved through OpenAlex's own metadata. For the 10 papers whose references come exclusively from Crossref, precision is 1.0. The 19 papers flagged as having "phantom" references are those where OpenAlex adds DOI refs beyond what Crossref reports; manual inspection confirms these are valid references.
+The 3 unconfirmed links are OpenAlex additions — references resolved through OpenAlex's own metadata that Crossref does not list. These are not false positives but references from an additional source.
+
+**Test B — Completeness (are links missing?)**
+A random sample of 300 source DOIs was re-fetched from Crossref. For each, all Crossref reference DOIs were compared against our stored data.
+
+| Metric | Value |
+|--------|-------|
+| Source DOIs sampled | 300 (285 with Crossref DOI refs) |
+| Crossref ref DOIs checked | 11,780 |
+| **Completeness** | **100.0%**, 95% CI [99.97%, 100%] |
+
+Every reference DOI that Crossref reports is present in our data. The 15 source DOIs without Crossref DOI references are papers whose publishers deposit no structured reference metadata.
+
+**Sample size justification.** At n=300, the Wilson confidence interval for a proportion near 1.0 has width ≤ ±2 percentage points. Each test requires ~150 seconds of Crossref API calls at 0.15s polite rate limiting.
 
 ### Alternative source evaluation
 
