@@ -34,7 +34,7 @@ format:
 <!-- Format: Data Paper, max 2,500 words, diamond OA, IISG/Openjournals -->
 <!-- Structure follows Petram & Kruizinga (2024) exemplar: Introduction, Method, Data, Concluding Remarks -->
 
-- Related dataset: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature" with DOI [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) in repository "Zenodo"
+- Related dataset: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature" with DOI [TODO: new Zenodo deposit] in repository "Zenodo"
 
 ## 1. Introduction {#sec-introduction}
 
@@ -122,11 +122,9 @@ The dataset supports several research directions: history-of-economics analyses 
 
 ## Data and Code Availability {.unnumbered}
 
-The reproducibility archive is deposited in Zenodo at <https://doi.org/10.5281/zenodo.19097045> under CC BY 4.0. It contains the v1.1 corpus data files (climate_finance_corpus.csv, embeddings.npz, citations.csv, and per-source catalogs) alongside the pipeline source code (scripts, configuration files, DVC pipeline definitions, and `pyproject.toml` with pinned dependencies). Key software dependencies: Python $\geq$ 3.10, pandas, scikit-learn, sentence-transformers, and DVC (Data Version Control). Suggested citation:
+The corpus data files and pipeline source code are deposited in Zenodo under CC BY 4.0 at [TODO: DOI]. The deposit contains the corpus data files (climate_finance_corpus.csv, embeddings.npz, citations.csv, and per-source catalogs) alongside the pipeline source code (scripts, configuration files, DVC pipeline definitions, and `pyproject.toml` with pinned dependencies). Key software dependencies: Python $\geq$ 3.10, pandas, scikit-learn, sentence-transformers, and DVC (Data Version Control). Suggested citation:
 
-> Ha-Duong, M. (2026). A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature (Version 1.1) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19097045>
-
-New versions retain the same concept DOI; version-specific DOIs are minted automatically by Zenodo. The `in_v1` column enables backward compatibility with analyses performed on earlier versions.
+> Ha-Duong, M. (2026). A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature [Data set]. Zenodo. [TODO: DOI]
 
 ## Technical Environment {.unnumbered}
 
