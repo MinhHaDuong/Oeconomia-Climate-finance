@@ -97,7 +97,7 @@ Users should be aware of several potential biases. The literature on climate fin
 
 ## 3. Data {#sec-data}
 
-- Climate finance corpus --- DOI: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)
+- Climate finance corpus --- DOI: [10.5281/zenodo.19236130](https://doi.org/10.5281/zenodo.19236130)
 - Temporal coverage: 1990--2024
 
 The Zenodo deposit is a reproducibility archive in two parts: the pipeline source code (scripts, configuration, and DVC definitions) and the v1.1 corpus data files described below. All CSV files use UTF-8 encoding with standard comma-separated format; identifiers are opaque string keys.
