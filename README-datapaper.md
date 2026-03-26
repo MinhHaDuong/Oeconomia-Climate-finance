@@ -1,102 +1,67 @@
 # Data paper reproducibility archive
 
-Companion to: Ha-Duong M. (2026) "A Multilingual Corpus of Climate Finance
-Literature, 1990–2024", Research Data Journal for the Humanities and Social
-Sciences.
+Companion to: Ha-Duong M. (2026) "A Curated Corpus of Climate Finance
+Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey
+Literature", Research Data Journal for the Humanities and Social Sciences.
 
-Dataset DOI: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)
+Dataset DOI: [10.5281/zenodo.19236130](https://doi.org/10.5281/zenodo.19236130)
 
-## What this archive contains
+## Archive structure
 
-| Path | Description |
-|------|-------------|
-| `data/catalogs/` | Pre-built corpus outputs (refined_works.csv, embeddings.npz, citations.csv, corpus_audit.csv) |
-| `data/exports/` | Pre-harvested bibCNRS and SciSpace exports (require institutional credentials to re-collect) |
-| `scripts/` | All pipeline scripts (discovery, merge, enrichment, refinement, embedding) |
-| `config/` | Query taxonomy, refinement rules, source configuration |
-| `tests/` | Acceptance tests and quality checks |
-| `Makefile` | Full pipeline targets |
-| `Makefile.datapaper` | Verification targets (this archive) |
-| `Dockerfile` | Container build for isolated reproduction |
-| `checksums-data.md5` | MD5 checksums of all shipped data files |
-| `verify_corpus.py` | Structural comparison script (Level 2 verification) |
-| `TOOLCHAIN.txt` | Python, uv, and key package versions used for the build |
+```
+climate-finance-datapaper/
+  code/                    # Full pipeline source (git archive of HEAD)
+    Makefile.datapaper     # Entry point — three targets below
+    content/               # Data paper source, figures, tables, vars
+    scripts/               # Pipeline + analysis scripts
+    config/                # Query taxonomy, source configuration
+    dvc.yaml, dvc.lock     # Pipeline definitions
+    checksums-data.md5     # Reference checksums for data/
+  data/                    # Deposit files
+    climate_finance_corpus.csv   # 42,922 works (abstracts stripped)
+    embeddings.npz               # 38,479 multilingual vectors (1024-dim)
+    citations.csv                # 968,871 citation pairs
+    *_works.csv                  # Per-source catalogs (6 files)
+```
 
-## Two-level verification
+## Prerequisites
 
-### Level 1: Checksum verification (fast, offline)
+- [Quarto](https://quarto.org/docs/get-started/) + XeLaTeX (for `make papers`)
+- GNU coreutils (for `make verify`; macOS: `brew install coreutils`)
 
-Verifies that shipped data files are bitwise identical to the author's outputs.
-No Python, no network, no API keys needed.
+## Usage
 
 ```bash
 tar xzf climate-finance-datapaper.tar.gz
-cd climate-finance-datapaper
-make -f Makefile.datapaper verify-quick
+cd climate-finance-datapaper/code
+make -f Makefile.datapaper verify   # check data checksums
+make -f Makefile.datapaper papers   # render data-paper.pdf
 ```
 
-### Level 2: Full rebuild (slow, requires internet)
+## Targets
 
-Rebuilds the corpus from source APIs and compares against the shipped
-reference. Takes 4–6 hours. Exact byte-identity is not expected because
-API responses evolve (new publications, updated citation counts). Instead,
-the comparison checks structural equivalence: schema, row-count tolerance
-(±5%), and statistical similarity of key metrics.
+**`make verify`** — checks shipped data files against MD5 checksums.
+No Python, no internet needed.
 
-```bash
-# Option A: native (requires Python >= 3.10 and uv)
-make -f Makefile.datapaper verify-rebuild
+**`make papers`** — renders `data-paper.pdf` from frozen variables and
+pre-built figures. No pipeline, no API calls, no corpus data needed.
+Output: `output/content/data-paper.pdf`.
 
-# Option B: Docker (isolated, no local Python needed)
-docker build -t climate-finance-corpus .
-docker run -v $(pwd)/rebuilt:/app/data climate-finance-corpus
-# Then compare rebuilt/ against data/catalogs/
-```
+**`make corpus`** — runs the full DVC pipeline (`dvc repro`). Included as
+process documentation; a full rebuild requires API access and takes 4–6
+hours. See `dvc.yaml` and `scripts/` for the pipeline logic.
 
-## API keys and credentials
+## Usage examples
 
-| Source | Key required? | How to obtain |
-|--------|--------------|---------------|
-| OpenAlex | Optional (faster with Premium key) | [openalex.org/pricing](https://openalex.org/pricing) |
-| ISTEX | No | Public API |
-| World Bank | No | Public API |
-| Crossref | No (polite pool recommended) | Set `mailto` in config |
-| bibCNRS | Pre-harvested (CNRS Janus credentials) | Included in `data/exports/` |
-| SciSpace | Pre-harvested (commercial tool) | Included in `data/exports/` |
+The following scripts read from the corpus CSV and produce the data
+paper's figure and tables. They illustrate how to work with the dataset:
 
-## Why no dedicated Dockerfile
+| Script | Output | What it does |
+|--------|--------|--------------|
+| `scripts/plot_fig_bars.py` | `fig_bars.png` | Annual publication volume bar chart |
+| `scripts/export_corpus_table.py` | `tab_corpus_sources.md` | Per-source quality and completeness table |
+| `scripts/export_language_table.py` | `tab_languages.md` | Language distribution table |
 
-This archive describes a **dataset**, not an analysis. Reviewers verify the
-deposit (row counts, schemas, checksums), not rebuild it. A full rebuild
-from APIs is inherently non-reproducible in the strict sense: API responses
-evolve daily, and two sources (bibCNRS, SciSpace) require manual export from
-restricted platforms. The generic `Dockerfile` in the main repository covers
-Level 2 rebuild for those who want to try; containerising Level 1 checksum
-verification would add ceremony without substance.
+## License
 
-## Non-reproducible steps
-
-- bibCNRS and SciSpace raw exports cannot be re-harvested without institutional
-  credentials. Their exports are included in `data/exports/` for this reason.
-- Citation counts from OpenAlex change daily. The shipped corpus reflects
-  counts as of the harvest date recorded in `TOOLCHAIN.txt`.
-- The LLM audit (Phase C2) requires an OpenRouter API key and is non-deterministic.
-  It can be skipped with `--skip-llm`; the shipped `llm_audit.csv` serves as the
-  reference.
-
-## Pipeline phases
-
-```
-Phase 1 — Corpus building (this archive):
-  make corpus-discover   # harvest from 6 sources (~2 hours)
-  make corpus-enrich     # DOIs, abstracts, citations (~3 hours)
-  make corpus-extend     # compute 6 quality flags
-  make corpus-filter     # apply retention policy → refined_works.csv
-  make corpus-align      # align embeddings and citations to filtered corpus
-
-Phase 2 — Analysis (separate):
-  make figures           # UMAP, clustering, breakpoints
-
-Phase 3 — Rendering (separate):
-  make manuscript        # Quarto → PDF
-```
+Code: MIT. Data: CC BY 4.0.
