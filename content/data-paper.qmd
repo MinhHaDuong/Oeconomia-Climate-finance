@@ -1,5 +1,5 @@
 ---
-title: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Eight Languages"
+title: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature"
 author:
   - name: "Minh Ha-Duong"
     orcid: "0000-0003-2398-9009"
@@ -11,22 +11,18 @@ date: "2026-03-23"
 metadata-files: [data-paper-vars.yml]
 bibliography: bibliography/main.bib
 abstract: |
-  This data paper describes a multilingual, deduplicated corpus of
+  This data paper presents a curated, multilingual corpus of
   {{< meta corpus_total >}} works on climate finance published between 1990
-  and 2024, assembled from {{< meta corpus_sources >}} bibliographic sources:
-  OpenAlex, ISTEX, bibCNRS, SciSpace, institutional grey literature,
-  and a curated teaching canon. The search strategy targets eight languages
-  through a four-tier keyword taxonomy; works in 26 detected languages are represented. A six-flag quality pipeline
-  combining metadata checks, citation isolation, semantic outlier
-  filtering, and cross-encoder relevance scoring produces a curated
-  dataset with full audit trail. A citation network of
-  {{< meta cite_total_rows >}} links, extracted via Crossref and OpenAlex,
-  supports co-citation analysis and bibliographic coupling ({{< meta cite_coverage_core_pct >}}%
-  coverage for core works cited $\geq$ 50 times). Pre-computed
-  {{< meta emb_dimensions >}}-dimensional multilingual sentence-transformer embeddings enable
-  clustering, topic modelling, and cross-lingual analysis without
-  re-encoding. The full corpus with quality flags, embeddings, and
-  citation network is deposited in Zenodo under CC BY 4.0.
+  and 2024. The dataset is assembled from
+  {{< meta corpus_sources >}} complementary sources that combine academic databases,
+  institutional repositories, and grey literature, enabling broader coverage
+  than single-source bibliometric studies. A multilingual retrieval strategy
+  based on an eight-language keyword taxonomy is used to capture relevant
+  works across linguistic contexts, while a reproducible pipeline integrates
+  deduplication, metadata harmonisation, and quality filtering. The resulting
+  corpus includes a citation network derived from Crossref and OpenAlex, as
+  well as pre-computed multilingual embeddings to support cross-lingual
+  analysis.
 keywords: |
   climate finance -- bibliometric corpus -- multilingual --
   sentence-transformer embeddings -- scientometrics -- history of economic thought
@@ -39,17 +35,15 @@ format:
 <!-- Format: Data Paper, max 2,500 words, diamond OA, IISG/Openjournals -->
 <!-- Structure follows Petram & Kruizinga (2024) exemplar: Introduction, Method, Data, Concluding Remarks -->
 
-- Related dataset: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Eight Languages" with DOI [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) in repository "Zenodo"
+- Related dataset: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature" with DOI [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) in repository "Zenodo"
 
 ## 1. Introduction {#sec-introduction}
 
-Climate finance---the financial flows directed at mitigating and adapting to climate change---has become one of the most politically salient objects in international economic governance. The \$100 billion annual commitment made at Copenhagen in 2009, and the \$300 billion New Collective Quantified Goal agreed at Baku in 2024, are contested not only in their adequacy but in their very definition: what counts as climate finance depends on accounting conventions that are themselves disputed [@roberts_weikmans2017; @michaelowa2007].
-
-A growing scholarly literature addresses this contested object, spanning economics, political science, international relations, development studies, and environmental governance. Yet researchers face a fragmented bibliographic terrain. Academic publications are scattered across databases with different coverage profiles. Institutional reports from the OECD, UNFCCC, World Bank, and Climate Policy Initiative, documents that have shaped the very categories of the debate, are absent from standard academic databases. The literature is also multilingual: while English dominates, French, Chinese, Japanese, and German traditions contribute perspectives that monolingual corpora miss entirely.
+Scholarship on climate finance is scattered across databases, languages, and institutional traditions, with no single corpus bringing these fragments together. Climate finance---the financial flows directed at mitigating and adapting to climate change---has become one of the most politically salient objects in international economic governance: the \$100 billion annual commitment made at Copenhagen in 2009, and the \$300 billion New Collective Quantified Goal agreed at Baku in 2024, are contested not only in their adequacy but in their very definition [@roberts_weikmans2017; @michaelowa2007]. The scholarship that analyses this contested object spans economics, political science, international relations, development studies, and environmental governance, yet it remains bibliographically fragmented. Academic publications are dispersed across databases with different coverage profiles. Institutional reports from the OECD, UNFCCC, World Bank, and Climate Policy Initiative---documents that have shaped the very categories of the debate---are absent from standard academic databases. The literature is also multilingual: while English dominates, French, Chinese, Japanese, and German traditions contribute perspectives that monolingual corpora miss entirely.
 
 Pioneering bibliometric work has begun to map this terrain, though the terms "climate finance," "green finance," and "sustainable finance" denote overlapping but distinct literatures with different disciplinary centres of gravity. @care_weber2023 survey sustainable finance bibliometrics using Scopus; @shang_jin2023 analyse climate finance publications from Web of Science; @maria_etal2023 map green finance using Scopus with network analysis. These studies established the field's bibliometric contours but rely on a single database each, cover English-language publications only, and do not publish reusable datasets (verified against each journal's data sharing policy and public repositories).
 
-Our dataset addresses these limitations by casting a wide net across {{< meta corpus_sources >}} complementary sources, applying a documented quality-filtering pipeline with full audit trail, and providing pre-computed sentence-transformer embeddings that place all works in a shared semantic space regardless of language. Because "climate finance" is a contested category whose boundaries are themselves an object of study [@weikmans_roberts2019], we deliberately err on the side of inclusion and publish the full corpus with quality flags, letting users draw their own boundary. The dataset was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance [Ha-Duong, under review]. However, its scope and documentation make it reusable for a range of applications across the humanities and social sciences: topic modelling, citation network analysis, bibliometric mapping, temporal analysis of concept emergence, and cross-lingual studies of how climate finance is discussed in different linguistic and institutional traditions.
+Our dataset addresses these limitations. Its construction follows three design principles: inclusiveness (broad retrieval across sources and languages), traceability (full audit trail of filtering decisions), and reusability (pre-computed embeddings and structured outputs). Concretely, it casts a wide net across {{< meta corpus_sources >}} complementary sources, applies a documented quality-filtering pipeline, and provides sentence-transformer embeddings that place all works in a shared semantic space regardless of language. Because "climate finance" is a contested category whose boundaries are themselves an object of study [@weikmans_roberts2019], we deliberately err on the side of inclusion and publish the full corpus with quality flags, letting users draw their own boundary. The dataset was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance [Ha-Duong, under review]. However, its scope and documentation make it reusable for a range of applications across the humanities and social sciences: topic modelling, citation network analysis, bibliometric mapping, temporal analysis of concept emergence, and cross-lingual studies of how climate finance is discussed in different linguistic and institutional traditions.
 
 ## 2. Method {#sec-method}
 
@@ -100,6 +94,8 @@ Near-duplicate detection identified coordinated multi-journal publications --- n
 
 Users should be aware of several potential biases. The literature on climate finance is distributed across distinct pools with different indexing infrastructures. Crossref covers OECD-based academic, commercial publishers. OpenAlex expands beyond OECD publishers and indexes grey literature, but remains centred on academic production. International organisations and think tanks (World Bank, OECD, UNFCCC standing committee reports) constitute a separate pool, partially captured here through our grey-literature and bibCNRS sources. News and public discourse form yet another pool, represented only indirectly through bibCNRS. This corpus is strongest on the academic pool and weakest on policy and media discourse. Non-English coverage remains limited (@tbl-languages): English accounts for {{< meta lang_english_pct >}}% of refined works, with 18 other languages represented individually and 6.7% unclassified. ISTEX yields only 4 records after filtering, reflecting limited overlap between its archive holdings and climate-finance vocabulary; it is retained as a source because it provides independent confirmation of records found elsewhere and its automated API makes future re-harvesting costless. Citation counts reflect OpenAlex data as of the collection date and favour older, English-language works. The teaching-canon component reflects a harvesting bias toward institutions that publish syllabi on public websites rather than behind learning management systems.
 
+While the corpus incorporates multiple sources and explicitly targets eight languages, its epistemic diversity remains constrained. English accounts for over 90% of works, and the majority of records originate from OpenAlex-linked academic infrastructures. This reflects structural biases in scholarly indexing systems, including those relying on Crossref, which tend to privilege English-language and Western publication venues. The inclusion of grey literature, bibCNRS, and multilingual queries partially mitigates this bias but does not eliminate it. A more globally representative climate finance corpus would require deeper integration of regional databases, non-DOI sources, and multilingual discovery pipelines.
+
 ## 3. Data {#sec-data}
 
 - Climate finance corpus --- DOI: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)
@@ -123,15 +119,15 @@ The dataset is released under CC BY 4.0. The pipeline is organised in three phas
 
 ## 4. Concluding Remarks {#sec-concluding}
 
-By combining {{< meta corpus_sources >}} complementary sources into a curated, multilingual, and reproducible dataset spanning 35 years, this corpus fills a gap in climate finance scholarship. The {{< meta corpus_sources >}}-source design pairs the breadth of OpenAlex with coverage from French archives (ISTEX), non-English discourse (bibCNRS), institutional reports (grey literature), pedagogical use (teaching canon), and AI-assisted discovery (SciSpace) absent from single-database corpora. Pre-computed multilingual embeddings lower the barrier to semantic analysis, enabling researchers to study thematic structure, temporal evolution, and cross-lingual patterns without re-encoding the full corpus.
+This corpus makes it possible to study climate finance as a single, cross-lingual bibliographic object for the first time. Its {{< meta corpus_sources >}}-source design pairs the breadth of OpenAlex with coverage from French archives (ISTEX), non-English discourse (bibCNRS), institutional reports (grey literature), pedagogical use (teaching canon), and AI-assisted discovery (SciSpace) absent from single-database corpora. Pre-computed multilingual embeddings lower the barrier to semantic analysis, enabling researchers to study thematic structure, temporal evolution, and cross-lingual patterns without re-encoding the full corpus.
 
-The dataset supports several research directions: history-of-economics analyses of climate finance as a contested concept, methodological studies of how different databases define "climate finance," genealogical analyses tracing concept propagation across disciplinary communities, and diachronic analyses of field dynamics over 35 years. The provenance architecture makes it straightforward to add new sources or extend the temporal window. A future iteration would benefit from OpenAlex's bulk download rather than keyword-based API queries: filtering a complete snapshot post-hoc with semantic classifiers would reduce the dependence on vocabulary choices made at harvest time. Author affiliation and country metadata, available through OpenAlex, are left for future enrichment.
+The dataset supports several research directions: history-of-economics analyses of climate finance as a contested concept, methodological studies of how different databases define "climate finance," genealogical analyses tracing concept propagation across disciplinary communities, and diachronic analyses of field dynamics over 35 years. The provenance architecture makes it straightforward to add new sources or extend the temporal window. A future iteration would benefit from OpenAlex's bulk download rather than keyword-based API queries: filtering a complete snapshot post-hoc with semantic classifiers would reduce the dependence on vocabulary choices made at harvest time. Author affiliation and country metadata, available through OpenAlex, are left for future enrichment. By making its boundaries explicit rather than implicit, the corpus turns the definition of "climate finance" from a hidden assumption into an object of analysis.
 
 ## Data Availability {.unnumbered}
 
 The reproducibility archive is deposited in Zenodo at <https://doi.org/10.5281/zenodo.19097045> under CC BY 4.0. It contains the pipeline source code and the v1.1 corpus data files (climate_finance_corpus.csv, embeddings.npz, citations.csv, and per-source catalogs). Suggested citation:
 
-> Ha-Duong, M. (2026). A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Eight Languages (Version 1.1) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19097045>
+> Ha-Duong, M. (2026). A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature (Version 1.1) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19097045>
 
 New versions retain the same concept DOI; version-specific DOIs are minted automatically by Zenodo. The `in_v1` column enables backward compatibility with analyses performed on earlier versions.
 
