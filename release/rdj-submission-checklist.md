@@ -1,7 +1,7 @@
 # RDJ4HSS Submission Checklist
 
 ## Manuscript
-- [x] Title: "A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Eight Languages"
+- [x] Title: "A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature"
 - [x] Sections follow RDJ4HSS structure: Abstract, Keywords, Related dataset, 1. Introduction, 2. Method (2.1 Sources, 2.2 Data Structure, 2.3 Quality/Biases), 3. Data, 4. Concluding Remarks, Acknowledgements, References
 - [ ] Word count ≤ 2,500 (body sections 1–4) — verify after final edits
 - [x] Author-date citations (APA-like)
@@ -11,7 +11,7 @@
 - [x] Table included (tab_corpus_sources.md)
 
 ## Data deposit
-- [x] Zenodo DOI: 10.5281/zenodo.19097045
+- [x] Zenodo DOI: 10.5281/zenodo.19236130
 - [ ] Update Zenodo deposit with v1.1 data files
 - [x] CC BY 4.0 license
 - [x] Suggested citation in paper
