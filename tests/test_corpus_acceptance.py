@@ -996,3 +996,103 @@ def test_language_null_rate_below_2_percent(enriched):
         f"Expected < 2% after enrich_language. "
         f"Run: uv run dvc repro enrich_works"
     )
+
+
+# ═══════════════════════════════════════════════════════════
+# 13. METADATA QUALITY — spot-check against Crossref
+# ═══════════════════════════════════════════════════════════
+
+QA_METADATA_REPORT_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "content", "tables", "qa_metadata_report.json"
+)
+
+
+class TestMetadataQuality:
+    """Check qa_metadata_report.json if available (warns if missing/stale)."""
+
+    def test_metadata_report_exists(self):
+        """Warn (don't fail) if qa_metadata_report.json is missing."""
+        if not os.path.isfile(QA_METADATA_REPORT_PATH):
+            import warnings
+            warnings.warn(
+                f"qa_metadata_report.json not found at {QA_METADATA_REPORT_PATH}. "
+                "Run: uv run python scripts/qa_metadata.py to generate it."
+            )
+            pytest.skip("qa_metadata_report.json not found (needs live API calls)")
+
+    def test_metadata_report_structure(self):
+        """Report must have title_match, year_match, and doi_resolution sections."""
+        if not os.path.isfile(QA_METADATA_REPORT_PATH):
+            pytest.skip("qa_metadata_report.json not found")
+        import json
+        with open(QA_METADATA_REPORT_PATH) as f:
+            report = json.load(f)
+        for key in ("title_match", "year_match", "doi_resolution"):
+            assert key in report, (
+                f"Missing '{key}' in qa_metadata_report.json"
+                + _diagnosis(
+                    "qa_metadata.py output schema changed",
+                    "Re-run: uv run python scripts/qa_metadata.py",
+                    "~2 min",
+                    "Metadata quality metrics unavailable for technical report",
+                )
+            )
+            section = report[key]
+            assert "sample_n" in section, f"'{key}' missing 'sample_n'"
+            assert "proportion" in section, f"'{key}' missing 'proportion'"
+            assert "ci_lower" in section, f"'{key}' missing 'ci_lower'"
+            assert "ci_upper" in section, f"'{key}' missing 'ci_upper'"
+
+    def test_metadata_title_accuracy(self):
+        """Title match rate CI lower bound must exceed 0.85."""
+        if not os.path.isfile(QA_METADATA_REPORT_PATH):
+            pytest.skip("qa_metadata_report.json not found")
+        import json
+        with open(QA_METADATA_REPORT_PATH) as f:
+            report = json.load(f)
+        title = report["title_match"]
+        assert title["sample_n"] >= 50, (
+            f"Title match sample too small: {title['sample_n']}"
+            + _diagnosis(
+                "qa_metadata.py ran with too few Crossref hits",
+                "Re-run with more samples or check API connectivity",
+                "~2 min",
+                "Title accuracy claim not statistically meaningful",
+            )
+        )
+        assert title["ci_lower"] > 0.85, (
+            f"Title match CI lower = {title['ci_lower']:.3f} (expected > 0.85)"
+            + _diagnosis(
+                "Titles diverge from Crossref ground truth",
+                "Investigate mismatches in report details",
+                "1 hour",
+                "Title metadata unreliable — readers cannot trust bibliographic data",
+            )
+        )
+
+    def test_metadata_year_accuracy(self):
+        """Year match rate CI lower bound must exceed 0.90."""
+        if not os.path.isfile(QA_METADATA_REPORT_PATH):
+            pytest.skip("qa_metadata_report.json not found")
+        import json
+        with open(QA_METADATA_REPORT_PATH) as f:
+            report = json.load(f)
+        year = report["year_match"]
+        assert year["sample_n"] >= 50, (
+            f"Year match sample too small: {year['sample_n']}"
+            + _diagnosis(
+                "qa_metadata.py ran with too few Crossref hits",
+                "Re-run with more samples or check API connectivity",
+                "~2 min",
+                "Year accuracy claim not statistically meaningful",
+            )
+        )
+        assert year["ci_lower"] > 0.90, (
+            f"Year match CI lower = {year['ci_lower']:.3f} (expected > 0.90)"
+            + _diagnosis(
+                "Publication years diverge from Crossref ground truth",
+                "Investigate mismatches in report details",
+                "1 hour",
+                "Year metadata unreliable — periodization analysis may be wrong",
+            )
+        )
