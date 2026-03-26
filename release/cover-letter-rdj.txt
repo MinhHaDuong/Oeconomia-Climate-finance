@@ -1,6 +1,6 @@
 **To:** Editors, Research Data Journal for the Humanities and Social Sciences
 **From:** Minh Ha-Duong, CIRED/CNRS
-**Re:** Data paper submission — "A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Eight Languages"
+**Re:** Data paper submission — "A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature"
 
 Dear Editors,
 
@@ -10,7 +10,7 @@ I am pleased to submit a data paper describing a multilingual bibliometric corpu
 
 **Why this dataset matters for HSS.** Climate finance is a contested category at the intersection of economics, political science, development studies, and environmental governance. Existing bibliometric studies of this literature rely on single databases, cover English only, and do not publish reusable datasets. Our corpus addresses these limitations by combining academic and institutional sources, including the grey literature that has shaped the very categories of the debate. The multilingual design — targeting French, Chinese, Japanese, and German alongside English — supports cross-linguistic studies that monolingual corpora cannot.
 
-**Data deposit.** The dataset is deposited in Zenodo at https://doi.org/10.5281/zenodo.19097045 under CC BY 4.0. All pipeline scripts are publicly available.
+**Data deposit.** The dataset is deposited in Zenodo at https://doi.org/10.5281/zenodo.19236130 under CC BY 4.0. All pipeline scripts are publicly available.
 
 **Companion study.** The corpus was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance. That companion paper is currently under review at Œconomia. The data paper stands independently: it describes the dataset's construction, validation, and reuse potential without depending on the companion study's analytical conclusions.
 
