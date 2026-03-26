@@ -39,14 +39,15 @@ Runs in a fresh context — the ticket is the only input. This prevents context 
 
 Autonomous execution using test-driven development. See `.agent/guidelines/coding-guidelines.md` and `.agent/guidelines/writing-guidelines.md` for domain-specific test conventions. The inner cycle is:
 
-1. **Red**: write a failing test that defines the expected behavior.
-2. **Green**: write the minimum code to make it pass.
-3. **Refactor**: clean up, then confirm tests still pass.
-4. **PR**: push branch, open PR (include context, it is a handoff point).
+1. **Red**: write a failing test that defines the expected behavior. Commit.
+2. **Green**: write the minimum code to make it pass. Commit.
+3. **Refactor**: clean up, then confirm tests still pass. Use `make check-fast` during development. Commit.
+4. **PR**: Pass `make check` gate, then submit the work by pushing the branch and opening a PR with detailed context.
 5. **Review**: See `.agent/runbooks/review-pr.md`.
-6. **Iterate**: if review finds issues, fix them all then re-review. Also fix nits, create no debt. Spin an agent to explore seemingly unrelated issues and decide between fix now or open ticket.
+6. **Fix**: Fix all issues and comments. Nits: fix them. Leave no debt. Seemingly unrelated issues: Spin an agent to explore and decide between fixing now or opening a ticket.
+6. **Iterate**: As necessary for top quality, up to three review/fix cycle.
 
-Each Red/Green/Refactor step gets its own commit. Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
+ Use `make check-fast` during development, `make check` before opening a PR.
 
 When stuck, escalate progressively:
 1. Fix direct — review feedback is straightforward.
