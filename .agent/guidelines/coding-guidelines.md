@@ -138,7 +138,7 @@ When adding a new enrichment script: put incremental state in `enrich_cache/<nam
 uv run python scripts/enrich_citations_batch.py                  # Crossref → enrich_cache/crossref_refs.csv
 uv run python scripts/enrich_citations_openalex.py               # OpenAlex → enrich_cache/openalex_refs.csv
 uv run python scripts/merge_citations.py                         # Concat caches → citations.csv (the DVC output)
-uv run python scripts/qa_citations.py                            # Verify citation quality (30-sample)
+uv run python scripts/qa_citations.py                            # Verify citation quality (n=300, accuracy + completeness)
 # Or simply: make citations  (runs all four; Crossref + OpenAlex in parallel)
 
 # Figures — alluvial pipeline (split into focused scripts as of #73)
@@ -174,7 +174,7 @@ uv run python scripts/export_core_venues_markdown.py  # Manuscript-ready top-10 
 
 **Overall coverage**: 17,248 / 23,194 corpus DOIs (74%) appear as source papers.
 **Core coverage** (cited ≥ 50): 2,284 core works.
-**Quality**: precision = recall = 1.000 verified against Crossref on 30-paper sample.
+**Quality**: 99.0% accuracy, 100% completeness verified against Crossref (n=300 per test, Wilson 95% CIs).
 **Structural ceiling**: the remaining 22% are at publishers (preprints, small journals, regional outlets) with no API reference metadata. Next step: PDF OCR with GROBID for core papers.
 
 The OpenAlex enrichment uses a two-phase approach:
