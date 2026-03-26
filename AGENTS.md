@@ -90,15 +90,15 @@ The agent must always know and declare its current DD phase.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically by `on-start` trigger.
 - **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). Credentials (`AGENT_GH_TOKEN`, `AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`) are project-specific secrets, deployed per-machine in `.env` (gitignored).
-- **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
-- **Merge commits** (`git merge --no-ff -m`): tactical-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
+- **One change per commit.** Message explains *why this change and not another*: tactical-level details: alternatives considered, local design choices made.
+- **Merge commits** (`git merge --no-ff -m`): strategic-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
 - **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`.
-- **Create PRs** for each ticket so the author can review changes before merging.
+- **Create PR** for each ticket to review changes before merging.
 
 ## Autonomous workflow
 
-When issue exploration leads to multiple action items, open one ticket for each. Then work in waves, learning from each.
+When issue exploration leads to multiple action items, open one ticket for each under a tracking ticket. Then work in waves, learning from each.
 
 ### Wave cycle
 
@@ -119,6 +119,7 @@ The wave ends with a global verification pass across all changes merged in this 
 - See `.agent/guidelines/writing-guidelines.md` for manuscript-specific guidance.
 
 ## Conversation scope
-**Doing conversations**: one ticket per conversation. The agent stops when the ticket's exit criteria are met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.
 
 **Dreaming conversations**: may produce zero or many tickets, or inline small fixes. The explore branch is the workspace; the tickets (or PR) are the deliverables.
+
+**Doing conversations**: one ticket per conversation. The agent transition to Celebration when the PR is merged with the ticket closed, exit criteria met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.
