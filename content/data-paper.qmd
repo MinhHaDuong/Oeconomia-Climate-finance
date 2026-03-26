@@ -2,7 +2,7 @@
 title: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature"
 author:
   - name: "Minh Ha-Duong\\thanks{Directeur de recherche, CIRED, CNRS. Correspondence: minh.ha-duong@cnrs.fr}"
-    orcid: "0000-0003-2398-9009"
+    orcid: "0000-0001-9988-2100"
     affiliation:
       - name: "CIRED"
       - name: "CNRS"
@@ -34,7 +34,7 @@ format:
 <!-- Format: Data Paper, max 2,500 words, diamond OA, IISG/Openjournals -->
 <!-- Structure follows Petram & Kruizinga (2024) exemplar: Introduction, Method, Data, Concluding Remarks -->
 
-- Related dataset: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature" with DOI [TODO: new Zenodo deposit] in repository "Zenodo"
+- Related dataset: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources, Multilingual Retrieval, and Grey Literature" with DOI [10.5281/zenodo.19236130](https://doi.org/10.5281/zenodo.19236130) in repository "Zenodo"
 
 ## 1. Introduction {#sec-introduction}
 

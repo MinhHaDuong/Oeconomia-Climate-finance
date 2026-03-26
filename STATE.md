@@ -22,7 +22,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Under double-blind review.
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS (news/discourse), SciSpace, grey literature, teaching canon
 - Semantic Scholar disconnected: keyword search was broken (wrong endpoint, no phrase matching)
-- 31,012 refined works, 637,444 citations, 37,928 embeddings
+- 31,204 refined works, 37,928 embeddings
 - Teaching expanded: 622 works from 52 institutions (scraper + LLM extraction)
 - Filtering pipeline renamed from "refinement" (#261)
 - `in_v1` provenance column: 29,805 / 31,012 rows match v1.0-submission (96.1%)
@@ -51,7 +51,7 @@ None.
 
 ## Next actions
 
-- Data paper submission (RDJ4HSS) — PDF ready; needs re-render after SciSpace fix (#452)
+- Data paper submission (RDJ4HSS) — PDF ready, re-rendered after SciSpace fix (#452)
 - Send Errata 1 to Oeconomia editor
 - Finalize DMP on OPIDoR (after v1.1 counts stabilize)
 - ESHET-HES conference slides (Nice, May 26–29)

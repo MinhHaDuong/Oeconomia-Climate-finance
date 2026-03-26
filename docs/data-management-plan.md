@@ -1,7 +1,7 @@
 # Plan de gestion des données / Data Management Plan
 
 **Project**: A Curated Corpus of Climate Finance Literature, 1990–2024
-**Author**: Minh Ha-Duong (ORCID 0000-0003-2398-9009)
+**Author**: Minh Ha-Duong (ORCID 0000-0001-9988-2100)
 **Affiliation**: CNRS, CIRED (UMR 8568 CNRS–ENPC–Cirad–AgroParisTech–EHESS)
 **Date**: 2026-03-26
 **Version**: 1.0
