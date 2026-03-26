@@ -111,7 +111,7 @@ The Zenodo deposit is a reproducibility archive in two parts: the pipeline sourc
 
 ![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
 
-Citation coverage is unevenly distributed over time: approximately 27% for works published before 2007 versus 47% for post-2015 works. Users conducting temporal citation-network analyses should account for this systematic undercount of early-period connectivity.
+Citation coverage --- the share of corpus works that appear as a citing source in the citation network --- is unevenly distributed over time: approximately 27% for works published before 2007 versus 47% for post-2015 works. This gap reflects two compounding factors: early and grey-literature works are less likely to carry DOIs or to have their reference lists indexed by Crossref and OpenAlex, and the field itself was smaller before 2007. Users conducting temporal citation-network analyses should account for this systematic undercount of early-period connectivity.
 
 The dataset is released under CC BY 4.0. The four automated or semi-automated sources can be re-harvested with an internet connection; the two restricted sources (bibCNRS, SciSpace) have their raw exports included in the Zenodo deposit.
 
