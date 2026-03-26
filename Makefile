@@ -561,42 +561,8 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 # Complete reproducibility package: all corpus-building scripts, DVC pipeline,
 # pool data, caches.  Reviewers can verify with:
 #   tar xzf archive.tar.gz && cd ... && uv sync && dvc repro
-DPAPER_ARCHIVE   := climate-finance-datapaper
-DPAPER_TMP       := /tmp/$(DPAPER_ARCHIVE)
-
 archive-datapaper: check-corpus corpus-tables figures-datapaper
-	@echo "=== Building data paper archive ==="
-	rm -rf $(DPAPER_TMP)
-	mkdir -p $(DPAPER_TMP)/code $(DPAPER_TMP)/data
-	@# Part 1: Code (pipeline source via git archive)
-	git archive HEAD | tar -x -C $(DPAPER_TMP)/code
-	rm -rf $(DPAPER_TMP)/code/.dvc $(DPAPER_TMP)/code/attic $(DPAPER_TMP)/code/.claude
-	@# Part 2: v1.1 corpus data files
-	@echo "  Preparing deposit CSV (dropping abstracts)..."
-	uv run python scripts/prepare_deposit.py --out-dir $(DPAPER_TMP)/data
-	@echo "  Copying embeddings, citations, and source catalogs..."
-	cp -L $(DATA_DIR)/embeddings.npz $(DPAPER_TMP)/data/
-	cp -L $(DATA_DIR)/citations.csv $(DPAPER_TMP)/data/
-	for src in openalex istex bibcnrs scispace grey teaching; do \
-		cp -L $(DATA_DIR)/$${src}_works.csv $(DPAPER_TMP)/data/ 2>/dev/null || true; \
-	done
-	@# Copy figures, tables, and vars for rendering (hard fail if missing)
-	mkdir -p $(DPAPER_TMP)/code/content/figures $(DPAPER_TMP)/code/content/tables
-	cp content/figures/fig_bars.png $(DPAPER_TMP)/code/content/figures/
-	cp content/tables/tab_corpus_sources.md content/tables/tab_languages.md \
-	   $(DPAPER_TMP)/code/content/tables/
-	cp content/data-paper-vars.yml $(DPAPER_TMP)/code/content/
-	@echo "  Computing data checksums..."
-	cd $(DPAPER_TMP)/data && md5sum * > $(DPAPER_TMP)/code/checksums-data.md5
-	@echo "=== Creating tarball ==="
-	tar czf $(DPAPER_ARCHIVE).tar.gz -C /tmp \
-		--exclude='__pycache__' --exclude='.venv' \
-		$(DPAPER_ARCHIVE)
-	@echo "=== Data paper archive ==="
-	@du -h $(DPAPER_ARCHIVE).tar.gz
-	@echo "Files: $$(tar tzf $(DPAPER_ARCHIVE).tar.gz | wc -l)"
-	rm -rf $(DPAPER_TMP)
-	@echo "Done: $(DPAPER_ARCHIVE).tar.gz"
+	bash scripts/build_datapaper_archive.sh
 
 # ── All checks (tests + lint) ────────────────────────────
 check: lint-prose
