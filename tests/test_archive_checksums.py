@@ -10,8 +10,9 @@ Verifies the Makefile:
 import os
 import re
 
+from makefile_helper import read_makefile as _read_makefile
+
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
-MAKEFILE = os.path.join(PROJECT_ROOT, "Makefile")
 DOCKERFILE = os.path.join(PROJECT_ROOT, "Dockerfile.analysis")
 MAKEFILE_ANALYSIS = os.path.join(PROJECT_ROOT, "Makefile.analysis-manuscript")
 
@@ -27,11 +28,6 @@ EXPECTED_OUTPUTS = [
     "content/tables/tab_pole_papers.csv",
     "content/tables/cluster_labels.json",
 ]
-
-
-def _read_makefile():
-    with open(MAKEFILE) as f:
-        return f.read()
 
 
 class TestAnalysisOutputsVariable:

@@ -26,6 +26,8 @@ import textwrap
 
 import pytest
 
+from makefile_helper import read_makefile as _read_makefile_resolved
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(REPO, "scripts")
 MAKEFILE = os.path.join(REPO, "Makefile")
@@ -436,8 +438,7 @@ class TestArchiveBitInvariance:
     """
 
     def _read_makefile(self):
-        with open(MAKEFILE) as f:
-            return f.read()
+        return _read_makefile_resolved()
 
     def test_analysis_archive_has_verify_target(self):
         """The analysis archive Makefile must include a 'verify' target

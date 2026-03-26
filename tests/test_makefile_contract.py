@@ -12,13 +12,9 @@ import re
 
 import yaml
 
-MAKEFILE = os.path.join(os.path.dirname(__file__), "..", "Makefile")
+from makefile_helper import read_makefile
+
 DVC_YAML = os.path.join(os.path.dirname(__file__), "..", "dvc.yaml")
-
-
-def read_makefile():
-    with open(MAKEFILE) as f:
-        return f.read()
 
 
 # ---------------------------------------------------------------------------
