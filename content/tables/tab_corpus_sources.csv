@@ -1,8 +1,8 @@
 Source,Query,Raw,Refined,Unique,%non-EN,%Journal,%DOI,%Refs,%Abstract
-OpenAlex,"4-tier keyword taxonomy, 9 languages (default.search on title+abstract+fulltext)",41145,30114,29560,6%,86%,72%,42%,87%
-ISTEX,"""climate finance"" OR ""finance climat*"" on French institutional archive",4,4,1,100%,100%,100%,75%,75%
+OpenAlex,"4-tier keyword taxonomy, 9 languages (default.search on title+abstract+fulltext)",41145,30174,29441,6%,86%,72%,42%,87%
+ISTEX,"""climate finance"" OR ""finance climat*"" on French institutional archive",748,637,444,2%,100%,100%,95%,97%
 bibCNRS,"FR, ZH, JA, DE queries via Gale/Wanfang/NewsBank (CNRS legacy portal)",233,222,202,66%,85%,11%,1%,5%
-SciSpace,AI-curated systematic review (RIS + CSV exports),663,615,235,2%,77%,83%,53%,91%
-Grey literature,"World Bank Open Knowledge Repository API + curated YAML (OECD, UNFCCC, CPI)",278,203,100,0%,100%,98%,16%,97%
+SciSpace,AI-curated systematic review (RIS + CSV exports),663,618,238,2%,77%,83%,53%,90%
+Grey literature,"World Bank Open Knowledge Repository API + curated YAML (OECD, UNFCCC, CPI)",278,205,102,0%,100%,98%,16%,97%
 Teaching canon,"Syllabi from 15 programmes (doctoral, MBA, professional, MOOC)",622,618,549,9%,8%,100%,52%,31%
-TOTAL,,42368,31204,30647,7%,84%,72%,42%,85%
+TOTAL,,42922,31713,30976,7%,85%,73%,43%,86%
