@@ -61,7 +61,7 @@ deposit to ensure reproducibility.
      citation isolation, semantic outlier, cross-encoder relevance scoring
 2. **Protection criteria** override flags: citation count ≥50, multi-source presence,
    within-corpus citations, teaching syllabus appearance
-3. **Cross-validation**: stratified sample of 30 papers, precision = 1.0, recall = 1.0
+3. **Cross-validation**: citation accuracy 99.0% (n=300), completeness 100% (n=300); metadata title match 99.0% (n=100); embedding validity Cohen's d=0.51 (p<0.001)
 4. **Human validation**: 100 papers for relevance scoring calibration (AUC = 0.818)
 5. **Checksum verification**: MD5 checksums for bitwise reproducibility checks
 6. **Structural verification**: schema, row-count ±5%, statistical similarity on rebuild

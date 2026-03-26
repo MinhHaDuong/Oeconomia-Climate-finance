@@ -84,17 +84,6 @@ def fetch_crossref_refs(doi: str) -> tuple[set[str], str]:
         return set(), f"error: {e}"
 
 
-def verify_link_in_crossref(source_doi: str, ref_doi: str) -> tuple[bool, str]:
-    """Check if ref_doi appears in the Crossref reference list of source_doi.
-
-    Returns (confirmed, status).
-    """
-    cr_refs, status = fetch_crossref_refs(source_doi)
-    if status != "ok":
-        return False, status
-    return ref_doi in cr_refs, "ok"
-
-
 def test_accuracy(cit: pd.DataFrame, sample_n: int, rng: np.random.Generator) -> dict:
     """Test A: sample citation rows, verify each link against Crossref.
 

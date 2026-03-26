@@ -73,4 +73,12 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 ---
 
+{{< include _includes/metadata-quality.md >}}
+
+---
+
+{{< include _includes/embedding-quality.md >}}
+
+---
+
 {{< include _includes/reproducibility.md >}}
