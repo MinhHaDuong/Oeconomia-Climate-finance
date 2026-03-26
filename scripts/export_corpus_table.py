@@ -55,6 +55,7 @@ CAPTION = (
     " filtering (a record in multiple sources is counted once per source)."
     " *Refined*: after six-flag quality filtering."
     " *Unique*: found only in that source (`source_count = 1`)."
+    " *%non-EN*: share of non-English works."
     " *%DOI*, *%Abstract*, *%Refs*: metadata completeness among refined"
     " records. {#tbl-quality}"
 )
@@ -62,10 +63,10 @@ CAPTION = (
 
 def _write_md_table(summary: pd.DataFrame, path: str) -> None:
     """Write a Quarto-includable markdown table with selected columns."""
-    cols = ["Source", "Raw", "Refined", "Unique", "%DOI", "%Abstract", "%Refs"]
+    cols = ["Source", "Raw", "Refined", "Unique", "%non-EN", "%DOI", "%Abstract", "%Refs"]
     lines = [
-        "| Source | Raw | Refined | Unique | %DOI | %Abstract | %Refs |",
-        "|:-------|----:|--------:|-------:|-----:|----------:|------:|",
+        "| Source | Raw | Refined | Unique | %non-EN | %DOI | %Abstract | %Refs |",
+        "|:-------|----:|--------:|-------:|--------:|-----:|----------:|------:|",
     ]
     for _, row in summary.iterrows():
         is_total = "TOTAL" in str(row["Source"])
