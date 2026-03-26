@@ -101,7 +101,7 @@ Verification commands are the "tests" for prose. Before editing, run `make check
 ### For final review
 - Check that "history of economic thought" framing is prominent
 - Verify all citations are in bibliography
-- Ensure Œconomia style guidelines are followed (see `docs/oeconomia-style.md`)
+- Ensure Œconomia style guidelines are followed (see `.agent/guidelines/oeconomia-style.md`)
 - Confirm word count fits journal norms
 
 ## Language polish — AI tells to eliminate

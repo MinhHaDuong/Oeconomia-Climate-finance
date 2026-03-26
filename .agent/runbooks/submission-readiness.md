@@ -1,6 +1,6 @@
 # Submission readiness — pre-sprout gate
 
-Run this checklist before creating a submission branch (`runbooks/submission-branch.md`).
+Run this checklist before creating a submission branch (`.agent/runbooks/submission-branch.md`).
 Every item must pass. If one fails, fix it before sprouting.
 
 ## Build

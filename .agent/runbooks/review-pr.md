@@ -94,7 +94,7 @@ When a reviewer spots a pre-existing issue in untouched code:
 
 1. **Spawn an investigation agent** (fresh context, read-only).
 2. The agent checks: Is this already tracked in an open issue? Is it intentional (documented trade-off)? How severe is the impact?
-3. If warranted → agent files a ticket following `runbooks/new-ticket.md`.
+3. If warranted → agent files a ticket following `.agent/runbooks/new-ticket.md`.
 4. If not warranted → agent comments with the reasoning (why it's acceptable or out of scope).
 5. The reviewer does not block the PR for pre-existing issues — focus stays on the diff.
 

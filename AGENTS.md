@@ -9,12 +9,12 @@
 | `README.md` | Project vision, repo structure, build commands | Onboarding, orientation |
 | `ROADMAP.md` | Milestones, deliverables, what's done | Starting work, picking tasks |
 | `STATE.md` | Current decisions, blockers, stats | Before any task (snapshot of now) |
-| `docs/writing-guidelines.md` | Prose style, language polish, citations | Editing manuscript text |
-| `docs/coding-guidelines.md` | Pipeline, scripts, conventions | Writing or running code |
-| `docs/oeconomia-style.md` | Journal house style | Final formatting |
+| `.agent/guidelines/writing-guidelines.md` | Prose style, language polish, citations | Editing manuscript text |
+| `.agent/guidelines/coding-guidelines.md` | Pipeline, scripts, conventions | Writing or running code |
+| `.agent/guidelines/oeconomia-style.md` | Journal house style | Final formatting |
 | `.env` | Project secrets + machine paths (gitignored) | Script execution, agent identity |
 | `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
-| `runbooks/` | Procedures fired by workflow triggers (see Triggers below) | Automated steps |
+| `.agent/runbooks/` | Procedures fired by workflow triggers (see Triggers below) | Automated steps |
 
 ## Dragon Dreaming workflow
 
@@ -37,16 +37,17 @@ Explore alternatives, design strategies, prototype approaches. Read code, resear
 ### Doing
 Runs in a fresh context — the ticket is the only input. This prevents context window pollution from Dreaming/Planning conversations. Launch via `start-ticket` trigger.
 
-Autonomous execution using test-driven development. See `docs/coding-guidelines.md` and `docs/writing-guidelines.md` for domain-specific test conventions. The inner cycle is:
+Autonomous execution using test-driven development. See `.agent/guidelines/coding-guidelines.md` and `.agent/guidelines/writing-guidelines.md` for domain-specific test conventions. The inner cycle is:
 
-1. **Red**: write a failing test that defines the expected behavior.
-2. **Green**: write the minimum code to make it pass.
-3. **Refactor**: clean up, then confirm tests still pass.
-4. **PR**: push branch, open PR (include context, it is a handoff point).
-5. **Review**: See `runbooks/review-pr.md`.
-6. **Iterate**: if review finds issues, fix them all then re-review. Also fix nits, create no debt. Spin an agent to explore seemingly unrelated issues and decide between fix now or open ticket.
+1. **Red**: write a failing test that defines the expected behavior. Commit.
+2. **Green**: write the minimum code to make it pass. Commit.
+3. **Refactor**: clean up, then confirm tests still pass. Use `make check-fast` during development. Commit.
+4. **PR**: Pass `make check` gate, then submit the work by pushing the branch and opening a PR with detailed context.
+5. **Review**: See `.agent/runbooks/review-pr.md`.
+6. **Fix**: Fix all issues and comments. Nits: fix them. Leave no debt. Seemingly unrelated issues: Spin an agent to explore and decide between fixing now or opening a ticket. Code smells: ultrathink architectural improvements, not code shaving.
+6. **Iterate**: As necessary for top quality, up to three review/fix cycle.
 
-Each Red/Green/Refactor step gets its own commit. Stay on the branch, protect main. Use `make check-fast` during development, `make check` before opening a PR.
+ Use `make check-fast` during development, `make check` before opening a PR.
 
 When stuck, escalate progressively:
 1. Fix direct — review feedback is straightforward.
@@ -72,41 +73,41 @@ The agent must always know and declare its current DD phase.
 
 | Event | When | Runbook |
 |-------|------|---------|
-| on-start | Beginning of every conversation | `runbooks/on-start.md` |
-| start-ticket | Starting work on a GitHub issue | `runbooks/start-ticket.md` |
-| pre-commit | Before every commit | `runbooks/pre-commit.md` |
-| post-task | After completing a ticket | `runbooks/celebrate.md` |
-| end-session | User ends a work session | `runbooks/celebrate-day.md` |
-| new-ticket | Creating a GitHub issue (issues are handoff documents) | `runbooks/new-ticket.md` |
-| review-pr | Reviewing a pull request (code) | `runbooks/review-pr.md` |
-| review-pr-prose | Reviewing a pull request (prose/manuscript) | `runbooks/review-pr-prose.md` |
-| memory-write | Writing or sweeping persistent memory | `runbooks/memory.md` |
-| autonomous | Unsupervised autonomous session (via end-session) | `runbooks/autonomous-session.md` |
+| on-start | Beginning of every conversation | `.agent/runbooks/on-start.md` |
+| start-ticket | Starting work on a GitHub issue | `.agent/runbooks/start-ticket.md` |
+| pre-commit | Before every commit | `.agent/runbooks/pre-commit.md` |
+| post-task | After completing a ticket | `.agent/runbooks/celebrate.md` |
+| end-session | User ends a work session | `.agent/runbooks/celebrate-day.md` |
+| new-ticket | Creating a GitHub issue (issues are handoff documents) | `.agent/runbooks/new-ticket.md` |
+| review-pr | Reviewing a pull request (code) | `.agent/runbooks/review-pr.md` |
+| review-pr-prose | Reviewing a pull request (prose/manuscript) | `.agent/runbooks/review-pr-prose.md` |
+| memory-write | Writing or sweeping persistent memory | `.agent/runbooks/memory.md` |
+| autonomous | Unsupervised autonomous session (via end-session) | `.agent/runbooks/autonomous-session.md` |
 
 ## Git discipline
 
-- **Always work on a branch.** Branch naming: `t{N}-short-description` (Doing), `explore-{topic}` (Dreaming), or `submission/{journal}-{document}` (long-lived submission tracking, see `runbooks/submission-branch.md`). Main is read-only except for STATE housekeeping (see `runbooks/celebrate-day.md` step 7).
+- **Always work on a branch.** Branch naming: `t{N}-short-description` (Doing), `explore-{topic}` (Dreaming), or `submission/{journal}-{document}` (long-lived submission tracking, see `.agent/runbooks/submission-branch.md`). Main is read-only except for STATE housekeeping (see `.agent/runbooks/celebrate-day.md` step 7).
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically by `on-start` trigger.
 - **Agent identity**: set at conversation start by the `on-start` trigger. The machine user is `HDMX-coding-agent` (GitHub account). Credentials (`AGENT_GH_TOKEN`, `AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`) are project-specific secrets, deployed per-machine in `.env` (gitignored).
-- **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
-- **Merge commits** (`git merge --no-ff -m`): tactical-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
+- **One change per commit.** Message explains *why this change and not another*: tactical-level details: alternatives considered, local design choices made.
+- **Merge commits** (`git merge --no-ff -m`): strategic-level detail — architecture decisions, cross-file impacts, residual debt. Readable via `git log --merges`.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`. In doubt, check older versions.
 - **Use worktrees** for feature branches — work in isolated copies via `git worktree`, not `git stash`/`git checkout`.
-- **Create PRs** for each ticket so the author can review changes before merging.
+- **Create PR** for each ticket to review changes before merging.
 
 ## Autonomous workflow
 
-When issue exploration leads to multiple action items, open one ticket for each. Then work in waves, learning from each.
+When issue exploration leads to multiple action items, open one ticket for each under a tracking ticket. Then work in waves, learning from each.
 
 ### Wave cycle
 
 1. **Select** — pick ripe tickets (dependencies met, blockers cleared).
 2. **Launch** — each ticket in its own worktree, independent tickets in parallel.
-3. **Verify** — review each PR in a fresh-context worktree (`runbooks/review-pr.md`).
+3. **Verify** — review each PR in a fresh-context worktree (`.agent/runbooks/review-pr.md`).
 4. **Learn** — for each result:
-   - **Success**: celebrate (`runbooks/celebrate.md`), save what worked as feedback memory.
+   - **Success**: celebrate (`.agent/runbooks/celebrate.md`), save what worked as feedback memory.
    - **Failure**: diagnose root cause, save lesson as feedback memory, re-ticket with the diagnosis.
 5. **Adapt** — read feedback memories before planning the next wave. Adjust approach based on what failed and what worked.
 6. **Clean up** — worktrees, branches, stale PRs. Then start the next wave.
@@ -116,9 +117,10 @@ The wave ends with a global verification pass across all changes merged in this 
 ## When to ask the author
 - You're stuck after three different approaches (including expert fan-out).
 - The task requires a judgment call outside your domain docs.
-- See `docs/writing-guidelines.md` for manuscript-specific guidance.
+- See `.agent/guidelines/writing-guidelines.md` for manuscript-specific guidance.
 
 ## Conversation scope
-**Doing conversations**: one ticket per conversation. The agent stops when the ticket's exit criteria are met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.
 
 **Dreaming conversations**: may produce zero or many tickets, or inline small fixes. The explore branch is the workspace; the tickets (or PR) are the deliverables.
+
+**Doing conversations**: one ticket per conversation. The agent transition to Celebration when the PR is merged with the ticket closed, exit criteria met. If investigation reveals sub-issues, open them as new tickets for future conversations — don't scope-creep the current one.

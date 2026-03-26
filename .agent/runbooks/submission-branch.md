@@ -19,7 +19,7 @@ relevant to the paper under review.
 
 ### 1. Sprout
 
-**Gate**: run `runbooks/submission-readiness.md` checklist before proceeding.
+**Gate**: run `.agent/runbooks/submission-readiness.md` checklist before proceeding.
 
 #### Create the branch
 

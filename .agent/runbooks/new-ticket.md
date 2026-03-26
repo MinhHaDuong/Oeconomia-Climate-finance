@@ -47,4 +47,4 @@ If investigation of a ticket reveals multiple independent action items:
    gh issue create --title "..." --body "..." --parent <TRACKING_ISSUE_NUMBER>
    ```
 3. After creating all sub-issues, edit the tracking issue body to add a `## Sub-issues` heading listing each child issue number.
-4. The tracking issue closes only after integration review (see `runbooks/celebrate.md` step 10).
+4. The tracking issue closes only after integration review (see `.agent/runbooks/celebrate.md` step 10).

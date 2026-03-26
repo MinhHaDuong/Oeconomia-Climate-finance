@@ -8,7 +8,7 @@ Run this sequence after completing a task. Do not skip steps.
 2. **Update STATE.md**: refresh stats, remove resolved blockers.
 3. **Update ROADMAP.md**: check off completed items, note new ones that emerged.
 4. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
-5. **Save persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons from this task. No sweep here — sweeps happen at session end (`runbooks/celebrate-day.md`).
+5. **Save persistent memory** (`$CLAUDE_MEMORY_DIR/MEMORY.md` or equivalent): save durable lessons from this task. No sweep here — sweeps happen at session end (`.agent/runbooks/celebrate-day.md`).
 6. **Commit** the updates on the current branch (before merging).
 
 ## Close and clean up

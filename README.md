@@ -157,9 +157,9 @@ make manuscript       # build PDF (requires figures)
 | `AGENTS.md` | AI workflow orchestration, Dragon Dreaming phases, git discipline |
 | `ROADMAP.md` | Milestones: what's done, what's next |
 | `STATE.md` | Current snapshot: stats, blockers, active PRs |
-| `docs/writing-guidelines.md` | Manuscript prose style, language polish rules |
-| `docs/coding-guidelines.md` | Pipeline phases, script reference, conventions |
-| `docs/oeconomia-style.md` | Journal house style |
+| `.agent/guidelines/writing-guidelines.md` | Manuscript prose style, language polish rules |
+| `.agent/guidelines/coding-guidelines.md` | Pipeline phases, script reference, conventions |
+| `.agent/guidelines/oeconomia-style.md` | Journal house style |
 
 ## Release
 

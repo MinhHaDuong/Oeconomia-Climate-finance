@@ -25,7 +25,7 @@ def test_under_smell_threshold():
     lines = _line_count()
     assert lines <= SMELL_THRESHOLD, (
         f"AGENTS.md is {lines} lines (smell threshold: {SMELL_THRESHOLD}). "
-        f"Consider extracting sections to docs/ or runbooks/."
+        f"Consider extracting sections to .agent/guidelines/ or .agent/runbooks/."
     )
 
 

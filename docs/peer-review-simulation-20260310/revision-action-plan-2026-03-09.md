@@ -101,5 +101,5 @@ comm -23 /tmp/cited.txt /tmp/bibed.txt  # should be empty
 - This action plan: `docs/revision-action-plan-2026-03-09.md`
 - Manuscript: `content/manuscript.qmd`
 - Bibliography: `content/bibliography/main.bib`
-- Style guide: `docs/oeconomia-style.md`
+- Style guide: `.agent/guidelines/oeconomia-style.md`
 - Writing guidelines: `AGENTS.md`

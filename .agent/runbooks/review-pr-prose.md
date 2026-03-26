@@ -19,7 +19,7 @@ A prose review spins multiple agents in parallel, each with a distinct disciplin
 | **Climate policy specialist** | Institutional accuracy, missing actors, policy nuance | Would practitioners recognize this account? |
 | **Literature specialist** | Deep research on cited and uncited works | What key references are missing? What recent work contradicts or supports claims? |
 | **Nitpicking adversarial referee** | Logical gaps, unsupported claims, rhetorical overreach, factual errors | Where exactly does the argument fail? |
-| **Copy editor** | AI tells, blacklist words, em-dash density, house style | Does this pass `docs/writing-guidelines.md` and `docs/oeconomia-style.md` checks? |
+| **Copy editor** | AI tells, blacklist words, em-dash density, house style | Does this pass `.agent/guidelines/writing-guidelines.md` and `.agent/guidelines/oeconomia-style.md` checks? |
 
 ### For technical report (reproducibility note)
 
