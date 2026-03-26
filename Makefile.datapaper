@@ -6,6 +6,7 @@
 #   make corpus  — rebuild the corpus incrementally (uses caches, needs internet)
 #
 # Prerequisites: Python >= 3.10, uv, quarto
+# macOS: brew install coreutils (for md5sum in make verify)
 
 .DEFAULT_GOAL := help
 .PHONY: help verify papers corpus
