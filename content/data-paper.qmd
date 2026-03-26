@@ -134,7 +134,7 @@ The pipeline source code is available at <https://github.com/MinhHaDuong/Oeconom
 
 ## Technical Environment {.unnumbered}
 
-API harvesting was last run on 2026-03-23. The pipeline was executed with Python 3.12.3, pandas 2.2, sentence-transformers 3.4 (model: *BAAI/bge-m3*), and BAAI/bge-reranker-v2-m3 for relevance scoring. Corpus building (API harvesting, enrichment, and filtering) runs on a single workstation without a GPU. Embedding computation requires a GPU and completes in under two hours on an NVIDIA RTX A4000 (16 GB).
+API harvesting was last run on 2026-03-23. The pipeline was executed with Python 3.12.3, pandas 2.2, sentence-transformers 3.4 (model: *BAAI/bge-m3*), and BAAI/bge-reranker-v2-m3 for relevance scoring. Corpus building (API harvesting, enrichment, and filtering) runs on a single workstation without a GPU. Embedding computation completes in under ten minutes on an NVIDIA RTX A4000 (16 GB).
 
 ## Funding {.unnumbered}
 
