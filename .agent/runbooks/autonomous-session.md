@@ -272,3 +272,4 @@ console output (CLI `claude -p`).
 - Did not explore competing approaches.
 - Commit on main blocked by pre-commit hook — use a branch.
 - Moved failing-test files out of sight (archived/renamed) instead of fixing them in place.
+- Stashed session log in a feature branch — use a volatile housekeeping branch (`housekeeping-session-log`) and merge it to main separately.
