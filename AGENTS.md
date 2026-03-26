@@ -86,7 +86,7 @@ The agent must always know and declare its current DD phase.
 
 ## Git discipline
 
-- **Always work on a branch.** Branch naming: `t{N}-short-description` (Doing), `explore-{topic}` (Dreaming), or `submission/{journal}-{document}` (long-lived submission tracking, see `.agent/runbooks/submission-branch.md`). Main is read-only except for STATE housekeeping (see `.agent/runbooks/celebrate-day.md` step 7).
+- **Always work on a branch.** Branch naming: `t{N}-short-description` (Doing), `explore-{topic}` (Dreaming), or `submission/{journal}-{document}` (long-lived submission tracking, see `.agent/runbooks/submission-branch.md`). Main is read-only except for STATE housekeeping (see `.agent/runbooks/celebrate-day.md` step 7). Submission branches are protected: no merges (cherry-pick only), no deletion, no force-push.
 - **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
 - **Post-checkout hook**: symlinks `.env` from main worktree into new worktrees (scripts need it for data paths).
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically by `on-start` trigger.
