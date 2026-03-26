@@ -22,6 +22,7 @@ import argparse
 import difflib
 import json
 import os
+import re
 import sys
 import time
 
@@ -60,7 +61,6 @@ def normalize_title(title):
     """Lowercase, strip whitespace and punctuation for comparison."""
     if not isinstance(title, str):
         return ""
-    import re
     return re.sub(r"[^\w\s]", "", title.lower()).strip()
 
 
@@ -162,6 +162,216 @@ def stratified_sample(df, n, seed, group_col="source"):
     return result
 
 
+def _parse_year(value):
+    """Convert a possibly-NaN year to int or None."""
+    if pd.notna(value):
+        return int(value)
+    return None
+
+
+def _compare_one_work(row, cr_title, cr_year, status):
+    """Compare one work's metadata against Crossref; return detail dict and tallies.
+
+    Returns (detail_dict, title_ok, year_ok, year_close) where the booleans
+    are None when the comparison could not be made.
+    """
+    our_title = str(row.get("title", ""))
+    our_year = _parse_year(row.get("year"))
+    detail = {
+        "doi": row["doi_norm"],
+        "source": str(row.get("source", "")),
+        "status": status,
+    }
+    title_ok = year_ok = year_close = None
+
+    if status != "ok":
+        return detail, title_ok, year_ok, year_close
+
+    sim = title_similarity(our_title, cr_title)
+    title_ok = sim >= TITLE_MATCH_THRESHOLD
+    detail.update({
+        "our_title": our_title[:100],
+        "cr_title": (cr_title or "")[:100],
+        "title_similarity": round(sim, 4),
+        "title_match": title_ok,
+    })
+
+    if our_year is not None and cr_year is not None:
+        year_ok = our_year == cr_year
+        year_close = abs(our_year - cr_year) <= 1
+        detail.update({
+            "our_year": our_year,
+            "cr_year": cr_year,
+            "year_match": year_ok,
+            "year_within_one": year_close,
+        })
+
+    return detail, title_ok, year_ok, year_close
+
+
+def verify_doi_works(doi_sample):
+    """Verify a sample of DOI-bearing works against Crossref.
+
+    Returns (details, counters_dict).
+    """
+    title_matches = title_checked = 0
+    year_matches = year_within_one = year_checked = 0
+    details = []
+
+    for i, (_, row) in enumerate(doi_sample.iterrows()):
+        cr_title, cr_year, status = fetch_crossref_metadata(row["doi_norm"])
+        detail, title_ok, year_ok, year_close = _compare_one_work(
+            row, cr_title, cr_year, status
+        )
+        details.append(detail)
+
+        if title_ok is not None:
+            title_checked += 1
+            title_matches += int(title_ok)
+        if year_ok is not None:
+            year_checked += 1
+            year_matches += int(year_ok)
+            year_within_one += int(year_close)
+
+        if (i + 1) % 20 == 0:
+            log.info("  Crossref progress: %d/%d", i + 1, len(doi_sample))
+
+    # DOI resolution check (subsample to keep total API calls reasonable)
+    doi_resolves = doi_checked_resolve = 0
+    resolve_sample = doi_sample.head(min(30, len(doi_sample)))
+    log.info("Checking DOI resolution for %d DOIs...", len(resolve_sample))
+    for _, row in resolve_sample.iterrows():
+        doi_checked_resolve += 1
+        if check_doi_resolves(row["doi_norm"]):
+            doi_resolves += 1
+
+    counters = {
+        "title_matches": title_matches, "title_checked": title_checked,
+        "year_matches": year_matches, "year_within_one": year_within_one,
+        "year_checked": year_checked,
+        "doi_resolves": doi_resolves, "doi_checked": doi_checked_resolve,
+    }
+    return details, counters
+
+
+def verify_no_doi_works(no_doi_sample):
+    """Verify a sample of works without DOIs via OpenAlex title search.
+
+    Returns (details, counters_dict).
+    """
+    details = []
+    title_matches = title_checked = 0
+    year_matches = year_checked = 0
+
+    for i, (_, row) in enumerate(no_doi_sample.iterrows()):
+        our_title = str(row.get("title", ""))
+        our_year = _parse_year(row.get("year"))
+
+        oa_title, oa_year, status = search_openalex_by_title(our_title)
+        detail = {
+            "our_title": our_title[:100],
+            "source": str(row.get("source", "")),
+            "status": status,
+        }
+
+        if status == "ok" and oa_title:
+            sim = title_similarity(our_title, oa_title)
+            detail["oa_title"] = (oa_title or "")[:100]
+            detail["title_similarity"] = round(sim, 4)
+            detail["title_match"] = sim >= TITLE_MATCH_THRESHOLD
+
+            if sim >= TITLE_MATCH_THRESHOLD:
+                title_checked += 1
+                title_matches += 1
+                if our_year is not None and oa_year is not None:
+                    year_checked += 1
+                    year_matches += int(our_year == oa_year)
+                    detail["our_year"] = our_year
+                    detail["oa_year"] = oa_year
+                    detail["year_match"] = our_year == oa_year
+
+        details.append(detail)
+        if (i + 1) % 10 == 0:
+            log.info("  OpenAlex progress: %d/%d", i + 1, len(no_doi_sample))
+
+    counters = {
+        "title_verified": title_checked, "title_matches": title_matches,
+        "year_checked": year_checked, "year_matches": year_matches,
+    }
+    return details, counters
+
+
+def build_report(args, works, has_doi, no_doi, doi_counters, doi_details,
+                 no_doi_counters, no_doi_details):
+    """Assemble the JSON report from verification results."""
+    c = doi_counters
+    title_ci = wilson_ci(c["title_matches"], c["title_checked"])
+    year_ci = wilson_ci(c["year_matches"], c["year_checked"])
+    yw1_ci = wilson_ci(c["year_within_one"], c["year_checked"])
+    doi_ci = wilson_ci(c["doi_resolves"], c["doi_checked"])
+
+    for label, vals in [("Title match", title_ci), ("Year exact", year_ci),
+                        ("Year within 1", yw1_ci), ("DOI resolves", doi_ci)]:
+        log.info("%s: %.3f [%.3f, %.3f]", label, *vals)
+
+    return {
+        "generated": pd.Timestamp.now().isoformat(),
+        "seed": args.seed,
+        "corpus_size": len(works),
+        "with_doi": len(has_doi),
+        "without_doi": len(no_doi),
+        "title_match": {
+            "sample_n": c["title_checked"], "matches": c["title_matches"],
+            "proportion": round(title_ci[0], 6),
+            "ci_lower": round(title_ci[1], 6), "ci_upper": round(title_ci[2], 6),
+            "threshold": TITLE_MATCH_THRESHOLD,
+        },
+        "year_match": {
+            "sample_n": c["year_checked"], "matches": c["year_matches"],
+            "proportion": round(year_ci[0], 6),
+            "ci_lower": round(year_ci[1], 6), "ci_upper": round(year_ci[2], 6),
+        },
+        "year_within_one": {
+            "sample_n": c["year_checked"], "matches": c["year_within_one"],
+            "proportion": round(yw1_ci[0], 6),
+            "ci_lower": round(yw1_ci[1], 6), "ci_upper": round(yw1_ci[2], 6),
+        },
+        "doi_resolution": {
+            "sample_n": c["doi_checked"], "resolves": c["doi_resolves"],
+            "proportion": round(doi_ci[0], 6),
+            "ci_lower": round(doi_ci[1], 6), "ci_upper": round(doi_ci[2], 6),
+        },
+        "no_doi_verification": {
+            "sample_n": len(no_doi_details), **no_doi_counters,
+        },
+        "details": doi_details,
+        "no_doi_details": no_doi_details,
+    }
+
+
+def log_mismatches(details):
+    """Log title and year mismatches for human review."""
+    title_mm = [d for d in details if d.get("title_match") is False]
+    if title_mm:
+        log.info("Title mismatches (%d):", len(title_mm))
+        for m in title_mm[:5]:
+            log.info("  DOI: %s  sim=%.3f", m["doi"], m.get("title_similarity", 0))
+            log.info("    Ours: %s", m.get("our_title", ""))
+            log.info("    CR:   %s", m.get("cr_title", ""))
+
+    year_mm = [d for d in details if d.get("year_match") is False]
+    if year_mm:
+        log.info("Year mismatches (%d):", len(year_mm))
+        for m in year_mm[:5]:
+            log.info("  DOI: %s  ours=%s cr=%s",
+                     m["doi"], m.get("our_year"), m.get("cr_year"))
+
+
+def _valid_doi(s):
+    """Return True if s is a non-empty, non-sentinel DOI string."""
+    return pd.notna(s) and s not in ("", "nan", "none")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="QA metadata: spot-check titles/years against Crossref"
@@ -182,244 +392,47 @@ def main():
     )
     args = parser.parse_args()
 
-    # ── Load data ────────────────────────────────────────────────────────────────
-    works_path = args.works_input
-    if not os.path.isfile(works_path):
-        log.error("Works file not found: %s", works_path)
+    # ── Load data ─────────────────────────────────────────────────────────────
+    if not os.path.isfile(args.works_input):
+        log.error("Works file not found: %s", args.works_input)
         sys.exit(1)
 
-    works = pd.read_csv(works_path, low_memory=False)
+    works = pd.read_csv(args.works_input, low_memory=False)
     works["doi_norm"] = works["doi"].apply(normalize_doi)
-    log.info("Loaded %d works from %s", len(works), works_path)
+    log.info("Loaded %d works from %s", len(works), args.works_input)
 
-    has_doi = works[
-        works["doi_norm"].notna()
-        & (works["doi_norm"] != "")
-        & (works["doi_norm"] != "nan")
-        & (works["doi_norm"] != "none")
-    ].copy()
-    no_doi = works[
-        works["doi_norm"].isna()
-        | (works["doi_norm"] == "")
-        | (works["doi_norm"] == "nan")
-        | (works["doi_norm"] == "none")
-    ].copy()
-
+    has_doi = works[works["doi_norm"].apply(_valid_doi)].copy()
+    no_doi = works[~works["doi_norm"].apply(_valid_doi)].copy()
     log.info("Works with DOI: %d, without DOI: %d", len(has_doi), len(no_doi))
 
-    # ── Sample 1: Works with DOIs → verify against Crossref ──────────────────
-    n_doi_sample = min(args.sample_n, len(has_doi))
-    doi_sample = stratified_sample(has_doi, n_doi_sample, args.seed)
+    # ── Verify works with DOIs against Crossref ──────────────────────────────
+    doi_sample = stratified_sample(has_doi, min(args.sample_n, len(has_doi)),
+                                   args.seed)
     log.info("Sampled %d works with DOIs, querying Crossref...", len(doi_sample))
+    doi_details, doi_counters = verify_doi_works(doi_sample)
 
-    title_matches = 0
-    title_checked = 0
-    year_matches = 0
-    year_within_one = 0  # off-by-one (online-first vs print date)
-    year_checked = 0
-    doi_resolves = 0
-    doi_checked = 0
-    details = []
-
-    for i, (_, row) in enumerate(doi_sample.iterrows()):
-        doi = row["doi_norm"]
-        our_title = str(row.get("title", ""))
-        our_year = row.get("year")
-        if pd.notna(our_year):
-            our_year = int(our_year)
-        else:
-            our_year = None
-
-        cr_title, cr_year, status = fetch_crossref_metadata(doi)
-
-        detail = {
-            "doi": doi,
-            "source": str(row.get("source", "")),
-            "status": status,
-        }
-
-        if status == "ok":
-            # Title comparison
-            sim = title_similarity(our_title, cr_title)
-            t_match = sim >= TITLE_MATCH_THRESHOLD
-            title_checked += 1
-            if t_match:
-                title_matches += 1
-            detail["our_title"] = our_title[:100]
-            detail["cr_title"] = (cr_title or "")[:100]
-            detail["title_similarity"] = round(sim, 4)
-            detail["title_match"] = t_match
-
-            # Year comparison
-            if our_year is not None and cr_year is not None:
-                y_match = our_year == cr_year
-                y_close = abs(our_year - cr_year) <= 1
-                year_checked += 1
-                if y_match:
-                    year_matches += 1
-                if y_close:
-                    year_within_one += 1
-                detail["our_year"] = our_year
-                detail["cr_year"] = cr_year
-                detail["year_match"] = y_match
-                detail["year_within_one"] = y_close
-
-        details.append(detail)
-
-        if (i + 1) % 20 == 0:
-            log.info("  Crossref progress: %d/%d", i + 1, len(doi_sample))
-
-    # DOI resolution check (subsample to keep total API calls reasonable)
-    doi_resolve_sample = doi_sample.head(min(30, len(doi_sample)))
-    log.info("Checking DOI resolution for %d DOIs...", len(doi_resolve_sample))
-    for _, row in doi_resolve_sample.iterrows():
-        doi = row["doi_norm"]
-        resolves = check_doi_resolves(doi)
-        doi_checked += 1
-        if resolves:
-            doi_resolves += 1
-
-    # ── Sample 2: Works without DOIs → verify via OpenAlex title search ──────
+    # ── Verify works without DOIs via OpenAlex ───────────────────────────────
     n_no_doi = min(args.no_doi_n, len(no_doi))
-    no_doi_details = []
-    no_doi_title_matches = 0
-    no_doi_title_checked = 0
-    no_doi_year_matches = 0
-    no_doi_year_checked = 0
-
     if n_no_doi > 0:
         no_doi_sample = stratified_sample(no_doi, n_no_doi, args.seed)
         log.info("Sampled %d works without DOIs, searching OpenAlex...",
                  len(no_doi_sample))
-
-        for i, (_, row) in enumerate(no_doi_sample.iterrows()):
-            our_title = str(row.get("title", ""))
-            our_year = row.get("year")
-            if pd.notna(our_year):
-                our_year = int(our_year)
-            else:
-                our_year = None
-
-            oa_title, oa_year, status = search_openalex_by_title(our_title)
-
-            detail = {
-                "our_title": our_title[:100],
-                "source": str(row.get("source", "")),
-                "status": status,
-            }
-
-            if status == "ok" and oa_title:
-                sim = title_similarity(our_title, oa_title)
-                # Only count as verified if OpenAlex found a good match
-                if sim >= TITLE_MATCH_THRESHOLD:
-                    no_doi_title_checked += 1
-                    no_doi_title_matches += 1
-                    detail["oa_title"] = (oa_title or "")[:100]
-                    detail["title_similarity"] = round(sim, 4)
-                    detail["title_match"] = True
-
-                    if our_year is not None and oa_year is not None:
-                        y_match = our_year == oa_year
-                        no_doi_year_checked += 1
-                        if y_match:
-                            no_doi_year_matches += 1
-                        detail["our_year"] = our_year
-                        detail["oa_year"] = oa_year
-                        detail["year_match"] = y_match
-                else:
-                    detail["oa_title"] = (oa_title or "")[:100]
-                    detail["title_similarity"] = round(sim, 4)
-                    detail["title_match"] = False
-
-            no_doi_details.append(detail)
-
-            if (i + 1) % 10 == 0:
-                log.info("  OpenAlex progress: %d/%d", i + 1, len(no_doi_sample))
+        no_doi_details, no_doi_counters = verify_no_doi_works(no_doi_sample)
     else:
         log.info("No works without DOIs to check")
+        no_doi_details, no_doi_counters = [], {}
 
-    # ── Compute Wilson CIs ───────────────────────────────────────────────────
-    title_prop, title_ci_lo, title_ci_hi = wilson_ci(title_matches, title_checked)
-    year_prop, year_ci_lo, year_ci_hi = wilson_ci(year_matches, year_checked)
-    yw1_prop, yw1_ci_lo, yw1_ci_hi = wilson_ci(year_within_one, year_checked)
-    doi_prop, doi_ci_lo, doi_ci_hi = wilson_ci(doi_resolves, doi_checked)
-
-    log.info("Title match: %d/%d = %.3f [%.3f, %.3f]",
-             title_matches, title_checked, title_prop, title_ci_lo, title_ci_hi)
-    log.info("Year exact match: %d/%d = %.3f [%.3f, %.3f]",
-             year_matches, year_checked, year_prop, year_ci_lo, year_ci_hi)
-    log.info("Year within 1: %d/%d = %.3f [%.3f, %.3f]",
-             year_within_one, year_checked, yw1_prop, yw1_ci_lo, yw1_ci_hi)
-    log.info("DOI resolves: %d/%d = %.3f [%.3f, %.3f]",
-             doi_resolves, doi_checked, doi_prop, doi_ci_lo, doi_ci_hi)
-
-    # ── Build report ─────────────────────────────────────────────────────────
-    report = {
-        "generated": pd.Timestamp.now().isoformat(),
-        "seed": args.seed,
-        "corpus_size": len(works),
-        "with_doi": len(has_doi),
-        "without_doi": len(no_doi),
-        "title_match": {
-            "sample_n": title_checked,
-            "matches": title_matches,
-            "proportion": round(title_prop, 6),
-            "ci_lower": round(title_ci_lo, 6),
-            "ci_upper": round(title_ci_hi, 6),
-            "threshold": TITLE_MATCH_THRESHOLD,
-        },
-        "year_match": {
-            "sample_n": year_checked,
-            "matches": year_matches,
-            "proportion": round(year_prop, 6),
-            "ci_lower": round(year_ci_lo, 6),
-            "ci_upper": round(year_ci_hi, 6),
-        },
-        "year_within_one": {
-            "sample_n": year_checked,
-            "matches": year_within_one,
-            "proportion": round(yw1_prop, 6),
-            "ci_lower": round(yw1_ci_lo, 6),
-            "ci_upper": round(yw1_ci_hi, 6),
-        },
-        "doi_resolution": {
-            "sample_n": doi_checked,
-            "resolves": doi_resolves,
-            "proportion": round(doi_prop, 6),
-            "ci_lower": round(doi_ci_lo, 6),
-            "ci_upper": round(doi_ci_hi, 6),
-        },
-        "no_doi_verification": {
-            "sample_n": len(no_doi_details),
-            "title_verified": no_doi_title_checked,
-            "title_matches": no_doi_title_matches,
-            "year_checked": no_doi_year_checked,
-            "year_matches": no_doi_year_matches,
-        },
-        "details": details,
-        "no_doi_details": no_doi_details,
-    }
+    # ── Build and save report ─────────────────────────────────────────────────
+    report = build_report(args, works, has_doi, no_doi,
+                          doi_counters, doi_details,
+                          no_doi_counters, no_doi_details)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w") as f:
         json.dump(report, f, indent=2)
     log.info("Report saved to: %s", OUTPUT_PATH)
 
-    # ── Summary ──────────────────────────────────────────────────────────────
-    mismatches = [d for d in details if d.get("title_match") is False]
-    if mismatches:
-        log.info("Title mismatches (%d):", len(mismatches))
-        for m in mismatches[:5]:
-            log.info("  DOI: %s  sim=%.3f", m["doi"], m.get("title_similarity", 0))
-            log.info("    Ours: %s", m.get("our_title", ""))
-            log.info("    CR:   %s", m.get("cr_title", ""))
-
-    year_mismatches = [d for d in details if d.get("year_match") is False]
-    if year_mismatches:
-        log.info("Year mismatches (%d):", len(year_mismatches))
-        for m in year_mismatches[:5]:
-            log.info("  DOI: %s  ours=%s cr=%s",
-                     m["doi"], m.get("our_year"), m.get("cr_year"))
+    log_mismatches(doi_details)
 
 
 if __name__ == "__main__":
