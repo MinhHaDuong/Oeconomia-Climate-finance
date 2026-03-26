@@ -37,6 +37,24 @@ for src in openalex istex bibcnrs scispace grey teaching; do
     cp -L "$DATA_DIR/${src}_works.csv" "$TMP/data/" 2>/dev/null || true
 done
 
+# ── Quarto project config: data paper only ───────────────
+# The repo _quarto.yml lists all papers; Quarto scans them all even when
+# rendering one file. Replace with a minimal config for the data paper.
+cat > "$TMP/code/_quarto.yml" << 'YAML'
+project:
+  type: default
+  output-dir: output
+  render:
+    - content/data-paper.qmd
+
+bibliography: content/bibliography/main.bib
+
+format:
+  pdf:
+    pdf-engine: xelatex
+    cite-method: citeproc
+YAML
+
 # ── Figures, tables, vars for rendering (hard fail) ──────
 echo "  Copying figures and tables..."
 mkdir -p "$TMP/code/content/figures" "$TMP/code/content/tables"
