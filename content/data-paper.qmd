@@ -80,7 +80,7 @@ The pipeline removes flagged works unless they meet one of four protection crite
 
 ### 2.3 Quality, Completeness, and Potential Biases {#sec-quality}
 
-@tbl-quality summarises corpus composition and metadata completeness per source. The "Refined" column counts works with a `from_*` provenance flag after deduplication and quality filtering; a single work may appear in multiple rows if discovered by several sources. %DOI is the share with a valid DOI, %Abstract the share with an abstract longer than 50 characters, and %Refs the share with at least one reference in the citation graph.
+@tbl-quality summarises corpus composition and metadata completeness per source. The "Refined" column counts works with a `from_*` provenance flag after deduplication and quality filtering; a single work may appear in multiple rows if discovered by several sources. %non-EN is the share of non-English works, %DOI the share with a valid DOI, %Abstract the share with an abstract longer than 50 characters, and %Refs the share with at least one reference in the citation graph.
 
 {{< include tables/tab_corpus_sources.md >}}
 
