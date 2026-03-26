@@ -793,7 +793,7 @@ class TestBlacklistValidation:
 # ═══════════════════════════════════════════════════════════
 
 class TestCitationQuality:
-    """Check qa_citations_report.json if available (warns if missing/stale)."""
+    """Check qa_citations_report.json: accuracy + completeness with CIs."""
 
     def test_citation_report_exists(self):
         """Warn (don't fail) if qa_citations_report.json is missing."""
@@ -834,41 +834,88 @@ class TestCitationQuality:
                 "Re-run: uv run python scripts/qa_citations.py"
             )
 
-    def test_citation_precision_recall(self):
-        """If report exists, recall must be >= 0.95 and sample size >= 20."""
+    def test_qa_report_has_accuracy_and_completeness(self):
+        """qa_citations_report.json has both tests with CIs."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
             pytest.skip("qa_citations_report.json not found")
         import json
         with open(QC_CITATIONS_REPORT_PATH) as f:
             report = json.load(f)
 
-        verification = report.get("verification", {})
-        precision = verification.get("aggregate_precision", 0)
-        recall = verification.get("aggregate_recall", 0)
-        sample_size = verification.get("sample_n", 0)
+        assert "accuracy" in report, \
+            "Report missing 'accuracy' section (Test A)" + _diagnosis(
+                "qa_citations.py needs rewrite for accuracy/completeness format",
+                "Re-run: uv run python scripts/qa_citations.py",
+                "~3 min",
+                "Cannot verify citation link quality",
+            )
+        assert "completeness" in report, \
+            "Report missing 'completeness' section (Test B)" + _diagnosis(
+                "qa_citations.py needs rewrite for accuracy/completeness format",
+                "Re-run: uv run python scripts/qa_citations.py",
+                "~3 min",
+                "Cannot verify citation completeness",
+            )
+        for section in ("accuracy", "completeness"):
+            data = report[section]
+            assert data["sample_n"] >= 300, \
+                f"{section} sample_n = {data['sample_n']} (expected >= 300)" + _diagnosis(
+                    "qa_citations.py ran with too small a sample",
+                    "Re-run with --sample-n 300",
+                    "~3 min",
+                    "Confidence intervals too wide to be meaningful",
+                )
+            assert "ci_lower" in data, \
+                f"{section} missing ci_lower" + _diagnosis(
+                    "Wilson CI not computed",
+                    "Re-run qa_citations.py (should compute Wilson CIs)",
+                    "~3 min",
+                    "No statistical uncertainty reported",
+                )
+            assert "ci_upper" in data, \
+                f"{section} missing ci_upper" + _diagnosis(
+                    "Wilson CI not computed",
+                    "Re-run qa_citations.py (should compute Wilson CIs)",
+                    "~3 min",
+                    "No statistical uncertainty reported",
+                )
 
-        assert sample_size >= 20, \
-            f"QC sample size = {sample_size} (expected >= 20)" + _diagnosis(
-                "qa_citations.py ran with too small a sample",
-                "Re-run with larger sample: uv run python scripts/qa_citations.py",
-                "~10 min",
-                "Quality metrics not statistically meaningful",
-            )
-        # Recall should be very high (we don't miss known references)
-        assert recall >= 0.95, \
-            f"Citation recall = {recall:.3f} (expected >= 0.95)" + _diagnosis(
-                "Citation enrichment missing known references",
-                "Check Crossref/OpenAlex API coverage gaps",
+    def test_citation_accuracy_high(self):
+        """Accuracy (proportion of our links confirmed by Crossref) should be >= 0.90."""
+        if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
+            pytest.skip("qa_citations_report.json not found")
+        import json
+        with open(QC_CITATIONS_REPORT_PATH) as f:
+            report = json.load(f)
+        if "accuracy" not in report:
+            pytest.skip("Report uses old format (no accuracy section)")
+
+        accuracy = report["accuracy"]
+        assert accuracy["proportion"] >= 0.90, \
+            f"Accuracy = {accuracy['proportion']:.3f} (expected >= 0.90)" + _diagnosis(
+                "Many citation links not confirmed by Crossref",
+                "Investigate false links in report details",
                 "1-2 hours",
-                "Citation graph has missing edges — co-citation communities underconnected",
+                "Citation graph contains unverifiable edges",
             )
-        # Precision may be lower (~0.65) because OpenAlex includes refs
-        # that Crossref doesn't have (not false positives, just additional sources)
-        if precision < 0.60:
-            import warnings
-            warnings.warn(
-                f"Citation precision = {precision:.3f}. This is expected when "
-                "OpenAlex includes references not in Crossref. Check report details."
+
+    def test_citation_completeness_high(self):
+        """Completeness (proportion of Crossref refs we captured) should be >= 0.90."""
+        if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
+            pytest.skip("qa_citations_report.json not found")
+        import json
+        with open(QC_CITATIONS_REPORT_PATH) as f:
+            report = json.load(f)
+        if "completeness" not in report:
+            pytest.skip("Report uses old format (no completeness section)")
+
+        completeness = report["completeness"]
+        assert completeness["proportion"] >= 0.90, \
+            f"Completeness = {completeness['proportion']:.3f} (expected >= 0.90)" + _diagnosis(
+                "Many Crossref references missing from our data",
+                "Check merge_citations.py and enrichment pipeline",
+                "1-2 hours",
+                "Citation graph has missing edges — analysis underconnected",
             )
 
 
