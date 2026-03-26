@@ -3,10 +3,11 @@ title: "A Curated Corpus of Climate Finance Literature, 1990--2024: Six Sources,
 author:
   - name: "Minh Ha-Duong"
     orcid: "0000-0003-2398-9009"
+    note: "Directeur de recherche at CIRED, CNRS"
     affiliation:
-      - name: "CNRS"
       - name: "CIRED"
-    email: "haduong@centre-cired.fr"
+      - name: "CNRS"
+    email: "minh.ha-duong@cnrs.fr"
 date: "2026-03-26"
 metadata-files: [data-paper-vars.yml]
 bibliography: bibliography/main.bib
