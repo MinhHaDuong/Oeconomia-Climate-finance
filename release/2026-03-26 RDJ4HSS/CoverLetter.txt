@@ -1,0 +1,29 @@
+**To:** Editors, Research Data Journal for the Humanities and Social Sciences
+**From:** Minh Ha-Duong, CIRED/CNRS
+**Re:** Data paper submission — "A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature"
+
+Dear Editors,
+
+I am pleased to submit a data paper describing a multilingual bibliometric corpus of climate finance literature for your consideration.
+
+**The dataset.** The deposit assembles 42,368 works on climate finance published between 1990 and 2024, drawn from six complementary sources: OpenAlex, ISTEX, bibCNRS, SciSpace, institutional grey literature (OECD, UNFCCC, World Bank, Climate Policy Initiative), and a curated teaching canon. The search strategy targets eight languages through a four-tier keyword taxonomy. A documented six-flag quality-filtering pipeline with full audit trail is included — users can apply our recommended filters (yielding 31,204 curated works) or draw their own boundary. Pre-computed multilingual sentence-transformer embeddings place all works in a shared semantic space regardless of language. A citation network of 929,014 links supports co-citation analysis. The deposit includes the pipeline source code for full reproducibility.
+
+**Why this dataset matters for HSS.** Climate finance is a contested category at the intersection of economics, political science, development studies, and environmental governance. Existing bibliometric studies of this literature rely on single databases, cover English only, and do not publish reusable datasets. Our corpus addresses these limitations by combining academic and institutional sources, including the grey literature that has shaped the very categories of the debate. The multilingual design — targeting French, Chinese, Japanese, and German alongside English — supports cross-linguistic studies that monolingual corpora cannot.
+
+**Data deposit.** The dataset is deposited in Zenodo at https://doi.org/10.5281/zenodo.19236130 under CC BY 4.0. All pipeline scripts are publicly available.
+
+**Companion study.** The corpus was constructed to support a history-of-economic-thought study of how climate finance crystallised as a category of economic governance. That companion paper is currently under review at Œconomia. The data paper stands independently: it describes the dataset's construction, validation, and reuse potential without depending on the companion study's analytical conclusions.
+
+**Scope fit.** The Research Data Journal's focus on humanities and social sciences research data, its commitment to FAIR principles, and its diamond open access model make it an ideal venue for this dataset. The corpus supports research across multiple HSS disciplines: history of economics, science and technology studies, political science of international development, and digital humanities.
+
+The paper is not under consideration elsewhere. The manuscript is approximately 2,500 words and includes one figure and three tables.
+
+I would be happy to provide any additional information needed for the review process.
+
+Respectfully,
+
+Minh Ha-Duong
+CIRED (Centre International de Recherche sur l'Environnement et le Développement)
+CNRS / ENPC / AgroParisTech
+haduong@centre-cired.fr
+ORCID: 0000-0001-9988-2100

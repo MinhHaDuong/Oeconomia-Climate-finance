@@ -1,0 +1,10 @@
+Acknowledgements
+
+This work was supported by CNRS (Centre National de la Recherche Scientifique) through the
+author's permanent research position at CIRED (Centre International de Recherche sur
+l'Environnement et le Développement).
+
+AI disclosure: Claude (Anthropic) assisted with extracting bibliographic references from
+university course syllabi for the teaching canon component. All extracted references were
+validated against Crossref metadata. The AI had no role in corpus design, quality filtering,
+analysis, or manuscript writing.
