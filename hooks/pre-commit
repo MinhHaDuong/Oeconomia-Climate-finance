@@ -8,6 +8,16 @@ if [ "$branch" = "main" ]; then
     exit 1
 fi
 
+# 1b. No merges on submission branches (use cherry-pick instead)
+case "$branch" in
+    submission/*)
+        if [ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; then
+            echo "ERROR: No merges on submission branches — use git cherry-pick." >&2
+            exit 1
+        fi
+        ;;
+esac
+
 # 2. CLAUDE.md is locked
 if git diff --cached --name-only | grep -qx 'CLAUDE.md'; then
     echo "ERROR: CLAUDE.md is protected. Edit AGENTS.md instead." >&2
