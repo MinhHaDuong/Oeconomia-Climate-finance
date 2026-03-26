@@ -44,7 +44,7 @@ Autonomous execution using test-driven development. See `.agent/guidelines/codin
 3. **Refactor**: clean up, then confirm tests still pass. Use `make check-fast` during development. Commit.
 4. **PR**: Pass `make check` gate, then submit the work by pushing the branch and opening a PR with detailed context.
 5. **Review**: See `.agent/runbooks/review-pr.md`.
-6. **Fix**: Fix all issues and comments. Nits: fix them. Leave no debt. Seemingly unrelated issues: Spin an agent to explore and decide between fixing now or opening a ticket.
+6. **Fix**: Fix all issues and comments. Nits: fix them. Leave no debt. Seemingly unrelated issues: Spin an agent to explore and decide between fixing now or opening a ticket. Code smells: ultrathink architectural improvements, not code shaving.
 6. **Iterate**: As necessary for top quality, up to three review/fix cycle.
 
  Use `make check-fast` during development, `make check` before opening a PR.
