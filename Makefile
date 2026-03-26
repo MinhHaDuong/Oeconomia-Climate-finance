@@ -590,7 +590,8 @@ archive-datapaper: check-corpus
 		cp -r content/tables/* $(DPAPER_TMP)/code/content/tables/; \
 	fi
 	cp content/*-vars.yml $(DPAPER_TMP)/code/content/ 2>/dev/null || true
-	echo 'CLIMATE_FINANCE_DATA=data' > $(DPAPER_TMP)/code/.env
+	@echo "  Computing data checksums..."
+	cd $(DPAPER_TMP)/data && md5sum * > $(DPAPER_TMP)/code/checksums-data.md5
 	@echo "=== Creating tarball ==="
 	tar czf $(DPAPER_ARCHIVE).tar.gz -C /tmp \
 		--exclude='__pycache__' --exclude='.venv' \
