@@ -105,7 +105,7 @@ Users should be aware of several potential biases. The literature on climate fin
 - Climate finance corpus --- DOI: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)
 - Temporal coverage: 1990--2024
 
-The Zenodo deposit is a reproducibility archive in two parts: the pipeline source code (scripts, configuration, and DVC definitions) and the v1.1 corpus data files described below. All CSV files use UTF-8 encoding with standard comma-separated dialect (RFC 4180); identifiers are opaque string keys.
+The Zenodo deposit is a reproducibility archive in two parts: the pipeline source code (scripts, configuration, and DVC definitions) and the v1.1 corpus data files described below. All CSV files use UTF-8 encoding with standard comma-separated format; identifiers are opaque string keys.
 
 **climate_finance_corpus.csv** ({{< meta corpus_raw >}} rows). The complete, unfiltered corpus. Each row is one deduplicated work with columns for: identifier (string), DOI, title, first author, year (integer), citation count (integer), publication venue, work type, language code (ISO 639-1), source provenance flags (one boolean per source: `from_openalex`, `from_istex`, `from_bibcnrs`, `from_scispace`, `from_grey`, `from_teaching`), and quality-filtering metadata (`is_flagged`, `flag_reason`, `is_protected`). The quality flags are the audit trail: users reproduce our refined subset ({{< meta corpus_total >}} works) with `df[~df['is_flagged'] | df['is_protected']]`. A `near_duplicate_group` column (integer, null for ungrouped works) identifies coordinated multi-journal publications sharing near-identical content. A version-tracking flag (`in_v1`) marks works present in the v1.0 submission corpus. Abstracts are not included in the deposited file due to publisher redistribution restrictions; they can be retrieved programmatically via the DOI or OpenAlex identifier. @fig-bars shows the temporal distribution.
 
@@ -119,7 +119,7 @@ The Zenodo deposit is a reproducibility archive in two parts: the pipeline sourc
 
 Citation coverage is unevenly distributed over time: approximately 27% for works published before 2007 versus 47% for post-2015 works. Users conducting temporal citation-network analyses should account for this systematic undercount of early-period connectivity.
 
-The dataset is released under CC BY 4.0. The pipeline is organised in three phases: corpus building (API harvesting, merging, enrichment, and filtering), analysis (embedding projection, clustering, and derived statistics), and document rendering. DVC (Data Version Control) tracks the pipeline DAG (directed acyclic graph) and ensures reproducibility. API queries use fixed year bounds (1990--2024), and raw responses are archived for re-extraction. The four automated or hybrid-automated sources can be re-harvested with an internet connection; the two restricted sources (bibCNRS, SciSpace) have their raw exports included in the Zenodo deposit.
+The dataset is released under CC BY 4.0. The four automated or semi-automated sources can be re-harvested with an internet connection; the two restricted sources (bibCNRS, SciSpace) have their raw exports included in the Zenodo deposit.
 
 ## 4. Concluding Remarks {#sec-concluding}
 
