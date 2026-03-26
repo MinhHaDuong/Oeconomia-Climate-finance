@@ -120,17 +120,13 @@ This corpus assembles climate finance scholarship into a single, cross-lingual b
 
 The dataset supports several research directions: history-of-economics analyses of climate finance as a contested concept, methodological studies of how different databases define "climate finance," genealogical analyses tracing concept propagation across disciplinary communities, and diachronic analyses of field dynamics over 35 years. The provenance architecture makes it straightforward to add new sources or extend the temporal window. A future iteration would benefit from OpenAlex's bulk download rather than keyword-based API queries: filtering a complete snapshot post-hoc with semantic classifiers would reduce the dependence on vocabulary choices made at harvest time. Author affiliation and country metadata, available through OpenAlex, are left for future enrichment. By making its boundaries explicit rather than implicit, the corpus turns the definition of "climate finance" from a hidden assumption into an object of analysis.
 
-## Data Availability {.unnumbered}
+## Data and Code Availability {.unnumbered}
 
-The reproducibility archive is deposited in Zenodo at <https://doi.org/10.5281/zenodo.19097045> under CC BY 4.0. It contains the pipeline source code and the v1.1 corpus data files (climate_finance_corpus.csv, embeddings.npz, citations.csv, and per-source catalogs). Suggested citation:
+The reproducibility archive is deposited in Zenodo at <https://doi.org/10.5281/zenodo.19097045> under CC BY 4.0. It contains the v1.1 corpus data files (climate_finance_corpus.csv, embeddings.npz, citations.csv, and per-source catalogs) alongside the pipeline source code (scripts, configuration files, DVC pipeline definitions, and `pyproject.toml` with pinned dependencies). Key software dependencies: Python $\geq$ 3.10, pandas, scikit-learn, sentence-transformers, and DVC (Data Version Control). Suggested citation:
 
 > Ha-Duong, M. (2026). A Curated Corpus of Climate Finance Literature, 1990–2024: Six Sources, Multilingual Retrieval, and Grey Literature (Version 1.1) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19097045>
 
 New versions retain the same concept DOI; version-specific DOIs are minted automatically by Zenodo. The `in_v1` column enables backward compatibility with analyses performed on earlier versions.
-
-## Code Availability {.unnumbered}
-
-The pipeline source code is available at <https://github.com/MinhHaDuong/Oeconomia-Climate-finance> under the MIT licence. The repository includes all scripts, configuration files, and DVC pipeline definitions needed to reproduce the corpus from source APIs. Key software dependencies: Python $\geq$ 3.10, pandas, scikit-learn, sentence-transformers, and DVC (Data Version Control). The full dependency list is pinned in `pyproject.toml`.
 
 ## Technical Environment {.unnumbered}
 
