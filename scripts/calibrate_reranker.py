@@ -226,42 +226,24 @@ def _find_optimal_threshold(pos_scores, neg_scores):
     return best_thresh
 
 
-def calibrate(args):
-    """Main calibration workflow."""
-    config = _load_config()
-    df, teaching_dois, cited_dois, llm_cache = load_data()
-    positive, negative = build_weak_labels(df, config, teaching_dois, cited_dois)
-
-    # Build calibration sample: all positive + all negative papers
-    labeled_mask = positive | negative
-    labels = positive[labeled_mask].values  # True = relevant
-    cal_df = df[labeled_mask].reset_index(drop=True)
-
-    # Build text for each paper
-    title_max = 200
-    abstract_max = 500
+def _build_calibration_texts(cal_df: pd.DataFrame,
+                              title_max: int = 200,
+                              abstract_max: int = 500) -> list[str]:
+    """Build text strings for each calibration paper (title + abstract)."""
     texts = []
     for _, row in cal_df.iterrows():
         title = str(row["title"] if pd.notna(row.get("title")) else "")[:title_max]
         abstract = str(row["abstract"] if pd.notna(row.get("abstract")) else "")[:abstract_max]
         texts.append(f"{title}. {abstract}" if abstract else title)
+    return texts
 
-    log.info("Calibration sample: %d papers (%d positive, %d negative)",
-             len(cal_df), labels.sum(), (~labels).sum())
 
-    queries = generate_queries()
-    if args.queries_only:
-        log.info("=== Generated queries ===")
-        for i, q in enumerate(queries, 1):
-            log.info("  %3d. %s", i, q)
-        return
-
-    # Load model — auto-detect GPU
+def _load_reranker(model_name: str, device_cfg: str):
+    """Load the cross-encoder reranker, auto-detecting GPU if requested."""
     import torch
     from sentence_transformers import CrossEncoder
 
-    model_name = args.model or DEFAULT_MODEL
-    device = args.device
+    device = device_cfg
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cpu":
@@ -274,24 +256,30 @@ def calibrate(args):
     t0 = time.time()
     reranker = CrossEncoder(model_name, device=device)
     log.info("  Model loaded in %.1fs", time.time() - t0)
+    return reranker
 
-    # Subsample for query search: keep it small for CPU speed
-    # Target: ~100 pos + ~100 neg = 200 papers (manageable with 220 queries)
-    rng = np.random.default_rng(42)
+
+def _subsample_for_query_search(
+    labels: "np.ndarray",
+    rng: "np.random.Generator",
+    n_pos: int = 100,
+    n_neg: int = 100,
+) -> "np.ndarray":
+    """Return indices of a balanced subsample for query search (pos + neg)."""
     pos_idx = np.where(labels)[0]
     neg_idx = np.where(~labels)[0]
-    n_pos_sample = min(len(pos_idx), 100)
-    n_neg_sample = min(len(neg_idx), 100)
-    pos_sample = rng.choice(pos_idx, size=n_pos_sample, replace=False)
-    neg_sample = rng.choice(neg_idx, size=n_neg_sample, replace=False)
-    sample_idx = np.sort(np.concatenate([pos_sample, neg_sample]))
-    sample_texts = [texts[i] for i in sample_idx]
-    sample_labels = labels[sample_idx]
-    log.info("  Query search sample: %d papers (%d pos, %d neg)",
-             len(sample_idx), sample_labels.sum(), (~sample_labels).sum())
+    pos_sample = rng.choice(pos_idx, size=min(len(pos_idx), n_pos), replace=False)
+    neg_sample = rng.choice(neg_idx, size=min(len(neg_idx), n_neg), replace=False)
+    return np.sort(np.concatenate([pos_sample, neg_sample]))
 
-    # Phase D: Search for best query
-    log.info("=== Query search (%d candidates) ===", len(queries))
+
+def _search_best_query(
+    queries: list[str],
+    reranker,
+    sample_texts: list[str],
+    sample_labels: "np.ndarray",
+) -> list[tuple]:
+    """Score all queries on the subsample and return sorted (auc, query, scores) list."""
     results = []
     t0 = time.time()
     for i, query in enumerate(queries):
@@ -304,10 +292,48 @@ def calibrate(args):
             eta = (len(queries) - i - 1) / rate
             log.info("  %d/%d queries scored (%.0fs elapsed, ~%.0fs remaining)",
                      i + 1, len(queries), elapsed, eta)
-
     results.sort(key=lambda x: -x[0])
     elapsed = time.time() - t0
     log.info("  Done in %.0fs (%.1f queries/s)", elapsed, len(queries) / elapsed)
+    return results
+
+
+def calibrate(args):
+    """Main calibration workflow."""
+    config = _load_config()
+    df, teaching_dois, cited_dois, llm_cache = load_data()
+    positive, negative = build_weak_labels(df, config, teaching_dois, cited_dois)
+
+    # Build calibration sample: all positive + all negative papers
+    labeled_mask = positive | negative
+    labels = positive[labeled_mask].values  # True = relevant
+    cal_df = df[labeled_mask].reset_index(drop=True)
+
+    texts = _build_calibration_texts(cal_df)
+    log.info("Calibration sample: %d papers (%d positive, %d negative)",
+             len(cal_df), labels.sum(), (~labels).sum())
+
+    queries = generate_queries()
+    if args.queries_only:
+        log.info("=== Generated queries ===")
+        for i, q in enumerate(queries, 1):
+            log.info("  %3d. %s", i, q)
+        return
+
+    model_name = args.model or DEFAULT_MODEL
+    reranker = _load_reranker(model_name, args.device)
+
+    # Subsample for query search: keep it small for CPU speed
+    # Target: ~100 pos + ~100 neg = 200 papers (manageable with 220 queries)
+    rng = np.random.default_rng(42)
+    sample_idx = _subsample_for_query_search(labels, rng)
+    sample_texts = [texts[i] for i in sample_idx]
+    sample_labels = labels[sample_idx]
+    log.info("  Query search sample: %d papers (%d pos, %d neg)",
+             len(sample_idx), sample_labels.sum(), (~sample_labels).sum())
+
+    log.info("=== Query search (%d candidates) ===", len(queries))
+    results = _search_best_query(queries, reranker, sample_texts, sample_labels)
 
     log.info("=== Top 10 queries by AUC ===")
     for rank, (auc, query, _) in enumerate(results[:10], 1):
@@ -340,21 +366,7 @@ def calibrate(args):
 
     # Compare with LLM cache
     if llm_cache:
-        agree = 0
-        disagree = 0
-        for i, (_, row) in enumerate(cal_df.iterrows()):
-            doi = normalize_doi(row["doi"]) if pd.notna(row.get("doi")) else ""
-            if doi in llm_cache:
-                reranker_relevant = all_scores[i] >= best_thresh
-                if reranker_relevant == llm_cache[doi]:
-                    agree += 1
-                else:
-                    disagree += 1
-        total = agree + disagree
-        if total > 0:
-            log.info("=== LLM cache comparison ===")
-            log.info("  Overlap: %d papers", total)
-            log.info("  Agreement: %d/%d (%.1f%%)", agree, total, 100 * agree / total)
+        _compare_with_llm_cache(cal_df, all_scores, best_thresh, llm_cache)
 
     # Save calibration results
     out_path = os.path.join(CATALOGS_DIR, "reranker_calibration.csv")
@@ -375,6 +387,25 @@ def calibrate(args):
     # HITL export
     if args.hitl:
         export_hitl(cal_df, all_scores, best_thresh)
+
+
+def _compare_with_llm_cache(cal_df, all_scores, best_thresh, llm_cache):
+    """Log agreement between reranker decisions and LLM cache labels."""
+    agree = 0
+    disagree = 0
+    for i, (_, row) in enumerate(cal_df.iterrows()):
+        doi = normalize_doi(row["doi"]) if pd.notna(row.get("doi")) else ""
+        if doi in llm_cache:
+            reranker_relevant = all_scores[i] >= best_thresh
+            if reranker_relevant == llm_cache[doi]:
+                agree += 1
+            else:
+                disagree += 1
+    total = agree + disagree
+    if total > 0:
+        log.info("=== LLM cache comparison ===")
+        log.info("  Overlap: %d papers", total)
+        log.info("  Agreement: %d/%d (%.1f%%)", agree, total, 100 * agree / total)
 
 
 def export_hitl(cal_df, scores, threshold, n_samples=100):

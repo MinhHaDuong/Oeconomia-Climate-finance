@@ -355,6 +355,66 @@ def _identify_candidates(df, config, already_flagged):
     return candidates_mask, doi_norm
 
 
+def _load_reranker_model(llm_cfg):
+    """Load a CrossEncoder reranker model with auto-detected device and logging.
+
+    Returns (reranker, device) tuple.
+    """
+    import torch
+    from sentence_transformers import CrossEncoder
+
+    model_name = llm_cfg["reranker_model"]
+    device_cfg = llm_cfg.get("reranker_device", "auto")
+    if device_cfg == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = device_cfg
+
+    if device == "cpu":
+        n_cpu = os.cpu_count() or 4
+        torch.set_num_threads(n_cpu)
+        log.info("    Loading reranker: %s (%d CPU threads)...", model_name, n_cpu)
+    else:
+        gpu_name = torch.cuda.get_device_name(0)
+        log.info("    Loading reranker: %s (GPU: %s)...", model_name, gpu_name)
+
+    t0 = time.time()
+    reranker = CrossEncoder(model_name, device=device)
+    log.info("    Model loaded in %.1fs", time.time() - t0)
+    return reranker
+
+
+def _score_batch(batch_idx, df, doi_norm, query, title_max, abstract_max, reranker):
+    """Build text pairs for a batch and return (dois, scores) arrays.
+
+    Pairs each paper's title+abstract against the reranker query.
+    """
+    texts = []
+    dois = []
+    for idx in batch_idx:
+        title = str(df.at[idx, "title"] if pd.notna(df.at[idx, "title"]) else "")[:title_max]
+        abstract = str(df.at[idx, "abstract"] if pd.notna(df.at[idx, "abstract"]) else "")[:abstract_max]
+        texts.append(f"{title}. {abstract}" if abstract else title)
+        dois.append(doi_norm.at[idx])
+
+    pairs = [(query, t) for t in texts]
+    scores = reranker.predict(pairs, batch_size=len(pairs), show_progress_bar=False)
+    return dois, scores
+
+
+def _yield_cached_results(priority_indices, doi_norm, cache, threshold, candidates_mask, df):
+    """Yield a partial series of flag decisions for already-cached candidate indices.
+
+    Returns a generator that yields (priority_indices, cached_results) if any cached.
+    """
+    cached_results = pd.Series(False, index=df.index[candidates_mask], dtype=bool)
+    for i in priority_indices:
+        d = doi_norm.at[i]
+        if d in cache:
+            cached_results.at[i] = not _is_relevant(cache[d], threshold)
+    yield priority_indices, cached_results
+
+
 def _reranker_streaming(df, config, *, already_flagged):
     """Score ALL papers with a cross-encoder reranker, prioritized by heuristic.
 
@@ -366,7 +426,6 @@ def _reranker_streaming(df, config, *, already_flagged):
     """
     try:
         import torch  # noqa: F401
-        from sentence_transformers import CrossEncoder  # noqa: F401
     except ImportError:
         log.warning("Flag 6 skipped: torch/sentence-transformers not installed")
         return
@@ -374,7 +433,6 @@ def _reranker_streaming(df, config, *, already_flagged):
     llm_cfg = config["llm_relevance"]
     candidates_mask, doi_norm = _identify_candidates(df, config, already_flagged)
 
-    model_name = llm_cfg["reranker_model"]
     query = llm_cfg["reranker_query"]
     threshold = float(llm_cfg.get("reranker_threshold", 0.5))
     batch_size = int(llm_cfg.get("reranker_batch_size", 64))
@@ -383,7 +441,7 @@ def _reranker_streaming(df, config, *, already_flagged):
 
     cache = _load_llm_cache(config)
 
-    # All papers with text worth scoring (abstract > 50 chars or title present)
+    # All papers with text worth scoring
     abstract_s = df["abstract"].fillna("").astype(str).str.strip()
     has_text = abstract_s.str.len() > 50
     scoreable = has_text & ~already_flagged
@@ -393,7 +451,6 @@ def _reranker_streaming(df, config, *, already_flagged):
     # Priority 2: papers that pass concept-group check (background scoring)
     priority2_indices = df.index[scoreable & ~candidates_mask].tolist()
 
-    # Split each priority into cached / uncached
     def uncached(indices):
         return [i for i in indices
                 if doi_norm.at[i] not in cache or doi_norm.at[i] == ""]
@@ -408,68 +465,39 @@ def _reranker_streaming(df, config, *, already_flagged):
     log.info("    Priority 2 (background scoring): %d (cached: %d, to score: %d)",
              len(priority2_indices), p2_cached, len(p2_uncached))
 
-    # Yield cached results for Flag 6 candidates
     if p1_cached > 0:
-        cached_results = pd.Series(False, index=df.index[candidates_mask], dtype=bool)
-        for i in priority1_indices:
-            d = doi_norm.at[i]
-            if d in cache:
-                cached_results.at[i] = not _is_relevant(cache[d], threshold)
-        yield priority1_indices, cached_results
+        yield from _yield_cached_results(
+            priority1_indices, doi_norm, cache, threshold, candidates_mask, df
+        )
 
-    # Combine uncached: priority 1 first, then priority 2
     all_uncached = p1_uncached + p2_uncached
     if not all_uncached:
         return
 
-    # Load model — auto-detect GPU
-    device_cfg = llm_cfg.get("reranker_device", "auto")
-    if device_cfg == "auto":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    else:
-        device = device_cfg
-    if device == "cpu":
-        n_cpu = os.cpu_count() or 4
-        torch.set_num_threads(n_cpu)
-        log.info("    Loading reranker: %s (%d CPU threads)...", model_name, n_cpu)
-    else:
-        gpu_name = torch.cuda.get_device_name(0)
-        log.info("    Loading reranker: %s (GPU: %s)...", model_name, gpu_name)
-    t0 = time.time()
-    reranker = CrossEncoder(model_name, device=device)
-    log.info("    Model loaded in %.1fs", time.time() - t0)
+    reranker = _load_reranker_model(llm_cfg)
 
-    # Score in batches, checkpointing after each
     max_batches = int(llm_cfg.get("reranker_max_batches", 0))  # 0 = unlimited
     p1_boundary = len(p1_uncached)
+    p1_set = set(p1_uncached)
     total_batches = (len(all_uncached) + batch_size - 1) // batch_size
     if max_batches > 0:
         effective_batches = min(max_batches, total_batches)
         log.info("    Limited to %d/%d batches (%d papers)",
                  effective_batches, total_batches, effective_batches * batch_size)
+
     for batch_start in range(0, len(all_uncached), batch_size):
         batch_idx = all_uncached[batch_start:batch_start + batch_size]
         current_batch = batch_start // batch_size + 1
 
-        texts = []
-        dois = []
-        for idx in batch_idx:
-            title = str(df.at[idx, "title"] if pd.notna(df.at[idx, "title"]) else "")[:title_max]
-            abstract = str(df.at[idx, "abstract"] if pd.notna(df.at[idx, "abstract"]) else "")[:abstract_max]
-            texts.append(f"{title}. {abstract}" if abstract else title)
-            dois.append(doi_norm.at[idx])
-
-        pairs = [(query, t) for t in texts]
-        scores = reranker.predict(pairs, batch_size=len(pairs), show_progress_bar=False)
-
+        dois, scores = _score_batch(
+            batch_idx, df, doi_norm, query, title_max, abstract_max, reranker
+        )
         for doi, score in zip(dois, scores):
             if doi:
                 cache[doi] = float(score)
-
         _save_llm_cache(cache, config)
 
-        # Only yield results for priority 1 (Flag 6 candidates)
-        p1_in_batch = [i for i in batch_idx if i in set(p1_uncached)]
+        p1_in_batch = [i for i in batch_idx if i in p1_set]
         if p1_in_batch:
             partial = pd.Series(False, index=pd.Index(p1_in_batch), dtype=bool)
             for idx_val in p1_in_batch:
@@ -478,7 +506,6 @@ def _reranker_streaming(df, config, *, already_flagged):
                     partial.at[idx_val] = not _is_relevant(cache[d], threshold)
             yield p1_in_batch, partial
 
-        # Progress reporting
         phase = "P1" if batch_start < p1_boundary else "P2"
         if current_batch < total_batches:
             log.info("    [%s] batch %d/%d", phase, current_batch, total_batches)
@@ -486,6 +513,50 @@ def _reranker_streaming(df, config, *, already_flagged):
         if max_batches > 0 and current_batch >= max_batches:
             log.info("    Stopped after %d batches (reranker_max_batches)", max_batches)
             break
+
+
+def _resolve_llm_model(llm_cfg, backend):
+    """Build provider-prefixed model string from config or env override.
+
+    New-style: REFINE_MODEL env var takes precedence.
+    Legacy: backend + ollama_model/openrouter_model keys.
+    Returns (model_string, batch_size).
+    """
+    model = os.environ.get("REFINE_MODEL", "")
+    if not model:
+        if backend == "ollama":
+            model = f"ollama/{llm_cfg['ollama_model']}"
+        else:
+            model = f"openrouter/{llm_cfg['openrouter_model']}"
+    batch_size = (
+        llm_cfg.get("ollama_batch_size", 5)
+        if backend == "ollama"
+        else llm_cfg.get("batch_size", 15)
+    )
+    return model, batch_size
+
+
+def _score_llm_batch(batch_idx, df, doi_norm, llm_cfg, model, title_max, abstract_max):
+    """Build prompt and call the LLM for one batch.
+
+    Returns (dois, scores_dict) where scores_dict maps "1"-indexed keys to bool.
+    Raises on parse error so the caller can manage retries.
+    """
+    papers = []
+    dois = []
+    for j, idx in enumerate(batch_idx):
+        title = str(df.at[idx, "title"] if pd.notna(df.at[idx, "title"]) else "")[:title_max]
+        abstract = str(df.at[idx, "abstract"] if pd.notna(df.at[idx, "abstract"]) else "")[:abstract_max]
+        doi = doi_norm.at[idx]
+        dois.append(doi)
+        papers.append(f"{j+1}. Title: {title}\n   Abstract: {abstract}")
+
+    prompt = llm_cfg["prompt_template"] + "\n\n".join(papers)
+    answer = _llm_call(prompt, model)
+    answer = re.sub(r"```json?\s*", "", answer)
+    answer = re.sub(r"```", "", answer)
+    scores = json.loads(answer)
+    return dois, scores
 
 
 def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
@@ -504,33 +575,18 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
 
     # LLM backends (openrouter / ollama)
     candidates_mask, doi_norm = _identify_candidates(df, config, already_flagged)
-
     n_candidates = candidates_mask.sum()
     if n_candidates == 0:
         log.info("  Flag 6: no candidates (all papers pass concept-group check)")
         return
 
-    # Build provider-prefixed model string from config
-    # New-style: REFINE_MODEL env var or config "model" key with prefix
-    # Legacy: backend + ollama_model/openrouter_model keys
-    model = os.environ.get("REFINE_MODEL", "")
-    if not model:
-        if backend == "ollama":
-            model = f"ollama/{llm_cfg['ollama_model']}"
-        else:
-            model = f"openrouter/{llm_cfg['openrouter_model']}"
-    if backend == "ollama":
-        batch_size = llm_cfg.get("ollama_batch_size", 5)
-    else:
-        batch_size = llm_cfg.get("batch_size", 15)
-
+    model, batch_size = _resolve_llm_model(llm_cfg, backend)
     title_max = llm_cfg.get("title_max_chars", 150)
     abstract_max = llm_cfg.get("abstract_max_chars", 250)
     max_errors = llm_cfg.get("max_consecutive_errors", 3)
 
     cache = _load_llm_cache(config)
     candidate_indices = df.index[candidates_mask].tolist()
-
     uncached_indices = [
         i for i in candidate_indices
         if doi_norm.at[i] not in cache or doi_norm.at[i] == ""
@@ -539,16 +595,11 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
     log.info("    Candidates: %d (cached: %d, to score: %d)",
              n_candidates, cached_count, len(uncached_indices))
 
-    # Yield cached results first
     if cached_count > 0:
-        cached_results = pd.Series(False, index=df.index[candidates_mask], dtype=bool)
-        for i in candidate_indices:
-            d = doi_norm.at[i]
-            if d in cache:
-                cached_results.at[i] = not _is_relevant(cache[d], 0)
-        yield candidate_indices, cached_results
+        yield from _yield_cached_results(
+            candidate_indices, doi_norm, cache, 0, candidates_mask, df
+        )
 
-    # Score uncached in batches
     retries_left = max_errors
     total_batches = (len(uncached_indices) + batch_size - 1) // batch_size
 
@@ -556,23 +607,10 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
         batch_idx = uncached_indices[batch_num:batch_num + batch_size]
         current_batch = batch_num // batch_size + 1
 
-        papers = []
-        dois = []
-        for j, idx in enumerate(batch_idx):
-            title = str(df.at[idx, "title"] if pd.notna(df.at[idx, "title"]) else "")[:title_max]
-            abstract = str(df.at[idx, "abstract"] if pd.notna(df.at[idx, "abstract"]) else "")[:abstract_max]
-            doi = doi_norm.at[idx]
-            dois.append(doi)
-            papers.append(f"{j+1}. Title: {title}\n   Abstract: {abstract}")
-
-        prompt = llm_cfg["prompt_template"] + "\n\n".join(papers)
-
         try:
-            answer = _llm_call(prompt, model)
-            answer = re.sub(r"```json?\s*", "", answer)
-            answer = re.sub(r"```", "", answer)
-            scores = json.loads(answer)
-
+            dois, scores = _score_llm_batch(
+                batch_idx, df, doi_norm, llm_cfg, model, title_max, abstract_max
+            )
             for j, doi in enumerate(dois):
                 key = str(j + 1)
                 if key in scores and doi:
@@ -585,6 +623,7 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
                 log.error("    Too many consecutive errors, stopping LLM scoring")
                 _save_llm_cache(cache, config)
                 break
+            dois = [doi_norm.at[i] for i in batch_idx]
 
         _save_llm_cache(cache, config)
 

@@ -324,6 +324,35 @@ def extract_first_paragraph(path):
 
 # --- Step 4: Semantic Scholar ---
 
+def _fetch_s2_abstract(doi, request_timeout, max_retries, retry_backoff, retry_jitter,
+                       s2_counters):
+    """Fetch a single abstract from Semantic Scholar by DOI.
+
+    Returns (doi, abstract_text). On any error returns (doi, "").
+    The caller is responsible for updating step-level counters.
+    """
+    try:
+        # S2 public API requires ≥3s between requests to avoid 429s
+        resp = retry_get(
+            f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
+            params={"fields": "abstract"},
+            timeout=max(1, request_timeout),
+            delay=3.0,
+            max_retries=max_retries,
+            backoff_base=retry_backoff,
+            jitter_max=retry_jitter,
+            counters=s2_counters,
+        )
+        if resp.status_code == 200:
+            ab = resp.json().get("abstract", "") or ""
+            return doi, clean_abstract(ab)
+        return doi, ""
+    except requests.exceptions.HTTPError:
+        return doi, ""
+    except Exception:
+        return doi, ""
+
+
 def step4_semantic_scholar(df, counters, checkpoint_every=50,
                            request_timeout=60.0, max_retries=5,
                            retry_backoff=2.0, retry_jitter=1.0):
@@ -351,43 +380,13 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
     s2_log_every = min(checkpoint_every, 10)
     s2_counters = {}
     for i, (idx, doi) in enumerate(to_query):
-        try:
-            # S2 public API requires ≥3s between requests to avoid 429s
-            resp = retry_get(
-                f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
-                params={"fields": "abstract"},
-                timeout=max(1, request_timeout),
-                delay=3.0,
-                max_retries=max_retries,
-                backoff_base=retry_backoff,
-                jitter_max=retry_jitter,
-                counters=s2_counters,
-            )
-            if resp.status_code == 200:
-                ab = resp.json().get("abstract", "") or ""
-                cache[doi] = clean_abstract(ab)
-                if cache[doi]:
-                    counters["step4_success"] = counters.get("step4_success", 0) + 1
-                else:
-                    counters["step4_empty_result"] = counters.get("step4_empty_result", 0) + 1
-            elif resp.status_code in (404, 400):
-                counters["step4_4xx"] = counters.get("step4_4xx", 0) + 1
-                cache[doi] = ""
-            else:
-                cache[doi] = ""
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if e.response is not None else 0
-            if status in (404, 400):
-                counters["step4_4xx"] = counters.get("step4_4xx", 0) + 1
-            else:
-                counters["step4_5xx"] = counters.get("step4_5xx", 0) + 1
-            if i < 3:
-                log.warning("S2 %s: %s", doi, e)
-            cache[doi] = ""
-        except Exception as e:
-            if i < 3:
-                log.warning("S2 %s: %s", doi, e)
-            cache[doi] = ""
+        _, ab = _fetch_s2_abstract(
+            doi, request_timeout, max_retries, retry_backoff, retry_jitter, s2_counters)
+        cache[doi] = ab
+        if ab:
+            counters["step4_success"] = counters.get("step4_success", 0) + 1
+        else:
+            counters["step4_empty_result"] = counters.get("step4_empty_result", 0) + 1
 
         if (i + 1) % s2_log_every == 0:
             filled_so_far = counters.get("step4_success", 0)
