@@ -19,7 +19,9 @@ Encoding: UTF-8, LF line endings.
 ```
 
 Every `.ticket` file starts with this line. It declares the format version
-and enables file-type detection without relying on the extension.
+and enables file-type detection without relying on the extension. A future
+`%ticket v2` adds headers without breaking v1 validators (they reject
+unknown versions rather than silently misparsing).
 
 ### Structure
 
@@ -42,26 +44,34 @@ Three sections, in order:
 2. **Log** — append-only ledger, after `--- log ---` separator.
 3. **Body** — free-form markdown, after `--- body ---` separator.
 
-A blank line ends the header block. Both separators are required.
+A blank line ends the header block. Both separators are required (the
+validator rejects files missing either one).
 
 ### Headers (closed set, v1)
 
 | Header | Required | Type | Values |
 |--------|----------|------|--------|
 | `Title` | yes | string | Short imperative sentence |
-| `Status` | yes | enum | `open`, `doing`, `closed` |
+| `Status` | yes | enum | `open`, `doing`, `closed`, `pending` |
 | `Created` | yes | date | `YYYY-MM-DD` |
 | `Author` | yes | string | Agent or human identifier |
 | `Blocked-by` | no | ref | Ticket ID or `gh#N` (repeatable) |
-| `Labels` | no | string | Comma-separated tags |
 
-No other headers are valid in v1. No `X-` extensions.
+No other headers are valid in v1. No `X-` extensions. If v2 needs new
+headers, it declares `%ticket v2` and extends the set.
+
+**Status values:**
+- `open` — available for work.
+- `doing` — claimed, in progress.
+- `closed` — completed or cancelled.
+- `pending` — awaiting external input (e.g., review). Excluded from ready query.
 
 **`Blocked-by` references:**
-- A bare ID (e.g., `0041`) refers to a local ticket.
+- A 4-digit ID (e.g., `0041`) refers to a local ticket.
 - `gh#N` refers to a GitHub issue. Resolved via API when online, treated as
   satisfied (non-blocking) when offline.
 - Repeatable: one `Blocked-by:` line per dependency.
+- A blocker must be `closed` to unblock. `doing` and `pending` still block.
 
 ### ID assignment
 
@@ -69,14 +79,11 @@ The ticket ID is derived from the filename, not a header.
 
 Filename pattern: `{ID}-{slug}.ticket`
 - ID: zero-padded sequential number, 4 digits. `0001`, `0002`, ...
-- Slug: lowercase kebab-case summary. `add-validation`, `fix-cycle-bug`.
+- Slug: lowercase kebab-case, ASCII only (`[a-z0-9-]`).
 
-To assign the next ID:
-```
-ls tickets/*.ticket tickets/archive/*.ticket 2>/dev/null \
-  | sed 's|.*/||; s|-.*/||' | sort -n | tail -1
-```
-Increment by 1, zero-pad to 4 digits. If the directory is empty, start at `0001`.
+To assign the next ID: read filenames in `tickets/` and `tickets/archive/`,
+extract the numeric prefix from each, take the maximum, increment by 1,
+zero-pad to 4 digits. If no tickets exist, start at `0001`.
 
 **Collision handling:** optimistic. Two worktrees may pick the same number.
 The pre-commit validator catches duplicate IDs. The agent that loses renames
@@ -143,7 +150,7 @@ across sessions but not across clones.
 ### Ready query
 
 A ticket is **ready** when:
-- `Status: open`
+- `Status: open` (not `doing`, not `closed`, not `pending`)
 - Every `Blocked-by` local ref points to a `Status: closed` ticket
 - Every `Blocked-by: gh#N` is either resolved via API or treated as satisfied (offline)
 - No `.wip` file exists for its ID
@@ -160,16 +167,17 @@ Archive moves the file to `tickets/archive/` via `git mv`.
 ## Validator rules (pre-commit)
 
 The Go validator enforces:
-1. Magic first line is `%ticket v1`
+1. Magic first line is `%ticket v1` (reject unknown versions)
 2. All required headers present
 3. No unknown headers
-4. `Status` value is in the enum
-5. `Created` is a valid ISO date
-6. Filename ID matches `NNNN-slug` pattern
+4. `Status` value is in the enum (`open`, `doing`, `closed`, `pending`)
+5. `Created` is a valid ISO date (`YYYY-MM-DD`)
+6. Filename matches `NNNN-{slug}.ticket` pattern (4-digit ID, ASCII slug)
 7. No duplicate IDs across `tickets/` and `tickets/archive/`
 8. `Blocked-by` local refs point to existing ticket IDs
 9. No dependency cycles
 10. Log lines match `{timestamp} {actor} {verb}` format
+11. Both `--- log ---` and `--- body ---` separators present
 
 ## Relationship to GitHub Issues
 
