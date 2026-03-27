@@ -122,6 +122,9 @@ stages:
   # Phase 1b.1: Enrichment — each script updates its own cache independently.
   # A join stage assembles enriched_works.csv from all caches. See #428.
   # Caches live in enrich_cache/ (persistent, append-only, not DVC outputs).
+  #
+  # IMPORTANT: `dvc repro join_enrichments` alone won't refresh caches.
+  # Use `make corpus-enrich` which runs all stages in order.
 
   enrich_dois:
     cmd: uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv

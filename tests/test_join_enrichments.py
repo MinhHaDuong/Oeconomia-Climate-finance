@@ -176,6 +176,174 @@ def test_join_preserves_existing_values(enrichment_dir):
     assert w001["doi"] == "10.1234/a"
 
 
+def test_crossfill_longest_abstract_wins(tmp_path):
+    """Cross-source backfill picks the longest abstract for a given DOI."""
+    from join_enrichments import join_enrichments
+
+    catalogs = tmp_path / "catalogs"
+    cache_dir = catalogs / "enrich_cache"
+    cache_dir.mkdir(parents=True)
+
+    # Two records share the same DOI; one has a short abstract, one has a long one
+    base = pd.DataFrame({
+        "source": ["openalex", "istex"],
+        "source_id": ["W100", "IST200"],
+        "doi": ["10.1234/shared", "10.1234/shared"],
+        "title": ["Title A", "Title B"],
+        "first_author": ["Auth A", "Auth B"],
+        "all_authors": ["Auth A", "Auth B"],
+        "year": [2020, 2020],
+        "journal": ["J1", "J2"],
+        "abstract": ["Short.", "A much longer abstract with more detail and content."],
+        "language": ["en", ""],
+        "keywords": ["", ""],
+        "categories": ["", ""],
+        "cited_by_count": [10, 5],
+        "affiliations": ["", ""],
+        "from_openalex": [1, 0],
+        "from_istex": [0, 1],
+        "from_bibcnrs": [0, 0],
+        "from_scispace": [0, 0],
+        "from_grey": [0, 0],
+        "from_teaching": [0, 0],
+        "source_count": [1, 1],
+    })
+    base.to_csv(catalogs / "unified_works.csv", index=False)
+
+    # Empty caches
+    pd.DataFrame({"source_id": [], "doi": []}).to_csv(
+        cache_dir / "doi_resolved.csv", index=False)
+    pd.DataFrame({"key": [], "abstract": []}).to_csv(
+        cache_dir / "openalex_abstracts.csv", index=False)
+    pd.DataFrame({"key": [], "abstract": []}).to_csv(
+        cache_dir / "s2_abstracts.csv", index=False)
+    pd.DataFrame({"key": [], "language": []}).to_csv(
+        cache_dir / "language_resolved.csv", index=False)
+    (cache_dir / "abstract_summaries_cache.jsonl").write_text("")
+
+    # Now blank the short abstract to trigger backfill
+    base.at[0, "abstract"] = ""
+    base.to_csv(catalogs / "unified_works.csv", index=False)
+
+    output_path = catalogs / "enriched_works.csv"
+    join_enrichments(
+        unified_path=str(catalogs / "unified_works.csv"),
+        output_path=str(output_path),
+        cache_dir=str(cache_dir),
+    )
+
+    result = pd.read_csv(output_path)
+    w100 = result[result["source_id"] == "W100"].iloc[0]
+    assert "much longer" in w100["abstract"], (
+        "Cross-source backfill should pick the longest abstract"
+    )
+
+
+def test_crossfill_ignores_nan_doi(tmp_path):
+    """Cross-source backfill must not match records with NaN DOIs."""
+    from join_enrichments import join_enrichments
+
+    catalogs = tmp_path / "catalogs"
+    cache_dir = catalogs / "enrich_cache"
+    cache_dir.mkdir(parents=True)
+
+    # Two records both have NaN DOI — they should NOT cross-fill
+    base = pd.DataFrame({
+        "source": ["openalex", "istex"],
+        "source_id": ["W100", "IST200"],
+        "doi": [float("nan"), float("nan")],
+        "title": ["Unrelated A", "Unrelated B"],
+        "first_author": ["Auth A", "Auth B"],
+        "all_authors": ["Auth A", "Auth B"],
+        "year": [2020, 2021],
+        "journal": ["J1", "J2"],
+        "abstract": ["Has an abstract.", ""],
+        "language": ["en", ""],
+        "keywords": ["", ""],
+        "categories": ["", ""],
+        "cited_by_count": [10, 5],
+        "affiliations": ["", ""],
+        "from_openalex": [1, 0],
+        "from_istex": [0, 1],
+        "from_bibcnrs": [0, 0],
+        "from_scispace": [0, 0],
+        "from_grey": [0, 0],
+        "from_teaching": [0, 0],
+        "source_count": [1, 1],
+    })
+    base.to_csv(catalogs / "unified_works.csv", index=False)
+
+    # Empty caches
+    pd.DataFrame({"source_id": [], "doi": []}).to_csv(
+        cache_dir / "doi_resolved.csv", index=False)
+    pd.DataFrame({"key": [], "abstract": []}).to_csv(
+        cache_dir / "openalex_abstracts.csv", index=False)
+    pd.DataFrame({"key": [], "abstract": []}).to_csv(
+        cache_dir / "s2_abstracts.csv", index=False)
+    pd.DataFrame({"key": [], "language": []}).to_csv(
+        cache_dir / "language_resolved.csv", index=False)
+    (cache_dir / "abstract_summaries_cache.jsonl").write_text("")
+
+    output_path = catalogs / "enriched_works.csv"
+    join_enrichments(
+        unified_path=str(catalogs / "unified_works.csv"),
+        output_path=str(output_path),
+        cache_dir=str(cache_dir),
+    )
+
+    result = pd.read_csv(output_path)
+    ist = result[result["source_id"] == "IST200"].iloc[0]
+    assert pd.isna(ist["abstract"]) or ist["abstract"] == "", (
+        "NaN DOI records must not cross-fill abstracts from unrelated records"
+    )
+
+
+def test_join_missing_cache_files(tmp_path):
+    """Join works gracefully when some cache files don't exist."""
+    from join_enrichments import join_enrichments
+
+    catalogs = tmp_path / "catalogs"
+    cache_dir = catalogs / "enrich_cache"
+    cache_dir.mkdir(parents=True)
+
+    base = pd.DataFrame({
+        "source": ["openalex"],
+        "source_id": ["W001"],
+        "doi": ["10.1234/a"],
+        "title": ["Title A"],
+        "first_author": ["Auth A"],
+        "all_authors": ["Auth A"],
+        "year": [2020],
+        "journal": ["J1"],
+        "abstract": ["Abstract text."],
+        "language": ["en"],
+        "keywords": ["kw1"],
+        "categories": ["cat1"],
+        "cited_by_count": [10],
+        "affiliations": ["Aff1"],
+        "from_openalex": [1],
+        "from_istex": [0],
+        "from_bibcnrs": [0],
+        "from_scispace": [0],
+        "from_grey": [0],
+        "from_teaching": [0],
+        "source_count": [1],
+    })
+    base.to_csv(catalogs / "unified_works.csv", index=False)
+
+    # No cache files at all — should not crash
+    output_path = catalogs / "enriched_works.csv"
+    join_enrichments(
+        unified_path=str(catalogs / "unified_works.csv"),
+        output_path=str(output_path),
+        cache_dir=str(cache_dir),
+    )
+
+    result = pd.read_csv(output_path)
+    assert len(result) == 1
+    assert result.iloc[0]["abstract"] == "Abstract text."
+
+
 def test_join_row_count_unchanged(enrichment_dir):
     """Join does not add or remove rows."""
     from join_enrichments import join_enrichments
