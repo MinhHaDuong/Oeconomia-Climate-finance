@@ -468,16 +468,7 @@ check-fast: lint-prose
 
 # ── Prose linting (AI-tell detection) ─────────────────────
 lint-prose:
-	@echo "=== Blacklisted words (expect 0) ==="
-	@count=$$(grep -ciE 'delve|nuanced|multifaceted|pivotal|tapestry|intricate|meticulous|vibrant|showcasing|underscores' content/manuscript.qmd || true); \
-	echo "  Found: $$count"; [ "$$count" -eq 0 ] || exit 1
-	@echo "=== Em-dash heavy paragraphs (target 0, currently 7 — fix during proofread) ==="
-	@count=$$(grep -cP -- '---.*---.*---' content/manuscript.qmd || true); \
-	echo "  Found: $$count"; [ "$$count" -le 7 ] || exit 1
-	@echo "=== Contrast farming (expect ≤3) ==="
-	@count=$$(grep -cP 'not .{3,60}, but ' content/manuscript.qmd || true); \
-	echo "  Found: $$count"; [ "$$count" -le 3 ] || exit 1
-	@echo "LINT-PROSE: PASS"
+	@bash scripts/lint_prose.sh
 
 # ── Setup (run once after cloning) ───────────────────────
 setup:
