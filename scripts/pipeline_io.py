@@ -36,7 +36,6 @@ import random
 import re
 import time
 
-import pandas as pd
 import requests
 
 _log = logging.getLogger("pipeline.io")

@@ -13,9 +13,6 @@ Canonical homes for new code:
 """
 
 import logging
-import os
-
-from dotenv import load_dotenv
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -56,7 +53,7 @@ _utils_log = get_logger("utils")
 # Paths — re-exported from pipeline_loaders so callers need not change
 # ---------------------------------------------------------------------------
 
-from pipeline_loaders import (  # noqa: E402
+from pipeline_loaders import (  # noqa: E402, F401
     BASE_DIR,
     CATALOGS_DIR,
     CONFIG_DIR,
@@ -96,7 +93,7 @@ REFS_COLUMNS = [
 # HTTP constants — re-exported from pipeline_io
 # ---------------------------------------------------------------------------
 
-from pipeline_io import (  # noqa: E402
+from pipeline_io import (  # noqa: E402, F401
     MAILTO,
     OPENALEX_API_KEY,
     POLITE_MAX_RETRIES,
@@ -107,7 +104,7 @@ from pipeline_io import (  # noqa: E402
 # Re-exports from pipeline_text
 # ---------------------------------------------------------------------------
 
-from pipeline_text import (  # noqa: E402
+from pipeline_text import (  # noqa: E402, F401
     ISO_639_1_CODES,
     LANG_NORMALIZE,
     clean_doi,
@@ -123,7 +120,7 @@ from pipeline_text import (  # noqa: E402
 # Re-exports from pipeline_io
 # ---------------------------------------------------------------------------
 
-from pipeline_io import (  # noqa: E402
+from pipeline_io import (  # noqa: E402, F401
     append_checkpoint,
     append_to_pool,
     dedup_courses,
@@ -144,7 +141,7 @@ from pipeline_io import (  # noqa: E402
 # Re-exports from pipeline_loaders
 # ---------------------------------------------------------------------------
 
-from pipeline_loaders import (  # noqa: E402
+from pipeline_loaders import (  # noqa: E402, F401
     load_analysis_config,
     load_analysis_corpus,
     load_analysis_periods,
@@ -160,7 +157,7 @@ from pipeline_loaders import (  # noqa: E402
 # Re-exports from pipeline_progress
 # ---------------------------------------------------------------------------
 
-from pipeline_progress import (  # noqa: E402
+from pipeline_progress import (  # noqa: E402, F401
     EX_STUCK,
     WatchedProgress,
     compute_priority_scores,

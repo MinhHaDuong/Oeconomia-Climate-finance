@@ -299,7 +299,6 @@ def load_analysis_corpus(core_only=False, with_embeddings=True,
 
     Returns (df, embeddings) where embeddings is None if with_embeddings=False.
     """
-    import numpy as np
 
     cfg = load_analysis_config()
     if cite_threshold is None:

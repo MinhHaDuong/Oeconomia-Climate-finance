@@ -12,7 +12,6 @@ Produces:
 """
 
 import os
-from collections import Counter
 
 import community as community_louvain
 import matplotlib.pyplot as plt
@@ -20,7 +19,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
-from sklearn.metrics.pairwise import cosine_similarity
 
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
 

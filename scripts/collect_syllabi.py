@@ -24,7 +24,6 @@ import os
 
 from syllabi_crossref import (CROSSREF_CACHE_PATH, _load_crossref_cache,  # noqa: F401
                                _save_crossref_cache_entry, crossref_lookup)  # noqa: F401
-from syllabi_harvest import stage_fetch as _stage_fetch
 from syllabi_harvest import stage_search as _stage_search
 from syllabi_io import (CHUNK_OVERLAP, CHUNK_SIZE, MAX_TEXT_CHARS,  # noqa: F401
                         _jsonl_lock, append_jsonl, extract_json_from_text,  # noqa: F401
