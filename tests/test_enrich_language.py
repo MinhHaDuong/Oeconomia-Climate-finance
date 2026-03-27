@@ -284,10 +284,26 @@ class TestDVCStage:
         deps = self.dvc["stages"]["enrich_language"]["deps"]
         assert any("unified_works.csv" in d for d in deps)
 
+    def test_stage_produces_stamp(self):
+        """enrich_language writes a stamp file for DVC ordering."""
+        outs = self.dvc["stages"]["enrich_language"]["outs"]
+        stamp_paths = []
+        for o in outs:
+            if isinstance(o, dict):
+                stamp_paths.extend(o.keys())
+            else:
+                stamp_paths.append(o)
+        assert any(".language.stamp" in p for p in stamp_paths)
+
+    def test_join_stage_depends_on_stamp(self):
+        """join_enrichments depends on enrich_language stamp."""
+        deps = self.dvc["stages"]["join_enrichments"]["deps"]
+        assert any(".language.stamp" in str(d) for d in deps)
+
     def test_join_stage_produces_enriched(self):
         """join_enrichments stage produces enriched_works.csv."""
         outs = self.dvc["stages"]["join_enrichments"]["outs"]
-        assert any("enriched_works.csv" in o for o in outs)
+        assert any("enriched_works.csv" in str(o) for o in outs)
 
 
 # ---------- script structure ----------

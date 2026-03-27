@@ -177,6 +177,20 @@ class TestFailFastChecks:
         assert any("unified_works.csv" in p for p in dep_paths), \
             "dvc.yaml join_enrichments stage must list unified_works.csv in deps"
 
+    def test_join_depends_on_all_enrichment_stamps(self):
+        """join_enrichments must depend on all 4 enrichment stamp files.
+
+        Without stamp dependencies, `dvc repro join_enrichments` could run
+        before enrichment stages populate their caches. See #428.
+        """
+        dvc = read_dvc_yaml()
+        deps = [str(d) for d in dvc["stages"]["join_enrichments"].get("deps", [])]
+        expected_stamps = [".dois.stamp", ".abstracts.stamp",
+                          ".language.stamp", ".summaries.stamp"]
+        for stamp in expected_stamps:
+            assert any(stamp in d for d in deps), \
+                f"join_enrichments must depend on {stamp}"
+
     def test_corpus_extend_checks_for_enriched(self):
         """dvc.yaml extend stage must declare enriched_works.csv as a dependency.
 

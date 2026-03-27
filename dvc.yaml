@@ -122,9 +122,9 @@ stages:
   # Phase 1b.1: Enrichment — each script updates its own cache independently.
   # A join stage assembles enriched_works.csv from all caches. See #428.
   # Caches live in enrich_cache/ (persistent, append-only, not DVC outputs).
-  #
-  # IMPORTANT: `dvc repro join_enrichments` alone won't refresh caches.
-  # Use `make corpus-enrich` which runs all stages in order.
+  # Each stage writes a .stamp file as its DVC output so the DAG captures
+  # ordering: join_enrichments depends on all stamps, ensuring caches are
+  # populated before the join runs.
   #
   # Design trade-off: enrich_language runs on unified_works.csv (before abstract
   # enrichment), so language detection may use title-only text for records whose
@@ -133,16 +133,23 @@ stages:
   # re-detect language with the full text. Accepted for stage independence.
 
   enrich_dois:
-    cmd: uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv
+    cmd: >-
+      uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv &&
+      date -Iseconds > data/catalogs/enrich_cache/.dois.stamp
     deps:
       - scripts/enrich_dois.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
+    outs:
+      - data/catalogs/enrich_cache/.dois.stamp:
+          cache: false
 
   enrich_abstracts:
-    cmd: uv run python scripts/enrich_abstracts.py --works-input data/catalogs/unified_works.csv
+    cmd: >-
+      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/unified_works.csv &&
+      date -Iseconds > data/catalogs/enrich_cache/.abstracts.stamp
     deps:
       - scripts/enrich_abstracts.py
       - scripts/utils.py
@@ -150,24 +157,37 @@ stages:
       - scripts/pipeline_text.py
       - scripts/pipeline_progress.py
       - data/catalogs/unified_works.csv
+    outs:
+      - data/catalogs/enrich_cache/.abstracts.stamp:
+          cache: false
 
   enrich_language:
-    cmd: uv run python scripts/enrich_language.py --works-input data/catalogs/unified_works.csv
+    cmd: >-
+      uv run python scripts/enrich_language.py --works-input data/catalogs/unified_works.csv &&
+      date -Iseconds > data/catalogs/enrich_cache/.language.stamp
     deps:
       - scripts/enrich_language.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
+    outs:
+      - data/catalogs/enrich_cache/.language.stamp:
+          cache: false
 
   summarize_abstracts:
-    cmd: uv run python scripts/summarize_abstracts.py --works-input data/catalogs/unified_works.csv
+    cmd: >-
+      uv run python scripts/summarize_abstracts.py --works-input data/catalogs/unified_works.csv &&
+      date -Iseconds > data/catalogs/enrich_cache/.summaries.stamp
     deps:
       - scripts/summarize_abstracts.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
+    outs:
+      - data/catalogs/enrich_cache/.summaries.stamp:
+          cache: false
 
   # NOTE: join_enrichments has no DVC deps on the enrichment stages above.
   # This is intentional — caches are persistent (not DVC outputs), so
@@ -181,6 +201,10 @@ stages:
       - scripts/pipeline_io.py
       - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
+      - data/catalogs/enrich_cache/.dois.stamp
+      - data/catalogs/enrich_cache/.abstracts.stamp
+      - data/catalogs/enrich_cache/.language.stamp
+      - data/catalogs/enrich_cache/.summaries.stamp
     outs:
       - data/catalogs/enriched_works.csv
 
