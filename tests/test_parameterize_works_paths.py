@@ -46,19 +46,10 @@ class TestEnrichDoisCLI:
         assert _has_flag(self._source, "--works-input"), \
             "enrich_dois.py must accept --works-input"
 
-    def test_accepts_works_output(self):
-        assert _has_flag(self._source, "--works-output"), \
-            "enrich_dois.py must accept --works-output"
-
     def test_works_input_default_is_unified(self):
         """Default --works-input should point to unified_works.csv."""
         assert "unified_works.csv" in self._source, \
             "enrich_dois.py --works-input default should be unified_works.csv"
-
-    def test_works_output_default_is_enriched(self):
-        """Default --works-output should point to enriched_works.csv."""
-        assert "enriched_works.csv" in self._source, \
-            "enrich_dois.py --works-output default should be enriched_works.csv"
 
     @pytest.mark.slow
     @pytest.mark.timeout(30)

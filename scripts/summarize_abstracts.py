@@ -22,7 +22,7 @@ import time
 import litellm
 import pandas as pd
 
-from utils import CATALOGS_DIR, get_logger, save_csv, save_run_report, make_run_id
+from utils import CATALOGS_DIR, get_logger, save_run_report, make_run_id
 
 log = get_logger("summarize_abstracts")
 
@@ -224,8 +224,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--works-input",
-        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-        help="Works CSV to process (default: enriched_works.csv)",
+        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+        help="Works CSV to process (default: unified_works.csv)",
     )
     parser.add_argument(
         "--model",
@@ -263,8 +263,7 @@ def main():
     for status, count in status_counts.items():
         log.info("  %s: %d", status, count)
 
-    # Save back (atomic write)
-    save_csv(result, args.works_input)
+    # Cache-only: join_enrichments.py applies summaries to the monolith (#428)
 
     elapsed = time.time() - t0
     counters = {
