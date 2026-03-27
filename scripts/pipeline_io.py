@@ -35,8 +35,13 @@ import os
 import random
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
-import requests
+import pandas as pd
+import requests  # type: ignore[import-untyped]
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 
 _log = logging.getLogger("pipeline.io")
 
@@ -56,8 +61,9 @@ RETRY_MAX_RETRIES = 5    # enrichment fetchers (heavy, fewer URLs)
 # HTTP helpers
 # ---------------------------------------------------------------------------
 
-def polite_get(url, params=None, headers=None, delay=0.2,
-               max_retries=POLITE_MAX_RETRIES):
+def polite_get(url: str, params: dict[str, Any] | None = None,
+               headers: dict[str, str] | None = None, delay: float = 0.2,
+               max_retries: int = POLITE_MAX_RETRIES) -> requests.Response:
     """HTTP GET with polite delay, exponential backoff+jitter, retry on 429/5xx.
 
     Delegates to retry_get. All callers (OpenAlex, ISTEX, World Bank, syllabi)
@@ -67,9 +73,11 @@ def polite_get(url, params=None, headers=None, delay=0.2,
                      max_retries=max_retries, timeout=30)
 
 
-def retry_get(url, params=None, headers=None, delay=0.2,
-              max_retries=RETRY_MAX_RETRIES,
-              timeout=60, counters=None, backoff_base=2.0, jitter_max=1.0):
+def retry_get(url: str, params: dict[str, Any] | None = None,
+              headers: dict[str, str] | None = None, delay: float = 0.2,
+              max_retries: int = RETRY_MAX_RETRIES,
+              timeout: float = 60, counters: dict[str, int] | None = None,
+              backoff_base: float = 2.0, jitter_max: float = 1.0) -> requests.Response:
     """HTTP GET with bounded exponential backoff+jitter and optional counter tracking.
 
     Parameters
@@ -174,7 +182,7 @@ def retry_get(url, params=None, headers=None, delay=0.2,
 # CSV helpers
 # ---------------------------------------------------------------------------
 
-def save_csv(df, path):
+def save_csv(df: pd.DataFrame, path: str) -> None:
     """Save DataFrame to CSV with UTF-8 encoding (atomic write-then-rename)."""
     import tempfile
 
@@ -198,7 +206,7 @@ def save_csv(df, path):
 # Run reports
 # ---------------------------------------------------------------------------
 
-def save_run_report(data, run_id, script_name):
+def save_run_report(data: dict[str, Any], run_id: str, script_name: str) -> str:
     """Persist a structured run-summary dict as JSON in catalogs/run_reports/.
 
     Parameters
@@ -228,7 +236,7 @@ def save_run_report(data, run_id, script_name):
     return path
 
 
-def make_run_id():
+def make_run_id() -> str:
     """Return a UTC timestamp string suitable for use as a run-id."""
     return time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
 
@@ -237,7 +245,7 @@ def make_run_id():
 # Checkpoint helpers (resumable enrichment)
 # ---------------------------------------------------------------------------
 
-def load_checkpoint(path):
+def load_checkpoint(path: str) -> list[dict[str, Any]]:
     """Load records from a JSONL checkpoint file."""
     records = []
     if os.path.exists(path):
@@ -250,7 +258,7 @@ def load_checkpoint(path):
     return records
 
 
-def append_checkpoint(records, path):
+def append_checkpoint(records: list[dict[str, Any]], path: str) -> None:
     """Append records to a JSONL checkpoint file."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
@@ -258,7 +266,7 @@ def append_checkpoint(records, path):
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
-def delete_checkpoint(path):
+def delete_checkpoint(path: str) -> None:
     """Remove checkpoint file after successful completion."""
     if os.path.exists(path):
         os.remove(path)
@@ -268,7 +276,7 @@ def delete_checkpoint(path):
 # Pool helpers (append-only raw storage, gzipped JSONL)
 # ---------------------------------------------------------------------------
 
-def pool_path(source, slug):
+def pool_path(source: str, slug: str) -> str:
     """Return path for a raw pool JSONL.gz file.
 
     Example: pool_path("openalex", "climate_finance")
@@ -282,7 +290,7 @@ def pool_path(source, slug):
     return os.path.join(d, f"{safe_slug}.jsonl.gz")
 
 
-def append_to_pool(records, path):
+def append_to_pool(records: list[dict[str, Any]], path: str) -> None:
     """Append raw API response dicts to a gzipped JSONL pool file."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with gzip.open(path, "at", encoding="utf-8") as f:
@@ -290,7 +298,7 @@ def append_to_pool(records, path):
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
-def load_pool_ids(source, id_field="id"):
+def load_pool_ids(source: str, id_field: str = "id") -> set[str]:
     """Scan all .jsonl.gz files in a source's pool dir, return set of IDs.
 
     Args:
@@ -304,7 +312,7 @@ def load_pool_ids(source, id_field="id"):
     from pipeline_loaders import POOL_DIR  # avoid circular import
 
     source_dir = os.path.join(POOL_DIR, source)
-    ids = set()
+    ids: set[str] = set()
     if not os.path.isdir(source_dir):
         return ids
     for fname in os.listdir(source_dir):
@@ -326,7 +334,7 @@ def load_pool_ids(source, id_field="id"):
     return ids
 
 
-def load_pool_records(source):
+def load_pool_records(source: str) -> list[dict[str, Any]]:
     """Load all raw records from a source's pool directory.
 
     Returns:
@@ -336,7 +344,7 @@ def load_pool_records(source):
     from pipeline_loaders import POOL_DIR  # avoid circular import
 
     source_dir = os.path.join(POOL_DIR, source)
-    records = []
+    records: list[dict[str, Any]] = []
     if not os.path.isdir(source_dir):
         return records
     for fname in sorted(os.listdir(source_dir)):
@@ -358,7 +366,7 @@ def load_pool_records(source):
 # Figure saving
 # ---------------------------------------------------------------------------
 
-def save_figure(fig, path_stem, no_pdf=False, dpi=150):
+def save_figure(fig: "Figure", path_stem: str, no_pdf: bool = False, dpi: int = 150) -> None:
     """Save figure as PNG and optionally PDF.
 
     Produces byte-identical output across runs by stripping volatile
@@ -378,7 +386,7 @@ def save_figure(fig, path_stem, no_pdf=False, dpi=150):
 # Teaching-data helpers
 # ---------------------------------------------------------------------------
 
-def dedup_courses(grouped, course_col, overlap_threshold=0.8, min_shared=10):
+def dedup_courses(grouped: pd.DataFrame, course_col: str, overlap_threshold: float = 0.8, min_shared: int = 10) -> pd.DataFrame:
     """Merge near-duplicate courses and recount n_courses.
 
     Two courses are considered duplicates if they share >= min_shared readings
@@ -424,7 +432,7 @@ def dedup_courses(grouped, course_col, overlap_threshold=0.8, min_shared=10):
             lambda x: len(set(x.split(" ; "))) if x else 0)
         return grouped
 
-    def apply_merge(courses_str):
+    def apply_merge(courses_str: str) -> str:
         courses = [c.strip() for c in courses_str.split(" ; ")]
         deduped = []
         seen = set()

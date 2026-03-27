@@ -44,14 +44,14 @@ class _DiskCache:
     with an encapsulated object that manages its own lifecycle.
     """
 
-    def __init__(self, path, flush_every=50):
+    def __init__(self, path: str, flush_every: int = 50) -> None:
         self._path = path
         self._flush_every = flush_every
-        self._data = None
+        self._data: dict[str, str] | None = None
         self._dirty = 0
         atexit.register(self.flush)
 
-    def load(self):
+    def load(self) -> dict[str, str]:
         """Load {key: value} cache from CSV. Cached in memory after first load."""
         if self._data is not None:
             return self._data
@@ -67,13 +67,13 @@ class _DiskCache:
         self._data = dict(zip(df["source_id"], df["doi"]))
         return self._data
 
-    def mark_dirty(self):
+    def mark_dirty(self) -> None:
         """Record a write; auto-flush when flush_every threshold is reached."""
         self._dirty += 1
         if self._dirty >= self._flush_every:
             self.flush()
 
-    def flush(self):
+    def flush(self) -> None:
         """Force-write cache to disk."""
         if self._data is None or self._dirty == 0:
             return
@@ -86,24 +86,24 @@ class _DiskCache:
 _cache = _DiskCache(CACHE_FILE)
 
 
-def load_cache():
+def load_cache() -> dict[str, str]:
     """Load {source_id: doi_or_empty} cache. Cached in memory after first load."""
     return _cache.load()
 
 
-def save_cache(cache=None):
+def save_cache(cache: dict[str, str] | None = None) -> None:
     """Persist cache to CSV. Batches writes — flushes every 50 updates."""
     if cache is not None:
         _cache._data = cache
     _cache.mark_dirty()
 
 
-def flush_cache():
+def flush_cache() -> None:
     """Force-write cache to disk."""
     _cache.flush()
 
 
-def title_similarity(a, b):
+def title_similarity(a: str, b: str) -> float:
     """Normalized title similarity ratio."""
     na, nb = normalize_title(a), normalize_title(b)
     if not na or not nb:
@@ -111,7 +111,7 @@ def title_similarity(a, b):
     return SequenceMatcher(None, na, nb).ratio()
 
 
-def _normalize_author(author):
+def _normalize_author(author: object) -> str:
     """Normalize author string: lowercase, strip, first author only.
 
     Used both for cache keys and for appending author to OpenAlex search.
@@ -121,7 +121,7 @@ def _normalize_author(author):
     return str(author).split(";")[0].split(",")[0].strip().lower()
 
 
-def search_doi(title, year=None, author=None):
+def search_doi(title: str, year: object = None, author: object = None) -> tuple[str | None, str | None, float]:
     """Search OpenAlex for a work by title.
 
     Title-only search with similarity ranking. Year and author are accepted
@@ -148,7 +148,7 @@ def search_doi(title, year=None, author=None):
         log.warning("Search failed for '%s': %s", title[:60], e)
         return None, None, 0
 
-    best_doi, best_id, best_sim = None, None, 0
+    best_doi, best_id, best_sim = None, None, 0.0
     for r in results:
         r_title = r.get("title", "")
         sim = title_similarity(title, r_title)
@@ -163,10 +163,10 @@ def search_doi(title, year=None, author=None):
 
 # --- Cache-transparent DOI resolver for external callers ---
 
-_title_cache = {}  # in-memory: cache_key → doi or ""
+_title_cache: dict[str, str] = {}  # in-memory: cache_key → doi or ""
 
 
-def find_doi(title, year=None, author=None):
+def find_doi(title: str | None, year: object = None, author: object = None) -> str:
     """Cached DOI lookup. Returns DOI string or empty string.
 
     Two-level cache (in-memory + on-disk) makes repeated lookups free.
@@ -183,7 +183,7 @@ def find_doi(title, year=None, author=None):
 
     anorm = _normalize_author(author)
     try:
-        ynorm = str(int(float(year))) if year and pd.notna(year) else ""
+        ynorm = str(int(float(year))) if year and pd.notna(year) else ""  # type: ignore[arg-type]
     except (ValueError, TypeError):
         ynorm = ""
     title_key = f"title:{tnorm}"
@@ -205,7 +205,8 @@ def find_doi(title, year=None, author=None):
             _title_cache[key] = cache[key]
             return cache[key]
 
-    # Level 3: query OpenAlex
+    # Level 3: query OpenAlex (title is guaranteed non-None here — early return above)
+    assert title is not None
     doi, _oa_id, sim = search_doi(title, year, author=author)
     result = doi if doi and sim >= TITLE_SIM_THRESHOLD else ""
 
@@ -219,7 +220,7 @@ def find_doi(title, year=None, author=None):
     return result
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be done without modifying files")

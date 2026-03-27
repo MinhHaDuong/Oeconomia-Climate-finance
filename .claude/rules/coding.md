@@ -31,6 +31,21 @@ paths:
 - Tests that use `time.sleep()` or threading timeouts: mark `@pytest.mark.integration`.
 - Tests that import heavy modules only for `inspect.getsource()`: read the file directly instead.
 
+## Typing policy
+
+Core library modules (imported by many scripts) must be fully typed:
+- `pipeline_text.py`, `pipeline_io.py`, `pipeline_progress.py`, `enrich_dois.py`
+- Enforced by mypy in `test_script_hygiene.py::TestTypingCoreModules`
+- Add new modules to the `TYPED_MODULES` list and `[tool.mypy] files` when they become shared infrastructure
+
+Do NOT type:
+- `main()` function bodies (argparse + orchestration, return None — add `-> None` but skip param annotations)
+- Plot scripts (matplotlib is inherently untyped)
+- DataFrame column access (pandas has no column-level types)
+- One-off analysis scripts
+
+When touching a core module, annotations are required on new/changed functions.
+
 ## Conventions
 
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.

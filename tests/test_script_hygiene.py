@@ -546,3 +546,42 @@ class TestNoBarePrint:
             f"{len(violators)} scripts use bare print() "
             f"(should use logging): {violators[:10]}"
         )
+
+
+# ---------------------------------------------------------------------------
+# 8. Type annotations on core modules (mypy)
+# ---------------------------------------------------------------------------
+
+_MYPY_AVAILABLE = subprocess.run(
+    ["uv", "run", "mypy", "--version"], capture_output=True
+).returncode == 0
+
+
+class TestTypingCoreModules:
+    """Core library modules must be fully typed (mypy --disallow-untyped-defs).
+
+    These modules are imported by many scripts — their type annotations
+    serve as machine-readable interface documentation. The list grows
+    as modules become shared infrastructure.
+    """
+
+    TYPED_MODULES = [
+        "pipeline_text.py",
+        "pipeline_io.py",
+        "pipeline_progress.py",
+        "enrich_dois.py",
+    ]
+
+    @pytest.mark.skipif(not _MYPY_AVAILABLE, reason="mypy not available")
+    def test_mypy_passes(self):
+        """Core modules must pass mypy --disallow-untyped-defs."""
+        paths = [os.path.join(SCRIPTS_DIR, m) for m in self.TYPED_MODULES]
+        result = subprocess.run(
+            ["uv", "run", "mypy", "--ignore-missing-imports",
+             "--disallow-untyped-defs", "--follow-imports=silent",
+             "--no-error-summary"] + paths,
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0, (
+            f"mypy errors in core modules:\n{result.stdout}"
+        )

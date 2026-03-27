@@ -33,7 +33,7 @@ import pandas as pd
 # DOI helpers
 # ---------------------------------------------------------------------------
 
-def normalize_doi(doi_raw):
+def normalize_doi(doi_raw: str | list | None) -> str:
     """Normalize a DOI: handle lists, strip URL prefix, lowercase, trim."""
     if doi_raw is None:
         return ""
@@ -50,7 +50,7 @@ def normalize_doi(doi_raw):
     return doi.strip().lower()
 
 
-def normalize_doi_safe(doi_raw):
+def normalize_doi_safe(doi_raw: object) -> str:
     """Normalize a DOI, returning "" for NaN/None values.
 
     Convenience wrapper for use in pandas .apply() calls, replacing the
@@ -58,10 +58,10 @@ def normalize_doi_safe(doi_raw):
     """
     if pd.isna(doi_raw):
         return ""
-    return normalize_doi(doi_raw)
+    return normalize_doi(doi_raw)  # type: ignore[arg-type]
 
 
-def clean_doi(raw):
+def clean_doi(raw: str | None) -> str:
     """Extract a clean DOI (10.xxxx/...) from a raw string.
 
     Handles URL-prefixed DOIs from LLM extraction:
@@ -89,7 +89,7 @@ def clean_doi(raw):
 # Title helpers
 # ---------------------------------------------------------------------------
 
-def normalize_title(title):
+def normalize_title(title: str | None) -> str:
     """Normalize a title for fuzzy dedup: lowercase, strip punctuation, collapse spaces."""
     if not title:
         return ""
@@ -103,7 +103,7 @@ def normalize_title(title):
 # Abstract helpers
 # ---------------------------------------------------------------------------
 
-def reconstruct_abstract(inverted_index):
+def reconstruct_abstract(inverted_index: dict | None) -> str:
     """Rebuild plain text from an OpenAlex abstract_inverted_index dict."""
     if not inverted_index:
         return ""
@@ -194,7 +194,7 @@ LANG_NORMALIZE = {
 }
 
 
-def normalize_lang(code):
+def normalize_lang(code: object) -> str | None:
     """Normalize a language code to 2-letter ISO 639-1.
 
     Handles: ISO 639-3 codes (eng→en), full names (english→en),
@@ -218,7 +218,7 @@ def normalize_lang(code):
     return LANG_NORMALIZE.get(code)
 
 
-def is_valid_iso639_1(code):
+def is_valid_iso639_1(code: object) -> bool:
     """Return True if code is a recognized ISO 639-1 two-letter language code."""
     if not code or not isinstance(code, str):
         return False
@@ -228,7 +228,7 @@ def is_valid_iso639_1(code):
 _langdetect_seeded = False
 
 
-def detect_language(text):
+def detect_language(text: str | None) -> str | None:
     """Detect language from text using langdetect. Returns 2-letter code or None.
 
     Requires at least 20 characters to attempt detection — shorter texts
@@ -244,6 +244,7 @@ def detect_language(text):
             from langdetect import DetectorFactory
             DetectorFactory.seed = 0
             _langdetect_seeded = True
-        return detect(str(text))
+        result: str = detect(str(text))
+        return result
     except LangDetectException:
         return None

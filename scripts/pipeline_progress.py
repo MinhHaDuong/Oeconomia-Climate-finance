@@ -17,6 +17,7 @@ import signal
 import subprocess
 import threading
 import time
+from collections.abc import Callable
 
 import pandas as pd
 from rich.progress import (
@@ -68,10 +69,10 @@ class WatchedProgress:
         self,
         stuck_timeout: float = 300,
         on_stuck: threading.Event | None = None,
-        flush_checkpoint: callable = None,
+        flush_checkpoint: Callable[[], None] | None = None,
         transient: bool = False,
         disable: bool = False,
-    ):
+    ) -> None:
         self.stuck_timeout = stuck_timeout
         self.on_stuck = on_stuck
         self.flush_checkpoint = flush_checkpoint
@@ -94,35 +95,35 @@ class WatchedProgress:
         self._lock = threading.Lock()
         self._stop_event = threading.Event()
         self._watchdog_thread: threading.Thread | None = None
-        self._prev_sigterm = None
+        self._prev_sigterm: signal.Handlers = None  # type: ignore[assignment]
 
-    def __enter__(self):
+    def __enter__(self) -> "WatchedProgress":
         self._progress.__enter__()
         self._install_sigterm_handler()
         self._start_watchdog()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: object) -> bool:
         self._stop_event.set()
         if self._watchdog_thread is not None:
             self._watchdog_thread.join(timeout=2)
         self._restore_sigterm_handler()
-        return self._progress.__exit__(exc_type, exc_val, exc_tb)
+        return self._progress.__exit__(exc_type, exc_val, exc_tb)  # type: ignore[return-value,no-any-return]
 
-    def add_task(self, description: str, total: int = 100, **kwargs) -> int:
+    def add_task(self, description: str, total: int = 100, **kwargs: object) -> int:
         """Add a new task to the progress display."""
-        task_id = self._progress.add_task(description, total=total, **kwargs)
+        task_id: int = self._progress.add_task(description, total=total, **kwargs)
         with self._lock:
             self._last_advance[task_id] = time.monotonic()
         return task_id
 
-    def advance(self, task_id: int, advance: float = 1):
+    def advance(self, task_id: int, advance: float = 1) -> None:
         """Advance a task and reset its stuck timer."""
         self._progress.advance(task_id, advance)
         with self._lock:
             self._last_advance[task_id] = time.monotonic()
 
-    def update(self, task_id: int, **kwargs):
+    def update(self, task_id: int, **kwargs: object) -> None:
         """Update task fields (description, total, etc.)."""
         self._progress.update(task_id, **kwargs)
         # If 'advance' or 'completed' changed, reset timer
@@ -130,14 +131,14 @@ class WatchedProgress:
             with self._lock:
                 self._last_advance[task_id] = time.monotonic()
 
-    def _start_watchdog(self):
+    def _start_watchdog(self) -> None:
         """Launch daemon thread that polls for stuck tasks."""
         self._watchdog_thread = threading.Thread(
             target=self._watchdog_loop, daemon=True, name="progress-watchdog"
         )
         self._watchdog_thread.start()
 
-    def _watchdog_loop(self):
+    def _watchdog_loop(self) -> None:
         """Check every second if any task exceeded stuck_timeout."""
         while not self._stop_event.is_set():
             self._stop_event.wait(timeout=1.0)
@@ -150,7 +151,7 @@ class WatchedProgress:
                         self._handle_stuck(task_id)
                         return
 
-    def _handle_stuck(self, task_id):
+    def _handle_stuck(self, task_id: int) -> None:
         """React to a stuck task: notify, flush, signal."""
         task = self._progress.tasks[task_id]
         msg = (
@@ -183,15 +184,15 @@ class WatchedProgress:
         else:
             raise SystemExit(EX_STUCK)
 
-    def _install_sigterm_handler(self):
+    def _install_sigterm_handler(self) -> None:
         """Intercept SIGTERM to flush checkpoint before exit."""
         try:
-            self._prev_sigterm = signal.getsignal(signal.SIGTERM)
+            self._prev_sigterm = signal.getsignal(signal.SIGTERM)  # type: ignore[assignment]
             signal.signal(signal.SIGTERM, self._sigterm_handler)
         except (OSError, ValueError):
             pass  # not main thread or signal not available
 
-    def _restore_sigterm_handler(self):
+    def _restore_sigterm_handler(self) -> None:
         """Restore previous SIGTERM handler."""
         try:
             if self._prev_sigterm is not None:
@@ -199,7 +200,7 @@ class WatchedProgress:
         except (OSError, ValueError):
             pass
 
-    def _sigterm_handler(self, signum, frame):
+    def _sigterm_handler(self, signum: int, frame: object) -> None:
         """Flush checkpoint on SIGTERM, then re-raise."""
         _log.info("SIGTERM received — flushing checkpoint before exit")
         if self.flush_checkpoint is not None:
