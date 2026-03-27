@@ -2,13 +2,14 @@
 
 Tests verify:
 - Phase 1 target definitions exist in correct order
-- corpus meta-target delegates to DVC (dvc repro)
+- corpus meta-target delegates to run_corpus_pipeline.sh (which calls dvc repro)
 - Artifact dependency contracts are expressed in dvc.yaml (not Makefile recipes)
 - The old cheap pre-filter is absent from corpus-discover
 """
 
 import os
 import re
+from pathlib import Path
 
 import yaml
 
@@ -46,19 +47,29 @@ class TestTargetPresence:
         assert re.search(r"^corpus-filter\s*:", mk, re.MULTILINE), \
             "corpus-filter target missing (new Phase 1d)"
 
-    def test_corpus_target_chains_all_phases(self):
-        """The 'corpus' meta-target must delegate to DVC (dvc repro).
+    def test_corpus_target_delegates_to_script(self):
+        """The 'corpus' meta-target must delegate to run_corpus_pipeline.sh.
 
-        Since DVC now owns the dependency graph (dvc.yaml), the Makefile
-        corpus target simply calls 'dvc repro' rather than chaining individual
-        phase targets. Each stage's artifact dependencies are declared in dvc.yaml.
+        The pipeline logic (guards, dvc repro, auto-commit) lives in a
+        standalone bash script for testability and readability. The Makefile
+        simply invokes it.
         """
         mk = read_makefile()
         m = re.search(r"^corpus\s*:(.*?)(?=\n\S|\Z)", mk, re.MULTILINE | re.DOTALL)
         assert m, "corpus meta-target not found"
         body = m.group(0)
-        assert "dvc repro" in body, \
-            "corpus meta-target must delegate to 'dvc repro' (DVC owns the pipeline DAG)"
+        assert "run_corpus_pipeline.sh" in body, \
+            "corpus meta-target must delegate to scripts/run_corpus_pipeline.sh"
+
+    def test_corpus_pipeline_script_calls_dvc_repro(self):
+        """The extracted corpus pipeline script must call 'dvc repro'.
+
+        Since DVC owns the dependency graph (dvc.yaml), the script must
+        delegate to 'dvc repro' rather than chaining individual phase targets.
+        """
+        script = (Path(__file__).resolve().parent.parent / "scripts" / "run_corpus_pipeline.sh").read_text()
+        assert "dvc repro" in script, \
+            "run_corpus_pipeline.sh must call 'dvc repro' (DVC owns the pipeline DAG)"
 
 
 # ---------------------------------------------------------------------------
