@@ -5,7 +5,6 @@ Ticket #428: each enrichment writes to its own cache; this script joins them.
 
 import os
 import json
-import tempfile
 
 import pandas as pd
 import pytest

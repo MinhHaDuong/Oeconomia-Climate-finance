@@ -125,6 +125,12 @@ stages:
   #
   # IMPORTANT: `dvc repro join_enrichments` alone won't refresh caches.
   # Use `make corpus-enrich` which runs all stages in order.
+  #
+  # Design trade-off: enrich_language runs on unified_works.csv (before abstract
+  # enrichment), so language detection may use title-only text for records whose
+  # abstracts are filled later by enrich_abstracts. The cache persists across
+  # runs, so a second `make corpus-enrich` after abstracts are filled will
+  # re-detect language with the full text. Accepted for stage independence.
 
   enrich_dois:
     cmd: uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv
@@ -163,6 +169,10 @@ stages:
       - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
 
+  # NOTE: join_enrichments has no DVC deps on the enrichment stages above.
+  # This is intentional — caches are persistent (not DVC outputs), so
+  # `dvc repro join_enrichments` reads whatever caches exist on disk.
+  # Use `make corpus-enrich` to run all enrichment stages first.
   join_enrichments:
     cmd: uv run python scripts/join_enrichments.py
     deps:
