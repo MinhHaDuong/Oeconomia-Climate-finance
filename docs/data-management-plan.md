@@ -17,7 +17,7 @@
 ### 1.1 What data does the project produce or reuse?
 
 The project produces a **multilingual bibliometric corpus** of scholarship
-around climate finance (1990–2024). Three categories of data:
+around climate finance (1990–2024). The principal datasets are:
 
 | Dataset | Format | Size | Origin |
 |---------|--------|------|--------|
@@ -74,7 +74,7 @@ deposit to ensure reproducibility.
 |-------|----------|-----------------|
 | Working data | Local workstation (SSD) | Continuous (git + DVC) |
 | Git repository | GitHub (private, MIT licence) | Every commit |
-| DVC remote | Default DVC remote | Every `dvc push` |
+| DVC remote | Development server (SSH) | Every `dvc push` |
 | Raw API responses | Append-only pool/ directory | Archived, never overwritten |
 
 - **Environment pinning**: `PYTHONHASHSEED=0`, `SOURCE_DATE_EPOCH=0`, dependencies
