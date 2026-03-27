@@ -51,9 +51,12 @@ def align_embeddings(refined_df, emb_path=None, dry_run=False):
 
     Parameters
     ----------
-    refined_df: DataFrame loaded from refined_works.csv (canonical row order).
-    emb_path:   Path to embeddings.npz cache. Defaults to EMBEDDINGS_PATH.
-    dry_run:    If True, skip file existence check (for testing).
+    refined_df : DataFrame
+        Loaded from refined_works.csv (canonical row order).
+    emb_path : str, optional
+        Path to embeddings.npz cache. Defaults to EMBEDDINGS_PATH.
+    dry_run : bool
+        If True, skip file existence check (for testing).
 
     Matching key: doi (normalised), then source_id as fallback for works
     without a DOI.
@@ -115,8 +118,12 @@ def align_citations(refined_doi_set, cit_path=None, dry_run=False):
 
     Parameters
     ----------
-    refined_doi_set: set of normalised DOIs in refined_works.csv.
-    cit_path:        Path to citations.csv. Defaults to CITATIONS_PATH.
+    refined_doi_set : set
+        Normalised DOIs present in refined_works.csv.
+    cit_path : str, optional
+        Path to citations.csv. Defaults to CITATIONS_PATH.
+    dry_run : bool
+        If True, skip file existence check (for testing).
 
     Returns
     -------

@@ -74,16 +74,25 @@ def retry_get(url, params=None, headers=None, delay=0.2,
 
     Parameters
     ----------
-    url:          Request URL.
-    params:       Query parameters dict.
-    headers:      HTTP headers dict.
-    delay:        Base polite delay before each attempt (seconds).
-    max_retries:  Maximum number of retry attempts for 429/5xx/timeout.
-    timeout:      Per-request timeout in seconds.
-    counters:     Optional dict to update with keys:
-                  ``retries``, ``rate_limited``, ``server_errors``, ``client_errors``.
-    backoff_base: Base for exponential backoff (seconds, default 2.0).
-    jitter_max:   Maximum random jitter added to each backoff (seconds, default 1.0).
+    url : str
+        Request URL.
+    params : dict, optional
+        Query parameters.
+    headers : dict, optional
+        HTTP headers.
+    delay : float
+        Base polite delay before each attempt (seconds).
+    max_retries : int
+        Maximum retry attempts for 429/5xx/timeout.
+    timeout : float
+        Per-request timeout in seconds.
+    counters : dict, optional
+        Mutable dict updated with keys ``retries``, ``rate_limited``,
+        ``server_errors``, ``client_errors``.
+    backoff_base : float
+        Base for exponential backoff (seconds).
+    jitter_max : float
+        Maximum random jitter added to each backoff (seconds).
 
     Returns
     -------
@@ -193,9 +202,12 @@ def save_run_report(data, run_id, script_name):
 
     Parameters
     ----------
-    data:        Dict of counters / metadata to save.
-    run_id:      Unique run identifier string (e.g. timestamp or ``--run-id`` value).
-    script_name: Short script name used as filename prefix.
+    data : dict
+        Counters / metadata to save.
+    run_id : str
+        Unique run identifier (e.g. timestamp or ``--run-id`` value).
+    script_name : str
+        Short script name used as filename prefix.
 
     Returns
     -------

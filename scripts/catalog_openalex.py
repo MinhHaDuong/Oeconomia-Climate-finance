@@ -276,13 +276,30 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
                 from_date=None, year_min=None, year_max=None):
     """Fetch all works matching a search term, append raw JSON to pool.
 
-    Args:
-        from_date: Optional YYYY-MM-DD to restrict to recently-created works.
-        year_min:  Optional minimum publication year (inclusive).
-        year_max:  Optional maximum publication year (inclusive).
+    Parameters
+    ----------
+    search_term : str
+        OpenAlex search query string.
+    delay : float
+        Polite delay between API requests (seconds).
+    limit : int
+        Maximum works to fetch (0 = unlimited).
+    existing_ids : set
+        OpenAlex IDs already in the pool (skipped on append).
+    pool_file : str
+        Path to the gzipped JSONL pool file for raw responses.
+    from_date : str, optional
+        YYYY-MM-DD to restrict to recently-created works.
+    year_min : int, optional
+        Minimum publication year (inclusive).
+    year_max : int, optional
+        Maximum publication year (inclusive).
 
-    Returns (n_new, out_of_budget) — count of new records and whether
-    the API budget was exhausted during pagination.
+    Returns
+    -------
+    tuple
+        (n_new, out_of_budget) — count of new records and whether
+        the API budget was exhausted during pagination.
     """
     cursor = "*"
     total_fetched = 0

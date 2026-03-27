@@ -85,6 +85,18 @@ def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, 
 
     Parameters
     ----------
+    df : DataFrame
+        Works table with a ``year`` column aligned row-by-row with *embeddings*.
+    embeddings : np.ndarray
+        Embedding matrix (N, D) aligned with *df*.
+    k : int
+        Number of KMeans clusters.
+    window_sizes : list of int
+        Window widths (in years) to compute divergence over.
+    start_year : int
+        First test year (inclusive).
+    end_year : int
+        Last test year (inclusive).
     censor_gap : int
         Number of transition years to censor before each test point.
         With censor_gap=0, before window is [y-w, y] (unchanged default).

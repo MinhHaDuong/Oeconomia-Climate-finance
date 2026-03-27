@@ -262,8 +262,10 @@ def sort_dois_by_priority(dois: list, works_df: pd.DataFrame) -> list:
 
     Parameters
     ----------
-    dois:      List of normalised DOI strings to sort.
-    works_df:  Works DataFrame with at minimum a ``doi`` column.
+    dois : list
+        Normalised DOI strings to sort.
+    works_df : DataFrame
+        Works table with at minimum a ``doi`` column.
 
     Returns
     -------

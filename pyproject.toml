@@ -96,6 +96,7 @@ select = [
     "I001",    # unsorted imports
     "RUF100",  # unused noqa comments
     "PERF102", # use .values()/.keys() instead of .items() when only one needed
+    "D417",    # undocumented parameters in docstrings
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -77,7 +77,8 @@ def add_period_bands(ax, y_frac=0.97, fontsize=7):
 
     Parameters
     ----------
-    ax : matplotlib Axes
+    ax : matplotlib.axes.Axes
+        Target axes to draw on.
     y_frac : float
         Vertical position of labels as fraction of axes height.
     fontsize : float
@@ -98,7 +99,8 @@ def add_period_lines(ax, events=None):
 
     Parameters
     ----------
-    ax : matplotlib Axes
+    ax : matplotlib.axes.Axes
+        Target axes to draw on.
     events : dict, optional
         Mapping {year: label} for event annotations.
         Default: Bali 2007 and Paris 2015.
