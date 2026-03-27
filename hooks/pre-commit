@@ -54,3 +54,23 @@ if [ -n "$conflicts" ]; then
     echo "$conflicts" >&2
     exit 1
 fi
+
+# 6. Validate .ticket files (if any are staged)
+ticket_files=$(git diff --cached --name-only | grep '\.ticket$' || true)
+if [ -n "$ticket_files" ]; then
+    ticket_bin="tickets/tools/go/ticket-tools"
+    if [ -x "$ticket_bin" ]; then
+        if ! "$ticket_bin" validate tickets/; then
+            echo "ERROR: Ticket validation failed. Fix errors above." >&2
+            exit 1
+        fi
+    else
+        # Fall back to Python validator
+        if command -v python3 >/dev/null 2>&1; then
+            if ! PYTHONPATH=tickets/tools python3 tickets/tools/validate_tickets.py tickets/; then
+                echo "ERROR: Ticket validation failed. Fix errors above." >&2
+                exit 1
+            fi
+        fi
+    fi
+fi

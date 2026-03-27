@@ -102,7 +102,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper ticket-validate ticket-ready ticket-archive
 
 .DEFAULT_GOAL := manuscript
 
@@ -595,3 +595,35 @@ clean:
 	rm -rf output/
 
 rebuild: clean all
+
+# ── Ticket tools ─────────────────────────────────────────
+# Local ticket system for agent coordination across worktrees.
+# Prefers Go binary if built, falls back to Python.
+TICKET_BIN := tickets/tools/go/ticket-tools
+TICKET_CMD = $(if $(wildcard $(TICKET_BIN)),$(TICKET_BIN),PYTHONPATH=tickets/tools python3 tickets/tools)
+
+ticket-validate:
+	@if [ -x "$(TICKET_BIN)" ]; then \
+		$(TICKET_BIN) validate tickets/; \
+	else \
+		PYTHONPATH=tickets/tools python3 tickets/tools/validate_tickets.py tickets/; \
+	fi
+
+ticket-ready:
+	@if [ -x "$(TICKET_BIN)" ]; then \
+		$(TICKET_BIN) ready tickets/; \
+	else \
+		PYTHONPATH=tickets/tools python3 tickets/tools/ready_tickets.py tickets/; \
+	fi
+
+DAYS ?= 90
+EXECUTE ?=
+ticket-archive:
+	@if [ -x "$(TICKET_BIN)" ]; then \
+		$(TICKET_BIN) archive tickets/ --days=$(DAYS) $(if $(EXECUTE),--execute); \
+	else \
+		PYTHONPATH=tickets/tools python3 tickets/tools/archive_tickets.py tickets/ --days=$(DAYS) $(if $(EXECUTE),--execute); \
+	fi
+
+ticket-build:
+	cd tickets/tools/go && go build -o ticket-tools .

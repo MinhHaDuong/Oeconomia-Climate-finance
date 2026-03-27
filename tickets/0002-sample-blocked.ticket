@@ -1,0 +1,13 @@
+%ticket v1
+Title: Sample blocked ticket
+Status: open
+Created: 2026-03-27
+Author: claude
+Blocked-by: 0001
+
+--- log ---
+2026-03-27T10:00Z claude created
+
+--- body ---
+## Context
+Demonstrates Blocked-by dependency. Not ready until 0001 is closed.

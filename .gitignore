@@ -64,3 +64,6 @@ output/
 
 /.quarto/
 _variables.yml
+
+# Ticket tools — compiled Go binary
+tickets/tools/go/ticket-tools

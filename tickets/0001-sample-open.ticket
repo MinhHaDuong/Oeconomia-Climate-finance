@@ -1,0 +1,16 @@
+%ticket v1
+Title: Sample open ticket for validation
+Status: open
+Created: 2026-03-27
+Author: claude
+
+--- log ---
+2026-03-27T10:00Z claude created
+
+--- body ---
+## Context
+Bootstrap ticket to validate the %ticket v1 system.
+
+## Exit criteria
+- Validator passes on this file
+- Ready query lists this ticket
