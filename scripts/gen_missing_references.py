@@ -179,6 +179,23 @@ def identifier_line(entry: dict) -> tuple[str, str]:
     return ("none", "")
 
 
+def _format_output_lines(doi_lines, url_lines, isbn_lines, no_id_lines):
+    """Combine identifier sections with blank-line separators."""
+    sections = [doi_lines, url_lines, isbn_lines]
+    lines = []
+    for section in sections:
+        if section:
+            if lines:
+                lines.append("")
+            lines.extend(section)
+    if no_id_lines:
+        if lines:
+            lines.append("")
+        lines.append("# No DOI or ISBN:")
+        lines.extend(no_id_lines)
+    return lines
+
+
 def main() -> None:
     # Parse bibliography
     with open(BIB_PATH, encoding="utf-8") as f:
@@ -208,37 +225,19 @@ def main() -> None:
         else:
             no_id_lines.append(f"#\t{label}")
 
-    # Write output
-    lines: list[str] = []
-    lines.extend(doi_lines)
-    if url_lines:
-        if doi_lines:
-            lines.append("")
-        lines.extend(url_lines)
-    if isbn_lines:
-        if doi_lines or url_lines:
-            lines.append("")
-        lines.extend(isbn_lines)
-    if no_id_lines:
-        if doi_lines or url_lines or isbn_lines:
-            lines.append("")
-        lines.append("# No DOI or ISBN:")
-        lines.extend(no_id_lines)
+    lines = _format_output_lines(doi_lines, url_lines, isbn_lines, no_id_lines)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
-    n_missing = len(doi_lines) + len(url_lines) + len(isbn_lines) + len(no_id_lines)
+    sections = [("DOI", doi_lines), ("URL", url_lines),
+                ("ISBN", isbn_lines), ("no identifier", no_id_lines)]
+    n_missing = sum(len(s) for _, s in sections)
     log.info("Written %d missing entries to %s", n_missing, OUTPUT_PATH)
-    if doi_lines:
-        log.info("  %d with DOI", len(doi_lines))
-    if url_lines:
-        log.info("  %d with URL", len(url_lines))
-    if isbn_lines:
-        log.info("  %d with ISBN", len(isbn_lines))
-    if no_id_lines:
-        log.info("  %d with no identifier", len(no_id_lines))
+    for label, section in sections:
+        if section:
+            log.info("  %d with %s", len(section), label)
 
 
 if __name__ == "__main__":
