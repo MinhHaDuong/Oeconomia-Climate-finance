@@ -487,6 +487,47 @@ class TestArchiveBitInvariance:
                 f"in Makefile dependency graph"
             )
 
+    def test_archive_copies_all_needed_scripts(self):
+        """Every scripts/*.py that is a prerequisite of an ANALYSIS_OUTPUTS
+        target must be copied in the archive-analysis recipe.
+
+        This is the reverse of test_archive_scripts_match_recipe: it catches
+        new script dependencies that were added to a Makefile rule but not
+        to the archive's cp list."""
+        mk = self._read_makefile()
+        # Extract the archive recipe's copied scripts
+        m = re.search(
+            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
+            mk, re.MULTILINE,
+        )
+        assert m, "archive-analysis recipe not found"
+        recipe = m.group(1)
+        copied = set(re.findall(r"scripts/([\w.]+\.py)", recipe))
+        # Extract ANALYSIS_OUTPUTS targets
+        m_out = re.search(
+            r"^ANALYSIS_OUTPUTS\s*:?=(.*?)(?=\n\S|\Z)",
+            mk, re.MULTILINE | re.DOTALL,
+        )
+        assert m_out, "ANALYSIS_OUTPUTS not found"
+        output_paths = re.findall(r"content/\S+", m_out.group(1))
+        # For each output, find its Makefile rule and collect script prereqs
+        needed = set()
+        for out in output_paths:
+            escaped = re.escape(out)
+            rule_m = re.search(
+                rf"^{escaped}\b[^:]*:(.*?)$",
+                mk, re.MULTILINE,
+            )
+            if rule_m:
+                prereqs = rule_m.group(1)
+                needed.update(re.findall(r"scripts/([\w.]+\.py)", prereqs))
+        # Every needed script must be in the copied set
+        missing = needed - copied
+        assert not missing, (
+            f"archive-analysis is missing cp for scripts needed by "
+            f"ANALYSIS_OUTPUTS targets: {sorted(missing)}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # 7. No bare print() in scripts (existing convention, mechanical check)

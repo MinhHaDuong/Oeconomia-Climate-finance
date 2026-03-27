@@ -491,7 +491,6 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	cp scripts/make_tab_venues.py           $(ANALYSIS_TMP)/scripts/
 	cp scripts/export_citation_coverage.py  $(ANALYSIS_TMP)/scripts/
 	cp scripts/analyze_bimodality.py        $(ANALYSIS_TMP)/scripts/
-	cp scripts/compute_clusters.py          $(ANALYSIS_TMP)/scripts/
 	@# Config + build infrastructure
 	cp config/analysis.yaml             $(ANALYSIS_TMP)/config/
 	cp config/v1_tab_alluvial.csv       $(ANALYSIS_TMP)/config/
