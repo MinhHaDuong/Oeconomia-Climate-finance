@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/on-start.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(make check-fast)",
+      "Bash(make check)",
+      "Bash(make lint-prose)",
+      "Bash(make manuscript)",
+      "Bash(make papers)",
+      "Bash(make figures)",
+      "Bash(uv sync*)",
+      "Bash(uv run python*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git worktree*)",
+      "Read",
+      "Glob",
+      "Grep",
+      "Skill"
+    ]
+  }
+}

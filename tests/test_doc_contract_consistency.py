@@ -21,7 +21,7 @@ import pytest
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 AGENTS_MD = os.path.join(ROOT, "AGENTS.md")
-CODING_GUIDELINES_MD = os.path.join(ROOT, ".agent", "guidelines", "coding-guidelines.md")
+CODING_GUIDELINES_MD = os.path.join(ROOT, ".claude", "rules", "coding.md")
 README_MD = os.path.join(ROOT, "README.md")
 CORPUS_CONSTRUCTION_MD = os.path.join(ROOT, "content", "_includes", "corpus-construction.md")
 REPRODUCIBILITY_MD = os.path.join(ROOT, "content", "_includes", "reproducibility.md")
@@ -37,7 +37,7 @@ def read(path):
 # ---------------------------------------------------------------------------
 
 class TestCodingGuidelinesMd:
-    """Pipeline contract docs moved from AGENTS.md to .agent/guidelines/coding-guidelines.md."""
+    """Pipeline contract docs live in .claude/rules/coding.md."""
 
     def test_all_four_artifacts_mentioned(self):
         """coding-guidelines.md must mention all four Phase 1 intermediate artifacts."""
@@ -45,7 +45,7 @@ class TestCodingGuidelinesMd:
         for artifact in ["unified_works.csv", "enriched_works.csv",
                          "extended_works.csv", "refined_works.csv"]:
             assert artifact in text, \
-                f"coding-guidelines.md missing artifact: {artifact}"
+                f"coding.md missing artifact: {artifact}"
 
     def test_all_four_make_targets_mentioned(self):
         """coding-guidelines.md must mention all four corpus Makefile targets."""
@@ -142,10 +142,10 @@ class TestReproducibilityMd:
 # ---------------------------------------------------------------------------
 
 class TestReadmeMd:
-    """README.md is vision-only; pipeline details live in .agent/guidelines/coding-guidelines.md."""
+    """README.md is vision-only; pipeline details live in .claude/rules/coding.md."""
 
-    def test_points_to_coding_guidelines(self):
-        """README.md should reference coding-guidelines.md for pipeline details."""
+    def test_points_to_coding_rules(self):
+        """README.md should reference coding rules for pipeline details."""
         text = read(README_MD)
-        assert "coding-guidelines" in text, \
-            "README.md should reference .agent/guidelines/coding-guidelines.md"
+        assert "coding" in text, \
+            "README.md should reference .claude/rules/coding.md"
