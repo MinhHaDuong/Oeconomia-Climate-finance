@@ -176,7 +176,39 @@ close tickets correctly. The CLI tools exist as guardrails, not interfaces.
 | `tickets/tools/go/ticket-tools` | Validator binary (pre-commit) |
 | `tickets/tools/*.py` | Python fallback + test harness |
 
-### 9. Go binary as single validator
+### 9. Directory location: `tickets/` at repo root
+
+**Choice:** Tickets live in `tickets/` at the repository root. Tools live
+in `tickets/tools/`. Agent-specific wiring (rules, skills) lives in
+`.claude/`.
+
+**Rationale (interoperability, discoverability, ergonomics):**
+
+- **Discoverability:** An agent dropped into a new repo runs `ls`. It sees
+  `tickets/`. Done. The directory name is the documentation. Hidden
+  directories (`.tickets/`, `.claude/tickets/`) require prior knowledge.
+- **Interoperability:** Root-level project directories (`docs/`, `scripts/`,
+  `tests/`, `hooks/`) are a universal convention. `tickets/` fits the
+  pattern. Any agent framework, CI script, or human finds it the same way.
+- **Ergonomics:** Tools co-located with data (`tickets/tools/` next to
+  `tickets/*.ticket`) means the validator doesn't need a config file to
+  know where to look. Short paths tab-complete well.
+
+**Alternatives considered:**
+- `.tickets/` (hidden): invisible by default, violates "ls tells you
+  what's here" principle. Agents must know to `ls -a`.
+- `.claude/tickets/`: locks to Claude ecosystem, buried 2 levels deep,
+  fights `.gitignore` rules (`.claude/*` is typically gitignored).
+- Configurable location: adds a settings layer for zero benefit — one
+  canonical location is simpler than a configurable one.
+
+**Plugin split:** Agent-specific wiring (`.claude/rules/`, `.claude/skills/`)
+is separate from portable artifacts (`tickets/`). This mirrors how
+`hooks/` (git infra) is separate from `.claude/rules/git.md` (agent
+instructions about git). A non-Claude agent ignores `.claude/` and reads
+`tickets/README.md` for the spec pointer.
+
+### 10. Go binary as single validator
 
 **Choice:** Single Go binary (`ticket-tools`) implements validate, ready,
 and archive. No Python/bash/Perl alternatives.
@@ -218,7 +250,7 @@ but are not the primary path.
 See `.claude/rules/tickets.md` for the complete format specification.
 That file is authoritative; this PEP documents the rationale.
 
-### 10. Postel's Law: tolerant on read, strict on write
+### 11. Postel's Law: tolerant on read, strict on write
 
 **Choice:** The validator enforces `%ticket v1` strictly on commit. But the
 agent — not the tooling — is the parser for arbitrary input.
