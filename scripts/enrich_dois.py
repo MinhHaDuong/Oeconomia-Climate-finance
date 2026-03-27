@@ -19,9 +19,15 @@ import os
 from difflib import SequenceMatcher
 
 import pandas as pd
-
-from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
-                   normalize_title, polite_get, get_logger)
+from utils import (
+    CATALOGS_DIR,
+    MAILTO,
+    OPENALEX_API_KEY,
+    get_logger,
+    normalize_doi,
+    normalize_title,
+    polite_get,
+)
 
 log = get_logger("enrich_dois")
 

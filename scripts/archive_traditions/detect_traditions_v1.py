@@ -269,7 +269,7 @@ if len(df_core) >= 10:
 
         # Top papers
         cluster_papers = df_core[mask_c].nlargest(5, "cited_by_count")
-        log.info(f"  Top papers:")
+        log.info("  Top papers:")
         for _, row in cluster_papers.iterrows():
             title = str(row.get("title", ""))[:75]
             author = str(row.get("first_author", ""))[:25]

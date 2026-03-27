@@ -23,9 +23,13 @@ import re
 import networkx as nx
 import numpy as np
 import pandas as pd
-
-from utils import (CATALOGS_DIR, get_logger, load_refined_citations,
-                   normalize_doi, save_csv)
+from utils import (
+    CATALOGS_DIR,
+    get_logger,
+    load_refined_citations,
+    normalize_doi,
+    save_csv,
+)
 
 log = get_logger("build_het_core")
 

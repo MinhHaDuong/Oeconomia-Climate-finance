@@ -17,9 +17,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
 import seaborn as sns
-
 from plot_style import COP_EVENTS
-from utils import BASE_DIR, get_logger, save_figure, load_analysis_config
+from utils import BASE_DIR, get_logger, load_analysis_config, save_figure
 
 log = get_logger("plot_fig_breakpoints")
 

@@ -23,8 +23,15 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
-
-from utils import BASE_DIR, CATALOGS_DIR, EMBEDDINGS_PATH, normalize_doi, get_logger, load_analysis_config, work_key
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    EMBEDDINGS_PATH,
+    get_logger,
+    load_analysis_config,
+    normalize_doi,
+    work_key,
+)
 
 log = get_logger("analyze_embeddings")
 

@@ -11,11 +11,15 @@ import re
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from plot_style import (
-    apply_style, FIGWIDTH, DPI, LIGHT, DARK, FILL,
+    DARK,
+    DPI,
+    FIGWIDTH,
+    FILL,
+    LIGHT,
+    apply_style,
 )
-from utils import CATALOGS_DIR, save_figure, BASE_DIR
+from utils import BASE_DIR, CATALOGS_DIR, save_figure
 
 apply_style()
 

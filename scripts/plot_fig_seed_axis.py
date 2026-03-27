@@ -18,11 +18,17 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from plot_style import DARK, DPI, FIGWIDTH, MED, apply_style
 from sklearn.mixture import GaussianMixture
-
-from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED
-from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings,
-                   save_figure, load_analysis_config, load_analysis_periods)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_analysis_periods,
+    load_refined_embeddings,
+    save_figure,
+)
 
 log = get_logger("plot_fig_seed_axis")
 

@@ -17,7 +17,6 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 import numpy as np
 import pandas as pd
 import yaml
-
 from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi_safe
 
 log = get_logger("filter_flags")
@@ -423,7 +422,7 @@ def _reranker_streaming(df, config, *, already_flagged):
     Yields (indices, partial_series) for Flag 6 candidates only.
     """
     try:
-        import torch  # noqa: F401
+        import torch  # noqa: F401 — availability check, used in _load_reranker_model
     except ImportError:
         log.warning("Flag 6 skipped: torch/sentence-transformers not installed")
         return

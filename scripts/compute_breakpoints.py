@@ -22,7 +22,6 @@ import pandas as pd
 from scipy.spatial.distance import cosine as cosine_dist
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
-
 from utils import BASE_DIR, get_logger, load_analysis_corpus
 
 log = get_logger("compute_breakpoints")

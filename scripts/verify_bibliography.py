@@ -16,7 +16,6 @@ import re
 import bibtexparser
 import pandas as pd
 from rapidfuzz import fuzz
-
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
 
 log = get_logger("verify_bibliography")

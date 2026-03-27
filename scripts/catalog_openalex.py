@@ -34,11 +34,24 @@ from datetime import date
 
 import pandas as pd
 import yaml
-
-from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS, MAILTO, OPENALEX_API_KEY,
-                   get_logger, normalize_doi, reconstruct_abstract, polite_get,
-                   save_csv, pool_path, append_to_pool, load_pool_ids,
-                   load_pool_records, POOL_DIR, load_collect_config)
+from utils import (
+    CATALOGS_DIR,
+    CONFIG_DIR,
+    MAILTO,
+    OPENALEX_API_KEY,
+    POOL_DIR,
+    WORKS_COLUMNS,
+    append_to_pool,
+    get_logger,
+    load_collect_config,
+    load_pool_ids,
+    load_pool_records,
+    normalize_doi,
+    polite_get,
+    pool_path,
+    reconstruct_abstract,
+    save_csv,
+)
 
 log = get_logger("catalog_openalex")
 

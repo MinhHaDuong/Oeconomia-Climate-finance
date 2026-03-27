@@ -29,7 +29,6 @@ import re
 
 import pandas as pd
 
-
 # ---------------------------------------------------------------------------
 # DOI helpers
 # ---------------------------------------------------------------------------
@@ -240,7 +239,7 @@ def detect_language(text):
     if not text or len(str(text).strip()) < 20:
         return None
     try:
-        from langdetect import detect, LangDetectException
+        from langdetect import LangDetectException, detect
         if not _langdetect_seeded:
             from langdetect import DetectorFactory
             DetectorFactory.seed = 0

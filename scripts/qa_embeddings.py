@@ -20,7 +20,6 @@ import os
 import numpy as np
 import pandas as pd
 from scipy import stats
-
 from utils import (
     CATALOGS_DIR,
     REFINED_EMBEDDINGS_PATH,

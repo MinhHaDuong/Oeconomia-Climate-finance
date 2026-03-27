@@ -28,9 +28,15 @@ from scipy.stats import gaussian_kde
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
-
-from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings,
-                   save_figure, load_analysis_config, load_analysis_periods)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_analysis_periods,
+    load_refined_embeddings,
+    save_figure,
+)
 
 log = get_logger("analyze_bimodality")
 
@@ -419,7 +425,6 @@ log.info(
 # Step 6c: Unsupervised main-axis detection (Embedding PCA)
 # ============================================================
 
-from sklearn.decomposition import PCA
 
 log.info("=== Unsupervised axis detection (Embedding PCA) ===")
 
@@ -497,6 +502,7 @@ ax.legend(fontsize=9, framealpha=0.9)
 
 # Add marginal histograms as insets
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 divider = make_axes_locatable(ax)
 ax_histx = divider.append_axes("top", 0.8, pad=0.1, sharex=ax)
 ax_histy = divider.append_axes("right", 0.8, pad=0.1, sharey=ax)

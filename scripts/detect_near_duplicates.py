@@ -27,7 +27,6 @@ import re
 from collections import defaultdict
 
 import pandas as pd
-
 from utils import get_logger
 
 log = get_logger("detect_near_duplicates")

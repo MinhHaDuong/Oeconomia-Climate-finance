@@ -15,15 +15,22 @@ import argparse
 import os
 import warnings
 
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.patheffects as pe
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.path import Path
-
-from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations,
-                   normalize_doi, save_figure, load_analysis_periods, load_analysis_config)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_analysis_periods,
+    load_refined_citations,
+    normalize_doi,
+    save_figure,
+)
 
 log = get_logger("analyze_genealogy")
 
@@ -243,6 +250,7 @@ band_height = 1.0 / max(n_communities, 1)
 
 # Count papers per (community, year) for jittering
 from collections import defaultdict
+
 comm_year_counts = defaultdict(int)
 comm_year_assigned = defaultdict(int)
 
@@ -281,10 +289,12 @@ for d in backbone_dois:
 # ============================================================
 
 import matplotlib
+
 matplotlib.rcParams['font.size'] = 8
 
 # Build palette from band colors
 from matplotlib.colors import to_rgba
+
 palette = {c: to_rgba(BAND_COLORS_RGB[c]) for c in range(n_communities)}
 
 fig, ax = plt.subplots(figsize=(16, 10))
@@ -626,7 +636,7 @@ for c in sorted_comms:
     pr, pg, pb, _ = palette[c]
     dark = f"rgb({int(pr*255*0.6)},{int(pg*255*0.6)},{int(pb*255*0.6)})"
     for li, line in enumerate(label_lines):
-        weight = "normal" if li < len(label_lines) - 1 else "normal"
+        weight = "normal"
         fill = dark if li < len(label_lines) - 1 else "#888"
         fsize = "11" if li < len(label_lines) - 1 else "9"
         svg_parts.append(
@@ -718,10 +728,10 @@ if args.robustness:
     log.info("=== Robustness: Louvain resolution sensitivity ===")
     import community as community_louvain
     import networkx as nx
-    from sklearn.metrics import adjusted_rand_score
 
     # Rebuild co-citation network (from analyze_cocitation.py logic)
     from scipy.sparse import lil_matrix
+    from sklearn.metrics import adjusted_rand_score
 
     ref_counts = cit.groupby("ref_doi").size().sort_values(ascending=False)
     TOP_N = 200

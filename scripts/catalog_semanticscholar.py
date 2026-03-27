@@ -29,11 +29,19 @@ import re
 
 import pandas as pd
 import yaml
-
-from utils import (CONFIG_DIR, CATALOGS_DIR, WORKS_COLUMNS,
-                   get_logger, normalize_doi, save_csv,
-                   pool_path, append_to_pool, load_pool_ids,
-                   load_pool_records, retry_get)
+from utils import (
+    CATALOGS_DIR,
+    CONFIG_DIR,
+    WORKS_COLUMNS,
+    append_to_pool,
+    get_logger,
+    load_pool_ids,
+    load_pool_records,
+    normalize_doi,
+    pool_path,
+    retry_get,
+    save_csv,
+)
 
 log = get_logger("catalog_semanticscholar")
 
@@ -99,8 +107,6 @@ def build_record(r):
         fields + [f.get("category", "") for f in s2_fields
                   if f.get("source") == "s2-fos-model"]
     )
-
-    pub_types = r.get("publicationTypes", []) or []
 
     return {
         "source": "semanticscholar",
@@ -191,10 +197,6 @@ def dry_run_query(search_term, delay):
 
 def extract_from_pool(config):
     """Build semanticscholar_works.csv from pool records."""
-    concept_groups = {
-        k: set(v) for k, v in config.get("concept_groups", {}).items()
-    }
-
     log.info("Loading pool records...")
     all_raw = load_pool_records("semanticscholar")
     log.info("  %d raw records in pool", len(all_raw))

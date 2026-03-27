@@ -20,9 +20,15 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 import numpy as np
 import pandas as pd
-
-from utils import (CATALOGS_DIR, EMBEDDINGS_CACHE_DIR, EMBEDDINGS_CACHE_PATH,
-                   EMBEDDINGS_PATH, get_logger, load_analysis_config, work_key)
+from utils import (
+    CATALOGS_DIR,
+    EMBEDDINGS_CACHE_DIR,
+    EMBEDDINGS_CACHE_PATH,
+    EMBEDDINGS_PATH,
+    get_logger,
+    load_analysis_config,
+    work_key,
+)
 
 log = get_logger("enrich_embeddings")
 

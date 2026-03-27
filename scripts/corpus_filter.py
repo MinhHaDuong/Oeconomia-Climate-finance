@@ -20,7 +20,6 @@ import os
 
 import numpy as np
 import pandas as pd
-
 from detect_near_duplicates import detect_near_duplicate_groups
 from filter_flags import (
     _load_config,
@@ -32,7 +31,16 @@ from filter_flags import (
     flag_semantic_outlier,
     flag_title_blacklist,
 )
-from utils import CATALOGS_DIR, CONFIG_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, normalize_doi_safe, save_csv, load_analysis_config
+from utils import (
+    CATALOGS_DIR,
+    CONFIG_DIR,
+    EMBEDDINGS_PATH,
+    get_logger,
+    load_analysis_config,
+    normalize_doi,
+    normalize_doi_safe,
+    save_csv,
+)
 
 log = get_logger("corpus_filter")
 

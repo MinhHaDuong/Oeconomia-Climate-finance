@@ -19,8 +19,13 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
-
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_refined_citations,
+    normalize_doi,
+)
 
 log = get_logger("analyze_cocitation")
 

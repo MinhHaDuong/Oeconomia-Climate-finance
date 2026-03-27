@@ -23,7 +23,6 @@ import os
 import re
 
 import bibtexparser
-
 from utils import get_logger
 
 log = get_logger("gen_missing_references")

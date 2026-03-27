@@ -15,9 +15,14 @@ import time
 
 import pandas as pd
 import requests
-
-from utils import (CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv,
-                   load_collect_config)
+from utils import (
+    CATALOGS_DIR,
+    WORKS_COLUMNS,
+    get_logger,
+    load_collect_config,
+    normalize_doi,
+    save_csv,
+)
 
 log = get_logger("catalog_scopus")
 

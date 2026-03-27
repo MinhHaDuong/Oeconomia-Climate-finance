@@ -10,10 +10,9 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from plot_style import DARK, DPI, FIGWIDTH, FILL, LIGHT, MED, apply_style
 from scipy.stats import gaussian_kde
 from sklearn.mixture import GaussianMixture
-
-from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT, FILL
 from utils import BASE_DIR, get_logger, save_figure
 
 log = get_logger("plot_figS_kde")

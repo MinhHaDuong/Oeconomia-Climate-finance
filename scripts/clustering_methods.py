@@ -29,7 +29,6 @@ import os
 
 import numpy as np
 from sklearn.metrics import adjusted_rand_score, silhouette_score
-
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("clustering_methods")
@@ -216,8 +215,8 @@ def build_tfidf_space(df, max_features=5000):
     Returns (X_tfidf, valid_idx) where X_tfidf is a dense matrix and
     valid_idx maps rows back to df positions.
     """
-    from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.decomposition import TruncatedSVD
+    from sklearn.feature_extraction.text import TfidfVectorizer
 
     abstracts = df["abstract"].fillna("")
     has_abstract = abstracts.str.len() > 20
@@ -248,9 +247,9 @@ def build_citation_space(df, citations_path=None):
     Two works are coupled if they share references. Returns (X_coupling,
     valid_idx) where X_coupling is SVD-reduced and valid_idx maps to df.
     """
+    import pandas as pd
     from scipy.sparse import csr_matrix
     from sklearn.decomposition import TruncatedSVD
-    import pandas as pd
 
     if citations_path is None:
         citations_path = os.path.join(CATALOGS_DIR, "refined_citations.csv")

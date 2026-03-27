@@ -18,7 +18,6 @@ import argparse
 import os
 
 import pandas as pd
-
 from summarize_core_venues import canonical_venue, venue_type
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
@@ -76,8 +75,9 @@ def main():
     table_rows = []
     used_indices = set()
     for label, prefixes, vtype in PUBLISHER_GROUPS:
+        lower_prefixes = [p.lower() for p in prefixes]
         mask = df["venue_canonical"].str.lower().apply(
-            lambda v: any(v.startswith(p.lower()) for p in prefixes)
+            lambda v, _pfx=lower_prefixes: any(v.startswith(p) for p in _pfx)
         )
         count = mask.sum()
         if count > 0:

@@ -21,7 +21,6 @@ import argparse
 import os
 
 import pandas as pd
-
 from utils import CATALOGS_DIR, REFS_COLUMNS, get_logger, normalize_doi
 
 log = get_logger("merge_citations")

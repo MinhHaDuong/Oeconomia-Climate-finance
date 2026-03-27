@@ -53,7 +53,7 @@ _utils_log = get_logger("utils")
 # Paths — re-exported from pipeline_loaders so callers need not change
 # ---------------------------------------------------------------------------
 
-from pipeline_loaders import (  # noqa: E402, F401
+from pipeline_loaders import (
     BASE_DIR,
     CATALOGS_DIR,
     CONFIG_DIR,
@@ -93,35 +93,14 @@ REFS_COLUMNS = [
 # HTTP constants — re-exported from pipeline_io
 # ---------------------------------------------------------------------------
 
-from pipeline_io import (  # noqa: E402, F401
+# ---------------------------------------------------------------------------
+# Re-exports from pipeline_io
+# ---------------------------------------------------------------------------
+from pipeline_io import (
     MAILTO,
     OPENALEX_API_KEY,
     POLITE_MAX_RETRIES,
     RETRY_MAX_RETRIES,
-)
-
-# ---------------------------------------------------------------------------
-# Re-exports from pipeline_text
-# ---------------------------------------------------------------------------
-
-from pipeline_text import (  # noqa: E402, F401
-    ISO_639_1_CODES,
-    LANG_NORMALIZE,
-    clean_doi,
-    detect_language,
-    is_valid_iso639_1,
-    normalize_doi,
-    normalize_doi_safe,
-    normalize_lang,
-    normalize_title,
-    reconstruct_abstract,
-)
-
-# ---------------------------------------------------------------------------
-# Re-exports from pipeline_io
-# ---------------------------------------------------------------------------
-
-from pipeline_io import (  # noqa: E402, F401
     append_checkpoint,
     append_to_pool,
     dedup_courses,
@@ -141,8 +120,7 @@ from pipeline_io import (  # noqa: E402, F401
 # ---------------------------------------------------------------------------
 # Re-exports from pipeline_loaders
 # ---------------------------------------------------------------------------
-
-from pipeline_loaders import (  # noqa: E402, F401
+from pipeline_loaders import (
     load_analysis_config,
     load_analysis_corpus,
     load_analysis_periods,
@@ -157,10 +135,25 @@ from pipeline_loaders import (  # noqa: E402, F401
 # ---------------------------------------------------------------------------
 # Re-exports from pipeline_progress
 # ---------------------------------------------------------------------------
-
-from pipeline_progress import (  # noqa: E402, F401
+from pipeline_progress import (
     EX_STUCK,
     WatchedProgress,
     compute_priority_scores,
     sort_dois_by_priority,
+)
+
+# ---------------------------------------------------------------------------
+# Re-exports from pipeline_text
+# ---------------------------------------------------------------------------
+from pipeline_text import (
+    ISO_639_1_CODES,
+    LANG_NORMALIZE,
+    clean_doi,
+    detect_language,
+    is_valid_iso639_1,
+    normalize_doi,
+    normalize_doi_safe,
+    normalize_lang,
+    normalize_title,
+    reconstruct_abstract,
 )

@@ -19,8 +19,7 @@ import os
 
 import numpy as np
 import pandas as pd
-
-from plot_style import apply_style, FIGWIDTH, DPI, DARK, MED, LIGHT
+from plot_style import DARK, DPI, FIGWIDTH, LIGHT, MED, apply_style
 from utils import BASE_DIR, save_figure
 
 apply_style()

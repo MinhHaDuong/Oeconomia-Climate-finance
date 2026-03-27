@@ -17,7 +17,6 @@ import argparse
 import os
 
 import pandas as pd
-
 from build_teaching_yaml import _dedup_course_names
 from utils import BASE_DIR, DATA_DIR, get_logger
 
@@ -77,9 +76,6 @@ def main():
     log.info("Wrote %s", OUTPUT_TABLE)
 
     # Print summary
-    n_courses = df["courses"].str.split(";").apply(
-        lambda x: len([c for c in x if c.strip()]) if isinstance(x, list) else 0
-    )
     log.info("=" * 65)
     log.info("SYLLABI READING LIST ANALYSIS")
     log.info("=" * 65)

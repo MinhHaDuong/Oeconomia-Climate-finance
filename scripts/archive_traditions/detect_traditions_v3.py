@@ -35,7 +35,7 @@ from sklearn.metrics.pairwise import cosine_distances
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_REPO = os.path.dirname(SCRIPT_DIR)
 
-from utils import get_logger, CATALOGS_DIR, normalize_doi, normalize_title
+from utils import CATALOGS_DIR, get_logger, normalize_doi, normalize_title
 
 log = get_logger("detect_traditions_v3")
 
@@ -224,7 +224,7 @@ for tradition, seeds in TRADITION_SEEDS.items():
 
     seed_indices[tradition] = list(set(matched))
 
-log.info(f"\nSeed papers found per tradition:")
+log.info("\nSeed papers found per tradition:")
 for t, idx_list in seed_indices.items():
     log.info(f"  {t}: {len(idx_list)} papers")
 

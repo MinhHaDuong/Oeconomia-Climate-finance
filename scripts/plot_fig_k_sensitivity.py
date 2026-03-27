@@ -13,7 +13,6 @@ import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from plot_style import COP_EVENTS
 from utils import BASE_DIR, get_logger, save_figure
 

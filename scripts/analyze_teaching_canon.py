@@ -20,7 +20,6 @@ import os
 from collections import defaultdict
 
 import pandas as pd
-
 from utils import BASE_DIR, DATA_DIR, get_logger
 
 log = get_logger("analyze_teaching_canon")

@@ -12,16 +12,22 @@ Produces:
 import os
 
 import community as community_louvain
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
-from scipy.sparse import lil_matrix
 
 # Add scripts dir to path for local imports
-from plot_style import apply_style, DARK, FIGWIDTH, DPI
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
+from plot_style import DARK, DPI, FIGWIDTH, apply_style
+from scipy.sparse import lil_matrix
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_refined_citations,
+    normalize_doi,
+)
 
 log = get_logger("plot_fig_traditions")
 

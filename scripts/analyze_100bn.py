@@ -25,7 +25,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import svds
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import normalize
-
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
 warnings.filterwarnings("ignore")

@@ -20,7 +20,6 @@ import re
 import sys
 
 import pdfplumber
-
 from utils import get_logger
 
 log = get_logger("qa_word_count")

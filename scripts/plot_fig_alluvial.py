@@ -21,8 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.path import Path
-
-from utils import BASE_DIR, get_logger, save_figure, load_analysis_config
+from utils import BASE_DIR, get_logger, load_analysis_config, save_figure
 
 log = get_logger("plot_fig_alluvial")
 
@@ -276,9 +275,11 @@ plt.close()
 
 # Check if we can reconstruct paper data for tooltips
 try:
-    from utils import CATALOGS_DIR as _CATALOGS_DIR, load_refined_embeddings as _load_embeddings, load_analysis_config as _load_cfg
     import pandas as _pd
     from sklearn.cluster import KMeans as _KMeans
+    from utils import CATALOGS_DIR as _CATALOGS_DIR
+    from utils import load_analysis_config as _load_cfg
+    from utils import load_refined_embeddings as _load_embeddings
 
     _alluvial_cfg = _load_cfg()
     _alluvial_ymin = _alluvial_cfg["periodization"]["year_min"]

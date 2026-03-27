@@ -18,8 +18,14 @@ import os
 import re
 
 import pandas as pd
-
-from utils import BASE_DIR, CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    WORKS_COLUMNS,
+    get_logger,
+    normalize_doi,
+    save_csv,
+)
 
 log = get_logger("catalog_scispace")
 

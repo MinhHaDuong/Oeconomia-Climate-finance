@@ -8,6 +8,7 @@ Public API (all re-exported by collect_syllabi.py):
   _load_crossref_cache, _save_crossref_cache_entry, crossref_lookup
 """
 
+import math
 import os
 
 from syllabi_io import append_jsonl, load_jsonl
@@ -47,7 +48,7 @@ def crossref_lookup(title, authors=""):
         return cache[tnorm]
 
     query = title
-    authors = str(authors) if authors and authors == authors else ""
+    authors = "" if not authors or (isinstance(authors, float) and math.isnan(authors)) else str(authors)
     if authors:
         first_author = authors.split(",")[0].split(";")[0].strip()
         if first_author:

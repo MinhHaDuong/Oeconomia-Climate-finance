@@ -5,7 +5,6 @@ serif fonts, and period annotations calibrated for 13.5 cm (5.3 inch) width.
 """
 
 import matplotlib as mpl
-
 from utils import load_analysis_periods
 
 # --- Dimensions ---
@@ -29,6 +28,7 @@ PERIODS = [
 
 # Period break years (boundaries between acts). Derived from config.
 from utils import load_analysis_config as _load_analysis_config
+
 PERIOD_BREAKS = _load_analysis_config()["periodization"]["breaks"]
 
 INCOMPLETE_FROM = 2022  # OpenAlex indexing incomplete from this year

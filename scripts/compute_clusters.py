@@ -26,8 +26,14 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import adjusted_rand_score
-
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_analysis_config, load_analysis_corpus, normalize_doi
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_analysis_corpus,
+    normalize_doi,
+)
 
 log = get_logger("compute_clusters")
 

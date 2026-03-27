@@ -24,11 +24,19 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 import requests
-
-from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, OPENALEX_API_KEY,
-                   reconstruct_abstract, normalize_doi,
-                   retry_get, save_run_report, make_run_id, get_logger,
-                   WatchedProgress)
+from utils import (
+    CATALOGS_DIR,
+    MAILTO,
+    OPENALEX_API_KEY,
+    RAW_DIR,
+    WatchedProgress,
+    get_logger,
+    make_run_id,
+    normalize_doi,
+    reconstruct_abstract,
+    retry_get,
+    save_run_report,
+)
 
 log = get_logger("enrich_abstracts")
 
@@ -296,7 +304,6 @@ def extract_abstract_tei(path):
     try:
         tree = ET.parse(path)
         root = tree.getroot()
-        ns = {"tei": "http://www.tei-c.org/ns/1.0"}
         for ab_elem in root.iter("{http://www.tei-c.org/ns/1.0}abstract"):
             text = "".join(ab_elem.itertext())
             return clean_abstract(text)

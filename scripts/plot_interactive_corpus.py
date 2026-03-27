@@ -24,8 +24,13 @@ import re
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi, load_analysis_config
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    normalize_doi,
+)
 
 log = get_logger("plot_interactive_corpus")
 

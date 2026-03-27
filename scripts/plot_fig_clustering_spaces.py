@@ -16,7 +16,6 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from utils import BASE_DIR, get_logger
 
 log = get_logger("plot_fig_clustering_spaces")

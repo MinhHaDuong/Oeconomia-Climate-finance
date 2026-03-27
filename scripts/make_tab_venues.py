@@ -13,7 +13,6 @@ import os
 
 import numpy as np
 import pandas as pd
-
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
 log = get_logger("make_tab_venues")

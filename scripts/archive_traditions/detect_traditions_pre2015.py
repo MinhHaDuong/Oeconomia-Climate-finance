@@ -27,8 +27,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
-
-from utils import get_logger, BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
 
 log = get_logger("detect_traditions_pre2015")
 
@@ -241,7 +240,6 @@ def characterize_communities(partition, graph, doi_meta, ref_counts, label=""):
             if title in ("nan", "None", ""):
                 title = f"[{d}]"
             rc = ref_counts.get(d, 0)
-            cbc = meta.get("cited_by_count", 0)
             log.info(f"    [{rc:>3}x cited] {author} ({year}) {title}")
 
         # TF-IDF terms

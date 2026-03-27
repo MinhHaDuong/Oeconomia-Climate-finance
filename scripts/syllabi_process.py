@@ -24,11 +24,24 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
-
 from syllabi_crossref import crossref_lookup
-from syllabi_io import (MAX_TEXT_CHARS, append_jsonl, extract_json_from_text,
-                        load_jsonl, llm_call, make_chunks)
-from utils import BASE_DIR, DATA_DIR, clean_doi, dedup_courses, get_logger, normalize_title, save_csv
+from syllabi_io import (
+    MAX_TEXT_CHARS,
+    append_jsonl,
+    extract_json_from_text,
+    llm_call,
+    load_jsonl,
+    make_chunks,
+)
+from utils import (
+    BASE_DIR,
+    DATA_DIR,
+    clean_doi,
+    dedup_courses,
+    get_logger,
+    normalize_title,
+    save_csv,
+)
 
 log = get_logger("syllabi_process")
 

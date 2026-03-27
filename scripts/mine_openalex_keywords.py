@@ -15,8 +15,7 @@ import os
 from collections import Counter
 
 import pandas as pd
-
-from utils import CATALOGS_DIR, get_logger, polite_get, MAILTO, OPENALEX_API_KEY
+from utils import CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, get_logger, polite_get
 
 log = get_logger("mine_openalex_keywords")
 

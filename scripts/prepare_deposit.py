@@ -16,7 +16,6 @@ import os
 import sys
 
 import pandas as pd
-
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("prepare_deposit")

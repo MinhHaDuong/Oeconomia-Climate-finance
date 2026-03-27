@@ -22,7 +22,6 @@ from collections import defaultdict
 
 import pandas as pd
 import yaml
-
 from utils import DATA_DIR, clean_doi, get_logger
 
 log = get_logger("build_teaching_yaml")

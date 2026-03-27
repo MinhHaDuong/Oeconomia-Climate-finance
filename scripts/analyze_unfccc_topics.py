@@ -26,7 +26,6 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import adjusted_rand_score, silhouette_score
 from sklearn.preprocessing import normalize
-
 from utils import BASE_DIR, get_logger, load_analysis_corpus
 
 log = get_logger("analyze_unfccc_topics")

@@ -20,17 +20,25 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+from plot_style import DARK, DPI, MED, apply_style
 from scipy.sparse import lil_matrix
-from plot_style import apply_style, DPI, DARK, MED
-from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_cluster_labels,
-                   load_refined_citations, load_refined_embeddings,
-                   normalize_doi, save_figure, load_analysis_config)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_cluster_labels,
+    load_refined_citations,
+    load_refined_embeddings,
+    normalize_doi,
+    save_figure,
+)
 
 log = get_logger("plot_heatmap_communities_clusters")
 
 apply_style()
-import matplotlib.pyplot as plt
 import community as community_louvain
+import matplotlib.pyplot as plt
 import networkx as nx
 from sklearn.cluster import KMeans
 

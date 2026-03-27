@@ -20,11 +20,20 @@ import os
 import re
 
 import pandas as pd
-
-from utils import (CATALOGS_DIR, RAW_DIR, WORKS_COLUMNS, REFS_COLUMNS,
-                   get_logger, normalize_doi, polite_get, save_csv,
-                   pool_path, append_to_pool, load_pool_records,
-                   load_collect_config)
+from utils import (
+    CATALOGS_DIR,
+    RAW_DIR,
+    REFS_COLUMNS,
+    WORKS_COLUMNS,
+    append_to_pool,
+    get_logger,
+    load_collect_config,
+    load_pool_records,
+    normalize_doi,
+    polite_get,
+    pool_path,
+    save_csv,
+)
 
 log = get_logger("catalog_istex")
 

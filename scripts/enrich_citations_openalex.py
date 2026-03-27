@@ -26,10 +26,17 @@ import os
 import time
 
 import pandas as pd
-
-from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
-                   sort_dois_by_priority, retry_get, save_run_report,
-                   make_run_id, get_logger)
+from utils import (
+    CATALOGS_DIR,
+    MAILTO,
+    OPENALEX_API_KEY,
+    get_logger,
+    make_run_id,
+    normalize_doi,
+    retry_get,
+    save_run_report,
+    sort_dois_by_priority,
+)
 
 log = get_logger("enrich_citations_openalex")
 

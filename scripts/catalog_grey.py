@@ -15,10 +15,16 @@ import argparse
 import os
 
 import pandas as pd
-
-from utils import (CATALOGS_DIR, CONFIG_DIR, WORKS_COLUMNS,
-                   get_logger, normalize_doi, polite_get, save_csv,
-                   load_collect_config)
+from utils import (
+    CATALOGS_DIR,
+    CONFIG_DIR,
+    WORKS_COLUMNS,
+    get_logger,
+    load_collect_config,
+    normalize_doi,
+    polite_get,
+    save_csv,
+)
 
 log = get_logger("catalog_grey")
 

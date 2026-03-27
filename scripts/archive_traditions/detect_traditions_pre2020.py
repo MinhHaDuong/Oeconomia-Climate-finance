@@ -26,8 +26,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
-
-from utils import get_logger, BASE_DIR, CATALOGS_DIR, normalize_doi
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
 
 log = get_logger("detect_traditions_pre2020")
 

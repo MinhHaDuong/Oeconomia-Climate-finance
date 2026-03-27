@@ -142,6 +142,7 @@ def load_analysis_periods(config_dir=None):
     corpus_collect.yaml does not exist.
     """
     import warnings
+
     import yaml
 
     cdir = config_dir or CONFIG_DIR

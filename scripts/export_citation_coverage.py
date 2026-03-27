@@ -13,8 +13,14 @@ import argparse
 import os
 
 import pandas as pd
-
-from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi, normalize_doi_safe, load_analysis_periods
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_periods,
+    normalize_doi,
+    normalize_doi_safe,
+)
 
 log = get_logger("export_citation_coverage")
 

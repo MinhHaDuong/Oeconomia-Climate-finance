@@ -18,7 +18,6 @@ import os
 import re
 
 import pandas as pd
-
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_csv
 
 log = get_logger("summarize_core_venues")

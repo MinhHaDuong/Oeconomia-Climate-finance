@@ -11,8 +11,7 @@ import argparse
 import os
 
 import pandas as pd
-
-from utils import CATALOGS_DIR, get_logger, BASE_DIR, normalize_lang
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_lang
 
 log = get_logger("export_language_table")
 

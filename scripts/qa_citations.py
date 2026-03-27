@@ -24,7 +24,7 @@ import time
 import numpy as np
 import pandas as pd
 import requests
-from utils import CATALOGS_DIR, MAILTO, normalize_doi, get_logger
+from utils import CATALOGS_DIR, MAILTO, get_logger, normalize_doi
 
 log = get_logger("qa_citations")
 

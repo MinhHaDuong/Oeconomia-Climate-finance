@@ -13,8 +13,7 @@ import argparse
 import os
 
 import pandas as pd
-
-from utils import CATALOGS_DIR, get_logger, save_csv, BASE_DIR
+from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_csv
 
 log = get_logger("export_corpus_table")
 

@@ -8,11 +8,10 @@ import argparse
 import os
 
 import matplotlib
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import yaml
-
-from plot_style import FIGWIDTH, DPI, DARK, MED, LIGHT, FILL, RCPARAMS
+from plot_style import DARK, DPI, FIGWIDTH, FILL, LIGHT, MED, RCPARAMS
 from utils import get_logger
 
 log = get_logger("plot_fig_dag")

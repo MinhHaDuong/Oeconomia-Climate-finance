@@ -22,20 +22,47 @@ Usage:
 import argparse
 import os
 
-from syllabi_crossref import (CROSSREF_CACHE_PATH, _load_crossref_cache,  # noqa: F401
-                               _save_crossref_cache_entry, crossref_lookup)  # noqa: F401
+from syllabi_crossref import (
+    CROSSREF_CACHE_PATH,
+    _load_crossref_cache,
+    _save_crossref_cache_entry,
+    crossref_lookup,
+)
 from syllabi_harvest import stage_search as _stage_search
-from syllabi_io import (CHUNK_OVERLAP, CHUNK_SIZE, MAX_TEXT_CHARS,  # noqa: F401
-                        _jsonl_lock, append_jsonl, extract_json_from_text,  # noqa: F401
-                        extract_pdf_text, load_jsonl, llm_call, make_chunks)  # noqa: F401
-from syllabi_process import (EXTRACT_CACHE_PATH, EXTRACT_PROMPT,  # noqa: F401
-                              _extract_cache_key, _extract_cache_lock,  # noqa: F401
-                              _load_extract_cache, _save_extract_cache_entry,  # noqa: F401
-                              stage_classify as _stage_classify,
-                              stage_extract as _stage_extract,
-                              stage_normalize as _stage_normalize)
-from utils import (BASE_DIR, DATA_DIR, MAILTO, clean_doi, dedup_courses,  # noqa: F401
-                   get_logger, normalize_title, polite_get, save_csv)  # noqa: F401
+from syllabi_io import (
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
+    MAX_TEXT_CHARS,
+    _jsonl_lock,
+    append_jsonl,
+    extract_json_from_text,
+    extract_pdf_text,
+    llm_call,
+    load_jsonl,
+    make_chunks,
+)
+from syllabi_process import (
+    EXTRACT_CACHE_PATH,
+    EXTRACT_PROMPT,
+    _extract_cache_key,
+    _extract_cache_lock,
+    _load_extract_cache,
+    _save_extract_cache_entry,
+)
+from syllabi_process import stage_classify as _stage_classify
+from syllabi_process import stage_extract as _stage_extract
+from syllabi_process import stage_normalize as _stage_normalize
+from utils import (
+    BASE_DIR,
+    DATA_DIR,
+    MAILTO,
+    clean_doi,
+    dedup_courses,
+    get_logger,
+    normalize_title,
+    polite_get,
+    save_csv,
+)
 
 log = get_logger("collect_syllabi")
 

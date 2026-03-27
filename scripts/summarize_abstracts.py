@@ -21,8 +21,7 @@ import time
 
 import litellm
 import pandas as pd
-
-from utils import CATALOGS_DIR, get_logger, save_run_report, make_run_id
+from utils import CATALOGS_DIR, get_logger, make_run_id, save_run_report
 
 log = get_logger("summarize_abstracts")
 

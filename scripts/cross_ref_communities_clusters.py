@@ -18,10 +18,15 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.cluster import KMeans
-
-from utils import (CATALOGS_DIR, get_logger, load_cluster_labels,
-                   load_refined_citations, load_refined_embeddings, normalize_doi,
-                   load_analysis_config)
+from utils import (
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_cluster_labels,
+    load_refined_citations,
+    load_refined_embeddings,
+    normalize_doi,
+)
 
 log = get_logger("cross_ref_communities_clusters")
 

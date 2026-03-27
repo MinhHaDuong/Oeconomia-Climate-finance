@@ -27,9 +27,15 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
-
-from utils import (BASE_DIR, CATALOGS_DIR, get_logger, load_refined_embeddings,
-                   save_figure, load_analysis_config, load_analysis_periods)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    get_logger,
+    load_analysis_config,
+    load_analysis_periods,
+    load_refined_embeddings,
+    save_figure,
+)
 
 log = get_logger("plot_fig45_pca_scatter")
 

@@ -47,7 +47,6 @@ if __name__ == "__main__":
     import numpy as np
     import pandas as pd
     from sklearn.feature_extraction.text import TfidfVectorizer
-
     from utils import load_analysis_corpus
 
     os.makedirs(TABLES_DIR, exist_ok=True)

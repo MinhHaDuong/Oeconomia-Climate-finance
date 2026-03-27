@@ -27,15 +27,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from utils import (
-    BASE_DIR,
-    get_logger,
-    load_analysis_config,
-    load_analysis_corpus,
-)
-
 # Re-export algorithm functions so callers and tests don't need to change
-from clustering_methods import (  # noqa: F401
+from clustering_methods import (
     build_citation_space,
     build_tfidf_space,
     cluster_hdbscan,
@@ -50,6 +43,12 @@ from clustering_methods import (  # noqa: F401
 )
 from plot_fig_clustering_comparison import generate_figures
 from plot_fig_clustering_spaces import plot_multi_space_figure
+from utils import (
+    BASE_DIR,
+    get_logger,
+    load_analysis_config,
+    load_analysis_corpus,
+)
 
 log = get_logger("compare_clustering")
 

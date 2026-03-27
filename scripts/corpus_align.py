@@ -29,10 +29,16 @@ import time
 
 import numpy as np
 import pandas as pd
-
 from utils import (
-    CATALOGS_DIR, EMBEDDINGS_PATH, REFINED_WORKS_PATH, REFINED_EMBEDDINGS_PATH, REFINED_CITATIONS_PATH,
-    get_logger, normalize_doi, save_run_report, make_run_id,
+    CATALOGS_DIR,
+    EMBEDDINGS_PATH,
+    REFINED_CITATIONS_PATH,
+    REFINED_EMBEDDINGS_PATH,
+    REFINED_WORKS_PATH,
+    get_logger,
+    make_run_id,
+    normalize_doi,
+    save_run_report,
 )
 
 log = get_logger("corpus_align")

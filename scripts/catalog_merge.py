@@ -19,9 +19,16 @@ import os
 
 import pandas as pd
 import yaml
-
-from utils import (BASE_DIR, CATALOGS_DIR, FROM_COLS, WORKS_COLUMNS,
-                   get_logger, normalize_doi, normalize_title, save_csv)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    FROM_COLS,
+    WORKS_COLUMNS,
+    get_logger,
+    normalize_doi,
+    normalize_title,
+    save_csv,
+)
 
 log = get_logger("catalog_merge")
 

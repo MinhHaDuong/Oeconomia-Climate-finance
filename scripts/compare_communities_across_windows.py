@@ -24,7 +24,6 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
-
 from utils import CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
 
 log = get_logger("compare_communities_across_windows")

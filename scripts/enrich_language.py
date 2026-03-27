@@ -19,11 +19,19 @@ import os
 import time
 
 import pandas as pd
-
-from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY,
-                   normalize_doi, retry_get, save_run_report,
-                   make_run_id, get_logger,
-                   normalize_lang, is_valid_iso639_1, detect_language)
+from utils import (
+    CATALOGS_DIR,
+    MAILTO,
+    OPENALEX_API_KEY,
+    detect_language,
+    get_logger,
+    is_valid_iso639_1,
+    make_run_id,
+    normalize_doi,
+    normalize_lang,
+    retry_get,
+    save_run_report,
+)
 
 log = get_logger("enrich_language")
 

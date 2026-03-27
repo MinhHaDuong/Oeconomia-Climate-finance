@@ -17,9 +17,14 @@ import argparse
 import os
 
 import pandas as pd
-
-from utils import (CATALOGS_DIR, get_logger, save_csv, BASE_DIR,
-                   normalize_lang, detect_language)
+from utils import (
+    BASE_DIR,
+    CATALOGS_DIR,
+    detect_language,
+    get_logger,
+    normalize_lang,
+    save_csv,
+)
 
 log = get_logger("qa_detect_language")
 

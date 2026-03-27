@@ -13,7 +13,6 @@ import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from utils import BASE_DIR, get_logger, save_figure
 
 log = get_logger("plot_fig_lexical_tfidf")

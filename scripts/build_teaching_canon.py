@@ -17,8 +17,14 @@ import os
 
 import pandas as pd
 import yaml
-
-from utils import DATA_DIR, CATALOGS_DIR, WORKS_COLUMNS, get_logger, normalize_doi, save_csv
+from utils import (
+    CATALOGS_DIR,
+    DATA_DIR,
+    WORKS_COLUMNS,
+    get_logger,
+    normalize_doi,
+    save_csv,
+)
 
 log = get_logger("build_teaching_canon")
 

@@ -17,9 +17,8 @@ import math
 import os
 
 import pandas as pd
-
-from utils import CATALOGS_DIR, get_logger, save_csv
 from pipeline_text import normalize_doi, normalize_lang
+from utils import CATALOGS_DIR, get_logger, save_csv
 
 log = get_logger("join_enrichments")
 

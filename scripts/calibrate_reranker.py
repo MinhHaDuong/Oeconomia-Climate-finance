@@ -21,8 +21,12 @@ import time
 
 import numpy as np
 import pandas as pd
-
-from filter_flags import _load_config, flag_missing_metadata, flag_no_abstract, flag_title_blacklist
+from filter_flags import (
+    _load_config,
+    flag_missing_metadata,
+    flag_no_abstract,
+    flag_title_blacklist,
+)
 from utils import CATALOGS_DIR, get_logger, normalize_doi, normalize_doi_safe
 
 log = get_logger("calibrate_reranker")
