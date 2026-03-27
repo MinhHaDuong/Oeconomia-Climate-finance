@@ -64,7 +64,7 @@ After all agents return:
 1. **Preserve dissent** — when agents contradict each other, surface both positions verbatim. Do not average or silently pick a winner. The human author decides.
 2. **Triage by confidence** — investigate low-confidence findings before posting. Promote or dismiss them with reasoning.
 3. **Merge findings** — deduplicate, note where scope agent flags what correctness agent requested.
-4. **Run tests**: `make check` (lint-prose + pytest).
+4. **Run tests**: `make check`.
 5. **Run build**: `make manuscript` (if prose changed).
 6. **Check for stale info**: are STATE.md, ROADMAP.md, docs/* consistent with the changes?
 7. **Post a single review**: `gh pr review <number> --comment --body "..."` or `--approve` / `--request-changes`. Attribute each finding to its perspective and confidence level.
@@ -104,4 +104,4 @@ When a reviewer spots a pre-existing issue in untouched code:
 - Are there new files that should be in .gitignore?
 - Do commit messages explain *why*, not just *what*?
 - Any secrets, large files, or conflict markers? (hook should catch, but verify)
-- Any blacklisted AI-tell words introduced? (`make lint-prose`)
+- Any blacklisted AI-tell words introduced? (see `.claude/rules/writing.md`)

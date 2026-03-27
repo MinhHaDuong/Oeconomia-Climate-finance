@@ -1,22 +1,8 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/on-start.sh"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(make check-fast)",
       "Bash(make check)",
-      "Bash(make lint-prose)",
       "Bash(make manuscript)",
       "Bash(make papers)",
       "Bash(make figures)",
@@ -30,7 +16,21 @@
       "Read",
       "Glob",
       "Grep",
-      "Skill"
+      "Skill",
+      "Edit(/.claude/skills/review-pr-prose/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/on-start.sh"
+          }
+        ]
+      }
     ]
   }
 }

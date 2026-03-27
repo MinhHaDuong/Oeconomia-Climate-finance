@@ -15,44 +15,22 @@ Spin disciplinary agents in parallel, each in a fresh context. Prose review read
 
 1. Identify the text: which `.qmd`/`.md` files changed? What is the target venue?
 2. Read the diff: `gh pr diff $ARGUMENTS`
-3. Select the panel from templates below.
-
-## Panel templates
-
-### Oeconomia manuscript (HPS journal)
-
-| Agent | Focus | Key question |
-|---|---|---|
-| **Historian of economics** | Historical accuracy, periodization, actors | Claims grounded in specific dates, documents, people? |
-| **STS / constructivism** | Category-making, co-production, performativity | Shows how the object was constructed? |
-| **Climate policy specialist** | Institutional accuracy, missing actors, policy nuance | Would practitioners recognize this account? |
-| **Literature specialist** | Deep research on cited/uncited works | Key references missing? Recent contradictions? |
-| **Adversarial referee** | Logical gaps, unsupported claims, rhetorical overreach | Where exactly does the argument fail? |
-| **Copy editor** | AI tells, blacklist words, house style | Passes writing rules and oeconomia-style rules? |
-
-### Technical report
-
-Scientometrician, Replicator, Literature specialist, Adversarial referee, Copy editor.
-
-### Custom panels
-
-One perspective per audience segment. Always include: Literature specialist + Adversarial referee + Copy editor.
+3. Recruit the panel: select agents appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check `.claude/rules/`).
 
 ## Each agent runs
 
 1. Read the **full text** (not just the diff).
-2. **Literature specialist** does actual web searches and cites specific papers.
-3. **Adversarial referee** quotes specific sentences and explains why they fail.
-4. Report **confidence** + **severity** (major / minor / suggestion).
-5. Verdict: **accept**, **minor revision**, or **major revision**.
+2. Report **confidence** + **severity** (major / minor / suggestion).
+3. Verdict: **accept**, **minor revision**, or **major revision**.
+
+Agents with relevant expertise should use available tools (web search for literature, linting tools if installed, etc.).
 
 ## Synthesis
 
 1. Preserve dissent verbatim.
 2. Group findings: major (blocks acceptance), minor (should fix), suggestion.
 3. Deduplicate convergent findings.
-4. Run `make lint-prose` and `make manuscript`.
-5. Check consistency with `content/*-vars.yml`, figures, tables.
+4. Build the manuscript. Check consistency between prose and data.
 6. Post single review via `gh pr review`.
 
 ## Proportional depth
