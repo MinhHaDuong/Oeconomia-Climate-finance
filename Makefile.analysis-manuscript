@@ -1,4 +1,6 @@
 # Phase 2 reproducibility — "Inventing Climate Finance" (Œconomia)
+# Shipped inside the analysis archive (cp'd by make archive-analysis).
+# Not used during development — provides a simple reviewer-facing interface.
 #
 # Verifies: figures and tables are reproducible from Phase 1 data.
 #

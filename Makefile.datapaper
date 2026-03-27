@@ -1,4 +1,6 @@
 # Data paper reproducibility — Climate Finance Corpus
+# Shipped inside the Zenodo archive via `git archive HEAD` in build_datapaper_archive.sh.
+# Not used during development — provides a simple reviewer-facing interface.
 #
 # Three targets:
 #   make verify  — verify shipped data against checksums (fast, offline)

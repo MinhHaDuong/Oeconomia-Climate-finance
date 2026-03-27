@@ -33,7 +33,8 @@ if [ -n "$secrets" ]; then
 fi
 
 # 4. No large files (>500KB), except uv.lock (grows with CUDA wheel metadata)
-large=$(git diff --cached --name-only --diff-filter=d | while IFS= read -r file; do
+#    diff-filter=AM: only check Added/Modified, skip Renamed (already in history)
+large=$(git diff --cached --name-only --diff-filter=AM | while IFS= read -r file; do
     case "$file" in uv.lock) continue ;; esac
     case "$file" in content/tables/*.csv) continue ;; esac
     size=$(wc -c < "$file" 2>/dev/null || echo 0)
