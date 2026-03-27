@@ -251,6 +251,27 @@ def robust_minmax(values):
 # ── PIPELINE helpers ─────────────────────────────────────────────────
 
 
+def _update_quota_counts(row, counts: dict) -> None:
+    """Increment quota counters in-place based on a paper row's flags."""
+    if row["_is_report"]:
+        counts["reports"] += 1
+    if row["_non_english"]:
+        counts["non_eng"] += 1
+    if row["_global_south"]:
+        counts["gs"] += 1
+
+
+def _row_helps_quota(row, counts: dict, minimums: dict) -> bool:
+    """Return True if the paper helps meet at least one unmet quota."""
+    if row["_is_report"] and counts["reports"] < minimums["reports"]:
+        return True
+    if row["_non_english"] and counts["non_eng"] < minimums["non_eng"]:
+        return True
+    if row["_global_south"] and counts["gs"] < minimums["gs"]:
+        return True
+    return False
+
+
 def _add_pagerank(s2):
     """Compute PageRank on the citation graph within S2 and add as column."""
     log.info("-- Step 3: Citation centrality (PageRank) --")
@@ -291,27 +312,21 @@ def _select_with_quotas(s2):
     s2["_non_english"] = s2.apply(is_non_english, axis=1)
     s2["_global_south"] = s2.apply(is_global_south, axis=1)
 
-    min_reports = int(TARGET_N * QUOTAS["institutional_reports_min"])
-    min_non_eng = int(TARGET_N * QUOTAS["non_english_min"])
-    min_gs = int(TARGET_N * QUOTAS["global_south_min"])
+    minimums = {
+        "reports": int(TARGET_N * QUOTAS["institutional_reports_min"]),
+        "non_eng": int(TARGET_N * QUOTAS["non_english_min"]),
+        "gs":      int(TARGET_N * QUOTAS["global_south_min"]),
+    }
+    counts = {"reports": 0, "non_eng": 0, "gs": 0}
 
     selected_idx = []
-    cnt_reports = 0
-    cnt_non_eng = 0
-    cnt_gs = 0
 
     # Pre-allocate: guaranteed inclusion for teaching canon papers (2+ institutions)
     canon_guaranteed = s2[s2["teaching_count"] >= 2].index.tolist()
     for i in canon_guaranteed:
         pos = s2.index.get_loc(i)
         selected_idx.append(pos)
-        row = s2.iloc[pos]
-        if row["_is_report"]:
-            cnt_reports += 1
-        if row["_non_english"]:
-            cnt_non_eng += 1
-        if row["_global_south"]:
-            cnt_gs += 1
+        _update_quota_counts(s2.iloc[pos], counts)
     log.info("Teaching canon guaranteed: %d", len(selected_idx))
 
     selected_set = set(selected_idx)
@@ -323,29 +338,11 @@ def _select_with_quotas(s2):
         if i in selected_set:
             continue
         row = s2.iloc[i]
-        helps_quota = False
-        if row["_is_report"] and cnt_reports < min_reports:
-            helps_quota = True
-        if row["_non_english"] and cnt_non_eng < min_non_eng:
-            helps_quota = True
-        if row["_global_south"] and cnt_gs < min_gs:
-            helps_quota = True
-
-        quotas_met = (
-            cnt_reports >= min_reports
-            and cnt_non_eng >= min_non_eng
-            and cnt_gs >= min_gs
-        )
-
-        if helps_quota or quotas_met:
+        quotas_met = all(counts[k] >= minimums[k] for k in counts)
+        if _row_helps_quota(row, counts, minimums) or quotas_met:
             selected_idx.append(i)
             selected_set.add(i)
-            if row["_is_report"]:
-                cnt_reports += 1
-            if row["_non_english"]:
-                cnt_non_eng += 1
-            if row["_global_south"]:
-                cnt_gs += 1
+            _update_quota_counts(row, counts)
 
     # Fill remaining slots freely from top-scored
     if len(selected_idx) < TARGET_N:

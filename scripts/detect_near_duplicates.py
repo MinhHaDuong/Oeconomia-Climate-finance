@@ -107,6 +107,67 @@ def _abstract_overlap_ratio(abstracts: list[str], prefix_length: int) -> float:
     return shared / len(abstracts)
 
 
+def _cluster_by_abstract_prefix(
+    df: pd.DataFrame,
+    uf: "_UnionFind",
+    idx_to_pos: dict,
+    min_abstract_length: int,
+    prefix_length: int,
+    min_group_size: int,
+) -> "pd.Series":
+    """Pass 1: group papers sharing the same normalized abstract prefix.
+
+    Returns the raw abstracts series (reused in Pass 2).
+    """
+    abstracts_raw = df["abstract"].fillna("").astype(str)
+    has_abstract = abstracts_raw.str.len() >= min_abstract_length
+    normalized_abstracts = abstracts_raw[has_abstract].apply(_normalize_text)
+    abstract_prefixes = normalized_abstracts.str[:prefix_length]
+
+    prefix_to_indices: dict[str, list[int]] = defaultdict(list)
+    for idx, prefix in abstract_prefixes.items():
+        if prefix:
+            prefix_to_indices[prefix].append(idx)
+
+    for prefix, indices in prefix_to_indices.items():
+        if len(indices) >= min_group_size:
+            anchor = idx_to_pos[indices[0]]
+            for idx in indices[1:]:
+                uf.union(anchor, idx_to_pos[idx])
+
+    return abstracts_raw
+
+
+def _cluster_by_title(
+    df: pd.DataFrame,
+    uf: "_UnionFind",
+    idx_to_pos: dict,
+    abstracts_raw: "pd.Series",
+    prefix_length: int,
+    abstract_overlap_threshold: float,
+    min_group_size: int,
+) -> None:
+    """Pass 2: group papers with the same normalized title, validated by abstract overlap."""
+    normalized_titles = df["title"].fillna("").apply(_normalize_text)
+
+    title_to_indices: dict[str, list[int]] = defaultdict(list)
+    for idx, title in normalized_titles.items():
+        if title and len(title) >= 10:  # skip very short/empty titles
+            title_to_indices[title].append(idx)
+
+    for title, indices in title_to_indices.items():
+        if len(indices) < min_group_size:
+            continue
+
+        group_abstracts = [str(abstracts_raw.at[i]) for i in indices]
+        overlap = _abstract_overlap_ratio(group_abstracts, prefix_length)
+
+        if overlap >= abstract_overlap_threshold:
+            anchor = idx_to_pos[indices[0]]
+            for idx in indices[1:]:
+                uf.union(anchor, idx_to_pos[idx])
+
+
 def detect_near_duplicate_groups(
     df: pd.DataFrame,
     *,
@@ -151,43 +212,14 @@ def detect_near_duplicate_groups(
     idx_to_pos = {idx: pos for pos, idx in enumerate(df.index)}
 
     # ── Pass 1: Abstract prefix clustering ────────────────────────
-    abstracts_raw = df["abstract"].fillna("").astype(str)
-    has_abstract = abstracts_raw.str.len() >= min_abstract_length
-    normalized_abstracts = abstracts_raw[has_abstract].apply(_normalize_text)
-    abstract_prefixes = normalized_abstracts.str[:prefix_length]
-
-    prefix_to_indices: dict[str, list[int]] = defaultdict(list)
-    for idx, prefix in abstract_prefixes.items():
-        if prefix:
-            prefix_to_indices[prefix].append(idx)
-
-    for prefix, indices in prefix_to_indices.items():
-        if len(indices) >= min_group_size:
-            anchor = idx_to_pos[indices[0]]
-            for idx in indices[1:]:
-                uf.union(anchor, idx_to_pos[idx])
+    abstracts_raw = _cluster_by_abstract_prefix(
+        df, uf, idx_to_pos, min_abstract_length, prefix_length, min_group_size)
 
     # ── Pass 2: Title clustering with abstract validation ─────────
     if "title" in df.columns:
-        normalized_titles = df["title"].fillna("").apply(_normalize_text)
-
-        title_to_indices: dict[str, list[int]] = defaultdict(list)
-        for idx, title in normalized_titles.items():
-            if title and len(title) >= 10:  # skip very short/empty titles
-                title_to_indices[title].append(idx)
-
-        for title, indices in title_to_indices.items():
-            if len(indices) < min_group_size:
-                continue
-
-            # Validate: check abstract overlap within this title group
-            group_abstracts = [str(abstracts_raw.at[i]) for i in indices]
-            overlap = _abstract_overlap_ratio(group_abstracts, prefix_length)
-
-            if overlap >= abstract_overlap_threshold:
-                anchor = idx_to_pos[indices[0]]
-                for idx in indices[1:]:
-                    uf.union(anchor, idx_to_pos[idx])
+        _cluster_by_title(
+            df, uf, idx_to_pos, abstracts_raw,
+            prefix_length, abstract_overlap_threshold, min_group_size)
 
     # ── Collect groups from union-find ────────────────────────────
     group_members: dict[int, list[int]] = defaultdict(list)

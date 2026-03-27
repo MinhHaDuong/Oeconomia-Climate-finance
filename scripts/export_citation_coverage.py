@@ -14,7 +14,7 @@ import os
 
 import pandas as pd
 
-from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi, load_analysis_periods
+from utils import CATALOGS_DIR, BASE_DIR, get_logger, normalize_doi, normalize_doi_safe, load_analysis_periods
 
 log = get_logger("export_citation_coverage")
 
@@ -32,9 +32,7 @@ def main():
     citations = pd.read_csv(CITATIONS_PATH, usecols=["source_doi"], low_memory=False)
 
     # Normalize DOIs for matching
-    refined["doi_norm"] = refined["doi"].apply(
-        lambda x: normalize_doi(x) if pd.notna(x) else ""
-    )
+    refined["doi_norm"] = refined["doi"].apply(normalize_doi_safe)
     fetched_dois = set(citations["source_doi"].dropna().apply(normalize_doi).unique())
 
     refined["has_citations"] = refined["doi_norm"].isin(fetched_dois)

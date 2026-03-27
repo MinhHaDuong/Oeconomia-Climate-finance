@@ -32,7 +32,7 @@ from filter_flags import (
     flag_semantic_outlier,
     flag_title_blacklist,
 )
-from utils import CATALOGS_DIR, CONFIG_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, save_csv, load_analysis_config
+from utils import CATALOGS_DIR, CONFIG_DIR, EMBEDDINGS_PATH, get_logger, normalize_doi, normalize_doi_safe, save_csv, load_analysis_config
 
 log = get_logger("corpus_filter")
 
@@ -77,7 +77,7 @@ def add_in_v1_column(df, v1_dois, v1_sids):
 
     Matching strategy: normalized DOI first, source_id fallback for no-DOI rows.
     """
-    doi_norm = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+    doi_norm = df["doi"].apply(normalize_doi_safe)
     doi_match = doi_norm.isin(v1_dois) & (doi_norm != "")
 
     sid_match = pd.Series(False, index=df.index)
@@ -403,7 +403,7 @@ def load_input_works(works_path):
     """Load works CSV and normalise DOIs."""
     df = pd.read_csv(works_path)
     log.info("  Loaded: %d rows from %s", len(df), works_path)
-    df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+    df["doi_norm"] = df["doi"].apply(normalize_doi_safe)
     return df
 
 
@@ -412,10 +412,8 @@ def load_citations(cheap=False):
         return None
     log.info("  Loading citations from %s...", CITATIONS_PATH)
     citations_df = pd.read_csv(CITATIONS_PATH)
-    citations_df["source_doi"] = citations_df["source_doi"].apply(
-        lambda x: normalize_doi(x) if pd.notna(x) else "")
-    citations_df["ref_doi"] = citations_df["ref_doi"].apply(
-        lambda x: normalize_doi(x) if pd.notna(x) else "")
+    citations_df["source_doi"] = citations_df["source_doi"].apply(normalize_doi_safe)
+    citations_df["ref_doi"] = citations_df["ref_doi"].apply(normalize_doi_safe)
     log.info("  Citations: %d", len(citations_df))
     return citations_df
 

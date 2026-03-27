@@ -20,7 +20,7 @@ import pandas as pd
 from scipy.sparse import lil_matrix
 
 # Add scripts dir to path for local imports
-from plot_style import apply_style, DARK, MED, LIGHT, FIGWIDTH, DPI
+from plot_style import apply_style, DARK, FIGWIDTH, DPI
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
 
 log = get_logger("plot_fig_traditions")

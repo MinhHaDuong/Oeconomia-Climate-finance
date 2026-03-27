@@ -17,7 +17,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from utils import BASE_DIR, CATALOGS_DIR, DATA_DIR, SOURCE_NAMES, get_logger, load_analysis_periods
+from utils import BASE_DIR, CATALOGS_DIR, SOURCE_NAMES, get_logger, load_analysis_periods
 
 log = get_logger("compute_vars")
 

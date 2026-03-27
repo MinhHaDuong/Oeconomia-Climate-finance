@@ -101,23 +101,44 @@ def catalog_files_from_dvc():
     return [d for d in deps if d.endswith("_works.csv")]
 
 
-def main():
-    # Load only the catalogs declared as deps in dvc.yaml
-    catalog_deps = catalog_files_from_dvc()
-    files = [os.path.join(BASE_DIR, d) for d in catalog_deps]
-    missing = [f for f in files if not os.path.exists(f)]
-    if missing:
-        for f in missing:
-            log.warning("missing catalog: %s", f)
-        files = [f for f in files if os.path.exists(f)]
+def _dedup_no_doi_records(no_doi: pd.DataFrame) -> pd.DataFrame | None:
+    """Deduplicate records without a DOI using normalized title + year.
 
-    if not files:
+    Returns the deduplicated DataFrame, or None if nothing survives filtering.
+    """
+    no_doi = no_doi.copy()
+    no_doi["_title_norm"] = no_doi["title"].apply(normalize_title)
+    no_doi["_year"] = no_doi["year"].astype(str).str[:4]
+    # Drop empty titles
+    no_doi = no_doi[no_doi["_title_norm"] != ""]
+    if len(no_doi) == 0:
+        return None
+    # Composite key for groupby
+    no_doi["_title_year"] = no_doi["_title_norm"] + "|" + no_doi["_year"]
+    result = _dedup_vectorized(no_doi, "_title_year")
+    log.info("  After title dedup: %d", len(result))
+    return result
+
+
+def _load_combined(files: list[str]) -> pd.DataFrame | None:
+    """Load and concatenate all catalog files.
+
+    Warns about missing files, skips them, and returns None if nothing loaded.
+    """
+    existing = []
+    for f in files:
+        if not os.path.exists(f):
+            log.warning("missing catalog: %s", f)
+        else:
+            existing.append(f)
+
+    if not existing:
         log.error("No catalog files found in data/catalogs/")
-        return
+        return None
 
     log.info("Loading catalogs:")
     frames = []
-    for f in files:
+    for f in existing:
         try:
             frames.append(_load_and_tag(f))
         except Exception as e:
@@ -125,10 +146,20 @@ def main():
 
     if not frames:
         log.error("No data loaded.")
-        return
+        return None
 
     combined = pd.concat(frames, ignore_index=True)
     log.info("Total records before dedup: %d", len(combined))
+    return combined
+
+
+def main():
+    # Load only the catalogs declared as deps in dvc.yaml
+    catalog_deps = catalog_files_from_dvc()
+    files = [os.path.join(BASE_DIR, d) for d in catalog_deps]
+    combined = _load_combined(files)
+    if combined is None:
+        return
 
     # Normalize DOIs
     combined["_doi_norm"] = combined["doi"].apply(normalize_doi)
@@ -150,16 +181,9 @@ def main():
 
     # Pass 2: title+year dedup for records without DOI (vectorized)
     if len(no_doi) > 0:
-        no_doi = no_doi.copy()
-        no_doi["_title_norm"] = no_doi["title"].apply(normalize_title)
-        no_doi["_year"] = no_doi["year"].astype(str).str[:4]
-        # Drop empty titles
-        no_doi = no_doi[no_doi["_title_norm"] != ""]
-        if len(no_doi) > 0:
-            # Composite key for groupby
-            no_doi["_title_year"] = no_doi["_title_norm"] + "|" + no_doi["_year"]
-            parts.append(_dedup_vectorized(no_doi, "_title_year"))
-            log.info("  After title dedup: %d", len(parts[-1]))
+        deduped = _dedup_no_doi_records(no_doi)
+        if deduped is not None:
+            parts.append(deduped)
 
     result = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
