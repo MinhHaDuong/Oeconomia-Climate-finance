@@ -152,16 +152,20 @@ deposit to ensure reproducibility.
 
 | Dataset | Repository | Licence | Embargo | DOI |
 |---------|-----------|---------|---------|-----|
-| Corpus v1.0 + embeddings + citations | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19097045 |
-| Corpus v1.1 + embeddings + citations | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19236130 |
+| Oeconomia reproducibility archive (corpus v1.0 + code) | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19097045 |
+| Data paper reproducibility archive (corpus v1.1 + code) | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19236130 |
 | Pipeline source code | GitHub | MIT | Until acceptance | — |
 | Oeconomia manuscript | HAL | CC BY 4.0 | None (preprint) | hal-05558422v1 |
 | Data paper | HAL + journal | CC BY 4.0 | None (diamond OA) | Submitted 2026-03-26 |
 
+**Zenodo deposits**: each paper has its own reproducibility archive on Zenodo,
+bundling the corpus version current at submission time alongside the full
+pipeline source code. The two deposits are independent records (no Zenodo
+concept DOI links them). The corpus itself is not deposited as a standalone
+dataset.
+
 **Versioning strategy**:
-- Zenodo concept DOI (stable across versions): 10.5281/zenodo.19097045
-- Version-specific DOIs minted automatically by Zenodo
-- `in_v1` column in corpus CSV enables backward compatibility
+- `in_v1` column in corpus CSV enables backward compatibility across versions
 - Git tags mark submission milestones (`v1.0-submission`, `v1.1-rdj-submitted`)
 
 **Timeline**:
@@ -233,7 +237,7 @@ knowledge through the published data paper and technical report.
 
 | Principle | Status | Evidence |
 |-----------|--------|----------|
-| **F1** Globally unique persistent identifier | ✅ | Zenodo DOI 10.5281/zenodo.19097045 |
+| **F1** Globally unique persistent identifier | ✅ | Zenodo DOIs 10.5281/zenodo.19097045 (v1.0) and 10.5281/zenodo.19236130 (v1.1) |
 | **F2** Rich metadata | ✅ | DataCite metadata on Zenodo, Dublin Core on HAL |
 | **F3** Metadata includes data identifier | ✅ | DOI in all metadata records |
 | **F4** Registered in searchable resource | ✅ | Zenodo, HAL, OpenAIRE, DataCite |
