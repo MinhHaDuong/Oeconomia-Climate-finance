@@ -97,6 +97,7 @@ def query_worldbank(wb_queries, year_min=None, year_max=None):
                     (from config/corpus_collect.yaml).
         year_min:   Optional minimum publication year (inclusive).
         year_max:   Optional maximum publication year (inclusive).
+
     """
     if isinstance(wb_queries, str):
         wb_queries = [wb_queries]

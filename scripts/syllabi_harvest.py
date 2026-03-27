@@ -42,6 +42,7 @@ def stage_search(search_path, syllabi_dir, limit=0):
         search_path: Path to write search_results.jsonl checkpoint.
         syllabi_dir: Directory to create if needed.
         limit: Max number of DuckDuckGo queries to run (0 = unlimited).
+
     """
     from ddgs import DDGS
 
@@ -211,6 +212,7 @@ def stage_fetch(search_path, pages_path, pdf_dir):
         search_path: Path to search_results.jsonl.
         pages_path: Path to write pages.jsonl checkpoint.
         pdf_dir: Directory to save downloaded PDFs.
+
     """
     os.makedirs(pdf_dir, exist_ok=True)
 

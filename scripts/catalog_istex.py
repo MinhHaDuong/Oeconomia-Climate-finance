@@ -150,6 +150,7 @@ def build_istex_query(base_query, year_min=None, year_max=None):
         year_max:   Optional maximum publication year (inclusive).
 
     ISTEX uses publicationDate field with bracket syntax: [YYYY TO YYYY].
+
     """
     q = base_query
     if year_min is not None and year_max is not None:

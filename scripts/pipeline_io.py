@@ -101,6 +101,7 @@ def retry_get(url, params=None, headers=None, delay=0.2,
     Raises
     ------
     RuntimeError after all retries are exhausted.
+
     """
     if params is None:
         params = {}
@@ -212,6 +213,7 @@ def save_run_report(data, run_id, script_name):
     Returns
     -------
     Path to the saved JSON file (str).
+
     """
     from pipeline_loaders import CATALOGS_DIR  # avoid circular import
 
@@ -297,6 +299,7 @@ def load_pool_ids(source, id_field="id"):
 
     Returns:
         set of ID strings already in the pool
+
     """
     from pipeline_loaders import POOL_DIR  # avoid circular import
 
@@ -328,6 +331,7 @@ def load_pool_records(source):
 
     Returns:
         list of dicts (raw API responses)
+
     """
     from pipeline_loaders import POOL_DIR  # avoid circular import
 

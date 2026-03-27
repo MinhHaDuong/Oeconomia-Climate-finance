@@ -23,6 +23,7 @@ Stability metrics:
 - hdbscan_sweep: cluster count + noise fraction by min_cluster_size
 - spectral_eigengap: silhouette sweep for Spectral
 - multi_space_silhouette: compare silhouette across spaces
+
 """
 
 import os

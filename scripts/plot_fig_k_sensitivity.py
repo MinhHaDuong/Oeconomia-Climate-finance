@@ -1,4 +1,4 @@
-"""K-sensitivity figure: do structural breaks persist across cluster counts?
+"""K-sensitivity figure: structural break persistence across cluster counts.
 
 Reads:  tab_k_sensitivity.csv
 Writes: fig_k_sensitivity.png (and .pdf unless --no-pdf)
