@@ -22,7 +22,7 @@ import time
 import litellm
 import pandas as pd
 
-from utils import CATALOGS_DIR, get_logger, save_csv, save_run_report, make_run_id
+from utils import CATALOGS_DIR, get_logger, save_run_report, make_run_id
 
 log = get_logger("summarize_abstracts")
 
@@ -263,8 +263,7 @@ def main():
     for status, count in status_counts.items():
         log.info("  %s: %d", status, count)
 
-    # Save back (atomic write)
-    save_csv(result, args.works_input)
+    # Cache-only: join_enrichments.py applies summaries to the monolith (#428)
 
     elapsed = time.time() - t0
     counters = {

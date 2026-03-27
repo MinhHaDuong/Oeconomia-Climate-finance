@@ -163,19 +163,19 @@ def read_dvc_yaml():
 
 class TestFailFastChecks:
     def test_corpus_enrich_checks_for_unified(self):
-        """dvc.yaml enrich_works stage must declare unified_works.csv as a dependency.
+        """dvc.yaml join_enrichments stage must declare unified_works.csv as a dependency.
 
         Previously the Makefile corpus-enrich recipe contained a fail-fast check.
         Now DVC owns the dependency graph: the contract is expressed in dvc.yaml
         deps, which DVC enforces before running the stage.
         """
         dvc = read_dvc_yaml()
-        assert "enrich_works" in dvc.get("stages", {}), \
-            "enrich_works stage missing from dvc.yaml"
-        deps = dvc["stages"]["enrich_works"].get("deps", [])
+        assert "join_enrichments" in dvc.get("stages", {}), \
+            "join_enrichments stage missing from dvc.yaml"
+        deps = dvc["stages"]["join_enrichments"].get("deps", [])
         dep_paths = [str(d) for d in deps]
         assert any("unified_works.csv" in p for p in dep_paths), \
-            "dvc.yaml enrich_works stage must list unified_works.csv in deps"
+            "dvc.yaml join_enrichments stage must list unified_works.csv in deps"
 
     def test_corpus_extend_checks_for_enriched(self):
         """dvc.yaml extend stage must declare enriched_works.csv as a dependency.

@@ -26,7 +26,7 @@ import pandas as pd
 import requests
 
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, OPENALEX_API_KEY,
-                   save_csv, reconstruct_abstract, normalize_doi,
+                   reconstruct_abstract, normalize_doi,
                    retry_get, save_run_report, make_run_id, get_logger,
                    WatchedProgress)
 
@@ -434,7 +434,7 @@ def main():
                         help="Run only this step (1-5, 0=all)")
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
-                        help="Input/output works CSV (default: unified_works.csv)")
+                        help="Input works CSV (default: unified_works.csv)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier for the run report (default: timestamp)")
     parser.add_argument("--resume", action="store_true", default=True,
@@ -505,10 +505,9 @@ def main():
     step_results = {}
 
     def _flush_checkpoint():
-        """Emergency save: write current state to disk."""
-        log.info("Flushing checkpoint — saving current state to %s", path)
-        out = df.drop(columns=["_missing", "_has_doi"], errors="ignore")
-        save_csv(out, path)
+        """Emergency save: flush caches to disk."""
+        log.info("Flushing caches to disk")
+        # Caches are flushed by each step's own save_cache calls
 
     with WatchedProgress(
         stuck_timeout=args.stuck_timeout,
@@ -551,10 +550,8 @@ def main():
             log.info("→ filled %d, remaining: %d", filled, after)
             _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
 
-    # Save
+    # Cache-only: join_enrichments.py applies caches to the monolith (#428)
     final_missing = int(df["_missing"].sum())
-    df.drop(columns=["_missing", "_has_doi"], inplace=True)
-    save_csv(df, path)
 
     elapsed = time.time() - t0
 

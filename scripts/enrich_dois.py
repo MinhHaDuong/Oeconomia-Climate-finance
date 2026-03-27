@@ -20,7 +20,7 @@ from difflib import SequenceMatcher
 import pandas as pd
 
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
-                   normalize_title, polite_get, save_csv, get_logger)
+                   normalize_title, polite_get, get_logger)
 
 log = get_logger("enrich_dois")
 
@@ -204,14 +204,10 @@ def main():
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
                         help="Input works CSV (default: unified_works.csv)")
-    parser.add_argument("--works-output",
-                        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-                        help="Output works CSV (default: enriched_works.csv)")
     args = parser.parse_args()
 
     # Load corpus
     corpus_path = args.works_input
-    output_path = args.works_output
     df = pd.read_csv(corpus_path)
     log.info("Loaded %d works from %s", len(df), corpus_path)
 
@@ -272,32 +268,10 @@ def main():
             log.info("Checkpoint: %d/%d (resolved=%d, not_found=%d)",
                      i + 1, len(to_process), resolved, not_found)
 
-    # Final save
+    # Final save — cache only, join_enrichments.py applies to the monolith (#428)
     save_cache(cache)
-    log.info("Done. Resolved: %d, Not found: %d", resolved, not_found)
-
-    if resolved == 0:
-        log.info("No new DOIs to apply.")
-        # Still copy input → output if they differ
-        if output_path != corpus_path:
-            save_csv(df, output_path)
-            log.info("Copied %d rows to %s", len(df), output_path)
-        return
-
-    # Apply resolved DOIs to corpus
-    resolved_map = {k: v for k, v in cache.items() if v}
-    log.info("Applying %d resolved DOIs → %s...", len(resolved_map), output_path)
-
-    mask = df["source_id"].isin(resolved_map) & ~has_doi
-    applied = 0
-    for idx in df[mask].index:
-        sid = df.at[idx, "source_id"]
-        new_doi = resolved_map[sid]
-        df.at[idx, "doi"] = new_doi
-        applied += 1
-
-    save_csv(df, output_path)
-    log.info("Applied %d DOIs. Saved %s", applied, output_path)
+    log.info("Done. Resolved: %d, Not found: %d. Cache: %s",
+             resolved, not_found, CACHE_FILE)
 
 
 if __name__ == "__main__":

@@ -1035,7 +1035,7 @@ def test_language_null_rate_below_2_percent(enriched):
     assert null_pct < 2.0, (
         f"Language null rate is {null_pct:.1f}% ({null_count}/{total}). "
         f"Expected < 2% after enrich_language. "
-        f"Run: uv run dvc repro enrich_works"
+        f"Run: uv run dvc repro join_enrichments"
     )
 
 

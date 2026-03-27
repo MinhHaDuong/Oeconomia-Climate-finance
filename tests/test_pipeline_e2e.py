@@ -265,13 +265,12 @@ class TestCatalogMerge:
 # ============================================================
 
 class TestEnrichDois:
-    def test_no_candidates_copies_input(self, pipeline_workspace):
-        """When all works have DOIs, enrich_dois copies input to output unchanged."""
+    def test_no_candidates_runs_ok(self, pipeline_workspace):
+        """When all works have DOIs, enrich_dois runs without error (cache-only)."""
         ws = pipeline_workspace
         catalogs_dir = ws / "data" / "catalogs"
 
-        # Create input where all rows have DOIs → 0 candidates → no API calls,
-        # no cache read (avoids DVC stub files in worktrees).
+        # Create input where all rows have DOIs → 0 candidates → no API calls.
         df = pd.DataFrame({
             "source_id": ["W1", "W2", "W3"],
             "doi": ["10.1/a", "10.1/b", "10.1/c"],
@@ -283,31 +282,24 @@ class TestEnrichDois:
         })
         input_path = catalogs_dir / "enrich_input.csv"
         df.to_csv(input_path, index=False)
-        output_path = catalogs_dir / "enrich_output.csv"
 
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_dois.py"),
-             "--works-input", str(input_path),
-             "--works-output", str(output_path)],
+             "--works-input", str(input_path)],
             capture_output=True, text=True,
             cwd=REPO_ROOT,
         )
         assert result.returncode == 0, \
             f"enrich_dois failed:\n{result.stdout}\n{result.stderr}"
-        assert output_path.exists()
-        out_df = pd.read_csv(output_path)
-        assert len(out_df) == 3, "Row count should be preserved"
-        # All DOIs preserved
-        assert set(out_df["doi"]) == {"10.1/a", "10.1/b", "10.1/c"}
 
     def test_accepts_cli_args(self):
-        """enrich_dois accepts --works-input, --works-output, --dry-run, --limit."""
+        """enrich_dois accepts --works-input, --dry-run, --limit."""
         result = subprocess.run(
             [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_dois.py"), "--help"],
             capture_output=True, text=True,
         )
         assert result.returncode == 0
-        for flag in ["--works-input", "--works-output", "--dry-run", "--limit"]:
+        for flag in ["--works-input", "--dry-run", "--limit"]:
             assert flag in result.stdout, f"enrich_dois should accept {flag}"
 
     def test_load_cache_handles_empty_file(self, tmp_path):

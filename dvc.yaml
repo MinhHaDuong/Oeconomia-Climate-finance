@@ -119,27 +119,53 @@ stages:
   # A failure in a late step (e.g. embeddings) won't force re-running
   # earlier steps (e.g. citations) on retry.
 
-  # Phase 1b.1: Resolve missing DOIs + fill abstracts + fill language + summarize oversized → enriched_works.csv
-  # All four modify enriched_works.csv in-place. Splitting into separate stages
-  # would cause a DVC rerun loop (in-place modification changes the tracked
-  # output hash, triggering false staleness). See #427 for design discussion.
-  # Language runs after abstracts (detection benefits from filled text).
-  # Summarize runs last: replaces >1000-token abstracts with LLM summaries (#415).
-  enrich_works:
-    cmd: >-
-      uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv --works-output data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/enrich_language.py --works-input data/catalogs/enriched_works.csv &&
-      uv run python scripts/summarize_abstracts.py --works-input data/catalogs/enriched_works.csv
+  # Phase 1b.1: Enrichment — each script updates its own cache independently.
+  # A join stage assembles enriched_works.csv from all caches. See #428.
+  # Caches live in enrich_cache/ (persistent, append-only, not DVC outputs).
+
+  enrich_dois:
+    cmd: uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv
     deps:
       - scripts/enrich_dois.py
+      - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_text.py
+      - data/catalogs/unified_works.csv
+
+  enrich_abstracts:
+    cmd: uv run python scripts/enrich_abstracts.py --works-input data/catalogs/unified_works.csv
+    deps:
       - scripts/enrich_abstracts.py
+      - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_text.py
+      - scripts/pipeline_progress.py
+      - data/catalogs/unified_works.csv
+
+  enrich_language:
+    cmd: uv run python scripts/enrich_language.py --works-input data/catalogs/unified_works.csv
+    deps:
       - scripts/enrich_language.py
+      - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_text.py
+      - data/catalogs/unified_works.csv
+
+  summarize_abstracts:
+    cmd: uv run python scripts/summarize_abstracts.py --works-input data/catalogs/unified_works.csv
+    deps:
       - scripts/summarize_abstracts.py
       - scripts/utils.py
       - scripts/pipeline_io.py
-      - scripts/pipeline_loaders.py
-      - scripts/pipeline_progress.py
+      - scripts/pipeline_text.py
+      - data/catalogs/unified_works.csv
+
+  join_enrichments:
+    cmd: uv run python scripts/join_enrichments.py
+    deps:
+      - scripts/join_enrichments.py
+      - scripts/utils.py
+      - scripts/pipeline_io.py
       - scripts/pipeline_text.py
       - data/catalogs/unified_works.csv
     outs:
