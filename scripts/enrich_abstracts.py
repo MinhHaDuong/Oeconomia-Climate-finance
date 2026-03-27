@@ -504,17 +504,11 @@ def main():
     }
     step_results = {}
 
-    def _flush_checkpoint():
-        """Emergency flush: persist all abstract caches to disk."""
-        log.info("Flushing abstract caches to disk")
-        for name in ("openalex_abstracts", "s2_abstracts"):
-            cache_path = os.path.join(CACHE_DIR, f"{name}.csv")
-            if os.path.exists(cache_path):
-                log.info("  cache already on disk: %s", cache_path)
-
+    # No flush_checkpoint needed: each step flushes its own cache periodically
+    # and at completion. The old callback saved the DataFrame monolith, which
+    # this script no longer produces (#428).
     with WatchedProgress(
         stuck_timeout=args.stuck_timeout,
-        flush_checkpoint=_flush_checkpoint,
         disable=args.no_progress,
     ) as wp:
         overall = wp.add_task(

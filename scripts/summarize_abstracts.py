@@ -224,8 +224,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--works-input",
-        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-        help="Works CSV to process (default: enriched_works.csv)",
+        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+        help="Works CSV to process (default: unified_works.csv)",
     )
     parser.add_argument(
         "--model",
