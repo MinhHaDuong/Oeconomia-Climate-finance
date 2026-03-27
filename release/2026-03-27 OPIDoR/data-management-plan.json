@@ -1,0 +1,287 @@
+{
+	"$schema": "https://raw.githubusercontent.com/RDA-DMP-Common/RDA-DMP-Common-Standard/master/examples/JSON/JSON-schema/1.2/maDMP-schema-1.2.json",
+	"dmp": {
+		"title": "A Curated Corpus of Climate Finance Literature, 1990-2024",
+		"description": "Data management plan for a multilingual bibliometric corpus of scholarship around climate finance (1990-2024). Structured following the CNRS template on DMP OPIDoR (Science Europe model). Satisfies CNRS Plan pour la Science Ouverte, Loi Republique numerique (Art. 30), and Plan National pour la Science Ouverte requirements.",
+		"language": "fra",
+		"created": "2026-03-27T00:00:00.0Z",
+		"modified": "2026-03-27T00:00:00.0Z",
+		"dmp_id": {
+			"identifier": "https://dmp.opidor.fr/plans/TODO",
+			"type": "other"
+		},
+		"contact": {
+			"name": "Minh Ha-Duong",
+			"mbox": "minh.ha-duong@cnrs.fr",
+			"contact_id": {
+				"identifier": "0000-0001-9988-2100",
+				"type": "orcid"
+			}
+		},
+		"contributor": [
+			{
+				"name": "Minh Ha-Duong",
+				"mbox": "minh.ha-duong@cnrs.fr",
+				"contributor_id": {
+					"identifier": "0000-0001-9988-2100",
+					"type": "orcid"
+				},
+				"role": [
+					"ProjectLeader",
+					"ContactPerson",
+					"DataManager",
+					"DataCurator"
+				]
+			}
+		],
+		"ethical_issues_exist": "no",
+		"ethical_issues_description": "The study uses only publicly available bibliographic metadata; no human subjects were involved (no IRB/CNIL declaration required). No personal data is processed. Author names are public bibliographic metadata. AI tools (sentence-transformers, cross-encoder reranker, LLM extraction) are used for data processing only; their use is documented in the data paper and technical report.",
+		"project": [
+			{
+				"title": "A Curated Corpus of Climate Finance Literature, 1990-2024",
+				"description": "Construction of a multilingual bibliometric corpus of scholarship around climate finance (1990-2024), merging 6 sources (OpenAlex, ISTEX, Crossref, World Bank, bibCNRS, SciSpace). The corpus supports two publications: a history-of-economics article (Oeconomia) and a data paper (RDJ4HSS).",
+				"start": "2024-10-01",
+				"end": "2026-12-31"
+			}
+		],
+		"dataset": [
+			{
+				"title": "Climate finance corpus v1.0 - Oeconomia reproducibility archive",
+				"description": "Corpus CSV (42,922 rows raw, 31,713 after filtering) bundled with full pipeline source code. Abstracts excluded due to publisher redistribution restrictions. Deposited alongside the Oeconomia manuscript submission.",
+				"type": "dataset",
+				"issued": "2026-03-18",
+				"dataset_id": {
+					"identifier": "10.5281/zenodo.19097045",
+					"type": "doi"
+				},
+				"personal_data": "no",
+				"sensitive_data": "no",
+				"data_quality_assurance": [
+					"Six-flag filtering pipeline with full audit trail: missing metadata, absent abstract + irrelevant title, title blacklist, citation isolation, semantic outlier, cross-encoder relevance scoring",
+					"Protection criteria override flags: citation count >= 50, multi-source presence, within-corpus citations, teaching syllabus appearance",
+					"Cross-validation: citation accuracy 99.0% (n=300), completeness 100% (n=300); metadata title match 99.0% (n=100); embedding validity Cohen's d=0.51 (p<0.001)",
+					"Human validation: 100 papers for relevance scoring calibration (AUC = 0.818)",
+					"Checksum verification: MD5 checksums for bitwise reproducibility checks",
+					"Structural verification: schema, row-count +/-5%, statistical similarity on rebuild"
+				],
+				"keyword": [
+					"climate finance",
+					"bibliometrics",
+					"systematic literature review",
+					"history of economics",
+					"corpus",
+					"OpenAlex"
+				],
+				"distribution": [
+					{
+						"title": "Zenodo deposit v1.0",
+						"description": "Reproducibility archive: corpus CSV, embeddings NPZ, citations CSV, pipeline source code, configuration files",
+						"format": [
+							"text/csv",
+							"application/x-numpy-data",
+							"application/gzip"
+						],
+						"byte_size": 58000000,
+						"data_access": "open",
+						"access_url": "https://zenodo.org/records/19097045",
+						"license": [
+							{
+								"license_ref": "https://creativecommons.org/licenses/by/4.0/",
+								"start_date": "2026-03-18"
+							}
+						],
+						"host": {
+							"title": "Zenodo",
+							"url": "https://www.re3data.org/repository/r3d100010468",
+							"host_id_type": "HTTP-RE3DATA",
+							"description": "Zenodo is a general-purpose open repository developed and operated by CERN, enabling researchers to share and preserve research outputs across all fields of science.",
+							"supports_versioning": "yes",
+							"storage_type": "repository",
+							"pid_system": [
+								"doi"
+							],
+							"certified_with": "CoreTrustSeal",
+							"geo_location": "CH",
+							"backup_type": "yes",
+							"backup_frequency": "weekly"
+						},
+						"available_until": "2046-03-18"
+					}
+				]
+			},
+			{
+				"title": "Climate finance corpus v1.1 - RDJ4HSS reproducibility archive",
+				"description": "Updated corpus bundled with full pipeline source code. Deposited alongside the RDJ4HSS data paper submission. Links to v1.0 as a related record. The corpus CSV includes an in_v1 column for backward compatibility.",
+				"type": "dataset",
+				"issued": "2026-03-26",
+				"dataset_id": {
+					"identifier": "10.5281/zenodo.19236130",
+					"type": "doi"
+				},
+				"personal_data": "no",
+				"sensitive_data": "no",
+				"data_quality_assurance": [
+					"Six-flag filtering pipeline with full audit trail",
+					"Protection criteria override flags for influential works",
+					"Cross-validation on citation accuracy, completeness, and metadata",
+					"Human validation for relevance scoring calibration",
+					"Checksum and structural verification for reproducibility"
+				],
+				"keyword": [
+					"climate finance",
+					"bibliometrics",
+					"data paper",
+					"corpus",
+					"OpenAlex"
+				],
+				"distribution": [
+					{
+						"title": "Zenodo deposit v1.1",
+						"description": "Reproducibility archive: corpus CSV v1.1, embeddings, citations, pipeline source code",
+						"format": [
+							"text/csv",
+							"application/x-numpy-data",
+							"application/gzip"
+						],
+						"byte_size": 209000000,
+						"data_access": "open",
+						"access_url": "https://zenodo.org/records/19236130",
+						"license": [
+							{
+								"license_ref": "https://creativecommons.org/licenses/by/4.0/",
+								"start_date": "2026-03-26"
+							}
+						],
+						"host": {
+							"title": "Zenodo",
+							"url": "https://www.re3data.org/repository/r3d100010468",
+							"host_id_type": "HTTP-RE3DATA",
+							"description": "Zenodo is a general-purpose open repository developed and operated by CERN.",
+							"supports_versioning": "yes",
+							"storage_type": "repository",
+							"pid_system": [
+								"doi"
+							],
+							"certified_with": "CoreTrustSeal",
+							"geo_location": "CH",
+							"backup_type": "yes",
+							"backup_frequency": "weekly"
+						},
+						"available_until": "2046-03-26"
+					}
+				]
+			},
+			{
+				"title": "Pipeline source code",
+				"description": "Python scripts, YAML configuration, Makefile, DVC pipeline definition. Approximately 150 files. Full pipeline for corpus construction from API harvesting through NLP processing to deposit preparation.",
+				"type": "software",
+				"dataset_id": {
+					"identifier": "https://github.com/MinhHaDuong/Oeconomia-Climate-finance",
+					"type": "url"
+				},
+				"personal_data": "no",
+				"sensitive_data": "no",
+				"data_quality_assurance": [
+					"Pre-commit hooks enforce: no commits on main, no secrets, no large files (>500 KB), no conflict markers",
+					"Environment pinning: PYTHONHASHSEED=0, SOURCE_DATE_EPOCH=0, dependencies locked in pyproject.toml",
+					"DVC (Data Version Control) DAG for reproducibility"
+				],
+				"distribution": [
+					{
+						"title": "GitHub repository",
+						"description": "Private during review, public upon acceptance",
+						"data_access": "closed",
+						"license": [
+							{
+								"license_ref": "https://opensource.org/licenses/MIT",
+								"start_date": "2026-06-01"
+							}
+						],
+						"host": {
+							"title": "GitHub",
+							"url": "https://www.re3data.org/repository/r3d100010375",
+							"host_id_type": "HTTP-RE3DATA",
+							"description": "GitHub is the largest code hosting platform in the world.",
+							"supports_versioning": "yes",
+							"storage_type": "repository",
+							"pid_system": [
+								"other"
+							]
+						}
+					}
+				]
+			},
+			{
+				"title": "Oeconomia manuscript (preprint)",
+				"description": "History-of-economics article on climate finance, deposited as preprint on HAL.",
+				"type": "document",
+				"issued": "2026-03-18",
+				"dataset_id": {
+					"identifier": "hal-05558422v1",
+					"type": "other"
+				},
+				"personal_data": "no",
+				"sensitive_data": "no",
+				"distribution": [
+					{
+						"title": "HAL deposit",
+						"description": "Full-text preprint, CC BY 4.0",
+						"data_access": "open",
+						"access_url": "https://hal.science/hal-05558422v1",
+						"license": [
+							{
+								"license_ref": "https://creativecommons.org/licenses/by/4.0/",
+								"start_date": "2026-03-18"
+							}
+						],
+						"host": {
+							"title": "HAL",
+							"url": "https://www.re3data.org/repository/r3d100010661",
+							"host_id_type": "HTTP-RE3DATA",
+							"description": "HAL is the French national open-science archive, operated by CCSD/CNRS. CoreTrustSeal certified since 2021.",
+							"supports_versioning": "yes",
+							"storage_type": "repository",
+							"pid_system": [
+								"other"
+							],
+							"certified_with": "CoreTrustSeal",
+							"geo_location": "FR"
+						}
+					}
+				]
+			}
+		],
+		"cost": [
+			{
+				"title": "Zenodo deposit",
+				"description": "Free up to 50 GB (CERN/OpenAIRE)",
+				"value": 0,
+				"currency_code": "EUR"
+			},
+			{
+				"title": "HAL deposit",
+				"description": "Free (CCSD/CNRS)",
+				"value": 0,
+				"currency_code": "EUR"
+			},
+			{
+				"title": "OpenAlex API",
+				"description": "Free (Premium key donated by OurResearch)",
+				"value": 0,
+				"currency_code": "EUR"
+			},
+			{
+				"title": "Data paper publication (RDJ4HSS)",
+				"description": "Free, diamond open access, no APC",
+				"value": 0,
+				"currency_code": "EUR"
+			},
+			{
+				"title": "Compute (embedding generation)",
+				"description": "Approximately 2h GPU time on existing workstation (NVIDIA RTX A4000)",
+				"value": 0,
+				"currency_code": "EUR"
+			}
+		]
+	}
+}
