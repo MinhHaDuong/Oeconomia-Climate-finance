@@ -1,6 +1,6 @@
 ## 2. Corpus Enrichment
 
-After discovery and merge, the pipeline enriches metadata and computes derived features before full filtering. A cheap pre-filter runs first to avoid wasting API calls on obviously irrelevant records.
+After discovery and merge, the pipeline enriches metadata and computes derived features before full filtering. Each enrichment script writes to its own cache in `enrich_cache/` (persistent, append-only); a final `join_enrichments.py` assembles `enriched_works.csv` from the base table and all caches. This allows each enrichment to run independently without triggering others. A cheap pre-filter runs first to avoid wasting API calls on obviously irrelevant records.
 
 ### Cheap pre-filter (flags 1–3)
 

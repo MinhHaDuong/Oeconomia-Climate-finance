@@ -259,12 +259,10 @@ class TestPass2LocalDetect:
 # ---------- DVC pipeline integration ----------
 
 class TestDVCStage:
-    """enrich_language.py must be folded into the enrich_works stage.
+    """enrich_language.py is an independent DVC stage (#428).
 
-    All three in-place enrichment scripts (DOIs, abstracts, language) are
-    bundled in one DVC stage to avoid a rerun loop: in-place modification
-    changes the tracked output hash, triggering false staleness.
-    See dvc.yaml comment at the enrich_works stage.
+    Each enrichment writes to its own cache; join_enrichments.py
+    assembles enriched_works.csv from all caches.
     """
 
     @pytest.fixture(autouse=True)
@@ -274,22 +272,38 @@ class TestDVCStage:
         with open(dvc_path) as f:
             self.dvc = yaml.safe_load(f)
 
-    def test_no_standalone_enrich_language_stage(self):
-        """A standalone stage would cause a DVC rerun loop (#427)."""
-        assert "enrich_language" not in self.dvc["stages"]
+    def test_standalone_enrich_language_stage(self):
+        """Language enrichment is its own DVC stage (#428)."""
+        assert "enrich_language" in self.dvc["stages"]
 
-    def test_script_in_enrich_works_deps(self):
-        deps = self.dvc["stages"]["enrich_works"]["deps"]
+    def test_stage_deps_include_script(self):
+        deps = self.dvc["stages"]["enrich_language"]["deps"]
         assert "scripts/enrich_language.py" in deps
 
-    def test_script_in_enrich_works_cmd(self):
-        cmd = self.dvc["stages"]["enrich_works"]["cmd"]
-        assert "enrich_language.py" in cmd
+    def test_stage_deps_include_unified(self):
+        deps = self.dvc["stages"]["enrich_language"]["deps"]
+        assert any("unified_works.csv" in d for d in deps)
 
-    def test_language_runs_after_abstracts(self):
-        """Language detection benefits from filled abstracts, so must run last."""
-        cmd = self.dvc["stages"]["enrich_works"]["cmd"]
-        assert cmd.index("enrich_abstracts.py") < cmd.index("enrich_language.py")
+    def test_stage_produces_stamp(self):
+        """enrich_language writes a stamp file for DVC ordering."""
+        outs = self.dvc["stages"]["enrich_language"]["outs"]
+        stamp_paths = []
+        for o in outs:
+            if isinstance(o, dict):
+                stamp_paths.extend(o.keys())
+            else:
+                stamp_paths.append(o)
+        assert any(".language.stamp" in p for p in stamp_paths)
+
+    def test_join_stage_depends_on_stamp(self):
+        """join_enrichments depends on enrich_language stamp."""
+        deps = self.dvc["stages"]["join_enrichments"]["deps"]
+        assert any(".language.stamp" in str(d) for d in deps)
+
+    def test_join_stage_produces_enriched(self):
+        """join_enrichments stage produces enriched_works.csv."""
+        outs = self.dvc["stages"]["join_enrichments"]["outs"]
+        assert any("enriched_works.csv" in str(o) for o in outs)
 
 
 # ---------- script structure ----------

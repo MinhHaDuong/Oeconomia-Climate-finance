@@ -21,7 +21,7 @@ import time
 import pandas as pd
 
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY,
-                   normalize_doi, retry_get, save_csv, save_run_report,
+                   normalize_doi, retry_get, save_run_report,
                    make_run_id, get_logger,
                    normalize_lang, is_valid_iso639_1, detect_language)
 
@@ -267,8 +267,8 @@ def main():
     parser.add_argument("--dry-run", action="store_true",
                         help="Show counts, don't modify data")
     parser.add_argument("--works-input",
-                        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-                        help="Input/output works CSV (default: enriched_works.csv)")
+                        default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
+                        help="Input works CSV (default: unified_works.csv)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier (default: timestamp)")
     parser.add_argument("--request-timeout", type=float, default=60.0,
@@ -347,8 +347,7 @@ def main():
     null_after_pass2 = int(df["language"].isna().sum())
     log.info("Pass 2 filled %d, remaining null: %d", filled_pass2, null_after_pass2)
 
-    # Save
-    save_csv(df, path)
+    # Cache-only: join_enrichments.py applies caches to the monolith (#428)
 
     elapsed = time.time() - t0
     counters.update({

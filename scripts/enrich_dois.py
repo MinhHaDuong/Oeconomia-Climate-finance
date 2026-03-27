@@ -14,13 +14,14 @@ Usage:
 """
 
 import argparse
+import atexit
 import os
 from difflib import SequenceMatcher
 
 import pandas as pd
 
 from utils import (CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, normalize_doi,
-                   normalize_title, polite_get, save_csv, get_logger)
+                   normalize_title, polite_get, get_logger)
 
 log = get_logger("enrich_dois")
 
@@ -30,52 +31,70 @@ TITLE_SIM_THRESHOLD = 0.85
 OPENALEX_SEARCH_URL = "https://api.openalex.org/works"
 
 
-_disk_cache = None
-_disk_cache_dirty = 0  # count of unsaved writes
+class _DiskCache:
+    """Batched disk cache: accumulates writes and flushes every N updates.
+
+    Replaces the previous global-variable cache (_disk_cache, _disk_cache_dirty)
+    with an encapsulated object that manages its own lifecycle.
+    """
+
+    def __init__(self, path, flush_every=50):
+        self._path = path
+        self._flush_every = flush_every
+        self._data = None
+        self._dirty = 0
+        atexit.register(self.flush)
+
+    def load(self):
+        """Load {key: value} cache from CSV. Cached in memory after first load."""
+        if self._data is not None:
+            return self._data
+        if not os.path.exists(self._path):
+            self._data = {}
+            return self._data
+        try:
+            df = pd.read_csv(self._path, dtype=str, keep_default_na=False)
+        except pd.errors.EmptyDataError:
+            log.warning("Cache file empty or corrupt: %s — starting fresh", self._path)
+            self._data = {}
+            return self._data
+        self._data = dict(zip(df["source_id"], df["doi"]))
+        return self._data
+
+    def mark_dirty(self):
+        """Record a write; auto-flush when flush_every threshold is reached."""
+        self._dirty += 1
+        if self._dirty >= self._flush_every:
+            self.flush()
+
+    def flush(self):
+        """Force-write cache to disk."""
+        if self._data is None or self._dirty == 0:
+            return
+        os.makedirs(os.path.dirname(self._path), exist_ok=True)
+        rows = [{"source_id": k, "doi": v} for k, v in self._data.items()]
+        pd.DataFrame(rows).to_csv(self._path, index=False)
+        self._dirty = 0
+
+
+_cache = _DiskCache(CACHE_FILE)
 
 
 def load_cache():
     """Load {source_id: doi_or_empty} cache. Cached in memory after first load."""
-    global _disk_cache
-    if _disk_cache is not None:
-        return _disk_cache
-    if not os.path.exists(CACHE_FILE):
-        _disk_cache = {}
-        return _disk_cache
-    try:
-        df = pd.read_csv(CACHE_FILE, dtype=str, keep_default_na=False)
-    except pd.errors.EmptyDataError:
-        log.warning("Cache file empty or corrupt: %s — starting fresh", CACHE_FILE)
-        _disk_cache = {}
-        return _disk_cache
-    _disk_cache = dict(zip(df["source_id"], df["doi"]))
-    return _disk_cache
+    return _cache.load()
 
 
 def save_cache(cache=None):
     """Persist cache to CSV. Batches writes — flushes every 50 updates."""
-    global _disk_cache, _disk_cache_dirty
     if cache is not None:
-        _disk_cache = cache
-    _disk_cache_dirty += 1
-    if _disk_cache_dirty < 50:
-        return
-    flush_cache()
+        _cache._data = cache
+    _cache.mark_dirty()
 
 
 def flush_cache():
     """Force-write cache to disk."""
-    global _disk_cache_dirty
-    if _disk_cache is None or _disk_cache_dirty == 0:
-        return
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    rows = [{"source_id": k, "doi": v} for k, v in _disk_cache.items()]
-    pd.DataFrame(rows).to_csv(CACHE_FILE, index=False)
-    _disk_cache_dirty = 0
-
-
-import atexit
-atexit.register(flush_cache)
+    _cache.flush()
 
 
 def title_similarity(a, b):
@@ -162,7 +181,6 @@ def find_doi(title, year=None, author=None):
     except (ValueError, TypeError):
         ynorm = ""
     title_key = f"title:{tnorm}"
-    precise_parts = [tnorm, anorm, ynorm]
     has_precise = anorm or ynorm
     precise_key = f"title+meta:{tnorm}|{anorm}|{ynorm}" if has_precise else None
 
@@ -204,14 +222,10 @@ def main():
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
                         help="Input works CSV (default: unified_works.csv)")
-    parser.add_argument("--works-output",
-                        default=os.path.join(CATALOGS_DIR, "enriched_works.csv"),
-                        help="Output works CSV (default: enriched_works.csv)")
     args = parser.parse_args()
 
     # Load corpus
     corpus_path = args.works_input
-    output_path = args.works_output
     df = pd.read_csv(corpus_path)
     log.info("Loaded %d works from %s", len(df), corpus_path)
 
@@ -272,32 +286,10 @@ def main():
             log.info("Checkpoint: %d/%d (resolved=%d, not_found=%d)",
                      i + 1, len(to_process), resolved, not_found)
 
-    # Final save
+    # Final save — cache only, join_enrichments.py applies to the monolith (#428)
     save_cache(cache)
-    log.info("Done. Resolved: %d, Not found: %d", resolved, not_found)
-
-    if resolved == 0:
-        log.info("No new DOIs to apply.")
-        # Still copy input → output if they differ
-        if output_path != corpus_path:
-            save_csv(df, output_path)
-            log.info("Copied %d rows to %s", len(df), output_path)
-        return
-
-    # Apply resolved DOIs to corpus
-    resolved_map = {k: v for k, v in cache.items() if v}
-    log.info("Applying %d resolved DOIs → %s...", len(resolved_map), output_path)
-
-    mask = df["source_id"].isin(resolved_map) & ~has_doi
-    applied = 0
-    for idx in df[mask].index:
-        sid = df.at[idx, "source_id"]
-        new_doi = resolved_map[sid]
-        df.at[idx, "doi"] = new_doi
-        applied += 1
-
-    save_csv(df, output_path)
-    log.info("Applied %d DOIs. Saved %s", applied, output_path)
+    log.info("Done. Resolved: %d, Not found: %d. Cache: %s",
+             resolved, not_found, CACHE_FILE)
 
 
 if __name__ == "__main__":

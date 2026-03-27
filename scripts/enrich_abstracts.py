@@ -26,7 +26,7 @@ import pandas as pd
 import requests
 
 from utils import (CATALOGS_DIR, RAW_DIR, MAILTO, OPENALEX_API_KEY,
-                   save_csv, reconstruct_abstract, normalize_doi,
+                   reconstruct_abstract, normalize_doi,
                    retry_get, save_run_report, make_run_id, get_logger,
                    WatchedProgress)
 
@@ -96,7 +96,7 @@ def _cache_size(name):
         return 0
     try:
         return max(0, sum(1 for _ in open(path)) - 1)  # rows minus header
-    except Exception:
+    except OSError:
         return 0
 
 
@@ -304,8 +304,8 @@ def extract_abstract_tei(path):
         for ab_elem in root.iter("abstract"):
             text = "".join(ab_elem.itertext())
             return clean_abstract(text)
-    except Exception:
-        pass
+    except (ET.ParseError, OSError) as e:
+        log.debug("TEI parse failed for %s: %s", path, e)
     return ""
 
 
@@ -317,12 +317,44 @@ def extract_first_paragraph(path):
         paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 50]
         if paragraphs:
             return clean_abstract(paragraphs[0])
-    except Exception:
-        pass
+    except OSError as e:
+        log.debug("Could not read %s: %s", path, e)
     return ""
 
 
 # --- Step 4: Semantic Scholar ---
+
+def _fetch_s2_abstract(doi, request_timeout, max_retries, retry_backoff, retry_jitter,
+                       s2_counters):
+    """Fetch a single abstract from Semantic Scholar by DOI.
+
+    Returns (abstract_text, status) where status is one of:
+      "success", "empty", "4xx", "5xx", "error".
+    The caller updates step-level counters based on status.
+    """
+    try:
+        resp = retry_get(
+            f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
+            params={"fields": "abstract"},
+            timeout=max(1, request_timeout),
+            delay=3.0,
+            max_retries=max_retries,
+            backoff_base=retry_backoff,
+            jitter_max=retry_jitter,
+            counters=s2_counters,
+        )
+        if resp.status_code == 200:
+            ab = clean_abstract(resp.json().get("abstract", "") or "")
+            return ab, "success" if ab else "empty"
+        if resp.status_code in (404, 400):
+            return "", "4xx"
+        return "", "5xx"
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else 0
+        return "", "4xx" if status in (404, 400) else "5xx"
+    except Exception:
+        return "", "error"
+
 
 def step4_semantic_scholar(df, counters, checkpoint_every=50,
                            request_timeout=60.0, max_retries=5,
@@ -351,43 +383,14 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
     s2_log_every = min(checkpoint_every, 10)
     s2_counters = {}
     for i, (idx, doi) in enumerate(to_query):
-        try:
-            # S2 public API requires ≥3s between requests to avoid 429s
-            resp = retry_get(
-                f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
-                params={"fields": "abstract"},
-                timeout=max(1, request_timeout),
-                delay=3.0,
-                max_retries=max_retries,
-                backoff_base=retry_backoff,
-                jitter_max=retry_jitter,
-                counters=s2_counters,
-            )
-            if resp.status_code == 200:
-                ab = resp.json().get("abstract", "") or ""
-                cache[doi] = clean_abstract(ab)
-                if cache[doi]:
-                    counters["step4_success"] = counters.get("step4_success", 0) + 1
-                else:
-                    counters["step4_empty_result"] = counters.get("step4_empty_result", 0) + 1
-            elif resp.status_code in (404, 400):
-                counters["step4_4xx"] = counters.get("step4_4xx", 0) + 1
-                cache[doi] = ""
-            else:
-                cache[doi] = ""
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if e.response is not None else 0
-            if status in (404, 400):
-                counters["step4_4xx"] = counters.get("step4_4xx", 0) + 1
-            else:
-                counters["step4_5xx"] = counters.get("step4_5xx", 0) + 1
-            if i < 3:
-                log.warning("S2 %s: %s", doi, e)
-            cache[doi] = ""
-        except Exception as e:
-            if i < 3:
-                log.warning("S2 %s: %s", doi, e)
-            cache[doi] = ""
+        ab, status = _fetch_s2_abstract(
+            doi, request_timeout, max_retries, retry_backoff, retry_jitter, s2_counters)
+        cache[doi] = ab
+
+        counter_key = f"step4_{status}"
+        counters[counter_key] = counters.get(counter_key, 0) + 1
+        if status in ("5xx", "error") and i < 3:
+            log.warning("S2 %s: %s response", doi, status)
 
         if (i + 1) % s2_log_every == 0:
             filled_so_far = counters.get("step4_success", 0)
@@ -434,7 +437,7 @@ def main():
                         help="Run only this step (1-5, 0=all)")
     parser.add_argument("--works-input",
                         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
-                        help="Input/output works CSV (default: unified_works.csv)")
+                        help="Input works CSV (default: unified_works.csv)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier for the run report (default: timestamp)")
     parser.add_argument("--resume", action="store_true", default=True,
@@ -504,15 +507,11 @@ def main():
     }
     step_results = {}
 
-    def _flush_checkpoint():
-        """Emergency save: write current state to disk."""
-        log.info("Flushing checkpoint — saving current state to %s", path)
-        out = df.drop(columns=["_missing", "_has_doi"], errors="ignore")
-        save_csv(out, path)
-
+    # No flush_checkpoint needed: each step flushes its own cache periodically
+    # and at completion. The old callback saved the DataFrame monolith, which
+    # this script no longer produces (#428).
     with WatchedProgress(
         stuck_timeout=args.stuck_timeout,
-        flush_checkpoint=_flush_checkpoint,
         disable=args.no_progress,
     ) as wp:
         overall = wp.add_task(
@@ -551,10 +550,8 @@ def main():
             log.info("→ filled %d, remaining: %d", filled, after)
             _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
 
-    # Save
+    # Cache-only: join_enrichments.py applies caches to the monolith (#428)
     final_missing = int(df["_missing"].sum())
-    df.drop(columns=["_missing", "_has_doi"], inplace=True)
-    save_csv(df, path)
 
     elapsed = time.time() - t0
 
