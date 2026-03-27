@@ -101,6 +101,7 @@ def compute_divergence_series(df, embeddings, k, window_sizes, start_year=2005, 
         Number of transition years to censor before each test point.
         With censor_gap=0, before window is [y-w, y] (unchanged default).
         With censor_gap=k, before window becomes [y-w-k, y-k].
+
     """
     km = KMeans(n_clusters=k, random_state=42, n_init=20)
     labels = km.fit_predict(embeddings)

@@ -100,6 +100,7 @@ def llm_call(prompt, model="openrouter/google/gemma-2-27b-it", max_tokens=2000):
         openrouter/google/gemma-2-27b-it → routes to OpenRouter
 
     litellm reads OPENROUTER_API_KEY from env automatically.
+
     """
     import litellm
 

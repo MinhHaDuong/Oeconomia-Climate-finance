@@ -83,6 +83,7 @@ def add_period_bands(ax, y_frac=0.97, fontsize=7):
         Vertical position of labels as fraction of axes height.
     fontsize : float
         Font size for period labels.
+
     """
     colors = [FILL, "#EEEEEE", FILL]
     for (label, start, end), color in zip(PERIODS, colors):
@@ -104,6 +105,7 @@ def add_period_lines(ax, events=None):
     events : dict, optional
         Mapping {year: label} for event annotations.
         Default: Bali 2007 and Paris 2015.
+
     """
     if events is None:
         events = {2007: "Bali 2007", 2015: "Paris 2015"}

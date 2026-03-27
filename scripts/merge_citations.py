@@ -41,6 +41,7 @@ def merge_citations(cache_dir=None, output_path=None):
 
     Returns:
         Number of rows written.
+
     """
     cache_dir = cache_dir or CACHE_DIR
     output_path = output_path or OUTPUT_PATH

@@ -61,6 +61,7 @@ class WatchedProgress:
         If True, the progress display disappears after completion.
     disable : bool
         If True, disable the progress display (for non-TTY / CI).
+
     """
 
     def __init__(
@@ -270,6 +271,7 @@ def sort_dois_by_priority(dois: list, works_df: pd.DataFrame) -> list:
     Returns
     -------
     Sorted list of DOIs (highest priority first).
+
     """
     scored = compute_priority_scores(works_df)
     doi_to_priority = dict(zip(

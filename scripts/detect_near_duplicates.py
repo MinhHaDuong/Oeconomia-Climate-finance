@@ -197,6 +197,7 @@ def detect_near_duplicate_groups(
     pd.Series
         Named "near_duplicate_group". Contains integer group IDs for papers
         in near-duplicate clusters, pd.NA for all others.
+
     """
     result = pd.Series(pd.NA, index=df.index, dtype="Int64", name="near_duplicate_group")
 

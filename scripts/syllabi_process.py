@@ -69,6 +69,7 @@ def stage_classify(pages_path, classified_path):
     Args:
         pages_path: Path to pages.jsonl (input).
         classified_path: Path to classified.jsonl checkpoint (output).
+
     """
     classify_model = os.environ.get(
         "CLASSIFY_MODEL", "openrouter/google/gemma-2-27b-it"
@@ -200,6 +201,7 @@ def stage_extract(pages_path, classified_path, references_path):
         pages_path: Path to pages.jsonl (input).
         classified_path: Path to classified.jsonl (input).
         references_path: Path to raw_references.jsonl checkpoint (output).
+
     """
     extract_model = os.environ.get(
         "EXTRACT_MODEL", "openrouter/google/gemma-2-27b-it"
@@ -346,6 +348,7 @@ def stage_normalize(references_path, output_csv):
     Args:
         references_path: Path to raw_references.jsonl (input).
         output_csv: Path to write reading_lists.csv (output).
+
     """
     extracted = load_jsonl(references_path)
 

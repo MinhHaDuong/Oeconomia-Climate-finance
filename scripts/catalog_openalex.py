@@ -85,6 +85,7 @@ def build_filter(search_term, from_date=None, year_min=None, year_max=None):
 
     Returns:
         Filter string for the OpenAlex API ``filter`` parameter.
+
     """
     f = f'default.search:"{search_term}"'
     if from_date:
@@ -193,6 +194,7 @@ def build_record(r):
 
     Returns:
         (record_dict, abstract_text, title_text)
+
     """
     authorships = r.get("authorships", [])
     first_author = ""
@@ -300,6 +302,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file,
     tuple
         (n_new, out_of_budget) — count of new records and whether
         the API budget was exhausted during pagination.
+
     """
     cursor = "*"
     total_fetched = 0

@@ -66,6 +66,7 @@ def align_embeddings(refined_df, emb_path=None, dry_run=False):
     tuple(np.ndarray, int, int)
         (vectors array of shape (N, D), n_matched, n_zero_fallback)
         n_zero_fallback: rows matched to zero-vector because embedding missing.
+
     """
     path = emb_path or EMBEDDINGS_PATH
     if not os.path.exists(path):
@@ -129,6 +130,7 @@ def align_citations(refined_doi_set, cit_path=None, dry_run=False):
     -------
     tuple(pd.DataFrame, int, int)
         (filtered DataFrame, total_rows_in, rows_kept)
+
     """
     path = cit_path or CITATIONS_PATH
     if not os.path.exists(path):
