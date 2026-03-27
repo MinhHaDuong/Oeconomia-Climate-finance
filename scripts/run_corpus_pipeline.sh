@@ -33,12 +33,12 @@ if [ "$current_branch" != "main" ]; then
 fi
 
 # --- Run pipeline ---
-uv run dvc repro
-ret=$?
+ret=0
+uv run dvc repro || ret=$?
 uv run dvc push
 
-if [ $ret -ne 0 ]; then
-    exit $ret
+if [ "$ret" -ne 0 ]; then
+    exit "$ret"
 fi
 
 # --- Auto-commit logic ---
