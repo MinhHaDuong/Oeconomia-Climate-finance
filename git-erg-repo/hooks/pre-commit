@@ -1,0 +1,18 @@
+#!/bin/sh
+# Pre-commit hook fragment for git-erg ticket validation.
+# Append this to your project's pre-commit hook, or use as-is.
+
+# Validate .erg files (if any are staged)
+erg_files=$(git diff --cached --name-only | grep '\.erg$' || true)
+if [ -n "$erg_files" ]; then
+    erg_bin="tickets/tools/go/erg"
+    if [ -x "$erg_bin" ]; then
+        if ! "$erg_bin" validate tickets/; then
+            echo "ERROR: Ticket validation failed. Fix errors above." >&2
+            exit 1
+        fi
+    else
+        echo "ERROR: erg binary not found. Run 'make build' first." >&2
+        exit 1
+    fi
+fi

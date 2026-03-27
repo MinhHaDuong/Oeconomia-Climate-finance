@@ -1,0 +1,7 @@
+# Compiled Go binary
+tickets/tools/go/erg
+
+# OS artifacts
+.DS_Store
+*~
+*.swp
