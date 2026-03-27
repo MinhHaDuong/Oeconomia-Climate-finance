@@ -54,8 +54,13 @@ output/
 *~
 *.swp
 
-# Claude Code config
-.claude/
+# Claude Code config — track shared config, ignore local/user files
+.claude/*
+!.claude/rules/
+!.claude/skills/
+!.claude/hooks/
+!.claude/settings.json
+.claude/settings.local.json
 
 /.quarto/
 _variables.yml

@@ -1,7 +1,7 @@
 """QA checks on the manuscript PDF: word count + Oeconomia editorial compliance.
 
 Extracts text from the PDF, counts words (total and per-section), and checks
-editorial requirements from .agent/guidelines/oeconomia-style.md and docs/Informations aux
+editorial requirements from .claude/rules/oeconomia-style.md and docs/Informations aux
 auteurs.md:
   - Abstracts in both French and English
   - Keywords in both languages
