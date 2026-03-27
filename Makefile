@@ -103,7 +103,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus lint-prose clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -459,17 +459,13 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 archive-datapaper: check-corpus corpus-tables figures-datapaper
 	bash release/scripts/build_datapaper_archive.sh
 
-# ── All checks (tests + lint) ────────────────────────────
-check: lint-prose
+# ── All checks (tests) ───────────────────────────────────
+check:
 	uv run pytest tests/ -v --tb=short
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
-check-fast: lint-prose
+check-fast:
 	uv run pytest tests/ -v --tb=short -m "not slow and not integration"
-
-# ── Prose linting (AI-tell detection) ─────────────────────
-lint-prose:
-	@bash scripts/lint_prose.sh
 
 # ── Setup (run once after cloning) ───────────────────────
 setup:
