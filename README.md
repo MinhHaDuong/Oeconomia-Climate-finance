@@ -71,14 +71,14 @@ The ideal state the project works towards:
 │   └── tables/                       # Generated tables (gitignored)
 ├── output/                           # Quarto rendered output (gitignored)
 ├── config/                           # Pipeline parameters (YAML)
-├── Makefile                          # Build: make manuscript, make figures, make corpus
+├── Makefile                          # Build: make corpus, make figures, make manuscript, make archive-*
 ├── dvc.yaml                          # Phase 1 pipeline DAG (DVC stages)
 ├── data/                             # DVC-managed data (dvc pull to populate)
 │   ├── catalogs/                    #   Corpus CSVs, embeddings, caches
 │   └── pool/                        #   Raw API responses (gzipped JSONL)
 ├── scripts/                          # Python analysis pipeline
 ├── docs/                             # Guidelines, journal info, book project notes
-├── release/                          # Releases outside CIRED. Append-only.
+├── release/                          # Phase 4: reproducibility archives & submissions. Append-only.
 └── attic/                            # Old stuff to delete when paper is accepted
 ```
 
@@ -146,6 +146,8 @@ After pulling data, regenerate them before building documents:
 make corpus-validate  # run acceptance tests on corpus
 make figures          # regenerate all figures and tables (~2 min)
 make manuscript       # build PDF (requires figures)
+make archive-analysis # Phase 4: reproducibility archive (data + scripts)
+make archive-manuscript # Phase 4: manuscript archive (pre-built figures + Quarto)
 ```
 
 ## Project documentation
