@@ -51,6 +51,17 @@ def normalize_doi(doi_raw):
     return doi.strip().lower()
 
 
+def normalize_doi_safe(doi_raw):
+    """Normalize a DOI, returning "" for NaN/None values.
+
+    Convenience wrapper for use in pandas .apply() calls, replacing the
+    repeated ``lambda x: normalize_doi(x) if pd.notna(x) else ""`` pattern.
+    """
+    if pd.isna(doi_raw):
+        return ""
+    return normalize_doi(doi_raw)
+
+
 def clean_doi(raw):
     """Extract a clean DOI (10.xxxx/...) from a raw string.
 

@@ -111,6 +111,7 @@ from pipeline_text import (  # noqa: E402, F401
     detect_language,
     is_valid_iso639_1,
     normalize_doi,
+    normalize_doi_safe,
     normalize_lang,
     normalize_title,
     reconstruct_abstract,
