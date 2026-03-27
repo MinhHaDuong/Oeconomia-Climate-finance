@@ -329,10 +329,13 @@ func detectCycles(tickets []Ticket) []string {
 		color[id] = white
 	}
 
-	var dfs func(node string, path []string)
-	dfs = func(node string, path []string) {
+	// Use a shared stack with explicit push/pop to avoid Go slice aliasing bugs.
+	var stack []string
+
+	var dfs func(node string)
+	dfs = func(node string) {
 		color[node] = gray
-		path = append(path, node)
+		stack = append(stack, node) // push
 		for _, neighbor := range adj[node] {
 			c, exists := color[neighbor]
 			if !exists {
@@ -340,26 +343,27 @@ func detectCycles(tickets []Ticket) []string {
 			}
 			if c == gray {
 				start := 0
-				for i, n := range path {
+				for i, n := range stack {
 					if n == neighbor {
 						start = i
 						break
 					}
 				}
-				cycle := append([]string{}, path[start:]...)
+				cycle := append([]string{}, stack[start:]...)
 				cycle = append(cycle, neighbor)
 				errors = append(errors, "dependency cycle: "+strings.Join(cycle, " -> "))
 			} else if c == white {
-				dfs(neighbor, path)
+				dfs(neighbor)
 			}
 		}
+		stack = stack[:len(stack)-1] // pop
 		color[node] = black
 	}
 
 	ids := sortedKeys2(adj)
 	for _, id := range ids {
 		if color[id] == white {
-			dfs(id, nil)
+			dfs(id)
 		}
 	}
 	return errors
@@ -537,6 +541,8 @@ func cmdReady(args []string) int {
 		}
 	}
 
+	wip := loadWip()
+
 	var warnings []string
 	var ready []readyEntry
 	openCount := 0
@@ -547,6 +553,12 @@ func cmdReady(args []string) int {
 			continue
 		}
 		openCount++
+
+		// Exclude WIP-claimed tickets
+		tid := t.FilenameID()
+		if _, claimed := wip[tid]; claimed {
+			continue
+		}
 
 		blocked := false
 		for _, refID := range t.BlockedBy() {
@@ -563,11 +575,9 @@ func cmdReady(args []string) int {
 			}
 		}
 		if !blocked {
-			ready = append(ready, readyEntry{t.FilenameID(), t.Title(), t.Filename()})
+			ready = append(ready, readyEntry{tid, t.Title(), t.Filename()})
 		}
 	}
-
-	wip := loadWip()
 
 	for _, w := range warnings {
 		fmt.Fprintf(os.Stderr, "WARNING: %s\n", w)

@@ -5,10 +5,6 @@ from pathlib import Path
 
 import pytest
 
-# Add ticket tools to path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
-
 from ticket_parser import Ticket, parse_ticket, load_tickets
 from validate_tickets import detect_cycles, validate_all, validate_ticket
 
@@ -234,6 +230,24 @@ class TestValidation:
         )
         errors = validate_ticket(t, {"0001"})
         assert any("invalid Status" in e for e in errors)
+
+    def test_doing_status_valid(self, tmp_ticket):
+        t = _parse(
+            tmp_ticket,
+            "0001-test.ticket",
+            """\
+            %ticket v1
+            Title: Test
+            Author: a
+            Status: doing
+            Created: 2026-01-01
+
+            --- log ---
+            --- body ---
+            """,
+        )
+        errors = validate_ticket(t, {"0001"})
+        assert not any("invalid Status" in e for e in errors)
 
     def test_pending_status_valid(self, tmp_ticket):
         t = _parse(

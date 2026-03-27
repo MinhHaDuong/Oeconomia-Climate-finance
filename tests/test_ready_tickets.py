@@ -5,9 +5,6 @@ from pathlib import Path
 
 import pytest
 
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
-
 from ready_tickets import find_ready, _load_wip
 
 
@@ -146,6 +143,50 @@ class TestReady:
         """})
         ready, _, _, _ = find_ready(d)
         assert len(ready) == 0
+
+    def test_doing_tickets_excluded(self, ticket_dir):
+        """Status: doing means claimed — not in ready set."""
+        d = ticket_dir(**{"0001-test.ticket": """\
+            %ticket v1
+            Title: Test
+            Author: a
+            Status: doing
+            Created: 2026-01-01
+
+            --- log ---
+            --- body ---
+        """})
+        ready, _, _, open_count = find_ready(d)
+        assert len(ready) == 0
+        assert open_count == 0  # doing is not open
+
+    def test_doing_blocker_still_blocks(self, ticket_dir):
+        """A Blocked-by ref to a doing ticket still blocks (not closed)."""
+        d = ticket_dir(**{
+            "0001-test.ticket": """\
+                %ticket v1
+                Title: Test
+                Author: a
+                Status: open
+                Created: 2026-01-01
+                Blocked-by: 0002
+
+                --- log ---
+                --- body ---
+            """,
+            "0002-dep.ticket": """\
+                %ticket v1
+                Title: Dep
+                Author: a
+                Status: doing
+                Created: 2026-01-01
+
+                --- log ---
+                --- body ---
+            """,
+        })
+        ready, _, _, _ = find_ready(d)
+        assert len(ready) == 0  # 0001 blocked, 0002 is doing (not open)
 
     def test_pending_tickets_excluded(self, ticket_dir):
         d = ticket_dir(**{"0001-test.ticket": """\

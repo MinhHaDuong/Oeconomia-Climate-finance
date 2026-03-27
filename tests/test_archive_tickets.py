@@ -5,9 +5,6 @@ from pathlib import Path
 
 import pytest
 
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tickets" / "tools"))
-
 from archive_tickets import find_archivable, ticket_age_date
 from ticket_parser import parse_ticket
 
