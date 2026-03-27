@@ -71,49 +71,47 @@ def parse_args():
     return parser.parse_args()
 
 
+# Each entry is (matcher, canonical_name).
+# matcher is either a substring str or a callable(low: str) -> bool.
+# More specific patterns must precede more general ones within the same family.
+_VENUE_RULES: list[tuple] = [
+    # Exact-match edge case
+    (lambda s: s == "mf policy paper", "IMF Policy Paper"),
+    # World Bank — most specific first
+    (lambda s: "world bank" in s and ("ebook" in s or "publication" in s or "washington, dc" in s),
+     "World Bank eBooks"),
+    ("world bank policy research working paper", "World Bank Policy Research Working Paper"),
+    ("world bank", "World Bank"),
+    # OECD — most specific first
+    ("oecd/iea climate change expert group papers", "OECD/IEA Climate Change Expert Group Papers"),
+    (lambda s: "oecd" in s and "working paper" in s, "OECD Working Papers"),
+    (lambda s: "oecd" in s and "paper" in s, "OECD Papers"),
+    (lambda s: s.startswith("oecd"), "OECD"),
+    # IMF — most specific first
+    ("imf working paper", "IMF Working Paper"),
+    ("imf staff climate notes", "IMF Staff Climate Notes"),
+    ("imf staff country reports", "IMF Staff Country Reports"),
+    (lambda s: "imf" in s and ("discussion note" in s or "staff" in s), "IMF Staff Notes"),
+    ("imf", "IMF"),
+    # Repositories and indexes
+    ("ssrn", "SSRN Electronic Journal"),
+    ("repec", "RePEc"),
+    ("depositonce", "DepositOnce"),
+    ("zenodo", "Zenodo"),
+    ("figshare", "Figshare"),
+    ("preprints", "Preprints"),
+]
+
+
 def canonical_venue(name):
     v = str(name or "").strip()
     low = v.lower()
     if not low:
         return "[missing]"
-    if low == "mf policy paper":
-        return "IMF Policy Paper"
-    if "world bank" in low and ("ebook" in low or "publication" in low or "washington, dc" in low):
-        return "World Bank eBooks"
-    if "world bank" in low and "policy research working paper" in low:
-        return "World Bank Policy Research Working Paper"
-    if "world bank" in low:
-        return "World Bank"
-    if "oecd/iea climate change expert group papers" in low:
-        return "OECD/IEA Climate Change Expert Group Papers"
-    if "oecd" in low and "working paper" in low:
-        return "OECD Working Papers"
-    if "oecd" in low and "paper" in low:
-        return "OECD Papers"
-    if low.startswith("oecd"):
-        return "OECD"
-    if "imf working paper" in low:
-        return "IMF Working Paper"
-    if "imf staff climate notes" in low:
-        return "IMF Staff Climate Notes"
-    if "imf staff country reports" in low:
-        return "IMF Staff Country Reports"
-    if "imf" in low and ("discussion note" in low or "staff" in low):
-        return "IMF Staff Notes"
-    if "imf" in low:
-        return "IMF"
-    if "ssrn" in low:
-        return "SSRN Electronic Journal"
-    if "repec" in low:
-        return "RePEc"
-    if "depositonce" in low:
-        return "DepositOnce"
-    if "zenodo" in low:
-        return "Zenodo"
-    if "figshare" in low:
-        return "Figshare"
-    if "preprints" in low:
-        return "Preprints"
+    for matcher, canonical in _VENUE_RULES:
+        matched = matcher(low) if callable(matcher) else (matcher in low)
+        if matched:
+            return canonical
     return v
 
 

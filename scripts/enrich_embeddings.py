@@ -88,6 +88,56 @@ def text_hash(text):
     return hashlib.md5(text.encode()).hexdigest()[:8]
 
 
+def _load_npz_cache(path: str) -> tuple[dict, dict]:
+    """Try to load cached embeddings from an .npz file.
+
+    Returns (key_to_vec, key_to_hash) if model/fields match, else ({}, {}).
+    """
+    cache = np.load(path, allow_pickle=True)
+    cached_model = str(cache["model"]) if "model" in cache.files else ""
+    cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
+    if cached_model != MODEL_NAME or cached_fields != TEXT_FIELDS:
+        log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
+                 cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
+        return {}, {}
+    cached_keys = cache["keys"]
+    cached_vecs = cache["vectors"]
+    cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
+    kvec = dict(zip(cached_keys, cached_vecs))
+    khash = dict(zip(cached_keys, cached_hashes)) if cached_hashes is not None else {}
+    return kvec, khash
+
+
+def _load_embedding_cache(works_path: str) -> tuple[dict, dict, str]:
+    """Load embedding cache from enrich_cache/, DVC output, or detect legacy file.
+
+    Probes candidate paths in priority order and returns
+    (key_to_vec, key_to_hash, legacy_path). The legacy_path is non-empty
+    only when an old .npy file was found (and should be deleted after encoding).
+    """
+    legacy_path = os.path.join(CATALOGS_DIR, "embeddings.npy")
+    key_to_vec: dict = {}
+    key_to_hash: dict = {}
+
+    if os.path.exists(EMBEDDINGS_CACHE_PATH):
+        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_CACHE_PATH)
+        if key_to_vec:
+            log.info("Loaded %d cached embeddings (model: %s, fields: %s)",
+                     len(key_to_vec), MODEL_NAME, TEXT_FIELDS)
+    elif os.path.exists(EMBEDDINGS_PATH):
+        # Migration: old pattern stored cache in the DVC output itself
+        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_PATH)
+        if key_to_vec:
+            log.info("Migrated %d cached embeddings from DVC output → enrich_cache/",
+                     len(key_to_vec))
+    elif os.path.exists(legacy_path):
+        log.info("Found legacy %s, will migrate to .npz (full recompute)", legacy_path)
+    else:
+        log.info("No embedding cache found, full computation")
+
+    return key_to_vec, key_to_hash, legacy_path
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -123,44 +173,7 @@ def main():
     # Cache lives in enrich_cache/ (not a DVC output), so DVC re-runs
     # don't destroy already-computed vectors. The DVC output (EMBEDDINGS_PATH)
     # is written at the end as an ephemeral artifact.
-    legacy_path = os.path.join(CATALOGS_DIR, "embeddings.npy")
-
-    def _load_npz_cache(path):
-        """Try to load cached embeddings from an .npz file.
-
-        Returns (key_to_vec, key_to_hash) if model/fields match, else ({}, {}).
-        """
-        cache = np.load(path, allow_pickle=True)
-        cached_model = str(cache["model"]) if "model" in cache.files else ""
-        cached_fields = str(cache["text_fields"]) if "text_fields" in cache.files else ""
-        if cached_model != MODEL_NAME or cached_fields != TEXT_FIELDS:
-            log.info("Config changed (model: %r→%r, fields: %r→%r), full recompute",
-                     cached_model, MODEL_NAME, cached_fields, TEXT_FIELDS)
-            return {}, {}
-        cached_keys = cache["keys"]
-        cached_vecs = cache["vectors"]
-        cached_hashes = cache["text_hashes"] if "text_hashes" in cache.files else None
-        kvec = dict(zip(cached_keys, cached_vecs))
-        khash = dict(zip(cached_keys, cached_hashes)) if cached_hashes is not None else {}
-        return kvec, khash
-
-    key_to_vec = {}   # key → vector
-    key_to_hash = {}  # key → text hash (to detect content changes)
-    if os.path.exists(EMBEDDINGS_CACHE_PATH):
-        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_CACHE_PATH)
-        if key_to_vec:
-            log.info("Loaded %d cached embeddings (model: %s, fields: %s)",
-                     len(key_to_vec), MODEL_NAME, TEXT_FIELDS)
-    elif os.path.exists(EMBEDDINGS_PATH):
-        # Migration: old pattern stored cache in the DVC output itself
-        key_to_vec, key_to_hash = _load_npz_cache(EMBEDDINGS_PATH)
-        if key_to_vec:
-            log.info("Migrated %d cached embeddings from DVC output → enrich_cache/",
-                     len(key_to_vec))
-    elif os.path.exists(legacy_path):
-        log.info("Found legacy %s, will migrate to .npz (full recompute)", legacy_path)
-    else:
-        log.info("No embedding cache found, full computation")
+    key_to_vec, key_to_hash, legacy_path = _load_embedding_cache(args.works_input)
 
     # A cached entry is valid only if key exists AND text hash matches
     keys = df["_key"].values

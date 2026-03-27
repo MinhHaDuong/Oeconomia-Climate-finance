@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 
-from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_figure, load_analysis_config
+from utils import BASE_DIR, get_logger, save_figure, load_analysis_config
 
 log = get_logger("plot_fig_alluvial")
 

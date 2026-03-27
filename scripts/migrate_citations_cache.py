@@ -18,7 +18,7 @@ import sys
 
 import pandas as pd
 
-from utils import CATALOGS_DIR, REFS_COLUMNS, get_logger, normalize_doi
+from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("migrate_citations_cache")
 

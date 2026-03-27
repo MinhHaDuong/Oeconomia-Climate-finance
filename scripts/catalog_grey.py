@@ -115,6 +115,52 @@ def query_worldbank(wb_queries, year_min=None, year_max=None):
     return all_records
 
 
+def _parse_wb_metadata(raw_metadata) -> dict:
+    """Normalise the two metadata shapes returned by the World Bank API.
+
+    The API may return either:
+    - a dict mapping field names to lists of ``{"value": ..., ...}`` dicts, or
+    - a flat list of ``{"key": ..., "value": ...}`` dicts.
+
+    Returns a plain ``{field: "val1 ; val2"}`` dict in both cases.
+    """
+    metadata: dict = {}
+    if isinstance(raw_metadata, dict):
+        for key, entries in raw_metadata.items():
+            vals = [
+                entry.get("value", "") if isinstance(entry, dict) else str(entry)
+                for entry in (entries if isinstance(entries, list) else [])
+                if (entry.get("value", "") if isinstance(entry, dict) else str(entry))
+            ]
+            metadata[key] = " ; ".join(vals)
+    elif isinstance(raw_metadata, list):
+        for m in raw_metadata:
+            key = m.get("key", "")
+            val = m.get("value", "")
+            metadata[key] = (metadata[key] + " ; " + val) if key in metadata else val
+    return metadata
+
+
+def _wb_record_from_metadata(metadata: dict, item: dict, year_str: str) -> dict:
+    """Build a works-catalog record from parsed World Bank metadata."""
+    return {
+        "source": "grey",
+        "source_id": item.get("uuid", ""),
+        "doi": normalize_doi(metadata.get("dc.identifier.doi", "")),
+        "title": metadata.get("dc.title", ""),
+        "first_author": metadata.get("dc.contributor.author", "").split(" ; ")[0],
+        "all_authors": metadata.get("dc.contributor.author", ""),
+        "year": year_str,
+        "journal": "World Bank",
+        "abstract": metadata.get("dc.description.abstract", ""),
+        "language": metadata.get("dc.language.iso", ""),
+        "keywords": metadata.get("dc.subject", ""),
+        "categories": "grey literature",
+        "cited_by_count": "",
+        "affiliations": "World Bank",
+    }
+
+
 def _query_worldbank_single(wb_query, year_min=None, year_max=None):
     """Run a single World Bank query. Called by query_worldbank()."""
     records = []
@@ -161,25 +207,7 @@ def _query_worldbank_single(wb_query, year_min=None, year_max=None):
 
         for obj in objects:
             item = obj.get("_embedded", {}).get("indexableObject", {})
-            raw_metadata = item.get("metadata", {})
-            # metadata is a dict of field_name -> list of {value, ...}
-            metadata = {}
-            if isinstance(raw_metadata, dict):
-                for key, entries in raw_metadata.items():
-                    vals = []
-                    for entry in (entries if isinstance(entries, list) else []):
-                        v = entry.get("value", "") if isinstance(entry, dict) else str(entry)
-                        if v:
-                            vals.append(v)
-                    metadata[key] = " ; ".join(vals)
-            elif isinstance(raw_metadata, list):
-                for m in raw_metadata:
-                    key = m.get("key", "")
-                    val = m.get("value", "")
-                    if key in metadata:
-                        metadata[key] += " ; " + val
-                    else:
-                        metadata[key] = val
+            metadata = _parse_wb_metadata(item.get("metadata", {}))
 
             year_str = (metadata.get("dc.date.issued", "") or "")[:4]
             # Client-side year filter as safety net (server-side may not
@@ -190,23 +218,7 @@ def _query_worldbank_single(wb_query, year_min=None, year_max=None):
                     continue
                 if year_max and year_num > year_max:
                     continue
-            records.append({
-                "source": "grey",
-                "source_id": item.get("uuid", ""),
-                "doi": normalize_doi(metadata.get("dc.identifier.doi", "")),
-                "title": metadata.get("dc.title", ""),
-                "first_author": metadata.get("dc.contributor.author",
-                                             "").split(" ; ")[0],
-                "all_authors": metadata.get("dc.contributor.author", ""),
-                "year": year_str,
-                "journal": "World Bank",
-                "abstract": metadata.get("dc.description.abstract", ""),
-                "language": metadata.get("dc.language.iso", ""),
-                "keywords": metadata.get("dc.subject", ""),
-                "categories": "grey literature",
-                "cited_by_count": "",
-                "affiliations": "World Bank",
-            })
+            records.append(_wb_record_from_metadata(metadata, item, year_str))
 
         page += 1
         fetched = page * page_size

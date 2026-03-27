@@ -5,8 +5,6 @@ serif fonts, and period annotations calibrated for 13.5 cm (5.3 inch) width.
 """
 
 import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 from utils import load_analysis_periods
 

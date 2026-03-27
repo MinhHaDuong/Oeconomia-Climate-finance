@@ -14,6 +14,7 @@ Usage:
 """
 
 import argparse
+import atexit
 import os
 from difflib import SequenceMatcher
 
@@ -30,52 +31,70 @@ TITLE_SIM_THRESHOLD = 0.85
 OPENALEX_SEARCH_URL = "https://api.openalex.org/works"
 
 
-_disk_cache = None
-_disk_cache_dirty = 0  # count of unsaved writes
+class _DiskCache:
+    """Batched disk cache: accumulates writes and flushes every N updates.
+
+    Replaces the previous global-variable cache (_disk_cache, _disk_cache_dirty)
+    with an encapsulated object that manages its own lifecycle.
+    """
+
+    def __init__(self, path, flush_every=50):
+        self._path = path
+        self._flush_every = flush_every
+        self._data = None
+        self._dirty = 0
+        atexit.register(self.flush)
+
+    def load(self):
+        """Load {key: value} cache from CSV. Cached in memory after first load."""
+        if self._data is not None:
+            return self._data
+        if not os.path.exists(self._path):
+            self._data = {}
+            return self._data
+        try:
+            df = pd.read_csv(self._path, dtype=str, keep_default_na=False)
+        except pd.errors.EmptyDataError:
+            log.warning("Cache file empty or corrupt: %s — starting fresh", self._path)
+            self._data = {}
+            return self._data
+        self._data = dict(zip(df["source_id"], df["doi"]))
+        return self._data
+
+    def mark_dirty(self):
+        """Record a write; auto-flush when flush_every threshold is reached."""
+        self._dirty += 1
+        if self._dirty >= self._flush_every:
+            self.flush()
+
+    def flush(self):
+        """Force-write cache to disk."""
+        if self._data is None or self._dirty == 0:
+            return
+        os.makedirs(os.path.dirname(self._path), exist_ok=True)
+        rows = [{"source_id": k, "doi": v} for k, v in self._data.items()]
+        pd.DataFrame(rows).to_csv(self._path, index=False)
+        self._dirty = 0
+
+
+_cache = _DiskCache(CACHE_FILE)
 
 
 def load_cache():
     """Load {source_id: doi_or_empty} cache. Cached in memory after first load."""
-    global _disk_cache
-    if _disk_cache is not None:
-        return _disk_cache
-    if not os.path.exists(CACHE_FILE):
-        _disk_cache = {}
-        return _disk_cache
-    try:
-        df = pd.read_csv(CACHE_FILE, dtype=str, keep_default_na=False)
-    except pd.errors.EmptyDataError:
-        log.warning("Cache file empty or corrupt: %s — starting fresh", CACHE_FILE)
-        _disk_cache = {}
-        return _disk_cache
-    _disk_cache = dict(zip(df["source_id"], df["doi"]))
-    return _disk_cache
+    return _cache.load()
 
 
 def save_cache(cache=None):
     """Persist cache to CSV. Batches writes — flushes every 50 updates."""
-    global _disk_cache, _disk_cache_dirty
     if cache is not None:
-        _disk_cache = cache
-    _disk_cache_dirty += 1
-    if _disk_cache_dirty < 50:
-        return
-    flush_cache()
+        _cache._data = cache
+    _cache.mark_dirty()
 
 
 def flush_cache():
     """Force-write cache to disk."""
-    global _disk_cache_dirty
-    if _disk_cache is None or _disk_cache_dirty == 0:
-        return
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    rows = [{"source_id": k, "doi": v} for k, v in _disk_cache.items()]
-    pd.DataFrame(rows).to_csv(CACHE_FILE, index=False)
-    _disk_cache_dirty = 0
-
-
-import atexit
-atexit.register(flush_cache)
+    _cache.flush()
 
 
 def title_similarity(a, b):
@@ -162,7 +181,6 @@ def find_doi(title, year=None, author=None):
     except (ValueError, TypeError):
         ynorm = ""
     title_key = f"title:{tnorm}"
-    precise_parts = [tnorm, anorm, ynorm]
     has_precise = anorm or ynorm
     precise_key = f"title+meta:{tnorm}|{anorm}|{ynorm}" if has_precise else None
 

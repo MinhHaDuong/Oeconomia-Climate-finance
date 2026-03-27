@@ -13,8 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from plot_style import (
-    apply_style, FIGWIDTH, DPI, MED, LIGHT, DARK, FILL,
-    INCOMPLETE_FROM, PERIODS, add_period_bands, add_period_lines,
+    apply_style, FIGWIDTH, DPI, LIGHT, DARK, FILL,
 )
 from utils import CATALOGS_DIR, save_figure, BASE_DIR
 

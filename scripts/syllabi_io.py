@@ -13,6 +13,7 @@ Public API (all re-exported by collect_syllabi.py):
 """
 
 import json
+import logging
 import os
 import re
 import threading
@@ -26,15 +27,7 @@ CHUNK_SIZE = 8000       # ~2K tokens per chunk — proven to work with gemma-2-2
 CHUNK_OVERLAP = 500     # Overlap between chunks to avoid splitting references at boundaries
 MAX_TEXT_CHARS = 500000 # Skip pages over 500K chars (misclassified books/reports, not syllabi)
 
-_log = None
-
-
-def _get_log():
-    global _log
-    if _log is None:
-        from utils import get_logger
-        _log = get_logger("syllabi_io")
-    return _log
+_log = logging.getLogger("pipeline.syllabi_io")
 
 
 def load_jsonl(path):
@@ -124,7 +117,7 @@ def llm_call(prompt, model="openrouter/google/gemma-2-27b-it", max_tokens=2000):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        _get_log().error("LLM error (%s): %s", model, e)
+        _log.error("LLM error (%s): %s", model, e)
         return None
 
 
