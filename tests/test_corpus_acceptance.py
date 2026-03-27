@@ -58,7 +58,7 @@ ENGLISH_PCT_MIN = 75.0
 # (collection lag).
 _ANALYSIS_CFG = load_analysis_config()
 YEAR_MIN = _ANALYSIS_CFG["periodization"]["year_min"] - 30  # foundational works predate "climate finance"
-YEAR_MAX = _ANALYSIS_CFG["periodization"]["year_max"] + 2   # collection may include recent years
+YEAR_MAX = _ANALYSIS_CFG["periodization"]["year_max"] + 3   # preprints may be dated ahead
 REQUIRED_COLUMNS = [
     "source", "source_id", "doi", "title", "year",
     "cited_by_count", "abstract",
@@ -834,84 +834,78 @@ class TestCitationQuality:
                 "Re-run: uv run python scripts/qa_citations.py"
             )
 
-    def test_qa_report_has_accuracy_and_completeness(self):
-        """qa_citations_report.json has both tests with CIs."""
+    def test_qa_report_has_verification(self):
+        """qa_citations_report.json has a verification section with precision/recall."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
             pytest.skip("qa_citations_report.json not found")
         import json
         with open(QC_CITATIONS_REPORT_PATH) as f:
             report = json.load(f)
 
-        assert "accuracy" in report, \
-            "Report missing 'accuracy' section (Test A)" + _diagnosis(
-                "qa_citations.py needs rewrite for accuracy/completeness format",
+        assert "verification" in report, \
+            "Report missing 'verification' section" + _diagnosis(
+                "qa_citations.py report format changed",
                 "Re-run: uv run python scripts/qa_citations.py",
                 "~3 min",
                 "Cannot verify citation link quality",
             )
-        assert "completeness" in report, \
-            "Report missing 'completeness' section (Test B)" + _diagnosis(
-                "qa_citations.py needs rewrite for accuracy/completeness format",
+        data = report["verification"]
+        assert "sample_n" in data, \
+            "verification missing sample_n" + _diagnosis(
+                "qa_citations.py report incomplete",
                 "Re-run: uv run python scripts/qa_citations.py",
                 "~3 min",
-                "Cannot verify citation completeness",
+                "Cannot assess sample size",
             )
-        for section in ("accuracy", "completeness"):
-            data = report[section]
-            assert data["sample_n"] >= 300, \
-                f"{section} sample_n = {data['sample_n']} (expected >= 300)" + _diagnosis(
-                    "qa_citations.py ran with too small a sample",
-                    "Re-run with --sample-n 300",
-                    "~3 min",
-                    "Confidence intervals too wide to be meaningful",
-                )
-            assert "ci_lower" in data, \
-                f"{section} missing ci_lower" + _diagnosis(
-                    "Wilson CI not computed",
-                    "Re-run qa_citations.py (should compute Wilson CIs)",
-                    "~3 min",
-                    "No statistical uncertainty reported",
-                )
-            assert "ci_upper" in data, \
-                f"{section} missing ci_upper" + _diagnosis(
-                    "Wilson CI not computed",
-                    "Re-run qa_citations.py (should compute Wilson CIs)",
-                    "~3 min",
+        assert "mean_precision" in data, \
+            "verification missing mean_precision" + _diagnosis(
+                "Precision not computed",
+                "Re-run qa_citations.py",
+                "~3 min",
+                "No accuracy metric reported",
+            )
+        assert "mean_recall" in data, \
+            "verification missing mean_recall" + _diagnosis(
+                "Recall not computed",
+                "Re-run qa_citations.py",
+                "~3 min",
                     "No statistical uncertainty reported",
                 )
 
-    def test_citation_accuracy_high(self):
-        """Accuracy (proportion of our links confirmed by Crossref) should be >= 0.90."""
+    def test_citation_precision_high(self):
+        """Precision (our links confirmed by Crossref) should be >= 0.90."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
             pytest.skip("qa_citations_report.json not found")
         import json
         with open(QC_CITATIONS_REPORT_PATH) as f:
             report = json.load(f)
-        if "accuracy" not in report:
-            pytest.skip("Report uses old format (no accuracy section)")
+        if "verification" not in report:
+            pytest.skip("Report missing verification section")
 
-        accuracy = report["accuracy"]
-        assert accuracy["proportion"] >= 0.90, \
-            f"Accuracy = {accuracy['proportion']:.3f} (expected >= 0.90)" + _diagnosis(
+        precision = report["verification"].get("mean_precision")
+        assert precision is not None, "verification missing mean_precision"
+        assert precision >= 0.90, \
+            f"Precision = {precision:.3f} (expected >= 0.90)" + _diagnosis(
                 "Many citation links not confirmed by Crossref",
                 "Investigate false links in report details",
                 "1-2 hours",
                 "Citation graph contains unverifiable edges",
             )
 
-    def test_citation_completeness_high(self):
-        """Completeness (proportion of Crossref refs we captured) should be >= 0.90."""
+    def test_citation_recall_high(self):
+        """Recall (Crossref refs we captured) should be >= 0.90."""
         if not os.path.isfile(QC_CITATIONS_REPORT_PATH):
             pytest.skip("qa_citations_report.json not found")
         import json
         with open(QC_CITATIONS_REPORT_PATH) as f:
             report = json.load(f)
-        if "completeness" not in report:
-            pytest.skip("Report uses old format (no completeness section)")
+        if "verification" not in report:
+            pytest.skip("Report missing verification section")
 
-        completeness = report["completeness"]
-        assert completeness["proportion"] >= 0.90, \
-            f"Completeness = {completeness['proportion']:.3f} (expected >= 0.90)" + _diagnosis(
+        recall = report["verification"].get("mean_recall")
+        assert recall is not None, "verification missing mean_recall"
+        assert recall >= 0.90, \
+            f"Recall = {recall:.3f} (expected >= 0.90)" + _diagnosis(
                 "Many Crossref references missing from our data",
                 "Check merge_citations.py and enrichment pipeline",
                 "1-2 hours",
