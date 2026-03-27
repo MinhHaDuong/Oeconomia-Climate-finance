@@ -184,7 +184,7 @@ def load_done_dois(cache_path, oa_citations_path=None):
                      len(oa_done), oa_citations_path)
             done |= oa_done
         except (pd.errors.EmptyDataError, KeyError):
-            pass
+            log.debug("Catalog citations file empty/corrupt: %s", oa_citations_path)
 
     return done
 

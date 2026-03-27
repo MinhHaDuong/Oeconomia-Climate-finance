@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from filter_flags import _load_config, flag_missing_metadata, flag_no_abstract, flag_title_blacklist
-from utils import CATALOGS_DIR, get_logger, normalize_doi
+from utils import CATALOGS_DIR, get_logger, normalize_doi, normalize_doi_safe
 
 log = get_logger("calibrate_reranker")
 
@@ -43,7 +43,7 @@ def load_data():
     # Prefer enriched (has all papers including flagged ones)
     path = ENRICHED_PATH if os.path.exists(ENRICHED_PATH) else REFINED_PATH
     df = pd.read_csv(path)
-    df["doi_norm"] = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+    df["doi_norm"] = df["doi"].apply(normalize_doi_safe)
     log.info("Loaded %d works from %s", len(df), os.path.basename(path))
 
     # Teaching works via from_teaching column

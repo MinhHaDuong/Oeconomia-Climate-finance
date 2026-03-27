@@ -222,8 +222,8 @@ for period_label, (y_start, y_end) in PERIODS.items():
     if dip_pvalue is not None:
         try:
             _, dp = diptest.diptest(pscores)
-        except Exception:
-            pass
+        except (ValueError, RuntimeError):
+            pass  # diptest fails on degenerate inputs (e.g., all-identical scores)
 
     period_stats.append({"period": period_label, "n": len(pscores),
                          "delta_bic": dbic, "dip_p": dp})

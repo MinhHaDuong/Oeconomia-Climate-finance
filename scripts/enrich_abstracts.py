@@ -96,7 +96,7 @@ def _cache_size(name):
         return 0
     try:
         return max(0, sum(1 for _ in open(path)) - 1)  # rows minus header
-    except Exception:
+    except OSError:
         return 0
 
 
@@ -304,8 +304,8 @@ def extract_abstract_tei(path):
         for ab_elem in root.iter("abstract"):
             text = "".join(ab_elem.itertext())
             return clean_abstract(text)
-    except Exception:
-        pass
+    except (ET.ParseError, OSError) as e:
+        log.debug("TEI parse failed for %s: %s", path, e)
     return ""
 
 
@@ -317,8 +317,8 @@ def extract_first_paragraph(path):
         paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 50]
         if paragraphs:
             return clean_abstract(paragraphs[0])
-    except Exception:
-        pass
+    except OSError as e:
+        log.debug("Could not read %s: %s", path, e)
     return ""
 
 

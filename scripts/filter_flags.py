@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi
+from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi, normalize_doi_safe
 
 log = get_logger("filter_flags")
 
@@ -164,7 +164,7 @@ def flag_citation_isolated(df, config, *, citations_df):
 
     # Ensure doi_norm exists
     if "doi_norm" not in df.columns:
-        doi_norm = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+        doi_norm = df["doi"].apply(normalize_doi_safe)
     else:
         doi_norm = df["doi_norm"]
 
@@ -205,7 +205,7 @@ def flag_semantic_outlier(df, config, *, embeddings, emb_df):
 
     # Ensure doi_norm exists
     if "doi_norm" not in df.columns:
-        doi_norm = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+        doi_norm = df["doi"].apply(normalize_doi_safe)
     else:
         doi_norm = df["doi_norm"]
 
@@ -222,9 +222,7 @@ def flag_semantic_outlier(df, config, *, embeddings, emb_df):
     threshold = mean_dist + sigma * std_dist
 
     # Build DOI -> distance mapping
-    emb_dois = emb_df["doi"].apply(
-        lambda x: normalize_doi(x) if pd.notna(x) else ""
-    )
+    emb_dois = emb_df["doi"].apply(normalize_doi_safe)
     emb_doi_to_dist = dict(zip(emb_dois, cos_dist))
     emb_doi_to_dist.pop("", None)
 
@@ -337,7 +335,7 @@ def _identify_candidates(df, config, already_flagged):
     min_groups = config["min_concept_groups"]
 
     if "doi_norm" not in df.columns:
-        doi_norm = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+        doi_norm = df["doi"].apply(normalize_doi_safe)
     else:
         doi_norm = df["doi_norm"]
 
@@ -674,7 +672,7 @@ def compute_protection(df, config, *, citations_df):
 
     # Ensure doi_norm exists
     if "doi_norm" not in df.columns:
-        doi_norm = df["doi"].apply(lambda x: normalize_doi(x) if pd.notna(x) else "")
+        doi_norm = df["doi"].apply(normalize_doi_safe)
     else:
         doi_norm = df["doi_norm"]
 
