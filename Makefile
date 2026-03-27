@@ -1,9 +1,10 @@
 # Makefile — Counting Climate Finance (Œconomia)
 #
-# Three-phase pipeline:
+# Four-phase pipeline:
 #   Phase 1: make corpus       Corpus building (slow — API calls, run rarely)
 #   Phase 2: make figures      Analysis & figures (fast, deterministic, run often)
 #   Phase 3: make manuscript   Render documents (Quarto → PDF/DOCX)
+#   Phase 4: make archive-*    Release & reproducibility archives
 #
 # Usage:
 #   make              Build all documents (manuscript + 3 companion papers)
@@ -426,7 +427,7 @@ output/content/data-paper.pdf: content/data-paper.qmd $(PROJECT_INCLUDES) $(BIB)
 output/content/companion-paper.pdf: content/companion-paper.qmd $(PROJECT_INCLUDES) $(BIB) content/companion-paper-vars.yml
 	quarto render $< --to pdf
 
-# ── Phase 2 archive (analysis reproducibility) ────────────
+# ── Phase 4a — analysis archive (packages Phase 2 outputs) ─
 # Data + scripts: reviewers verify figures/tables are reproducible.
 #   tar xzf archive.tar.gz && cd ... && uv sync && make
 SHELL            := /bin/bash
@@ -443,7 +444,7 @@ ANALYSIS_OUTPUTS := content/figures/fig_bars_v1.png \
 archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 	bash release/scripts/build_analysis_archive.sh
 
-# ── Phase 3 archive (manuscript reproducibility) ──────────
+# ── Phase 4b — manuscript archive (packages Phase 3 outputs) ─
 # Pre-built figures + content: reviewers verify PDF renders.
 # No Python needed — only Quarto + XeLaTeX.
 #   tar xzf archive.tar.gz && cd ... && make
@@ -451,7 +452,7 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml output/content/manuscript.pdf
 	bash release/scripts/build_manuscript_archive.sh
 
-# ── Data paper archive (full pipeline) ────────────────────
+# ── Phase 4c — data paper archive (full pipeline) ─────────
 # Complete reproducibility package: all corpus-building scripts, DVC pipeline,
 # pool data, caches.  Reviewers can verify with:
 #   tar xzf archive.tar.gz && cd ... && uv sync && dvc repro

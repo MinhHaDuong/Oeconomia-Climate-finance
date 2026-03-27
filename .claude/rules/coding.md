@@ -96,6 +96,11 @@ Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragm
 **Phase 3 — Render** (Quarto → PDF/DOCX):
 - Reads Phase 2 outputs. Build artifacts go to `output/` (gitignored).
 
+**Phase 4 — Release & archives** (reproducibility packaging):
+- Scripts: `release/scripts/build_*_archive.sh`
+- Templates: `release/templates/` (Makefiles, READMEs, Dockerfiles shipped in archives)
+- Reads Phase 2/3 outputs; produces `*.tar.gz` reproducibility archives
+
 ## Incremental caches vs DVC outputs
 
 - **`enrich_cache/`** — persistent cache directory (gitignored, not a DVC output). Survives `dvc repro`.
