@@ -159,7 +159,7 @@ def detect_communities(cutoff_year):
 
     # Build co-citation matrix
     cocit_matrix = lil_matrix((actual_n, actual_n), dtype=np.float64)
-    for _src, ref_list in source_groups.items():
+    for ref_list in source_groups.values():
         refs_in_top = [r for r in ref_list if r in top_set]
         if len(refs_in_top) < 2:
             continue

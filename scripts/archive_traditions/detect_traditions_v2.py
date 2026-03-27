@@ -166,7 +166,7 @@ log.info("Building co-citation matrix...")
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 
 cocit_matrix = lil_matrix((TOP_N, TOP_N), dtype=np.float64)
-for source_doi, ref_list in source_groups.items():
+for ref_list in source_groups.values():
     refs_in_top = [r for r in ref_list if r in top_set]
     if len(refs_in_top) < 2:
         continue
@@ -370,7 +370,7 @@ if len(pre2007_with_refs) >= 10:
 
     # Count shared references between pairs
     coupling_counts = defaultdict(int)
-    for ref, citers in ref_to_citers.items():
+    for citers in ref_to_citers.values():
         citers_list = sorted(citers)
         if len(citers_list) < 2:
             continue

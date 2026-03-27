@@ -47,7 +47,7 @@ for k in k_values:
     ax.plot(valid["year"], valid[col], "-o", color=k_colors.get(k, "grey"), markersize=4,
             label=f"k={k}", alpha=0.8, linewidth=1.5 if k == K_DEFAULT else 1.0)
 
-for yr, label in COP_EVENTS.items():
+for yr in COP_EVENTS.keys():
     if 2004 <= yr <= 2024:
         ax.axvline(yr, color="grey", linestyle="--", alpha=0.4, linewidth=0.8)
 

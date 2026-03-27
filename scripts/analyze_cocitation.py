@@ -105,7 +105,7 @@ source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 # Count co-citation pairs
 cocit_matrix = lil_matrix((TOP_N, TOP_N), dtype=np.float64)
 
-for source_doi, ref_list in source_groups.items():
+for ref_list in source_groups.values():
     # Filter to top refs only
     refs_in_top = [r for r in ref_list if r in top_set]
     if len(refs_in_top) < 2:

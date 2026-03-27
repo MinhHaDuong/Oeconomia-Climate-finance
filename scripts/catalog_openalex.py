@@ -375,7 +375,7 @@ def extract_from_pool(config):
 
     # Build a map: pool filename slug → tier config
     slug_to_tier = {}
-    for tier_num, tier_cfg in tiers.items():
+    for tier_cfg in tiers.values():
         for term in tier_cfg.get("terms", []):
             slug_to_tier[query_slug(term)] = tier_cfg
 

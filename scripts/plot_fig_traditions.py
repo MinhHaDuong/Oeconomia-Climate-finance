@@ -140,7 +140,7 @@ log.info("Building co-citation matrix...")
 source_groups = cit.groupby("source_doi")["ref_doi"].apply(list)
 
 cocit = lil_matrix((TOP_N, TOP_N), dtype=np.float32)
-for _, ref_list in source_groups.items():
+for ref_list in source_groups.values():
     in_top = [r for r in ref_list if r in top_set]
     if len(in_top) < 2:
         continue
