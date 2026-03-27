@@ -160,9 +160,8 @@ deposit to ensure reproducibility.
 
 **Zenodo deposits**: each paper has its own reproducibility archive on Zenodo,
 bundling the corpus version current at submission time alongside the full
-pipeline source code. The two deposits are independent records (no Zenodo
-concept DOI links them). The corpus itself is not deposited as a standalone
-dataset.
+pipeline source code. The v1.1 deposit links to the v1.0 deposit as a
+related record. The corpus itself is not deposited as a standalone dataset.
 
 **Versioning strategy**:
 - `in_v1` column in corpus CSV enables backward compatibility across versions
