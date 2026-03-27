@@ -4,19 +4,26 @@ Journal format, most recent first.
 
 ---
 
-## [PENDING] — Data paper submission to RDJ4HSS
+## 2026-03-26 — Submitted to RDJ4HSS (data paper)
 
 **Target**: Research Data Journal for the Humanities and Social Sciences
 **Platform**: platform.openjournals.nl/RDJHSS
 **Document**: `content/data-paper.qmd`
 
-**Status**: Preparing for submission. Editorial review complete (2 rounds).
+**Status**: Under review (peer reviewers + data specialists).
 
-**Cover letter**: `release/cover-letter-rdj.txt`
+**Cover letter**: `release/2026-03-26 RDJ4HSS/CoverLetter.txt`
 **Checklist**: `release/rdj-submission-checklist.md`
-**Submission branch**: `submission/rdj-data-paper` (to be created)
+**Submission branch**: `submission/rdj-data-paper`
+**Git tag**: `v1.1-rdj-submitted`
 
-**Zenodo deposit**: https://doi.org/10.5281/zenodo.19097045 (update with v1.1 data)
+**Zenodo deposit**: https://doi.org/10.5281/zenodo.19236130
+- Single reproducibility archive: corpus v1.1 + pipeline source code
+- Links to v1.0 deposit (10.5281/zenodo.19097045)
+
+**Known errata in as-sent cover letter**: corpus stats cite v1.0 numbers
+(42,368 raw / 31,204 refined / 929,014 citations) instead of v1.1
+(42,922 / 31,713 / 968,871). The paper itself uses correct v1.1 numbers.
 
 ---
 
