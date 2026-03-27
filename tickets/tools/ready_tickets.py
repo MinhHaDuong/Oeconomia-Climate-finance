@@ -44,8 +44,16 @@ def _load_wip(wip_dir: Path | None) -> dict[str, str]:
     return wip
 
 
-def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str], int, int]:
-    """Return (ready_tickets, warnings, total_count, open_count)."""
+def find_ready(
+    ticket_dir: Path, wip: dict[str, str] | None = None
+) -> tuple[list[dict], list[str], int, int]:
+    """Return (ready_tickets, warnings, total_count, open_count).
+
+    wip: optional dict of claimed ticket IDs (from _load_wip).
+    If provided, claimed tickets are excluded from the ready set.
+    """
+    if wip is None:
+        wip = {}
     tickets = load_tickets(ticket_dir)
     status_by_id = {t.filename_id: t.status for t in tickets}
     warnings: list[str] = []
@@ -56,6 +64,11 @@ def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str], int, int]:
         if t.status != "open":
             continue
         open_count += 1
+
+        # Exclude WIP-claimed tickets
+        tid = t.filename_id
+        if tid in wip:
+            continue
 
         blocked = False
         for ref in t.blocked_by:
@@ -71,7 +84,7 @@ def find_ready(ticket_dir: Path) -> tuple[list[dict], list[str], int, int]:
                 break
 
         if not blocked:
-            ready.append({"id": t.filename_id, "title": t.title, "file": t.path.name})
+            ready.append({"id": tid, "title": t.title, "file": t.path.name})
 
     return ready, warnings, len(tickets), open_count
 
@@ -87,8 +100,8 @@ def main() -> int:
         print(f"Directory not found: {ticket_dir}")
         return 1
 
-    ready, warnings, total, open_count = find_ready(ticket_dir)
     wip = _load_wip(_wip_dir())
+    ready, warnings, total, open_count = find_ready(ticket_dir, wip=wip)
 
     for w in warnings:
         print(f"WARNING: {w}", file=sys.stderr)

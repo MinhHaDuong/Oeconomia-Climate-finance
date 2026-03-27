@@ -13,7 +13,7 @@ argument-hint: <ticket-id>
 1. Find the ticket file: `tickets/$ARGUMENTS-*.ticket`
 
 2. Update the ticket:
-   - Change `Status: doing` → `Status: closed`
+   - Change `Status:` line to `Status: closed` (works from any prior status)
    - Append log line: `{timestamp} {agent} status closed — {reason}`
 
 3. Release the claim:

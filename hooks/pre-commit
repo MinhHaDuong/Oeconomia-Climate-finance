@@ -72,7 +72,8 @@ if [ -n "$ticket_files" ]; then
                 exit 1
             fi
         else
-            echo "WARNING: No ticket validator available (Go binary not built, python3 not found). Skipping validation." >&2
+            echo "ERROR: No ticket validator available (build with 'make ticket-build' or install python3)." >&2
+            exit 1
         fi
     fi
 fi
