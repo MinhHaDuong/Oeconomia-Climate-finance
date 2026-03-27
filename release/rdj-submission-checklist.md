@@ -19,8 +19,8 @@
 
 ## Cover letter
 - [x] `release/cover-letter-rdj.txt` — addresses editors, explains scope fit
-- [x] Citation count matches current data (929,014)
-- [ ] Review for any other stale numbers
+- [x] Citation count in as-sent letter: 929,014 (v1.0 number; actual v1.1 is 968,871)
+- [x] As-sent copy: `release/2026-03-26 RDJ4HSS/CoverLetter.txt`
 
 ## Reproducibility
 - [x] Analysis archive builds: `make archive-analysis`
@@ -32,6 +32,9 @@
 - [ ] Does RDJ4HSS use blind review? (website unclear — check submission form)
 - [ ] AI disclosure: not mentioned in guidelines, but good practice to include
 - [ ] Word count scope: 2,500 limit applies to which sections? (body ~2,341)
+
+## Post-submission
+- [ ] Deposit DMP on OPIDoR (`docs/data-management-plan.md`)
 
 ## Done
 - [x] DMP updated with v1.1 numbers (`docs/data-management-plan.md`)
