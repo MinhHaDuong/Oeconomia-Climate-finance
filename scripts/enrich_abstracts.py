@@ -328,11 +328,11 @@ def _fetch_s2_abstract(doi, request_timeout, max_retries, retry_backoff, retry_j
                        s2_counters):
     """Fetch a single abstract from Semantic Scholar by DOI.
 
-    Returns (doi, abstract_text). On any error returns (doi, "").
-    The caller is responsible for updating step-level counters.
+    Returns (abstract_text, status) where status is one of:
+      "success", "empty", "4xx", "5xx", "error".
+    The caller updates step-level counters based on status.
     """
     try:
-        # S2 public API requires ≥3s between requests to avoid 429s
         resp = retry_get(
             f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
             params={"fields": "abstract"},
@@ -344,13 +344,16 @@ def _fetch_s2_abstract(doi, request_timeout, max_retries, retry_backoff, retry_j
             counters=s2_counters,
         )
         if resp.status_code == 200:
-            ab = resp.json().get("abstract", "") or ""
-            return doi, clean_abstract(ab)
-        return doi, ""
-    except requests.exceptions.HTTPError:
-        return doi, ""
+            ab = clean_abstract(resp.json().get("abstract", "") or "")
+            return ab, "success" if ab else "empty"
+        if resp.status_code in (404, 400):
+            return "", "4xx"
+        return "", "5xx"
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else 0
+        return "", "4xx" if status in (404, 400) else "5xx"
     except Exception:
-        return doi, ""
+        return "", "error"
 
 
 def step4_semantic_scholar(df, counters, checkpoint_every=50,
@@ -380,13 +383,14 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
     s2_log_every = min(checkpoint_every, 10)
     s2_counters = {}
     for i, (idx, doi) in enumerate(to_query):
-        _, ab = _fetch_s2_abstract(
+        ab, status = _fetch_s2_abstract(
             doi, request_timeout, max_retries, retry_backoff, retry_jitter, s2_counters)
         cache[doi] = ab
-        if ab:
-            counters["step4_success"] = counters.get("step4_success", 0) + 1
-        else:
-            counters["step4_empty_result"] = counters.get("step4_empty_result", 0) + 1
+
+        counter_key = f"step4_{status}"
+        counters[counter_key] = counters.get(counter_key, 0) + 1
+        if status in ("5xx", "error") and i < 3:
+            log.warning("S2 %s: %s response", doi, status)
 
         if (i + 1) % s2_log_every == 0:
             filled_so_far = counters.get("step4_success", 0)

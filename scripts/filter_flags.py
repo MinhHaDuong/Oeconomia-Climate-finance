@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi, normalize_doi_safe
+from utils import CATALOGS_DIR, CONFIG_DIR, get_logger, normalize_doi_safe
 
 log = get_logger("filter_flags")
 
@@ -605,6 +605,8 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
         batch_idx = uncached_indices[batch_num:batch_num + batch_size]
         current_batch = batch_num // batch_size + 1
 
+        dois = [doi_norm.at[i] for i in batch_idx]
+
         try:
             dois, scores = _score_llm_batch(
                 batch_idx, df, doi_norm, llm_cfg, model, title_max, abstract_max
@@ -621,7 +623,6 @@ def flag_llm_irrelevant_streaming(df, config, *, already_flagged):
                 log.error("    Too many consecutive errors, stopping LLM scoring")
                 _save_llm_cache(cache, config)
                 break
-            dois = [doi_norm.at[i] for i in batch_idx]
 
         _save_llm_cache(cache, config)
 
