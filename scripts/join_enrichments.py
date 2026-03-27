@@ -59,11 +59,15 @@ def _load_summary_cache(path):
         return {}
     result = {}
     with open(path) as f:
-        for line in f:
+        for lineno, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
-            entry = json.loads(line)
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                log.warning("Skipping malformed JSON at %s:%d", path, lineno)
+                continue
             doi = entry.get("doi", "")
             if doi:
                 result[doi] = entry

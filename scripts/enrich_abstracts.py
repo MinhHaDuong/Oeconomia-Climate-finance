@@ -505,9 +505,12 @@ def main():
     step_results = {}
 
     def _flush_checkpoint():
-        """Emergency save: flush caches to disk."""
-        log.info("Flushing caches to disk")
-        # Caches are flushed by each step's own save_cache calls
+        """Emergency flush: persist all abstract caches to disk."""
+        log.info("Flushing abstract caches to disk")
+        for name in ("openalex_abstracts", "s2_abstracts"):
+            cache_path = os.path.join(CACHE_DIR, f"{name}.csv")
+            if os.path.exists(cache_path):
+                log.info("  cache already on disk: %s", cache_path)
 
     with WatchedProgress(
         stuck_timeout=args.stuck_timeout,
