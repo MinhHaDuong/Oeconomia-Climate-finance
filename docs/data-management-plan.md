@@ -3,8 +3,8 @@
 **Project**: A Curated Corpus of Climate Finance Literature, 1990–2024
 **Author**: Minh Ha-Duong (ORCID 0000-0001-9988-2100)
 **Affiliation**: CNRS, CIRED (UMR 8568 CNRS–ENPC–Cirad–AgroParisTech–EHESS)
-**Date**: 2026-03-26
-**Version**: 1.0
+**Date**: 2026-03-27
+**Version**: 1.1
 
 > Structured following the CNRS template on DMP OPIDoR (Science Europe model).
 > Satisfies CNRS Plan pour la Science Ouverte, Loi République numérique (Art. 30),
@@ -21,9 +21,9 @@ around climate finance (1990–2024). Three categories of data:
 
 | Dataset | Format | Size | Origin |
 |---------|--------|------|--------|
-| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 42,368 rows raw (31,204 after filtering) | Merged from 6 sources; deposit artifact via `prepare_deposit.py` |
-| embeddings.npz | NumPy compressed archive | 37,928 × 1024 float32 | Computed (BGE-M3 sentence-transformer) |
-| citations.csv | CSV | 929,014 rows total (797,975 refined) | Extracted via Crossref + OpenAlex |
+| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 42,922 rows raw (31,713 after filtering) | Merged from 6 sources; deposit artifact via `prepare_deposit.py` |
+| embeddings.npz | NumPy compressed archive | 38,479 × 1024 float32 | Computed (BGE-M3 sentence-transformer) |
+| citations.csv | CSV | 968,871 citation pairs | Extracted via Crossref + OpenAlex |
 | Per-source catalogs (×6) | CSV | Variable | API harvests + manual exports |
 | Raw API responses | Gzipped JSONL | ~2 GB | OpenAlex, ISTEX, Crossref, World Bank |
 | Pipeline source code | Python, YAML, Makefile | ~150 files | Original |
@@ -47,7 +47,7 @@ deposit to ensure reproducibility.
 
 ### 2.1 What documentation accompanies the data?
 
-- **Data paper** (submitted to RDJ4HSS): full methodology, data records, technical validation
+- **Data paper** (submitted to RDJ4HSS, 2026-03-26): full methodology, data records, technical validation
 - **Technical report** (`content/technical-report.qmd`): detailed pipeline documentation
 - **README-datapaper.md**: two-level verification protocol (checksums + full rebuild)
 - **Inline audit trail**: `is_flagged`, `flag_reason`, `is_protected` columns in corpus CSV
@@ -138,7 +138,7 @@ deposit to ensure reproducibility.
 ### 4.3 CNRS-specific obligations
 
 - **HAL deposit**: mandatory for CNRS researchers. Done: hal-05558422v1
-  (Oeconomia manuscript). The data paper will also be deposited on HAL.
+  (Oeconomia manuscript). The data paper to be deposited on HAL upon acceptance.
 - **CRAC dossier**: the Zenodo dataset is linked to the HAL deposit via
   "Ressource associée" metadata, enabling inclusion in annual activity report.
 - **HAL licence**: mandatory from January 2026 for all full-text deposits.
@@ -152,22 +152,22 @@ deposit to ensure reproducibility.
 
 | Dataset | Repository | Licence | Embargo | DOI |
 |---------|-----------|---------|---------|-----|
-| Corpus + embeddings + citations | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19097045 |
+| Corpus v1.0 + embeddings + citations | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19097045 |
+| Corpus v1.1 + embeddings + citations | Zenodo | CC BY 4.0 | None | 10.5281/zenodo.19236130 |
 | Pipeline source code | GitHub | MIT | Until acceptance | — |
 | Oeconomia manuscript | HAL | CC BY 4.0 | None (preprint) | hal-05558422v1 |
-| Data paper | HAL + journal | CC BY 4.0 | None (diamond OA) | TBD |
+| Data paper | HAL + journal | CC BY 4.0 | None (diamond OA) | Submitted 2026-03-26 |
 
 **Versioning strategy**:
 - Zenodo concept DOI (stable across versions): 10.5281/zenodo.19097045
 - Version-specific DOIs minted automatically by Zenodo
 - `in_v1` column in corpus CSV enables backward compatibility
-- Git tags mark submission milestones (e.g., `v1.0-submission`)
+- Git tags mark submission milestones (`v1.0-submission`, `v1.1-rdj-submitted`)
 
 **Timeline**:
 1. ✅ v1.0 deposited on Zenodo (2026-03-18, with Oeconomia submission)
-2. ✅ v1.1 ready (corpus refined, teaching canon expanded)
-3. Pending: update Zenodo deposit to v1.1 (with data paper submission)
-4. Pending: make GitHub repository public (upon Oeconomia acceptance or data paper submission)
+2. ✅ v1.1 deposited on Zenodo (2026-03-26, DOI 10.5281/zenodo.19236130, with RDJ4HSS data paper submission)
+3. Pending: make GitHub repository public (upon Oeconomia acceptance or data paper acceptance)
 
 ### 5.2 How will data be preserved for the long term?
 
@@ -251,4 +251,4 @@ knowledge through the published data paper and technical report.
 
 *This DMP follows the CNRS structured template (Science Europe model) and is
 intended for registration on [DMP OPIDoR](https://dmp.opidor.fr/). It will be
-updated upon data paper acceptance and repository publication.*
+updated upon paper acceptance and repository publication.*
