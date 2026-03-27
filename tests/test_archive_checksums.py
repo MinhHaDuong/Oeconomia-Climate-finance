@@ -12,8 +12,8 @@ import re
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 MAKEFILE = os.path.join(PROJECT_ROOT, "Makefile")
-DOCKERFILE = os.path.join(PROJECT_ROOT, "Dockerfile.analysis")
-MAKEFILE_ANALYSIS = os.path.join(PROJECT_ROOT, "Makefile.analysis-manuscript")
+DOCKERFILE = os.path.join(PROJECT_ROOT, "release", "templates", "Dockerfile.analysis")
+MAKEFILE_ANALYSIS = os.path.join(PROJECT_ROOT, "release", "templates", "Makefile.analysis-manuscript")
 
 # The outputs that reviewers must be able to verify (from ticket #210).
 EXPECTED_OUTPUTS = [
@@ -66,20 +66,19 @@ class TestAnalysisOutputsVariable:
         )
 
 
+def _read_analysis_build_script():
+    script = os.path.join(PROJECT_ROOT, "release", "scripts", "build_analysis_archive.sh")
+    with open(script) as f:
+        return f.read()
+
+
 class TestArchiveScripts:
-    """archive-analysis must copy all scripts needed to reproduce outputs."""
+    """Analysis archive build script must copy all scripts needed to reproduce outputs."""
 
     def test_export_citation_coverage_copied(self):
-        mk = _read_makefile()
-        m = re.search(
-            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-            mk,
-            re.MULTILINE,
-        )
-        assert m, "archive-analysis recipe not found"
-        recipe = m.group(1)
-        assert "export_citation_coverage.py" in recipe, (
-            "archive-analysis must copy export_citation_coverage.py"
+        script = _read_analysis_build_script()
+        assert "export_citation_coverage.py" in script, (
+            "build_analysis_archive.sh must copy export_citation_coverage.py"
         )
 
 
@@ -97,17 +96,10 @@ class TestArchiveChecksums:
         )
 
     def test_recipe_generates_checksum_file(self):
-        """archive-analysis must create expected_outputs.md5."""
-        mk = _read_makefile()
-        m = re.search(
-            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-            mk,
-            re.MULTILINE,
-        )
-        assert m, "archive-analysis recipe not found"
-        recipe = m.group(1)
-        assert "expected_outputs.md5" in recipe, (
-            "archive-analysis recipe must generate expected_outputs.md5"
+        """Analysis archive build script must create expected_outputs.md5."""
+        script = _read_analysis_build_script()
+        assert "expected_outputs.md5" in script, (
+            "build_analysis_archive.sh must generate expected_outputs.md5"
         )
 
 
@@ -128,17 +120,12 @@ class TestDockerfileAnalysis:
         assert os.path.isfile(DOCKERFILE), "Dockerfile.analysis missing"
 
     def test_archive_ships_dockerfile(self):
-        """archive-analysis recipe must copy Dockerfile.analysis into the archive."""
-        mk = _read_makefile()
-        m = re.search(
-            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-            mk,
-            re.MULTILINE,
-        )
-        assert m, "archive-analysis recipe not found"
-        recipe = m.group(1)
-        assert "Dockerfile.analysis" in recipe, (
-            "archive-analysis must copy Dockerfile.analysis into archive"
+        """Analysis archive build script must copy Dockerfile.analysis into the archive."""
+        script = os.path.join(PROJECT_ROOT, "release", "scripts", "build_analysis_archive.sh")
+        with open(script) as f:
+            content = f.read()
+        assert "Dockerfile.analysis" in content, (
+            "build_analysis_archive.sh must copy Dockerfile.analysis into archive"
         )
 
     def test_installs_uv(self):

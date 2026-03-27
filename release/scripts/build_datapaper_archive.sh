@@ -6,11 +6,11 @@
 #   data/  — deposit files (corpus CSV without abstracts, embeddings, citations, catalogs)
 #
 # Prerequisites: make check-corpus corpus-tables figures-datapaper
-# Usage: bash scripts/build_datapaper_archive.sh
+# Usage: bash release/scripts/build_datapaper_archive.sh
 
 set -euo pipefail
 
-PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJ_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ARCHIVE=climate-finance-datapaper
 TMP="/tmp/$ARCHIVE"
 DATA_DIR="$PROJ_ROOT/data/catalogs"

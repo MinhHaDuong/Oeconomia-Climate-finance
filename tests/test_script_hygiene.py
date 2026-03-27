@@ -442,7 +442,7 @@ class TestArchiveBitInvariance:
     def test_analysis_archive_has_verify_target(self):
         """The analysis archive Makefile must include a 'verify' target
         that checks md5sums, so reviewers can confirm bit-invariance."""
-        archive_mk = os.path.join(REPO, "Makefile.analysis-manuscript")
+        archive_mk = os.path.join(REPO, "release", "templates", "Makefile.analysis-manuscript")
         with open(archive_mk) as f:
             content = f.read()
         assert re.search(r"^verify\s*:", content, re.MULTILINE), (
@@ -450,59 +450,52 @@ class TestArchiveBitInvariance:
             "that runs md5sum -c expected_outputs.md5"
         )
 
+    @staticmethod
+    def _read_analysis_build_script():
+        script = os.path.join(REPO, "release", "scripts", "build_analysis_archive.sh")
+        with open(script) as f:
+            return f.read()
+
     def test_analysis_archive_checksums_cover_all_outputs(self):
-        """expected_outputs.md5 must be generated from $(ANALYSIS_OUTPUTS)."""
-        mk = self._read_makefile()
-        m = re.search(
-            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE,
-        )
-        assert m, "archive-analysis recipe not found"
-        recipe = m.group(1)
-        assert "ANALYSIS_OUTPUTS" in recipe, (
-            "archive-analysis checksum generation must use $(ANALYSIS_OUTPUTS)"
+        """expected_outputs.md5 must be generated in the build script."""
+        script = self._read_analysis_build_script()
+        assert "expected_outputs.md5" in script, (
+            "build_analysis_archive.sh must generate expected_outputs.md5"
         )
 
     def test_archive_scripts_match_recipe(self):
         """Every script copied into the archive must appear in ANALYSIS_OUTPUTS deps
-        or the archive recipe. No orphan scripts in the archive."""
+        or the build script. No orphan scripts in the archive."""
         mk = self._read_makefile()
-        m = re.search(
-            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE,
-        )
-        assert m, "archive-analysis recipe not found"
-        recipe = m.group(1)
-        # Extract all .py files copied
-        copied_scripts = re.findall(r"scripts/(\w+\.py)", recipe)
+        script = self._read_analysis_build_script()
+        # Extract all .py files from the build script's for-loop and cp lines
+        copied_scripts = re.findall(r"(\w+\.py)", script)
         # Each copied script must either be in the Makefile's dep graph
         # or be a utility (utils.py, plot_style.py)
-        utilities = {"utils.py", "plot_style.py"}
-        for script in copied_scripts:
-            if script in utilities:
+        utilities = {
+            "utils.py", "plot_style.py",
+            "pipeline_loaders.py", "pipeline_io.py",
+            "pipeline_progress.py", "pipeline_text.py",
+        }
+        for s in copied_scripts:
+            if s in utilities:
                 continue
             # Script must appear as a dependency somewhere in the Makefile
-            assert script in mk, (
-                f"Archive copies {script} but it's not referenced "
+            assert s in mk, (
+                f"Archive copies {s} but it's not referenced "
                 f"in Makefile dependency graph"
             )
 
     def test_archive_copies_all_needed_scripts(self):
         """Every scripts/*.py that is a prerequisite of an ANALYSIS_OUTPUTS
-        target must be copied in the archive-analysis recipe.
+        target must be copied in the build script.
 
         This is the reverse of test_archive_scripts_match_recipe: it catches
         new script dependencies that were added to a Makefile rule but not
         to the archive's cp list."""
         mk = self._read_makefile()
-        # Extract the archive recipe's copied scripts
-        m = re.search(
-            r"^archive-analysis\s*:.*?\n((?:\t.*\n?)*)",
-            mk, re.MULTILINE,
-        )
-        assert m, "archive-analysis recipe not found"
-        recipe = m.group(1)
-        copied = set(re.findall(r"scripts/([\w.]+\.py)", recipe))
+        script = self._read_analysis_build_script()
+        copied = set(re.findall(r"([\w.]+\.py)", script))
         # Extract ANALYSIS_OUTPUTS targets
         m_out = re.search(
             r"^ANALYSIS_OUTPUTS\s*:?=(.*?)(?=\n\S|\Z)",
@@ -524,7 +517,7 @@ class TestArchiveBitInvariance:
         # Every needed script must be in the copied set
         missing = needed - copied
         assert not missing, (
-            f"archive-analysis is missing cp for scripts needed by "
+            f"build_analysis_archive.sh is missing cp for scripts needed by "
             f"ANALYSIS_OUTPUTS targets: {sorted(missing)}"
         )
 

@@ -49,7 +49,7 @@ deposit to ensure reproducibility.
 
 - **Data paper** (submitted to RDJ4HSS, 2026-03-26): full methodology, data records, technical validation
 - **Technical report** (`content/technical-report.qmd`): detailed pipeline documentation
-- **README-datapaper.md**: two-level verification protocol (checksums + full rebuild)
+- **release/templates/README-datapaper.md**: two-level verification protocol (checksums + full rebuild)
 - **Inline audit trail**: `is_flagged`, `flag_reason`, `is_protected` columns in corpus CSV
 - **DVC pipeline definition** (`dvc.yaml`): complete dependency graph
 - **Version-controlled configuration**: keyword taxonomy, quality thresholds, model parameters
