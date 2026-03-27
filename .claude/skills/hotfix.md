@@ -22,11 +22,14 @@ Run these steps in order. Stop and report on failure at any step.
 ### 1. Verify — clean working tree, tests pass
 
 ```bash
-# Must be on main with no uncommitted changes
+# Must start from main with no uncommitted changes
+git checkout main
+git pull origin main
 git status --porcelain
 ```
 
-If the working tree is dirty, ask the user what to do. Then:
+If not on main, switch to it first. If the working tree is dirty, ask the
+user what to do (uncommitted work may belong to another task). Then:
 
 ```bash
 make check-fast
@@ -62,6 +65,8 @@ Stage only the changed files (no `git add -A`). Commit message format:
 fix: <what was fixed>
 
 <Why this change and not another — one sentence.>
+
+<session URL>
 ```
 
 The pre-commit hook will enforce repo invariants (no main commits — but we're
