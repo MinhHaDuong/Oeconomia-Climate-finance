@@ -28,7 +28,7 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 ## Post-submission improvements
 
 - [x] Split embeddings encoding (Phase 1) from UMAP+clustering (Phase 2) (#189)
-- [ ] Split remaining enrich stages into independent DVC stages
+- [x] Split remaining enrich stages into independent DVC stages (#428)
 - [x] Re-enable Semantic Scholar with API key (#263)
 - [x] Add `in_v1` provenance column for v1.0 backward compatibility (#283)
 - [ ] JETP query: add concept filter to exclude physics journal noise
@@ -59,3 +59,5 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - Retry robustness + budget guard (#171): unified retry_get, API key fix, budget-aware fetch
 - Split embeddings (#189): enrich_embeddings.py (Phase 1 encoding) + analyze_embeddings.py (Phase 2 UMAP+clustering)
 - Phase separation + manuscript cleanup (#189b): surgical Makefile deps, no API calls in Phase 3, structural break purge, layout fixes
+- Enrichment pipeline independence (#428): 4 DVC stages + join_enrichments.py, post-checkout hook symlinks .dvc/config.local (#505)
+- Code smell cleanup (#507): 26 dead imports removed, 11 complex functions refactored, global cache → class, normalize_doi_safe helper, exception narrowing
