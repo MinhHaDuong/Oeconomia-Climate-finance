@@ -8,6 +8,9 @@ argument-hint: [title]
 
 # Create local ticket
 
+**Input:** anything — a title, a sentence, a JSON blob from `gh`, a paste
+from a conversation. Extract the intent and normalize to `%ticket v1`.
+
 ## Steps
 
 1. Determine the next ID:

@@ -190,3 +190,11 @@ The Go validator enforces:
 
 A ticket may reference a GitHub issue (`Blocked-by: gh#435`) but never
 caches it. The two systems are independent.
+
+## Postel's Law
+
+**Strict on write, tolerant on read.** The validator enforces `%ticket v1`
+on commit. But you — the agent — are the parser for arbitrary input. If you
+receive ticket-like information in any form (raw JSON from `gh`, a sentence,
+a markdown sketch), understand the intent and write clean `%ticket v1`. The
+pre-commit hook catches mistakes. The tolerance is in you, not the tooling.

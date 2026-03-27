@@ -218,6 +218,29 @@ but are not the primary path.
 See `.claude/rules/tickets.md` for the complete format specification.
 That file is authoritative; this PEP documents the rationale.
 
+### 10. Postel's Law: tolerant on read, strict on write
+
+**Choice:** The validator enforces `%ticket v1` strictly on commit. But the
+agent — not the tooling — is the parser for arbitrary input.
+
+**Rationale:** An agent may receive ticket-like information in any form:
+raw `gh issue view --json` output, a sentence in conversation, a markdown
+sketch, a paste from a PR comment. Requiring the agent to first convert
+this into `%ticket v1` before it can reason about it would be a barrier.
+
+Instead: the agent reads whatever it finds, understands the intent, and
+writes clean `%ticket v1`. The pre-commit hook catches any formatting
+mistakes. The tolerance is in the LLM, not the tooling.
+
+This keeps the tooling simple (one format to parse, one format to
+validate) while making the system maximally agent-friendly. The strict
+format is a *write contract*, not a *read requirement*.
+
+**Implication for skills:** Skill prompts accept any input shape and
+normalize to `%ticket v1` on output. The `/ticket-new` skill can take
+a JSON blob, a sentence, or a structured template — it produces the
+same canonical format.
+
 ## Open questions
 
 1. **v2 header candidates**: Labels, Priority, Assignee — add when needed.
@@ -225,3 +248,5 @@ That file is authoritative; this PEP documents the rationale.
    per-project?
 3. **Cross-machine coordination**: Currently out of scope. If needed,
    the `.wip` protocol could be extended with a network-aware lock.
+4. **Log verb enforcement**: The spec lists a closed verb set but the
+   validator only checks structural format (rule 10). Enforce in v2?
