@@ -17,8 +17,7 @@
       "Glob",
       "Grep",
       "Skill",
-      "Edit(/.claude/skills/review-pr-prose/**)",
-      "Edit(/.claude/skills/update-publist/**)"
+      "Edit(/.claude/**)"
     ],
     "additionalDirectories": [
       "/home/haduong/CNRS/html/src"
