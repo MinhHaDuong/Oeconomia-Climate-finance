@@ -80,6 +80,7 @@ The agent must always know and declare its current DD phase.
 | `/autonomous` | Unsupervised autonomous session | Dragon Dreaming cycles with 60/40 balance |
 | `/submission-branch` | Creating a submission branch | Sprout, freeze, revision lifecycle |
 | `/submission-readiness` | Pre-submission gate | Checklist before sprouting |
+| `/update-publist` | Adding/updating a publication | Edit Ha-Duong.bib, deposit on HAL via SWORD |
 
 ## Autonomous workflow
 
