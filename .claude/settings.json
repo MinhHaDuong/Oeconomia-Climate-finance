@@ -13,7 +13,8 @@
       "Glob",
       "Grep",
       "Skill",
-      "Edit(/.claude/**)"
+      "Edit(/.claude/**)",
+      "WebFetch(domain:docs.astral.sh)"
     ],
     "deny": [
       "Bash(rm -rf *)",
