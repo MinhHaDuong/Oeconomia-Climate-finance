@@ -2,7 +2,11 @@
 
 Parked ideas for post-submission.
 
+> **Status review 2026-03-28**: Both papers submitted (Oeconomia 03-18, RDJ4HSS 03-26). Annotations below.
+
 ## Repro packages (phase 4)
+
+> **PARTIAL** — Phase 4 documented (#502), archive helpers in `release/` (#495, #493), build scripts extracted (#500). manifest.txt auto-generation and per-phase repro notes not yet built.
 
 - Based on manifest.txt auto-generated from the Makefile (+AI sandbox validation)
 - Each phase gets its own repro package with its own repro note
@@ -13,11 +17,15 @@ Parked ideas for post-submission.
 
 ## qmd vs tex
 
+> **MOOT** — Both submissions used qmd successfully. Revisit only if a journal requests .tex source.
+
 - Not convinced qmd > tex for Oeconomia
 - Escape hatch: `quarto render --to latex` if journal wants .tex source
 - Switching cost probably not worth it now since qmd already works
 
 ## Conversation logging & replay
+
+> **PARTIAL** — Agentic harness telemetry module landed (#489). Full conversation replay and ollama benchmarking not started.
 
 - Memorize all conversations and tool calls
 - Can verify which `gh` functions are actually used (audit before replacing)
@@ -27,6 +35,8 @@ Parked ideas for post-submission.
   - Can also use replays to refine the harness itself (as minimax team did)
 
 ## Polars (Rust pandas replacement)
+
+> **NOT STARTED** — No urgency; current pandas code works and performance issues are documented but not blocking.
 
 - Evaluate replacing pandas with Polars in Phase 2 scripts
 - Already had `iterrows()` performance issues on 20K+ DataFrames
@@ -38,6 +48,6 @@ Parked ideas for post-submission.
 ## Open questions (to resolve post-submission)
 
 - Phase 2 repro package: pointer to phase 1 (DOI) or bundled snapshot?
-- Data paper: standalone submission (Scientific Data/JOSS) or HAL working paper?
+- ~~Data paper: standalone submission (Scientific Data/JOSS) or HAL working paper?~~ **RESOLVED** — submitted to RDJ4HSS (diamond OA), under review since 2026-03-26.
 - manifest.txt: walk Make DAG, DVC DAG, or both?
 - AI sandbox validation: CI job in container?
