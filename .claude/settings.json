@@ -15,6 +15,11 @@
       "Skill",
       "Edit(/.claude/**)"
     ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(*> /etc/*)"
+    ],
     "additionalDirectories": [
       "/home/haduong/CNRS/html/src"
     ]
