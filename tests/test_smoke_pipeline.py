@@ -1,11 +1,17 @@
 """Smoke pipeline: run Phase 2 analysis on a tiny corpus fixture.
 
-Validates that the full analysis pipeline (figures, tables, stats) runs
-end-to-end on a 100-row fixture without network access or DVC remote.
+Validates that the analysis pipeline (tables, figures) runs end-to-end on
+a 100-row fixture without network access or DVC remote.
 
 The fixture lives in tests/fixtures/smoke/ and is checked into git (<1 MB).
 Scripts locate it via the CLIMATE_FINANCE_DATA environment variable, which
 overrides the default data/catalogs/ path in pipeline_loaders.py.
+
+Smoke tests exercise the critical Phase 2 chain:
+  compute_breakpoints → compute_clusters → plot_fig1_bars
+
+Scripts that require larger data (analyze_bimodality, analyze_cocitation)
+are excluded — they need statistical mass that 100 rows can't provide.
 """
 
 import os
@@ -18,7 +24,6 @@ import pytest
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "smoke")
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
-ROOT_DIR = os.path.join(os.path.dirname(__file__), "..")
 
 SMOKE_N_ROWS = 100
 
@@ -61,7 +66,8 @@ class TestSmokeFixtureExists:
     def test_fixture_total_size_under_1mb(self):
         total = 0
         for fname in os.listdir(FIXTURE_DIR):
-            total += os.path.getsize(os.path.join(FIXTURE_DIR, fname))
+            if not fname.startswith("."):
+                total += os.path.getsize(os.path.join(FIXTURE_DIR, fname))
         assert total < 1_000_000, f"Fixture total size {total} bytes exceeds 1 MB"
 
 
@@ -91,33 +97,62 @@ def _run_script(script_name, *args, timeout=60):
 
 
 # ---------------------------------------------------------------------------
-# Phase 2 script smoke tests
+# Phase 2 script smoke tests — critical path
 # ---------------------------------------------------------------------------
 
 @pytest.mark.slow
-class TestSmokePhase2:
-    """Each Phase 2 script runs without error on the fixture data."""
+class TestSmokeCriticalPath:
+    """Core Phase 2 scripts run without error on fixture data.
 
-    def test_compute_breakpoints(self, tmp_path):
+    These scripts form the critical pipeline chain:
+    refined_works.csv → breakpoints → clusters → figures.
+    """
+
+    def test_compute_breakpoints(self):
         result = _run_script("compute_breakpoints.py", "--no-pdf")
         assert result.returncode == 0, (
             f"compute_breakpoints.py failed:\n{result.stderr}"
         )
 
-    def test_compute_clusters(self, tmp_path):
+    def test_compute_clusters(self):
         result = _run_script("compute_clusters.py", "--no-pdf")
         assert result.returncode == 0, (
             f"compute_clusters.py failed:\n{result.stderr}"
         )
 
-    def test_analyze_bimodality(self, tmp_path):
-        result = _run_script("analyze_bimodality.py", "--no-pdf")
-        assert result.returncode == 0, (
-            f"analyze_bimodality.py failed:\n{result.stderr}"
-        )
-
-    def test_plot_fig1_bars(self, tmp_path):
+    def test_plot_fig1_bars(self):
         result = _run_script("plot_fig1_bars.py", "--no-pdf")
         assert result.returncode == 0, (
             f"plot_fig1_bars.py failed:\n{result.stderr}"
+        )
+
+    def test_plot_fig1_bars_v1(self):
+        result = _run_script("plot_fig1_bars.py", "--no-pdf", "--v1-only")
+        assert result.returncode == 0, (
+            f"plot_fig1_bars.py --v1-only failed:\n{result.stderr}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Makefile smoke target
+# ---------------------------------------------------------------------------
+
+class TestSmokeMakeTarget:
+    """make smoke target is declared in the Makefile."""
+
+    def test_makefile_has_smoke_target(self):
+        import re
+        makefile = os.path.join(os.path.dirname(__file__), "..", "Makefile")
+        with open(makefile) as f:
+            content = f.read()
+        assert re.search(r"^smoke\s*:", content, re.MULTILINE), (
+            "Makefile missing 'smoke' target"
+        )
+
+    def test_smoke_in_phony(self):
+        makefile = os.path.join(os.path.dirname(__file__), "..", "Makefile")
+        with open(makefile) as f:
+            content = f.read()
+        assert "smoke" in content.split(".PHONY:")[1].split("\n")[0] if ".PHONY:" in content else False, (
+            "smoke not in .PHONY declaration"
         )

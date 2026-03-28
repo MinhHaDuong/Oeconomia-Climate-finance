@@ -103,7 +103,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper
 
 .DEFAULT_GOAL := manuscript
 
@@ -466,6 +466,11 @@ check:
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
 check-fast:
 	uv run pytest tests/ -v --tb=short -m "not slow and not integration"
+
+# Smoke pipeline: run Phase 2 on a 100-row fixture (no DVC pull needed, <30s).
+# Exercises: compute_breakpoints, compute_clusters, plot_fig1_bars.
+smoke:
+	uv run pytest tests/test_smoke_pipeline.py -v --tb=short
 
 # ── Setup (run once after cloning) ───────────────────────
 setup:
