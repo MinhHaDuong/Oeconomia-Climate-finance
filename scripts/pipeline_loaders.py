@@ -50,9 +50,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 
-# Data lives in <repo>/data/ (managed by DVC).
+# Data lives in <repo>/data/catalogs/ (managed by DVC).
+# Override with CLIMATE_FINANCE_DATA env var for smoke tests / worktrees.
+_data_override = os.environ.get("CLIMATE_FINANCE_DATA")
 DATA_DIR = os.path.join(BASE_DIR, "data")
-CATALOGS_DIR = os.path.join(DATA_DIR, "catalogs")
+CATALOGS_DIR = _data_override or os.path.join(DATA_DIR, "catalogs")
 EXPORTS_DIR = os.path.join(DATA_DIR, "exports")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 POOL_DIR = os.path.join(DATA_DIR, "pool")

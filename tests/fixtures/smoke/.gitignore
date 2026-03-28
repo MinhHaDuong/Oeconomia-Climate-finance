@@ -1,0 +1,9 @@
+# Ignore outputs written by scripts that use CATALOGS_DIR for both I/O
+# (e.g., build_het_core.py writes het_mostcited_50.csv here when
+# CLIMATE_FINANCE_DATA points to this directory).
+# Only the 3 contract files should be tracked.
+*
+!.gitignore
+!refined_works.csv
+!refined_embeddings.npz
+!refined_citations.csv
