@@ -34,6 +34,10 @@ CF_PATTERN = re.compile(r"\bclimate[\s-]?finance\b", re.IGNORECASE)
 
 def main():
     parser = argparse.ArgumentParser(description="Plot Fig 1 bar chart")
+    parser.add_argument("--output", type=str, required=True,
+                        help="Output file path (e.g., content/figures/fig_bars.png)")
+    parser.add_argument("--input", type=str, nargs="+", default=None,
+                        help="Input CSV path(s) (default: refined_works.csv from CATALOGS_DIR)")
     parser.add_argument("--no-pdf", action="store_true",
                         help="Skip PDF output")
     parser.add_argument("--v1-only", action="store_true",
@@ -41,7 +45,7 @@ def main():
     args = parser.parse_args()
 
     # --- Load corpus ---
-    csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    csv_path = args.input[0] if args.input else os.path.join(CATALOGS_DIR, "refined_works.csv")
     usecols = ["year", "title", "abstract"]
     if args.v1_only:
         # Check column exists before loading
@@ -135,8 +139,7 @@ def main():
     fig.tight_layout()
 
     # --- Save ---
-    stem = "fig_bars_v1" if args.v1_only else "fig_bars"
-    out_path = os.path.join(BASE_DIR, "content", "figures", stem)
+    out_path = os.path.splitext(args.output)[0]  # save_figure adds extension
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 

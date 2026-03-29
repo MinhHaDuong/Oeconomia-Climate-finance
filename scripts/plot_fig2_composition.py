@@ -57,6 +57,8 @@ def _format_tfidf_line(terms_str, max_terms=9, line_width=35):
 
 def main():
     parser = argparse.ArgumentParser(description="Figure 2: thematic recomposition")
+    parser.add_argument("--output", type=str, required=True,
+                        help="Output file path (e.g., content/figures/fig_composition.png)")
     parser.add_argument("--no-pdf", action="store_true", help="skip PDF output")
     parser.add_argument("--alluvial", type=str, default=None,
                         help="Path to alluvial CSV (default: tab_alluvial.csv)")
@@ -157,7 +159,7 @@ def main():
     fig.subplots_adjust(top=0.97, bottom=0.07, hspace=0.75, wspace=0.18)
 
     # Save
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_composition")
+    out_path = os.path.splitext(args.output)[0]  # save_figure adds extension
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 
