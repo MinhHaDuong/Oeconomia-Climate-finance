@@ -2,15 +2,32 @@
 
 When creating or modifying scripts in `scripts/`:
 
+## Use the shared I/O parser
+
+Import `parse_io_args` and `validate_io` from `script_io_args.py`:
+
+```python
+from script_io_args import parse_io_args, validate_io
+
+def main():
+    io_args, extra = parse_io_args()       # --output (required), --input (optional)
+    validate_io(output=io_args.output)      # fail fast if output dir missing
+
+    # Script-specific args parsed from 'extra'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-pdf", action="store_true")
+    args = parser.parse_args(extra)
+
+    # ... computation ...
+
+    out_path = os.path.splitext(io_args.output)[0]
+    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+```
+
 ## Required: --output argument
 
 Every script that produces a file must accept `--output <path>` (required, no default).
 The Makefile passes the target path via `$@`.
-
-```python
-parser.add_argument("--output", type=str, required=True,
-                    help="Output file path")
-```
 
 ## Optional: --input argument
 
@@ -20,7 +37,7 @@ accept `--input` to make dependencies explicit.
 
 ## Save path
 
-Use `os.path.splitext(args.output)[0]` as the stem passed to `save_figure()`,
+Use `os.path.splitext(io_args.output)[0]` as the stem passed to `save_figure()`,
 which appends the extension. This way the Makefile controls the output path.
 
 ## Makefile convention
