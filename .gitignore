@@ -64,3 +64,4 @@ output/
 
 /.quarto/
 _variables.yml
+benchmarks/
