@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-27
+Last updated: 2026-03-29
 
 ## Status: TWO PAPERS SUBMITTED
 
@@ -35,6 +35,7 @@ Under review (peer reviewers + data specialists).
 - DVC clean, 18 files pushed
 - Enrichment pipeline split into independent DVC stages (#428, #505)
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
+- Infrastructure sprint (#508–#514): smoke pipeline, I/O discipline, Makefile namespaces, parameterized K, revision runbook, performance baseline
 
 ## Blockers
 
@@ -45,3 +46,4 @@ None.
 - Send Errata 1 to Oeconomia editor
 - Finalize DMP on OPIDoR
 - ESHET-HES conference slides (Nice, May 26–29)
+- Remaining infrastructure: #513 (schema contracts), #515 (DAG viz), #516 (determinism checker), #428 (enrichment normalization)
