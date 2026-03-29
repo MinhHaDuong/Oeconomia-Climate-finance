@@ -331,6 +331,7 @@ stages:
       - scripts/pipeline_loaders.py
       - scripts/pipeline_progress.py
       - scripts/pipeline_text.py
+      - config/analysis.yaml
       - data/catalogs/enriched_works.csv
       - data/catalogs/embeddings.npz
     outs:
