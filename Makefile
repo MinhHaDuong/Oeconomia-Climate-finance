@@ -1,20 +1,24 @@
 # Makefile — Counting Climate Finance (Œconomia)
 #
-# Four-phase pipeline:
-#   Phase 1: make corpus       Corpus building (slow — API calls, run rarely)
-#   Phase 2: make figures      Analysis & figures (fast, deterministic, run often)
-#   Phase 3: make manuscript   Render documents (Quarto → PDF/DOCX)
-#   Phase 4: make archive-*    Release & reproducibility archives
+# Four-phase pipeline, namespaced by concern:
+#   corpus-*      Phase 1: collection, enrichment, alignment (slow, API-dependent)
+#   analysis-*    Phase 2: embeddings, clustering, figures (fast, deterministic)
+#   manuscript-*  Phase 3: Oeconomia article rendering
+#   datapaper-*   Phase 3: RDJ4HSS data paper rendering
+#   archive-*     Phase 4: release & reproducibility packages
 #
 # Usage:
-#   make              Build all documents (manuscript + 3 companion papers)
-#   make manuscript   Build manuscript only (PDF + DOCX)
-#   make papers       Build technical report, data paper, companion paper
-#   make figures      Regenerate all figures (from existing data)
-#   make archive-manuscript  Minimal package for Oeconomia reviewers
-#   make archive-datapaper   Full pipeline package for data paper
-#   make clean        Remove build outputs
-#   make rebuild      Clean + rebuild everything
+#   make                    Build manuscript (default)
+#   make manuscript         Build manuscript only (PDF + DOCX)
+#   make papers             Build all documents
+#   make analysis-figures   Regenerate all figures
+#   make analysis-stats     Recompute computed variables
+#   make corpus             Full Phase 1 pipeline (padme only)
+#   make corpus-sync        Pull data from padme (doudou only)
+#   make archive-manuscript Minimal package for Oeconomia reviewers
+#   make archive-datapaper  Full pipeline package for data paper
+#   make clean              Remove build outputs
+#   make rebuild            Clean + rebuild everything
 
 # ── Paths ─────────────────────────────────────────────────
 # Data lives in data/catalogs/ (managed by DVC).
@@ -103,7 +107,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
 
 .DEFAULT_GOAL := manuscript
 
@@ -404,6 +408,12 @@ figures-companion:  check-corpus $(COMPANION_FIGS)
 figures-techrep:    check-corpus $(TECHREP_FIGS)
 figures: check-corpus $(ALL_FIGS) corpus-tables
 
+# ── Namespaced aliases (Phase 2) ────────────────────────
+# Organized by concern for discoverability: make analysis-<tab>
+analysis-figures: figures
+analysis-tables: corpus-tables $(MOSTCITED)
+analysis-stats: stats
+
 # ═══════════════════════════════════════════════════════════
 # PHASE 3 — Render (Quarto → PDF/DOCX)
 # ═══════════════════════════════════════════════════════════
@@ -411,6 +421,13 @@ figures: check-corpus $(ALL_FIGS) corpus-tables
 manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
 papers: check-corpus output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
+
+# ── Namespaced aliases (Phase 3) ────────────────────────
+manuscript-render: manuscript
+manuscript-figures: figures-manuscript
+
+datapaper-render: output/content/data-paper.pdf
+datapaper-figures: figures-datapaper
 
 output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to pdf
