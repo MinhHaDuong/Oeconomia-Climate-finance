@@ -251,16 +251,16 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 # -- Manuscript (Oeconomia article) --
 # Fig 1 (bars): corpus growth per year
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
+	uv run python $< --output $@ --no-pdf
 
 # Fig 1 v1 variant: restricted to submission corpus for manuscript stability
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf --v1-only
+	uv run python $< --output $@ --no-pdf --v1-only
 
 # Fig 2 (composition): frozen v1 archive data + corrected labels
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
-	uv run python $< --no-pdf --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
+	uv run python $< --output $@ --no-pdf --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 # -- Data paper --
 # Semantic UMAP maps (3 co-produced figures)

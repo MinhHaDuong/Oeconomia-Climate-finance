@@ -1,10 +1,12 @@
-"""Fig 1 (bars): Corpus documents per year, 2000-2024.
+"""Fig 1 (bars): Corpus documents per year, 1992-2023.
 
 Stacked bar chart showing total corpus size and the subset mentioning
 "climate finance" in title or abstract. For Oeconomia submission.
+
+Usage:
+    uv run python scripts/plot_fig1_bars.py --output content/figures/fig_bars.png [--no-pdf] [--v1-only]
 """
 
-import argparse
 import os
 import re
 
@@ -19,7 +21,8 @@ from plot_style import (
     LIGHT,
     apply_style,
 )
-from utils import BASE_DIR, CATALOGS_DIR, save_figure
+from script_io_args import parse_io_args, validate_io
+from utils import CATALOGS_DIR, save_figure
 
 apply_style()
 
@@ -33,15 +36,19 @@ CF_PATTERN = re.compile(r"\bclimate[\s-]?finance\b", re.IGNORECASE)
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(description="Plot Fig 1 bar chart")
     parser.add_argument("--no-pdf", action="store_true",
                         help="Skip PDF output")
     parser.add_argument("--v1-only", action="store_true",
                         help="Restrict to v1.0-submission corpus (in_v1==1)")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # --- Load corpus ---
-    csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    csv_path = io_args.input[0] if io_args.input else os.path.join(CATALOGS_DIR, "refined_works.csv")
     usecols = ["year", "title", "abstract"]
     if args.v1_only:
         # Check column exists before loading
@@ -135,8 +142,7 @@ def main():
     fig.tight_layout()
 
     # --- Save ---
-    stem = "fig_bars_v1" if args.v1_only else "fig_bars"
-    out_path = os.path.join(BASE_DIR, "content", "figures", stem)
+    out_path = os.path.splitext(io_args.output)[0]  # save_figure adds extension
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 

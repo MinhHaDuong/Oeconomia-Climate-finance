@@ -5,24 +5,17 @@ Six-panel grouped horizontal bar chart showing how each thematic cluster's
 share evolves from Before (1990-2006) through Crystallisation (2007-2014)
 to Disputes (2015-2024).
 
-Inputs:
-  - content/tables/tab_alluvial.csv  (period × cluster counts)
-  - content/tables/cluster_labels.json (cluster names)
-
-Outputs:
-  - content/figures/fig_composition.png (+.pdf unless --no-pdf)
-
 Usage:
-    uv run python scripts/plot_fig2_composition.py [--no-pdf]
+    uv run python scripts/plot_fig2_composition.py --output content/figures/fig_composition.png [--no-pdf]
 """
 
-import argparse
 import os
 import textwrap
 
 import numpy as np
 import pandas as pd
 from plot_style import DARK, DPI, FIGWIDTH, LIGHT, MED, apply_style
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, load_cluster_labels, save_figure
 
 apply_style()
@@ -56,13 +49,17 @@ def _format_tfidf_line(terms_str, max_terms=9, line_width=35):
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(description="Figure 2: thematic recomposition")
     parser.add_argument("--no-pdf", action="store_true", help="skip PDF output")
     parser.add_argument("--alluvial", type=str, default=None,
                         help="Path to alluvial CSV (default: tab_alluvial.csv)")
     parser.add_argument("--labels", type=str, default=None,
                         help="Path to cluster labels JSON (default: cluster_labels.json)")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # Load data
     csv_path = args.alluvial or os.path.join(BASE_DIR, "content", "tables", "tab_alluvial.csv")
@@ -157,7 +154,7 @@ def main():
     fig.subplots_adjust(top=0.97, bottom=0.07, hspace=0.75, wspace=0.18)
 
     # Save
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_composition")
+    out_path = os.path.splitext(io_args.output)[0]  # save_figure adds extension
     save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
     plt.close(fig)
 
