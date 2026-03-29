@@ -232,10 +232,12 @@ def main():
     # Step 2: KMeans clustering
     # ============================================================
 
-    log.info("Clustering with KMeans (k=6, matching co-citation communities)...")
-    kmeans = KMeans(n_clusters=6, random_state=42, n_init=20)
+    cfg = load_analysis_config()
+    k = cfg["clustering"]["k"]
+    log.info("Clustering with KMeans (k=%d from config/analysis.yaml)...", k)
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=20)
     df["semantic_cluster"] = kmeans.fit_predict(coords)
-    n_clusters = 6
+    n_clusters = k
     log.info("Semantic clusters: %d", n_clusters)
 
     # Cluster sizes
