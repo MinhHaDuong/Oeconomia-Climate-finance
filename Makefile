@@ -107,7 +107,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-save check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
 
 .DEFAULT_GOAL := manuscript
 
@@ -493,6 +493,17 @@ smoke:
 # Catches unseeded randomness, leaking timestamps, floating-point non-determinism.
 determinism-check:
 	uv run pytest tests/test_determinism.py -v --tb=short
+
+# Regression hashes: run Phase 2 scripts on smoke data, compare output hashes
+# against golden baseline. Catches unintentional output changes from refactoring,
+# dependency upgrades, or parameter drift. Float tolerance: 8 significant digits.
+#   make regression          — check against golden baseline
+#   make regression-save     — regenerate golden baseline (after intentional change)
+regression:
+	uv run python scripts/regression_hashes.py --check
+
+regression-save:
+	uv run python scripts/regression_hashes.py --save
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.
