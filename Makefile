@@ -107,7 +107,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
 
 .DEFAULT_GOAL := manuscript
 
@@ -488,6 +488,11 @@ check-fast:
 # Exercises: compute_breakpoints, compute_clusters, plot_fig1_bars.
 smoke:
 	uv run pytest tests/test_smoke_pipeline.py -v --tb=short
+
+# Determinism check: run figure scripts twice on smoke data, diff outputs.
+# Catches unseeded randomness, leaking timestamps, floating-point non-determinism.
+determinism-check:
+	uv run pytest tests/test_determinism.py -v --tb=short
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.
