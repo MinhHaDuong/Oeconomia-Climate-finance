@@ -526,14 +526,8 @@ class TestArchiveBitInvariance:
 # 7. No bare print() in pipeline scripts
 # ---------------------------------------------------------------------------
 
-# CLI tools produce user-facing reports on stdout — print() is fine there.
-# Pipeline scripts (compute, plot, enrich, etc.) must use logging.
-CLI_TOOLS = {
-    "regression_hashes.py",
-    "regression_history.py",
-}
-
 # Pipeline script prefixes that must use logging, not print().
+# Scripts outside these prefixes (CLI tools, one-off utilities) are not checked.
 _PIPELINE_PREFIXES = (
     "compute_", "plot_", "enrich_", "catalog_", "qa_", "qc_",
     "build_", "export_", "analyze_", "filter_", "corpus_",
@@ -548,8 +542,6 @@ class TestNoBarePrint:
         """Pipeline scripts may not use bare print() (use log.info())."""
         violators = []
         for name in _all_scripts():
-            if name in LIBRARY_SCRIPTS or name in CLI_TOOLS:
-                continue
             if not name.startswith(_PIPELINE_PREFIXES):
                 continue
             tree = _parse_script(name)
