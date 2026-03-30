@@ -49,17 +49,7 @@ Explore alternatives, design strategies, prototype approaches. Use GitHub Issues
 ### Doing
 Runs in a fresh context — the ticket is the only input. Launch via `/start-ticket`.
 
-Autonomous execution using test-driven development. The inner cycle is:
-
-1. **Red**: write a failing test that defines the expected behavior. Commit.
-2. **Green**: write the minimum code to make it pass. Commit.
-3. **Refactor**: clean up, then confirm tests still pass. Use `make check-fast` during development. Commit.
-4. **PR**: Pass `make check` gate, then push and open a PR.
-5. **Review**: `/review-pr` or `/review-pr-prose`.
-6. **Fix**: Fix all issues. Nits: fix them. Code smells: ultrathink architectural improvements.
-7. **Iterate**: Up to three review/fix cycles.
-
-Use `make check-fast` during development, `make check` before opening a PR.
+Test first. Fix the pattern, not just the instance. Clean up. `make check-fast` between commits, `make check` before PR. Then `/review-pr` — up to three review/fix cycles.
 
 ### Celebrating (autonomous)
 Runs via `/celebrate`. Celebrating is not a formality — it closes the energy cycle. Reflect on what was accomplished and learned, acknowledge contributions, release the context.
