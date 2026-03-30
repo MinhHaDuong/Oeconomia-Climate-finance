@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from plot_style import DARK, DPI, FIGWIDTH, MED, apply_style
-from sklearn.mixture import GaussianMixture
 from script_io_args import parse_io_args, validate_io
+from sklearn.mixture import GaussianMixture
 from utils import (
     BASE_DIR,
     CATALOGS_DIR,
@@ -193,9 +193,9 @@ def main():
     plt.close()
 
     # ── Save CSV ──
-    out_dir = os.path.dirname(io_args.output)
     tab = pd.DataFrame(stats_rows)
-    csv_path = os.path.join(out_dir, "tab_seed_axis_core.csv") if out_dir else "tab_seed_axis_core.csv"
+    os.makedirs(TABLES_DIR, exist_ok=True)
+    csv_path = os.path.join(TABLES_DIR, "tab_seed_axis_core.csv")
     tab.to_csv(csv_path, index=False)
     log.info("Saved -> %s", csv_path)
 

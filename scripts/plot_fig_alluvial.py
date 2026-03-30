@@ -216,9 +216,9 @@ def main():
     ax.set_xlim(-0.06, 0.95)
     ax.set_ylim(-0.06, 1.0)
     total = int(alluvial_data.values.sum())
-    core_label = f"core papers cited >= {cite_threshold}, " if args.core_only else ""
+    core_label = f"core papers cited \u2265 {cite_threshold}, " if args.core_only else ""
     ax.set_title(
-        f"Thematic recomposition of scholarship around climate finance, 1990-2024\n"
+        f"Thematic recomposition of scholarship around climate finance, 1990\u20132024\n"
         f"({core_label}N = {total:,} publications; band width = number of publications per thematic cluster)",
         fontsize=7, pad=8,
     )

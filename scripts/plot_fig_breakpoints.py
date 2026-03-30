@@ -101,7 +101,7 @@ def main():
     ax.text(2024.3, 2.0, "z=2.0", fontsize=7, va="center", color="black", alpha=0.5)
     ax.set_xlabel("Year", fontsize=11)
     ax.set_ylabel("Structural divergence (z-score)", fontsize=11)
-    corpus_note = f" (core: cited >= {cite_threshold}, N={n_corpus:,})" if args.core_only else ""
+    corpus_note = f" (core: cited \u2265 {cite_threshold}, N={n_corpus:,})" if args.core_only else ""
     ax.set_title(f"Detecting structural shifts in scholarship around climate finance{corpus_note}",
                  fontsize=12, pad=15)
     ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))

@@ -95,7 +95,7 @@ REGISTRY: list[dict] = [
     {
         "name": "build_het_core",
         "script": "build_het_core.py",
-        "args": [],
+        "args": ["--output", "tests/fixtures/smoke/catalogs/het_mostcited_50.csv"],
         "deps": [],
         "outputs": [
             "tests/fixtures/smoke/catalogs/het_mostcited_50.csv",
