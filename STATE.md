@@ -32,6 +32,7 @@ Under review (peer reviewers + data specialists).
 - 42,922 raw → 31,713 refined works, 38,479 embeddings, 968,871 citations
 - Teaching expanded: 622 works from 52 institutions (scraper + LLM extraction)
 - Citation pipeline: cache-is-data architecture (#441), hardened with atomic writes + crash tolerance + no-DOI dedup (#529)
+- Fuzzy ref matching: GROBID-parsed refs matched to corpus works via rapidfuzz token_sort_ratio ≥ 85 with year ±1 blocking (#539)
 - DVC clean, 18 files pushed
 - Enrichment pipeline split into independent DVC stages (#428, #505)
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
