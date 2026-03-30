@@ -322,13 +322,13 @@ content/figures/fig_breakpoints.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py \
 		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
 		content/tables/tab_alluvial.csv
-	uv run python $<
+	uv run python $< --output $@
 
 # Alluvial figure (static PNG)
 content/figures/fig_alluvial.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $<
+	uv run python $< --output $@
 
 # Alluvial figure (interactive HTML)
 content/figures/fig_alluvial.html: \
@@ -362,7 +362,7 @@ content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py
 
 # Seed-axis violin (core, manuscript figure)
 content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 # PCA scatter (unsupervised)
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
@@ -397,12 +397,12 @@ content/figures/fig_breakpoints_core.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py \
 		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
 		content/tables/tab_alluvial_core.csv
-	uv run python $< --core-only
+	uv run python $< --output $@ --core-only
 
 content/figures/fig_alluvial_core.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
-	uv run python $< --core-only
+	uv run python $< --output $@ --core-only
 
 # Bimodality core variant tables
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
@@ -453,7 +453,7 @@ content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/uti
 # K-sensitivity figure
 content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 		content/tables/tab_k_sensitivity.csv
-	uv run python $<
+	uv run python $< --output $@
 
 # Lexical TF-IDF figures (one per detected break year; output filenames are
 # dynamic, so we use a sentinel file to track freshness).
