@@ -68,6 +68,8 @@ def cluster_spectral(X, k=6, random_state=42, max_n=5000):
     O(n³), infeasible on >10K works with 1024D input). Remaining points
     are assigned to nearest cluster centroid.
     """
+    import warnings
+
     from sklearn.cluster import SpectralClustering
     from sklearn.metrics import pairwise_distances_argmin_min
 
@@ -80,7 +82,14 @@ def cluster_spectral(X, k=6, random_state=42, max_n=5000):
             n_neighbors=min(15, n - 1),
             n_jobs=1,
         )
-        return sc.fit_predict(X)
+        # Well-separated clusters produce a block-diagonal affinity matrix
+        # (disconnected graph). Spectral clustering handles this correctly —
+        # each connected component maps to one cluster.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",
+                                    message="Graph is not fully connected",
+                                    category=UserWarning)
+            return sc.fit_predict(X)
 
     # Subsample + assign out-of-sample via nearest centroid
     rng = np.random.RandomState(random_state)
