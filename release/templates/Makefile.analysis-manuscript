@@ -44,6 +44,18 @@ content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFI
 content/tables/tab_pole_papers.csv &: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $<
 
+content/figures/fig_bimodality.png: scripts/plot_bimodality.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $<
+
+content/figures/fig_bimodality_lexical.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $<
+
+content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $<
+
 # ── Verification ──────────────────────────────────────────
 verify: figures
 	md5sum -c expected_outputs.md5

@@ -335,14 +335,24 @@ content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.p
 		content/tables/tab_breakpoints.csv
 	uv run python $<
 
-# Bimodality tests (co-produced)
-content/figures/fig_bimodality.png \
-content/figures/fig_bimodality_lexical.png \
-content/figures/fig_bimodality_keywords.png \
+# Bimodality tables (computation only — figures are separate targets below)
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
 content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $<
+
+# Bimodality figures (each reads tab_pole_papers.csv)
+content/figures/fig_bimodality.png: scripts/plot_bimodality.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
+
+content/figures/fig_bimodality_lexical.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
+
+content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
 
 # Seed-axis violin (core, manuscript figure)
 content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(REFINED)
@@ -388,14 +398,24 @@ content/figures/fig_alluvial_core.png: \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
 	uv run python $< --core-only
 
-# Bimodality core variant (co-produced)
-content/figures/fig_bimodality_core.png \
-content/figures/fig_bimodality_lexical_core.png \
-content/figures/fig_bimodality_keywords_core.png \
+# Bimodality core variant tables
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
 content/tables/tab_pole_papers_core.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only
+
+# Bimodality core variant figures
+content/figures/fig_bimodality_core.png: scripts/plot_bimodality.py scripts/utils.py \
+		content/tables/tab_pole_papers_core.csv
+	uv run python $< --core-only --output $@
+
+content/figures/fig_bimodality_lexical_core.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
+		content/tables/tab_pole_papers_core.csv
+	uv run python $< --core-only --output $@
+
+content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
+		content/tables/tab_pole_papers_core.csv
+	uv run python $< --core-only --output $@
 
 # Pre-2007 co-citation traditions network
 content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)

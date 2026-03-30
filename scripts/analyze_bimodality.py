@@ -8,9 +8,6 @@ Method:
 - Validate with TF-IDF and keyword co-occurrence
 
 Produces:
-- figures/fig_bimodality.pdf: KDE of embedding scores by period
-- figures/fig_bimodality_lexical.pdf: TF-IDF version (appendix)
-- figures/fig_bimodality_keywords.pdf: Keyword scatter (appendix)
 - tables/tab_bimodality.csv: Dip test p-values, GMM BIC, pole paper counts
 - tables/tab_pole_papers.csv: Per-paper score and pole assignment
 - tables/tab_axis_detection.csv: Unsupervised TF-IDF components and alignment to pole axis
@@ -20,11 +17,8 @@ import argparse
 import os
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from scipy.stats import gaussian_kde
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.mixture import GaussianMixture
@@ -35,13 +29,11 @@ from utils import (
     load_analysis_config,
     load_analysis_periods,
     load_refined_embeddings,
-    save_figure,
 )
 
 log = get_logger("analyze_bimodality")
 
-parser = argparse.ArgumentParser(description="Bimodality analysis (Fig 5)")
-parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
+parser = argparse.ArgumentParser(description="Bimodality analysis (tables only)")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 args = parser.parse_args()
@@ -49,9 +41,7 @@ args = parser.parse_args()
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Paths ---
-FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
-os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 
@@ -73,7 +63,6 @@ ACCOUNTABILITY_TERMS = {
 # Three-act periods (from config)
 _period_tuples, _period_labels = load_analysis_periods()
 PERIODS = dict(zip(_period_labels, _period_tuples))
-PERIOD_COLORS = dict(zip(_period_labels, ["#8da0cb", "#fc8d62", "#66c2a5"]))
 
 
 # --- Load data + embeddings ---
@@ -104,18 +93,12 @@ if args.core_only:
     log.info("Core-only mode: %d papers (cited_by_count >= %d)", len(df), CITE_THRESHOLD)
     assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
 
-# Output naming: use "_core" suffix for figures and "b" prefix for tables in core mode
+# Output naming: use "_core" suffix for tables in core mode
 if args.core_only:
-    FIG5A = "fig_bimodality_core"
-    FIG5B = "fig_bimodality_lexical_core"
-    FIG5C = "fig_bimodality_keywords_core"
     TAB5_BIM = "tab_bimodality_core.csv"
     TAB5_AXIS = "tab_axis_detection_core.csv"
     TAB5_POLE = "tab_pole_papers_core.csv"
 else:
-    FIG5A = "fig_bimodality"
-    FIG5B = "fig_bimodality_lexical"
-    FIG5C = "fig_bimodality_keywords"
     TAB5_BIM = "tab_bimodality.csv"
     TAB5_AXIS = "tab_axis_detection.csv"
     TAB5_POLE = "tab_pole_papers.csv"
@@ -247,60 +230,7 @@ for period_label, (y_start, y_end) in PERIODS.items():
 
 
 # ============================================================
-# Step 5: Figure 5 — KDE of embedding scores by period
-# ============================================================
-
-sns.set_style("whitegrid")
-fig, axes = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
-
-for ax, (period_label, (y_start, y_end)) in zip(axes, PERIODS.items()):
-    pmask = (df["year"] >= y_start) & (df["year"] <= y_end)
-    pscores = df.loc[pmask, "axis_score"].values
-
-    if len(pscores) < 10:
-        ax.set_title(f"{period_label}\n(n={len(pscores)}, too few)")
-        continue
-
-    # KDE
-    kde = gaussian_kde(pscores, bw_method=0.15)
-    x = np.linspace(pscores.min() - 0.5, pscores.max() + 0.5, 500)
-    y = kde(x)
-
-    ax.fill_between(x, y, alpha=0.3, color=PERIOD_COLORS[period_label])
-    ax.plot(x, y, color=PERIOD_COLORS[period_label], linewidth=2)
-
-    # GMM components overlay
-    if len(pscores) >= 20:
-        g2 = GaussianMixture(n_components=2, random_state=42).fit(pscores.reshape(-1, 1))
-        means = g2.means_.flatten()
-        stds = np.sqrt(g2.covariances_.flatten())
-        weights = g2.weights_
-
-        for i in range(2):
-            comp = weights[i] * gaussian_kde(
-                np.random.RandomState(42).normal(means[i], stds[i], 10000),
-                bw_method=0.15
-            )(x)
-            ax.plot(x, comp, "--", color="grey", alpha=0.5, linewidth=1)
-
-    ax.axvline(0, color="black", linestyle=":", alpha=0.3)
-    ax.set_title(f"{period_label}\n(n={len(pscores):,})", fontsize=11)
-    ax.set_xlabel("← Accountability          Efficiency →", fontsize=9)
-
-axes[0].set_ylabel("Density", fontsize=11)
-
-fig.suptitle(
-    "Distribution of papers along the efficiency–accountability axis",
-    fontsize=13, y=1.02,
-)
-plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG5A), pdf=args.pdf)
-log.info("(%s)", FIG5A)
-plt.close()
-
-
-# ============================================================
-# Step 6: TF-IDF axis (Method B — lexical validation)
+# Step 5: TF-IDF axis (Method B — lexical validation)
 # ============================================================
 
 log.info("=== Method B: TF-IDF lexical axis ===")
@@ -339,44 +269,13 @@ lg2 = GaussianMixture(n_components=2, random_state=42).fit(lex_vals.reshape(-1, 
 lex_dbic = lg1.bic(lex_vals.reshape(-1, 1)) - lg2.bic(lex_vals.reshape(-1, 1))
 log.info("Lexical dBIC: %.0f", lex_dbic)
 
-# Lexical figure
-fig, axes = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
-
-for ax, (period_label, (y_start, y_end)) in zip(axes, PERIODS.items()):
-    pmask = (df["year"] >= y_start) & (df["year"] <= y_end)
-    pscores = df.loc[pmask, "lex_score"].values
-
-    if len(pscores) < 10:
-        ax.set_title(f"{period_label}\n(n={len(pscores)}, too few)")
-        continue
-
-    kde = gaussian_kde(pscores, bw_method=0.15)
-    x = np.linspace(np.percentile(pscores, 1), np.percentile(pscores, 99), 500)
-    y = kde(x)
-
-    ax.fill_between(x, y, alpha=0.3, color=PERIOD_COLORS[period_label])
-    ax.plot(x, y, color=PERIOD_COLORS[period_label], linewidth=2)
-    ax.axvline(0, color="black", linestyle=":", alpha=0.3)
-    ax.set_title(f"{period_label}\n(n={len(pscores):,})", fontsize=11)
-    ax.set_xlabel("← Accountability          Efficiency →", fontsize=9)
-
-axes[0].set_ylabel("Density", fontsize=11)
-fig.suptitle(
-    "Distribution along the efficiency–accountability axis (TF-IDF lexical)",
-    fontsize=13, y=1.02,
-)
-plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG5B), pdf=args.pdf)
-log.info("(%s)", FIG5B)
-plt.close()
-
 # Agreement check
 corr = np.corrcoef(df["axis_score"].values, df["lex_score"].values)[0, 1]
 log.info("Correlation between embedding and TF-IDF axis scores: r=%.3f", corr)
 
 
 # ============================================================
-# Step 6b: Unsupervised main-axis detection (TF-IDF SVD)
+# Step 5b: Unsupervised main-axis detection (TF-IDF SVD)
 # ============================================================
 
 log.info("=== Unsupervised axis detection (TF-IDF SVD) ===")
@@ -435,7 +334,7 @@ log.info(
 
 
 # ============================================================
-# Step 6c: Unsupervised main-axis detection (Embedding PCA)
+# Step 5c: Unsupervised main-axis detection (Embedding PCA)
 # ============================================================
 
 
@@ -492,49 +391,7 @@ log.info("Top 10 embedding PCs explain %.1f%% total", pca_explained.sum() * 100)
 
 
 # ============================================================
-# Step 7: Keyword co-occurrence scatter (Method C)
-# ============================================================
-
-log.info("=== Method C: Keyword co-occurrence ===")
-
-fig, ax = plt.subplots(figsize=(7, 6))
-
-for period_label, (y_start, y_end) in PERIODS.items():
-    pmask = (df["year"] >= y_start) & (df["year"] <= y_end)
-    pdata = df[pmask]
-    ax.scatter(
-        pdata["eff_count"], pdata["acc_count"],
-        alpha=0.15, s=15, color=PERIOD_COLORS[period_label],
-        label=f"{period_label} (n={len(pdata):,})",
-    )
-
-ax.set_xlabel("Efficiency keyword count", fontsize=11)
-ax.set_ylabel("Accountability keyword count", fontsize=11)
-ax.set_title("Keyword co-occurrence: efficiency vs. accountability terms", fontsize=12)
-ax.legend(fontsize=9, framealpha=0.9)
-
-# Add marginal histograms as insets
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-divider = make_axes_locatable(ax)
-ax_histx = divider.append_axes("top", 0.8, pad=0.1, sharex=ax)
-ax_histy = divider.append_axes("right", 0.8, pad=0.1, sharey=ax)
-
-ax_histx.hist(df["eff_count"], bins=range(0, df["eff_count"].max() + 2),
-              color="#4C72B0", alpha=0.7, edgecolor="white")
-ax_histy.hist(df["acc_count"], bins=range(0, df["acc_count"].max() + 2),
-              orientation="horizontal", color="#C44E52", alpha=0.7, edgecolor="white")
-
-ax_histx.tick_params(labelbottom=False)
-ax_histy.tick_params(labelleft=False)
-
-save_figure(fig, os.path.join(FIGURES_DIR, FIG5C), pdf=args.pdf)
-log.info("(%s)", FIG5C)
-plt.close()
-
-
-# ============================================================
-# Step 7b: Embedding PCA — axis detection
+# Step 6: Embedding PCA — axis detection table
 # ============================================================
 
 log.info("=== Embedding PCA: axis detection ===")
@@ -603,7 +460,7 @@ log.info("Saved -> tables/%s", TAB5_AXIS)
 
 
 # ============================================================
-# Step 8: Save tables
+# Step 7: Save tables
 # ============================================================
 
 # Summary table
