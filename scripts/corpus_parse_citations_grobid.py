@@ -5,7 +5,7 @@ Reads crossref_refs.csv, extracts unstructured text from ref_raw for rows
 with empty ref_title, sends to GROBID processCitation API, caches results
 as JSONL, and writes ref_parsed.csv with REFS_COLUMNS schema.
 
-corpus_corpus_merge_citations.py reads this as a third input alongside crossref_refs.csv
+corpus_merge_citations.py reads this as a third input alongside crossref_refs.csv
 and openalex_refs.csv.
 
 Requires: GROBID running at --grobid-url (default http://localhost:8070).

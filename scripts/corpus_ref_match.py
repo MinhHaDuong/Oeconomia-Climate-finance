@@ -4,7 +4,7 @@
 For each ref in ref_parsed.csv that lacks a ref_doi, attempt to match it
 against refined_works.csv using fuzzy title matching (rapidfuzz token_sort_ratio
 ≥ 85) with year ±1 blocking.  Matched refs are written to ref_matches.csv
-in REFS_COLUMNS schema, ready for merge_citations.py.
+in REFS_COLUMNS schema, ready for corpus_merge_citations.py.
 
 Performance features (#567):
 - JSONL cache keyed by (normalized_title, year) — re-runs hit cache
@@ -16,7 +16,7 @@ Ticket: #539, #567
 Depends on: #538 (GROBID-parsed refs)
 
 Usage:
-    uv run python scripts/ref_match_corpus.py
+    uv run python scripts/corpus_ref_match.py
 """
 
 import argparse
