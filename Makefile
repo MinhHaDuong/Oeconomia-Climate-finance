@@ -229,16 +229,16 @@ corpus-validate: $(REFINED)
 
 # ── Corpus reporting (Phase 2 — reads only refined data) ──
 content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $<
 
 content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md &: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 content/tables/tab_languages.md: scripts/export_language_table.py scripts/utils.py $(ENRICHED)
-	uv run python $<
+	uv run python $< --output $@
 
 corpus-tables: content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md \
                content/tables/tab_citation_coverage.md \
@@ -253,7 +253,7 @@ COMPUTED_STATS := content/technical-report-vars.yml \
 $(COMPUTED_STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
 		content/tables/tab_axis_detection.csv
-	uv run python $<
+	uv run python $< --output $@
 
 stats: $(COMPUTED_STATS)
 
@@ -264,7 +264,7 @@ $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
 	uv run python $<
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
-	uv run python $<
+	uv run python $< --output $@
 
 # ── Figures ──────────────────────────────────────────────
 
@@ -286,7 +286,7 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 # Semantic UMAP maps (3 co-produced figures)
 content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/figures/fig_semantic_period.png &: \
 		scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 # -- Companion paper (quantitative) --
 # Structural break tables (independent of clustering)
@@ -322,7 +322,7 @@ content/figures/fig_alluvial.png: \
 # Period divergence curves
 content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_breakpoints.csv
-	uv run python $<
+	uv run python $< --output $@
 
 # Bimodality tests (co-produced)
 content/figures/fig_bimodality.png \
@@ -399,12 +399,12 @@ content/tables/tab_community_summary.csv &: \
 # KDE supplementary
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $<
+	uv run python $< --output $@
 
 # Lexical TF-IDF table (diagnostic, not in manuscript)
 content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.py $(REFINED) \
 		content/tables/tab_breakpoint_robustness.csv
-	uv run python $<
+	uv run python $< --output $@
 
 # K-sensitivity table (diagnostic, --robustness flag)
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
@@ -424,7 +424,7 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 
 # DVC pipeline DAG (data paper)
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
-	uv run python $<
+	uv run python $< --output $@
 
 figures-manuscript: corpus-handoff $(MANUSCRIPT_FIGS)
 figures-datapaper:  corpus-handoff $(DATAPAPER_FIGS)

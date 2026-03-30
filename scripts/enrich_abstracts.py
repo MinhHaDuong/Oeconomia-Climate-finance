@@ -438,6 +438,8 @@ STEPS = {
 
 def main():
     parser = argparse.ArgumentParser(description="Enrich missing abstracts")
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show counts, don't modify data")
     parser.add_argument("--step", type=int, default=0,

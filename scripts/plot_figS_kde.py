@@ -4,7 +4,6 @@ Produces:
 - content/figures/figS_kde.png (+.pdf if --pdf)
 """
 
-import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -12,6 +11,7 @@ import numpy as np
 import pandas as pd
 from plot_style import DARK, DPI, FIGWIDTH, FILL, LIGHT, MED, apply_style
 from scipy.stats import gaussian_kde
+from script_io_args import parse_io_args, validate_io
 from sklearn.mixture import GaussianMixture
 from utils import BASE_DIR, get_logger, save_figure
 
@@ -21,9 +21,13 @@ apply_style()
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(description="KDE of bimodality axis scores")
     parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # Load scores
     path = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
@@ -84,7 +88,7 @@ def main():
 
     fig.tight_layout()
 
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_kde")
+    out_path = os.path.splitext(io_args.output)[0]
     save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
     plt.close(fig)
 

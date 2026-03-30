@@ -16,13 +16,13 @@ Produces:
 - figures/fig_semantic_period.pdf: Same map colored by period
 """
 
-import argparse
 import os
 import warnings
 from collections import Counter
 
 import numpy as np
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import (
     BASE_DIR,
     CATALOGS_DIR,
@@ -155,6 +155,13 @@ def _generate_figures(df, n_clusters, plt, sns, pdf=False):
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    global FIGURES_DIR
+    FIGURES_DIR = os.path.dirname(io_args.output) or FIGURES_DIR
+
+    import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--works-input",
@@ -167,7 +174,7 @@ def main():
         help="Embeddings .npz file (default: embeddings.npz)",
     )
     parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # Defer heavy imports so --help works without analysis group installed
     import matplotlib.pyplot as plt

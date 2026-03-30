@@ -201,7 +201,9 @@ class TestArgparsePresence:
             if name in LIBRARY_SCRIPTS:
                 continue
             source = _read_script(name)
-            if "argparse" not in source and "ArgumentParser" not in source:
+            if ("argparse" not in source
+                    and "ArgumentParser" not in source
+                    and "parse_io_args" not in source):
                 violators.append(name)
         assert not violators, (
             f"{len(violators)} entry-point scripts lack argparse "
@@ -778,7 +780,7 @@ class TestOutputFlag:
                 continue
             if f.name in self.OUTPUT_EXEMPT:
                 continue
-            if "--output" not in src:
+            if "--output" not in src and "parse_io_args" not in src:
                 violators.append(f.name)
         assert not violators, (
             f"{len(violators)} scripts produce output but have no --output flag: "

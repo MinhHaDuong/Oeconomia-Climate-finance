@@ -358,6 +358,8 @@ def _fetch_all_waves(missing, args, p1_counters, p2_counters, _log_event, t0):
 def main():
     parser = argparse.ArgumentParser(
         description="Enrich citations from OpenAlex (most-cited first)")
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument("--batch-size", type=int, default=50,
                         help="DOIs per OpenAlex request (max ~100)")
     parser.add_argument("--resolve-batch-size", type=int, default=100,

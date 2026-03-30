@@ -10,12 +10,12 @@ bibliographic coupling (→ 100D SVD). Used in technical report.
 Run compare_clustering.py first to generate the input JSON.
 """
 
-import argparse
 import json
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, get_logger
 
 log = get_logger("plot_fig_clustering_spaces")
@@ -24,14 +24,14 @@ FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 
-def plot_multi_space_figure(space_results, pdf=False):
+def plot_multi_space_figure(space_results, output_dir=FIGURES_DIR, pdf=False):
     """Bar chart comparing silhouette scores across representation spaces.
 
     Reads the multi-space silhouette results (semantic, lexical, citation)
     and produces a grouped bar chart showing silhouette at each k value.
     Output: fig_clustering_spaces.png (and .pdf with --pdf).
     """
-    os.makedirs(FIGURES_DIR, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     if not space_results:
         log.warning("No multi-space results to plot")
@@ -78,38 +78,39 @@ def plot_multi_space_figure(space_results, pdf=False):
     ax.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
-    png_path = os.path.join(FIGURES_DIR, "fig_clustering_spaces.png")
+    png_path = os.path.join(output_dir, "fig_clustering_spaces.png")
     fig.savefig(png_path, dpi=150, bbox_inches="tight")
     log.info("Saved multi-space figure → %s", png_path)
     if pdf:
-        pdf_path = os.path.join(FIGURES_DIR, "fig_clustering_spaces.pdf")
+        pdf_path = os.path.join(output_dir, "fig_clustering_spaces.pdf")
         fig.savefig(pdf_path, dpi=300, bbox_inches="tight")
         log.info("Saved multi-space figure → %s", pdf_path)
     plt.close()
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(
         description="Plot multi-space silhouette comparison figure"
     )
     parser.add_argument("--pdf", action="store_true",
                         help="Also save PDF output")
-    parser.add_argument(
-        "--input",
-        default=os.path.join(TABLES_DIR, "clustering_multi_space.json"),
-        help="Path to clustering_multi_space.json (default: content/tables/)",
-    )
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
-    if not os.path.exists(args.input):
-        log.error("Input file not found: %s", args.input)
+    input_path = io_args.input[0] if io_args.input else os.path.join(TABLES_DIR, "clustering_multi_space.json")
+    if not os.path.exists(input_path):
+        log.error("Input file not found: %s", input_path)
         log.error("Run compare_clustering.py first to generate it.")
         raise SystemExit(1)
 
-    with open(args.input) as f:
+    with open(input_path) as f:
         space_results = json.load(f)
 
-    plot_multi_space_figure(space_results, pdf=args.pdf)
+    output_dir = os.path.dirname(io_args.output) or FIGURES_DIR
+    plot_multi_space_figure(space_results, output_dir=output_dir, pdf=args.pdf)
     log.info("Done.")
 
 

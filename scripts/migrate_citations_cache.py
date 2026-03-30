@@ -51,6 +51,8 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(
         description="One-time migration: split v1 citations.csv into source caches")
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.parse_args()
 
     crossref_cache = os.path.join(CACHE_DIR, "crossref_refs.csv")

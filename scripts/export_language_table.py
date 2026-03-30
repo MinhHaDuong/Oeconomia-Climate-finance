@@ -7,10 +7,10 @@ Shows language distribution in the full enriched corpus with ISO 639-1 codes
 normalised (e.g., en_US → en) and grouped into major languages + "Other".
 """
 
-import argparse
 import os
 
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_lang
 
 log = get_logger("export_language_table")
@@ -84,8 +84,10 @@ def normalise_language(code: str) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
+    global OUTPUT_MD
+    io_args, _extra = parse_io_args()
+    validate_io(output=io_args.output)
+    OUTPUT_MD = io_args.output
 
     df = pd.read_csv(ENRICHED_PATH, usecols=["language"])
     df["lang"] = df["language"].apply(normalise_language)

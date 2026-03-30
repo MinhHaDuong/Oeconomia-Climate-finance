@@ -4,7 +4,6 @@ Reads the pipeline definition and renders a directed acyclic graph
 showing stage dependencies. Output: content/figures/fig_dag.png
 """
 
-import argparse
 import os
 
 import matplotlib
@@ -12,6 +11,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import yaml
 from plot_style import DARK, DPI, FIGWIDTH, FILL, LIGHT, MED, RCPARAMS
+from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
 log = get_logger("plot_fig_dag")
@@ -90,7 +90,7 @@ PHASES = [
 ]
 
 
-def draw_dag(deps):
+def draw_dag(deps, output_path=None):
     """Render the DAG as a matplotlib figure."""
     matplotlib.rcParams.update(RCPARAMS)
 
@@ -147,7 +147,7 @@ def draw_dag(deps):
     ax.set_aspect("equal")
     ax.axis("off")
 
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_dag.png")
+    out_path = output_path or os.path.join(BASE_DIR, "content", "figures", "fig_dag.png")
     fig.savefig(out_path, dpi=DPI, bbox_inches="tight",
                 facecolor="white", pad_inches=0.1)
     log.info("Saved %s", out_path)
@@ -155,7 +155,7 @@ def draw_dag(deps):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
+    io_args, _extra = parse_io_args()
+    validate_io(output=io_args.output)
     deps = load_dag()
-    draw_dag(deps)
+    draw_dag(deps, output_path=io_args.output)

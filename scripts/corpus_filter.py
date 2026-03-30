@@ -562,6 +562,8 @@ def main():
                         help="Cheap filter: only flags 1-3 (metadata, no-abstract, blacklist)")
     parser.add_argument("--v1-identifiers", default=None,
                         help="Path to v1 identifiers file (default: config/v1_identifiers.txt.gz)")
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     args = parser.parse_args()
 
     if args.cheap:

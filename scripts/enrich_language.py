@@ -272,6 +272,8 @@ def pass2_local_detect(df):
 def main():
     parser = argparse.ArgumentParser(
         description="Enrich missing language tags via OpenAlex + local detection")
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show counts, don't modify data")
     parser.add_argument("--works-input",
