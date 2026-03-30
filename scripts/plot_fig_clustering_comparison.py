@@ -9,11 +9,11 @@ Writes: content/figures/fig_clustering_ari.png
         (+ .pdf variants with --pdf)
 
 Three figures in one script because they share data from a single
-comparison run (compare_clustering.py) and always appear together in
-the technical report. Separated from compare_clustering.py so figures
+comparison run (compute_clustering_comparison.py) and always appear together in
+the technical report. Separated from compute_clustering_comparison.py so figures
 can be regenerated without re-running the full comparison.
 
-Run compare_clustering.py first to generate the input tables.
+Run compute_clustering_comparison.py first to generate the input tables.
 """
 
 import argparse
@@ -194,7 +194,7 @@ def main():
         log.warning("Optimal-k JSON not found: %s (skipping)", args.optimal_k)
 
     if ari_table is None and perturbation_table is None and optimal_k is None:
-        log.error("No input data found. Run compare_clustering.py first.")
+        log.error("No input data found. Run compute_clustering_comparison.py first.")
         raise SystemExit(1)
 
     generate_figures(ari_table, perturbation_table, optimal_k, pdf=args.pdf)

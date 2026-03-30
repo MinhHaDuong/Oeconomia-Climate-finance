@@ -8,7 +8,7 @@ This decouples enrichment stages in DVC: each can run independently,
 and only this join stage produces the shared output. See #428.
 
 Usage:
-    uv run python scripts/join_enrichments.py [--unified PATH] [--output PATH]
+    uv run python scripts/enrich_join.py [--unified PATH] [--output PATH]
 """
 
 import argparse
@@ -20,7 +20,7 @@ import pandas as pd
 from pipeline_text import normalize_doi, normalize_lang
 from utils import CATALOGS_DIR, get_logger, save_csv
 
-log = get_logger("join_enrichments")
+log = get_logger("enrich_join")
 
 CACHE_DIR_DEFAULT = os.path.join(CATALOGS_DIR, "enrich_cache")
 TOKEN_LIMIT = 1000

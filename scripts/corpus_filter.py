@@ -20,7 +20,7 @@ import os
 
 import numpy as np
 import pandas as pd
-from detect_near_duplicates import detect_near_duplicate_groups
+from qa_near_duplicates import detect_near_duplicate_groups
 from filter_flags import (
     _load_config,
     compute_protection,

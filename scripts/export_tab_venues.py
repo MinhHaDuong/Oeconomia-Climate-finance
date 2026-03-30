@@ -5,7 +5,7 @@ Shows distinctive journals per pole (efficiency vs accountability)
 among core works (cited >= 50). Output: content/tables/tab_venues.md
 
 Usage:
-    uv run python scripts/make_tab_venues.py [--min-papers 10] [--core-threshold 50]
+    uv run python scripts/export_tab_venues.py [--min-papers 10] [--core-threshold 50]
 """
 
 import argparse
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
-log = get_logger("make_tab_venues")
+log = get_logger("export_tab_venues")
 
 POLE_PAPERS = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
 OUTPUT = os.path.join(BASE_DIR, "content", "tables", "tab_venues.md")

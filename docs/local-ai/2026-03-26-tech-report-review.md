@@ -65,7 +65,7 @@ Three independent reviewers checked claims against code and analysis outputs.
 - [x] Created `analysis_corpus_n` var (27,506) for refined works with non-zero embeddings
 - [x] Regenerated tab_corpus_sources.md from current data
 - [x] Fixed clustering-comparison citation numbers with meta vars
-- [ ] Clustering-comparison stale snapshot numbers (27,315 → 27,509) need fresh compare_clustering run
+- [ ] Clustering-comparison stale snapshot numbers (27,315 → 27,509) need fresh compute_clustering_comparison run
 - [ ] HDBSCAN/Spectral ARI scores unverifiable without stored table
 
 Note: reviewer claim "grey lit Raw 278 → 4,882" was incorrect. Grey lit Raw

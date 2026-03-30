@@ -1,9 +1,9 @@
 """CrossRef DOI lookup cache for the syllabi normalization stage.
 
-Extracted from collect_syllabi.py to keep the main script under the
+Extracted from catalog_syllabi.py to keep the main script under the
 god-module 800-line threshold (see test_script_hygiene.py).
 
-Public API (all re-exported by collect_syllabi.py):
+Public API (all re-exported by catalog_syllabi.py):
   CROSSREF_CACHE_PATH
   _load_crossref_cache, _save_crossref_cache_entry, crossref_lookup
 """

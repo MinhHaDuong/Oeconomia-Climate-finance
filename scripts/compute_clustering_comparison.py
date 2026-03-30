@@ -16,7 +16,7 @@ Evaluation:
 - Interpretability: cluster size distribution, noise fraction
 
 Re-exports all algorithm functions from clustering_methods so tests that
-import from compare_clustering continue to work after the split.
+import from compute_clustering_comparison continue to work after the split.
 """
 
 import argparse
@@ -50,7 +50,7 @@ from utils import (
     load_analysis_corpus,
 )
 
-log = get_logger("compare_clustering")
+log = get_logger("compute_clustering_comparison")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 

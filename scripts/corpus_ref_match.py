@@ -163,8 +163,7 @@ def match_refs_to_corpus(
     """
     year_choices, title_to_doi = _build_corpus_index(corpus_path)
     total_entries = sum(len(v) for v in year_choices.values())
-    log.info("Corpus index: %d years, %d entries",
-             len(year_choices), total_entries)
+    log.info("Corpus index: %d years, %d entries", len(year_choices), total_entries)
 
     refs = pd.read_csv(ref_parsed_path, dtype=str, keep_default_na=False)
     log.info("Ref parsed: %d rows", len(refs))

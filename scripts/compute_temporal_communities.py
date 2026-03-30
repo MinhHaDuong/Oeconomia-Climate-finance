@@ -12,7 +12,7 @@ Uses IDENTICAL methodology for each window:
 Then align communities across windows using Jaccard similarity on DOI sets.
 
 Usage:
-    uv run python scripts/compare_communities_across_windows.py
+    uv run python scripts/compute_temporal_communities.py
 """
 
 import os
@@ -26,7 +26,7 @@ from scipy.sparse import lil_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 from utils import CATALOGS_DIR, get_logger, load_refined_citations, normalize_doi
 
-log = get_logger("compare_communities_across_windows")
+log = get_logger("compute_temporal_communities")
 
 # ============================================================
 # Parameters

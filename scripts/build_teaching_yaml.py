@@ -2,7 +2,7 @@
 """Build teaching_sources.yaml from scraped reading lists.
 
 Reads:
-  data/syllabi/reading_lists.csv    — automated web scraping (collect_syllabi.py)
+  data/syllabi/reading_lists.csv    — automated web scraping (catalog_syllabi.py)
 
 Writes:
   data/teaching_sources.yaml

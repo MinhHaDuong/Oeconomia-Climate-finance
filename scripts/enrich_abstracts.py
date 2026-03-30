@@ -557,7 +557,7 @@ def main():
             log.info("→ filled %d, remaining: %d", filled, after)
             _log_event("step_end", step=step_num, name=name, filled=filled, missing_after=after)
 
-    # Cache-only: join_enrichments.py applies caches to the monolith (#428)
+    # Cache-only: enrich_join.py applies caches to the monolith (#428)
     final_missing = int(df["_missing"].sum())
 
     elapsed = time.time() - t0

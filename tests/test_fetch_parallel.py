@@ -50,7 +50,7 @@ class TestFetchParallelDifferentHosts:
         Sequential with 0.5s polite_get delay + per-host politeness would take
         ~5-8s. Parallel should finish in ~1-2s.
         """
-        from collect_syllabi import PAGES_PATH, SEARCH_PATH, stage_fetch
+        from catalog_syllabi import PAGES_PATH, SEARCH_PATH, stage_fetch
 
         urls = [f"http://host{i}.example.com/syllabus" for i in range(10)]
         search_records = [_make_search_record(u) for u in urls]
@@ -70,9 +70,9 @@ class TestFetchParallelDifferentHosts:
             time.sleep(0.5)
             return _mock_response(url)
 
-        with patch("collect_syllabi.SEARCH_PATH", str(search_path)), \
-             patch("collect_syllabi.PAGES_PATH", str(pages_path)), \
-             patch("collect_syllabi.PDF_DIR", str(pdf_dir)), \
+        with patch("catalog_syllabi.SEARCH_PATH", str(search_path)), \
+             patch("catalog_syllabi.PAGES_PATH", str(pages_path)), \
+             patch("catalog_syllabi.PDF_DIR", str(pdf_dir)), \
              patch("syllabi_harvest.polite_get", side_effect=slow_polite_get):
 
             t0 = time.monotonic()
@@ -93,7 +93,7 @@ class TestFetchPerHostPoliteness:
 
     def test_same_host_rate_limited(self, tmp_path):
         """5 URLs on one host should take ≥4s (1s spacing between requests)."""
-        from collect_syllabi import stage_fetch
+        from catalog_syllabi import stage_fetch
 
         urls = [f"http://same-host.example.com/page{i}" for i in range(5)]
         search_records = [_make_search_record(u) for u in urls]
@@ -114,9 +114,9 @@ class TestFetchPerHostPoliteness:
             call_times.append((url, time.monotonic()))
             return _mock_response(url)
 
-        with patch("collect_syllabi.SEARCH_PATH", str(search_path)), \
-             patch("collect_syllabi.PAGES_PATH", str(pages_path)), \
-             patch("collect_syllabi.PDF_DIR", str(pdf_dir)), \
+        with patch("catalog_syllabi.SEARCH_PATH", str(search_path)), \
+             patch("catalog_syllabi.PAGES_PATH", str(pages_path)), \
+             patch("catalog_syllabi.PDF_DIR", str(pdf_dir)), \
              patch("syllabi_harvest.polite_get", side_effect=tracking_polite_get):
 
             t0 = time.monotonic()
@@ -136,7 +136,7 @@ class TestFetchCheckpointIntegrity:
 
     def test_no_corrupted_lines(self, tmp_path):
         """Fetch 20 URLs across 20 hosts — every JSONL line must be valid JSON."""
-        from collect_syllabi import stage_fetch
+        from catalog_syllabi import stage_fetch
 
         urls = [f"http://host{i}.example.com/page" for i in range(20)]
         search_records = [_make_search_record(u) for u in urls]
@@ -154,9 +154,9 @@ class TestFetchCheckpointIntegrity:
             time.sleep(0.05)  # Small delay to create contention
             return _mock_response(url)
 
-        with patch("collect_syllabi.SEARCH_PATH", str(search_path)), \
-             patch("collect_syllabi.PAGES_PATH", str(pages_path)), \
-             patch("collect_syllabi.PDF_DIR", str(pdf_dir)), \
+        with patch("catalog_syllabi.SEARCH_PATH", str(search_path)), \
+             patch("catalog_syllabi.PAGES_PATH", str(pages_path)), \
+             patch("catalog_syllabi.PDF_DIR", str(pdf_dir)), \
              patch("syllabi_harvest.polite_get", side_effect=fast_polite_get):
             stage_fetch()
 

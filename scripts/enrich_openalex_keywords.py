@@ -7,7 +7,7 @@ queries OpenAlex for their keywords and concepts, and ranks by frequency.
 Output: prints ranked keyword/concept tables to stdout.
 
 Usage:
-    python scripts/mine_openalex_keywords.py [--min-citations 50]
+    python scripts/enrich_openalex_keywords.py [--min-citations 50]
 """
 
 import argparse
@@ -17,7 +17,7 @@ from collections import Counter
 import pandas as pd
 from utils import CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, get_logger, polite_get
 
-log = get_logger("mine_openalex_keywords")
+log = get_logger("enrich_openalex_keywords")
 
 OA_API = "https://api.openalex.org/works"
 

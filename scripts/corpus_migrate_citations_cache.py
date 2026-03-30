@@ -10,7 +10,7 @@ OpenAlex rows: source_id starts with "openalex:" — convert to OA_REFS_COLUMNS 
 After migration, deletes the old done-files (citations_done.csv, citations_oa_done.txt).
 
 Usage:
-    uv run python scripts/migrate_citations_cache.py
+    uv run python scripts/corpus_migrate_citations_cache.py
 """
 
 import os
@@ -19,7 +19,7 @@ import sys
 import pandas as pd
 from utils import CATALOGS_DIR, get_logger
 
-log = get_logger("migrate_citations_cache")
+log = get_logger("corpus_migrate_citations_cache")
 
 CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 
@@ -105,7 +105,7 @@ def main():
 
     # Verify: run merge to produce citations.csv
     log.info("Running merge to verify...")
-    from merge_citations import merge_citations
+    from corpus_merge_citations import merge_citations
     n = merge_citations()
     log.info("Migration complete: %d rows in citations.csv", n)
 

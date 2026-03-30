@@ -19,7 +19,7 @@ Strategy: flag, keep, and document. These are real publications — removing the
 would be editorializing. But they should be identified for transparency.
 
 Usage:
-    from detect_near_duplicates import detect_near_duplicate_groups
+    from qa_near_duplicates import detect_near_duplicate_groups
     df["near_duplicate_group"] = detect_near_duplicate_groups(df)
 """
 
@@ -29,7 +29,7 @@ from collections import defaultdict
 import pandas as pd
 from utils import get_logger
 
-log = get_logger("detect_near_duplicates")
+log = get_logger("qa_near_duplicates")
 
 # Default parameters
 DEFAULT_PREFIX_LENGTH = 200

@@ -1,6 +1,6 @@
 ## 12. Citation Graph: Coverage and Quality
 
-**Scripts:** `scripts/enrich_citations_batch.py` (Crossref), `scripts/enrich_citations_openalex.py` (OpenAlex), `scripts/parse_citations_grobid.py` (GROBID parsing), `scripts/ref_match_corpus.py` (fuzzy corpus matching), `scripts/merge_citations.py` (merge caches → citations.csv), `scripts/qa_citations.py` (verification)
+**Scripts:** `scripts/enrich_citations_batch.py` (Crossref), `scripts/enrich_citations_openalex.py` (OpenAlex), `scripts/corpus_parse_citations_grobid.py` (GROBID parsing), `scripts/corpus_ref_match.py` (fuzzy corpus matching), `scripts/corpus_merge_citations.py` (merge caches → citations.csv), `scripts/qa_citations.py` (verification)
 
 **Data:** `content/tables/qa_citations_report.json`
 
@@ -67,4 +67,4 @@ Prior to adding the OpenAlex enrichment pass, the Crossref-only coverage stood a
 
 \* Semantic Scholar coverage is low for grey literature, non-English, and small-journal content typical in this corpus; its free tier requires an API key for sustained use.
 
-OpenAlex was the highest-leverage option because: (a) 100% of tested never-fetched DOIs were found in the index, (b) 45% had `referenced_works` lists, and (c) references are pre-resolved to OpenAlex IDs which map cleanly to DOIs. The `enrich_citations_openalex.py` script fetches referenced works and resolves OpenAlex IDs to DOIs in interleaved waves, appending to `enrich_cache/openalex_refs.csv`. The merge step (`merge_citations.py`) then combines both source caches into `citations.csv`. OpenAlex contributed 237,918 citation rows, raising overall coverage from 47% to 78%.
+OpenAlex was the highest-leverage option because: (a) 100% of tested never-fetched DOIs were found in the index, (b) 45% had `referenced_works` lists, and (c) references are pre-resolved to OpenAlex IDs which map cleanly to DOIs. The `enrich_citations_openalex.py` script fetches referenced works and resolves OpenAlex IDs to DOIs in interleaved waves, appending to `enrich_cache/openalex_refs.csv`. The merge step (`corpus_merge_citations.py`) then combines both source caches into `citations.csv`. OpenAlex contributed 237,918 citation rows, raising overall coverage from 47% to 78%.
