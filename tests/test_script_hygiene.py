@@ -1055,20 +1055,20 @@ class TestOutputFlag:
         "catalog_scopus.py", "catalog_semanticscholar.py",
         # Teaching pipeline (DVC-managed or standalone)
         "build_teaching_canon.py", "build_teaching_yaml.py",
-        "collect_syllabi.py", "analyze_syllabi.py", "analyze_teaching_canon.py",
+        "catalog_syllabi.py", "analyze_syllabi.py", "analyze_teaching_canon.py",
         # Interactive / exploratory tools
-        "compare_clustering.py", "compare_communities_across_windows.py",
-        "cross_ref_communities_clusters.py", "plot_interactive_corpus.py",
-        "mine_openalex_keywords.py",
+        "compute_clustering_comparison.py", "compute_temporal_communities.py",
+        "analyze_communities_clusters.py", "plot_interactive_corpus.py",
+        "enrich_openalex_keywords.py",
         # DVC join/merge stages
-        "join_enrichments.py", "merge_citations.py", "ref_match_corpus.py",
-        "summarize_abstracts.py", "parse_citations_grobid.py",
+        "enrich_join.py", "corpus_merge_citations.py", "corpus_ref_match.py",
+        "summarize_abstracts.py", "corpus_parse_citations_grobid.py",
         # Tool / utility scripts
-        "generate_smoke_fixture.py", "regression_hashes.py",
-        "regression_history.py", "verify_bibliography.py",
-        "gen_missing_references.py", "analyze_unfccc_topics.py",
+        "build_smoke_fixture.py", "compute_regression_hashes.py",
+        "compute_regression_history.py", "qa_bibliography.py",
+        "qa_missing_references.py", "analyze_unfccc_topics.py",
         # Not in ticket #549 scope — future migration
-        "build_het_core.py", "make_tab_venues.py",
+        "build_het_core.py", "export_tab_venues.py",
         "plot_genealogy.py", "plot_genealogy_html.py",
         "plot_fig_traditions.py", "analyze_genealogy.py",
     }
