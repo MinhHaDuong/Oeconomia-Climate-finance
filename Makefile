@@ -523,7 +523,7 @@ determinism-check:
 #   make regression          — check against golden baseline
 #   make regression-save     — regenerate golden baseline (after intentional change)
 regression:
-	uv run pytest tests/test_regression.py -v --tb=short -m slow -k "test_regression_"
+	uv run pytest tests/test_regression.py -v --tb=short -m integration -k "test_regression_"
 
 regression-save:
 	uv run python scripts/regression_hashes.py --save

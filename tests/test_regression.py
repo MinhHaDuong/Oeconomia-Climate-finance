@@ -123,7 +123,7 @@ def _make_test(entry):
     """Factory: create a test function for one registry entry."""
     name = entry["name"]
 
-    @pytest.mark.slow
+    @pytest.mark.integration
     def test_func(regression_outputs):
         results, errors = regression_outputs
         if name in errors:
