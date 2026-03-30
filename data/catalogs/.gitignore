@@ -31,6 +31,8 @@
 /reranker_calibration.csv
 /reranker_hitl_review.csv
 /semantic_clusters.csv
+# Phase 1→2 handoff: Feather files derived from CSV contract files
+*.feather
 /openalex_baselines.json
 /openalex_econ_yearly.csv
 /abstract_cache
