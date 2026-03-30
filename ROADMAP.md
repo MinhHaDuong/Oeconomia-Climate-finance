@@ -62,4 +62,4 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - Enrichment pipeline independence (#428): 4 DVC stages + join_enrichments.py, post-checkout hook symlinks .dvc/config.local (#505)
 - Code smell cleanup (#507): 26 dead imports removed, 11 complex functions refactored, global cache → class, normalize_doi_safe helper, exception narrowing
 - God module split (#542): `analyze_genealogy.py` 808→322L, M/V architecture with table-as-contract, robustness to `analyze_cocitation.py`
-- Phantom `--no-pdf` cleanup (#545): removed no-op flag from 8 non-plotting scripts, added `TestNoPdfDiscipline` guard
+- PDF opt-in flip (#544): `save_figure()` default from PDF-on to PDF-off across 33 files, `TestPdfDiscipline` guard (#545)
