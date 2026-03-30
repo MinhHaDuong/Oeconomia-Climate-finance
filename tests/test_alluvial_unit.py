@@ -60,6 +60,7 @@ class TestLoadAnalysisCorpus:
         with_emb = kwargs.pop("with_embeddings", embeddings is not None)
 
         with patch("pipeline_loaders.pd.read_csv", return_value=works_df), \
+             patch("pipeline_loaders.REFINED_WORKS_FEATHER", "/nonexistent"), \
              patch("pipeline_loaders.load_refined_embeddings",
                    return_value=embeddings):
             return load_analysis_corpus(with_embeddings=with_emb, **kwargs)

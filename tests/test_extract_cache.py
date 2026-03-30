@@ -153,29 +153,29 @@ class TestStageExtractUsesCache:
         """catalog_syllabi must export _extract_cache_key."""
         import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "_extract_cache_key"), \
-            "_extract_cache_key function must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "_extract_cache_key"), \
+            "_extract_cache_key function must exist in catalog_syllabi"
 
     def test_load_extract_cache_exists(self):
         """catalog_syllabi must export _load_extract_cache."""
         import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "_load_extract_cache"), \
-            "_load_extract_cache function must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "_load_extract_cache"), \
+            "_load_extract_cache function must exist in catalog_syllabi"
 
     def test_save_extract_cache_entry_exists(self):
         """catalog_syllabi must export _save_extract_cache_entry."""
         import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "_save_extract_cache_entry"), \
-            "_save_extract_cache_entry function must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "_save_extract_cache_entry"), \
+            "_save_extract_cache_entry function must exist in catalog_syllabi"
 
     def test_extract_cache_path_defined(self):
         """catalog_syllabi must define EXTRACT_CACHE_PATH."""
         import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "EXTRACT_CACHE_PATH"), \
-            "EXTRACT_CACHE_PATH constant must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "EXTRACT_CACHE_PATH"), \
+            "EXTRACT_CACHE_PATH constant must exist in catalog_syllabi"
         assert "extract_cache" in catalog_syllabi.EXTRACT_CACHE_PATH
         assert catalog_syllabi.EXTRACT_CACHE_PATH.endswith(".jsonl")
 

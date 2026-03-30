@@ -553,15 +553,30 @@ _PIPELINE_PREFIXES = (
     "summarize_",
 )
 
+# CLI tools that happen to start with a pipeline prefix but produce
+# human-readable console output (print is intentional, not a logging miss).
+_PRINT_ALLOWLIST = {
+    "compute_regression_hashes.py",
+    "compute_regression_history.py",
+}
+
 
 class TestNoBarePrint:
     """Pipeline scripts must use logging, not print()."""
+
+    def test_print_allowlist_not_stale(self):
+        """Every script in _PRINT_ALLOWLIST must still exist."""
+        all_names = set(_all_scripts())
+        stale = _PRINT_ALLOWLIST - all_names
+        assert not stale, f"Stale _PRINT_ALLOWLIST entries (script removed?): {stale}"
 
     def test_no_bare_print_in_pipeline_scripts(self):
         """Pipeline scripts may not use bare print() (use log.info())."""
         violators = []
         for name in _all_scripts():
             if not name.startswith(_PIPELINE_PREFIXES):
+                continue
+            if name in _PRINT_ALLOWLIST:
                 continue
             tree = _parse_script(name)
             for node in ast.walk(tree):

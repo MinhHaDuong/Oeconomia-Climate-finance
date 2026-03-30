@@ -1,7 +1,7 @@
 """Tests for DOI lookup in the teaching pipeline.
 
 Verifies:
-- collect_syllabi uses crossref_lookup with cache for teaching DOI resolution
+- catalog_syllabi uses crossref_lookup with cache for teaching DOI resolution
 - enrich_dois provides find_doi for the main corpus pipeline
 - CLASSIFY_MODEL and EXTRACT_MODEL env vars are wired at call sites
 """
@@ -19,13 +19,13 @@ class TestTeachingDOILookup:
     def test_crossref_lookup_exists(self):
         """catalog_syllabi.py should have crossref_lookup for teaching DOI resolution."""
         import catalog_syllabi
-        assert hasattr(collect_syllabi, "crossref_lookup"), \
+        assert hasattr(catalog_syllabi, "crossref_lookup"), \
             "crossref_lookup should exist — teaching pipeline uses CrossRef"
 
     def test_crossref_cache_exists(self):
         """catalog_syllabi.py should have CrossRef cache infrastructure."""
         import catalog_syllabi
-        assert hasattr(collect_syllabi, "_load_crossref_cache"), \
+        assert hasattr(catalog_syllabi, "_load_crossref_cache"), \
             "CrossRef cache loader should exist"
 
     def test_normalize_stage_uses_crossref(self):
