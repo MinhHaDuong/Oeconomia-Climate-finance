@@ -324,9 +324,15 @@ content/figures/fig_breakpoints.png: \
 		content/tables/tab_alluvial.csv
 	uv run python $<
 
-# Alluvial figure
+# Alluvial figure (static PNG)
 content/figures/fig_alluvial.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
+		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
+	uv run python $<
+
+# Alluvial figure (interactive HTML)
+content/figures/fig_alluvial.html: \
+		scripts/plot_alluvial_html.py scripts/utils.py \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
 	uv run python $<
 

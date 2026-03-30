@@ -8,7 +8,8 @@ Use them directly for better Makefile integration:
   uv run python scripts/compute_clusters.py [flags]     # tab_alluvial.csv, cluster_labels.json
   uv run python scripts/compute_lexical.py [flags]      # tab_lexical_tfidf.csv
   uv run python scripts/plot_fig_breakpoints.py [flags] # fig_breakpoints.png
-  uv run python scripts/plot_fig_alluvial.py [flags]    # fig_alluvial.png + .html
+  uv run python scripts/plot_fig_alluvial.py [flags]    # fig_alluvial.png
+  uv run python scripts/plot_alluvial_html.py [flags]  # fig_alluvial.html
   uv run python scripts/plot_fig_k_sensitivity.py       # fig_k_sensitivity.png (needs --robustness first)
   uv run python scripts/plot_fig_lexical_tfidf.py       # fig_lexical_tfidf_{year}.png
 
@@ -27,6 +28,7 @@ SCRIPT_FLAGS = {
     "scripts/compute_lexical.py":     set(),
     "scripts/plot_fig_breakpoints.py": {"--core-only", "--censor-gap", "--pdf"},
     "scripts/plot_fig_alluvial.py":    {"--core-only", "--censor-gap", "--pdf"},
+    "scripts/plot_alluvial_html.py":   {"--core-only", "--censor-gap"},
 }
 
 parser = argparse.ArgumentParser(description="Full alluvial pipeline (deprecated)")
