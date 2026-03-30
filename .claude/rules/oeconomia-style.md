@@ -1,7 +1,5 @@
 ---
-paths:
-  - "content/manuscript.qmd"
-  - "content/manuscript-vars.yml"
+globs: ["content/**"]
 ---
 
 # Oeconomia House Style
