@@ -1,11 +1,11 @@
 """Tests for unstructured Crossref reference parsing in fetch_batch."""
 
+import json
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
-import pytest
 from enrich_citations_batch import parse_ref_fields
 
 
@@ -95,3 +95,35 @@ class TestParseRefFields:
         assert result["ref_year"] == "2015"  # structured wins
         assert result["ref_title"] == "Greenpeace, 2003. Sinks in the CDM."
         assert result["ref_first_author"] == "Greenpeace"
+
+
+class TestBackfillEquivalence:
+    """Backfill (json.loads(ref_raw) → parse) == fresh fetch (ref → parse).
+
+    The backfill script reads ref_raw (stored by json.dumps at fetch time)
+    and applies parse_ref_fields. A fresh fetch would apply parse_ref_fields
+    directly to the API response dict. These must produce identical results,
+    otherwise the backfill is not equivalent to rebuilding from scratch.
+    """
+
+    SAMPLE_REFS = [
+        {"article-title": "Climate policy", "author": "Brown", "year": "2003",
+         "journal-title": "Nature", "key": "k1"},
+        {"unstructured": "Greenpeace, 2003. Sinks in the CDM.", "key": "k2"},
+        {"volume-title": "Handbook", "year": "2019", "key": "k3"},
+        {"unstructured": "No comma here 2010", "key": "k4"},
+        {"series-title": "NBER", "author": "Smith", "key": "k5"},
+        {"unstructured": "", "key": "k6"},
+        {"key": "k7"},  # no useful fields at all
+        {"article-title": "Real", "unstructured": "Fake, 1999. Wrong.",
+         "author": "Real Author", "year": "2020", "key": "k8"},
+    ]
+
+    def test_json_roundtrip_preserves_parse_result(self):
+        """parse_ref_fields(json.loads(json.dumps(ref))) == parse_ref_fields(ref)."""
+        for ref in self.SAMPLE_REFS:
+            fresh = parse_ref_fields(ref)
+            roundtripped = parse_ref_fields(json.loads(json.dumps(ref)))
+            assert fresh == roundtripped, (
+                f"Mismatch for ref {ref}: fresh={fresh}, roundtripped={roundtripped}"
+            )
