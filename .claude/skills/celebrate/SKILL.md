@@ -24,17 +24,17 @@ Do not skip steps.
 ## Close and clean up
 
 8. **Merge to main**: feature work through PR. Chores merge locally via short-lived branch + fast-forward.
-9. **Push** and **clean up**: delete local and remote branch.
+9. **Push** and **clean up**: delete remote branch after merge.
 10. **Close** the ticket if still open.
 11. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
     - All closed → integration review: re-read all child PR diffs, run `make check`, verify exit criteria.
     - Any open → do nothing, tracker stays open.
-12. **Verify hygiene**:
-    - `git worktree list` → only main (or active work)
+12. **Exit worktree**: call `ExitWorktree` with action `remove` — the worktree is throwaway, all state is in the branch/PR.
+13. **Verify hygiene**:
     - `git branch -a` → no stale remote branches
     - `gh pr list` → no stale PRs
-13. **Log celebration** (skip if harness not installed):
+14. **Log celebration** (skip if harness not installed):
     ```bash
     ~/.agent/log/log-celebration '{"project":"oeconomia","session_type":"task",...}'
     ```
-14. **Offer** to work on AGENTS.md if the workflow can be improved.
+15. **Offer** to work on AGENTS.md if the workflow can be improved.

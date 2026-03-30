@@ -68,7 +68,7 @@ The agent must always know and declare its current DD phase.
 
 | Skill | When | Purpose |
 |-------|------|---------|
-| `/start-ticket N` | Starting work on a GitHub issue | Create worktree, write first test, transition to Doing |
+| `/start-ticket N` | Starting work on a GitHub issue | Enter worktree, write first test, transition to Doing |
 | `/celebrate` | After completing a ticket | Reflect, update STATE/ROADMAP, clean up |
 | `/end-session` | User ends a work session | Push branches, run tests, refresh STATE |
 | `/new-ticket` | Creating a GitHub issue | Write handoff document with test spec |
@@ -86,7 +86,7 @@ When issue exploration leads to multiple action items, open one ticket for each 
 
 ### Wave cycle
 
-Work in waves. Each wave: pick ripe tickets, run them in parallel worktrees, `/review-pr` each, `/celebrate` or re-ticket with diagnosis. Read feedback memories before the next wave. Clean up between waves.
+Work in waves. Each wave: pick ripe tickets, run them in parallel conversations (each auto-isolated via `EnterWorktree`), `/review-pr` each, `/celebrate` or re-ticket with diagnosis. Read feedback memories before the next wave. Clean up between waves.
 
 ## Conversation scope
 

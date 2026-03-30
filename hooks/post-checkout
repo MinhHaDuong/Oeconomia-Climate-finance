@@ -1,23 +1,9 @@
 #!/bin/sh
-# Symlink .env from main worktree into new worktrees
-# .env is gitignored (machine-specific paths), but scripts need it
-
-main_worktree=$(git worktree list --porcelain | head -1 | sed 's/^worktree //')
-
-if [ ! -e .env ]; then
-    if [ -f "$main_worktree/.env" ]; then
-        ln -s "$main_worktree/.env" .env
-        echo "Linked .env from main worktree"
-    fi
-fi
-
-# Symlink .dvc/config.local so DVC can find the local cache in worktrees.
-if [ ! -e .dvc/config.local ]; then
-    if [ -f "$main_worktree/.dvc/config.local" ]; then
-        ln -s "$main_worktree/.dvc/config.local" .dvc/config.local
-        echo "Linked .dvc/config.local from main worktree"
-    fi
-fi
+# Post-checkout hook for worktrees.
+#
+# .env and .dvc/config.local are handled by .worktreeinclude (auto-copied
+# into worktrees created by EnterWorktree / `claude --worktree`).
+# This hook handles DVC data population only.
 
 # Populate DVC-managed data from local cache.
 # DVC is in the "corpus" dependency group and needs a torch extra.
