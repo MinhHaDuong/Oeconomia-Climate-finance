@@ -84,14 +84,7 @@ When issue exploration leads to multiple action items, open one ticket for each 
 
 ### Wave cycle
 
-1. **Select** — pick ripe tickets (dependencies met, blockers cleared).
-2. **Launch** — each ticket in its own worktree, independent tickets in parallel.
-3. **Verify** — review each PR in a fresh-context worktree (`/review-pr`).
-4. **Learn** — for each result:
-   - **Success**: `/celebrate`, save what worked as feedback memory.
-   - **Failure**: diagnose root cause, save lesson, re-ticket with diagnosis.
-5. **Adapt** — read feedback memories before planning the next wave.
-6. **Clean up** — worktrees, branches, stale PRs. Then start the next wave.
+Work in waves. Each wave: pick ripe tickets, run them in parallel worktrees, `/review-pr` each, `/celebrate` or re-ticket with diagnosis. Read feedback memories before the next wave. Clean up between waves.
 
 ## Conversation scope
 
