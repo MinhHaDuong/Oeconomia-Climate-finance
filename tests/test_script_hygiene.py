@@ -722,3 +722,65 @@ class TestMarkerDiscipline:
             f"Files using subprocess must mark tests @integration, not @slow: "
             f"{violations}"
         )
+
+
+# ---------------------------------------------------------------------------
+# 11. I/O discipline: --output flag (#549)
+# ---------------------------------------------------------------------------
+
+class TestOutputFlag:
+    """Every script that produces files must accept --output (#549).
+
+    Per script-io.md, scripts use parse_io_args() from script_io_args.py
+    so the Makefile can pass output paths via $@.
+
+    Scripts that are pure libraries, QA reporters (stdout only), catalog
+    harvesters (DVC-managed), or interactive tools are exempt.
+    """
+
+    # Scripts with __main__ that legitimately don't need --output:
+    OUTPUT_EXEMPT = {
+        # QA reporters (stdout / fixed JSON)
+        "qa_citations.py", "qa_detect_language.py", "qa_detect_type.py",
+        "qa_embeddings.py", "qa_metadata.py", "qa_word_count.py",
+        # Catalog harvesters (DVC-managed)
+        "catalog_bibcnrs.py", "catalog_grey.py", "catalog_istex.py",
+        "catalog_merge.py", "catalog_openalex.py", "catalog_scispace.py",
+        "catalog_scopus.py", "catalog_semanticscholar.py",
+        # Teaching pipeline (DVC-managed or standalone)
+        "build_teaching_canon.py", "build_teaching_yaml.py",
+        "collect_syllabi.py", "analyze_syllabi.py", "analyze_teaching_canon.py",
+        # Interactive / exploratory tools
+        "compare_clustering.py", "compare_communities_across_windows.py",
+        "cross_ref_communities_clusters.py", "plot_interactive_corpus.py",
+        "mine_openalex_keywords.py",
+        # DVC join/merge stages
+        "join_enrichments.py", "merge_citations.py", "ref_match_corpus.py",
+        "summarize_abstracts.py", "parse_citations_grobid.py",
+        # Tool / utility scripts
+        "generate_smoke_fixture.py", "regression_hashes.py",
+        "regression_history.py", "verify_bibliography.py",
+        "gen_missing_references.py", "analyze_unfccc_topics.py",
+        # Not in ticket #549 scope — future migration
+        "build_het_core.py", "make_tab_venues.py",
+        "plot_genealogy.py", "plot_genealogy_html.py",
+        "plot_fig_traditions.py", "analyze_genealogy.py",
+    }
+
+    def test_all_producing_scripts_accept_output(self):
+        """Every script with __main__ that writes files must accept --output."""
+        violators = []
+        for f in Path(SCRIPTS_DIR).glob("*.py"):
+            src = f.read_text()
+            if "__name__" not in src or "__main__" not in src:
+                continue
+            if f.name in LIBRARY_SCRIPTS:
+                continue
+            if f.name in self.OUTPUT_EXEMPT:
+                continue
+            if "--output" not in src:
+                violators.append(f.name)
+        assert not violators, (
+            f"{len(violators)} scripts produce output but have no --output flag: "
+            f"{sorted(violators)}"
+        )
