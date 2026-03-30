@@ -1,30 +1,32 @@
-"""Tests for the post-checkout hook.
+"""Tests for worktree setup: post-checkout hook and .worktreeinclude.
 
-The hook must symlink machine-local config from the main worktree
-so that DVC and scripts work in worktrees without manual setup.
+.worktreeinclude auto-copies .env and .dvc/config.local into worktrees
+created by EnterWorktree. The post-checkout hook handles DVC data only.
 """
 
-import subprocess
-import textwrap
 from pathlib import Path
 
-HOOK = Path(__file__).resolve().parents[1] / "hooks" / "post-checkout"
+REPO = Path(__file__).resolve().parents[1]
+HOOK = REPO / "hooks" / "post-checkout"
+WORKTREEINCLUDE = REPO / ".worktreeinclude"
 
 
-def test_hook_symlinks_dvc_config_local():
-    """post-checkout must symlink .dvc/config.local from main worktree."""
+def test_worktreeinclude_copies_env():
+    """.worktreeinclude must list .env for auto-copy into worktrees."""
+    contents = WORKTREEINCLUDE.read_text()
+    assert ".env" in contents
+
+
+def test_worktreeinclude_copies_dvc_config():
+    """.worktreeinclude must list .dvc/config.local for auto-copy."""
+    contents = WORKTREEINCLUDE.read_text()
+    assert ".dvc/config.local" in contents
+
+
+def test_hook_runs_dvc_checkout():
+    """post-checkout hook must run dvc checkout for data population."""
     source = HOOK.read_text()
-    # The hook should reference .dvc/config.local
-    assert ".dvc/config.local" in source, (
-        "post-checkout hook does not handle .dvc/config.local — "
-        "worktrees will fail dvc checkout silently"
-    )
-
-
-def test_hook_symlinks_env():
-    """post-checkout must symlink .env (existing behavior, regression guard)."""
-    source = HOOK.read_text()
-    assert ".env" in source
+    assert "dvc checkout" in source
 
 
 def test_hook_is_executable():

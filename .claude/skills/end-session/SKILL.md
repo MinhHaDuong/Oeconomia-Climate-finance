@@ -16,7 +16,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 3. **Commit WIP if needed** — uncommitted work gets `wip:` prefix and push.
 4. **Handoff notes** — for in-progress tickets with unpushed context, add a GitHub comment: what's done, what's next, blockers.
 5. **Hygiene sweep**:
-   - `git worktree list` + scan for stale worktree directories
+   - `git worktree list` → remove any stale worktrees (`git worktree prune`)
    - `git branch -a` → delete stale remote branches
    - `gh issue list` → no orphan issues
    - `gh pr list` → no stale PRs

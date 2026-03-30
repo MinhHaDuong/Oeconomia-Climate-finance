@@ -6,15 +6,16 @@ When this trigger runs, the agent is about to start implementing a ticket.
 
 1. `gh issue view N --json title,body` — read the ticket.
 2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
-3. Create a worktree and branch:
+3. If not already in a worktree, enter one: call `EnterWorktree` with name `t{N}`.
+4. Create or checkout the ticket branch:
    ```bash
-   git worktree add ../t{N}-short-description -b t{N}-short-description
+   git switch -c t{N}-short-description
    ```
-4. Read the files listed in **Relevant files**.
-5. Write the first test from the **Test** section of the ticket.
-6. Run `make check-fast` — confirm the test fails (Red).
-7. `[Planning → Doing]` — announce the transition, then begin: Red → Green → Refactor.
-8. Create the PR.
-9. Review according to the runbook.
-10. Fix, addressing all comments regardless of their apparent severity.
-11. Repeat 9–10 up to 3 times. If still not clean, escalate (see AGENTS.md).
+5. Read the files listed in **Relevant files**.
+6. Write the first test from the **Test** section of the ticket.
+7. Run `make check-fast` — confirm the test fails (Red).
+8. `[Planning → Doing]` — announce the transition, then begin: Red → Green → Refactor.
+9. Create the PR.
+10. Review according to the runbook.
+11. Fix, addressing all comments regardless of their apparent severity.
+12. Repeat 10–11 up to 3 times. If still not clean, escalate (see AGENTS.md).

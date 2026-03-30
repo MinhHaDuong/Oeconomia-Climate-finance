@@ -25,19 +25,23 @@ export GH_TOKEN="$AGENT_GH_TOKEN"
 
 Read `STATE.md` and `ROADMAP.md`.
 
-## 3. Branch and announce phase
+## 3. Isolate and announce phase
 
-**GATE — nothing below this step runs until a branch is checked out.**
+**GATE — nothing below this step runs until the worktree is entered.**
 
-Infer the Dragon Dreaming phase from context, create or checkout the working branch, then announce. The pre-commit hook blocks all commits on main.
+Every conversation runs in its own worktree. Call `EnterWorktree` with a descriptive name, then checkout the right branch and announce the phase. This ensures parallel conversations never interfere with each other.
 
-| Context | Phase | Branch |
-|---------|-------|--------|
-| Fresh conversation, no ticket | `[→ Dreaming]` | Create `explore-{topic}` |
-| Ticket reference but no branch | `[→ Planning]` | Create `explore-{topic}`; the `/start-ticket` skill creates the `t{N}` branch when Doing begins |
-| Active feature branch + open PR | `[→ Doing]` | Checkout existing branch |
+| Context | Worktree name | Then | Phase |
+|---------|---------------|------|-------|
+| Fresh conversation, no ticket | `explore-{topic}` | Create branch `explore-{topic}` | `[→ Dreaming]` |
+| Ticket reference but no branch | `explore-{topic}` | Create branch `explore-{topic}` | `[→ Planning]` |
+| `/start-ticket N` | `t{N}` | Create or checkout branch `t{N}-short-description` | `[→ Doing]` |
+| Active feature branch + open PR | `t{N}` | Checkout existing branch | `[→ Doing]` |
+| PR review | `review-{N}` | Checkout PR branch | read-only |
 
-If the conversation turns out to be a quick question with no file edits, the branch is harmless — delete it at session end if empty.
+After `EnterWorktree`, run `git switch <branch>` (or `git switch -c <branch>`) to land on the correct branch. The worktree is throwaway — all durable state lives in branches.
+
+`.worktreeinclude` auto-copies `.env` and `.dvc/config.local` into the worktree.
 
 # Escalation Protocol
 

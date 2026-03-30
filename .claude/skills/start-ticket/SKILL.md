@@ -14,15 +14,16 @@ argument-hint: <issue-number>
 
 1. Read the ticket: `gh issue view $ARGUMENTS --json title,body`
 2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
-3. Create a worktree and branch:
+3. If not already in a worktree, enter one: call `EnterWorktree` with name `t$ARGUMENTS`.
+4. Create or checkout the ticket branch:
    ```bash
-   git worktree add ../t$ARGUMENTS-short-description -b t$ARGUMENTS-short-description
+   git switch -c t$ARGUMENTS-short-description
    ```
-4. Read the files listed in **Relevant files**.
-5. Write the first test from the **Test** section of the ticket.
-6. Run `make check-fast` — confirm the test fails.
-7. Announce `[Planning → Doing]`, then implement until `make check` passes.
-8. Create the PR.
-9. Review according to `/review-pr`.
-10. Fix all comments regardless of severity.
-11. Repeat 9–10 up to 3 times. If still not clean, escalate (see workflow rules).
+5. Read the files listed in **Relevant files**.
+6. Write the first test from the **Test** section of the ticket.
+7. Run `make check-fast` — confirm the test fails.
+8. Announce `[Planning → Doing]`, then implement until `make check` passes.
+9. Create the PR.
+10. Review according to `/review-pr`.
+11. Fix all comments regardless of severity.
+12. Repeat 10–11 up to 3 times. If still not clean, escalate (see workflow rules).
