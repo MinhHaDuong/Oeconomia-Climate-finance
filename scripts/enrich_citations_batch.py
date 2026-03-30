@@ -214,7 +214,9 @@ def main():
         total_refs += len(refs)
         total_found += len(found_dois)
 
-        # Append real refs to cache
+        # Append real refs to cache.
+        # Note: mode='a' can leave a partial last line on crash.
+        # merge_citations.py reads with on_bad_lines="warn" to tolerate this.
         if refs:
             batch_df = pd.DataFrame(refs, columns=REFS_COLUMNS)
             batch_df.to_csv(CACHE_PATH, mode="a", header=False, index=False)

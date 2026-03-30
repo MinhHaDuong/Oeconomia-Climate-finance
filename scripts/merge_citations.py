@@ -21,7 +21,7 @@ import argparse
 import os
 
 import pandas as pd
-from utils import CATALOGS_DIR, REFS_COLUMNS, get_logger, normalize_doi
+from utils import CATALOGS_DIR, REFS_COLUMNS, get_logger, normalize_doi, save_csv
 
 log = get_logger("merge_citations")
 
@@ -51,9 +51,11 @@ def merge_citations(cache_dir=None, output_path=None):
 
     frames = []
 
-    # Read Crossref cache — already has REFS_COLUMNS schema
+    # Read Crossref cache — already has REFS_COLUMNS schema.
+    # on_bad_lines="warn" tolerates partial trailing lines from crash-during-append.
     if os.path.exists(crossref_path):
-        cr = pd.read_csv(crossref_path, dtype=str, keep_default_na=False)
+        cr = pd.read_csv(crossref_path, dtype=str, keep_default_na=False,
+                         on_bad_lines="warn")
         log.info("Crossref cache: %d rows", len(cr))
         frames.append(cr)
     else:
@@ -61,7 +63,8 @@ def merge_citations(cache_dir=None, output_path=None):
 
     # Read OpenAlex cache — has ref_oa_id, needs mapping to REFS_COLUMNS
     if os.path.exists(openalex_path):
-        oa = pd.read_csv(openalex_path, dtype=str, keep_default_na=False)
+        oa = pd.read_csv(openalex_path, dtype=str, keep_default_na=False,
+                         on_bad_lines="warn")
         log.info("OpenAlex cache: %d rows", len(oa))
         # Map to REFS_COLUMNS: ref_oa_id → source_id, fill missing columns
         oa_mapped = pd.DataFrame({
@@ -82,7 +85,7 @@ def merge_citations(cache_dir=None, output_path=None):
     if not frames:
         log.info("No cache files found — writing empty citations.csv")
         empty = pd.DataFrame({c: pd.Series(dtype=str) for c in REFS_COLUMNS})
-        empty.to_csv(output_path, index=False)
+        save_csv(empty, output_path)
         return 0
 
     combined = pd.concat(frames, ignore_index=True)
@@ -99,18 +102,22 @@ def merge_citations(cache_dir=None, output_path=None):
         lambda x: normalize_doi(x) if x else "")
 
     # Dedup: for rows with ref_doi, dedup on (source_doi, ref_doi).
-    # For rows without ref_doi (books/reports), keep all (they're unique by content).
+    # For rows without ref_doi (books/reports), dedup on
+    # (source_doi, ref_title, ref_first_author, ref_year) to catch
+    # the same book reference from both Crossref and OpenAlex.
     has_ref_doi = combined["_ref_norm"] != ""
     with_doi = combined[has_ref_doi].drop_duplicates(
         subset=["_src_norm", "_ref_norm"], keep="first")
-    without_doi = combined[~has_ref_doi]
+    without_doi = combined[~has_ref_doi].drop_duplicates(
+        subset=["_src_norm", "ref_title", "ref_first_author", "ref_year"],
+        keep="first")
 
     result = pd.concat([with_doi, without_doi], ignore_index=True)
     n_deduped = len(combined) - len(result)
 
     # Drop internal columns, ensure REFS_COLUMNS order
     result = result[REFS_COLUMNS]
-    result.to_csv(output_path, index=False)
+    save_csv(result, output_path)
 
     log.info("Merged: %d rows (-%d sentinels, -%d dupes) → %s",
              len(result), n_sentinel, n_deduped, output_path)
