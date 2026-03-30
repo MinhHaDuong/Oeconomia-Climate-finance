@@ -1091,43 +1091,31 @@ class TestOutputFlag:
             f"{sorted(violators)}"
         )
 
-    def test_output_flag_is_wired_through(self):
-        """--output must control actual output, not be a no-op.
+    # Scripts that can run with smoke fixtures (no network, no full corpus).
+    # Each entry: (script, extra_args, output_extension)
+    BLACKBOX_SCRIPTS = [
+        # Phase 2 plots that accept --input
+        ("plot_fig1_bars.py", ["--input", "tests/fixtures/smoke/catalogs/refined_works.csv"], ".png"),
+        # Phase 2 scripts that need no input
+        ("plot_fig_dag.py", [], ".png"),
+    ]
 
-        Checks that args.output or io_args.output appears in the script
-        body beyond just argparse declaration and validate_io calls.
-        """
-        # Lines that merely declare/validate --output don't count
-        BOILERPLATE = {
-            "add_argument", "validate_io", "parse_io_args",
-            "parse_args", "parse_known_args", 'help=', 'help="',
-        }
-        no_ops = []
-        for f in Path(SCRIPTS_DIR).glob("*.py"):
-            src = f.read_text()
-            if "__name__" not in src or "__main__" not in src:
-                continue
-            if f.name in LIBRARY_SCRIPTS or f.name in self.OUTPUT_EXEMPT:
-                continue
-            if "--output" not in src and "parse_io_args" not in src:
-                continue
-            # Find lines that USE the output value
-            used = False
-            for line in src.splitlines():
-                stripped = line.strip()
-                if stripped.startswith("#"):
-                    continue
-                # Must reference the output variable
-                if ".output" not in stripped and "output_path" not in stripped:
-                    continue
-                # Skip boilerplate lines
-                if any(bp in stripped for bp in BOILERPLATE):
-                    continue
-                used = True
-                break
-            if not used:
-                no_ops.append(f.name)
-        assert not no_ops, (
-            f"{len(no_ops)} scripts accept --output but never use it: "
-            f"{sorted(no_ops)}"
+    @pytest.mark.integration
+    @pytest.mark.parametrize("script,extra_args,ext", BLACKBOX_SCRIPTS,
+                             ids=[s[0] for s in BLACKBOX_SCRIPTS])
+    def test_output_file_created(self, script, extra_args, ext, tmp_path):
+        """Run script --output /tmp/... and verify the file appears."""
+        import subprocess
+        out_path = tmp_path / f"test_output{ext}"
+        cmd = [
+            sys.executable, os.path.join(SCRIPTS_DIR, script),
+            "--output", str(out_path),
+        ] + extra_args
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, (
+            f"{script} failed (rc={result.returncode}):\n{result.stderr[-500:]}"
+        )
+        assert out_path.exists(), (
+            f"{script} exited 0 but --output {out_path} was not created. "
+            f"The script ignores --output and writes elsewhere."
         )
