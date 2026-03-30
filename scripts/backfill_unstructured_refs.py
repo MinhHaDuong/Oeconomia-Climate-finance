@@ -12,11 +12,8 @@ Usage:
 import argparse
 import json
 import os
-import sys
 
 import pandas as pd
-
-sys.path.insert(0, os.path.dirname(__file__))
 from enrich_citations_batch import parse_ref_fields
 from utils import CATALOGS_DIR, get_logger
 
