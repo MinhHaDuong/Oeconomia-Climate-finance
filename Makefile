@@ -37,6 +37,10 @@ REFINED_EMB := $(DATA_DIR)/refined_embeddings.npz
 REFINED_CIT := $(DATA_DIR)/refined_citations.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
 
+# Phase 1→2 handoff: Feather files for fast Phase 2 reads
+REFINED_FTH := $(DATA_DIR)/refined_works.feather
+REFINED_CIT_FTH := $(DATA_DIR)/refined_citations.feather
+
 # ── Reproducibility ───────────────────────────────────────
 # PYTHONHASHSEED=0  → deterministic dict/set iteration order
 # SOURCE_DATE_EPOCH=0 → reproducible timestamps in PDF/PNG metadata
@@ -107,7 +111,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -193,6 +197,17 @@ content/tables/qa_citations_report.json: scripts/qa_citations.py scripts/utils.p
 
 # Gate for Phase 2: verify all three contract files exist.
 # If any is missing, suggest dvc pull (data not synced) or make corpus (not built).
+# Phase 1→2 handoff: convert CSV contract files to Feather for fast Phase 2 reads.
+# Embeddings stay as .npz (already binary). One conversion pass (~5s) replaces
+# ~48s of repeated CSV parsing across 25 Phase 2 script invocations.
+$(REFINED_FTH): $(REFINED)
+	uv run python -c "import pandas as pd; pd.read_csv('$<').to_feather('$@')"
+
+$(REFINED_CIT_FTH): $(REFINED_CIT)
+	uv run python -c "import pandas as pd; pd.read_csv('$<', low_memory=False).to_feather('$@')"
+
+handoff: $(REFINED_FTH) $(REFINED_CIT_FTH)
+
 check-corpus:
 	@ok=true; \
 	for f in "$(REFINED)" "$(REFINED_EMB)" "$(REFINED_CIT)"; do \

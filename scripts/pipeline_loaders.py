@@ -79,6 +79,11 @@ REFINED_WORKS_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")
 REFINED_EMBEDDINGS_PATH = os.path.join(CATALOGS_DIR, "refined_embeddings.npz")
 REFINED_CITATIONS_PATH = os.path.join(CATALOGS_DIR, "refined_citations.csv")
 
+# Phase 2 reads Feather for speed (20–50× faster than CSV). The Makefile
+# handoff target converts CSV → Feather; loaders fall back to CSV if missing.
+REFINED_WORKS_FEATHER = os.path.join(CATALOGS_DIR, "refined_works.feather")
+REFINED_CITATIONS_FEATHER = os.path.join(CATALOGS_DIR, "refined_citations.feather")
+
 _CLUSTER_LABELS_PATH = os.path.join(BASE_DIR, "content", "tables", "cluster_labels.json")
 
 
@@ -278,10 +283,13 @@ def load_refined_citations():
     Run ``make corpus-align`` (or ``uv run python scripts/corpus_align.py``)
     to produce this file.
     """
+    if os.path.exists(REFINED_CITATIONS_FEATHER):
+        return pd.read_feather(REFINED_CITATIONS_FEATHER)
     if not os.path.exists(REFINED_CITATIONS_PATH):
         raise FileNotFoundError(
-            f"refined_citations.csv not found at {REFINED_CITATIONS_PATH}. "
-            "Run: uv run python scripts/corpus_align.py"
+            f"refined_citations not found at {REFINED_CITATIONS_FEATHER} or "
+            f"{REFINED_CITATIONS_PATH}. "
+            "Run: make handoff (or uv run python scripts/corpus_align.py)"
         )
     return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 
@@ -309,7 +317,10 @@ def load_analysis_corpus(core_only=False, with_embeddings=True,
     year_min = cfg["periodization"]["year_min"]
     year_max = cfg["periodization"]["year_max"]
 
-    works = pd.read_csv(REFINED_WORKS_PATH)
+    if os.path.exists(REFINED_WORKS_FEATHER):
+        works = pd.read_feather(REFINED_WORKS_FEATHER)
+    else:
+        works = pd.read_csv(REFINED_WORKS_PATH)
     works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
