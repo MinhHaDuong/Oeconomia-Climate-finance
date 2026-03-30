@@ -54,7 +54,7 @@ REGISTRY: list[dict] = [
     {
         "name": "compute_breakpoints",
         "script": "compute_breakpoints.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "deps": [],
         "outputs": [
             "content/tables/tab_breakpoints.csv",
@@ -64,7 +64,7 @@ REGISTRY: list[dict] = [
     {
         "name": "compute_clusters",
         "script": "compute_clusters.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "deps": [],
         "outputs": [
             "content/tables/tab_alluvial.csv",
@@ -74,7 +74,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig1_bars",
         "script": "plot_fig1_bars.py",
-        "args": ["--output", str(FIGURES_DIR / "fig_bars.png"), "--no-pdf"],
+        "args": ["--output", str(FIGURES_DIR / "fig_bars.png")],
         "deps": [],
         "outputs": [
             "content/figures/fig_bars.png",
@@ -85,7 +85,7 @@ REGISTRY: list[dict] = [
         "script": "plot_fig1_bars.py",
         "args": [
             "--output", str(FIGURES_DIR / "fig_bars_v1.png"),
-            "--no-pdf", "--v1-only",
+            "--v1-only",
         ],
         "deps": [],
         "outputs": [
@@ -105,7 +105,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig2_breaks",
         "script": "plot_fig2_breaks.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "deps": ["compute_breakpoints"],
         "outputs": [
             "content/figures/fig_breaks.png",
@@ -115,7 +115,7 @@ REGISTRY: list[dict] = [
         "name": "plot_fig2_composition",
         "script": "plot_fig2_composition.py",
         "args": [
-            "--output", str(FIGURES_DIR / "fig_composition.png"), "--no-pdf",
+            "--output", str(FIGURES_DIR / "fig_composition.png"),
         ],
         "deps": ["compute_clusters"],
         "outputs": [
@@ -125,7 +125,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_alluvial",
         "script": "plot_fig_alluvial.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "deps": ["compute_clusters"],
         "outputs": [
             "content/figures/fig_alluvial.png",
@@ -134,7 +134,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_breakpoints",
         "script": "plot_fig_breakpoints.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "deps": ["compute_breakpoints", "compute_clusters"],
         "outputs": [
             "content/figures/fig_breakpoints.png",

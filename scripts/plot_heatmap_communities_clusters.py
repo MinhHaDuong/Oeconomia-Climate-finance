@@ -11,7 +11,7 @@ Indirect mapping: for each co-citation community, count unique corpus papers
 community.
 
 Usage:
-    uv run python scripts/plot_heatmap_communities_clusters.py [--no-pdf]
+    uv run python scripts/plot_heatmap_communities_clusters.py [--pdf]
 """
 
 import argparse
@@ -44,7 +44,7 @@ from sklearn.cluster import KMeans
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Heatmap: communities vs clusters")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF output")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
 args = parser.parse_args()
 
 # --- Paths ---
@@ -349,7 +349,7 @@ fig.tight_layout(rect=[0, 0, 1, 0.96])
 
 # Save
 out_stem = os.path.join(FIGURES_DIR, "heatmap_communities_clusters")
-save_figure(fig, out_stem, no_pdf=args.no_pdf, dpi=DPI)
+save_figure(fig, out_stem, pdf=args.pdf, dpi=DPI)
 plt.close(fig)
 
 log.info("Done.")

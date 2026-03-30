@@ -5,7 +5,7 @@ Reads:
   data/catalogs/refined_citations.csv — for internal citation edges
 
 Produces:
-  content/figures/fig_genealogy.png (and .pdf unless --no-pdf)
+  content/figures/fig_genealogy.png (and .pdf if --pdf)
 """
 
 import argparse
@@ -225,7 +225,7 @@ def _draw_nodes_and_labels(ax, backbone_dois, doi_meta, lineage, positions, pale
         )
 
 
-def render_figure(backbone_dois, doi_meta, lineage, positions, edges, no_pdf, output_path):
+def render_figure(backbone_dois, doi_meta, lineage, positions, edges, pdf, output_path):
     """Render the static matplotlib genealogy figure."""
     palette = {c: to_rgba(BAND_COLORS_RGB[c]) for c in range(N_COMMUNITIES)}
 
@@ -275,7 +275,7 @@ def render_figure(backbone_dois, doi_meta, lineage, positions, edges, no_pdf, ou
 
     plt.tight_layout()
     fig_stem = os.path.splitext(output_path)[0]
-    save_figure(fig, fig_stem, no_pdf=no_pdf)
+    save_figure(fig, fig_stem, pdf=pdf)
     plt.close()
     log.info("Saved genealogy figure -> %s", output_path)
 
@@ -284,8 +284,8 @@ def main():
     parser = argparse.ArgumentParser(description="Render static genealogy figure")
     parser.add_argument("--output", default=os.path.join(FIGURES_DIR, "fig_genealogy.png"),
                         help="Output figure path")
-    parser.add_argument("--no-pdf", action="store_true",
-                        help="Skip PDF generation (PNG only)")
+    parser.add_argument("--pdf", action="store_true",
+                        help="Also save PDF output")
     parser.add_argument("--input", default=os.path.join(TABLES_DIR, "tab_lineages.csv"),
                         help="Input lineages table path")
     args = parser.parse_args()
@@ -293,7 +293,7 @@ def main():
     backbone_dois, doi_meta, lineage, positions = load_model(args.input)
     edges = load_edges(backbone_dois)
     render_figure(backbone_dois, doi_meta, lineage, positions, edges,
-                  args.no_pdf, args.output)
+                  args.pdf, args.output)
 
 
 if __name__ == "__main__":

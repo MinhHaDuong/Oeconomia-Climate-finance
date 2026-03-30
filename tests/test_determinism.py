@@ -57,7 +57,7 @@ class TestDeterminism:
 
     def test_fig_bars_deterministic(self, tmp_path):
         p1, p2 = _run_twice(
-            "plot_fig1_bars.py", ["--no-pdf"], "fig_bars.png", tmp_path
+            "plot_fig1_bars.py", [], "fig_bars.png", tmp_path
         )
         assert p1.exists() and p2.exists()
         assert filecmp.cmp(str(p1), str(p2), shallow=False), (
@@ -66,7 +66,7 @@ class TestDeterminism:
 
     def test_fig_bars_v1_deterministic(self, tmp_path):
         p1, p2 = _run_twice(
-            "plot_fig1_bars.py", ["--no-pdf", "--v1-only"],
+            "plot_fig1_bars.py", ["--v1-only"],
             "fig_bars_v1.png", tmp_path,
         )
         assert p1.exists() and p2.exists()

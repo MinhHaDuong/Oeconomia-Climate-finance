@@ -164,25 +164,25 @@ class TestSmokeCriticalPath:
     """
 
     def test_compute_breakpoints(self, smoke_output_dir):
-        result = _run_script("compute_breakpoints.py", "--no-pdf")
+        result = _run_script("compute_breakpoints.py")
         assert result.returncode == 0, (
             f"compute_breakpoints.py failed:\n{result.stderr}"
         )
 
     def test_compute_clusters(self, smoke_output_dir):
-        result = _run_script("compute_clusters.py", "--no-pdf")
+        result = _run_script("compute_clusters.py")
         assert result.returncode == 0, (
             f"compute_clusters.py failed:\n{result.stderr}"
         )
 
     def test_plot_fig1_bars(self, smoke_output_dir):
-        result = _run_script("plot_fig1_bars.py", "--no-pdf")
+        result = _run_script("plot_fig1_bars.py")
         assert result.returncode == 0, (
             f"plot_fig1_bars.py failed:\n{result.stderr}"
         )
 
     def test_plot_fig1_bars_v1(self, smoke_output_dir):
-        result = _run_script("plot_fig1_bars.py", "--no-pdf", "--v1-only")
+        result = _run_script("plot_fig1_bars.py", "--v1-only")
         assert result.returncode == 0, (
             f"plot_fig1_bars.py --v1-only failed:\n{result.stderr}"
         )

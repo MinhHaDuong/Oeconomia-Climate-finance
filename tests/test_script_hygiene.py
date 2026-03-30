@@ -648,13 +648,13 @@ class TestTypingCoreModules:
 
 
 # ---------------------------------------------------------------------------
-# 9. No phantom --no-pdf in non-plotting scripts
+# 9. No phantom --pdf in non-plotting scripts
 # ---------------------------------------------------------------------------
 
-class TestNoPdfDiscipline:
-    """Scripts that produce no figures should not accept --no-pdf.
+class TestPdfDiscipline:
+    """Scripts that produce no figures should not accept --pdf.
 
-    The --no-pdf flag controls PDF generation in plotting scripts. When
+    The --pdf flag controls PDF generation in plotting scripts. When
     non-plotting scripts accept it as a no-op "for interface compatibility",
     the flag becomes a phantom that misleads readers about what the script does.
     """
@@ -674,6 +674,6 @@ class TestNoPdfDiscipline:
     def test_non_plotting_scripts_no_phantom_pdf_flag(self, script):
         path = os.path.join(SCRIPTS_DIR, script)
         src = Path(path).read_text()
-        assert "--no-pdf" not in src, (
-            f"{script} accepts --no-pdf but produces no figures"
+        assert '"--pdf"' not in src, (
+            f"{script} accepts --pdf but produces no figures"
         )

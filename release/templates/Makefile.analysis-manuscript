@@ -28,11 +28,11 @@ content/tables/tab_alluvial.csv content/tables/tab_core_shares.csv content/table
 
 # ── Figures ─────────────────────────────────────────────────
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf --v1-only
+	uv run python $< --v1-only
 
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
-	uv run python $< --no-pdf --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
+	uv run python $< --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 $(DATA)/het_mostcited_50.csv: scripts/build_het_core.py scripts/utils.py $(REFINED)
 	uv run python $<
@@ -42,7 +42,7 @@ content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFI
 	uv run python $<
 
 content/tables/tab_pole_papers.csv &: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
+	uv run python $<
 
 # ── Verification ──────────────────────────────────────────
 verify: figures

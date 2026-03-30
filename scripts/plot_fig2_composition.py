@@ -6,7 +6,7 @@ share evolves from Before (1990-2006) through Crystallisation (2007-2014)
 to Disputes (2015-2024).
 
 Usage:
-    uv run python scripts/plot_fig2_composition.py --output content/figures/fig_composition.png [--no-pdf]
+    uv run python scripts/plot_fig2_composition.py --output content/figures/fig_composition.png [--pdf]
 """
 
 import os
@@ -54,7 +54,7 @@ def main():
 
     import argparse
     parser = argparse.ArgumentParser(description="Figure 2: thematic recomposition")
-    parser.add_argument("--no-pdf", action="store_true", help="skip PDF output")
+    parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
     parser.add_argument("--alluvial", type=str, default=None,
                         help="Path to alluvial CSV (default: tab_alluvial.csv)")
     parser.add_argument("--labels", type=str, default=None,
@@ -155,7 +155,7 @@ def main():
 
     # Save
     out_path = os.path.splitext(io_args.output)[0]  # save_figure adds extension
-    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+    save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
     plt.close(fig)
 
 

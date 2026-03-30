@@ -1,9 +1,9 @@
 """K-sensitivity figure: structural break persistence across cluster counts.
 
 Reads:  tab_k_sensitivity.csv
-Writes: fig_k_sensitivity.png (and .pdf unless --no-pdf)
+Writes: fig_k_sensitivity.png (and .pdf if --pdf)
 
-Flags: --no-pdf
+Flags: --pdf
 
 Run compute_breakpoints.py --robustness first to generate tab_k_sensitivity.csv.
 """
@@ -26,7 +26,7 @@ K_DEFAULT = 6
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Plot k-sensitivity figure")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
 args = parser.parse_args()
 
 # --- Load data ---
@@ -57,6 +57,6 @@ ax.set_title("K-sensitivity: do structural breaks persist across cluster counts?
              fontsize=12, pad=15)
 ax.legend(fontsize=9, framealpha=0.9)
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, "fig_k_sensitivity"), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, "fig_k_sensitivity"), pdf=args.pdf)
 plt.close()
 log.info("Saved fig_k_sensitivity.png")

@@ -9,7 +9,7 @@ Produces:
 - tables/tab_seed_axis_core.csv
 
 Usage:
-    uv run python scripts/plot_fig_seed_axis.py [--no-pdf]
+    uv run python scripts/plot_fig_seed_axis.py [--pdf]
 """
 
 import argparse
@@ -34,7 +34,7 @@ log = get_logger("plot_fig_seed_axis")
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Seed-axis violin plot (Fig seed)")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
 args = parser.parse_args()
 
 apply_style()
@@ -241,7 +241,7 @@ axes[0].set_ylabel("\u2190 Accountability     Score     Efficiency \u2192",
 plt.tight_layout()
 
 save_figure(fig, os.path.join(FIGURES_DIR, "fig_seed_axis_core"),
-            no_pdf=args.no_pdf, dpi=DPI)
+            pdf=args.pdf, dpi=DPI)
 plt.close()
 
 

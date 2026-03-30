@@ -26,7 +26,7 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 ## Conventions
 
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
-- All scripts support `--no-pdf`.
+- Plotting scripts accept `--pdf` for optional PDF output.
 - `make` builds all documents. `make manuscript` builds manuscript only. `make papers` builds the 3 companion documents. `make figures` regenerates all figures (byte-reproducible).
 - House style: `.agent/guidelines/oeconomia-style.md` (eyeballed from 15-4 samples)
 - **Logging, not print.** All scripts MUST use `from utils import get_logger; log = get_logger("script_name")` — never bare `print()`. The `get_logger()` factory configures a shared `pipeline` root logger with `StreamHandler` (auto-flush to stderr, `HH:MM:SS LEVEL message` format). Use `log.info()` for progress, `log.warning()` for retries/rate-limits, `log.error()` for failures.
@@ -37,7 +37,7 @@ Consult this file when writing or modifying Python scripts, pipeline steps, or b
 - **Sentinel stamps for dynamic outputs.** When a script produces filenames that depend on data (e.g., one figure per detected break year), Make can't declare them as static targets. Use a stamp file instead:
   ```makefile
   .my_target.stamp: scripts/my_script.py input.csv
-  	uv run python $< --no-pdf
+  	uv run python $<
   	@touch $@
   ```
   Add `*.stamp` to `.gitignore`. The stamp sits at the repo root (not under `content/figures/` which is gitignored).
