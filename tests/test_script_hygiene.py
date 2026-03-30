@@ -681,7 +681,43 @@ class TestPdfDiscipline:
 
 
 # ---------------------------------------------------------------------------
-# 10. Test marker discipline: @slow vs @integration
+# 10. analyze_* scripts must not produce figures (1-fig-1-script)
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzeNoFigures:
+    """analyze_* scripts compute data, not figures.
+
+    Figure production belongs in plot_* scripts. This enforces the
+    1-fig-1-script separation: analyze_* should not call save_figure()
+    or savefig().
+    """
+
+    # Pre-existing violations with open tickets for splitting.
+    # Remove entries as they are fixed.
+    KNOWN_VIOLATIONS = {
+        "analyze_bimodality.py",    # #550
+        "analyze_embeddings.py",    # #551
+    }
+
+    def test_analyze_scripts_no_save_figure_or_savefig(self):
+        violations = []
+        for fname in sorted(os.listdir(SCRIPTS_DIR)):
+            if not fname.startswith("analyze_") or not fname.endswith(".py"):
+                continue
+            if fname in self.KNOWN_VIOLATIONS:
+                continue
+            path = os.path.join(SCRIPTS_DIR, fname)
+            src = Path(path).read_text()
+            if "save_figure" in src or "savefig" in src:
+                violations.append(fname)
+        assert not violations, (
+            f"analyze_* scripts must not produce figures (use plot_*): {violations}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 11. Test marker discipline: @slow vs @integration
 # ---------------------------------------------------------------------------
 
 TESTS_DIR = os.path.join(REPO, "tests")
