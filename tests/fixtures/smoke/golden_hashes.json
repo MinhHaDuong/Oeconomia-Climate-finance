@@ -1,6 +1,6 @@
 {
   "build_het_core": {
-    "tests/fixtures/smoke/het_mostcited_50.csv": "3c962705efc33469e6d5f8a24a5698ac3f249a0110760ea53b0ca2597c928522"
+    "tests/fixtures/smoke/catalogs/het_mostcited_50.csv": "3c962705efc33469e6d5f8a24a5698ac3f249a0110760ea53b0ca2597c928522"
   },
   "compute_breakpoints": {
     "content/tables/tab_breakpoint_robustness.csv": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
