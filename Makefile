@@ -371,15 +371,15 @@ content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/u
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
 		$(REFINED) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
-	uv run python $<
+	uv run python $< --output $@
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
-	uv run python $<
+	uv run python $< --output $@
 
 content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
-	uv run python $<
+	uv run python $< --output $@
 
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only: structural break tables

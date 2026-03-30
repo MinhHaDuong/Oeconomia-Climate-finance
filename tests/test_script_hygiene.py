@@ -1068,8 +1068,7 @@ class TestOutputFlag:
         "compute_regression_history.py", "qa_bibliography.py",
         "qa_missing_references.py", "analyze_unfccc_topics.py",
         # Not in ticket #549 scope — future migration
-        "plot_genealogy.py", "plot_genealogy_html.py",
-        "plot_fig_traditions.py", "analyze_genealogy.py",
+        "plot_fig_traditions.py",
     }
 
     def test_all_producing_scripts_accept_output(self):

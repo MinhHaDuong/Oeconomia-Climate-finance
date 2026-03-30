@@ -21,6 +21,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import (
     BASE_DIR,
     CATALOGS_DIR,
@@ -303,18 +304,15 @@ def save_lineage_table(backbone_dois, lineage, positions, doi_meta, output_path)
 # ============================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Genealogy lineage analysis")
-    parser.add_argument("--output", default=os.path.join(TABLES_DIR, "tab_lineages.csv"),
-                        help="Output CSV path")
-    args = parser.parse_args()
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
 
     works, cit, doi_meta, doi_to_cluster = load_data()
     backbone_dois = select_backbone(works, doi_meta)
     backbone_dois, lineage = assign_lineages(backbone_dois, doi_meta, doi_to_cluster)
-    # Edge count logged for diagnostics; renderers reconstruct DAG from CSV
     build_citation_dag(backbone_dois, cit)
     positions = compute_layout(backbone_dois, lineage, doi_meta)
-    save_lineage_table(backbone_dois, lineage, positions, doi_meta, args.output)
+    save_lineage_table(backbone_dois, lineage, positions, doi_meta, io_args.output)
 
     log.info("Done.")
 
