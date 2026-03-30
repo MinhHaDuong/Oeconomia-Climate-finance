@@ -37,7 +37,7 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 $(DATA)/het_mostcited_50.csv: scripts/build_het_core.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) \
+content/tables/tab_venues.md: scripts/export_tab_venues.py scripts/utils.py $(REFINED) \
 		content/tables/tab_pole_papers.csv
 	uv run python $<
 

@@ -49,14 +49,14 @@ class TestClusterMethods:
     """Each clustering method returns valid labels of correct length."""
 
     def test_kmeans_labels(self, synthetic_embeddings):
-        from compare_clustering import cluster_kmeans
+        from compute_clustering_comparison import cluster_kmeans
         X, _ = synthetic_embeddings
         labels = cluster_kmeans(X, k=3, random_state=42)
         assert len(labels) == len(X)
         assert set(labels) == {0, 1, 2}
 
     def test_hdbscan_labels(self, synthetic_embeddings):
-        from compare_clustering import cluster_hdbscan
+        from compute_clustering_comparison import cluster_hdbscan
         X, _ = synthetic_embeddings
         labels = cluster_hdbscan(X, min_cluster_size=10)
         assert len(labels) == len(X)
@@ -64,14 +64,14 @@ class TestClusterMethods:
         assert max(labels) >= 0, "Should find at least one cluster"
 
     def test_hdbscan_finds_noise(self, noisy_embeddings):
-        from compare_clustering import cluster_hdbscan
+        from compute_clustering_comparison import cluster_hdbscan
         labels = cluster_hdbscan(noisy_embeddings, min_cluster_size=10)
         n_noise = sum(1 for l in labels if l == -1)
         # With well-separated blobs + random noise, should detect some noise
         assert n_noise > 0, "HDBSCAN should detect noise points"
 
     def test_spectral_labels(self, synthetic_embeddings):
-        from compare_clustering import cluster_spectral
+        from compute_clustering_comparison import cluster_spectral
         X, _ = synthetic_embeddings
         labels = cluster_spectral(X, k=3, random_state=42)
         assert len(labels) == len(X)
@@ -79,7 +79,7 @@ class TestClusterMethods:
 
     def test_all_methods_agree_on_well_separated(self, synthetic_embeddings):
         """On trivially separable data, all methods should mostly agree."""
-        from compare_clustering import cluster_kmeans, cluster_hdbscan, cluster_spectral
+        from compute_clustering_comparison import cluster_kmeans, cluster_hdbscan, cluster_spectral
         from sklearn.metrics import adjusted_rand_score
 
         X, true = synthetic_embeddings
@@ -110,13 +110,13 @@ class TestStabilityMetrics:
     """ARI-based stability measurement works correctly."""
 
     def test_ari_identical_assignments(self):
-        from compare_clustering import compute_stability_ari
+        from compute_clustering_comparison import compute_stability_ari
         labels = np.array([0, 1, 2, 0, 1, 2])
         ari = compute_stability_ari(labels, labels)
         assert ari == pytest.approx(1.0)
 
     def test_ari_random_assignments(self):
-        from compare_clustering import compute_stability_ari
+        from compute_clustering_comparison import compute_stability_ari
         rng = np.random.RandomState(42)
         a = rng.randint(0, 3, size=1000)
         b = rng.randint(0, 3, size=1000)
@@ -125,7 +125,7 @@ class TestStabilityMetrics:
 
     def test_perturbation_stability(self, synthetic_embeddings):
         """Removing 1% of points should not drastically change clustering."""
-        from compare_clustering import perturbation_stability
+        from compute_clustering_comparison import perturbation_stability
         X, _ = synthetic_embeddings
         mean_ari, std_ari = perturbation_stability(
             X, method="kmeans", k=3, drop_frac=0.01, n_repeats=5,
@@ -143,7 +143,7 @@ class TestOptimalK:
     """k-selection metrics return valid results."""
 
     def test_silhouette_scores(self, synthetic_embeddings):
-        from compare_clustering import silhouette_sweep
+        from compute_clustering_comparison import silhouette_sweep
         X, _ = synthetic_embeddings
         results = silhouette_sweep(X, k_range=range(2, 6), random_state=42)
         assert len(results) == 4  # k=2,3,4,5
@@ -152,7 +152,7 @@ class TestOptimalK:
         assert best_k == 3, f"Expected k=3 to win on 3-blob data, got k={best_k}"
 
     def test_hdbscan_min_cluster_size_sweep(self, synthetic_embeddings):
-        from compare_clustering import hdbscan_sweep
+        from compute_clustering_comparison import hdbscan_sweep
         X, _ = synthetic_embeddings
         results = hdbscan_sweep(X, sizes=[5, 10, 20, 50])
         assert len(results) == 4
@@ -171,7 +171,7 @@ class TestMultiSpace:
     """TF-IDF and citation space builders produce valid outputs."""
 
     def test_tfidf_space(self):
-        from compare_clustering import build_tfidf_space
+        from compute_clustering_comparison import build_tfidf_space
         df = pd.DataFrame({
             "abstract": [
                 "climate change finance green bonds sustainable investment",
@@ -186,7 +186,7 @@ class TestMultiSpace:
         assert len(valid_idx) == 40
 
     def test_citation_space(self, tmp_path):
-        from compare_clustering import build_citation_space
+        from compute_clustering_comparison import build_citation_space
         # 6 works: A,B cite refs 1,2; C,D cite refs 2,3; E,F cite ref 4
         # → A-B coupled, C-D coupled, E-F coupled (3 groups)
         df = pd.DataFrame({
@@ -213,7 +213,7 @@ class TestMultiSpace:
 
     def test_spectral_subsampling_preserves_sample_labels(self):
         """Spectral subsampling: sample points keep spectral labels."""
-        from compare_clustering import cluster_spectral
+        from compute_clustering_comparison import cluster_spectral
         rng = np.random.RandomState(42)
         # Create 3 well-separated blobs with enough points to trigger subsampling
         centers = [rng.randn(5) * 10 for _ in range(3)]

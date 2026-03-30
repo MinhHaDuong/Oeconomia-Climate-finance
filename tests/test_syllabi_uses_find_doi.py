@@ -1,7 +1,7 @@
 """Tests for DOI lookup in the teaching pipeline.
 
 Verifies:
-- collect_syllabi uses crossref_lookup with cache for teaching DOI resolution
+- catalog_syllabi uses crossref_lookup with cache for teaching DOI resolution
 - enrich_dois provides find_doi for the main corpus pipeline
 - CLASSIFY_MODEL and EXTRACT_MODEL env vars are wired at call sites
 """
@@ -17,22 +17,22 @@ class TestTeachingDOILookup:
     """Verify teaching pipeline uses CrossRef with cache."""
 
     def test_crossref_lookup_exists(self):
-        """collect_syllabi.py should have crossref_lookup for teaching DOI resolution."""
-        import collect_syllabi
-        assert hasattr(collect_syllabi, "crossref_lookup"), \
+        """catalog_syllabi.py should have crossref_lookup for teaching DOI resolution."""
+        import catalog_syllabi
+        assert hasattr(catalog_syllabi, "crossref_lookup"), \
             "crossref_lookup should exist — teaching pipeline uses CrossRef"
 
     def test_crossref_cache_exists(self):
-        """collect_syllabi.py should have CrossRef cache infrastructure."""
-        import collect_syllabi
-        assert hasattr(collect_syllabi, "_load_crossref_cache"), \
+        """catalog_syllabi.py should have CrossRef cache infrastructure."""
+        import catalog_syllabi
+        assert hasattr(catalog_syllabi, "_load_crossref_cache"), \
             "CrossRef cache loader should exist"
 
     def test_normalize_stage_uses_crossref(self):
         """stage_normalize implementation should call crossref_lookup.
 
         After the harvest/process split, the implementation lives in
-        syllabi_process; collect_syllabi.stage_normalize is a thin wrapper.
+        syllabi_process; catalog_syllabi.stage_normalize is a thin wrapper.
         """
         import syllabi_process
         source = inspect.getsource(syllabi_process.stage_normalize)
@@ -57,7 +57,7 @@ class TestModelEnvVars:
         """stage_classify implementation should read CLASSIFY_MODEL env var.
 
         After the harvest/process split, the implementation lives in
-        syllabi_process; collect_syllabi.stage_classify is a thin wrapper.
+        syllabi_process; catalog_syllabi.stage_classify is a thin wrapper.
         """
         import syllabi_process
         source = inspect.getsource(syllabi_process.stage_classify)
@@ -68,7 +68,7 @@ class TestModelEnvVars:
         """stage_extract implementation should read EXTRACT_MODEL env var.
 
         After the harvest/process split, the implementation lives in
-        syllabi_process; collect_syllabi.stage_extract is a thin wrapper.
+        syllabi_process; catalog_syllabi.stage_extract is a thin wrapper.
         """
         import syllabi_process
         source = inspect.getsource(syllabi_process.stage_extract)

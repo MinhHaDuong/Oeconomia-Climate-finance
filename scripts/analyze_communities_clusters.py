@@ -8,7 +8,7 @@ Compares two independent categorizations of the same papers:
 Produces a contingency table (community x cluster) for overlapping DOIs.
 
 Usage:
-    uv run python scripts/cross_ref_communities_clusters.py
+    uv run python scripts/analyze_communities_clusters.py
 """
 
 import os
@@ -28,7 +28,7 @@ from utils import (
     normalize_doi,
 )
 
-log = get_logger("cross_ref_communities_clusters")
+log = get_logger("analyze_communities_clusters")
 
 CLUSTER_LABELS = load_cluster_labels()
 

@@ -2,7 +2,7 @@
 
 Covers:
 1. polite_get delegates to retry_get (survives transient 429/5xx)
-2. mine_openalex_keywords.py sends API key
+2. enrich_openalex_keywords.py sends API key
 3. budget_exhausted guard stops fetching when budget hits zero
 """
 
@@ -67,7 +67,7 @@ class TestPoliteGetRobustness:
 
 
 class TestMineOpenalexKeywordsApiKey:
-    """mine_openalex_keywords.py should send the API key when available."""
+    """enrich_openalex_keywords.py should send the API key when available."""
 
     def test_fetch_sends_api_key(self, monkeypatch, requests_mock):
         """fetch_openalex_metadata should include api_key in params."""
@@ -86,12 +86,12 @@ class TestMineOpenalexKeywordsApiKey:
             json=capture_request,
         )
 
-        from mine_openalex_keywords import fetch_openalex_metadata
+        from enrich_openalex_keywords import fetch_openalex_metadata
         fetch_openalex_metadata(["10.1000/test"])
 
         # The api_key param should be present
         assert "api_key" in captured_params, (
-            "mine_openalex_keywords does not send OPENALEX_API_KEY"
+            "enrich_openalex_keywords does not send OPENALEX_API_KEY"
         )
 
 

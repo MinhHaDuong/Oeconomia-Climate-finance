@@ -8,7 +8,7 @@ Run as part of `make check` (via pytest). One test per script, so
 failures pinpoint exactly which script's output changed.
 
 When a change is intentional:
-    uv run python scripts/regression_hashes.py --save
+    uv run python scripts/compute_regression_hashes.py --save
     git add tests/fixtures/smoke/golden_hashes.json
     # commit with explanation of why outputs changed
 """
@@ -25,7 +25,7 @@ SCRIPTS_DIR = os.path.join(ROOT, "scripts")
 GOLDEN_PATH = os.path.join(ROOT, "tests", "fixtures", "smoke", "golden_hashes.json")
 
 sys.path.insert(0, SCRIPTS_DIR)
-from regression_hashes import REGISTRY, _hash_output, _smoke_env  # noqa: E402
+from compute_regression_hashes import REGISTRY, _hash_output, _smoke_env  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 sys.path.pop(0)
@@ -52,7 +52,7 @@ def regression_outputs(tmp_path_factory):
     """
     import shutil
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    from regression_hashes import _resolve_waves
+    from compute_regression_hashes import _resolve_waves
 
     tmp = tmp_path_factory.mktemp("regression_backup")
     env = _smoke_env()
@@ -132,7 +132,7 @@ def _make_test(entry):
         golden = _load_golden()
         assert name in golden, (
             f"{name} not in golden_hashes.json. Run: "
-            "uv run python scripts/regression_hashes.py --save"
+            "uv run python scripts/compute_regression_hashes.py --save"
         )
         assert name in results, f"{name} produced no outputs"
 
@@ -143,7 +143,7 @@ def _make_test(entry):
                 f"{name}: {os.path.basename(rel_path)} changed\n"
                 f"  golden:  {expected_hash[:16]}...\n"
                 f"  current: {actual_hash[:16]}...\n"
-                "If intentional: uv run python scripts/regression_hashes.py --save"
+                "If intentional: uv run python scripts/compute_regression_hashes.py --save"
             )
 
     test_func.__name__ = f"test_regression_{name}"
@@ -166,7 +166,7 @@ class TestRegressionInfra:
     def test_golden_hashes_exist(self):
         assert os.path.exists(GOLDEN_PATH), (
             "Golden hashes not found. Generate with: "
-            "uv run python scripts/regression_hashes.py --save"
+            "uv run python scripts/compute_regression_hashes.py --save"
         )
 
     def test_golden_hashes_valid_json(self):
@@ -180,7 +180,7 @@ class TestRegressionInfra:
         missing = registry_names - golden_names
         assert not missing, (
             f"Golden hashes missing for: {missing}. "
-            "Run: uv run python scripts/regression_hashes.py --save"
+            "Run: uv run python scripts/compute_regression_hashes.py --save"
         )
 
     def test_makefile_has_regression_target(self):

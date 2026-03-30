@@ -13,7 +13,7 @@ import pytest
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 MANUSCRIPT = os.path.join(ROOT, "content", "manuscript.qmd")
 TAB_VENUES = os.path.join(ROOT, "content", "tables", "tab_venues.md")
-SCRIPT = os.path.join(ROOT, "scripts", "make_tab_venues.py")
+SCRIPT = os.path.join(ROOT, "scripts", "export_tab_venues.py")
 
 
 def read(path):
@@ -71,4 +71,4 @@ class TestVenueTableFile:
 class TestScriptExists:
     def test_script_exists(self):
         assert os.path.isfile(SCRIPT), \
-            "scripts/make_tab_venues.py must exist"
+            "scripts/export_tab_venues.py must exist"

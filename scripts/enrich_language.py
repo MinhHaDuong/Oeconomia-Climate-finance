@@ -355,7 +355,7 @@ def main():
     null_after_pass2 = int(df["language"].isna().sum())
     log.info("Pass 2 filled %d, remaining null: %d", filled_pass2, null_after_pass2)
 
-    # Cache-only: join_enrichments.py applies caches to the monolith (#428)
+    # Cache-only: enrich_join.py applies caches to the monolith (#428)
 
     elapsed = time.time() - t0
     counters.update({

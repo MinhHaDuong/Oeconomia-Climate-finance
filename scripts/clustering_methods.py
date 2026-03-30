@@ -3,9 +3,9 @@
 Pure algorithmic module — no I/O, no plotting. All functions operate
 on numpy arrays and return numpy arrays or plain dicts.
 
-Extracted from compare_clustering.py (ticket #430) to separate
+Extracted from compute_clustering_comparison.py (ticket #430) to separate
 algorithms from orchestration. This module is a library (no __main__
-guard), importable from compare_clustering.py and tests.
+guard), importable from compute_clustering_comparison.py and tests.
 
 Methods:
 - KMeans (sklearn): fast, deterministic, sensitive to k

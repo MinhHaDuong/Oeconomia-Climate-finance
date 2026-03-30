@@ -1,4 +1,4 @@
-"""Tests for ref_match_corpus — match parsed citation refs to corpus works."""
+"""Tests for corpus_ref_match — match parsed citation refs to corpus works."""
 
 import os
 import sys
@@ -33,7 +33,7 @@ class TestRefMatchCorpus:
 
     def test_exact_title_year_match(self, tmp_path):
         """Ticket spec: Stern Review matched by exact normalized title + year."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1017/CBO9780511817434", "title": "The Economics of Climate Change",
@@ -61,7 +61,7 @@ class TestRefMatchCorpus:
 
     def test_fuzzy_title_match_grobid_artifact(self, tmp_path):
         """GROBID often prepends 'in ' — fuzzy matching should catch this."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1017/ipcc2014", "title": "Climate Change 2014: Mitigation of Climate Change",
@@ -86,7 +86,7 @@ class TestRefMatchCorpus:
 
     def test_year_off_by_one_matches(self, tmp_path):
         """Year ±1 tolerance catches publication date discrepancies."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1234/work1", "title": "Adaptation Finance in Developing Countries",
@@ -110,7 +110,7 @@ class TestRefMatchCorpus:
 
     def test_skips_refs_that_already_have_doi(self, tmp_path):
         """Refs with existing ref_doi should not be re-matched."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1017/CBO9780511817434", "title": "The Economics of Climate Change",
@@ -134,7 +134,7 @@ class TestRefMatchCorpus:
 
     def test_no_match_below_threshold(self, tmp_path):
         """Unrelated titles should not match even with same year."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1234/work1", "title": "The Economics of Climate Change",
@@ -158,7 +158,7 @@ class TestRefMatchCorpus:
 
     def test_output_has_refs_columns_schema(self, tmp_path):
         """Output must conform to REFS_COLUMNS schema for merge_citations compatibility."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1234/work1", "title": "Green Bonds and Climate Finance",
@@ -183,7 +183,7 @@ class TestRefMatchCorpus:
 
     def test_empty_ref_parsed_produces_empty_output(self, tmp_path):
         """Empty input should produce empty output with correct schema."""
-        from ref_match_corpus import match_refs_to_corpus
+        from corpus_ref_match import match_refs_to_corpus
 
         corpus_path = _make_csv(tmp_path / "refined_works.csv", [
             {"doi": "10.1234/work1", "title": "Some Work",

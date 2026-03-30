@@ -15,7 +15,7 @@ Output format mirrors the doifetch input convention:
   #	<Label>
 
 Run with:
-  uv run python scripts/gen_missing_references.py
+  uv run python scripts/qa_missing_references.py
 """
 
 import argparse
@@ -25,7 +25,7 @@ import re
 import bibtexparser
 from utils import get_logger
 
-log = get_logger("gen_missing_references")
+log = get_logger("qa_missing_references")
 
 # ---------------------------------------------------------------------------
 # Paths

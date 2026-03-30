@@ -27,7 +27,7 @@ class TestExtractCacheKey:
     """_extract_cache_key must produce sha256(text):model keys."""
 
     def test_key_format_is_sha256_colon_model(self):
-        from collect_syllabi import _extract_cache_key
+        from catalog_syllabi import _extract_cache_key
 
         text = "Some syllabus page text"
         model = "google/gemma-2-27b-it"
@@ -37,28 +37,28 @@ class TestExtractCacheKey:
         assert key == f"{expected_hash}:{model}"
 
     def test_different_text_gives_different_key(self):
-        from collect_syllabi import _extract_cache_key
+        from catalog_syllabi import _extract_cache_key
 
         key1 = _extract_cache_key("text A", "model-x")
         key2 = _extract_cache_key("text B", "model-x")
         assert key1 != key2
 
     def test_different_model_gives_different_key(self):
-        from collect_syllabi import _extract_cache_key
+        from catalog_syllabi import _extract_cache_key
 
         key1 = _extract_cache_key("same text", "model-x")
         key2 = _extract_cache_key("same text", "model-y")
         assert key1 != key2
 
     def test_same_inputs_give_same_key(self):
-        from collect_syllabi import _extract_cache_key
+        from catalog_syllabi import _extract_cache_key
 
         key1 = _extract_cache_key("hello", "m")
         key2 = _extract_cache_key("hello", "m")
         assert key1 == key2
 
     def test_key_contains_full_64_char_hex_hash(self):
-        from collect_syllabi import _extract_cache_key
+        from catalog_syllabi import _extract_cache_key
 
         key = _extract_cache_key("test", "model")
         hash_part = key.split(":")[0]
@@ -75,13 +75,13 @@ class TestExtractCacheRoundtrip:
         return str(tmp_path / "extract_cache.jsonl")
 
     def test_load_empty_cache_returns_empty_dict(self, cache_path):
-        from collect_syllabi import _load_extract_cache
+        from catalog_syllabi import _load_extract_cache
 
         cache = _load_extract_cache(cache_path)
         assert cache == {}
 
     def test_save_then_load_single_entry(self, cache_path):
-        from collect_syllabi import (
+        from catalog_syllabi import (
             _load_extract_cache,
             _save_extract_cache_entry,
         )
@@ -96,7 +96,7 @@ class TestExtractCacheRoundtrip:
         assert cache[key] == refs
 
     def test_save_multiple_entries_roundtrip(self, cache_path):
-        from collect_syllabi import (
+        from catalog_syllabi import (
             _load_extract_cache,
             _save_extract_cache_entry,
         )
@@ -114,7 +114,7 @@ class TestExtractCacheRoundtrip:
             assert cache[key] == refs
 
     def test_cache_file_is_valid_jsonl(self, cache_path):
-        from collect_syllabi import _save_extract_cache_entry
+        from catalog_syllabi import _save_extract_cache_entry
 
         _save_extract_cache_entry(
             "k1:m", [{"title": "T"}], cache_path
@@ -133,7 +133,7 @@ class TestExtractCacheRoundtrip:
 
     def test_last_write_wins_on_duplicate_key(self, cache_path):
         """If the same key is saved twice, loading should return the last value."""
-        from collect_syllabi import (
+        from catalog_syllabi import (
             _load_extract_cache,
             _save_extract_cache_entry,
         )
@@ -150,40 +150,40 @@ class TestStageExtractUsesCache:
     """stage_extract must reference extract cache infrastructure."""
 
     def test_extract_cache_key_exists(self):
-        """collect_syllabi must export _extract_cache_key."""
-        import collect_syllabi
+        """catalog_syllabi must export _extract_cache_key."""
+        import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "_extract_cache_key"), \
-            "_extract_cache_key function must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "_extract_cache_key"), \
+            "_extract_cache_key function must exist in catalog_syllabi"
 
     def test_load_extract_cache_exists(self):
-        """collect_syllabi must export _load_extract_cache."""
-        import collect_syllabi
+        """catalog_syllabi must export _load_extract_cache."""
+        import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "_load_extract_cache"), \
-            "_load_extract_cache function must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "_load_extract_cache"), \
+            "_load_extract_cache function must exist in catalog_syllabi"
 
     def test_save_extract_cache_entry_exists(self):
-        """collect_syllabi must export _save_extract_cache_entry."""
-        import collect_syllabi
+        """catalog_syllabi must export _save_extract_cache_entry."""
+        import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "_save_extract_cache_entry"), \
-            "_save_extract_cache_entry function must exist in collect_syllabi"
+        assert hasattr(catalog_syllabi, "_save_extract_cache_entry"), \
+            "_save_extract_cache_entry function must exist in catalog_syllabi"
 
     def test_extract_cache_path_defined(self):
-        """collect_syllabi must define EXTRACT_CACHE_PATH."""
-        import collect_syllabi
+        """catalog_syllabi must define EXTRACT_CACHE_PATH."""
+        import catalog_syllabi
 
-        assert hasattr(collect_syllabi, "EXTRACT_CACHE_PATH"), \
-            "EXTRACT_CACHE_PATH constant must exist in collect_syllabi"
-        assert "extract_cache" in collect_syllabi.EXTRACT_CACHE_PATH
-        assert collect_syllabi.EXTRACT_CACHE_PATH.endswith(".jsonl")
+        assert hasattr(catalog_syllabi, "EXTRACT_CACHE_PATH"), \
+            "EXTRACT_CACHE_PATH constant must exist in catalog_syllabi"
+        assert "extract_cache" in catalog_syllabi.EXTRACT_CACHE_PATH
+        assert catalog_syllabi.EXTRACT_CACHE_PATH.endswith(".jsonl")
 
     def test_stage_extract_source_mentions_cache(self):
         """stage_extract implementation must reference the extract cache.
 
         After the harvest/process split, the implementation lives in
-        syllabi_process.stage_extract; collect_syllabi.stage_extract is a
+        syllabi_process.stage_extract; catalog_syllabi.stage_extract is a
         thin wrapper that delegates to it.
         """
         import inspect

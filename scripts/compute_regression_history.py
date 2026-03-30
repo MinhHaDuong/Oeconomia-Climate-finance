@@ -5,9 +5,9 @@ runs registered scripts on the smoke fixture, and records output hashes.
 Compares hashes across commits to find where outputs changed.
 
 Usage:
-    uv run python scripts/regression_history.py --commits <sha1> <sha2> ...
-    uv run python scripts/regression_history.py --range <start>..<end>
-    uv run python scripts/regression_history.py --since-smoke
+    uv run python scripts/compute_regression_history.py --commits <sha1> <sha2> ...
+    uv run python scripts/compute_regression_history.py --range <start>..<end>
+    uv run python scripts/compute_regression_history.py --since-smoke
 
 Output: prints a table of (commit, script, output, hash) and flags changes.
 """
@@ -25,7 +25,7 @@ from pathlib import Path
 
 from utils import get_logger
 
-log = get_logger("regression_history")
+log = get_logger("compute_regression_history")
 
 # ---------------------------------------------------------------------------
 # Paths (relative to this script's location in the repo)

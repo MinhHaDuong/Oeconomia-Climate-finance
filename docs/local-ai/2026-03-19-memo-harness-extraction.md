@@ -36,7 +36,7 @@ Audit of the pipeline (63 scripts, ~19k lines) to inform harness defaults.
 |--------|-------|
 | Total scripts | 68 (63 + 5 archive_traditions) |
 | Average length | ~308 lines |
-| Longest | `collect_syllabi.py` (855 lines) |
+| Longest | `catalog_syllabi.py` (855 lines) |
 | Classes | 0 |
 | Functions >50 statements (ruff PLR0915) | 22 |
 | Test files | 27 |

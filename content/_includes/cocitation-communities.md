@@ -1,6 +1,6 @@
 ## 11. Co-citation Community Detection Across Time Windows
 
-**Script:** `scripts/compare_communities_across_windows.py`
+**Script:** `scripts/compute_temporal_communities.py`
 
 This analysis traces the evolution of co-citation communities in the climate finance literature across four time windows, testing whether the three intellectual traditions posited by the manuscript (environmental economics, development economics, burden-sharing) are empirically detectable as distinct citation lineages. @fig-traditions shows the pre-2007 co-citation network with the three traditions colored.
 
@@ -66,7 +66,7 @@ Only 27 of the pre-2007 top-250 references survive into the full-span top-250 (J
 
 ### Cross-reference with semantic clusters
 
-**Script:** `scripts/cross_ref_communities_clusters.py`
+**Script:** `scripts/analyze_communities_clusters.py`
 
 To assess whether co-citation communities and embedding-based KMeans clusters (k=6, used in the alluvial analysis) capture the same or complementary structure, we traced which KMeans clusters the *citers* of each pre-2007 co-citation community belong to. Only 2 of 137 community nodes are themselves in the embedding corpus; the indirect mapping via citers yields 831 (citer, community) pairs.
 

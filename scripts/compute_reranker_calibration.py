@@ -8,10 +8,10 @@ existing flags) as weak labels to:
   C. Export boundary cases for human review (--hitl)
 
 Usage:
-    uv run python scripts/calibrate_reranker.py                    # full calibration
-    uv run python scripts/calibrate_reranker.py --hitl             # export boundary cases
-    uv run python scripts/calibrate_reranker.py --model OTHER      # try a different model
-    uv run python scripts/calibrate_reranker.py --queries-only     # skip scoring, just show generated queries
+    uv run python scripts/compute_reranker_calibration.py                    # full calibration
+    uv run python scripts/compute_reranker_calibration.py --hitl             # export boundary cases
+    uv run python scripts/compute_reranker_calibration.py --model OTHER      # try a different model
+    uv run python scripts/compute_reranker_calibration.py --queries-only     # skip scoring, just show generated queries
 """
 
 import argparse
@@ -29,7 +29,7 @@ from filter_flags import (
 )
 from utils import CATALOGS_DIR, get_logger, normalize_doi, normalize_doi_safe
 
-log = get_logger("calibrate_reranker")
+log = get_logger("compute_reranker_calibration")
 
 # Paths
 REFINED_PATH = os.path.join(CATALOGS_DIR, "refined_works.csv")

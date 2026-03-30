@@ -1,4 +1,4 @@
-"""Tests for join_enrichments.py — assembles enriched_works.csv from caches.
+"""Tests for enrich_join.py — assembles enriched_works.csv from caches.
 
 Ticket #428: each enrichment writes to its own cache; this script joins them.
 """
@@ -92,7 +92,7 @@ EXPECTED_COLUMNS = [
 
 def test_join_produces_all_columns(enrichment_dir):
     """join_enrichments.py output has all expected columns."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     output_path = enrichment_dir / "enriched_works.csv"
     join_enrichments(
@@ -108,7 +108,7 @@ def test_join_produces_all_columns(enrichment_dir):
 
 def test_join_applies_doi_cache(enrichment_dir):
     """DOI cache entries fill missing DOIs."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     output_path = enrichment_dir / "enriched_works.csv"
     join_enrichments(
@@ -124,7 +124,7 @@ def test_join_applies_doi_cache(enrichment_dir):
 
 def test_join_applies_abstract_caches(enrichment_dir):
     """Abstract caches fill missing abstracts."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     output_path = enrichment_dir / "enriched_works.csv"
     join_enrichments(
@@ -140,7 +140,7 @@ def test_join_applies_abstract_caches(enrichment_dir):
 
 def test_join_applies_language_cache(enrichment_dir):
     """Language cache fills missing language tags."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     output_path = enrichment_dir / "enriched_works.csv"
     join_enrichments(
@@ -158,7 +158,7 @@ def test_join_applies_language_cache(enrichment_dir):
 
 def test_join_preserves_existing_values(enrichment_dir):
     """Existing non-null values are not overwritten by caches."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     output_path = enrichment_dir / "enriched_works.csv"
     join_enrichments(
@@ -177,7 +177,7 @@ def test_join_preserves_existing_values(enrichment_dir):
 
 def test_crossfill_longest_abstract_wins(tmp_path):
     """Cross-source backfill picks the longest abstract for a given DOI."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     catalogs = tmp_path / "catalogs"
     cache_dir = catalogs / "enrich_cache"
@@ -240,7 +240,7 @@ def test_crossfill_longest_abstract_wins(tmp_path):
 
 def test_crossfill_ignores_nan_doi(tmp_path):
     """Cross-source backfill must not match records with NaN DOIs."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     catalogs = tmp_path / "catalogs"
     cache_dir = catalogs / "enrich_cache"
@@ -299,7 +299,7 @@ def test_crossfill_ignores_nan_doi(tmp_path):
 
 def test_join_missing_cache_files(tmp_path):
     """Join works gracefully when some cache files don't exist."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     catalogs = tmp_path / "catalogs"
     cache_dir = catalogs / "enrich_cache"
@@ -345,7 +345,7 @@ def test_join_missing_cache_files(tmp_path):
 
 def test_join_row_count_unchanged(enrichment_dir):
     """Join does not add or remove rows."""
-    from join_enrichments import join_enrichments
+    from enrich_join import join_enrichments
 
     output_path = enrichment_dir / "enriched_works.csv"
     join_enrichments(

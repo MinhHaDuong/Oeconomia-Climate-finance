@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 import pytest
-from parse_citations_grobid import parse_tei_citation, build_cache_key
+from corpus_parse_citations_grobid import parse_tei_citation, build_cache_key
 
 
 class TestParseTeiCitation:

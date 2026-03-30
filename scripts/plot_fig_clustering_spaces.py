@@ -7,7 +7,7 @@ Bar chart comparing KMeans silhouette scores across three representation
 spaces: semantic embeddings (1024D), lexical TF-IDF (→ 100D SVD), and
 bibliographic coupling (→ 100D SVD). Used in technical report.
 
-Run compare_clustering.py first to generate the input JSON.
+Run compute_clustering_comparison.py first to generate the input JSON.
 """
 
 import argparse
@@ -103,7 +103,7 @@ def main():
 
     if not os.path.exists(args.input):
         log.error("Input file not found: %s", args.input)
-        log.error("Run compare_clustering.py first to generate it.")
+        log.error("Run compute_clustering_comparison.py first to generate it.")
         raise SystemExit(1)
 
     with open(args.input) as f:
