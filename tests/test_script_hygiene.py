@@ -1093,11 +1093,17 @@ class TestOutputFlag:
 
     # Scripts that can run with smoke fixtures (no network, no full corpus).
     # Each entry: (script, extra_args, output_extension)
+    SMOKE = "tests/fixtures/smoke/catalogs"
     BLACKBOX_SCRIPTS = [
-        # Phase 2 plots that accept --input
-        ("plot_fig1_bars.py", ["--input", "tests/fixtures/smoke/catalogs/refined_works.csv"], ".png"),
-        # Phase 2 scripts that need no input
+        # Phase 2 plots
+        ("plot_fig1_bars.py", ["--input", f"{SMOKE}/refined_works.csv"], ".png"),
         ("plot_fig_dag.py", [], ".png"),
+        # Phase 2 exports
+        ("export_citation_coverage.py",
+         ["--input", f"{SMOKE}/refined_works.csv", f"{SMOKE}/refined_citations.csv"], ".md"),
+        ("export_language_table.py", ["--input", f"{SMOKE}/refined_works.csv"], ".md"),
+        ("summarize_core_venues.py",
+         ["--core", f"{SMOKE}/refined_works.csv"], ".csv"),
     ]
 
     @pytest.mark.integration

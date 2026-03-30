@@ -33,9 +33,9 @@ _period_tuples, _period_labels = load_analysis_periods()
 PERIODS = [(label, start, end) for label, (start, end) in zip(_period_labels, _period_tuples)]
 
 
-def main():
-    refined = pd.read_csv(REFINED_PATH, low_memory=False)
-    citations = pd.read_csv(CITATIONS_PATH, usecols=["source_doi"], low_memory=False)
+def main(refined_path=REFINED_PATH, citations_path=CITATIONS_PATH):
+    refined = pd.read_csv(refined_path, low_memory=False)
+    citations = pd.read_csv(citations_path, usecols=["source_doi"], low_memory=False)
 
     # Normalize DOIs for matching
     refined["doi_norm"] = refined["doi"].apply(normalize_doi_safe)
@@ -83,4 +83,8 @@ if __name__ == "__main__":
     io_args, _extra = parse_io_args()
     validate_io(output=io_args.output)
     OUTPUT_PATH = io_args.output
-    main()
+    inputs = io_args.input or []
+    main(
+        refined_path=inputs[0] if len(inputs) > 0 else REFINED_PATH,
+        citations_path=inputs[1] if len(inputs) > 1 else CITATIONS_PATH,
+    )

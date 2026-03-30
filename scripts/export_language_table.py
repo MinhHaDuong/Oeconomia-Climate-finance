@@ -89,7 +89,8 @@ def main() -> None:
     validate_io(output=io_args.output)
     OUTPUT_MD = io_args.output
 
-    df = pd.read_csv(ENRICHED_PATH, usecols=["language"])
+    input_path = io_args.input[0] if io_args.input else ENRICHED_PATH
+    df = pd.read_csv(input_path, usecols=["language"])
     df["lang"] = df["language"].apply(normalise_language)
 
     counts = df["lang"].value_counts()
