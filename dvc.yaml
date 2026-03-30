@@ -217,10 +217,12 @@ stages:
       uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv & p1=$!;
       uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv & p2=$!;
       wait $p1 && wait $p2 &&
+      uv run python scripts/parse_citations_grobid.py &&
       uv run python scripts/merge_citations.py
     deps:
       - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
+      - scripts/parse_citations_grobid.py
       - scripts/merge_citations.py
       - scripts/utils.py
       - scripts/pipeline_io.py
