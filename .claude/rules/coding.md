@@ -51,7 +51,7 @@ When touching a core module, annotations are required on new/changed functions.
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
 - All scripts support `--no-pdf`.
 - `make` builds all documents. `make manuscript` builds manuscript only. `make papers` builds the 3 companion documents. `make figures` regenerates all figures (byte-reproducible).
-- **Logging, not print — in pipeline scripts.** Scripts that transform data or produce figures use `from utils import get_logger` — never bare `print()`. CLI tools that report to the user (not part of the pipeline) may use `print()` for stdout. The test enforces this by prefix; see `test_script_hygiene.py::TestNoBarePrint` for the exact scope.
+- **Logging, not print** in pipeline scripts. `print()` is OK in CLI tools. Enforced by `test_script_hygiene.py::TestNoBarePrint`.
 
 ## Makefile conventions
 
