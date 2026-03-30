@@ -65,3 +65,6 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - PDF opt-in flip (#544): `save_figure()` default from PDF-on to PDF-off across 33 files, `TestPdfDiscipline` guard (#545)
 - Fuzzy ref matching (#539): GROBID-parsed citation refs matched to corpus works via rapidfuzz, new `ref_match` DVC stage, integrated into `corpus_merge_citations`
 - Worktree isolation (#568): every conversation runs in throwaway worktree via `EnterWorktree`, `.worktreeinclude` replaces post-checkout symlinks
+- Text normalization (#533): ftfy + html.unescape at merge funnel point, fixes ~3,000 rows with encoding artifacts from upstream aggregators
+- GROBID citation parsing (#538): 352K unstructured Crossref refs → structured title/author/year via local GROBID (podman), 200 cit/sec, JSONL cache
+- Crossref DOI fallback (#569): `enrich_dois` queries Crossref when OpenAlex has no DOI, 9,268 OA-only candidates unlocked

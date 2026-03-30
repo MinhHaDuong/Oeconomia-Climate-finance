@@ -29,10 +29,13 @@ Under review (peer reviewers + data specialists).
 ## Corpus (v1.1.1)
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS (news/discourse), SciSpace, grey literature, teaching canon
-- 42,922 raw → 31,713 refined works, 38,479 embeddings, 968,871 citations
+- 42,916 raw → 31,712 refined works, 38,479 embeddings, 967,204 citations
 - Teaching expanded: 622 works from 52 institutions (scraper + LLM extraction)
+- Text normalization: ftfy + html.unescape at merge time fixes mojibake, HTML entities, zero-width chars (#533)
 - Citation pipeline: cache-is-data architecture (#441), hardened with atomic writes + crash tolerance + no-DOI dedup (#529)
-- Fuzzy ref matching: GROBID-parsed refs matched to corpus works via rapidfuzz token_sort_ratio ≥ 85 with year ±1 blocking (#539)
+- GROBID citation parsing: 352K unstructured Crossref refs parsed into structured fields, 200 cit/sec via podman (#538)
+- Fuzzy ref matching: GROBID-parsed refs matched to corpus works, 3,414 new graph edges (#539)
+- Crossref DOI fallback: enrich_dois now queries Crossref when OpenAlex has no DOI, 9,268 candidates unlocked (#569)
 - DVC clean, 18 files pushed
 - Enrichment pipeline split into independent DVC stages (#428, #505)
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
@@ -52,4 +55,5 @@ None.
 - ESHET-HES conference slides (Nice, May 26–29)
 - Remaining infrastructure: #515 (DAG viz), #428 (enrichment normalization)
 - 1-fig-1-script sweep: #546 (alluvial), #550 (bimodality), #551 (embeddings), #552 (cocitation), #559 (filter_flags LLM extraction)
-- #535: Parse unstructured Crossref refs (80K rows with empty metadata)
+- #567: Redesign ref_match_corpus (caching, progress logging, smarter algorithm)
+- #569: Run overnight Crossref DOI resolution (8.5h, ~1,400 new DOIs expected)
