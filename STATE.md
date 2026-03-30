@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
 ## Status: TWO PAPERS SUBMITTED
 
@@ -26,12 +26,12 @@ Under review (peer reviewers + data specialists).
 - Manuscript decoupled from live corpus: frozen archive data in `config/v1_*`, pinned vars in `manuscript-vars.yml`
 - Figure 2 labels corrected (Errata 1): 5/6 cluster titles were mapped to wrong panels
 
-## Corpus (v1.1)
+## Corpus (v1.1.1)
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS (news/discourse), SciSpace, grey literature, teaching canon
 - 42,922 raw → 31,713 refined works, 38,479 embeddings, 968,871 citations
 - Teaching expanded: 622 works from 52 institutions (scraper + LLM extraction)
-- Citation pipeline: cache-is-data architecture (#441)
+- Citation pipeline: cache-is-data architecture (#441), hardened with atomic writes + crash tolerance + no-DOI dedup (#529)
 - DVC clean, 18 files pushed
 - Enrichment pipeline split into independent DVC stages (#428, #505)
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
@@ -47,3 +47,4 @@ None.
 - Finalize DMP on OPIDoR
 - ESHET-HES conference slides (Nice, May 26–29)
 - Remaining infrastructure: #513 (schema contracts), #515 (DAG viz), #516 (determinism checker), #428 (enrichment normalization)
+- #535: Parse unstructured Crossref refs (80K rows with empty metadata)
