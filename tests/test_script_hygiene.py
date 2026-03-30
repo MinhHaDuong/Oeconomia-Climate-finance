@@ -579,6 +579,29 @@ class TestNoPhaseTwoInDvc:
         )
 
 
+class TestFeatherHandoff:
+    """Phase 2 loaders must read Feather, not CSV (#528).
+
+    The Phase 1→2 handoff converts CSV to Feather for fast reads.
+    load_analysis_corpus and load_refined_citations must use read_feather.
+    """
+
+    def test_load_analysis_corpus_reads_feather(self):
+        source_path = os.path.join(SCRIPTS_DIR, "pipeline_loaders.py")
+        with open(source_path) as f:
+            source = f.read()
+        assert "read_feather" in source, (
+            "pipeline_loaders.py must use pd.read_feather for Phase 2 reads"
+        )
+
+    def test_feather_handoff_targets_in_makefile(self):
+        with open(MAKEFILE) as f:
+            content = f.read()
+        assert ".feather" in content, (
+            "Makefile must have handoff targets producing .feather files"
+        )
+
+
 _MYPY_AVAILABLE = subprocess.run(
     ["uv", "run", "mypy", "--version"], capture_output=True
 ).returncode == 0
