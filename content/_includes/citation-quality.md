@@ -1,6 +1,6 @@
 ## 12. Citation Graph: Coverage and Quality
 
-**Scripts:** `scripts/enrich_citations_batch.py` (Crossref), `scripts/enrich_citations_openalex.py` (OpenAlex), `scripts/merge_citations.py` (merge caches → citations.csv), `scripts/qa_citations.py` (verification)
+**Scripts:** `scripts/enrich_citations_batch.py` (Crossref), `scripts/enrich_citations_openalex.py` (OpenAlex), `scripts/parse_citations_grobid.py` (GROBID parsing), `scripts/ref_match_corpus.py` (fuzzy corpus matching), `scripts/merge_citations.py` (merge caches → citations.csv), `scripts/qa_citations.py` (verification)
 
 **Data:** `content/tables/qa_citations_report.json`
 
