@@ -665,6 +665,7 @@ class TestPdfDiscipline:
         "compute_clusters.py",
         "compute_lexical.py",
         "analyze_100bn.py",
+        "analyze_embeddings.py",
         "analyze_unfccc_topics.py",
         "calibrate_reranker.py",
         "plot_interactive_corpus.py",
@@ -721,4 +722,33 @@ class TestMarkerDiscipline:
         assert not violations, (
             f"Files using subprocess must mark tests @integration, not @slow: "
             f"{violations}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 11. analyze_* scripts must not produce figures (#551)
+# ---------------------------------------------------------------------------
+
+class TestAnalyzeNoFigures:
+    """analyze_* scripts should compute data, not produce figures.
+
+    The naming convention: analyze_* → data artifacts, plot_* → figures.
+    Calling save_figure() or .savefig() in an analyze_ script is a
+    separation-of-concerns violation.
+
+    Tickets: #550 (bimodality), #551 (embeddings), #552 (cocitation).
+    """
+
+    # Scripts already split — should stay clean.
+    CLEAN_ANALYZE = [
+        "analyze_embeddings.py",
+    ]
+
+    @pytest.mark.parametrize("script", CLEAN_ANALYZE)
+    def test_analyze_scripts_no_save_figure(self, script):
+        path = os.path.join(SCRIPTS_DIR, script)
+        src = Path(path).read_text()
+        assert "save_figure" not in src and ".savefig(" not in src, (
+            f"{script} calls save_figure/savefig — analyze_ scripts "
+            f"should produce data only, not figures"
         )

@@ -19,7 +19,7 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 | `compute_breakpoints.py` | `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv` (+ core variants via `--core-only`, + `tab_k_sensitivity.csv` via `--robustness`) | acceptable | Robustness table is derived from the breakpoint detection in the same run. The k-sensitivity table is gated behind a `--robustness` flag — a separate entry point in the Makefile already exists. Core variants use `--core-only`. |
 | `compute_clusters.py` | `tab_alluvial.csv`, `cluster_labels.json`, `tab_core_shares.csv` (+ core variants via `--core-only`) | acceptable | The cluster labels and alluvial cross-tab are joint products of one clustering run. `tab_core_shares.csv` is a filtered view of the same clustering. Splitting would require serializing/deserializing intermediate cluster assignments. |
 | `analyze_bimodality.py` | `fig_bimodality.png`, `fig_bimodality_lexical.png`, `fig_bimodality_keywords.png`, `tab_bimodality.csv`, `tab_axis_detection.csv`, `tab_pole_papers.csv` (+ core variants) | **splittable** | Three independent figures (embedding histogram, lexical histogram, keyword scatter) plus three tables. The figures visualize different aspects and could be separate plotting scripts reading the tables. The tables themselves are tightly coupled (single analysis run), but the figures are not. |
-| `analyze_embeddings.py` | `fig_semantic.png`, `fig_semantic_lang.png`, `fig_semantic_period.png`, `semantic_clusters.csv` | **splittable** | Three figures color the same UMAP by different variables (cluster, language, period). Each is an independent visualization that could be its own script reading pre-computed UMAP coordinates. The CSV of cluster assignments is a data product, not a figure. |
+| `analyze_embeddings.py` | `semantic_clusters.csv` | **done** (#551) | Split: `analyze_embeddings.py` produces data only; `plot_semantic.py --color-by {cluster,language,period}` produces one figure per invocation. |
 | `analyze_genealogy.py` | `fig_genealogy.png`, `fig_genealogy.html`, `tab_lineages.csv` (+ `tab_louvain_sensitivity.csv` via `--robustness`) | acceptable | The HTML is an interactive companion of the static PNG (same visualization, different format). The lineage table is the data behind the figure. These are tightly coupled. |
 | `plot_fig_alluvial.py` | `fig_alluvial.png`, `fig_alluvial.html` | acceptable | HTML is an interactive companion of the static figure (same visualization, two formats). |
 | `plot_fig45_pca_scatter.py` | `fig_pca_scatter.png`, `tab_pca_axes.csv` | acceptable | The CSV records axis metadata for the figure — a sidecar, not an independent product. |
@@ -36,7 +36,7 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 ### Splittable cases
 
 1. **`analyze_bimodality.py`** — 3 independent figures + 3 tables. The tables are one analysis; each figure could be a separate plot script.
-2. **`analyze_embeddings.py`** — 3 independent UMAP figures + 1 CSV. Each figure colors by a different variable; trivially separable if UMAP coordinates are saved first.
+2. ~~**`analyze_embeddings.py`**~~ — done (#551): split into `analyze_embeddings.py` (data) + `plot_semantic.py` (parameterized plot).
 3. **`analyze_cocitation.py`** — community detection + summary table + network figure. Not in Makefile yet; when added, should be split.
 
 ### Notes
