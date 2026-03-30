@@ -295,7 +295,7 @@ class TestFlagLLMIrrelevant:
             call_count += 1
             return '{"1": true}'
 
-        monkeypatch.setattr("filter_flags._llm_call", counting_llm_call)
+        monkeypatch.setattr("filter_flags_llm._llm_call", counting_llm_call)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         already_flagged = pd.Series(True, index=fixture_df.index)
@@ -306,7 +306,7 @@ class TestFlagLLMIrrelevant:
     def test_returns_series_aligned(self, fixture_df, config, monkeypatch):
         """Result is aligned with input df index."""
         monkeypatch.setattr(
-            "filter_flags._llm_call",
+            "filter_flags_llm._llm_call",
             lambda p, b, a, m: '{"1": true}',
         )
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")

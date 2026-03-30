@@ -266,6 +266,7 @@ stages:
     deps:
       - scripts/corpus_filter.py
       - scripts/filter_flags.py
+      - scripts/filter_flags_llm.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_loaders.py
@@ -285,6 +286,7 @@ stages:
     deps:
       - scripts/corpus_filter.py
       - scripts/filter_flags.py
+      - scripts/filter_flags_llm.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_loaders.py

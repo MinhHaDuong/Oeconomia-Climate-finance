@@ -85,7 +85,7 @@ def _scripts_with_main_guard():
 # Scripts that are pure libraries (no __main__ guard, imported by others).
 # These are exempt from argparse checks (no __main__ guard).
 LIBRARY_SCRIPTS = {
-    "utils.py", "plot_style.py", "filter_flags.py",
+    "utils.py", "plot_style.py", "filter_flags.py", "filter_flags_llm.py",
     "clustering_methods.py",
     "detect_near_duplicates.py",
     "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
@@ -407,6 +407,24 @@ class TestModuleLength:
             f"utils.py is {lines} lines — must be a thin facade (≤ {self.SMELL_LINES}L). "
             "Split remaining code into pipeline_text.py / pipeline_io.py / "
             "pipeline_loaders.py / pipeline_progress.py"
+        )
+
+    def test_filter_flags_under_500_lines(self):
+        """filter_flags.py must stay under 500 lines after LLM extraction (#559)."""
+        path = os.path.join(SCRIPTS_DIR, "filter_flags.py")
+        with open(path) as f:
+            lines = sum(1 for _ in f)
+        assert lines <= self.SMELL_LINES, (
+            f"filter_flags.py is {lines} lines — must be ≤ {self.SMELL_LINES}L. "
+            "LLM backend code belongs in filter_flags_llm.py (#559)"
+        )
+
+    def test_filter_flags_llm_exists(self):
+        """filter_flags_llm.py must exist after LLM extraction (#559)."""
+        path = os.path.join(SCRIPTS_DIR, "filter_flags_llm.py")
+        assert os.path.exists(path), (
+            "filter_flags_llm.py does not exist — extract Flag 6 LLM code from "
+            "filter_flags.py (#559)"
         )
 
     def test_pipeline_modules_exist(self):
