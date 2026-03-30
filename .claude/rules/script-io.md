@@ -1,3 +1,7 @@
+---
+globs: ["scripts/**"]
+---
+
 # Script I/O Discipline
 
 When creating or modifying scripts in `scripts/`:
