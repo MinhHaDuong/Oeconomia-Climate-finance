@@ -36,6 +36,7 @@ Under review (peer reviewers + data specialists).
 - Enrichment pipeline split into independent DVC stages (#428, #505)
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
 - Infrastructure sprint (#508–#514): smoke pipeline, I/O discipline, Makefile namespaces, parameterized K, revision runbook, performance baseline
+- Feather handoff (#527, #528): Phase 2 reads Feather instead of CSV (~48s → ~1.5s cumulative parse time), `analyze_embeddings` removed from DVC pipeline, pyarrow added
 
 ## Blockers
 
