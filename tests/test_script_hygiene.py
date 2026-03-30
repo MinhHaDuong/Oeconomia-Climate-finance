@@ -807,3 +807,37 @@ class TestAnalyzeNoFigures:
             f"{script} calls save_figure/savefig — analyze_ scripts "
             f"should produce data only, not figures"
         )
+
+
+# ---------------------------------------------------------------------------
+# 12. 1-figure-1-script: each plot script produces exactly one output type
+# ---------------------------------------------------------------------------
+
+class TestSingleOutputType:
+    """Each plot_* script should produce exactly one visual output type.
+
+    A script that writes both a static figure (save_figure/savefig) and an
+    interactive HTML file bundles two renderers in one module. Split them
+    following the genealogy pattern: plot_X.py (PNG) + plot_X_html.py (HTML).
+    """
+
+    def test_plot_scripts_single_output_type(self):
+        """No plot_* script produces both PNG and HTML."""
+        violations = []
+        for name in _all_scripts():
+            if not name.startswith("plot_"):
+                continue
+            path = os.path.join(SCRIPTS_DIR, name)
+            src = Path(path).read_text()
+            has_static = "save_figure" in src or "savefig" in src
+            has_html = ".html" in src and (
+                # Detect actual HTML file writing, not just docstring mentions
+                bool(re.search(r"""open\(.*\.html""", src))
+                or bool(re.search(r"""\.html['"]""", src))
+            )
+            if has_static and has_html:
+                violations.append(name)
+        assert not violations, (
+            f"Plot scripts producing both PNG and HTML (split into separate scripts): "
+            + ", ".join(violations)
+        )
