@@ -14,13 +14,13 @@ Produces:
 - data/catalogs/semantic_clusters.csv: Cluster assignments with UMAP coordinates
 """
 
-import argparse
 import os
 import warnings
 from collections import Counter
 
 import numpy as np
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import (
     CATALOGS_DIR,
     EMBEDDINGS_PATH,
@@ -38,6 +38,13 @@ CLUSTERS_PATH = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    global FIGURES_DIR
+    FIGURES_DIR = os.path.dirname(io_args.output) or FIGURES_DIR
+
+    import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--works-input",
@@ -49,7 +56,7 @@ def main():
         default=EMBEDDINGS_PATH,
         help="Embeddings .npz file (default: embeddings.npz)",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # Defer heavy imports so --help works without analysis group installed
     import umap

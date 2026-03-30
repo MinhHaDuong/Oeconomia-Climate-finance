@@ -435,6 +435,10 @@ def export_hitl(cal_df, scores, threshold, n_samples=100):
 
 
 def main():
+    from script_io_args import parse_io_args, validate_io
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
     parser = argparse.ArgumentParser(
         description="Calibrate cross-encoder reranker for Flag 6 relevance scoring")
     parser.add_argument("--model", default=None,
@@ -445,7 +449,7 @@ def main():
                         help="Export boundary cases for human review")
     parser.add_argument("--queries-only", action="store_true",
                         help="Only print generated queries, don't score")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
     calibrate(args)
 
 

@@ -201,7 +201,9 @@ class TestArgparsePresence:
             if name in LIBRARY_SCRIPTS:
                 continue
             source = _read_script(name)
-            if "argparse" not in source and "ArgumentParser" not in source:
+            if ("argparse" not in source
+                    and "ArgumentParser" not in source
+                    and "parse_io_args" not in source):
                 violators.append(name)
         assert not violators, (
             f"{len(violators)} entry-point scripts lack argparse "

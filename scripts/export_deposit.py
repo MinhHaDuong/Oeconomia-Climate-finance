@@ -42,6 +42,8 @@ DEPOSIT_RENAMES = {"from_scispsace": "from_scispace"}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument(
         "--out-dir",
         default=os.path.join(CATALOGS_DIR, "deposit"),

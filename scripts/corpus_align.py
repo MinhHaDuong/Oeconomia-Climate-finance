@@ -22,7 +22,7 @@ Usage:
     uv run python scripts/corpus_align.py [--run-id ID] [--dry-run]
 """
 
-import argparse
+
 import os
 import sys
 import time
@@ -150,9 +150,12 @@ def align_citations(refined_doi_set, cit_path=None, dry_run=False):
 
 
 def main():
+    import argparse
     parser = argparse.ArgumentParser(
         description="Align embeddings and citations to refined_works.csv row order"
     )
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument("--run-id", default=None,
                         help="Unique run identifier for the run report (default: timestamp)")
     parser.add_argument("--dry-run", action="store_true",

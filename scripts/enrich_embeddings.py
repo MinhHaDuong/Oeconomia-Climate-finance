@@ -146,6 +146,8 @@ def _load_embedding_cache(works_path: str) -> tuple[dict, dict, str]:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument(
         "--works-input",
         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),

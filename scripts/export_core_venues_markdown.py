@@ -14,10 +14,10 @@ Usage:
     uv run python scripts/export_core_venues_markdown.py
 """
 
-import argparse
 import os
 
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from summarize_core_venues import canonical_venue, venue_type
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
@@ -37,7 +37,11 @@ PUBLISHER_GROUPS = [
 N_TOP_JOURNALS = 3
 
 
-def parse_args():
+def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(description="Export top core venues as markdown table")
     parser.add_argument(
         "--core",
@@ -45,17 +49,8 @@ def parse_args():
         default=os.path.join(CATALOGS_DIR, "het_mostcited_50.csv"),
         help="Input core works CSV",
     )
-    parser.add_argument(
-        "--out",
-        type=str,
-        default=os.path.join(TABLES_DIR, "tab_core_venues_top10.md"),
-        help="Output markdown file (Quarto-includable)",
-    )
-    return parser.parse_args()
+    args = parser.parse_args(extra)
 
-
-def main():
-    args = parse_args()
     if not os.path.exists(args.core):
         raise FileNotFoundError(f"Core file not found: {args.core}")
 
@@ -123,11 +118,11 @@ def main():
 
     content = "\n".join(lines) + "\n"
 
-    os.makedirs(os.path.dirname(args.out), exist_ok=True)
-    with open(args.out, "w", encoding="utf-8") as handle:
+    os.makedirs(os.path.dirname(io_args.output), exist_ok=True)
+    with open(io_args.output, "w", encoding="utf-8") as handle:
         handle.write(content)
 
-    log.info("Saved manuscript table: %s", args.out)
+    log.info("Saved manuscript table: %s", io_args.output)
     for venue, count, vtype in table_rows:
         log.info("  %s: %d (%s)", venue, count, vtype)
 

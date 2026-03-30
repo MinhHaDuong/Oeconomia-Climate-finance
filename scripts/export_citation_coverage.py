@@ -9,10 +9,10 @@ Usage:
     uv run python scripts/export_citation_coverage.py
 """
 
-import argparse
 import os
 
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import (
     BASE_DIR,
     CATALOGS_DIR,
@@ -80,6 +80,7 @@ def main():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
+    io_args, _extra = parse_io_args()
+    validate_io(output=io_args.output)
+    OUTPUT_PATH = io_args.output
     main()

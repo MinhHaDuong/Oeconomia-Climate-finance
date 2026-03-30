@@ -123,6 +123,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Batch-enrich citations from Crossref (DOIs processed in priority order: "
                     "most-cited works first, deterministic)")
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--limit", type=int, default=0,
                         help="Max DOIs to process (0=all)")

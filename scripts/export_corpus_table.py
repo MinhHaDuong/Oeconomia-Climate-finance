@@ -9,10 +9,10 @@ non-English share, journal-article share, DOI coverage, reference coverage,
 and abstract availability.
 """
 
-import argparse
 import os
 
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_csv
 
 log = get_logger("export_corpus_table")
@@ -167,16 +167,20 @@ def main():
     summary = pd.DataFrame(rows)
 
     # Save CSV (full detail)
-    csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.csv")
+    csv_path = _output_csv
     save_csv(summary, csv_path)
 
     # Save markdown table (included by data-paper.qmd and _includes/tab_corpus_sources.md)
-    md_path = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.md")
+    md_path = os.path.splitext(csv_path)[0] + ".md"
     _write_md_table(summary, md_path)
     log.info("Wrote %s", md_path)
 
 
+# Default output path (overridden by --output)
+_output_csv = os.path.join(BASE_DIR, "content", "tables", "tab_corpus_sources.csv")
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
+    io_args, _extra = parse_io_args()
+    validate_io(output=io_args.output)
+    _output_csv = io_args.output
     main()

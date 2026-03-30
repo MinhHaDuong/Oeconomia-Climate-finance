@@ -261,6 +261,8 @@ def find_doi(title: str | None, year: object = None, author: object = None) -> s
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default=None,
+                        help="Output path (for pipeline tracking)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be done without modifying files")
     parser.add_argument("--limit", type=int, default=0,
