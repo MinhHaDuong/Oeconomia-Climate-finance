@@ -9,8 +9,12 @@ Produces:
 - figures/fig_communities.pdf: Co-citation network with community coloring
 - data/catalogs/communities.csv: Community assignments for top-cited works
 - tables/tab_community_summary.csv: Top works per community
+
+Options:
+  --robustness    Louvain resolution sensitivity (R3)
 """
 
+import argparse
 import os
 
 import community as community_louvain
@@ -28,6 +32,12 @@ from utils import (
 )
 
 log = get_logger("analyze_cocitation")
+
+# --- Args ---
+parser = argparse.ArgumentParser(description="Co-citation community analysis")
+parser.add_argument("--robustness", action="store_true",
+                    help="Run Louvain resolution sensitivity (R3)")
+args = parser.parse_args()
 
 # --- Paths ---
 FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
@@ -302,3 +312,56 @@ fig.savefig(os.path.join(FIGURES_DIR, "fig_communities.pdf"), dpi=300, bbox_inch
 fig.savefig(os.path.join(FIGURES_DIR, "fig_communities.png"), dpi=150, bbox_inches="tight")
 log.info("Saved communities figure -> figures/fig_communities.pdf")
 plt.close()
+
+
+# ============================================================
+# Robustness: Louvain resolution sensitivity (R3)
+# ============================================================
+
+if args.robustness:
+    from sklearn.metrics import adjusted_rand_score
+
+    log.info("=== Robustness: Louvain resolution sensitivity ===")
+
+    resolutions = [0.5, 1.0, 1.5, 2.0]
+    partitions = {}
+
+    try:
+        for gamma in resolutions:
+            part = community_louvain.best_partition(
+                G, weight="weight", resolution=gamma, random_state=42
+            )
+            partitions[gamma] = part
+            n_c = len(set(part.values()))
+            log.info("  gamma=%.1f: %d communities", gamma, n_c)
+
+        # Build sensitivity table
+        common_nodes = list(G.nodes())
+        sens_rows = []
+        for doi in common_nodes:
+            row = {"doi": doi}
+            for gamma in resolutions:
+                col = f"community_g{str(gamma).replace('.', '')}"
+                row[col] = partitions[gamma].get(doi, -1)
+            sens_rows.append(row)
+
+        sens_df = pd.DataFrame(sens_rows)
+        sens_df.to_csv(
+            os.path.join(TABLES_DIR, "tab_louvain_sensitivity.csv"), index=False
+        )
+        log.info("Saved Louvain sensitivity -> tables/tab_louvain_sensitivity.csv")
+
+        # ARI between resolution levels
+        log.info("  Pairwise ARI:")
+        for i, g1 in enumerate(resolutions):
+            for g2 in resolutions[i + 1:]:
+                labels1 = [partitions[g1][n] for n in common_nodes]
+                labels2 = [partitions[g2][n] for n in common_nodes]
+                ari = adjusted_rand_score(labels1, labels2)
+                log.info("    gamma=%.1f vs gamma=%.1f: ARI=%.3f", g1, g2, ari)
+
+    except TypeError:
+        log.warning("community_louvain.best_partition does not support 'resolution'.")
+        log.warning("Skipping R3 sensitivity analysis.")
+
+log.info("Done.")
