@@ -7,7 +7,9 @@ Writes: content/figures/fig_breakpoints.png  (and core/censor variants)
 
 Flags: --core-only, --censor-gap N, --pdf
 
-Run compute_alluvial.py first to generate the input tables.
+Usage:
+    uv run python scripts/plot_fig_breakpoints.py --output content/figures/fig_breakpoints.png
+    uv run python scripts/plot_fig_breakpoints.py --output content/figures/fig_breakpoints_core.png --core-only
 """
 
 import argparse
@@ -18,112 +20,101 @@ import matplotlib.ticker as ticker
 import pandas as pd
 import seaborn as sns
 from plot_style import COP_EVENTS
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, get_logger, load_analysis_config, save_figure
 
 log = get_logger("plot_fig_breakpoints")
 
-# --- Paths ---
-FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
-os.makedirs(FIGURES_DIR, exist_ok=True)
-
 WINDOW_SIZES = [2, 3, 4]
-_cfg = load_analysis_config()
-CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
-# --- Args ---
-parser = argparse.ArgumentParser(description="Render structural break detection figure")
-parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
-parser.add_argument("--core-only", action="store_true",
-                    help="Use core-only variant of input tables")
-parser.add_argument("--censor-gap", type=int, default=0,
-                    help="Load censor-gap variant of input tables")
-args = parser.parse_args()
 
-# Output naming mirrors compute_alluvial.py
-if args.core_only:
-    FIG_BP = "fig_breakpoints_core"
-    TAB_BP = "tab_breakpoints_core.csv"
-    TAB_BP_ROBUST = "tab_breakpoint_robustness_core.csv"
-    TAB_AL = "tab_alluvial_core.csv"
-else:
-    FIG_BP = "fig_breakpoints"
-    TAB_BP = "tab_breakpoints.csv"
-    TAB_BP_ROBUST = "tab_breakpoint_robustness.csv"
-    TAB_AL = "tab_alluvial.csv"
+def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
 
-if args.censor_gap > 0:
-    suffix = f"_censor{args.censor_gap}"
-    FIG_BP += suffix
-    TAB_BP = TAB_BP.replace(".csv", f"{suffix}.csv")
-    TAB_BP_ROBUST = TAB_BP_ROBUST.replace(".csv", f"{suffix}.csv")
+    _cfg = load_analysis_config()
+    cite_threshold = _cfg["clustering"]["cite_threshold"]
 
-# --- Load tables ---
-bp_df = pd.read_csv(os.path.join(TABLES_DIR, TAB_BP))
-try:
-    robust_df = pd.read_csv(os.path.join(TABLES_DIR, TAB_BP_ROBUST))
-except pd.errors.EmptyDataError:
-    robust_df = pd.DataFrame()
-robust_list = robust_df.to_dict("records")
+    parser = argparse.ArgumentParser(description="Render structural break detection figure")
+    parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
+    parser.add_argument("--core-only", action="store_true",
+                        help="Use core-only variant of input tables")
+    parser.add_argument("--censor-gap", type=int, default=0,
+                        help="Load censor-gap variant of input tables")
+    args = parser.parse_args(extra)
 
-# Corpus size from alluvial table (used in title for --core-only mode)
-alluvial_df = pd.read_csv(os.path.join(TABLES_DIR, TAB_AL), index_col=0)
-n_corpus = int(alluvial_df.values.sum())
+    # Derive input table names from mode
+    if args.core_only:
+        tab_bp = "tab_breakpoints_core.csv"
+        tab_bp_robust = "tab_breakpoint_robustness_core.csv"
+        tab_al = "tab_alluvial_core.csv"
+    else:
+        tab_bp = "tab_breakpoints.csv"
+        tab_bp_robust = "tab_breakpoint_robustness.csv"
+        tab_al = "tab_alluvial.csv"
 
-# supplementary is always empty (kept for structural compatibility with original)
-supplementary = []
+    if args.censor_gap > 0:
+        suffix = f"_censor{args.censor_gap}"
+        tab_bp = tab_bp.replace(".csv", f"{suffix}.csv")
+        tab_bp_robust = tab_bp_robust.replace(".csv", f"{suffix}.csv")
 
-# ============================================================
-# Step 6: Render breakpoints figure
-# ============================================================
+    # --- Load tables ---
+    bp_df = pd.read_csv(os.path.join(TABLES_DIR, tab_bp))
+    try:
+        robust_df = pd.read_csv(os.path.join(TABLES_DIR, tab_bp_robust))
+    except pd.errors.EmptyDataError:
+        robust_df = pd.DataFrame()
+    robust_list = robust_df.to_dict("records")
 
-sns.set_style("whitegrid")
+    alluvial_df = pd.read_csv(os.path.join(TABLES_DIR, tab_al), index_col=0)
+    n_corpus = int(alluvial_df.values.sum())
 
-fig, ax = plt.subplots(figsize=(12, 5))
+    # --- Plot ---
+    sns.set_style("whitegrid")
 
-colors_w = {2: "#E63946", 3: "#457B9D", 4: "#2A9D8F"}
-for w in WINDOW_SIZES:
-    col = f"z_js_w{w}"
-    valid = bp_df[["year", col]].dropna()
-    ax.plot(valid["year"], valid[col], "-o", color=colors_w[w], markersize=4,
-            label=f"JS div (w={w})", alpha=0.8)
+    fig, ax = plt.subplots(figsize=(12, 5))
 
-# Mark robust breakpoints (data-derived)
-for i, bp in enumerate(robust_list[:3]):
-    ax.axvspan(bp["year"] - 0.3, bp["year"] + 0.3, alpha=0.25, color="orange",
-               zorder=0, label="Data-derived break" if i == 0 else "")
+    colors_w = {2: "#E63946", 3: "#457B9D", 4: "#2A9D8F"}
+    for w in WINDOW_SIZES:
+        col = f"z_js_w{w}"
+        valid = bp_df[["year", col]].dropna()
+        ax.plot(valid["year"], valid[col], "-o", color=colors_w[w], markersize=4,
+                label=f"JS div (w={w})", alpha=0.8)
 
-# Mark supplementary COP breaks
-for yr in supplementary:
-    ax.axvspan(yr - 0.3, yr + 0.3, alpha=0.15, color="blue",
-               zorder=0, label="COP supplement" if yr == supplementary[0] else "")
+    for i, bp in enumerate(robust_list[:3]):
+        ax.axvspan(bp["year"] - 0.3, bp["year"] + 0.3, alpha=0.25, color="orange",
+                   zorder=0, label="Data-derived break" if i == 0 else "")
 
-# COP event lines
-for yr, label in COP_EVENTS.items():
-    if 2004 <= yr <= 2024:
-        ax.axvline(yr, color="grey", linestyle="--", alpha=0.5, linewidth=0.8)
-        ax.text(yr, ax.get_ylim()[1] * 0.95 if ax.get_ylim()[1] > 0 else 2.5,
-                label, ha="center", va="top", fontsize=7, color="grey",
-                rotation=0)
+    for yr, label in COP_EVENTS.items():
+        if 2004 <= yr <= 2024:
+            ax.axvline(yr, color="grey", linestyle="--", alpha=0.5, linewidth=0.8)
+            ax.text(yr, ax.get_ylim()[1] * 0.95 if ax.get_ylim()[1] > 0 else 2.5,
+                    label, ha="center", va="top", fontsize=7, color="grey",
+                    rotation=0)
 
-# Significance bands
-ax.axhspan(-1.5, 1.5, alpha=0.08, color="grey", zorder=0)  # non-significant zone
-ax.axhline(1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
-ax.axhline(2.0, color="black", linestyle="--", alpha=0.4, linewidth=0.8)
-ax.axhline(-1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
-ax.text(2024.3, 1.5, "z=1.5", fontsize=7, va="center", color="black", alpha=0.5)
-ax.text(2024.3, 2.0, "z=2.0", fontsize=7, va="center", color="black", alpha=0.5)
-ax.set_xlabel("Year", fontsize=11)
-ax.set_ylabel("Structural divergence (z-score)", fontsize=11)
-corpus_note = f" (core: cited ≥ {CITE_THRESHOLD}, N={n_corpus:,})" if args.core_only else ""
-ax.set_title(f"Detecting structural shifts in scholarship around climate finance{corpus_note}",
-             fontsize=12, pad=15)
-ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
+    ax.axhspan(-1.5, 1.5, alpha=0.08, color="grey", zorder=0)
+    ax.axhline(1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
+    ax.axhline(2.0, color="black", linestyle="--", alpha=0.4, linewidth=0.8)
+    ax.axhline(-1.5, color="black", linestyle=":", alpha=0.4, linewidth=0.8)
+    ax.text(2024.3, 1.5, "z=1.5", fontsize=7, va="center", color="black", alpha=0.5)
+    ax.text(2024.3, 2.0, "z=2.0", fontsize=7, va="center", color="black", alpha=0.5)
+    ax.set_xlabel("Year", fontsize=11)
+    ax.set_ylabel("Structural divergence (z-score)", fontsize=11)
+    corpus_note = f" (core: cited \u2265 {cite_threshold}, N={n_corpus:,})" if args.core_only else ""
+    ax.set_title(f"Detecting structural shifts in scholarship around climate finance{corpus_note}",
+                 fontsize=12, pad=15)
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+    ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
 
-plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG_BP), pdf=args.pdf)
-log.info("  (%s)", FIG_BP)
-plt.close()
+    plt.tight_layout()
+    out_stem = os.path.splitext(io_args.output)[0]
+    save_figure(fig, out_stem, pdf=args.pdf)
+    log.info("Saved %s", io_args.output)
+    plt.close()
 
-log.info("Done.")
+    log.info("Done.")
+
+
+if __name__ == "__main__":
+    main()

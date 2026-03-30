@@ -95,7 +95,7 @@ REGISTRY: list[dict] = [
     {
         "name": "build_het_core",
         "script": "build_het_core.py",
-        "args": [],
+        "args": ["--output", "tests/fixtures/smoke/catalogs/het_mostcited_50.csv"],
         "deps": [],
         "outputs": [
             "tests/fixtures/smoke/catalogs/het_mostcited_50.csv",
@@ -125,7 +125,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_alluvial",
         "script": "plot_fig_alluvial.py",
-        "args": [],
+        "args": ["--output", "content/figures/fig_alluvial.png"],
         "deps": ["compute_clusters"],
         "outputs": [
             "content/figures/fig_alluvial.png",
@@ -134,7 +134,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_breakpoints",
         "script": "plot_fig_breakpoints.py",
-        "args": [],
+        "args": ["--output", "content/figures/fig_breakpoints.png"],
         "deps": ["compute_breakpoints", "compute_clusters"],
         "outputs": [
             "content/figures/fig_breakpoints.png",
