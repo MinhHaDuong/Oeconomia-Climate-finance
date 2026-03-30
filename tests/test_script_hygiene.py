@@ -677,3 +677,122 @@ class TestPdfDiscipline:
         assert '"--pdf"' not in src, (
             f"{script} accepts --pdf but produces no figures"
         )
+
+
+# ---------------------------------------------------------------------------
+# 10. Test marker discipline: @slow vs @integration
+# ---------------------------------------------------------------------------
+
+TESTS_DIR = os.path.join(REPO, "tests")
+
+
+class TestMarkerDiscipline:
+    """Enforce correct use of @pytest.mark.slow vs @pytest.mark.integration.
+
+    - @integration: tests that spawn subprocesses (subprocess.run/Popen)
+      or use sleep-based timing
+    - @slow: tests that require network access or real corpus data
+      (no subprocess spawning)
+
+    A file that imports subprocess and marks tests @slow is almost certainly
+    mislabeled — subprocess tests should be @integration.
+    """
+
+    # Files that legitimately use both @slow and subprocess (none expected).
+    # Add entries here only with a comment explaining why.
+    EXCEPTIONS = set()
+
+    def test_no_slow_in_subprocess_files(self):
+        """Files that import subprocess must not use @slow (use @integration)."""
+        violations = []
+        for fname in sorted(os.listdir(TESTS_DIR)):
+            if not fname.startswith("test_") or not fname.endswith(".py"):
+                continue
+            if fname in self.EXCEPTIONS:
+                continue
+            path = os.path.join(TESTS_DIR, fname)
+            with open(path) as f:
+                source = f.read()
+            uses_subprocess = "import subprocess" in source
+            # Match actual decorator lines (any indent), not string mentions
+            uses_slow = bool(re.search(r"^\s*@pytest\.mark\.slow", source, re.MULTILINE))
+            if uses_subprocess and uses_slow:
+                violations.append(fname)
+        assert not violations, (
+            f"Files using subprocess must mark tests @integration, not @slow: "
+            f"{violations}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 11. Rules state intent only — mechanical details live in tests/hooks
+# ---------------------------------------------------------------------------
+
+
+class TestRulesIntentOnly:
+    """Rule files must state intent, not duplicate mechanical details.
+
+    When a rule encodes the same list, threshold, or pattern that an
+    enforcing test or hook already contains, the two copies drift apart.
+    The rule should point to the test; the test is the source of truth.
+    """
+
+    RULES_DIR = os.path.join(REPO, ".claude", "rules")
+
+    def _read_rule(self, name):
+        with open(os.path.join(self.RULES_DIR, name)) as f:
+            return f.read()
+
+    def test_coding_no_typed_module_list(self):
+        """coding.md must not enumerate typed modules
+        (TestTypingCoreModules owns that list)."""
+        content = self._read_rule("coding.md")
+        for mod in TestTypingCoreModules.TYPED_MODULES:
+            assert mod not in content, (
+                f"coding.md lists '{mod}' — that belongs in "
+                f"TestTypingCoreModules.TYPED_MODULES, not the rule"
+            )
+
+    def test_coding_no_typing_syntax_examples(self):
+        """coding.md must not list typing syntax
+        (ruff UP rules enforce this)."""
+        content = self._read_rule("coding.md")
+        syntax_examples = ["list[str]", "dict[str", "Union[", "Optional["]
+        found = [s for s in syntax_examples if s in content]
+        assert not found, (
+            f"coding.md contains typing syntax examples {found} — "
+            f"ruff UP rules in TestRuffModernPython enforce this"
+        )
+
+    def test_git_no_hook_details(self):
+        """git.md must not itemize pre-commit hook thresholds
+        (hooks/pre-commit is the source)."""
+        content = self._read_rule("git.md")
+        assert ">500KB" not in content, (
+            "git.md specifies file size threshold — "
+            "hooks/pre-commit owns that"
+        )
+
+    def test_script_io_no_code_template(self):
+        """script-io.md must not contain Python code blocks
+        (agent should read a migrated script as example)."""
+        content = self._read_rule("script-io.md")
+        assert "```python" not in content, (
+            "script-io.md contains a Python code template — "
+            "the agent should read a migrated script as the example"
+        )
+
+    def test_coding_no_architecture_sections(self):
+        """coding.md must not contain project architecture docs
+        (those live in architecture.md)."""
+        content = self._read_rule("coding.md")
+        arch_headers = [
+            "## Data location",
+            "## Project structure",
+            "## Pipeline phases",
+        ]
+        found = [h for h in arch_headers if h in content]
+        assert not found, (
+            f"coding.md contains architecture sections {found} — "
+            f"these belong in architecture.md"
+        )
