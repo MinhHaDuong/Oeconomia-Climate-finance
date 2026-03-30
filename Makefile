@@ -261,7 +261,7 @@ stats: $(COMPUTED_STATS)
 
 # Core subset → venues table
 $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
 	uv run python $< --output $@

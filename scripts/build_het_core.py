@@ -13,7 +13,8 @@ Reads:  $DATA/catalogs/refined_works.csv, $DATA/catalogs/refined_citations.csv
 Writes: $DATA/catalogs/het_mostcited_50.csv
 
 Usage:
-    python scripts/build_het_core.py
+    uv run python scripts/build_het_core.py --output data/catalogs/het_mostcited_50.csv \
+        [--refined-works data/catalogs/refined_works.csv]
 """
 
 import argparse
@@ -23,6 +24,7 @@ import re
 import networkx as nx
 import numpy as np
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import (
     CATALOGS_DIR,
     get_logger,
@@ -376,12 +378,21 @@ def _select_with_quotas(s2):
 # ── PIPELINE ────────────────────────────────────────────────────────────
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--refined-works",
+                        default=os.path.join(CATALOGS_DIR, "refined_works.csv"),
+                        help="Path to refined_works.csv")
+    args = parser.parse_args(extra)
+
     log.info("=" * 60)
     log.info("BUILDING HET CLIMATE FINANCE CORE")
     log.info("=" * 60)
 
     # Load corpus
-    corpus_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+    corpus_path = args.refined_works
     df = pd.read_csv(corpus_path, dtype=str, keep_default_na=False)
     df["cited_by_count_num"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
     df["year_num"] = pd.to_numeric(df["year"], errors="coerce").fillna(2020)
@@ -476,8 +487,7 @@ def main():
     out["pagerank"] = out["pagerank"].map(lambda x: f"{x:.6f}")
     out["score"] = out["score"].round(4)
 
-    het_path = os.path.join(CATALOGS_DIR, "het_mostcited_50.csv")
-    save_csv(out, het_path)
+    save_csv(out, io_args.output)
 
     # Print funnel
     log.info("=" * 60)
@@ -510,6 +520,4 @@ def main():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
     main()
