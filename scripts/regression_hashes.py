@@ -409,23 +409,23 @@ def main():
         _restore_outputs(backups)
 
     if args.dump:
-        print(json.dumps(current, indent=2, sort_keys=True))
+        sys.stdout.write(json.dumps(current, indent=2, sort_keys=True) + "\n")
         return
 
     if args.save:
         save_golden(current)
-        print(f"Golden hashes saved ({sum(len(v) for v in current.values())} files)")
+        log.info("Golden hashes saved (%d files)", sum(len(v) for v in current.values()))
         return
 
     # --check
     golden = load_golden()
     diffs = compare(current, golden)
     if not diffs:
-        print("OK — all outputs match golden hashes.")
+        log.info("OK — all outputs match golden hashes.")
     else:
-        print(f"REGRESSION — {len(diffs)} difference(s):")
+        log.error("REGRESSION — %d difference(s):", len(diffs))
         for d in diffs:
-            print(d)
+            log.error("%s", d)
         sys.exit(1)
 
 

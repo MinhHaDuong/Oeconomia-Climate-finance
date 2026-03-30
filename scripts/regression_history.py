@@ -23,6 +23,10 @@ import sys
 import tempfile
 from pathlib import Path
 
+from utils import get_logger
+
+log = get_logger("regression_history")
+
 # ---------------------------------------------------------------------------
 # Paths (relative to this script's location in the repo)
 # ---------------------------------------------------------------------------
@@ -141,7 +145,7 @@ def _run_at_commit(sha: str, worktree_base: Path) -> dict[str, dict[str, str]]:
             capture_output=True, text=True, cwd=str(wt_path), timeout=120,
         )
         if sync.returncode != 0:
-            print(f"  WARNING: uv sync failed at {sha[:8]}, trying without sync")
+            log.warning("uv sync failed at %s, trying without sync", sha[:8])
 
         env = {
             **os.environ,
@@ -236,8 +240,7 @@ def main():
     else:
         commits = args.commits
 
-    print(f"Testing {len(commits)} commits...")
-    print()
+    log.info("Testing %d commits...", len(commits))
 
     tmp_base = Path(tempfile.mkdtemp(prefix="regression_history_"))
 
@@ -245,11 +248,9 @@ def main():
     try:
         for sha in commits:
             info = _get_commit_info(sha)
-            print(f"  {info} ...", end=" ", flush=True)
             try:
                 hashes = _run_at_commit(sha, tmp_base)
                 all_results.append((sha, info, hashes))
-                # Count outputs
                 n_ok = sum(
                     1 for h in hashes.values()
                     for v in h.values()
@@ -257,23 +258,18 @@ def main():
                 )
                 n_err = sum(1 for h in hashes.values() if "__error__" in h)
                 if n_err:
-                    print(f"  {n_ok} hashed, {n_err} errors")
+                    log.info("  %s  %d hashed, %d errors", info, n_ok, n_err)
                 else:
-                    print(f"  {n_ok} outputs hashed")
+                    log.info("  %s  %d outputs hashed", info, n_ok)
             except Exception as e:
-                print(f"  FAILED: {e}")
+                log.error("  %s  FAILED: %s", info, e)
                 all_results.append((sha, info, {"__error__": str(e)}))
     finally:
         shutil.rmtree(tmp_base, ignore_errors=True)
 
     # --- Report ---
-    print()
-    print("=" * 72)
-    print("REGRESSION HISTORY REPORT")
-    print("=" * 72)
-
     if len(all_results) < 2:
-        print("Need at least 2 commits to compare.")
+        log.info("Need at least 2 commits to compare.")
         return
 
     # Compare consecutive pairs
@@ -298,30 +294,26 @@ def main():
 
         if diffs:
             changes_found += len(diffs)
-            print(f"\n  {prev_info}")
-            print(f"→ {cur_info}")
+            log.warning("  %s", prev_info)
+            log.warning("→ %s", cur_info)
             for script, f, old, new in diffs:
-                print(f"  CHANGED  {script} / {os.path.basename(f)}")
-                print(f"           {old}... → {new}...")
+                log.warning("  CHANGED  %s / %s", script, os.path.basename(f))
+                log.warning("           %s... → %s...", old, new)
 
     if changes_found == 0:
-        print("\nNo output changes detected across all tested commits.")
+        log.info("No output changes detected across all tested commits.")
     else:
-        print(f"\n{changes_found} output change(s) detected across "
-              f"{len(all_results)} commits.")
+        log.warning("%d output change(s) detected across %d commits.",
+                    changes_found, len(all_results))
 
     # Final hashes table
-    print()
-    print("-" * 72)
-    print("FINAL HASHES (most recent commit)")
-    print("-" * 72)
     _, info, hashes = all_results[-1]
-    print(f"Commit: {info}")
+    log.info("FINAL HASHES — %s", info)
     for script, files in sorted(hashes.items()):
         if script.startswith("__"):
             continue
         for f, h in sorted(files.items()):
-            print(f"  {script:25s}  {os.path.basename(f):40s}  {h[:16]}...")
+            log.info("  %-25s  %-40s  %s...", script, os.path.basename(f), h[:16])
 
 
 if __name__ == "__main__":
