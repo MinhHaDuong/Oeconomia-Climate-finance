@@ -50,11 +50,12 @@ FIGURES_DIR = CONTENT_DIR / "figures"
 # ---------------------------------------------------------------------------
 
 REGISTRY: list[dict] = [
-    # --- Compute (order matters: downstream scripts read their outputs) ---
+    # --- Wave 1: independent (no deps, run in parallel) ---
     {
         "name": "compute_breakpoints",
         "script": "compute_breakpoints.py",
         "args": ["--no-pdf"],
+        "deps": [],
         "outputs": [
             "content/tables/tab_breakpoints.csv",
             "content/tables/tab_breakpoint_robustness.csv",
@@ -64,16 +65,17 @@ REGISTRY: list[dict] = [
         "name": "compute_clusters",
         "script": "compute_clusters.py",
         "args": ["--no-pdf"],
+        "deps": [],
         "outputs": [
             "content/tables/tab_alluvial.csv",
             "content/tables/cluster_labels.json",
         ],
     },
-    # --- Figures: bars ---
     {
         "name": "plot_fig1_bars",
         "script": "plot_fig1_bars.py",
         "args": ["--output", str(FIGURES_DIR / "fig_bars.png"), "--no-pdf"],
+        "deps": [],
         "outputs": [
             "content/figures/fig_bars.png",
         ],
@@ -85,15 +87,26 @@ REGISTRY: list[dict] = [
             "--output", str(FIGURES_DIR / "fig_bars_v1.png"),
             "--no-pdf", "--v1-only",
         ],
+        "deps": [],
         "outputs": [
             "content/figures/fig_bars_v1.png",
         ],
     },
-    # --- Figures: breaks and composition (depend on compute_* outputs) ---
+    {
+        "name": "build_het_core",
+        "script": "build_het_core.py",
+        "args": [],
+        "deps": [],
+        "outputs": [
+            "tests/fixtures/smoke/het_mostcited_50.csv",
+        ],
+    },
+    # --- Wave 2: depend on compute_* outputs ---
     {
         "name": "plot_fig2_breaks",
         "script": "plot_fig2_breaks.py",
         "args": ["--no-pdf"],
+        "deps": ["compute_breakpoints"],
         "outputs": [
             "content/figures/fig_breaks.png",
         ],
@@ -104,35 +117,27 @@ REGISTRY: list[dict] = [
         "args": [
             "--output", str(FIGURES_DIR / "fig_composition.png"), "--no-pdf",
         ],
+        "deps": ["compute_clusters"],
         "outputs": [
             "content/figures/fig_composition.png",
         ],
     },
-    # --- Figures: alluvial (depends on compute_clusters) ---
     {
         "name": "plot_fig_alluvial",
         "script": "plot_fig_alluvial.py",
         "args": ["--no-pdf"],
+        "deps": ["compute_clusters"],
         "outputs": [
             "content/figures/fig_alluvial.png",
         ],
     },
-    # --- Figures: breakpoints panel (depends on compute_breakpoints + clusters) ---
     {
         "name": "plot_fig_breakpoints",
         "script": "plot_fig_breakpoints.py",
         "args": ["--no-pdf"],
+        "deps": ["compute_breakpoints", "compute_clusters"],
         "outputs": [
             "content/figures/fig_breakpoints.png",
-        ],
-    },
-    # --- Build: HET core selection (writes to CATALOGS_DIR = fixture dir) ---
-    {
-        "name": "build_het_core",
-        "script": "build_het_core.py",
-        "args": [],
-        "outputs": [
-            "tests/fixtures/smoke/het_mostcited_50.csv",
         ],
     },
 ]
@@ -272,39 +277,64 @@ def _restore_outputs(backups: dict[str, Path | None]) -> None:
         shutil.rmtree(backup_dir)
 
 
+def _run_one(entry: dict, env: dict) -> tuple[str, dict[str, str]]:
+    """Run one script, return (name, {file: hash}) or raise on failure."""
+    name = entry["name"]
+    script = str(SCRIPTS_DIR / entry["script"])
+    proc = subprocess.run(
+        [sys.executable, script, *entry["args"]],
+        capture_output=True, text=True, env=env, timeout=120,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"{name} failed (exit {proc.returncode}):\n{proc.stderr[:500]}")
+    hashes: dict[str, str] = {}
+    for rel_path in entry["outputs"]:
+        abs_path = ROOT / rel_path
+        if not abs_path.exists():
+            raise FileNotFoundError(f"{name}: missing output {rel_path}")
+        hashes[rel_path] = _hash_output(abs_path)
+    return name, hashes
+
+
+def _resolve_waves() -> list[list[dict]]:
+    """Group REGISTRY entries into waves respecting deps."""
+    done: set[str] = set()
+    remaining = list(REGISTRY)
+    waves: list[list[dict]] = []
+    while remaining:
+        wave = [e for e in remaining if all(d in done for d in e["deps"])]
+        if not wave:
+            names = [e["name"] for e in remaining]
+            raise RuntimeError(f"Circular dependency in REGISTRY: {names}")
+        waves.append(wave)
+        done.update(e["name"] for e in wave)
+        remaining = [e for e in remaining if e["name"] not in done]
+    return waves
+
+
 def run_and_hash() -> dict[str, dict[str, str]]:
-    """Run all registered scripts, return {script_name: {file: sha256}}."""
-    # Ensure output directories exist
+    """Run scripts in parallel waves, return {script_name: {file: sha256}}.
+
+    Wave 1 (5 scripts, no deps) runs in parallel.
+    Wave 2 (4 scripts, depend on wave 1) runs in parallel after wave 1.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-    results: dict[str, dict[str, str]] = {}
     env = _smoke_env()
+    results: dict[str, dict[str, str]] = {}
+    waves = _resolve_waves()
 
-    for entry in REGISTRY:
-        name = entry["name"]
-        script = str(SCRIPTS_DIR / entry["script"])
-        args = entry["args"]
-
-        log.info("Running %s ...", name)
-        proc = subprocess.run(
-            [sys.executable, script, *args],
-            capture_output=True, text=True, env=env, timeout=120,
-        )
-        if proc.returncode != 0:
-            log.error("%s failed (exit %d):\n%s", name, proc.returncode, proc.stderr)
-            raise RuntimeError(f"{name} failed with exit code {proc.returncode}")
-
-        hashes: dict[str, str] = {}
-        for rel_path in entry["outputs"]:
-            abs_path = ROOT / rel_path
-            if not abs_path.exists():
-                raise FileNotFoundError(
-                    f"{name} did not produce expected output: {rel_path}"
-                )
-            hashes[rel_path] = _hash_output(abs_path)
-        results[name] = hashes
-        log.info("  %s: %d outputs hashed", name, len(hashes))
+    for i, wave in enumerate(waves):
+        log.info("Wave %d: %s", i + 1, [e["name"] for e in wave])
+        with ThreadPoolExecutor(max_workers=len(wave)) as pool:
+            futures = {pool.submit(_run_one, e, env): e["name"] for e in wave}
+            for future in as_completed(futures):
+                name, hashes = future.result()  # raises on failure
+                results[name] = hashes
+                log.info("  %s: %d outputs", name, len(hashes))
 
     return results
 

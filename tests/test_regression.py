@@ -44,12 +44,15 @@ def _load_golden() -> dict:
 
 @pytest.fixture(scope="module")
 def regression_outputs(tmp_path_factory):
-    """Run all registered scripts once, return {name: {file: hash}}.
+    """Run scripts in parallel waves, return {name: {file: hash}}.
 
-    Uses module scope so all 9 scripts run once per test session,
-    not once per test function. ~12s → paid once.
+    Uses module scope — all scripts run once per test session.
+    Wave 1 (5 independent scripts) and wave 2 (4 dependent scripts)
+    each run in parallel via ThreadPoolExecutor.
     """
     import shutil
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from regression_hashes import _resolve_waves
 
     tmp = tmp_path_factory.mktemp("regression_backup")
     env = _smoke_env()
@@ -71,10 +74,11 @@ def regression_outputs(tmp_path_factory):
     (ROOT_PATH / "content" / "tables").mkdir(parents=True, exist_ok=True)
     (ROOT_PATH / "content" / "figures").mkdir(parents=True, exist_ok=True)
 
-    # Run scripts in order, collect hashes
+    # Run scripts in parallel waves
     results: dict[str, dict[str, str]] = {}
     errors: dict[str, str] = {}
-    for entry in REGISTRY:
+
+    def _run_entry(entry):
         name = entry["name"]
         script = os.path.join(SCRIPTS_DIR, entry["script"])
         proc = subprocess.run(
@@ -82,14 +86,23 @@ def regression_outputs(tmp_path_factory):
             capture_output=True, text=True, env=env, timeout=120,
         )
         if proc.returncode != 0:
-            errors[name] = proc.stderr[:500]
-            continue
+            return name, None, proc.stderr[:500]
         hashes = {}
         for rel_path in entry["outputs"]:
             abs_path = ROOT_PATH / rel_path
             if abs_path.exists():
                 hashes[rel_path] = _hash_output(abs_path)
-        results[name] = hashes
+        return name, hashes, None
+
+    for wave in _resolve_waves():
+        with ThreadPoolExecutor(max_workers=len(wave)) as pool:
+            futures = [pool.submit(_run_entry, e) for e in wave]
+            for future in as_completed(futures):
+                name, hashes, err = future.result()
+                if err:
+                    errors[name] = err
+                else:
+                    results[name] = hashes
 
     # Restore backups
     for rel_path, backup_path in backups.items():
