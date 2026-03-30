@@ -207,7 +207,7 @@ $(REFINED_FTH): $(REFINED)
 $(REFINED_CIT_FTH): $(REFINED_CIT)
 	uv run python -c "import pandas as pd; pd.read_csv('$<', low_memory=False).to_feather('$@')"
 
-corpus-handoff: $(REFINED_FTH) $(REFINED_CIT_FTH)
+corpus-handoff: check-corpus $(REFINED_FTH) $(REFINED_CIT_FTH)
 
 check-corpus:
 	@ok=true; \
@@ -418,11 +418,11 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
 	uv run python $<
 
-figures-manuscript: check-manuscript-data $(MANUSCRIPT_FIGS)
-figures-datapaper:  check-corpus $(DATAPAPER_FIGS)
-figures-companion:  check-corpus $(COMPANION_FIGS)
-figures-techrep:    check-corpus $(TECHREP_FIGS)
-figures: check-corpus $(ALL_FIGS) corpus-tables
+figures-manuscript: corpus-handoff $(MANUSCRIPT_FIGS)
+figures-datapaper:  corpus-handoff $(DATAPAPER_FIGS)
+figures-companion:  corpus-handoff $(COMPANION_FIGS)
+figures-techrep:    corpus-handoff $(TECHREP_FIGS)
+figures: corpus-handoff $(ALL_FIGS) corpus-tables
 
 # ── Namespaced aliases (Phase 2) ────────────────────────
 # Organized by concern for discoverability: make analysis-<tab>
