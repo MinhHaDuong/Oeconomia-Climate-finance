@@ -64,3 +64,4 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - God module split (#542): `analyze_genealogy.py` 808→322L, M/V architecture with table-as-contract, robustness to `analyze_cocitation.py`
 - PDF opt-in flip (#544): `save_figure()` default from PDF-on to PDF-off across 33 files, `TestPdfDiscipline` guard (#545)
 - Fuzzy ref matching (#539): GROBID-parsed citation refs matched to corpus works via rapidfuzz, new `ref_match` DVC stage, integrated into `corpus_merge_citations`
+- Worktree isolation (#568): every conversation runs in throwaway worktree via `EnterWorktree`, `.worktreeinclude` replaces post-checkout symlinks
