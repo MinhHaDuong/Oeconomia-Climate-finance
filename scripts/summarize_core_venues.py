@@ -13,17 +13,21 @@ Usage:
     uv run python scripts/summarize_core_venues.py
 """
 
-import argparse
 import os
 import re
 
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, save_csv
 
 log = get_logger("summarize_core_venues")
 
 
 def parse_args():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(description="Summarize core venue distributions")
     parser.add_argument(
         "--core",
@@ -37,37 +41,16 @@ def parse_args():
         default=30,
         help="Top N venues per output table",
     )
-    parser.add_argument(
-        "--out-all",
-        type=str,
-        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_venues_all.csv"),
-        help="Output path for all venues summary",
-    )
-    parser.add_argument(
-        "--out-journals",
-        type=str,
-        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_venues_journals.csv"),
-        help="Output path for journal-only summary",
-    )
-    parser.add_argument(
-        "--out-series",
-        type=str,
-        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_venues_series.csv"),
-        help="Output path for report/WP series summary",
-    )
-    parser.add_argument(
-        "--out-institutions",
-        type=str,
-        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_institutions.csv"),
-        help="Output path for institution summary (OECD/WB/IMF/other)",
-    )
-    parser.add_argument(
-        "--out-institution-types",
-        type=str,
-        default=os.path.join(BASE_DIR, "content", "tables", "tab_core_institution_by_type.csv"),
-        help="Output path for institution x venue_type summary",
-    )
-    return parser.parse_args()
+    args = parser.parse_args(extra)
+
+    # Primary output is --output; sibling outputs derive from its directory
+    args.out_all = io_args.output
+    out_dir = os.path.dirname(io_args.output) or os.path.join(BASE_DIR, "content", "tables")
+    args.out_journals = os.path.join(out_dir, "tab_core_venues_journals.csv")
+    args.out_series = os.path.join(out_dir, "tab_core_venues_series.csv")
+    args.out_institutions = os.path.join(out_dir, "tab_core_institutions.csv")
+    args.out_institution_types = os.path.join(out_dir, "tab_core_institution_by_type.csv")
+    return args
 
 
 # Each entry is (matcher, canonical_name).

@@ -11,15 +11,15 @@ Outputs:
   - content/figures/fig2_breaks.png (+.pdf if --pdf)
 
 Usage:
-    uv run python scripts/plot_fig2_breaks.py [--pdf]
+    uv run python scripts/plot_fig2_breaks.py --output content/figures/fig_breaks.png [--pdf]
 """
 
-import argparse
 import os
 
 import numpy as np
 import pandas as pd
 from plot_style import DARK, DPI, FIGWIDTH, LIGHT, MED, apply_style
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, save_figure
 
 apply_style()
@@ -27,9 +27,13 @@ import matplotlib.pyplot as plt
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    import argparse
     parser = argparse.ArgumentParser(description="Figure 2: structural breaks")
     parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # Load data
     csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_breakpoints.csv")
@@ -95,7 +99,7 @@ def main():
     fig.tight_layout()
 
     # Save
-    out_path = os.path.join(BASE_DIR, "content", "figures", "fig_breaks")
+    out_path = os.path.splitext(io_args.output)[0]
     save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
     plt.close(fig)
 

@@ -15,7 +15,6 @@ Steps:
 Output: content/tables/tab_100bn_papers.csv
 """
 
-import argparse
 import os
 import warnings
 
@@ -23,6 +22,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import svds
+from script_io_args import parse_io_args, validate_io
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import normalize
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
@@ -385,12 +385,13 @@ def analyze_distinctive_refs(works, papers_100bn, mask_final, cites_clean):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Analyze the $100bn climate finance accounting sub-literature"
-    )
-    _args = parser.parse_args()
+    io_args, _extra = parse_io_args()
+    validate_io(output=io_args.output)
 
-    os.makedirs(TABLES_DIR, exist_ok=True)
+    global OUTPUT_PATH
+    OUTPUT_PATH = io_args.output
+
+    os.makedirs(os.path.dirname(io_args.output) or TABLES_DIR, exist_ok=True)
 
     # Step 1: Load data
     log.info("Loading refined_works.csv ...")

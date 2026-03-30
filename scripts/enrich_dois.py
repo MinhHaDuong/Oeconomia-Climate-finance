@@ -261,6 +261,8 @@ def find_doi(title: str | None, year: object = None, author: object = None) -> s
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default=None,
+                        help="Stamp file path — written on success (DVC output)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be done without modifying files")
     parser.add_argument("--limit", type=int, default=0,
@@ -335,6 +337,13 @@ def main() -> None:
     save_cache(cache)
     log.info("Done. Resolved: %d, Not found: %d. Cache: %s",
              resolved, not_found, CACHE_FILE)
+
+    if args.output:
+        import time as _time
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(_time.strftime("%Y-%m-%dT%H:%M:%S%z") + "\n")
+        log.info("Stamp: %s", args.output)
 
 
 if __name__ == "__main__":

@@ -201,7 +201,9 @@ class TestArgparsePresence:
             if name in LIBRARY_SCRIPTS:
                 continue
             source = _read_script(name)
-            if "argparse" not in source and "ArgumentParser" not in source:
+            if ("argparse" not in source
+                    and "ArgumentParser" not in source
+                    and "parse_io_args" not in source):
                 violators.append(name)
         assert not violators, (
             f"{len(violators)} entry-point scripts lack argparse "
@@ -1025,4 +1027,101 @@ class TestAlwaysLoadedContextBudget:
             f"Breakdown: {', '.join(contributors)}.\n"
             f"Fix: add globs: frontmatter to path-scope a rule file, "
             f"or trim content."
+        )
+
+
+# ---------------------------------------------------------------------------
+# 15. I/O discipline: --output flag (#549)
+# ---------------------------------------------------------------------------
+
+class TestOutputFlag:
+    """Every script that produces files must accept --output (#549).
+
+    Per script-io.md, scripts use parse_io_args() from script_io_args.py
+    so the Makefile can pass output paths via $@.
+
+    Scripts that are pure libraries, QA reporters (stdout only), catalog
+    harvesters (DVC-managed), or interactive tools are exempt.
+    """
+
+    # Scripts with __main__ that legitimately don't need --output:
+    OUTPUT_EXEMPT = {
+        # QA reporters (stdout / fixed JSON)
+        "qa_citations.py", "qa_detect_language.py", "qa_detect_type.py",
+        "qa_embeddings.py", "qa_metadata.py", "qa_word_count.py",
+        # Catalog harvesters (DVC-managed)
+        "catalog_bibcnrs.py", "catalog_grey.py", "catalog_istex.py",
+        "catalog_merge.py", "catalog_openalex.py", "catalog_scispace.py",
+        "catalog_scopus.py", "catalog_semanticscholar.py",
+        # Teaching pipeline (DVC-managed or standalone)
+        "build_teaching_canon.py", "build_teaching_yaml.py",
+        "catalog_syllabi.py", "analyze_syllabi.py", "analyze_teaching_canon.py",
+        # Interactive / exploratory tools
+        "compute_clustering_comparison.py", "compute_temporal_communities.py",
+        "analyze_communities_clusters.py", "plot_interactive_corpus.py",
+        "enrich_openalex_keywords.py",
+        # DVC join/merge stages
+        "enrich_join.py", "corpus_merge_citations.py", "corpus_ref_match.py",
+        "summarize_abstracts.py", "corpus_parse_citations_grobid.py",
+        # Tool / utility scripts
+        "build_smoke_fixture.py", "compute_regression_hashes.py",
+        "compute_regression_history.py", "qa_bibliography.py",
+        "qa_missing_references.py", "analyze_unfccc_topics.py",
+        # Not in ticket #549 scope — future migration
+        "build_het_core.py", "export_tab_venues.py",
+        "plot_genealogy.py", "plot_genealogy_html.py",
+        "plot_fig_traditions.py", "analyze_genealogy.py",
+    }
+
+    def test_all_producing_scripts_accept_output(self):
+        """Every script with __main__ that writes files must accept --output."""
+        violators = []
+        for f in Path(SCRIPTS_DIR).glob("*.py"):
+            src = f.read_text()
+            if "__name__" not in src or "__main__" not in src:
+                continue
+            if f.name in LIBRARY_SCRIPTS:
+                continue
+            if f.name in self.OUTPUT_EXEMPT:
+                continue
+            if "--output" not in src and "parse_io_args" not in src:
+                violators.append(f.name)
+        assert not violators, (
+            f"{len(violators)} scripts produce output but have no --output flag: "
+            f"{sorted(violators)}"
+        )
+
+    # Scripts that can run with smoke fixtures (no network, no full corpus).
+    # Each entry: (script, extra_args, output_extension)
+    SMOKE = "tests/fixtures/smoke/catalogs"
+    BLACKBOX_SCRIPTS = [
+        # Phase 2 plots
+        ("plot_fig1_bars.py", ["--input", f"{SMOKE}/refined_works.csv"], ".png"),
+        ("plot_fig_dag.py", [], ".png"),
+        # Phase 2 exports
+        ("export_citation_coverage.py",
+         ["--input", f"{SMOKE}/refined_works.csv", f"{SMOKE}/refined_citations.csv"], ".md"),
+        ("export_language_table.py", ["--input", f"{SMOKE}/refined_works.csv"], ".md"),
+        ("summarize_core_venues.py",
+         ["--core", f"{SMOKE}/refined_works.csv"], ".csv"),
+    ]
+
+    @pytest.mark.integration
+    @pytest.mark.parametrize("script,extra_args,ext", BLACKBOX_SCRIPTS,
+                             ids=[s[0] for s in BLACKBOX_SCRIPTS])
+    def test_output_file_created(self, script, extra_args, ext, tmp_path):
+        """Run script --output /tmp/... and verify the file appears."""
+        import subprocess
+        out_path = tmp_path / f"test_output{ext}"
+        cmd = [
+            sys.executable, os.path.join(SCRIPTS_DIR, script),
+            "--output", str(out_path),
+        ] + extra_args
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, (
+            f"{script} failed (rc={result.returncode}):\n{result.stderr[-500:]}"
+        )
+        assert out_path.exists(), (
+            f"{script} exited 0 but --output {out_path} was not created. "
+            f"The script ignores --output and writes elsewhere."
         )

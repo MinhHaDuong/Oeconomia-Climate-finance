@@ -302,7 +302,7 @@ def _search_best_query(
     return results
 
 
-def calibrate(args):
+def calibrate(args, output_path=None):
     """Main calibration workflow."""
     config = _load_config()
     df, teaching_dois, cited_dois, llm_cache = load_data()
@@ -373,7 +373,7 @@ def calibrate(args):
         _compare_with_llm_cache(cal_df, all_scores, best_thresh, llm_cache)
 
     # Save calibration results
-    out_path = os.path.join(CATALOGS_DIR, "reranker_calibration.csv")
+    out_path = output_path or os.path.join(CATALOGS_DIR, "reranker_calibration.csv")
     cal_df["reranker_score"] = all_scores
     cal_df["weak_label"] = labels
     cal_df[["doi", "title", "year", "cited_by_count", "source_count",
@@ -435,6 +435,10 @@ def export_hitl(cal_df, scores, threshold, n_samples=100):
 
 
 def main():
+    from script_io_args import parse_io_args, validate_io
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
     parser = argparse.ArgumentParser(
         description="Calibrate cross-encoder reranker for Flag 6 relevance scoring")
     parser.add_argument("--model", default=None,
@@ -445,8 +449,8 @@ def main():
                         help="Export boundary cases for human review")
     parser.add_argument("--queries-only", action="store_true",
                         help="Only print generated queries, don't score")
-    args = parser.parse_args()
-    calibrate(args)
+    args = parser.parse_args(extra)
+    calibrate(args, output_path=io_args.output)
 
 
 if __name__ == "__main__":

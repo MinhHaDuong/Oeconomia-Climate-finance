@@ -123,6 +123,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Batch-enrich citations from Crossref (DOIs processed in priority order: "
                     "most-cited works first, deterministic)")
+    parser.add_argument("--output", default=None,
+                        help="Stamp file path — written on success (DVC output)")
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--limit", type=int, default=0,
                         help="Max DOIs to process (0=all)")
@@ -257,6 +259,12 @@ def main():
     log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
                refs_written=total_refs, report_path=report_path)
+
+    if args.output:
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(time.strftime("%Y-%m-%dT%H:%M:%S%z") + "\n")
+        log.info("Stamp: %s", args.output)
 
 
 if __name__ == "__main__":

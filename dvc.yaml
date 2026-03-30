@@ -134,8 +134,8 @@ stages:
 
   enrich_dois:
     cmd: >-
-      uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv &&
-      date -Iseconds > data/catalogs/enrich_cache/.dois.stamp
+      uv run python scripts/enrich_dois.py --works-input data/catalogs/unified_works.csv
+      --output data/catalogs/enrich_cache/.dois.stamp
     deps:
       - scripts/enrich_dois.py
       - scripts/utils.py
@@ -148,8 +148,8 @@ stages:
 
   enrich_abstracts:
     cmd: >-
-      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/unified_works.csv &&
-      date -Iseconds > data/catalogs/enrich_cache/.abstracts.stamp
+      uv run python scripts/enrich_abstracts.py --works-input data/catalogs/unified_works.csv
+      --output data/catalogs/enrich_cache/.abstracts.stamp
     deps:
       - scripts/enrich_abstracts.py
       - scripts/utils.py
@@ -163,8 +163,8 @@ stages:
 
   enrich_language:
     cmd: >-
-      uv run python scripts/enrich_language.py --works-input data/catalogs/unified_works.csv &&
-      date -Iseconds > data/catalogs/enrich_cache/.language.stamp
+      uv run python scripts/enrich_language.py --works-input data/catalogs/unified_works.csv
+      --output data/catalogs/enrich_cache/.language.stamp
     deps:
       - scripts/enrich_language.py
       - scripts/utils.py
@@ -245,7 +245,7 @@ stages:
   # Phase 1b.5: Sentence embeddings (encoding only — no UMAP/clustering)
   # Requires uv sync --group corpus --extra cpu (or --extra cu130 on GPU)
   enrich_embeddings:
-    cmd: uv run python scripts/enrich_embeddings.py --works-input data/catalogs/enriched_works.csv
+    cmd: uv run python scripts/enrich_embeddings.py --works-input data/catalogs/enriched_works.csv --output data/catalogs/embeddings.npz
     deps:
       - scripts/enrich_embeddings.py
       - scripts/utils.py

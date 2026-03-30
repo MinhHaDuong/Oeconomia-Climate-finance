@@ -358,6 +358,8 @@ def _fetch_all_waves(missing, args, p1_counters, p2_counters, _log_event, t0):
 def main():
     parser = argparse.ArgumentParser(
         description="Enrich citations from OpenAlex (most-cited first)")
+    parser.add_argument("--output", default=None,
+                        help="Stamp file path — written on success (DVC output)")
     parser.add_argument("--batch-size", type=int, default=50,
                         help="DOIs per OpenAlex request (max ~100)")
     parser.add_argument("--resolve-batch-size", type=int, default=100,
@@ -451,6 +453,12 @@ def main():
     log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
                rows_written=totals["rows"], report_path=report_path)
+
+    if args.output:
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(time.strftime("%Y-%m-%dT%H:%M:%S%z") + "\n")
+        log.info("Stamp: %s", args.output)
 
 
 if __name__ == "__main__":

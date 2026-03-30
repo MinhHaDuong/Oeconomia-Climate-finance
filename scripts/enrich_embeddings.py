@@ -146,6 +146,8 @@ def _load_embedding_cache(works_path: str) -> tuple[dict, dict, str]:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default=EMBEDDINGS_PATH,
+                        help="Output embeddings.npz path (DVC output)")
     parser.add_argument(
         "--works-input",
         default=os.path.join(CATALOGS_DIR, "unified_works.csv"),
@@ -237,8 +239,10 @@ def main():
     log.info("Saved %d embeddings cache → %s", len(embeddings), EMBEDDINGS_CACHE_PATH)
 
     # Save DVC output (ephemeral — may be deleted on next DVC repro)
-    np.savez_compressed(EMBEDDINGS_PATH, **cache_arrays)
-    log.info("Saved %d embeddings output → %s", len(embeddings), EMBEDDINGS_PATH)
+    output_path = args.output
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    np.savez_compressed(output_path, **cache_arrays)
+    log.info("Saved %d embeddings output → %s", len(embeddings), output_path)
 
     # Clean up legacy file
     if os.path.exists(legacy_path):

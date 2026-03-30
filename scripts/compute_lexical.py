@@ -43,16 +43,20 @@ if __name__ == "__main__":
 
     import numpy as np
     import pandas as pd
+    from script_io_args import parse_io_args, validate_io
     from sklearn.feature_extraction.text import TfidfVectorizer
     from utils import load_analysis_corpus
 
-    os.makedirs(TABLES_DIR, exist_ok=True)
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    os.makedirs(os.path.dirname(io_args.output) or TABLES_DIR, exist_ok=True)
 
     # --- Args ---
     parser = argparse.ArgumentParser(description="Compute lexical TF-IDF table at break years")
     parser.add_argument("--core-only", action="store_true",
                         help="Not supported (lexical analysis uses full corpus). Prints warning.")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     if args.core_only:
         log.warning("--core-only is not supported by compute_lexical.py "
@@ -73,7 +77,7 @@ if __name__ == "__main__":
         robust_df = pd.DataFrame()
     if len(robust_df) == 0:
         log.warning("No robust breakpoints in %s — writing empty output.", robust_path)
-        pd.DataFrame().to_csv(os.path.join(TABLES_DIR, "tab_lexical_tfidf.csv"), index=False)
+        pd.DataFrame().to_csv(io_args.output, index=False)
         raise SystemExit(0)
     detected_breaks = sorted(robust_df["year"].tolist()[:3])
     log.info("Detected break years (from tab_breakpoint_robustness.csv): %s", detected_breaks)
@@ -179,8 +183,7 @@ if __name__ == "__main__":
 
     if all_rows:
         result = pd.concat(all_rows, ignore_index=True)
-        out_path = os.path.join(TABLES_DIR, "tab_lexical_tfidf.csv")
-        result.to_csv(out_path, index=False)
+        result.to_csv(io_args.output, index=False)
         years_saved = sorted(result["break_year"].unique())
         log.info("Saved TF-IDF table -> tables/tab_lexical_tfidf.csv "
                  "(%d rows, break years: %s)", len(result), years_saved)
