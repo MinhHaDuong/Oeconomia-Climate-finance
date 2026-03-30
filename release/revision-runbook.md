@@ -55,7 +55,7 @@ Reviewer asks to rerun with different parameters (e.g., K=8, different cite_thre
 
 1. Create ticket branch: `t{N}-param-{param}-{value}`
 2. Update `config/analysis.yaml` (e.g., `k: 8`)
-3. `dvc repro analyze_embeddings` (if Phase 2) or `dvc repro` (if Phase 1)
+3. `make figures` (if Phase 2 only) or `dvc repro && make figures` (if Phase 1 changed)
 4. Freeze new outputs: `cp content/tables/tab_alluvial.csv config/v2_tab_alluvial.csv`
 5. Regenerate figures: `make figures`
 6. Update manuscript text (cluster descriptions, numbers)

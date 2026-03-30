@@ -319,21 +319,4 @@ stages:
       - data/catalogs/refined_embeddings.npz
       - data/catalogs/refined_citations.csv
 
-  # Phase 2: Semantic landscape analysis (UMAP + KMeans clustering)
-  # Loads pre-computed embeddings.npz, produces UMAP projections and clusters.
-  # Not in the Phase 1 critical path — can run independently after embeddings exist.
-  analyze_embeddings:
-    cmd: uv run python scripts/analyze_embeddings.py --works-input data/catalogs/enriched_works.csv
-    deps:
-      - scripts/analyze_embeddings.py
-      - scripts/utils.py
-      - scripts/pipeline_io.py
-      - scripts/pipeline_loaders.py
-      - scripts/pipeline_progress.py
-      - scripts/pipeline_text.py
-      - config/analysis.yaml
-      - data/catalogs/enriched_works.csv
-      - data/catalogs/embeddings.npz
-    outs:
-      - data/catalogs/semantic_clusters.csv
 

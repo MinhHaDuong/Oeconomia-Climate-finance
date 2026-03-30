@@ -13,7 +13,7 @@
 
 **Output:** `embeddings.npz` -- a compressed NumPy archive containing the embedding vectors (N x 1024), DOI/source_id keys for each row, model name, and text field specification. The incremental cache is stored separately in `enrich_cache/embeddings_cache.npz` so that DVC re-runs (which delete stage outputs) do not destroy already-computed vectors. Only works absent from the cache or whose text content has changed are re-encoded. A change in model name or text fields triggers a full recompute.
 
-**Phase 2 analysis** (`analyze_embeddings.py`, separate DVC stage):
+**Phase 2 analysis** (`analyze_embeddings.py`, Makefile target):
 
 - UMAP projection (n_components=2, n_neighbors=15, min_dist=0.05, cosine metric, random_state=42)
 - KMeans clustering (k=6, n_init=20, random_state=42) on UMAP coordinates
