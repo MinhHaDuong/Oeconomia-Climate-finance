@@ -57,9 +57,9 @@ class TestParseIoArgs:
         """Script-specific flags pass through via parse_known_args."""
         from script_io_args import parse_io_args
         args, extra = parse_io_args([
-            "--output", "out.png", "--no-pdf", "--v1-only"
+            "--output", "out.png", "--pdf", "--v1-only"
         ])
-        assert "--no-pdf" in extra
+        assert "--pdf" in extra
         assert "--v1-only" in extra
 
     def test_validate_io_checks_output_dir(self, tmp_path):

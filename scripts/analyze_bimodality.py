@@ -41,7 +41,7 @@ from utils import (
 log = get_logger("analyze_bimodality")
 
 parser = argparse.ArgumentParser(description="Bimodality analysis (Fig 5)")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 args = parser.parse_args()
@@ -285,7 +285,7 @@ fig.suptitle(
     fontsize=13, y=1.02,
 )
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG5A), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG5A), pdf=args.pdf)
 log.info("(%s)", FIG5A)
 plt.close()
 
@@ -353,7 +353,7 @@ fig.suptitle(
     fontsize=13, y=1.02,
 )
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG5B), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG5B), pdf=args.pdf)
 log.info("(%s)", FIG5B)
 plt.close()
 
@@ -515,7 +515,7 @@ ax_histy.hist(df["acc_count"], bins=range(0, df["acc_count"].max() + 2),
 ax_histx.tick_params(labelbottom=False)
 ax_histy.tick_params(labelleft=False)
 
-save_figure(fig, os.path.join(FIGURES_DIR, FIG5C), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG5C), pdf=args.pdf)
 log.info("(%s)", FIG5C)
 plt.close()
 

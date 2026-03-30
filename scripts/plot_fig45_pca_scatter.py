@@ -12,8 +12,8 @@ Produces:
 - tables/tab_pca_components*.csv: Component metadata
 
 Usage:
-    uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised [--no-pdf]
-    uv run python scripts/plot_fig45_pca_scatter.py [--no-pdf]   # full corpus, unsupervised
+    uv run python scripts/plot_fig45_pca_scatter.py --core-only --supervised [--pdf]
+    uv run python scripts/plot_fig45_pca_scatter.py [--pdf]   # full corpus, unsupervised
 """
 
 import argparse
@@ -43,7 +43,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="PCA scatter plots (Figs 4 & 5)")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--supervised", action="store_true",
@@ -380,7 +380,7 @@ else:
                  fontsize=13, y=1.02)
 plt.tight_layout()
 
-save_figure(fig, os.path.join(FIGURES_DIR, FIG_STEM), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG_STEM), pdf=args.pdf)
 plt.close()
 
 

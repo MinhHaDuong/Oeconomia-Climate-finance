@@ -366,20 +366,22 @@ def load_pool_records(source: str) -> list[dict[str, Any]]:
 # Figure saving
 # ---------------------------------------------------------------------------
 
-def save_figure(fig: "Figure", path_stem: str, no_pdf: bool = False, dpi: int = 150) -> None:
+def save_figure(fig: "Figure", path_stem: str, pdf: bool = False, dpi: int = 150) -> None:
     """Save figure as PNG and optionally PDF.
 
     Produces byte-identical output across runs by stripping volatile
     metadata (Software version, creation timestamps).
+
+    PDF output is opt-in: pass ``pdf=True`` for print-quality PDF.
     """
     import os as _os
     _meta = {"Software": None, "Creation Time": None}
     fig.savefig(f"{path_stem}.png", dpi=dpi, bbox_inches="tight",
                 metadata=_meta, pil_kwargs={"optimize": False})
-    if not no_pdf:
+    if pdf:
         fig.savefig(f"{path_stem}.pdf", dpi=max(dpi, 300), bbox_inches="tight")
     _log.info("Saved → %s.png%s", _os.path.basename(path_stem),
-              "" if no_pdf else " + .pdf")
+              " + .pdf" if pdf else "")
 
 
 # ---------------------------------------------------------------------------

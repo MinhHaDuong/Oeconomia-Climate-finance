@@ -5,7 +5,7 @@ Reads:  content/tables/tab_breakpoints.csv
         content/tables/tab_alluvial.csv  (to compute N for title in --core-only mode)
 Writes: content/figures/fig_breakpoints.png  (and core/censor variants)
 
-Flags: --core-only, --censor-gap N, --no-pdf
+Flags: --core-only, --censor-gap N, --pdf
 
 Run compute_alluvial.py first to generate the input tables.
 """
@@ -33,7 +33,7 @@ CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Render structural break detection figure")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF")
 parser.add_argument("--core-only", action="store_true",
                     help="Use core-only variant of input tables")
 parser.add_argument("--censor-gap", type=int, default=0,
@@ -119,7 +119,7 @@ ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
 
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG_BP), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG_BP), pdf=args.pdf)
 log.info("  (%s)", FIG_BP)
 plt.close()
 

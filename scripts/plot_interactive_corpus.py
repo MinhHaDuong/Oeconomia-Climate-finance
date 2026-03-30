@@ -13,7 +13,7 @@ Produces a standalone Plotly scatter plot of the ~1,176 core papers
 Output: figures/interactive_core_corpus.html
 
 Usage:
-    uv run python scripts/plot_interactive_corpus.py [--no-pdf]
+    uv run python scripts/plot_interactive_corpus.py
 """
 
 import argparse
@@ -38,8 +38,6 @@ log = get_logger("plot_interactive_corpus")
 parser = argparse.ArgumentParser(
     description="Interactive HTML scatter of core corpus (Fig interactive)"
 )
-parser.add_argument("--no-pdf", action="store_true",
-                    help="(no effect — kept for interface consistency)")
 args = parser.parse_args()
 
 # --- Paths ---

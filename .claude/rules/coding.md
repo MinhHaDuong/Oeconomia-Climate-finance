@@ -49,7 +49,7 @@ When touching a core module, annotations are required on new/changed functions.
 ## Conventions
 
 - `uv sync` to install (never pip). `uv run python scripts/...` to execute.
-- All scripts support `--no-pdf`.
+- All plot scripts accept `--pdf` for print-quality PDF output (PNG by default).
 - `make` builds all documents. `make manuscript` builds manuscript only. `make papers` builds the 3 companion documents. `make figures` regenerates all figures (byte-reproducible).
 - **Logging, not print.** All scripts MUST use `from utils import get_logger; log = get_logger("script_name")` — never bare `print()`.
 

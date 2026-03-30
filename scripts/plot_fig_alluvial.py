@@ -6,7 +6,7 @@ Reads:  content/tables/tab_alluvial.csv
 Writes: content/figures/fig_alluvial.png  (and core/censor variants)
         content/figures/fig_alluvial.html  (interactive version with paper tooltips)
 
-Flags: --core-only, --censor-gap N, --no-pdf
+Flags: --core-only, --censor-gap N, --pdf
 
 Run compute_alluvial.py first to generate the input tables.
 """
@@ -35,7 +35,7 @@ CITE_THRESHOLD = _cfg["clustering"]["cite_threshold"]
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Render alluvial figure and interactive HTML")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF")
 parser.add_argument("--core-only", action="store_true",
                     help="Use core-only variant of input tables")
 parser.add_argument("--censor-gap", type=int, default=0,
@@ -260,7 +260,7 @@ ax.set_title(
 ax.axis("off")
 
 plt.tight_layout()
-save_figure(fig, os.path.join(FIGURES_DIR, FIG_AL), no_pdf=args.no_pdf)
+save_figure(fig, os.path.join(FIGURES_DIR, FIG_AL), pdf=args.pdf)
 log.info("  (%s)", FIG_AL)
 plt.close()
 

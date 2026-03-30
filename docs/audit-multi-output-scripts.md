@@ -42,6 +42,6 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 ### Notes
 
 - This audit covers Phase 2 scripts only. Phase 1 (corpus building) scripts were excluded — they are DVC-managed and follow different conventions.
-- The `save_figure()` utility in `utils.py` always writes both PNG and PDF (unless `--no-pdf`). PNG+PDF pairs are a single output in two formats, not multi-output.
+- The `save_figure()` utility in `pipeline_io.py` writes PNG by default (opt-in PDF with `--pdf`). PNG+PDF pairs are a single output in two formats, not multi-output.
 - Scripts invoked with `--core-only` produce a parallel set of outputs with `_core` suffixes. These are separate Makefile targets calling the same script — acceptable reuse via flags.
 - Splitting is a future ticket. This document is diagnostic only.

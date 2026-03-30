@@ -43,7 +43,7 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 CLUSTERS_PATH = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
 
 
-def _generate_figures(df, n_clusters, plt, sns):
+def _generate_figures(df, n_clusters, plt, sns, pdf=False):
     """Generate semantic landscape figures (cluster, language, period)."""
     sns.set_style("whitegrid")
 
@@ -66,9 +66,10 @@ def _generate_figures(df, n_clusters, plt, sns):
     ax.set_xlabel("UMAP 1")
     ax.set_ylabel("UMAP 2")
     plt.tight_layout()
-    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.pdf"), dpi=300, bbox_inches="tight")
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.png"), dpi=150, bbox_inches="tight")
-    log.info("Saved semantic map → figures/fig_semantic.pdf")
+    if pdf:
+        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic.pdf"), dpi=300, bbox_inches="tight")
+    log.info("Saved semantic map → figures/fig_semantic.png%s", " + .pdf" if pdf else "")
     plt.close()
 
     # --- Figure: Colored by language ---
@@ -102,9 +103,10 @@ def _generate_figures(df, n_clusters, plt, sns):
     ax.set_xlabel("UMAP 1")
     ax.set_ylabel("UMAP 2")
     plt.tight_layout()
-    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.png"), dpi=150, bbox_inches="tight")
-    log.info("Saved semantic map (language) → figures/fig_semantic_lang.pdf")
+    if pdf:
+        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_lang.pdf"), dpi=300, bbox_inches="tight")
+    log.info("Saved semantic map (language) → figures/fig_semantic_lang.png%s", " + .pdf" if pdf else "")
     plt.close()
 
     # --- Figure: Colored by period ---
@@ -145,9 +147,10 @@ def _generate_figures(df, n_clusters, plt, sns):
     ax.set_xlabel("UMAP 1")
     ax.set_ylabel("UMAP 2")
     plt.tight_layout()
-    fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.pdf"), dpi=300, bbox_inches="tight")
     fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.png"), dpi=150, bbox_inches="tight")
-    log.info("Saved semantic map (period) → figures/fig_semantic_period.pdf")
+    if pdf:
+        fig.savefig(os.path.join(FIGURES_DIR, "fig_semantic_period.pdf"), dpi=300, bbox_inches="tight")
+    log.info("Saved semantic map (period) → figures/fig_semantic_period.png%s", " + .pdf" if pdf else "")
     plt.close()
 
 
@@ -163,7 +166,7 @@ def main():
         default=EMBEDDINGS_PATH,
         help="Embeddings .npz file (default: embeddings.npz)",
     )
-    parser.add_argument("--no-pdf", action="store_true", help="Skip PDF figure generation")
+    parser.add_argument("--pdf", action="store_true", help="Also save PDF figures")
     args = parser.parse_args()
 
     # Defer heavy imports so --help works without analysis group installed
@@ -285,10 +288,7 @@ def main():
     # Step 5: Visualize
     # ============================================================
 
-    if args.no_pdf:
-        log.info("Skipping figure generation (--no-pdf)")
-    else:
-        _generate_figures(df, n_clusters, plt, sns)
+    _generate_figures(df, n_clusters, plt, sns, pdf=args.pdf)
 
     # --- Save cluster assignments ---
     out = df[["source", "doi", "title", "first_author", "year", "language",

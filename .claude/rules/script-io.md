@@ -15,13 +15,13 @@ def main():
 
     # Script-specific args parsed from 'extra'
     parser = argparse.ArgumentParser()
-    parser.add_argument("--no-pdf", action="store_true")
+    parser.add_argument("--pdf", action="store_true")
     args = parser.parse_args(extra)
 
     # ... computation ...
 
     out_path = os.path.splitext(io_args.output)[0]
-    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+    save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
 ```
 
 ## Required: --output argument
@@ -44,7 +44,7 @@ which appends the extension. This way the Makefile controls the output path.
 
 ```makefile
 content/figures/fig_NAME.png: scripts/plot_fig_NAME.py scripts/utils.py $(REFINED)
-    uv run python $< --output $@ --no-pdf
+    uv run python $< --output $@
 ```
 
 ## Migration

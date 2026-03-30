@@ -1,9 +1,9 @@
 """Lexical TF-IDF bar charts at structural break years.
 
 Reads:  tab_lexical_tfidf.csv (pre-computed by compute_lexical.py)
-Writes: fig_lexical_tfidf_{year}.png (and .pdf unless --no-pdf) for each break year
+Writes: fig_lexical_tfidf_{year}.png (+.pdf with --pdf) for each break year
 
-Flags: --no-pdf
+Flags: --pdf
 
 Run compute_breakpoints.py and compute_lexical.py first.
 """
@@ -23,11 +23,11 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Plot lexical TF-IDF bar charts at break years")
-parser.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (PNG only)")
+parser.add_argument("--pdf", action="store_true", help="Also save PDF")
 args = parser.parse_args()
 
 
-def _plot_break_year(tdf, break_year, n_show=20, xlim=None, no_pdf=False):
+def _plot_break_year(tdf, break_year, n_show=20, xlim=None, pdf=False):
     """Plot lexical comparison figure from pre-computed TF-IDF table rows.
 
     tdf: DataFrame subset for one break_year (columns: term, diff, clean, etc.)
@@ -95,7 +95,7 @@ def _plot_break_year(tdf, break_year, n_show=20, xlim=None, no_pdf=False):
 
     plt.tight_layout()
     fname = f"fig_lexical_tfidf_{break_year}"
-    save_figure(fig, os.path.join(FIGURES_DIR, fname), no_pdf=no_pdf)
+    save_figure(fig, os.path.join(FIGURES_DIR, fname), pdf=pdf)
     log.info("    Saved %s.png (A=%d, B=%d)", fname, n_before, n_after)
     plt.close()
 
@@ -126,6 +126,6 @@ log.info("Shared x-axis range: [%.4f, %.4f]", shared_xlim[0], shared_xlim[1])
 for yr in break_years:
     subset = tfidf_all[tfidf_all["break_year"] == yr]
     log.info("Break year %d:", yr)
-    _plot_break_year(subset, yr, xlim=shared_xlim, no_pdf=args.no_pdf)
+    _plot_break_year(subset, yr, xlim=shared_xlim, pdf=args.pdf)
 
 log.info("Done.")

@@ -271,8 +271,7 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 # -- Manuscript (Oeconomia article) --
 # Fig 1 (bars): corpus growth per year
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --output $@ --no-pdf
-
+	uv run python $< --output $@
 # Fig 1 v1 variant: restricted to submission corpus for manuscript stability
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $< --output $@ --no-pdf --v1-only
@@ -292,14 +291,12 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 # Structural break tables (independent of clustering)
 content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv &: \
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Clustering — v1 frozen from reproducibility archive (not re-clustered).
 # KMeans is unstable to small corpus perturbations; re-clustering the v1
 # subset produces different assignments. These checked-in files are the
@@ -311,19 +308,16 @@ content/figures/fig_breakpoints.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py \
 		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
 		content/tables/tab_alluvial.csv
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Alluvial figure
 content/figures/fig_alluvial.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Period divergence curves
 content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_breakpoints.csv
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Bimodality tests (co-produced)
 content/figures/fig_bimodality.png \
 content/figures/fig_bimodality_lexical.png \
@@ -331,16 +325,13 @@ content/figures/fig_bimodality_keywords.png \
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
 content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Seed-axis violin (core, manuscript figure)
 content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
-
+	uv run python $<
 # PCA scatter (unsupervised)
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
 		$(REFINED) content/tables/tab_pole_papers.csv content/figures/fig_semantic.png
@@ -348,8 +339,7 @@ content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
-	uv run python $< --no-pdf
-
+	uv run python $<
 content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
 	uv run python $<
@@ -358,25 +348,21 @@ content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils
 # Core-only: structural break tables
 content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv &: \
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --no-pdf
-
+	uv run python $< --core-only
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --no-pdf
-
+	uv run python $< --core-only
 # Core-only figures
 content/figures/fig_breakpoints_core.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py \
 		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
 		content/tables/tab_alluvial_core.csv
-	uv run python $< --core-only --no-pdf
-
+	uv run python $< --core-only
 content/figures/fig_alluvial_core.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
-	uv run python $< --core-only --no-pdf
-
+	uv run python $< --core-only
 # Bimodality core variant (co-produced)
 content/figures/fig_bimodality_core.png \
 content/figures/fig_bimodality_lexical_core.png \
@@ -384,8 +370,7 @@ content/figures/fig_bimodality_keywords_core.png \
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
 content/tables/tab_pole_papers_core.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --no-pdf
-
+	uv run python $< --core-only
 # Pre-2007 co-citation traditions network
 content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $<
@@ -399,28 +384,23 @@ content/tables/tab_community_summary.csv &: \
 # KDE supplementary
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Lexical TF-IDF table (diagnostic, not in manuscript)
 content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.py $(REFINED) \
 		content/tables/tab_breakpoint_robustness.csv
-	uv run python $< --no-pdf
-
+	uv run python $<
 # K-sensitivity table (diagnostic, --robustness flag)
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --robustness --no-pdf
-
+	uv run python $< --robustness
 # K-sensitivity figure
 content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 		content/tables/tab_k_sensitivity.csv
-	uv run python $< --no-pdf
-
+	uv run python $<
 # Lexical TF-IDF figures (one per detected break year; output filenames are
 # dynamic, so we use a sentinel file to track freshness).
 .lexical_tfidf.stamp: scripts/plot_fig_lexical_tfidf.py scripts/plot_style.py \
 		content/tables/tab_lexical_tfidf.csv
-	uv run python $< --no-pdf
-	@touch $@
+	uv run python $<	@touch $@
 
 # DVC pipeline DAG (data paper)
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
@@ -526,11 +506,7 @@ BENCH_OUT := benchmarks/timings.jsonl
 
 benchmark: check-corpus
 	@mkdir -p benchmarks
-	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py --no-pdf
-	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py --no-pdf
-	$(BENCH) analyze_bimodality $(BENCH_OUT) uv run python scripts/analyze_bimodality.py --no-pdf
-	$(BENCH) plot_fig1_bars $(BENCH_OUT) uv run python scripts/plot_fig1_bars.py --no-pdf
-	@echo "Benchmark results: $(BENCH_OUT)"
+	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py	$(BENCH) analyze_bimodality $(BENCH_OUT) uv run python scripts/analyze_bimodality.py	$(BENCH) plot_fig1_bars $(BENCH_OUT) uv run python scripts/plot_fig1_bars.py	@echo "Benchmark results: $(BENCH_OUT)"
 
 # ── Setup (run once after cloning) ───────────────────────
 setup:

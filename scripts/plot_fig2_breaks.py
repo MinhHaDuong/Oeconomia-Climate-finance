@@ -8,10 +8,10 @@ Inputs:
   - content/tables/tab_breakpoints.csv
 
 Outputs:
-  - content/figures/fig2_breaks.png (+.pdf unless --no-pdf)
+  - content/figures/fig2_breaks.png (+.pdf with --pdf)
 
 Usage:
-    uv run python scripts/plot_fig2_breaks.py [--no-pdf]
+    uv run python scripts/plot_fig2_breaks.py [--pdf]
 """
 
 import argparse
@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 
 def main():
     parser = argparse.ArgumentParser(description="Figure 2: structural breaks")
-    parser.add_argument("--no-pdf", action="store_true", help="skip PDF output")
+    parser.add_argument("--pdf", action="store_true", help="Also save PDF")
     args = parser.parse_args()
 
     # Load data
@@ -96,7 +96,7 @@ def main():
 
     # Save
     out_path = os.path.join(BASE_DIR, "content", "figures", "fig_breaks")
-    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+    save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
     plt.close(fig)
 
 

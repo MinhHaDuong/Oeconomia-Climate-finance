@@ -312,8 +312,8 @@ def main():
 
     # Generate figures — delegates to dedicated plot_fig_*.py scripts
     generate_figures(ari_table, perturbation_table, optimal_k,
-                     no_pdf=args.no_pdf)
-    plot_multi_space_figure(space_results, no_pdf=args.no_pdf)
+                     pdf=not args.no_pdf)
+    plot_multi_space_figure(space_results, pdf=not args.no_pdf)
 
     log.info("Comparison complete.")
 
