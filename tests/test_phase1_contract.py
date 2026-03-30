@@ -79,6 +79,7 @@ def _make_citations_csv(tmp_path, refined_dois, extra_dois=None):
 
 
 def _env_with_data(tmp_path):
+    """Set CLIMATE_FINANCE_DATA to tmp_path (DATA_DIR); CATALOGS_DIR = tmp_path/catalogs/."""
     return {**os.environ, "CLIMATE_FINANCE_DATA": str(tmp_path)}
 
 

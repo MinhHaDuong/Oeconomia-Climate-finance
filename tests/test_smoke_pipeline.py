@@ -3,9 +3,9 @@
 Validates that the analysis pipeline (tables, figures) runs end-to-end on
 a 100-row fixture without network access or DVC remote.
 
-The fixture lives in tests/fixtures/smoke/ and is checked into git (<1 MB).
+The fixture lives in tests/fixtures/smoke/catalogs/ and is checked into git (<1 MB).
 Scripts locate it via the CLIMATE_FINANCE_DATA environment variable, which
-overrides the default data/catalogs/ path in pipeline_loaders.py.
+overrides DATA_DIR in pipeline_loaders.py (CATALOGS_DIR = DATA_DIR/catalogs/).
 
 Smoke tests exercise the critical Phase 2 chain:
   compute_breakpoints → compute_clusters → plot_fig1_bars
@@ -24,7 +24,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "smoke")
+SMOKE_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "smoke")
+FIXTURE_DIR = os.path.join(SMOKE_DIR, "catalogs")
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 ROOT_DIR = os.path.join(os.path.dirname(__file__), "..")
 
@@ -86,7 +87,7 @@ def _smoke_env(output_dir=None):
     """
     env = {
         **os.environ,
-        "CLIMATE_FINANCE_DATA": FIXTURE_DIR,
+        "CLIMATE_FINANCE_DATA": SMOKE_DIR,
         "PYTHONHASHSEED": "0",
         "SOURCE_DATE_EPOCH": "0",
     }
