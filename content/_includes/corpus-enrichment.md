@@ -29,7 +29,7 @@ Citation links are assembled from three sources:
 
 - **Crossref** (`enrich_citations_batch.py`): Batch DOI lookup via the Crossref REST API. Writes to `enrich_cache/crossref_refs.csv` (append-only); resumable via cache-is-data.
 - **OpenAlex** (`enrich_citations_openalex.py`): Fills gaps using OpenAlex's `referenced_works` field. Writes to `enrich_cache/openalex_refs.csv`; also skips DOIs already in `openalex_citations.csv` (catalog-stage harvest).
-- **Merge** (`merge_citations.py`): Concatenates both caches into `citations.csv`, deduplicates on (source_doi, ref_doi), and excludes sentinels. DVC can safely wipe `citations.csv` — merge regenerates it in seconds.
+- **Merge** (`merge_citations.py`): Concatenates both caches into `citations.csv`, deduplicates on (source_doi, ref_doi) for DOI-bearing refs and on (source_doi, ref_title, ref_first_author, ref_year) for no-DOI refs (books, reports), and excludes sentinels. DVC can safely wipe `citations.csv` — merge regenerates it in seconds.
 - **ISTEX** (`catalog_istex.py`): Reference lists (`refBibs`) are extracted during discovery and stored in `istex_refs.csv`.
 
 Quality control (`qa_citations.py`) validates DOI formats, removes self-citations, and reports coverage statistics. The merged `citations.csv` is needed for citation isolation detection (flag 4 in §3).

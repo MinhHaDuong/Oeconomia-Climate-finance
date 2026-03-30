@@ -105,12 +105,17 @@ def merge_citations(cache_dir=None, output_path=None):
     # For rows without ref_doi (books/reports), dedup on
     # (source_doi, ref_title, ref_first_author, ref_year) to catch
     # the same book reference from both Crossref and OpenAlex.
+    # Normalize title/author to lowercase for case-insensitive matching.
     has_ref_doi = combined["_ref_norm"] != ""
     with_doi = combined[has_ref_doi].drop_duplicates(
         subset=["_src_norm", "_ref_norm"], keep="first")
-    without_doi = combined[~has_ref_doi].drop_duplicates(
-        subset=["_src_norm", "ref_title", "ref_first_author", "ref_year"],
+    without_doi = combined[~has_ref_doi].copy()
+    without_doi["_title_norm"] = without_doi["ref_title"].str.lower().str.strip()
+    without_doi["_author_norm"] = without_doi["ref_first_author"].str.lower().str.strip()
+    without_doi = without_doi.drop_duplicates(
+        subset=["_src_norm", "_title_norm", "_author_norm", "ref_year"],
         keep="first")
+    without_doi = without_doi.drop(columns=["_title_norm", "_author_norm"])
 
     result = pd.concat([with_doi, without_doi], ignore_index=True)
     n_deduped = len(combined) - len(result)
