@@ -11,7 +11,8 @@ Note: Period boundaries are hard-coded to the manuscript three-act structure
 (2007, 2015). They are independent of the break detection in compute_breakpoints.py.
 
 Downstream scripts:
-  plot_fig_alluvial.py  →  tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
+  plot_fig_alluvial.py   →  tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
+  plot_alluvial_html.py  →  tab_alluvial.csv, cluster_labels.json
 """
 
 import argparse
