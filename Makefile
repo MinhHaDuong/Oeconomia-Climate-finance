@@ -341,10 +341,18 @@ content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/pl
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Citation genealogy (needs bimodality output for pole assignments)
-content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
+# Citation genealogy: model (lineage table) then renderers
+content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
 		$(REFINED) content/tables/tab_pole_papers.csv content/figures/fig_semantic.png
+	uv run python $<
+
+content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
+		content/tables/tab_lineages.csv $(REFINED_CIT)
 	uv run python $< --no-pdf
+
+content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py \
+		content/tables/tab_lineages.csv $(REFINED_CIT)
+	uv run python $<
 
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only: structural break tables
