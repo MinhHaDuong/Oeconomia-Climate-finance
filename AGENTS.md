@@ -22,6 +22,12 @@
 | `.claude/hooks/` | Hook scripts (on-start setup) |
 | `hooks/` | Git hooks (pre-commit, pre-push, post-checkout) |
 
+## Bash tool: no compound commands
+
+Claude Code's permission system blocks wildcard matching across shell operators (`&&`, `||`, `;`, `|`). A pattern like `Bash(*gh api*)` will **not** match `source .env && gh api ...`. This is a security feature, not a bug.
+
+**Rule**: never chain commands with `&&` in a single Bash tool call. Use separate Bash calls instead — each call matches its own permission pattern. Chaining is fine inside shell scripts (hooks, Makefile recipes) since those run outside the permission system.
+
 ## Dragon Dreaming workflow
 
 Every task passes through four phases. Announce transitions inline: `[Phase → Phase] reason`.

@@ -4,12 +4,20 @@ At the beginning of every conversation:
 
 ## 1. Setup
 
-Load `.env`, set agent identity, and activate hooks:
+Load `.env`, set agent identity, and activate hooks. Each line is a **separate Bash call** (compound `&&` chains bypass permission patterns):
 ```bash
-set -a && source .env && set +a
+set -a; source .env; set +a
+```
+```bash
 git config user.name  "$AGENT_GIT_NAME"
+```
+```bash
 git config user.email "$AGENT_GIT_EMAIL"
+```
+```bash
 git config core.hooksPath hooks
+```
+```bash
 export GH_TOKEN="$AGENT_GH_TOKEN"
 ```
 

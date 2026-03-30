@@ -87,7 +87,7 @@ foster, tapestry, landscape (unless proper noun, e.g. CPI *Global Landscape*)
 
 ## Testing
 
-`make check-fast` before editing. `make clean && make all` as integration test before PR.
+`make check-fast` before editing. `make clean` then `make all` (separate Bash calls) as integration test before PR.
 
 ## When to ask the author
 
