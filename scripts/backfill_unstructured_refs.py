@@ -12,6 +12,8 @@ Usage:
 import argparse
 import json
 import os
+import shutil
+import tempfile
 
 import pandas as pd
 from enrich_citations_batch import parse_ref_fields
@@ -42,7 +44,8 @@ def main():
     log.info("Reading %s", CACHE_PATH)
     df = pd.read_csv(CACHE_PATH, dtype=str, keep_default_na=False,
                      on_bad_lines="warn")
-    log.info("Total rows: %d", len(df))
+    row_count = len(df)
+    log.info("Total rows: %d", row_count)
 
     # Find rows that need backfill: empty title, non-empty ref_raw
     needs_backfill = (df["ref_title"] == "") & (df["ref_raw"] != "")
@@ -78,8 +81,20 @@ def main():
     df.loc[needs_backfill & year_mask.reindex(df.index, fill_value=False),
            "ref_year"] = years
 
+    assert len(df) == row_count, (
+        f"Row count changed: {row_count} → {len(df)}")
+
+    # Atomic write: temp file then rename, so a crash can't corrupt the cache
     log.info("Writing %s", CACHE_PATH)
-    df.to_csv(CACHE_PATH, index=False)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=os.path.dirname(CACHE_PATH), suffix=".tmp")
+    os.close(fd)
+    try:
+        df.to_csv(tmp_path, index=False)
+        shutil.move(tmp_path, CACHE_PATH)
+    except BaseException:
+        os.unlink(tmp_path)
+        raise
     log.info("Done.")
 
 
