@@ -15,6 +15,7 @@ content/bibliography/*.pdf
 
 # Data directory — DVC manages catalog/pool/exports/syllabi (*.dvc files tracked by git)
 data/raw/
+data/run_reports/
 data/teaching_sources.yaml
 data/catalogs/.citations_batch_checkpoint.csv
 
