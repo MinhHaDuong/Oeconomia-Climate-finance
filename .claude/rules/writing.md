@@ -1,8 +1,5 @@
 ---
-paths:
-  - "content/**/*.qmd"
-  - "content/**/*.md"
-  - "content/bibliography/**"
+globs: ["content/**"]
 ---
 
 # Writing Rules
