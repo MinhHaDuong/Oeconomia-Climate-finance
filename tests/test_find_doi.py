@@ -202,7 +202,7 @@ class TestResolveDoi:
         _title_cache.clear()
 
     def test_search_doi_title_only_search(self):
-        """search_doi uses title-only search — author is NOT appended to query.
+        """OpenAlex search uses title-only — author is NOT appended to query.
 
         Author appended to OpenAlex fulltext search pollutes results.
         Author is only used for cache keying in find_doi(), not in the API call.
@@ -214,14 +214,15 @@ class TestResolveDoi:
 
             search_doi("Climate Finance Overview", year=2023, author="Stern")
 
-            call_kwargs = mock_get.call_args
-            params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
+            # First call is OpenAlex
+            oa_call = mock_get.call_args_list[0]
+            params = oa_call[1]["params"] if "params" in oa_call[1] else oa_call[0][1]
             search_str = params["search"]
             assert "stern" not in search_str.lower(), \
                 "Author should NOT be in search string — it breaks OpenAlex fulltext search"
 
     def test_search_doi_no_author(self):
-        """search_doi without author uses title-only search (backward compatible)."""
+        """OpenAlex search without author uses title-only (backward compatible)."""
         from enrich_dois import search_doi
 
         with patch("enrich_dois.polite_get") as mock_get:
@@ -229,11 +230,50 @@ class TestResolveDoi:
 
             search_doi("Climate Finance Overview", year=2023)
 
-            call_kwargs = mock_get.call_args
-            params = call_kwargs[1]["params"] if "params" in call_kwargs[1] else call_kwargs[0][1]
+            # First call is OpenAlex
+            oa_call = mock_get.call_args_list[0]
+            params = oa_call[1]["params"] if "params" in oa_call[1] else oa_call[0][1]
             search_str = params["search"]
-            # Should only contain the title, no author
             assert search_str == "Climate Finance Overview"[:200]
+
+    def test_search_doi_crossref_fallback(self):
+        """When OpenAlex returns no match, search_doi falls back to Crossref."""
+        from enrich_dois import search_doi
+
+        # Mock OpenAlex: no results
+        oa_response = type("R", (), {"json": lambda self: {"results": []}})()
+        # Mock Crossref: returns a match
+        cr_response = type("R", (), {"json": lambda self: {
+            "message": {"items": [{
+                "DOI": "10.1017/CBO9780511817434",
+                "title": ["The Economics of Climate Change"],
+            }]}
+        }})()
+
+        with patch("enrich_dois.polite_get") as mock_get:
+            # First call = OpenAlex (no results), second = Crossref (match)
+            mock_get.side_effect = [oa_response, cr_response]
+
+            doi, oa_id, sim = search_doi("The Economics of Climate Change", 2006)
+            assert doi == "10.1017/cbo9780511817434"
+            assert sim >= 0.85
+            assert mock_get.call_count == 2  # OA + Crossref
+
+    def test_search_doi_no_crossref_when_oa_matches(self):
+        """When OpenAlex returns a good match, Crossref is not queried."""
+        from enrich_dois import search_doi
+
+        oa_response = type("R", (), {"json": lambda self: {"results": [{
+            "doi": "https://doi.org/10.1234/oa-match",
+            "title": "Climate Finance Overview",
+            "id": "https://openalex.org/W123",
+        }]}})()
+
+        with patch("enrich_dois.polite_get") as mock_get:
+            mock_get.return_value = oa_response
+            doi, oa_id, sim = search_doi("Climate Finance Overview")
+            assert doi == "10.1234/oa-match"
+            assert mock_get.call_count == 1  # Only OA, no Crossref
 
     def test_find_doi_saves_to_disk_cache(self):
         """find_doi saves result to disk cache after OpenAlex query."""
