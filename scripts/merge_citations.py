@@ -5,12 +5,13 @@ Reads source-specific cache files from enrich_cache/:
   - crossref_refs.csv   (source_doi, ref_doi, ref_title, ..., ref_raw)
   - openalex_refs.csv   (source_doi, ref_oa_id, ref_doi, ref_title, ...)
   - ref_parsed.csv      (GROBID-parsed unstructured refs, REFS_COLUMNS schema)
+  - ref_matches.csv     (fuzzy-matched refs with discovered DOIs, #539)
 
 Produces citations.csv with REFS_COLUMNS schema, deduplicated on
 (source_doi, ref_doi). Sentinel rows are excluded.
 
-This script is the final step of the enrich_citations DVC stage.
-It runs after the Crossref and OpenAlex passes (which can run in parallel).
+This script is the final step of the ref_match DVC stage.
+It runs after ref_match_corpus.py (which fuzzy-matches parsed refs to corpus).
 DVC may wipe citations.csv before a re-run — this merge regenerates it
 from the persistent caches in seconds, with no API calls.
 
@@ -91,6 +92,15 @@ def merge_citations(cache_dir=None, output_path=None):
         frames.append(gp)
     else:
         log.info("No GROBID parsed cache at %s", grobid_path)
+
+    # Read fuzzy-matched refs (#539) — REFS_COLUMNS schema with discovered DOIs
+    ref_matches_path = os.path.join(cache_dir, "ref_matches.csv")
+    if os.path.exists(ref_matches_path):
+        rm = pd.read_csv(ref_matches_path, dtype=str, keep_default_na=False)
+        log.info("Ref matches cache: %d rows", len(rm))
+        frames.append(rm)
+    else:
+        log.info("No ref matches cache at %s", ref_matches_path)
 
     if not frames:
         log.info("No cache files found — writing empty citations.csv")
