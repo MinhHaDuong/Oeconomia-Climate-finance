@@ -343,7 +343,7 @@ content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/u
 
 # Citation genealogy (needs bimodality output for pole assignments)
 content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab_pole_papers.csv
+		$(REFINED) content/tables/tab_pole_papers.csv content/figures/fig_semantic.png
 	uv run python $< --no-pdf
 
 # -- Technical report (robustness, variants, supplementary) --
