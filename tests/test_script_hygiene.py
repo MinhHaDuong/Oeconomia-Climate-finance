@@ -677,3 +677,48 @@ class TestPdfDiscipline:
         assert '"--pdf"' not in src, (
             f"{script} accepts --pdf but produces no figures"
         )
+
+
+# ---------------------------------------------------------------------------
+# 10. Test marker discipline: @slow vs @integration
+# ---------------------------------------------------------------------------
+
+TESTS_DIR = os.path.join(REPO, "tests")
+
+
+class TestMarkerDiscipline:
+    """Enforce correct use of @pytest.mark.slow vs @pytest.mark.integration.
+
+    - @integration: tests that spawn subprocesses (subprocess.run/Popen)
+      or use sleep-based timing
+    - @slow: tests that require network access or real corpus data
+      (no subprocess spawning)
+
+    A file that imports subprocess and marks tests @slow is almost certainly
+    mislabeled — subprocess tests should be @integration.
+    """
+
+    # Files that legitimately use both @slow and subprocess (none expected).
+    # Add entries here only with a comment explaining why.
+    EXCEPTIONS = set()
+
+    def test_no_slow_in_subprocess_files(self):
+        """Files that import subprocess must not use @slow (use @integration)."""
+        violations = []
+        for fname in sorted(os.listdir(TESTS_DIR)):
+            if not fname.startswith("test_") or not fname.endswith(".py"):
+                continue
+            if fname in self.EXCEPTIONS:
+                continue
+            path = os.path.join(TESTS_DIR, fname)
+            with open(path) as f:
+                source = f.read()
+            uses_subprocess = "import subprocess" in source
+            # Match actual decorator lines (any indent), not string mentions
+            uses_slow = bool(re.search(r"^\s*@pytest\.mark\.slow", source, re.MULTILINE))
+            if uses_subprocess and uses_slow:
+                violations.append(fname)
+        assert not violations, (
+            f"Files using subprocess must mark tests @integration, not @slow: "
+            f"{violations}"
+        )

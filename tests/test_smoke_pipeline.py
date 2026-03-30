@@ -152,7 +152,7 @@ def smoke_output_dir(tmp_path):
         shutil.copy2(backup_path, orig_path)
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 class TestSmokeCriticalPath:
     """Core Phase 2 scripts run without error on fixture data.
 

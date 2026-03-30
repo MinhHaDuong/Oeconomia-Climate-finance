@@ -327,7 +327,7 @@ class TestResumePreview:
         assert "Resume preview" in output or "Missing abstracts" in output
         assert "Total works" in output or "Loaded" in output
 
-    @pytest.mark.slow
+    @pytest.mark.integration
     @pytest.mark.timeout(30)
     def test_enrich_citations_batch_preview_on_empty_corpus(self, tmp_path):
         works_path = make_mini_works(tmp_path)

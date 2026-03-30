@@ -51,7 +51,7 @@ class TestEnrichDoisCLI:
         assert "unified_works.csv" in self._source, \
             "enrich_dois.py --works-input default should be unified_works.csv"
 
-    @pytest.mark.slow
+    @pytest.mark.integration
     @pytest.mark.timeout(30)
     def test_dry_run_uses_custom_input(self, tmp_path):
         """With --dry-run --works-input, the script reads from the specified path."""

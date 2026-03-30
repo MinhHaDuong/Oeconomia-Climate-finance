@@ -51,7 +51,7 @@ def _run_twice(script, args, out_name, tmp_path):
     )
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 class TestDeterminism:
     """Phase 2 figure scripts produce identical output on two runs."""
 
