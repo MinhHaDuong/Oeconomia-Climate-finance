@@ -32,6 +32,9 @@ def load_dag():
     out_to_stage = {}
     for name, spec in stages.items():
         for out in spec.get("outs", []):
+            # DVC outs can be strings or dicts like {"path": {cache: false}}
+            if isinstance(out, dict):
+                out = next(iter(out))
             out_to_stage[out] = name
 
     # Build adjacency: stage → list of upstream stages
