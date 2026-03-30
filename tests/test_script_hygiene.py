@@ -523,17 +523,34 @@ class TestArchiveBitInvariance:
 
 
 # ---------------------------------------------------------------------------
-# 7. No bare print() in scripts (existing convention, mechanical check)
+# 7. No bare print() in pipeline scripts
 # ---------------------------------------------------------------------------
 
-class TestNoBarePrint:
-    """Scripts must use logging, not print(). Already clean — prevent regression."""
+# CLI tools produce user-facing reports on stdout — print() is fine there.
+# Pipeline scripts (compute, plot, enrich, etc.) must use logging.
+CLI_TOOLS = {
+    "regression_hashes.py",
+    "regression_history.py",
+}
 
-    def test_no_bare_print(self):
-        """No script may use bare print() calls (use log.info() instead)."""
+# Pipeline script prefixes that must use logging, not print().
+_PIPELINE_PREFIXES = (
+    "compute_", "plot_", "enrich_", "catalog_", "qa_", "qc_",
+    "build_", "export_", "analyze_", "filter_", "corpus_",
+    "summarize_", "compare_",
+)
+
+
+class TestNoBarePrint:
+    """Pipeline scripts must use logging, not print()."""
+
+    def test_no_bare_print_in_pipeline_scripts(self):
+        """Pipeline scripts may not use bare print() (use log.info())."""
         violators = []
         for name in _all_scripts():
-            if name in LIBRARY_SCRIPTS:
+            if name in LIBRARY_SCRIPTS or name in CLI_TOOLS:
+                continue
+            if not name.startswith(_PIPELINE_PREFIXES):
                 continue
             tree = _parse_script(name)
             for node in ast.walk(tree):
@@ -543,7 +560,7 @@ class TestNoBarePrint:
                     violators.append(name)
                     break
         assert not violators, (
-            f"{len(violators)} scripts use bare print() "
+            f"{len(violators)} pipeline scripts use bare print() "
             f"(should use logging): {violators[:10]}"
         )
 

@@ -145,7 +145,7 @@ def _run_at_commit(sha: str, worktree_base: Path) -> dict[str, dict[str, str]]:
             capture_output=True, text=True, cwd=str(wt_path), timeout=120,
         )
         if sync.returncode != 0:
-            log.warning("uv sync failed at %s, trying without sync", sha[:8])
+            print(f"  WARNING: uv sync failed at {sha[:8]}, trying without sync")
 
         env = {
             **os.environ,
@@ -240,7 +240,8 @@ def main():
     else:
         commits = args.commits
 
-    log.info("Testing %d commits...", len(commits))
+    print(f"Testing {len(commits)} commits...")
+    print()
 
     tmp_base = Path(tempfile.mkdtemp(prefix="regression_history_"))
 
@@ -248,6 +249,7 @@ def main():
     try:
         for sha in commits:
             info = _get_commit_info(sha)
+            print(f"  {info} ...", end=" ", flush=True)
             try:
                 hashes = _run_at_commit(sha, tmp_base)
                 all_results.append((sha, info, hashes))
@@ -258,18 +260,23 @@ def main():
                 )
                 n_err = sum(1 for h in hashes.values() if "__error__" in h)
                 if n_err:
-                    log.info("  %s  %d hashed, %d errors", info, n_ok, n_err)
+                    print(f"  {n_ok} hashed, {n_err} errors")
                 else:
-                    log.info("  %s  %d outputs hashed", info, n_ok)
+                    print(f"  {n_ok} outputs hashed")
             except Exception as e:
-                log.error("  %s  FAILED: %s", info, e)
+                print(f"  FAILED: {e}")
                 all_results.append((sha, info, {"__error__": str(e)}))
     finally:
         shutil.rmtree(tmp_base, ignore_errors=True)
 
     # --- Report ---
+    print()
+    print("=" * 72)
+    print("REGRESSION HISTORY REPORT")
+    print("=" * 72)
+
     if len(all_results) < 2:
-        log.info("Need at least 2 commits to compare.")
+        print("Need at least 2 commits to compare.")
         return
 
     # Compare consecutive pairs
@@ -294,26 +301,30 @@ def main():
 
         if diffs:
             changes_found += len(diffs)
-            log.warning("  %s", prev_info)
-            log.warning("→ %s", cur_info)
+            print(f"\n  {prev_info}")
+            print(f"→ {cur_info}")
             for script, f, old, new in diffs:
-                log.warning("  CHANGED  %s / %s", script, os.path.basename(f))
-                log.warning("           %s... → %s...", old, new)
+                print(f"  CHANGED  {script} / {os.path.basename(f)}")
+                print(f"           {old}... → {new}...")
 
     if changes_found == 0:
-        log.info("No output changes detected across all tested commits.")
+        print("\nNo output changes detected across all tested commits.")
     else:
-        log.warning("%d output change(s) detected across %d commits.",
-                    changes_found, len(all_results))
+        print(f"\n{changes_found} output change(s) detected across "
+              f"{len(all_results)} commits.")
 
     # Final hashes table
+    print()
+    print("-" * 72)
+    print("FINAL HASHES (most recent commit)")
+    print("-" * 72)
     _, info, hashes = all_results[-1]
-    log.info("FINAL HASHES — %s", info)
+    print(f"Commit: {info}")
     for script, files in sorted(hashes.items()):
         if script.startswith("__"):
             continue
         for f, h in sorted(files.items()):
-            log.info("  %-25s  %-40s  %s...", script, os.path.basename(f), h[:16])
+            print(f"  {script:25s}  {os.path.basename(f):40s}  {h[:16]}...")
 
 
 if __name__ == "__main__":
