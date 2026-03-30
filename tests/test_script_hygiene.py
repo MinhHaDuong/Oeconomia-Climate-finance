@@ -722,3 +722,35 @@ class TestMarkerDiscipline:
             f"Files using subprocess must mark tests @integration, not @slow: "
             f"{violations}"
         )
+
+
+# ---------------------------------------------------------------------------
+# 11. Script naming convention (#547)
+# ---------------------------------------------------------------------------
+
+class TestScriptNaming:
+    """Every script in scripts/ must have a conforming prefix.
+
+    Allowed prefixes: catalog_, enrich_, qa_, qc_, corpus_, plot_,
+    analyze_, compute_, export_, summarize_, build_.
+
+    Library modules (no prefix needed) are listed in LIBRARY_MODULES.
+    """
+
+    PREFIXES = ("catalog_", "enrich_", "qa_", "qc_", "corpus_", "plot_",
+                "analyze_", "compute_", "export_", "summarize_", "build_")
+    LIBRARY_MODULES = {"utils.py", "plot_style.py", "script_io_args.py",
+                       "pipeline_io.py", "pipeline_loaders.py",
+                       "pipeline_progress.py", "pipeline_text.py",
+                       "filter_flags.py", "clustering_methods.py", "schemas.py",
+                       # syllabi sub-modules (extracted from catalog_syllabi.py)
+                       "syllabi_config.py", "syllabi_crossref.py",
+                       "syllabi_harvest.py", "syllabi_io.py",
+                       "syllabi_process.py"}
+
+    def test_all_scripts_have_conforming_prefix(self):
+        for f in Path(SCRIPTS_DIR).glob("*.py"):
+            if f.name.startswith("_") or f.name in self.LIBRARY_MODULES:
+                continue
+            assert any(f.name.startswith(p) for p in self.PREFIXES), \
+                f"{f.name} has non-conforming prefix"
