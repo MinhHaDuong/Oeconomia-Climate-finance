@@ -19,6 +19,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import time
 
 import pandas as pd
@@ -42,6 +43,38 @@ URL = "https://api.crossref.org/works"
 HEADERS = {"User-Agent": f"ClimateFinancePipeline/1.0 (mailto:{MAILTO})"}
 SENTINEL_REF_DOI = "__NO_REFS__"  # Marker for DOIs found but with no references
 MAX_CONSECUTIVE_ERRORS = 5  # Stop after this many consecutive failures
+
+
+def parse_ref_fields(ref):
+    """Extract title, first_author, year from a Crossref reference object.
+
+    Tries structured fields first (article-title, volume-title, series-title,
+    author, year). Falls back to the unstructured text blob for any field
+    that remains empty.
+    """
+    title = (ref.get("article-title")
+             or ref.get("volume-title")
+             or ref.get("series-title")
+             or "")
+    author = ref.get("author", "")
+    year = ref.get("year", "")
+
+    # Fall back to unstructured text for missing fields
+    unstructured = ref.get("unstructured", "").strip()
+    if unstructured:
+        if not title:
+            title = unstructured
+        if not year:
+            m = re.search(r"\b(1[89]\d{2}|20[0-2]\d)\b", unstructured)
+            if m:
+                year = m.group(1)
+        if not author:
+            # First token before a comma (e.g. "Brown, 2003. ..." → "Brown")
+            m = re.match(r"([^,]+),", unstructured)
+            if m:
+                author = m.group(1).strip()
+
+    return {"ref_title": title, "ref_first_author": author, "ref_year": year}
 
 
 def fetch_batch(dois, delay=0.2, counters=None,
@@ -79,15 +112,14 @@ def fetch_batch(dois, delay=0.2, counters=None,
     for item in items:
         source_doi = normalize_doi(item.get("DOI", ""))
         for ref in item.get("reference", []):
+            parsed = parse_ref_fields(ref)
             row = {
                 "source_doi": source_doi,
                 "source_id": "",
                 "ref_doi": normalize_doi(ref.get("DOI", "")),
-                "ref_title": ref.get("article-title",
-                             ref.get("volume-title",
-                             ref.get("series-title", ""))),
-                "ref_first_author": ref.get("author", ""),
-                "ref_year": ref.get("year", ""),
+                "ref_title": parsed["ref_title"],
+                "ref_first_author": parsed["ref_first_author"],
+                "ref_year": parsed["ref_year"],
                 "ref_journal": ref.get("journal-title", ""),
                 "ref_raw": json.dumps(ref, ensure_ascii=False),
             }
