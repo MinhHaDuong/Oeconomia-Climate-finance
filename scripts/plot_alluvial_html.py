@@ -327,7 +327,7 @@ document.querySelectorAll('.cell').forEach(el => {{
 
 def main():
     parser = argparse.ArgumentParser(description="Render interactive alluvial HTML")
-    parser.add_argument("--output", default=os.path.join(FIGURES_DIR, "fig_alluvial.html"),
+    parser.add_argument("--output", default=None,
                         help="Output HTML path")
     parser.add_argument("--core-only", action="store_true",
                         help="Use core-only variant of input tables")
@@ -336,6 +336,8 @@ def main():
     args = parser.parse_args()
 
     alluvial_data, cluster_labels, fig_name = load_data(args.core_only, args.censor_gap)
+    if args.output is None:
+        args.output = os.path.join(FIGURES_DIR, f"{fig_name}.html")
     period_stacks = compute_stacks(alluvial_data)
 
     # Load paper data for tooltips
