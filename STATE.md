@@ -49,6 +49,6 @@ None.
 - Send Errata 1 to Oeconomia editor
 - Finalize DMP on OPIDoR
 - ESHET-HES conference slides (Nice, May 26–29)
-- Remaining infrastructure: #513 (schema contracts), #515 (DAG viz), #516 (determinism checker), #428 (enrichment normalization)
+- Remaining infrastructure: #515 (DAG viz), #428 (enrichment normalization)
 - 1-fig-1-script sweep: #546 (alluvial), #550 (bimodality), #551 (embeddings), #552 (cocitation), #559 (filter_flags LLM extraction)
 - #535: Parse unstructured Crossref refs (80K rows with empty metadata)
