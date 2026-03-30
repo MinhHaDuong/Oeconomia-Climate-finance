@@ -121,17 +121,11 @@ def _normalize_author(author: object) -> str:
     return str(author).split(";")[0].split(",")[0].strip().lower()
 
 
-def search_doi(title: str, year: object = None, author: object = None) -> tuple[str | None, str | None, float]:
-    """Search OpenAlex for a work by title.
+CROSSREF_SEARCH_URL = "https://api.crossref.org/works"
 
-    Title-only search with similarity ranking. Year and author are accepted
-    for API compatibility but not used in the query — year filters exclude
-    correct matches when OpenAlex's year differs from the source, and author
-    appended to search pollutes fulltext matching. Both are still used for
-    cache keying in find_doi().
 
-    Returns (doi, openalex_id, similarity) or (None, None, 0).
-    """
+def _search_openalex(title: str) -> tuple[str | None, str | None, float]:
+    """Query OpenAlex works search. Returns (doi, oa_id, similarity)."""
     params = {
         "search": title[:200],
         "select": "id,doi,title,publication_year",
@@ -145,8 +139,8 @@ def search_doi(title: str, year: object = None, author: object = None) -> tuple[
         resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=1.0)
         results = resp.json().get("results", [])
     except Exception as e:
-        log.warning("Search failed for '%s': %s", title[:60], e)
-        return None, None, 0
+        log.warning("OpenAlex search failed for '%s': %s", title[:60], e)
+        return None, None, 0.0
 
     best_doi, best_id, best_sim = None, None, 0.0
     for r in results:
@@ -159,6 +153,51 @@ def search_doi(title: str, year: object = None, author: object = None) -> tuple[
             best_id = r.get("id", "").replace("https://openalex.org/", "")
 
     return best_doi, best_id, best_sim
+
+
+def _search_crossref(title: str) -> tuple[str | None, float]:
+    """Query Crossref works search. Returns (doi, similarity)."""
+    params = {
+        "query.title": title[:200],
+        "rows": 3,
+        "mailto": MAILTO,
+    }
+    try:
+        resp = polite_get(CROSSREF_SEARCH_URL, params=params, delay=1.0)
+        items = resp.json().get("message", {}).get("items", [])
+    except Exception as e:
+        log.warning("Crossref search failed for '%s': %s", title[:60], e)
+        return None, 0.0
+
+    best_doi, best_sim = None, 0.0
+    for item in items:
+        cr_titles = item.get("title", [])
+        cr_title = cr_titles[0] if cr_titles else ""
+        sim = title_similarity(title, cr_title)
+        if sim > best_sim:
+            best_sim = sim
+            best_doi = normalize_doi(item.get("DOI", ""))
+
+    return best_doi, best_sim
+
+
+def search_doi(title: str, year: object = None, author: object = None) -> tuple[str | None, str | None, float]:
+    """Search for a DOI by title: OpenAlex first, Crossref fallback.
+
+    Returns (doi, openalex_id, similarity) or (None, None, 0).
+    """
+    # Try OpenAlex first
+    doi, oa_id, sim = _search_openalex(title)
+    if doi and sim >= TITLE_SIM_THRESHOLD:
+        return doi, oa_id, sim
+
+    # Fallback: Crossref
+    cr_doi, cr_sim = _search_crossref(title)
+    if cr_doi and cr_sim >= TITLE_SIM_THRESHOLD:
+        return cr_doi, oa_id, cr_sim
+
+    # Return best OA result even if below threshold (caller decides)
+    return doi, oa_id, sim
 
 
 # --- Cache-transparent DOI resolver for external callers ---
@@ -237,14 +276,13 @@ def main() -> None:
     log.info("Loaded %d works from %s", len(df), corpus_path)
 
     # Identify DOI-less works with titles
-    # Skip OpenAlex-only sources: if OA doesn't have a DOI, re-querying OA won't help
+    # All DOI-less works are candidates — Crossref fallback can find DOIs
+    # that OpenAlex lacks (previously OA-only works were skipped)
     doi_col = df["doi"].fillna("").astype(str).str.strip()
     has_doi = doi_col.apply(lambda x: bool(x) and x.lower() not in ("", "nan", "none"))
     has_title = df["title"].notna() & (df["title"].str.strip() != "")
-    is_oa_only = (df["from_openalex"] == 1) & (df["source_count"] == 1)
-    candidates = df[~has_doi & has_title & ~is_oa_only].copy()
-    skipped_oa = int((~has_doi & has_title & is_oa_only).sum())
-    log.info("Candidates: %d (skipped %d OA-only)", len(candidates), skipped_oa)
+    candidates = df[~has_doi & has_title].copy()
+    log.info("Candidates: %d", len(candidates))
 
     # Load cache — skip already-processed
     cache = load_cache()
