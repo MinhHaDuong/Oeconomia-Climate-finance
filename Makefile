@@ -303,7 +303,7 @@ content/figures/fig_semantic_period.png: scripts/plot_semantic.py scripts/utils.
 # Structural break tables (independent of clustering)
 content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv &: \
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output content/tables/tab_breakpoints.csv
 
 # Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
@@ -385,7 +385,7 @@ content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils
 # Core-only: structural break tables
 content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv &: \
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only
+	uv run python $< --output content/tables/tab_breakpoints_core.csv --core-only
 
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
@@ -448,7 +448,7 @@ content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.p
 
 # K-sensitivity table (diagnostic, --robustness flag)
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --robustness
+	uv run python $< --output content/tables/tab_breakpoints.csv --robustness
 
 # K-sensitivity figure
 content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
@@ -576,7 +576,7 @@ BENCH_OUT := benchmarks/timings.jsonl
 
 benchmark: check-corpus
 	@mkdir -p benchmarks
-	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py
+	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py --output content/tables/tab_breakpoints.csv
 	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py
 	$(BENCH) analyze_bimodality $(BENCH_OUT) uv run python scripts/analyze_bimodality.py
 	$(BENCH) plot_fig1_bars $(BENCH_OUT) uv run python scripts/plot_fig1_bars.py

@@ -54,7 +54,7 @@ REGISTRY: list[dict] = [
     {
         "name": "compute_breakpoints",
         "script": "compute_breakpoints.py",
-        "args": [],
+        "args": ["--output", "content/tables/tab_breakpoints.csv"],
         "deps": [],
         "outputs": [
             "content/tables/tab_breakpoints.csv",
