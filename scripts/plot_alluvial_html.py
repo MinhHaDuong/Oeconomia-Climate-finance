@@ -15,6 +15,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, get_logger, load_analysis_config
 
 log = get_logger("plot_alluvial_html")
@@ -326,21 +327,19 @@ document.querySelectorAll('.cell').forEach(el => {{
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
     parser = argparse.ArgumentParser(description="Render interactive alluvial HTML")
-    parser.add_argument("--output", default=None,
-                        help="Output HTML path")
     parser.add_argument("--core-only", action="store_true",
                         help="Use core-only variant of input tables")
     parser.add_argument("--censor-gap", type=int, default=0,
                         help="Load censor-gap variant (affects output name only)")
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     alluvial_data, cluster_labels, fig_name = load_data(args.core_only, args.censor_gap)
-    if args.output is None:
-        args.output = os.path.join(FIGURES_DIR, f"{fig_name}.html")
     period_stacks = compute_stacks(alluvial_data)
 
-    # Load paper data for tooltips
     df = load_paper_data(alluvial_data, cluster_labels, args.core_only)
     if df is not None:
         top_papers = collect_top_papers(
@@ -349,7 +348,7 @@ def main():
     else:
         top_papers = {}
 
-    render_html(alluvial_data, cluster_labels, period_stacks, top_papers, args.output)
+    render_html(alluvial_data, cluster_labels, period_stacks, top_papers, io_args.output)
     log.info("Done.")
 
 

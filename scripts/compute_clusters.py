@@ -84,6 +84,168 @@ def _word_count(terms):
 K_DEFAULT = 6
 
 
+def _label_clusters(df, core_only):
+    """Label clusters using TF-IDF distinctiveness scoring.
+
+    Returns dict mapping cluster_id -> label string.
+    """
+    abstracts_for_tfidf = [_collapse_acronyms(a) for a in df["abstract"].fillna("").tolist()]
+    min_df_val = 3 if core_only else 5
+    label_vectorizer = TfidfVectorizer(
+        ngram_range=(1, 2), max_features=8000, sublinear_tf=True,
+        stop_words="english", min_df=min_df_val, max_df=0.8,
+    )
+    X_label = label_vectorizer.fit_transform(abstracts_for_tfidf)
+    label_features = np.array(label_vectorizer.get_feature_names_out())
+    corpus_mean = np.asarray(X_label.mean(axis=0)).flatten()
+
+    cluster_labels = {}
+    for c in range(K_DEFAULT):
+        cluster_labels[c] = _label_single_cluster(
+            c, df, X_label, label_features, corpus_mean
+        )
+    return cluster_labels
+
+
+def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
+    """Compute a label for a single cluster from TF-IDF distinctiveness."""
+    c_mask = df["cluster"].values == c
+    if c_mask.sum() == 0:
+        return f"Cluster {c}"
+
+    c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
+    distinctiveness = c_mean - corpus_mean
+
+    uni_candidates = []
+    bi_candidates = []
+    for i in np.argsort(distinctiveness)[::-1]:
+        term = label_features[i]
+        tokens = term.split()
+        if any(t in LABEL_STOPWORDS for t in tokens):
+            continue
+        if distinctiveness[i] <= 0:
+            break
+        if " " in term:
+            if len(bi_candidates) < 20:
+                bi_candidates.append((term, float(distinctiveness[i])))
+        else:
+            if len(tokens[0]) < 3:
+                continue
+            if len(uni_candidates) < 30:
+                uni_candidates.append((term, float(distinctiveness[i])))
+        if len(uni_candidates) >= 30 and len(bi_candidates) >= 20:
+            break
+    candidates = bi_candidates + uni_candidates
+
+    unigram_scores = {t: s for t, s in candidates if " " not in t}
+    bigrams = [(t, s) for t, s in candidates if " " in t]
+    promoted = set()
+    for bigram, bi_score in bigrams:
+        parts = bigram.split()
+        best_uni = max((unigram_scores.get(p, 0) for p in parts), default=0)
+        if best_uni > 0 and bi_score >= best_uni * 0.5:
+            promoted.add(bigram)
+
+    max_words = 10
+    scored, used_tokens = _select_label_terms(candidates, promoted, max_words)
+
+    # Merge adjacent unigrams into bigrams where possible
+    bigram_dist = {label_features[i]: distinctiveness[i]
+                   for i in range(len(label_features)) if " " in label_features[i]}
+    unigram_dist = {label_features[i]: distinctiveness[i]
+                    for i in range(len(label_features)) if " " not in label_features[i]}
+    scored, used_tokens = _merge_unigram_pairs(
+        scored, used_tokens, bigram_dist, unigram_dist
+    )
+
+    # Fill remaining slots
+    for term, _ in candidates:
+        if _word_count(scored) >= max_words:
+            break
+        if _word_count(scored) + len(term.split()) > max_words:
+            continue
+        tokens = set(term.split())
+        if tokens.issubset(used_tokens):
+            continue
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
+        if " " in term and term not in promoted:
+            continue
+        scored.append(term)
+        used_tokens.update(tokens)
+
+    return " / ".join(scored) if scored else f"Cluster {c}"
+
+
+def _select_label_terms(candidates, promoted, max_words):
+    """Select label terms prioritizing promoted bigrams, respecting word budget."""
+    scored = []
+    used_tokens = set()
+    # Promoted bigrams first
+    for term, _ in candidates:
+        if term not in promoted:
+            continue
+        if _word_count(scored) + len(term.split()) > max_words:
+            continue
+        tokens = set(term.split())
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
+        scored.append(term)
+        used_tokens.update(tokens)
+        if _word_count(scored) >= max_words:
+            break
+    # Non-promoted fill
+    for term, _ in candidates:
+        if _word_count(scored) >= max_words:
+            break
+        if " " in term and term not in promoted:
+            continue
+        if _word_count(scored) + len(term.split()) > max_words:
+            continue
+        tokens = set(term.split())
+        if tokens.issubset(used_tokens):
+            continue
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
+        scored.append(term)
+        used_tokens.update(tokens)
+    return scored, used_tokens
+
+
+def _merge_unigram_pairs(scored, used_tokens, bigram_dist, unigram_dist):
+    """Merge adjacent unigram pairs into bigrams where stronger."""
+    merged_flag = True
+    while merged_flag:
+        merged_flag = False
+        for i, a in enumerate(scored):
+            if " " in a:
+                continue
+            for j, b in enumerate(scored):
+                if j <= i or " " in b:
+                    continue
+                for bigram in (f"{a} {b}", f"{b} {a}"):
+                    if bigram not in bigram_dist:
+                        continue
+                    weaker = min(unigram_dist.get(a, 0), unigram_dist.get(b, 0))
+                    if bigram_dist[bigram] >= weaker:
+                        scored[i] = bigram
+                        scored.pop(j)
+                        used_tokens.update(bigram.split())
+                        merged_flag = True
+                        break
+                if merged_flag:
+                    break
+            if merged_flag:
+                break
+    return scored, used_tokens
+
+
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output)
@@ -205,140 +367,7 @@ def main():
         log.info("Saved core shares table -> %s", core_shares_path)
 
     # ── Step 6: Label communities from abstract TF-IDF ──
-    abstracts_for_tfidf = [_collapse_acronyms(a) for a in df["abstract"].fillna("").tolist()]
-    min_df_val = 3 if args.core_only else 5
-    label_vectorizer = TfidfVectorizer(
-        ngram_range=(1, 2), max_features=8000, sublinear_tf=True,
-        stop_words="english", min_df=min_df_val, max_df=0.8,
-    )
-    X_label = label_vectorizer.fit_transform(abstracts_for_tfidf)
-    label_features = np.array(label_vectorizer.get_feature_names_out())
-
-    corpus_mean = np.asarray(X_label.mean(axis=0)).flatten()
-
-    cluster_labels = {}
-    for c in range(K_DEFAULT):
-        c_mask = df["cluster"].values == c
-        if c_mask.sum() == 0:
-            cluster_labels[c] = f"Cluster {c}"
-            continue
-        c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
-        distinctiveness = c_mean - corpus_mean
-
-        uni_candidates = []
-        bi_candidates = []
-        for i in np.argsort(distinctiveness)[::-1]:
-            term = label_features[i]
-            tokens = term.split()
-            if any(t in LABEL_STOPWORDS for t in tokens):
-                continue
-            if distinctiveness[i] <= 0:
-                break
-            if " " in term:
-                if len(bi_candidates) < 20:
-                    bi_candidates.append((term, float(distinctiveness[i])))
-            else:
-                if len(tokens[0]) < 3:
-                    continue
-                if len(uni_candidates) < 30:
-                    uni_candidates.append((term, float(distinctiveness[i])))
-            if len(uni_candidates) >= 30 and len(bi_candidates) >= 20:
-                break
-        candidates = bi_candidates + uni_candidates
-
-        unigram_scores = {t: s for t, s in candidates if " " not in t}
-        bigrams = [(t, s) for t, s in candidates if " " in t]
-        promoted = set()
-        for bigram, bi_score in bigrams:
-            parts = bigram.split()
-            best_uni = max((unigram_scores.get(p, 0) for p in parts), default=0)
-            if best_uni > 0 and bi_score >= best_uni * 0.5:
-                promoted.add(bigram)
-
-        max_words = 10
-
-        scored = []
-        used_tokens = set()
-        for term, _ in candidates:
-            if term not in promoted:
-                continue
-            if _word_count(scored) + len(term.split()) > max_words:
-                continue
-            tokens = set(term.split())
-            stems = {t.rstrip("s") for t in tokens}
-            used_stems = {t.rstrip("s") for t in used_tokens}
-            if stems.issubset(used_stems):
-                continue
-            scored.append(term)
-            used_tokens.update(tokens)
-            if _word_count(scored) >= max_words:
-                break
-        for term, _ in candidates:
-            if _word_count(scored) >= max_words:
-                break
-            if " " in term and term not in promoted:
-                continue
-            if _word_count(scored) + len(term.split()) > max_words:
-                continue
-            tokens = set(term.split())
-            if tokens.issubset(used_tokens):
-                continue
-            stems = {t.rstrip("s") for t in tokens}
-            used_stems = {t.rstrip("s") for t in used_tokens}
-            if stems.issubset(used_stems):
-                continue
-            scored.append(term)
-            used_tokens.update(tokens)
-
-        bigram_dist = {}
-        for idx_f, feat in enumerate(label_features):
-            if " " in feat:
-                bigram_dist[feat] = distinctiveness[idx_f]
-        unigram_dist = {}
-        for idx_f, feat in enumerate(label_features):
-            if " " not in feat:
-                unigram_dist[feat] = distinctiveness[idx_f]
-        merged_flag = True
-        while merged_flag:
-            merged_flag = False
-            for i, a in enumerate(scored):
-                if " " in a:
-                    continue
-                for j, b in enumerate(scored):
-                    if j <= i or " " in b:
-                        continue
-                    for bigram in (f"{a} {b}", f"{b} {a}"):
-                        if bigram not in bigram_dist:
-                            continue
-                        weaker = min(unigram_dist.get(a, 0), unigram_dist.get(b, 0))
-                        if bigram_dist[bigram] >= weaker:
-                            scored[i] = bigram
-                            scored.pop(j)
-                            used_tokens.update(bigram.split())
-                            merged_flag = True
-                            break
-                    if merged_flag:
-                        break
-                if merged_flag:
-                    break
-        for term, _ in candidates:
-            if _word_count(scored) >= max_words:
-                break
-            if _word_count(scored) + len(term.split()) > max_words:
-                continue
-            tokens = set(term.split())
-            if tokens.issubset(used_tokens):
-                continue
-            stems = {t.rstrip("s") for t in tokens}
-            used_stems = {t.rstrip("s") for t in used_tokens}
-            if stems.issubset(used_stems):
-                continue
-            if " " in term and term not in promoted:
-                continue
-            scored.append(term)
-            used_tokens.update(tokens)
-
-        cluster_labels[c] = " / ".join(scored) if scored else f"Cluster {c}"
+    cluster_labels = _label_clusters(df, args.core_only)
 
     log.info("Cluster labels:")
     for c, label in cluster_labels.items():

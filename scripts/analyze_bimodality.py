@@ -56,6 +56,261 @@ ACCOUNTABILITY_TERMS = {
     "grant equivalent", "overreporting", "climate debt",
 }
 
+def _tfidf_svd_detection(X_tfidf, tfidf, df):
+    """Step 5b: Unsupervised main-axis detection via TF-IDF SVD."""
+    log.info("=== Unsupervised axis detection (TF-IDF SVD) ===")
+    n_components = min(5, max(2, X_tfidf.shape[1] - 1))
+    svd = TruncatedSVD(n_components=n_components, random_state=42)
+    svd_scores = svd.fit_transform(X_tfidf)
+    explained = svd.explained_variance_ratio_
+    feature_names = np.array(tfidf.get_feature_names_out())
+
+    component_rows = []
+    best_idx, best_abs_corr, best_corr, best_dbic = None, -1, None, None
+
+    for comp_idx in range(n_components):
+        comp_scores = svd_scores[:, comp_idx] - np.median(svd_scores[:, comp_idx])
+        comp_corr = np.corrcoef(comp_scores, df["axis_score"].values)[0, 1]
+        comp_abs_corr = abs(comp_corr)
+        cg1 = GaussianMixture(n_components=1, random_state=42).fit(comp_scores.reshape(-1, 1))
+        cg2 = GaussianMixture(n_components=2, random_state=42).fit(comp_scores.reshape(-1, 1))
+        comp_dbic = cg1.bic(comp_scores.reshape(-1, 1)) - cg2.bic(comp_scores.reshape(-1, 1))
+        weights = svd.components_[comp_idx]
+        top_pos_terms = "; ".join(feature_names[np.argsort(weights)[-10:][::-1]])
+        top_neg_terms = "; ".join(feature_names[np.argsort(weights)[:10]])
+        component_rows.append({
+            "component": f"PC{comp_idx + 1}",
+            "explained_variance_ratio": explained[comp_idx],
+            "corr_with_embedding_axis": comp_corr,
+            "abs_corr_with_embedding_axis": comp_abs_corr,
+            "delta_bic": comp_dbic,
+            "top_positive_terms": top_pos_terms,
+            "top_negative_terms": top_neg_terms,
+        })
+        if comp_abs_corr > best_abs_corr:
+            best_abs_corr, best_corr, best_idx, best_dbic = (
+                comp_abs_corr, comp_corr, comp_idx, comp_dbic
+            )
+
+    main_axis_label = f"PC{best_idx + 1}"
+    log.info("Main unsupervised component: %s (r=%.3f, dBIC=%.0f)",
+             main_axis_label, best_corr, best_dbic)
+    return component_rows, main_axis_label, best_corr, best_dbic, best_idx, explained
+
+
+def _embedding_pca_detection(embeddings, df, explained_frac):
+    """Step 5c: Unsupervised main-axis detection via Embedding PCA."""
+    log.info("=== Unsupervised axis detection (Embedding PCA) ===")
+    n_emb_components = 10
+    pca = PCA(n_components=n_emb_components, random_state=42)
+    pca_scores = pca.fit_transform(embeddings)
+    pca_explained = pca.explained_variance_ratio_
+
+    emb_component_rows = []
+    emb_best_idx, emb_best_abs_corr, emb_best_corr, emb_best_dbic = None, -1, None, None
+
+    for comp_idx in range(n_emb_components):
+        comp_scores_centered = pca_scores[:, comp_idx] - np.median(pca_scores[:, comp_idx])
+        comp_corr = np.corrcoef(comp_scores_centered, df["axis_score"].values)[0, 1]
+        comp_abs_corr = abs(comp_corr)
+        cg1 = GaussianMixture(n_components=1, random_state=42).fit(comp_scores_centered.reshape(-1, 1))
+        cg2 = GaussianMixture(n_components=2, random_state=42).fit(comp_scores_centered.reshape(-1, 1))
+        comp_dbic = cg1.bic(comp_scores_centered.reshape(-1, 1)) - cg2.bic(comp_scores_centered.reshape(-1, 1))
+        emb_component_rows.append({
+            "component": f"emb_PC{comp_idx + 1}",
+            "explained_variance_ratio": pca_explained[comp_idx],
+            "corr_with_embedding_axis": comp_corr,
+            "abs_corr_with_embedding_axis": comp_abs_corr,
+            "delta_bic": comp_dbic,
+        })
+        log.info("emb_PC%d: var=%.3f, r=%+.3f, dBIC=%.0f",
+                 comp_idx + 1, pca_explained[comp_idx], comp_corr, comp_dbic)
+        if comp_abs_corr > emb_best_abs_corr:
+            emb_best_abs_corr, emb_best_corr, emb_best_idx, emb_best_dbic = (
+                comp_abs_corr, comp_corr, comp_idx, comp_dbic
+            )
+
+    log.info("Best embedding PCA: emb_PC%d (r=%+.3f, %.1f%% var, dBIC=%.0f)",
+             emb_best_idx + 1, emb_best_corr, pca_explained[emb_best_idx] * 100, emb_best_dbic)
+    log.info("Seed axis explains %.1f%% of embedding variance (for comparison)",
+             explained_frac * 100)
+    log.info("Top 10 embedding PCs explain %.1f%% total", pca_explained.sum() * 100)
+    return emb_component_rows
+
+
+def _load_bimodality_data(core_only):
+    """Load refined works and embeddings, optionally filtering to core subset."""
+    log.info("Loading data...")
+    _cfg = load_analysis_config()
+    _year_min = _cfg["periodization"]["year_min"]
+    _year_max = _cfg["periodization"]["year_max"]
+
+    works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
+    works["year"] = pd.to_numeric(works["year"], errors="coerce")
+
+    has_title = works["title"].notna() & (works["title"].str.len() > 0)
+    in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
+    df = works[has_title & in_range].copy().reset_index(drop=True)
+
+    embeddings = load_refined_embeddings()[(has_title & in_range).values]
+    assert len(embeddings) == len(df), f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
+    log.info("Loaded %d papers with embeddings (%dD)", len(df), embeddings.shape[1])
+
+    cite_threshold = _cfg["clustering"]["cite_threshold"]
+    df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
+    if core_only:
+        core_mask = df["cited_by_count"] >= cite_threshold
+        core_indices = df.index[core_mask].values
+        df = df.loc[core_mask].reset_index(drop=True)
+        embeddings = embeddings[core_indices]
+        log.info("Core-only mode: %d papers (cited_by_count >= %d)", len(df), cite_threshold)
+        assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
+
+    df["abstract_lower"] = df["abstract"].str.lower()
+    df["year"] = df["year"].astype(int)
+    return df, embeddings
+
+
+def _save_all_tables(*, df, n_eff, n_acc, n_both, bic1, bic2, delta_bic,
+                     dip_pvalue, explained_frac, corr, lg1, lg2, lex_vals,
+                     lex_dbic, main_axis_label, best_corr, best_dbic,
+                     best_idx, explained, period_stats, component_rows,
+                     emb_component_rows, axis_detection, output_path,
+                     out_dir, tab_axis, tab_pole):
+    """Step 7: Save all output tables (bimodality summary, axis detection, pole papers)."""
+    summary_rows = [{
+        "method": "embedding",
+        "n_papers": len(df),
+        "n_efficiency_pole": n_eff,
+        "n_accountability_pole": n_acc,
+        "n_both_poles": n_both,
+        "bic_1comp": bic1, "bic_2comp": bic2, "delta_bic": delta_bic,
+        "dip_pvalue": dip_pvalue, "explained_variance": explained_frac,
+        "embedding_lexical_corr": corr,
+    }, {
+        "method": "tfidf_lexical",
+        "n_papers": len(df),
+        "n_efficiency_pole": n_eff,
+        "n_accountability_pole": n_acc,
+        "n_both_poles": n_both,
+        "bic_1comp": lg1.bic(lex_vals.reshape(-1, 1)),
+        "bic_2comp": lg2.bic(lex_vals.reshape(-1, 1)),
+        "delta_bic": lex_dbic, "dip_pvalue": None,
+        "explained_variance": None, "embedding_lexical_corr": corr,
+    }, {
+        "method": f"unsupervised_{main_axis_label}",
+        "n_papers": len(df),
+        "n_efficiency_pole": n_eff,
+        "n_accountability_pole": n_acc,
+        "n_both_poles": n_both,
+        "bic_1comp": None, "bic_2comp": None,
+        "delta_bic": best_dbic, "dip_pvalue": None,
+        "explained_variance": explained[best_idx],
+        "embedding_lexical_corr": best_corr,
+    }]
+    for ps in period_stats:
+        summary_rows.append({
+            "method": f"embedding_{ps['period']}",
+            "n_papers": ps["n"],
+            "delta_bic": ps["delta_bic"],
+            "dip_pvalue": ps["dip_p"],
+        })
+
+    tab5 = pd.DataFrame(summary_rows)
+    for col in ["bic_1comp", "bic_2comp", "delta_bic"]:
+        if col in tab5.columns:
+            tab5[col] = pd.to_numeric(tab5[col], errors="coerce").round(0).astype("Int64")
+    for col in ["explained_variance", "embedding_lexical_corr", "dip_pvalue"]:
+        if col in tab5.columns:
+            tab5[col] = pd.to_numeric(tab5[col], errors="coerce").round(4)
+    tab5.to_csv(output_path, index=False)
+    log.info("Saved -> %s", output_path)
+
+    # Combined axis detection table
+    all_axis_rows = component_rows + emb_component_rows
+    axis_tab = pd.DataFrame(all_axis_rows).sort_values("component")
+    for col in ["explained_variance_ratio", "corr_with_embedding_axis",
+                "abs_corr_with_embedding_axis"]:
+        if col in axis_tab.columns:
+            axis_tab[col] = axis_tab[col].round(4)
+    if "delta_bic" in axis_tab.columns:
+        axis_tab["delta_bic"] = axis_tab["delta_bic"].round(0).astype("Int64")
+    axis_path = os.path.join(out_dir, tab_axis) if out_dir else tab_axis
+    axis_tab.to_csv(axis_path, index=False)
+    log.info("Saved -> %s", axis_path)
+
+    # Per-paper scores
+    pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",
+                       "eff_count", "acc_count"]].copy()
+    pole_papers["axis_score"] = pole_papers["axis_score"].round(4)
+    pole_papers["lex_score"] = pole_papers["lex_score"].round(4)
+    pole_papers["pole_assignment"] = np.where(
+        df["axis_score"] > 0, "efficiency",
+        np.where(df["axis_score"] < 0, "accountability", "neutral")
+    )
+    pole_path = os.path.join(out_dir, tab_pole) if out_dir else tab_pole
+    pole_papers.to_csv(pole_path, index=False)
+    log.info("Saved -> %s (%d papers)", pole_path, len(pole_papers))
+
+
+def _build_axis_detection_table(embeddings, axis, explained_frac, tfidf, X_tfidf):
+    """Step 6: Build axis detection table from Embedding PCA."""
+    log.info("=== Embedding PCA: axis detection ===")
+    n_emb_components = 5
+    pca = PCA(n_components=n_emb_components, random_state=42)
+    pca_scores = pca.fit_transform(embeddings)
+
+    axis_rows = []
+    feature_names = np.array(tfidf.get_feature_names_out())
+
+    X_dense = X_tfidf.toarray() if hasattr(X_tfidf, 'toarray') else X_tfidf
+    X_col_means = X_dense.mean(axis=0)
+    X_centered = X_dense - X_col_means
+    X_col_norms = np.sqrt((X_centered ** 2).sum(axis=0) + 1e-10)
+
+    for comp_idx in range(n_emb_components):
+        pc_direction = pca.components_[comp_idx]
+        cos_sim = np.dot(pc_direction, axis) / (
+            np.linalg.norm(pc_direction) * np.linalg.norm(axis) + 1e-10
+        )
+        var_explained = pca.explained_variance_ratio_[comp_idx]
+
+        comp_scores_vec = pca_scores[:, comp_idx]
+        scores_centered = comp_scores_vec - comp_scores_vec.mean()
+        scores_norm = np.sqrt((scores_centered ** 2).sum())
+        denom = scores_norm * X_col_norms
+        corrs = (X_centered.T @ scores_centered) / (denom + 1e-10)
+
+        pos_terms = "; ".join(feature_names[j] for j in np.argsort(corrs)[-10:][::-1])
+        neg_terms = "; ".join(feature_names[j] for j in np.argsort(corrs)[:10])
+
+        log.info("PC%d: var=%.3f, cos(seed axis)=%.3f", comp_idx + 1, var_explained, cos_sim)
+        log.info("  + %s", pos_terms)
+        log.info("  - %s", neg_terms)
+
+        axis_rows.append({
+            "component": f"emb_PC{comp_idx+1}",
+            "variance_explained": var_explained,
+            "cosine_with_seed_axis": cos_sim,
+            "top_positive_terms": pos_terms,
+            "top_negative_terms": neg_terms,
+        })
+
+    axis_rows.append({
+        "component": "seed_eff_acc",
+        "variance_explained": explained_frac,
+        "cosine_with_seed_axis": 1.0,
+        "top_positive_terms": "; ".join(sorted(EFFICIENCY_TERMS)[:10]),
+        "top_negative_terms": "; ".join(sorted(ACCOUNTABILITY_TERMS)[:10]),
+    })
+
+    result = pd.DataFrame(axis_rows)
+    for col in ["variance_explained", "cosine_with_seed_axis"]:
+        if col in result.columns:
+            result[col] = result[col].round(4)
+    return result
+
+
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output)
@@ -79,35 +334,7 @@ def main():
     periods = dict(zip(_period_labels, _period_tuples))
 
     # --- Load data + embeddings ---
-    log.info("Loading data...")
-    _cfg = load_analysis_config()
-    _year_min = _cfg["periodization"]["year_min"]
-    _year_max = _cfg["periodization"]["year_max"]
-
-    works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
-    works["year"] = pd.to_numeric(works["year"], errors="coerce")
-
-    has_title = works["title"].notna() & (works["title"].str.len() > 0)
-    in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
-    df = works[has_title & in_range].copy().reset_index(drop=True)
-
-    embeddings = load_refined_embeddings()[(has_title & in_range).values]
-    assert len(embeddings) == len(df), f"Embedding size mismatch: {len(embeddings)} vs {len(df)}"
-    log.info("Loaded %d papers with embeddings (%dD)", len(df), embeddings.shape[1])
-
-    # Core filtering: keep only highly-cited papers
-    cite_threshold = _cfg["clustering"]["cite_threshold"]
-    df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0)
-    if args.core_only:
-        core_mask = df["cited_by_count"] >= cite_threshold
-        core_indices = df.index[core_mask].values
-        df = df.loc[core_mask].reset_index(drop=True)
-        embeddings = embeddings[core_indices]
-        log.info("Core-only mode: %d papers (cited_by_count >= %d)", len(df), cite_threshold)
-        assert len(df) == len(embeddings), "Embedding alignment error after core filtering"
-
-    df["abstract_lower"] = df["abstract"].str.lower()
-    df["year"] = df["year"].astype(int)
+    df, embeddings = _load_bimodality_data(args.core_only)
 
 
     # ── Step 1: Identify pole papers from abstracts ──
@@ -235,255 +462,29 @@ def main():
     corr = np.corrcoef(df["axis_score"].values, df["lex_score"].values)[0, 1]
     log.info("Correlation between embedding and TF-IDF axis scores: r=%.3f", corr)
 
-    # ── Step 5b: Unsupervised main-axis detection (TF-IDF SVD) ──
-    log.info("=== Unsupervised axis detection (TF-IDF SVD) ===")
-
-    n_components = min(5, max(2, X_tfidf.shape[1] - 1))
-    svd = TruncatedSVD(n_components=n_components, random_state=42)
-    svd_scores = svd.fit_transform(X_tfidf)
-    explained = svd.explained_variance_ratio_
-
-    component_rows = []
-    feature_names = np.array(tfidf.get_feature_names_out())
-
-    best_idx = None
-    best_abs_corr = -1
-    best_corr = None
-    best_dbic = None
-
-    for comp_idx in range(n_components):
-        comp_scores = svd_scores[:, comp_idx]
-        comp_scores = comp_scores - np.median(comp_scores)
-
-        comp_corr = np.corrcoef(comp_scores, df["axis_score"].values)[0, 1]
-        comp_abs_corr = abs(comp_corr)
-
-        cg1 = GaussianMixture(n_components=1, random_state=42).fit(comp_scores.reshape(-1, 1))
-        cg2 = GaussianMixture(n_components=2, random_state=42).fit(comp_scores.reshape(-1, 1))
-        comp_dbic = cg1.bic(comp_scores.reshape(-1, 1)) - cg2.bic(comp_scores.reshape(-1, 1))
-
-        weights = svd.components_[comp_idx]
-        top_pos_idx = np.argsort(weights)[-10:][::-1]
-        top_neg_idx = np.argsort(weights)[:10]
-        top_pos_terms = "; ".join(feature_names[top_pos_idx])
-        top_neg_terms = "; ".join(feature_names[top_neg_idx])
-
-        component_rows.append({
-            "component": f"PC{comp_idx + 1}",
-            "explained_variance_ratio": explained[comp_idx],
-            "corr_with_embedding_axis": comp_corr,
-            "abs_corr_with_embedding_axis": comp_abs_corr,
-            "delta_bic": comp_dbic,
-            "top_positive_terms": top_pos_terms,
-            "top_negative_terms": top_neg_terms,
-        })
-
-        if comp_abs_corr > best_abs_corr:
-            best_abs_corr = comp_abs_corr
-            best_corr = comp_corr
-            best_idx = comp_idx
-            best_dbic = comp_dbic
-
-    main_axis_label = f"PC{best_idx + 1}"
-    log.info(
-        "Main unsupervised component aligned with efficiency<->accountability axis: "
-        "%s (r=%.3f, dBIC=%.0f)", main_axis_label, best_corr, best_dbic
-    )
-
-    # ── Step 5c: Unsupervised main-axis detection (Embedding PCA) ──
-    log.info("=== Unsupervised axis detection (Embedding PCA) ===")
-
-    n_emb_components = 10
-    pca = PCA(n_components=n_emb_components, random_state=42)
-    pca_scores = pca.fit_transform(embeddings)
-    pca_explained = pca.explained_variance_ratio_
-
-    emb_component_rows = []
-    emb_best_idx = None
-    emb_best_abs_corr = -1
-    emb_best_corr = None
-    emb_best_dbic = None
-
-    for comp_idx in range(n_emb_components):
-        comp_scores = pca_scores[:, comp_idx]
-        comp_scores_centered = comp_scores - np.median(comp_scores)
-
-        comp_corr = np.corrcoef(comp_scores_centered, df["axis_score"].values)[0, 1]
-        comp_abs_corr = abs(comp_corr)
-
-        cg1 = GaussianMixture(n_components=1, random_state=42).fit(comp_scores_centered.reshape(-1, 1))
-        cg2 = GaussianMixture(n_components=2, random_state=42).fit(comp_scores_centered.reshape(-1, 1))
-        comp_dbic = cg1.bic(comp_scores_centered.reshape(-1, 1)) - cg2.bic(comp_scores_centered.reshape(-1, 1))
-
-        emb_component_rows.append({
-            "component": f"emb_PC{comp_idx + 1}",
-            "explained_variance_ratio": pca_explained[comp_idx],
-            "corr_with_embedding_axis": comp_corr,
-            "abs_corr_with_embedding_axis": comp_abs_corr,
-            "delta_bic": comp_dbic,
-        })
-
-        log.info("emb_PC%d: var=%.3f, r=%+.3f, dBIC=%.0f",
-                 comp_idx + 1, pca_explained[comp_idx], comp_corr, comp_dbic)
-
-        if comp_abs_corr > emb_best_abs_corr:
-            emb_best_abs_corr = comp_abs_corr
-            emb_best_corr = comp_corr
-            emb_best_idx = comp_idx
-            emb_best_dbic = comp_dbic
-
-    emb_main_label = f"emb_PC{emb_best_idx + 1}"
-    log.info(
-        "Best embedding PCA component aligned with seed axis: "
-        "%s (r=%+.3f, explains %.1f%% of embedding variance, dBIC=%.0f)",
-        emb_main_label, emb_best_corr, pca_explained[emb_best_idx] * 100, emb_best_dbic
-    )
-    log.info("Seed axis explains %.1f%% of embedding variance (for comparison)",
-             explained_frac * 100)
-    log.info("Top 10 embedding PCs explain %.1f%% total", pca_explained.sum() * 100)
+    # ── Steps 5b+5c: Unsupervised axis detection ──
+    component_rows, main_axis_label, best_corr, best_dbic, best_idx, explained = \
+        _tfidf_svd_detection(X_tfidf, tfidf, df)
+    emb_component_rows = _embedding_pca_detection(embeddings, df, explained_frac)
 
     # ── Step 6: Embedding PCA -- axis detection table ──
-    log.info("=== Embedding PCA: axis detection ===")
-
-    n_emb_components = 5
-    pca = PCA(n_components=n_emb_components, random_state=42)
-    pca_scores = pca.fit_transform(embeddings)
-
-    axis_rows = []
-    feature_names = np.array(tfidf.get_feature_names_out())
-
-    X_dense = X_tfidf.toarray() if hasattr(X_tfidf, 'toarray') else X_tfidf
-    X_col_means = X_dense.mean(axis=0)
-    X_centered = X_dense - X_col_means
-    X_col_norms = np.sqrt((X_centered ** 2).sum(axis=0) + 1e-10)
-
-    for comp_idx in range(n_emb_components):
-        pc_direction = pca.components_[comp_idx]
-        cos_sim = np.dot(pc_direction, axis) / (
-            np.linalg.norm(pc_direction) * np.linalg.norm(axis) + 1e-10
-        )
-        var_explained = pca.explained_variance_ratio_[comp_idx]
-
-        comp_scores_vec = pca_scores[:, comp_idx]
-        scores_centered = comp_scores_vec - comp_scores_vec.mean()
-        scores_norm = np.sqrt((scores_centered ** 2).sum())
-        denom = scores_norm * X_col_norms
-        corrs = (X_centered.T @ scores_centered) / (denom + 1e-10)
-
-        top_pos_idx = np.argsort(corrs)[-10:][::-1]
-        top_neg_idx = np.argsort(corrs)[:10]
-        pos_terms = "; ".join(feature_names[j] for j in top_pos_idx)
-        neg_terms = "; ".join(feature_names[j] for j in top_neg_idx)
-
-        log.info("PC%d: var=%.3f, cos(seed axis)=%.3f", comp_idx + 1, var_explained, cos_sim)
-        log.info("  + %s", pos_terms)
-        log.info("  - %s", neg_terms)
-
-        axis_rows.append({
-            "component": f"emb_PC{comp_idx+1}",
-            "variance_explained": var_explained,
-            "cosine_with_seed_axis": cos_sim,
-            "top_positive_terms": pos_terms,
-            "top_negative_terms": neg_terms,
-        })
-
-    axis_rows.append({
-        "component": "seed_eff_acc",
-        "variance_explained": explained_frac,
-        "cosine_with_seed_axis": 1.0,
-        "top_positive_terms": "; ".join(sorted(EFFICIENCY_TERMS)[:10]),
-        "top_negative_terms": "; ".join(sorted(ACCOUNTABILITY_TERMS)[:10]),
-    })
-
-    axis_detection = pd.DataFrame(axis_rows)
-    for col in ["variance_explained", "cosine_with_seed_axis"]:
-        if col in axis_detection.columns:
-            axis_detection[col] = axis_detection[col].round(4)
+    axis_detection = _build_axis_detection_table(
+        embeddings, axis, explained_frac, tfidf, X_tfidf
+    )
 
     # ── Step 7: Save tables ──
-    # Summary table
-    summary_rows = [{
-        "method": "embedding",
-        "n_papers": len(df),
-        "n_efficiency_pole": n_eff,
-        "n_accountability_pole": n_acc,
-        "n_both_poles": n_both,
-        "bic_1comp": bic1,
-        "bic_2comp": bic2,
-        "delta_bic": delta_bic,
-        "dip_pvalue": dip_pvalue,
-        "explained_variance": explained_frac,
-        "embedding_lexical_corr": corr,
-    }, {
-        "method": "tfidf_lexical",
-        "n_papers": len(df),
-        "n_efficiency_pole": n_eff,
-        "n_accountability_pole": n_acc,
-        "n_both_poles": n_both,
-        "bic_1comp": lg1.bic(lex_vals.reshape(-1, 1)),
-        "bic_2comp": lg2.bic(lex_vals.reshape(-1, 1)),
-        "delta_bic": lex_dbic,
-        "dip_pvalue": None,
-        "explained_variance": None,
-        "embedding_lexical_corr": corr,
-    }, {
-        "method": f"unsupervised_{main_axis_label}",
-        "n_papers": len(df),
-        "n_efficiency_pole": n_eff,
-        "n_accountability_pole": n_acc,
-        "n_both_poles": n_both,
-        "bic_1comp": None,
-        "bic_2comp": None,
-        "delta_bic": best_dbic,
-        "dip_pvalue": None,
-        "explained_variance": explained[best_idx],
-        "embedding_lexical_corr": best_corr,
-    }]
-
-    for ps in period_stats:
-        summary_rows.append({
-            "method": f"embedding_{ps['period']}",
-            "n_papers": ps["n"],
-            "delta_bic": ps["delta_bic"],
-            "dip_pvalue": ps["dip_p"],
-        })
-
-    tab5 = pd.DataFrame(summary_rows)
-    for col in ["bic_1comp", "bic_2comp", "delta_bic"]:
-        if col in tab5.columns:
-            tab5[col] = pd.to_numeric(tab5[col], errors="coerce").round(0).astype("Int64")
-    for col in ["explained_variance", "embedding_lexical_corr", "dip_pvalue"]:
-        if col in tab5.columns:
-            tab5[col] = pd.to_numeric(tab5[col], errors="coerce").round(4)
-    tab5.to_csv(io_args.output, index=False)
-    log.info("Saved -> %s", io_args.output)
-
-    # Combined axis detection table
-    all_axis_rows = component_rows + emb_component_rows
-    axis_tab = pd.DataFrame(all_axis_rows).sort_values("component")
-    for col in ["explained_variance_ratio", "corr_with_embedding_axis",
-                "abs_corr_with_embedding_axis"]:
-        if col in axis_tab.columns:
-            axis_tab[col] = axis_tab[col].round(4)
-    if "delta_bic" in axis_tab.columns:
-        axis_tab["delta_bic"] = axis_tab["delta_bic"].round(0).astype("Int64")
-    axis_path = os.path.join(out_dir, tab_axis) if out_dir else tab_axis
-    axis_tab.to_csv(axis_path, index=False)
-    log.info("Saved -> %s", axis_path)
-
-    # Per-paper scores
-    pole_papers = df[["doi", "title", "year", "axis_score", "lex_score",
-                       "eff_count", "acc_count"]].copy()
-    pole_papers["axis_score"] = pole_papers["axis_score"].round(4)
-    pole_papers["lex_score"] = pole_papers["lex_score"].round(4)
-    pole_papers["pole_assignment"] = np.where(
-        df["axis_score"] > 0, "efficiency",
-        np.where(df["axis_score"] < 0, "accountability", "neutral")
+    _save_all_tables(
+        df=df, n_eff=n_eff, n_acc=n_acc, n_both=n_both,
+        bic1=bic1, bic2=bic2, delta_bic=delta_bic, dip_pvalue=dip_pvalue,
+        explained_frac=explained_frac, corr=corr, lg1=lg1, lg2=lg2,
+        lex_vals=lex_vals, lex_dbic=lex_dbic,
+        main_axis_label=main_axis_label, best_corr=best_corr,
+        best_dbic=best_dbic, best_idx=best_idx, explained=explained,
+        period_stats=period_stats, component_rows=component_rows,
+        emb_component_rows=emb_component_rows, axis_detection=axis_detection,
+        output_path=io_args.output, out_dir=out_dir,
+        tab_axis=tab_axis, tab_pole=tab_pole,
     )
-    pole_path = os.path.join(out_dir, tab_pole) if out_dir else tab_pole
-    pole_papers.to_csv(pole_path, index=False)
-    log.info("Saved -> %s (%d papers)", pole_path, len(pole_papers))
-
     log.info("Done.")
 
 

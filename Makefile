@@ -334,7 +334,7 @@ content/figures/fig_alluvial.png: \
 content/figures/fig_alluvial.html: \
 		scripts/plot_alluvial_html.py scripts/utils.py \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $<
+	uv run python $< --output $@
 
 # Period divergence curves
 content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py \
