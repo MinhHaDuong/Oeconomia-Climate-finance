@@ -11,11 +11,11 @@ Usage:
     uv run python scripts/export_deposit.py [--out-dir DIR]
 """
 
-import argparse
 import os
 import sys
 
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("export_deposit")
@@ -41,13 +41,10 @@ DEPOSIT_RENAMES = {"from_scispsace": "from_scispace"}
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    default_out = os.path.join(CATALOGS_DIR, "deposit", "climate_finance_corpus.csv")
-    parser.add_argument("--output", default=default_out,
-                        help="Output CSV path (default: %(default)s)")
-    args = parser.parse_args()
+    io_args, _extra = parse_io_args()
+    validate_io(output=io_args.output)
 
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+    os.makedirs(os.path.dirname(io_args.output), exist_ok=True)
 
     # --- Read extended_works.csv (has quality flags) ---
     extended_path = os.path.join(CATALOGS_DIR, "extended_works.csv")
@@ -88,7 +85,7 @@ def main():
         log.info("Renamed columns: %s", renames)
 
     # --- Write ---
-    out_path = args.output
+    out_path = io_args.output
     df.to_csv(out_path, index=False)
     log.info("Wrote %s (%d rows, %d columns)", out_path, n_total, len(df.columns))
 
@@ -115,7 +112,7 @@ def main():
             log.error(e)
         sys.exit(1)
 
-    log.info("Deposit files ready in %s", os.path.dirname(args.output))
+    log.info("Deposit files ready in %s", os.path.dirname(io_args.output))
 
 
 if __name__ == "__main__":

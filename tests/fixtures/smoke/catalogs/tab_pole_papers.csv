@@ -1,0 +1,21 @@
+doi,title,year,axis_score,lex_score,eff_count,acc_count,pole_assignment
+10.1038/s41558-018-0176-z,Test paper 0,2010,0.5,0.3,5,1,efficiency
+10.3200/env.51.4.22-31,Test paper 1,2011,-0.5,-0.3,1,5,accountability
+10.1073/pnas.2004334117,Test paper 2,2012,0.5,0.3,5,1,efficiency
+10.1016/j.resconrec.2014.03.003,Test paper 3,2013,-0.5,-0.3,1,5,accountability
+10.1111/j.1467-7679.2009.00465.x,Test paper 4,2014,0.5,0.3,5,1,efficiency
+10.5751/es-07489-200230,Test paper 5,2015,-0.5,-0.3,1,5,accountability
+10.1007/s10784-019-09441-y,Test paper 6,2016,0.5,0.3,5,1,efficiency
+10.17528/cifor/003876,Test paper 7,2017,-0.5,-0.3,1,5,accountability
+10.1016/j.forpol.2018.01.005,Test paper 8,2018,0.5,0.3,5,1,efficiency
+10.1146/annurev-environ-102017-025809,Test paper 9,2019,-0.5,-0.3,1,5,accountability
+10.1787/5k8zth7s6s6d-en,Test paper 10,2010,0.5,0.3,5,1,efficiency
+10.5194/acp-12-10181-2012,Test paper 11,2011,-0.5,-0.3,1,5,accountability
+10.1016/j.emj.2007.07.003,Test paper 12,2012,0.5,0.3,5,1,efficiency
+10.5772/intechopen.72047,Test paper 13,2013,-0.5,-0.3,1,5,accountability
+10.1016/j.worlddev.2018.10.005,Test paper 14,2014,0.5,0.3,5,1,efficiency
+10.1186/s12302-014-0017-2,Test paper 15,2015,-0.5,-0.3,1,5,accountability
+10.1016/j.rser.2008.05.002,Test paper 16,2016,0.5,0.3,5,1,efficiency
+10.1007/s10021-019-00350-4,Test paper 17,2017,-0.5,-0.3,1,5,accountability
+10.3390/en12091663,Test paper 18,2018,0.5,0.3,5,1,efficiency
+10.15376/biores.7.4.4786-4805,Test paper 19,2019,-0.5,-0.3,1,5,accountability

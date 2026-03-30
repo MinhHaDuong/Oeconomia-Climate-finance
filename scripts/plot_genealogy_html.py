@@ -15,6 +15,7 @@ import os
 import numpy as np
 import pandas as pd
 from matplotlib.colors import to_rgba
+from script_io_args import parse_io_args, validate_io
 from utils import (
     BASE_DIR,
     get_logger,
@@ -378,16 +379,18 @@ def render_html(backbone_dois, doi_meta, lineage, positions, edges, output_path)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Render interactive genealogy HTML")
-    parser.add_argument("--output", default=os.path.join(FIGURES_DIR, "fig_genealogy.html"),
-                        help="Output HTML path")
-    parser.add_argument("--input", default=os.path.join(TABLES_DIR, "tab_lineages.csv"),
-                        help="Input lineages table path")
-    args = parser.parse_args()
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
 
-    backbone_dois, doi_meta, lineage, positions = load_model(args.input)
+    parser = argparse.ArgumentParser(description="Render interactive genealogy HTML")
+    parser.add_argument("--lineages", default=os.path.join(TABLES_DIR, "tab_lineages.csv"),
+                        help="Input lineages table path")
+    args = parser.parse_args(extra)
+
+    input_path = io_args.input[0] if io_args.input else args.lineages
+    backbone_dois, doi_meta, lineage, positions = load_model(input_path)
     edges = load_edges(backbone_dois)
-    render_html(backbone_dois, doi_meta, lineage, positions, edges, args.output)
+    render_html(backbone_dois, doi_meta, lineage, positions, edges, io_args.output)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import gaussian_kde
 from sklearn.mixture import GaussianMixture
+from script_io_args import parse_io_args, validate_io
 from utils import (
     BASE_DIR,
     get_logger,
@@ -26,7 +27,6 @@ from utils import (
 log = get_logger("plot_bimodality")
 
 # --- Paths ---
-FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 # Three-act periods (from config)
@@ -92,13 +92,11 @@ def render_figure(df, output_path, pdf=False):
 
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
     parser = argparse.ArgumentParser(
         description="Embedding KDE by period with GMM overlay"
-    )
-    parser.add_argument(
-        "--output",
-        default=os.path.join(FIGURES_DIR, "fig_bimodality.png"),
-        help="Output figure path",
     )
     parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
     parser.add_argument(
@@ -106,16 +104,11 @@ def main():
         action="store_true",
         help="Read core variant of pole papers table",
     )
-    parser.add_argument(
-        "--input",
-        default=None,
-        help="Input pole papers table path",
-    )
-    args = parser.parse_args()
+    args = parser.parse_args(extra)
 
     # Resolve input path
-    if args.input:
-        input_path = args.input
+    if io_args.input:
+        input_path = io_args.input[0]
     else:
         suffix = "_core" if args.core_only else ""
         input_path = os.path.join(TABLES_DIR, f"tab_pole_papers{suffix}.csv")
@@ -124,7 +117,7 @@ def main():
     df["year"] = pd.to_numeric(df["year"], errors="coerce").astype(int)
     log.info("Loaded %d papers from %s", len(df), input_path)
 
-    render_figure(df, args.output, pdf=args.pdf)
+    render_figure(df, io_args.output, pdf=args.pdf)
 
 
 if __name__ == "__main__":

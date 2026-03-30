@@ -5,7 +5,10 @@ Shows distinctive journals per pole (efficiency vs accountability)
 among core works (cited >= 50). Output: content/tables/tab_venues.md
 
 Usage:
-    uv run python scripts/export_tab_venues.py [--min-papers 10] [--core-threshold 50]
+    uv run python scripts/export_tab_venues.py --output content/tables/tab_venues.md \
+        [--refined-works data/catalogs/refined_works.csv] \
+        [--pole-papers content/tables/tab_pole_papers.csv] \
+        [--min-papers 10] [--core-threshold 50]
 """
 
 import argparse
@@ -13,26 +16,30 @@ import os
 
 import numpy as np
 import pandas as pd
+from script_io_args import parse_io_args, validate_io
 from utils import BASE_DIR, CATALOGS_DIR, get_logger
 
 log = get_logger("export_tab_venues")
 
-POLE_PAPERS = os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv")
-OUTPUT = os.path.join(BASE_DIR, "content", "tables", "tab_venues.md")
-
 
 def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--min-papers", type=int, default=10,
                         help="Minimum core papers per journal to include")
     parser.add_argument("--core-threshold", type=int, default=50,
                         help="Minimum cited_by_count for core subset")
-    args = parser.parse_args()
+    parser.add_argument("--refined-works", default=os.path.join(CATALOGS_DIR, "refined_works.csv"),
+                        help="Path to refined_works.csv")
+    parser.add_argument("--pole-papers",
+                        default=os.path.join(BASE_DIR, "content", "tables", "tab_pole_papers.csv"),
+                        help="Path to tab_pole_papers.csv")
+    args = parser.parse_args(extra)
 
-    works = pd.read_csv(
-        os.path.join(CATALOGS_DIR, "refined_works.csv"), low_memory=False
-    )
-    poles = pd.read_csv(POLE_PAPERS)
+    works = pd.read_csv(args.refined_works, low_memory=False)
+    poles = pd.read_csv(args.pole_papers)
 
     # Deduplicate poles on DOI, merge with works for journal metadata
     poles_dedup = poles.drop_duplicates(subset="doi", keep="first")
@@ -126,11 +133,13 @@ def main():
     lines.append("")
     lines.append(caption)
 
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with open(OUTPUT, "w") as f:
+    out_dir = os.path.dirname(io_args.output)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    with open(io_args.output, "w") as f:
         f.write("\n".join(lines) + "\n")
 
-    log.info("Wrote %d venues to %s", len(selected), OUTPUT)
+    log.info("Wrote %d venues to %s", len(selected), io_args.output)
 
 
 if __name__ == "__main__":
