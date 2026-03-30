@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Resolve missing DOIs via OpenAlex title+year search.
+"""Resolve missing DOIs via OpenAlex + Crossref title search.
 
-For each work in refined_works.csv that lacks a DOI but has a title,
-queries the OpenAlex works endpoint and fuzzy-matches on title.
+For each work in unified_works.csv that lacks a DOI but has a title,
+queries OpenAlex first, then falls back to Crossref if no match found.
 Idempotent: caches results so re-runs skip already-resolved works.
 
 Produces:
@@ -194,7 +194,7 @@ def search_doi(title: str, year: object = None, author: object = None) -> tuple[
     # Fallback: Crossref
     cr_doi, cr_sim = _search_crossref(title)
     if cr_doi and cr_sim >= TITLE_SIM_THRESHOLD:
-        return cr_doi, oa_id, cr_sim
+        return cr_doi, None, cr_sim
 
     # Return best OA result even if below threshold (caller decides)
     return doi, oa_id, sim
@@ -295,7 +295,7 @@ def main() -> None:
         log.info("Limited to: %d", len(to_process))
 
     if args.dry_run:
-        log.info("[DRY RUN] Would search OpenAlex for %d works", len(to_process))
+        log.info("[DRY RUN] Would search OpenAlex+Crossref for %d works", len(to_process))
         for _, row in to_process.head(10).iterrows():
             log.info("  %s: %s", row['source_id'], str(row['title'])[:80])
         if len(to_process) > 10:

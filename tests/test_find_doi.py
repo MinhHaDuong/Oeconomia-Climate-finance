@@ -259,6 +259,31 @@ class TestResolveDoi:
             assert sim >= 0.85
             assert mock_get.call_count == 2  # OA + Crossref
 
+    def test_search_doi_crossref_returns_no_oa_id(self):
+        """When Crossref finds a DOI, oa_id must be None (not the unrelated OA result)."""
+        from enrich_dois import search_doi
+
+        # OA returns a low-sim match with an OA ID
+        oa_response = type("R", (), {"json": lambda self: {"results": [{
+            "doi": "https://doi.org/10.9999/wrong",
+            "title": "Totally Different Paper",
+            "id": "https://openalex.org/W999",
+        }]}})()
+        # Crossref returns a good match
+        cr_response = type("R", (), {"json": lambda self: {
+            "message": {"items": [{
+                "DOI": "10.1017/CBO9780511817434",
+                "title": ["The Economics of Climate Change"],
+            }]}
+        }})()
+
+        with patch("enrich_dois.polite_get") as mock_get:
+            mock_get.side_effect = [oa_response, cr_response]
+            doi, oa_id, sim = search_doi("The Economics of Climate Change")
+            assert doi == "10.1017/cbo9780511817434"
+            assert oa_id is None  # Must NOT be W999 from the unrelated OA result
+            assert sim >= 0.85
+
     def test_search_doi_no_crossref_when_oa_matches(self):
         """When OpenAlex returns a good match, Crossref is not queried."""
         from enrich_dois import search_doi
