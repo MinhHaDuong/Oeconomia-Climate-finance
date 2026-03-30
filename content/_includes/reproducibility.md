@@ -52,9 +52,11 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 | Bimodality analysis | ~1 min |
 | Citation genealogy | ~1 min |
 
-### Polars evaluation
+### Performance: DataFrame library and storage format
 
-We benchmarked Polars 1.39 against pandas 2.2 on the actual pipeline data (31,713 refined works, 835,455 citations) to evaluate a potential migration. Each operation was measured over three runs (median reported), after one warmup, on a single machine.
+We benchmarked alternative DataFrame libraries and storage formats on the actual pipeline data (31,713 refined works, 835,455 citations) to evaluate potential speedups. All timings are medians over 3--5 runs after a warmup pass, on a single machine (Intel x86, SSD).
+
+**DataFrame library.** Polars 1.39 vs pandas 2.2, reading from CSV:
 
 | Operation | pandas | Polars | Speedup |
 |---|---|---|---|
@@ -66,7 +68,20 @@ We benchmarked Polars 1.39 against pandas 2.2 on the actual pipeline data (31,71
 | Sort | 8 ms | 2 ms | 3× |
 | CSV write | 0.70 s | 0.04 s | 17× |
 
-Polars is 3--33× faster on CSV I/O and 2--3× faster on in-memory operations, thanks to its Rust-based columnar engine. However, the absolute gains are small: the entire Phase 2 benchmark completes in under 15 seconds with pandas. The real bottlenecks are network-bound Phase 1 stages (API harvesting, citation enrichment). Migrating 108 Python files from pandas to Polars' incompatible API would also require conversion at every scikit-learn, matplotlib, and numpy boundary. We therefore retain pandas, noting that `pd.read_csv(..., engine="pyarrow")` offers a ~3× CSV speedup with no API changes if needed in the future.
+Polars is 3--33× faster on I/O and 2--3× faster on in-memory operations. However, migrating 108 Python files to Polars' incompatible API would require rewriting every call site plus conversion shims at every scikit-learn, matplotlib, and numpy boundary. We retain pandas.
+
+**Storage format.** We then tested pandas' pyarrow CSV engine, Parquet, and Feather (Arrow IPC) against the default C-engine CSV reader:
+
+| Format | refined_works (31K rows) | citations (835K rows) | Disk size (works / citations) |
+|---|---|---|---|
+| CSV (default C engine) | 0.65 s | 4.16 s | 62 / 317 MB |
+| CSV (pyarrow engine) | fails^[The `refined_works.csv` abstract column contains embedded newlines inside quoted fields. The pyarrow CSV parser rejects these, while the default C parser handles them. Fixing this would require sanitizing all abstract text at write time.] | 0.09 s | --- |
+| Parquet | 0.13 s | 0.58 s | 30 / 122 MB |
+| Feather (Arrow IPC) | 0.03 s | 0.08 s | 31 / 135 MB |
+
+Feather is 20--50× faster than CSV, and both binary formats halve disk usage through columnar compression. The pyarrow CSV engine, which would have been a zero-migration speedup, fails on the works file due to embedded newlines in abstracts.
+
+**Decision.** The Phase 2 pipeline completes in under 15 seconds total; the absolute savings from a format switch are a few seconds per run. The real bottlenecks are network-bound Phase 1 stages (API harvesting, citation enrichment). We retain CSV for its human readability, diff-friendliness, and universal tooling. If the corpus grows past ~200K works or Phase 2 scripts run in parameter-sweep loops, switching the Phase 1→2 contract files to Feather would require changes to only two scripts (`corpus_align.py` for writes, `pipeline_loaders.py` for reads) and would add pyarrow as a dependency.
 
 ### Cross-machine reproducibility
 
