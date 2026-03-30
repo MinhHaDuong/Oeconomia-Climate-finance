@@ -24,7 +24,7 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 | `plot_fig_alluvial.py` | `fig_alluvial.png`, `fig_alluvial.html` | acceptable | HTML is an interactive companion of the static figure (same visualization, two formats). |
 | `plot_fig45_pca_scatter.py` | `fig_pca_scatter.png`, `tab_pca_axes.csv` | acceptable | The CSV records axis metadata for the figure — a sidecar, not an independent product. |
 | `plot_fig_seed_axis.py` | `fig_seed_axis_core.png`, `tab_seed_axis_core.csv` | acceptable | Same pattern — CSV is a sidecar table for the figure. |
-| `analyze_cocitation.py` | `communities.csv`, `tab_community_summary.csv`, `fig_communities.png` | **splittable** | Not in the Makefile (no target), but the script produces a data table, a summary table, and a figure — three independent outputs. The community detection (data) and the network visualization (figure) are separable. |
+| `analyze_cocitation.py` + `plot_cocitation.py` | `communities.csv`, `tab_community_summary.csv` / `fig_communities.png` | **split** (#552) | Compute script produces data + summary CSVs; plot script reads communities.csv and renders the network figure. |
 | `plot_fig_lexical_tfidf.py` | `fig_lexical_tfidf_{year}.png` (one per detected break year, dynamic) | acceptable | Multiple figures but they share the same logic, parameterized by break year. The dynamic set is inherently co-produced. |
 
 ## Summary
@@ -37,7 +37,7 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 
 1. **`analyze_bimodality.py`** — 3 independent figures + 3 tables. The tables are one analysis; each figure could be a separate plot script.
 2. ~~**`analyze_embeddings.py`**~~ — done (#551): split into `analyze_embeddings.py` (data) + `plot_semantic.py` (parameterized plot).
-3. **`analyze_cocitation.py`** — community detection + summary table + network figure. Not in Makefile yet; when added, should be split.
+3. ~~**`analyze_cocitation.py`**~~ — done (#552): split into `analyze_cocitation.py` (compute) + `plot_cocitation.py` (figure).
 
 ### Notes
 
