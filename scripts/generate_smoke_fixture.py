@@ -26,7 +26,8 @@ log = get_logger("generate_smoke_fixture")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Allow override via env var (useful when running from a worktree without data)
 _data_override = os.environ.get("CLIMATE_FINANCE_DATA")
-CATALOGS = _data_override or os.path.join(BASE_DIR, "data", "catalogs")
+_data_dir = _data_override or os.path.join(BASE_DIR, "data")
+CATALOGS = os.path.join(_data_dir, "catalogs")
 FIXTURE_DIR = os.path.join(BASE_DIR, "tests", "fixtures", "smoke")
 
 N_SAMPLE = 100

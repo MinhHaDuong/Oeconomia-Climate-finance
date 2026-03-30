@@ -1,0 +1,6 @@
+# Only track the 3 Phase 1→2 contract files
+*
+!.gitignore
+!refined_works.csv
+!refined_embeddings.npz
+!refined_citations.csv
