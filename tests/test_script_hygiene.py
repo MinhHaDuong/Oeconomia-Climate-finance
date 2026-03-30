@@ -85,7 +85,7 @@ def _scripts_with_main_guard():
 # Scripts that are pure libraries (no __main__ guard, imported by others).
 # These are exempt from argparse checks (no __main__ guard).
 LIBRARY_SCRIPTS = {
-    "utils.py", "plot_style.py", "filter_flags.py",
+    "utils.py", "plot_style.py", "filter_flags.py", "filter_flags_llm.py",
     "clustering_methods.py",
     "qa_near_duplicates.py",
     "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
@@ -409,6 +409,24 @@ class TestModuleLength:
             "pipeline_loaders.py / pipeline_progress.py"
         )
 
+    def test_filter_flags_under_500_lines(self):
+        """filter_flags.py must stay under 500 lines after LLM extraction (#559)."""
+        path = os.path.join(SCRIPTS_DIR, "filter_flags.py")
+        with open(path) as f:
+            lines = sum(1 for _ in f)
+        assert lines <= self.SMELL_LINES, (
+            f"filter_flags.py is {lines} lines — must be ≤ {self.SMELL_LINES}L. "
+            "LLM backend code belongs in filter_flags_llm.py (#559)"
+        )
+
+    def test_filter_flags_llm_exists(self):
+        """filter_flags_llm.py must exist after LLM extraction (#559)."""
+        path = os.path.join(SCRIPTS_DIR, "filter_flags_llm.py")
+        assert os.path.exists(path), (
+            "filter_flags_llm.py does not exist — extract Flag 6 LLM code from "
+            "filter_flags.py (#559)"
+        )
+
     def test_pipeline_modules_exist(self):
         """pipeline_text/io/loaders/progress.py must exist after split."""
         for name in ("pipeline_text.py", "pipeline_io.py",
@@ -661,10 +679,12 @@ class TestPdfDiscipline:
 
     # Scripts known to produce no figures (confirmed: no save_figure/savefig)
     NON_PLOTTING = [
+        "analyze_bimodality.py",
         "compute_breakpoints.py",
         "compute_clusters.py",
         "compute_lexical.py",
         "analyze_100bn.py",
+        "analyze_embeddings.py",
         "analyze_unfccc_topics.py",
         "compute_reranker_calibration.py",
         "plot_interactive_corpus.py",
@@ -680,7 +700,43 @@ class TestPdfDiscipline:
 
 
 # ---------------------------------------------------------------------------
-# 10. Test marker discipline: @slow vs @integration
+# 10. analyze_* scripts must not produce figures (1-fig-1-script)
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzeNoFigures:
+    """analyze_* scripts compute data, not figures.
+
+    Figure production belongs in plot_* scripts. This enforces the
+    1-fig-1-script separation: analyze_* should not call save_figure()
+    or savefig().
+    """
+
+    # Pre-existing violations with open tickets for splitting.
+    # Remove entries as they are fixed.
+    KNOWN_VIOLATIONS = {
+        "analyze_bimodality.py",    # #550
+        "analyze_embeddings.py",    # #551
+    }
+
+    def test_analyze_scripts_no_save_figure_or_savefig(self):
+        violations = []
+        for fname in sorted(os.listdir(SCRIPTS_DIR)):
+            if not fname.startswith("analyze_") or not fname.endswith(".py"):
+                continue
+            if fname in self.KNOWN_VIOLATIONS:
+                continue
+            path = os.path.join(SCRIPTS_DIR, fname)
+            src = Path(path).read_text()
+            if "save_figure" in src or "savefig" in src:
+                violations.append(fname)
+        assert not violations, (
+            f"analyze_* scripts must not produce figures (use plot_*): {violations}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 11. Test marker discipline: @slow vs @integration
 # ---------------------------------------------------------------------------
 
 TESTS_DIR = os.path.join(REPO, "tests")
@@ -742,7 +798,8 @@ class TestScriptNaming:
     LIBRARY_MODULES = {"utils.py", "plot_style.py", "script_io_args.py",
                        "pipeline_io.py", "pipeline_loaders.py",
                        "pipeline_progress.py", "pipeline_text.py",
-                       "filter_flags.py", "clustering_methods.py", "schemas.py",
+                       "filter_flags.py", "filter_flags_llm.py",
+                       "clustering_methods.py", "schemas.py",
                        # syllabi sub-modules (extracted from catalog_syllabi.py)
                        "syllabi_config.py", "syllabi_crossref.py",
                        "syllabi_harvest.py", "syllabi_io.py",
@@ -754,3 +811,66 @@ class TestScriptNaming:
                 continue
             assert any(f.name.startswith(p) for p in self.PREFIXES), \
                 f"{f.name} has non-conforming prefix"
+
+
+# ---------------------------------------------------------------------------
+# 12. analyze_* scripts must not produce figures (#551)
+# ---------------------------------------------------------------------------
+
+class TestAnalyzeNoFigures:
+    """analyze_* scripts should compute data, not produce figures.
+
+    The naming convention: analyze_* → data artifacts, plot_* → figures.
+    Calling save_figure() or .savefig() in an analyze_ script is a
+    separation-of-concerns violation.
+
+    Tickets: #550 (bimodality), #551 (embeddings), #552 (cocitation).
+    """
+
+    # Scripts already split — should stay clean.
+    CLEAN_ANALYZE = [
+        "analyze_embeddings.py",
+    ]
+
+    @pytest.mark.parametrize("script", CLEAN_ANALYZE)
+    def test_analyze_scripts_no_save_figure(self, script):
+        path = os.path.join(SCRIPTS_DIR, script)
+        src = Path(path).read_text()
+        assert "save_figure" not in src and ".savefig(" not in src, (
+            f"{script} calls save_figure/savefig — analyze_ scripts "
+            f"should produce data only, not figures"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 13. 1-figure-1-script: each plot script produces exactly one output type
+# ---------------------------------------------------------------------------
+
+class TestSingleOutputType:
+    """Each plot_* script should produce exactly one visual output type.
+
+    A script that writes both a static figure (save_figure/savefig) and an
+    interactive HTML file bundles two renderers in one module. Split them
+    following the genealogy pattern: plot_X.py (PNG) + plot_X_html.py (HTML).
+    """
+
+    def test_plot_scripts_single_output_type(self):
+        """No plot_* script produces both PNG and HTML."""
+        violations = []
+        for name in _all_scripts():
+            if not name.startswith("plot_"):
+                continue
+            path = os.path.join(SCRIPTS_DIR, name)
+            src = Path(path).read_text()
+            has_static = "save_figure" in src or "savefig" in src
+            has_html = ".html" in src and (
+                # Detect actual HTML file writing, not just docstring mentions
+                bool(re.search(r"""open\(.*\.html""", src))
+                or bool(re.search(r"""\.html['"]""", src))
+            )
+            if has_static and has_html:
+                violations.append(name)
+        assert not violations, (
+            f"Plot scripts producing both PNG and HTML (split into separate scripts): "
+            + ", ".join(violations)
+        )

@@ -283,10 +283,21 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 	uv run python $< --output $@ --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 # -- Data paper --
-# Semantic UMAP maps (3 co-produced figures)
-content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/figures/fig_semantic_period.png &: \
-		scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
+# Semantic clusters (computation only — no figures)
+SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
+
+$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
 	uv run python $<
+
+# Semantic UMAP maps (one parameterized plot script, 3 invocations)
+content/figures/fig_semantic.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
+	uv run python $< --color-by cluster --output $@
+
+content/figures/fig_semantic_lang.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
+	uv run python $< --color-by language --output $@
+
+content/figures/fig_semantic_period.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
+	uv run python $< --color-by period --output $@
 
 # -- Companion paper (quantitative) --
 # Structural break tables (independent of clustering)
@@ -313,9 +324,15 @@ content/figures/fig_breakpoints.png: \
 		content/tables/tab_alluvial.csv
 	uv run python $<
 
-# Alluvial figure
+# Alluvial figure (static PNG)
 content/figures/fig_alluvial.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
+		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
+	uv run python $<
+
+# Alluvial figure (interactive HTML)
+content/figures/fig_alluvial.html: \
+		scripts/plot_alluvial_html.py scripts/utils.py \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
 	uv run python $<
 
@@ -324,14 +341,24 @@ content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.p
 		content/tables/tab_breakpoints.csv
 	uv run python $<
 
-# Bimodality tests (co-produced)
-content/figures/fig_bimodality.png \
-content/figures/fig_bimodality_lexical.png \
-content/figures/fig_bimodality_keywords.png \
+# Bimodality tables (computation only — figures are separate targets below)
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
 content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $<
+
+# Bimodality figures (each reads tab_pole_papers.csv)
+content/figures/fig_bimodality.png: scripts/plot_bimodality.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
+
+content/figures/fig_bimodality_lexical.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
+
+content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
 
 # Seed-axis violin (core, manuscript figure)
 content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(REFINED)
@@ -343,7 +370,7 @@ content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/u
 
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab_pole_papers.csv content/figures/fig_semantic.png
+		$(REFINED) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
 	uv run python $<
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
@@ -377,24 +404,37 @@ content/figures/fig_alluvial_core.png: \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
 	uv run python $< --core-only
 
-# Bimodality core variant (co-produced)
-content/figures/fig_bimodality_core.png \
-content/figures/fig_bimodality_lexical_core.png \
-content/figures/fig_bimodality_keywords_core.png \
+# Bimodality core variant tables
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
 content/tables/tab_pole_papers_core.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
 	uv run python $< --core-only
 
+# Bimodality core variant figures
+content/figures/fig_bimodality_core.png: scripts/plot_bimodality.py scripts/utils.py \
+		content/tables/tab_pole_papers_core.csv
+	uv run python $< --core-only --output $@
+
+content/figures/fig_bimodality_lexical_core.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
+		content/tables/tab_pole_papers_core.csv
+	uv run python $< --core-only --output $@
+
+content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
+		content/tables/tab_pole_papers_core.csv
+	uv run python $< --core-only --output $@
+
 # Pre-2007 co-citation traditions network
 content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-# Co-citation communities (network + community assignments)
-content/figures/fig_communities.png \
-content/tables/tab_community_summary.csv &: \
-		scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
-	uv run python $<
+# Co-citation communities (compute: community assignments + summary table)
+COMMUNITIES := data/catalogs/communities.csv
+$(COMMUNITIES): scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
+	uv run python $< --output $@
+
+# Co-citation communities (plot: network figure)
+content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES)
+	uv run python $< --output $@ --input $(COMMUNITIES)
 
 # KDE supplementary
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
