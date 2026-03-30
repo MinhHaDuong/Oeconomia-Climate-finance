@@ -289,7 +289,7 @@ def load_refined_citations():
         raise FileNotFoundError(
             f"refined_citations not found at {REFINED_CITATIONS_FEATHER} or "
             f"{REFINED_CITATIONS_PATH}. "
-            "Run: make handoff (or uv run python scripts/corpus_align.py)"
+            "Run: make corpus-handoff (or uv run python scripts/corpus_align.py)"
         )
     return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 

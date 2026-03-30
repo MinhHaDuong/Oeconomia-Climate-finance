@@ -111,7 +111,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures handoff
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -206,7 +206,7 @@ $(REFINED_FTH): $(REFINED)
 $(REFINED_CIT_FTH): $(REFINED_CIT)
 	uv run python -c "import pandas as pd; pd.read_csv('$<', low_memory=False).to_feather('$@')"
 
-handoff: $(REFINED_FTH) $(REFINED_CIT_FTH)
+corpus-handoff: $(REFINED_FTH) $(REFINED_CIT_FTH)
 
 check-corpus:
 	@ok=true; \
