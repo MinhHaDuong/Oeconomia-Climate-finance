@@ -4,6 +4,35 @@ Journal format, most recent first.
 
 ---
 
+## 2026-03-30 — Corpus v1.1.1 (text normalization, unreleased)
+
+**What changed**: Added a text normalization step at the merge funnel point (`catalog_merge.py`) to fix encoding artifacts inherited from upstream aggregator APIs. No new data harvested; no API calls.
+
+**Fixes applied** (via `normalize_text()` in `pipeline_text.py`):
+
+| Issue | Rows affected | Fix |
+|-------|---------------|-----|
+| HTML named entities (`&amp;`, `&lt;`) | ~1,200 titles + ~1,000 abstracts | `html.unescape()` |
+| HTML numeric entities (`&#13;`, `&#146;`) | ~770 abstracts | `html.unescape()` |
+| Literal `\n`/`\t` in text | ~1,070 abstracts | Replace with space |
+| Zero-width chars (ZWSP, soft-hyphen, BOM) | ~80 across fields | Strip |
+| Mojibake / double-encoded UTF-8 (`Ã©` → `é`) | ~65 across fields | `ftfy.fix_text()` |
+| Smart-quote mojibake (`â€™` → `'`) | ~40 abstracts | `ftfy.fix_text()` |
+
+**Not fixed**: 29 records (0.09%) with U+FFFD replacement characters in author names — encoding errors at the publisher metadata deposit level, present in both OpenAlex and Crossref APIs.
+
+**Expected downstream impact** (after `dvc repro`):
+- ~18 additional title+year dedup merges (previously missed because `R&amp;D` ≠ `R&D`)
+- ~37.8% of abstracts change (mostly curly-quote→straight-quote normalization by ftfy)
+- Embeddings recomputed → UMAP/clustering may shift
+- Frozen v1 data (`config/v1_*`) and submitted manuscripts are unaffected
+
+**New dependency**: `ftfy` 6.3.1
+
+**PR**: #534, **Issue**: #533
+
+---
+
 ## 2026-03-26 — Submitted to RDJ4HSS (data paper)
 
 **Target**: Research Data Journal for the Humanities and Social Sciences

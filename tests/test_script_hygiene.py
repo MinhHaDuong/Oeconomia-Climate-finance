@@ -23,6 +23,7 @@ import re
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -561,6 +562,56 @@ class TestNoBarePrint:
 # 8. Type annotations on core modules (mypy)
 # ---------------------------------------------------------------------------
 
+class TestNoPhaseTwoInDvc:
+    """Phase 2 scripts must not be DVC stages (#527).
+
+    Phase 2 (analyze_*, compute_*, plot_*, export_*) is fast and deterministic —
+    outputs are Makefile targets, not DVC-tracked artifacts. Only Phase 1
+    (catalog_*, enrich_*, corpus_*) belongs in dvc.yaml.
+    """
+
+    # summarize_abstracts is Phase 1 enrichment (writes to enrich_cache/), not Phase 2
+    PHASE2_PREFIXES = ("analyze_", "compute_", "plot_", "export_")
+
+    def test_no_phase2_stages_in_dvc(self):
+        import yaml
+
+        dvc_path = os.path.join(REPO, "dvc.yaml")
+        with open(dvc_path) as f:
+            dvc = yaml.safe_load(f)
+        phase2_stages = [
+            s for s in dvc.get("stages", {})
+            if s.startswith(self.PHASE2_PREFIXES)
+        ]
+        assert phase2_stages == [], (
+            f"Phase 2 stages found in dvc.yaml (should be Makefile targets): "
+            f"{phase2_stages}"
+        )
+
+
+class TestFeatherHandoff:
+    """Phase 2 loaders must read Feather, not CSV (#528).
+
+    The Phase 1→2 handoff converts CSV to Feather for fast reads.
+    load_analysis_corpus and load_refined_citations must use read_feather.
+    """
+
+    def test_load_analysis_corpus_reads_feather(self):
+        source_path = os.path.join(SCRIPTS_DIR, "pipeline_loaders.py")
+        with open(source_path) as f:
+            source = f.read()
+        assert "read_feather" in source, (
+            "pipeline_loaders.py must use pd.read_feather for Phase 2 reads"
+        )
+
+    def test_feather_handoff_targets_in_makefile(self):
+        with open(MAKEFILE) as f:
+            content = f.read()
+        assert ".feather" in content, (
+            "Makefile must have handoff targets producing .feather files"
+        )
+
+
 _MYPY_AVAILABLE = subprocess.run(
     ["uv", "run", "mypy", "--version"], capture_output=True
 ).returncode == 0
@@ -593,4 +644,36 @@ class TestTypingCoreModules:
         )
         assert result.returncode == 0, (
             f"mypy errors in core modules:\n{result.stdout}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 9. No phantom --no-pdf in non-plotting scripts
+# ---------------------------------------------------------------------------
+
+class TestNoPdfDiscipline:
+    """Scripts that produce no figures should not accept --no-pdf.
+
+    The --no-pdf flag controls PDF generation in plotting scripts. When
+    non-plotting scripts accept it as a no-op "for interface compatibility",
+    the flag becomes a phantom that misleads readers about what the script does.
+    """
+
+    # Scripts known to produce no figures (confirmed: no save_figure/savefig)
+    NON_PLOTTING = [
+        "compute_breakpoints.py",
+        "compute_clusters.py",
+        "compute_lexical.py",
+        "analyze_100bn.py",
+        "analyze_unfccc_topics.py",
+        "calibrate_reranker.py",
+        "plot_interactive_corpus.py",
+    ]
+
+    @pytest.mark.parametrize("script", NON_PLOTTING)
+    def test_non_plotting_scripts_no_phantom_pdf_flag(self, script):
+        path = os.path.join(SCRIPTS_DIR, script)
+        src = Path(path).read_text()
+        assert "--no-pdf" not in src, (
+            f"{script} accepts --no-pdf but produces no figures"
         )

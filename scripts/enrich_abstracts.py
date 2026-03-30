@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 import requests
+from pipeline_text import normalize_text
 from utils import (
     CATALOGS_DIR,
     MAILTO,
@@ -65,12 +66,11 @@ def _is_paywall_stub(text):
 
 
 def clean_abstract(text):
-    """Strip HTML/XML/JATS tags, normalize whitespace, nullify paywall stubs."""
+    """Strip HTML/XML/JATS tags, fix encoding, nullify paywall stubs."""
     if not text:
         return ""
-    text = re.sub(r"<[^>]+>", " ", text)  # strip tags
-    text = re.sub(r"&[a-z]+;", " ", text)  # strip entities
-    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"<[^>]+>", " ", text)  # strip tags before normalize_text
+    text = normalize_text(text)
     if len(text) < MIN_ABSTRACT_LEN:
         return ""
     if _is_paywall_stub(text):

@@ -61,3 +61,4 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - Phase separation + manuscript cleanup (#189b): surgical Makefile deps, no API calls in Phase 3, structural break purge, layout fixes
 - Enrichment pipeline independence (#428): 4 DVC stages + join_enrichments.py, post-checkout hook symlinks .dvc/config.local (#505)
 - Code smell cleanup (#507): 26 dead imports removed, 11 complex functions refactored, global cache → class, normalize_doi_safe helper, exception narrowing
+- God module split (#542): `analyze_genealogy.py` 808→322L, M/V architecture with table-as-contract, robustness to `analyze_cocitation.py`

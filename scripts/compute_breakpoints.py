@@ -8,7 +8,6 @@ Flags:
   --core-only     Restrict to highly-cited papers (cited_by_count >= 50)
   --censor-gap N  Censor N transition years before each test point (default: 0)
   --robustness    Also run k-sensitivity table (k=4,5,6,7)
-  --no-pdf        Accepted for interface compatibility; no-op (no figures generated)
 
 Note: The k-sensitivity *figure* is produced by plot_fig_k_sensitivity.py.
 """
@@ -34,7 +33,6 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 # --- Args ---
 parser = argparse.ArgumentParser(description="Compute structural break tables")
 parser.add_argument("--robustness", action="store_true", help="Run k-sensitivity analysis")
-parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--censor-gap", type=int, default=0,

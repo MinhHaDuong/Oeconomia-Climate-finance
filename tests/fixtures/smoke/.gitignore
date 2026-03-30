@@ -4,7 +4,5 @@
 # Only the 3 contract files should be tracked.
 *
 !.gitignore
-!refined_works.csv
-!refined_embeddings.npz
-!refined_citations.csv
+!catalogs/
 !golden_hashes.json

@@ -74,7 +74,7 @@ Write `docs/local-ai/YYYY-MM-DD-log.md` on `session-log-YYYY-MM-DD` branch. Incl
 ## Invariants
 
 - **Never merge to main.** All changes as PRs.
-- **Archive bit-identical.** Verify: `make archive-analysis && make -C /tmp/climate-finance-analysis verify`
+- **Archive bit-identical.** Verify: `make archive-analysis` then `make -C /tmp/climate-finance-analysis verify` (separate Bash calls).
 - **One ticket per worktree.**
 - **Commit messages explain why.**
 

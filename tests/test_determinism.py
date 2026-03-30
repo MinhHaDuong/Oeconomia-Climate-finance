@@ -11,7 +11,7 @@ import sys
 
 import pytest
 
-FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "smoke")
+SMOKE_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "smoke")
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 MAKEFILE = os.path.join(os.path.dirname(__file__), "..", "Makefile")
 
@@ -19,7 +19,7 @@ MAKEFILE = os.path.join(os.path.dirname(__file__), "..", "Makefile")
 def _smoke_env():
     return {
         **os.environ,
-        "CLIMATE_FINANCE_DATA": FIXTURE_DIR,
+        "CLIMATE_FINANCE_DATA": SMOKE_DIR,
         "PYTHONHASHSEED": "0",
         "SOURCE_DATE_EPOCH": "0",
         "MPLBACKEND": "Agg",

@@ -14,6 +14,7 @@
 #   make analysis-figures   Regenerate all figures
 #   make analysis-stats     Recompute computed variables
 #   make corpus             Full Phase 1 pipeline (padme only)
+#   make corpus-handoff     Convert CSV→Feather for faster Phase 2 reads (optional)
 #   make corpus-sync        Pull data from padme (doudou only)
 #   make archive-manuscript Minimal package for Oeconomia reviewers
 #   make archive-datapaper  Full pipeline package for data paper
@@ -36,6 +37,10 @@ REFINED     := $(DATA_DIR)/refined_works.csv
 REFINED_EMB := $(DATA_DIR)/refined_embeddings.npz
 REFINED_CIT := $(DATA_DIR)/refined_citations.csv
 MOSTCITED   := $(DATA_DIR)/het_mostcited_50.csv
+
+# Phase 1→2 handoff: Feather files for fast Phase 2 reads
+REFINED_FTH := $(DATA_DIR)/refined_works.feather
+REFINED_CIT_FTH := $(DATA_DIR)/refined_citations.feather
 
 # ── Reproducibility ───────────────────────────────────────
 # PYTHONHASHSEED=0  → deterministic dict/set iteration order
@@ -107,7 +112,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-save check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-save check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -193,6 +198,17 @@ content/tables/qa_citations_report.json: scripts/qa_citations.py scripts/utils.p
 
 # Gate for Phase 2: verify all three contract files exist.
 # If any is missing, suggest dvc pull (data not synced) or make corpus (not built).
+# Phase 1→2 handoff: convert CSV contract files to Feather for fast Phase 2 reads.
+# Embeddings stay as .npz (already binary). One conversion pass (~5s) replaces
+# ~48s of repeated CSV parsing across 25 Phase 2 script invocations.
+$(REFINED_FTH): $(REFINED)
+	uv run python -c "import pandas as pd; pd.read_csv('$<').to_feather('$@')"
+
+$(REFINED_CIT_FTH): $(REFINED_CIT)
+	uv run python -c "import pandas as pd; pd.read_csv('$<', low_memory=False).to_feather('$@')"
+
+corpus-handoff: check-corpus $(REFINED_FTH) $(REFINED_CIT_FTH)
+
 check-corpus:
 	@ok=true; \
 	for f in "$(REFINED)" "$(REFINED_EMB)" "$(REFINED_CIT)"; do \
@@ -276,13 +292,13 @@ content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/f
 # Structural break tables (independent of clustering)
 content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv &: \
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
+	uv run python $<
 
 # Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --no-pdf
+	uv run python $<
 
 # Clustering — v1 frozen from reproducibility archive (not re-clustered).
 # KMeans is unstable to small corpus perturbations; re-clustering the v1
@@ -325,21 +341,29 @@ content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/pl
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
 	uv run python $< --no-pdf
 
-# Citation genealogy (needs bimodality output for pole assignments)
-content/figures/fig_genealogy.png: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab_pole_papers.csv
+# Citation genealogy: model (lineage table) then renderers
+content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
+		$(REFINED) content/tables/tab_pole_papers.csv content/figures/fig_semantic.png
+	uv run python $<
+
+content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
+		content/tables/tab_lineages.csv $(REFINED_CIT)
 	uv run python $< --no-pdf
+
+content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py \
+		content/tables/tab_lineages.csv $(REFINED_CIT)
+	uv run python $<
 
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only: structural break tables
 content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv &: \
 		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --no-pdf
+	uv run python $< --core-only
 
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only --no-pdf
+	uv run python $< --core-only
 
 # Core-only figures
 content/figures/fig_breakpoints_core.png: \
@@ -380,11 +404,11 @@ content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scri
 # Lexical TF-IDF table (diagnostic, not in manuscript)
 content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.py $(REFINED) \
 		content/tables/tab_breakpoint_robustness.csv
-	uv run python $< --no-pdf
+	uv run python $<
 
 # K-sensitivity table (diagnostic, --robustness flag)
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --robustness --no-pdf
+	uv run python $< --robustness
 
 # K-sensitivity figure
 content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
@@ -402,11 +426,11 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
 	uv run python $<
 
-figures-manuscript: check-manuscript-data $(MANUSCRIPT_FIGS)
-figures-datapaper:  check-corpus $(DATAPAPER_FIGS)
-figures-companion:  check-corpus $(COMPANION_FIGS)
-figures-techrep:    check-corpus $(TECHREP_FIGS)
-figures: check-corpus $(ALL_FIGS) corpus-tables
+figures-manuscript: corpus-handoff $(MANUSCRIPT_FIGS)
+figures-datapaper:  corpus-handoff $(DATAPAPER_FIGS)
+figures-companion:  corpus-handoff $(COMPANION_FIGS)
+figures-techrep:    corpus-handoff $(TECHREP_FIGS)
+figures: corpus-handoff $(ALL_FIGS) corpus-tables
 
 # ── Namespaced aliases (Phase 2) ────────────────────────
 # Organized by concern for discoverability: make analysis-<tab>
@@ -512,8 +536,8 @@ BENCH_OUT := benchmarks/timings.jsonl
 
 benchmark: check-corpus
 	@mkdir -p benchmarks
-	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py --no-pdf
-	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py --no-pdf
+	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py
+	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py
 	$(BENCH) analyze_bimodality $(BENCH_OUT) uv run python scripts/analyze_bimodality.py --no-pdf
 	$(BENCH) plot_fig1_bars $(BENCH_OUT) uv run python scripts/plot_fig1_bars.py --no-pdf
 	@echo "Benchmark results: $(BENCH_OUT)"

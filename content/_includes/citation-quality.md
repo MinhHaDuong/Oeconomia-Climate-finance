@@ -22,6 +22,10 @@ Coverage varies by period:
 
 The remaining {{< meta cite_never_fetched >}} never-fetched DOIs belong to publishers — preprint servers, small journals, regional outlets — that neither deposit reference metadata to Crossref nor appear in OpenAlex with resolved references. This is a genuine structural ceiling; no further improvement is expected without full-text PDF access.
 
+### Unstructured references
+
+Of the reference rows in `refined_citations.csv`, 60% carry a resolved DOI, 17% have a title but no DOI, and 23% (~189,000 rows) contain only a raw Crossref `unstructured` string — a free-text citation that neither Crossref nor OpenAlex could parse into structured fields. OpenAlex's `referenced_works` endpoint already resolves most Crossref references using fuzzy title and author matching at scale; these 189,000 rows are the residual that OpenAlex could not match either, typically grey literature, institutional reports, and working papers outside its corpus.
+
 ### Quality verification
 
 Two statistical tests verify the citation graph against Crossref as independent ground truth (seed 42, n=300 per test, verification date: 2026-03-26).

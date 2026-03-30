@@ -1,10 +1,13 @@
 """Pure text-transform utilities for the literature indexing pipeline.
 
 All functions here are stateless: no I/O, no side effects, no imports
-beyond stdlib + pandas. Safe to import in any context.
+beyond stdlib + pandas + ftfy. Safe to import in any context.
 
 Exports
 -------
+normalize_text
+    Fix encoding artifacts from aggregator APIs: HTML entities, mojibake,
+    zero-width chars, literal escape sequences, whitespace.
 normalize_doi
     Strip URL prefix, lowercase, trim a DOI string.
 normalize_title
@@ -25,9 +28,47 @@ detect_language
     Detect language from text using langdetect (seeded for reproducibility).
 """
 
+import html
 import re
 
+import ftfy
 import pandas as pd
+
+# ---------------------------------------------------------------------------
+# General text normalization
+# ---------------------------------------------------------------------------
+
+# Characters that are invisible/zero-width and should be stripped.
+_INVISIBLE_RE = re.compile(r"[\u200b\u200c\u200d\ufeff\u00ad]")
+
+# Literal backslash-escape sequences that should become spaces.
+_LITERAL_ESCAPES_RE = re.compile(r"\\[nrt]")
+
+
+def normalize_text(text: str | None) -> str:
+    """Fix encoding artifacts from upstream aggregator APIs.
+
+    Handles (in order):
+    1. ftfy: mojibake repair (double-encoded UTF-8, smart-quote garbling)
+    2. html.unescape (x2): named + numeric HTML entities, including double-encoded
+    3. Zero-width / invisible character removal
+    4. Literal backslash escape sequences (\\n, \\t, \\r) → space
+    5. Whitespace normalization (collapse runs, strip)
+    """
+    if not text:
+        return ""
+    text = str(text)
+    # 1. Fix mojibake (Ã© → é, â€™ → ', etc.)
+    text = ftfy.fix_text(text)
+    # 2. Decode HTML entities — two passes for double-encoded (&amp;#43; → &#43; → +)
+    text = html.unescape(html.unescape(text))
+    # 3. Strip invisible characters
+    text = _INVISIBLE_RE.sub("", text)
+    # 4. Replace literal escape sequences with spaces
+    text = _LITERAL_ESCAPES_RE.sub(" ", text)
+    # 5. Normalize whitespace (real newlines, tabs, multiple spaces → single space)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 # ---------------------------------------------------------------------------
 # DOI helpers

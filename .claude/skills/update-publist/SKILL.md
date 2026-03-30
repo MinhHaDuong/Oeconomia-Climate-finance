@@ -12,8 +12,8 @@ Update the author's BibTeX database and archive on HAL. Covers all scientific pr
 ## Source of truth
 
 - **BibTeX file**: `~/CNRS/html/src/Ha-Duong.bib`
-- **Build**: `cd ~/CNRS/html/src && make` (generates `index.html`)
-- **Deploy**: `cd ~/CNRS/html && make sync` (FTP to ouvaton.coop)
+- **Build**: `make` in `~/CNRS/html/src` (generates `index.html`)
+- **Deploy**: `make sync` in `~/CNRS/html` (FTP to ouvaton.coop)
 - Not a git repo — edits are direct.
 
 ## BibTeX entry type rules
@@ -83,5 +83,5 @@ Only proceed to upload after the review passes.
 3. Add or edit BibTeX entries following the type rules above.
 4. **PDF review gate**: vision-review every page of the PDF against HAL guidelines before upload.
 5. Run the HAL SWORD workflow (dry run, then real).
-6. Tell the user to rebuild: `cd ~/CNRS/html/src && make`
+6. Tell the user to rebuild: run `make` in `~/CNRS/html/src`
 7. Update STATE.md if HAL IDs changed.

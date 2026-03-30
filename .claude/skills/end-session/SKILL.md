@@ -20,6 +20,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    - `git branch -a` → delete stale remote branches
    - `gh issue list` → no orphan issues
    - `gh pr list` → no stale PRs
+   - `.claude/settings.local.json` → review accumulated one-off permissions. Propose promoting recurring patterns to `settings.json` (shared), then reset local `allow` to `[]`
 6. **Full test suite** — `make check` on main. New failures → open ticket (tag `bug`). Known failures → confirm still open.
 7. **Refresh STATE.md** on a throwaway branch:
    a. `git checkout -b housekeeping-state-YYYY-MM-DD main`

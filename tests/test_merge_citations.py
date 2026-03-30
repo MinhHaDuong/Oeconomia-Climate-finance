@@ -130,6 +130,23 @@ class TestMergeCitations:
         result = pd.read_csv(out)
         assert len(result) == 0
 
+    def test_no_doi_dedup_across_sources(self, tmp_path, cache_dir):
+        """Same book ref from both sources should be deduplicated."""
+        _write_crossref(cache_dir, [
+            ["10.1/a", "", "", "Climate Book", "Brown", "1996", "", '{"author":"Brown"}'],
+        ])
+        _write_openalex(cache_dir, [
+            ["10.1/a", "W999", "", "Climate Book", "Brown", "1996", ""],
+        ])
+        out = tmp_path / "citations.csv"
+
+        from merge_citations import merge_citations
+        merge_citations(cache_dir=str(cache_dir), output_path=str(out))
+
+        result = pd.read_csv(out)
+        assert len(result) == 1, \
+            f"Expected 1 row (deduped no-DOI ref), got {len(result)}"
+
     def test_output_columns(self, tmp_path, cache_dir):
         """Output should have the standard REFS_COLUMNS schema."""
         _write_crossref(cache_dir, [

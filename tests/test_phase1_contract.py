@@ -79,7 +79,37 @@ def _make_citations_csv(tmp_path, refined_dois, extra_dois=None):
 
 
 def _env_with_data(tmp_path):
+    """Set CLIMATE_FINANCE_DATA to tmp_path (DATA_DIR); CATALOGS_DIR = tmp_path/catalogs/."""
     return {**os.environ, "CLIMATE_FINANCE_DATA": str(tmp_path)}
+
+
+# ---------------------------------------------------------------------------
+# Unit: CLIMATE_FINANCE_DATA env var sets DATA_DIR, not CATALOGS_DIR
+# ---------------------------------------------------------------------------
+
+class TestClimateFinanceDataSemantics:
+    """CLIMATE_FINANCE_DATA override sets DATA_DIR; CATALOGS_DIR appends /catalogs."""
+
+    def test_catalogs_dir_appends_catalogs(self, monkeypatch):
+        monkeypatch.setenv("CLIMATE_FINANCE_DATA", "/tmp/mydata")
+        import importlib
+        import pipeline_loaders
+        importlib.reload(pipeline_loaders)
+        try:
+            assert pipeline_loaders.CATALOGS_DIR == "/tmp/mydata/catalogs"
+            assert pipeline_loaders.DATA_DIR == "/tmp/mydata"
+        finally:
+            importlib.reload(pipeline_loaders)
+
+    def test_default_catalogs_dir_without_override(self, monkeypatch):
+        monkeypatch.delenv("CLIMATE_FINANCE_DATA", raising=False)
+        import importlib
+        import pipeline_loaders
+        importlib.reload(pipeline_loaders)
+        try:
+            assert pipeline_loaders.CATALOGS_DIR.endswith(os.path.join("data", "catalogs"))
+        finally:
+            importlib.reload(pipeline_loaders)
 
 
 # ---------------------------------------------------------------------------

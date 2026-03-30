@@ -52,6 +52,39 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 | Bimodality analysis | ~1 min |
 | Citation genealogy | ~1 min |
 
+### Performance: DataFrame library and storage format
+
+We benchmarked alternative DataFrame libraries and storage formats on the actual pipeline data (31,713 refined works, 835,455 citations) to evaluate potential speedups. All timings are medians over 3--5 runs after a warmup pass, on a single machine (Intel x86, SSD).
+
+**DataFrame library.** Polars 1.39 vs pandas 2.2, reading from CSV:
+
+| Operation | pandas | Polars | Speedup |
+|---|---|---|---|
+| CSV read refined works | 0.54 s | 0.11 s | 5× |
+| CSV read citations | 2.87 s | 0.09 s | 33× |
+| GroupBy aggregation | 0.04 s | 0.02 s | 2× |
+| Left join | 6 ms | 2 ms | 3× |
+| String filter | 24 ms | 7 ms | 3× |
+| Sort | 8 ms | 2 ms | 3× |
+| CSV write | 0.70 s | 0.04 s | 17× |
+
+Polars is 3--33× faster on I/O and 2--3× faster on in-memory operations. However, migrating 108 Python files to Polars' incompatible API would require rewriting every call site plus conversion shims at every scikit-learn, matplotlib, and numpy boundary. We retain pandas.
+
+**Storage format.** We then tested pandas' pyarrow CSV engine, Parquet, and Feather (Arrow IPC) against the default C-engine CSV reader:
+
+| Format | refined_works (31K rows) | citations (835K rows) | Disk size (works / citations) |
+|---|---|---|---|
+| CSV (default C engine) | 0.65 s | 4.16 s | 62 / 317 MB |
+| CSV (pyarrow engine) | fails^[The `refined_works.csv` abstract column contains embedded newlines inside quoted fields. The pyarrow CSV parser rejects these, while the default C parser handles them. Fixing this would require sanitizing all abstract text at write time.] | 0.09 s | --- |
+| Parquet | 0.13 s | 0.58 s | 30 / 122 MB |
+| Feather (Arrow IPC) | 0.03 s | 0.08 s | 31 / 135 MB |
+
+Feather is 20--50× faster than CSV, and both binary formats halve disk usage through columnar compression. The pyarrow CSV engine, which would have been a zero-migration speedup, fails on the works file due to embedded newlines in abstracts.
+
+**Cumulative cost.** The CSV parse cost is paid independently by each script: 16 Phase 2 scripts read `refined_works.csv` and 9 read `refined_citations.csv`, with no cross-script caching. A full `make analysis-figures` run thus spends ~0.65 s × 16 + ~4.2 s × 9 ≈ 48 seconds on CSV parsing alone. With Feather this drops to ~1.5 seconds.
+
+**Implementation.** CSV remains the canonical archival format — human-readable, diff-friendly, and shipped in reproducibility archives. An optional `make corpus-handoff` step converts CSV to Feather for developers iterating on Phase 2 scripts. The Phase 2 loaders (`pipeline_loaders.py`) prefer Feather when present and fall back to CSV transparently.
+
 ### Cross-machine reproducibility
 
 Figures and tables are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).

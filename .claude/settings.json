@@ -3,23 +3,32 @@
     "allow": [
       "Bash(*make*)",
       "Bash(*uv sync*)",
-      "Bash(*uv run python*)",
-      "Bash(*git status*)",
-      "Bash(*git log*)",
-      "Bash(*git diff*)",
-      "Bash(*git branch*)",
-      "Bash(*git worktree*)",
+      "Bash(*uv run *)",
+      "Bash(*uv add *)",
+      "Bash(*python3 *)",
+      "Bash(*git *)",
+      "Bash(*gh issue *)",
+      "Bash(*gh pr *)",
+      "Bash(*gh api*)",
+      "Bash(*dvc *)",
+      "Bash(*quarto *)",
       "Read",
       "Glob",
       "Grep",
       "Skill",
+      "WebSearch",
       "Edit(/.claude/**)",
       "WebFetch(domain:docs.astral.sh)"
     ],
     "deny": [
       "Bash(rm -rf *)",
       "Bash(sudo *)",
-      "Bash(*> /etc/*)"
+      "Bash(*> /etc/*)",
+      "Bash(*git push --force*)",
+      "Bash(*git push -f *)",
+      "Bash(*git reset --hard*)",
+      "Bash(*git clean*)",
+      "Bash(*git rebase*)"
     ],
     "additionalDirectories": [
       "/home/haduong/CNRS/html/src"
