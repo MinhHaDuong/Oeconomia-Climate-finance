@@ -81,7 +81,9 @@ Polars is 3--33× faster on I/O and 2--3× faster on in-memory operations. Howev
 
 Feather is 20--50× faster than CSV, and both binary formats halve disk usage through columnar compression. The pyarrow CSV engine, which would have been a zero-migration speedup, fails on the works file due to embedded newlines in abstracts.
 
-**Decision.** The Phase 2 pipeline completes in under 15 seconds total; the absolute savings from a format switch are a few seconds per run. The real bottlenecks are network-bound Phase 1 stages (API harvesting, citation enrichment). We retain CSV for its human readability, diff-friendliness, and universal tooling. If the corpus grows past ~200K works or Phase 2 scripts run in parameter-sweep loops, switching the Phase 1→2 contract files to Feather would require changes to only two scripts (`corpus_align.py` for writes, `pipeline_loaders.py` for reads) and would add pyarrow as a dependency.
+**Cumulative cost.** The CSV parse cost is paid independently by each script: 16 Phase 2 scripts read `refined_works.csv` and 9 read `refined_citations.csv`, with no cross-script caching. A full `make analysis-figures` run thus spends ~0.65 s × 16 + ~4.2 s × 9 ≈ 48 seconds on CSV parsing alone. With Feather this drops to ~1.5 seconds.
+
+**Decision.** Phase 1 continues to write CSV (human-readable, diff-friendly, DVC-tracked). A format conversion step at the Phase 1→2 handoff produces Feather files that Phase 2 scripts read. Each phase tracks its own inputs: Phase 1 outputs are DVC-stored (expensive to regenerate); Phase 2 outputs are verified by hash (cheap to regenerate). This requires adding pyarrow as a dependency and modifying the handoff step (write) and `pipeline_loaders.py` (read). See #527 for the first step: removing the one Phase 2 stage that is currently misplaced in the DVC pipeline.
 
 ### Cross-machine reproducibility
 
