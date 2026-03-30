@@ -151,6 +151,7 @@ class TestUtilsHelpers:
         assert counters.get("retries", 0) == 0
         assert counters.get("rate_limited", 0) == 0
 
+    @pytest.mark.integration
     def test_retry_get_records_rate_limit(self, requests_mock):
         from utils import retry_get
         requests_mock.get(
@@ -166,6 +167,7 @@ class TestUtilsHelpers:
         assert counters.get("rate_limited", 0) >= 1
         assert counters.get("retries", 0) >= 1
 
+    @pytest.mark.integration
     def test_retry_get_records_server_error_then_success(self, requests_mock):
         from utils import retry_get
         requests_mock.get(

@@ -15,6 +15,7 @@ SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 sys.path.insert(0, SCRIPTS_DIR)
 
 
+@pytest.mark.integration
 class TestPoliteGetRobustness:
     """polite_get should survive transient 429s with exponential backoff."""
 
