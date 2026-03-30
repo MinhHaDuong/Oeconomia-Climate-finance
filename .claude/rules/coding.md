@@ -13,7 +13,7 @@ paths:
 ## Testing
 
 - Tests live in `tests/`. A new script or changed behavior starts with a test in `tests/test_<module>.py`.
-- `make check-fast`: unit tests + prose lint, < 20 s — run during development.
+- `make check-fast`: unit tests + prose lint, < 10 s — run during development.
 - `make check`: full suite including integration + slow tests — run before opening a PR.
 - Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken them without discussion.
 
