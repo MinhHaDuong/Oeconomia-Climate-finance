@@ -10,8 +10,8 @@ Reads source-specific cache files from enrich_cache/:
 Produces citations.csv with REFS_COLUMNS schema, deduplicated on
 (source_doi, ref_doi). Sentinel rows are excluded.
 
-This script is the final step of the enrich_citations DVC stage.
-It runs after the Crossref and OpenAlex passes (which can run in parallel).
+This script is the final step of the ref_match DVC stage.
+It runs after ref_match_corpus.py (which fuzzy-matches parsed refs to corpus).
 DVC may wipe citations.csv before a re-run — this merge regenerates it
 from the persistent caches in seconds, with no API calls.
 

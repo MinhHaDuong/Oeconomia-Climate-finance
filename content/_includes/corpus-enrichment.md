@@ -25,12 +25,13 @@ Abstracts are needed for embedding generation (§2.4) and LLM relevance scoring 
 
 ### Citation enrichment
 
-Citation links are assembled from three sources:
+Citation links are assembled from four sources:
 
 - **Crossref** (`enrich_citations_batch.py`): Batch DOI lookup via the Crossref REST API. Writes to `enrich_cache/crossref_refs.csv` (append-only); resumable via cache-is-data.
 - **OpenAlex** (`enrich_citations_openalex.py`): Fills gaps using OpenAlex's `referenced_works` field. Writes to `enrich_cache/openalex_refs.csv`; also skips DOIs already in `openalex_citations.csv` (catalog-stage harvest).
 - **GROBID parsing** (`parse_citations_grobid.py`): Approximately half of Crossref references carry only an unstructured citation string (no structured title, author, or year fields). These are parsed by GROBID, a purpose-built ML model for bibliographic reference parsing, running locally via Podman. Results are cached in `enrich_cache/grobid_parsed.jsonl` (keyed by text hash) and written to `enrich_cache/ref_parsed.csv` with the standard reference schema.
-- **Merge** (`merge_citations.py`): Concatenates all three caches (Crossref, OpenAlex, GROBID-parsed) into `citations.csv`, deduplicates on (source_doi, ref_doi) for DOI-bearing refs and on (source_doi, ref_title, ref_first_author, ref_year) for no-DOI refs (books, reports), and excludes sentinels. DVC can safely wipe `citations.csv` — merge regenerates it in seconds.
+- **Corpus matching** (`ref_match_corpus.py`): Fuzzy-matches GROBID-parsed refs against `refined_works.csv` to discover `ref_doi` for refs that cite corpus works. Uses rapidfuzz `token_sort_ratio` ≥ 85 with year ±1 blocking. Writes to `enrich_cache/ref_matches.csv`.
+- **Merge** (`merge_citations.py`): Concatenates all four caches (Crossref, OpenAlex, GROBID-parsed, corpus-matched) into `citations.csv`, deduplicates on (source_doi, ref_doi) for DOI-bearing refs and on (source_doi, ref_title, ref_first_author, ref_year) for no-DOI refs (books, reports), and excludes sentinels. DVC can safely wipe `citations.csv` — merge regenerates it in seconds.
 - **ISTEX** (`catalog_istex.py`): Reference lists (`refBibs`) are extracted during discovery and stored in `istex_refs.csv`.
 
 Quality control (`qa_citations.py`) validates DOI formats, removes self-citations, and reports coverage statistics. The merged `citations.csv` is needed for citation isolation detection (flag 4 in §3).

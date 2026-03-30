@@ -208,10 +208,10 @@ stages:
     outs:
       - data/catalogs/enriched_works.csv
 
-  # Phase 1b.3: Build citation graph (Crossref + OpenAlex in parallel, then merge)
+  # Phase 1b.3: Build citation caches (Crossref + OpenAlex in parallel, then GROBID parse)
   # Crossref and OpenAlex write to enrich_cache/ (persistent, append-only).
-  # merge_citations.py concats both caches into citations.csv (the DVC output).
-  # DVC wipe of citations.csv is harmless — merge regenerates it in seconds.
+  # GROBID parses unstructured Crossref refs into ref_parsed.csv.
+  # citations.csv is produced downstream by the ref_match stage (#539).
   enrich_citations:
     cmd: >-
       uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv & p1=$!;
