@@ -259,10 +259,6 @@ def main() -> None:
         description="UNFCCC-guided topic taxonomy analysis of climate finance literature"
     )
     parser.add_argument(
-        "--no-pdf", action="store_true",
-        help="No-op (no figures generated here)"
-    )
-    parser.add_argument(
         "--skip-citation-silhouette", action="store_true",
         help="Skip the expensive citation-space silhouette computation"
     )

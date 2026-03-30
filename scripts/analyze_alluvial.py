@@ -22,9 +22,9 @@ import sys
 
 # Which flags each sub-script accepts
 SCRIPT_FLAGS = {
-    "scripts/compute_breakpoints.py": {"--core-only", "--censor-gap", "--robustness", "--no-pdf"},
-    "scripts/compute_clusters.py":    {"--core-only", "--no-pdf", "--breaks"},
-    "scripts/compute_lexical.py":     {"--no-pdf"},
+    "scripts/compute_breakpoints.py": {"--core-only", "--censor-gap", "--robustness"},
+    "scripts/compute_clusters.py":    {"--core-only", "--breaks"},
+    "scripts/compute_lexical.py":     set(),
     "scripts/plot_fig_breakpoints.py": {"--core-only", "--censor-gap", "--no-pdf"},
     "scripts/plot_fig_alluvial.py":    {"--core-only", "--censor-gap", "--no-pdf"},
 }
@@ -33,7 +33,6 @@ parser = argparse.ArgumentParser(description="Full alluvial pipeline (deprecated
 parser.add_argument("--core-only", action="store_true")
 parser.add_argument("--censor-gap", type=int, default=0)
 parser.add_argument("--robustness", action="store_true")
-parser.add_argument("--no-pdf", action="store_true")
 parser.add_argument("--breaks", type=str, default=None)
 args = parser.parse_args()
 
@@ -48,8 +47,6 @@ def _build_argv(script):
         argv.extend(["--censor-gap", str(args.censor_gap)])
     if args.robustness and "--robustness" in accepted:
         argv.append("--robustness")
-    if args.no_pdf and "--no-pdf" in accepted:
-        argv.append("--no-pdf")
     if args.breaks and "--breaks" in accepted:
         argv.extend(["--breaks", args.breaks])
     return argv

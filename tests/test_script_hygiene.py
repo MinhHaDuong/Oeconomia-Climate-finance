@@ -23,6 +23,7 @@ import re
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -634,4 +635,36 @@ class TestTypingCoreModules:
         )
         assert result.returncode == 0, (
             f"mypy errors in core modules:\n{result.stdout}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 9. No phantom --no-pdf in non-plotting scripts
+# ---------------------------------------------------------------------------
+
+class TestNoPdfDiscipline:
+    """Scripts that produce no figures should not accept --no-pdf.
+
+    The --no-pdf flag controls PDF generation in plotting scripts. When
+    non-plotting scripts accept it as a no-op "for interface compatibility",
+    the flag becomes a phantom that misleads readers about what the script does.
+    """
+
+    # Scripts known to produce no figures (confirmed: no save_figure/savefig)
+    NON_PLOTTING = [
+        "compute_breakpoints.py",
+        "compute_clusters.py",
+        "compute_lexical.py",
+        "analyze_100bn.py",
+        "analyze_unfccc_topics.py",
+        "calibrate_reranker.py",
+        "plot_interactive_corpus.py",
+    ]
+
+    @pytest.mark.parametrize("script", NON_PLOTTING)
+    def test_non_plotting_scripts_no_phantom_pdf_flag(self, script):
+        path = os.path.join(SCRIPTS_DIR, script)
+        src = Path(path).read_text()
+        assert "--no-pdf" not in src, (
+            f"{script} accepts --no-pdf but produces no figures"
         )
