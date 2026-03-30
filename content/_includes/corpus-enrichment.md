@@ -12,6 +12,10 @@ Before enrichment, `corpus_filter.py --apply --cheap` removes papers that fail b
 
 This step typically removes ~5,000 records, saving downstream enrichment costs. Papers removed here are not submitted for abstract backfill, citation lookup, or embedding generation.
 
+### DOI enrichment
+
+The script `enrich_dois.py` resolves missing DOIs for works that have a title but no DOI. It queries OpenAlex by title (fuzzy match, similarity threshold ≥ 0.85), then falls back to Crossref title search when OpenAlex returns no match. Results are cached in `enrich_cache/doi_resolved.csv` (keyed by source_id). Approximately 27% of corpus works lack DOIs; the Crossref fallback recovers DOIs for works that OpenAlex indexes without one.
+
 ### Abstract enrichment
 
 The script `enrich_abstracts.py` backfills missing abstracts through four sources, tried in order:

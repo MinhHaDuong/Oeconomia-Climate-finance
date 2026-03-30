@@ -31,6 +31,43 @@ Journal format, most recent first.
 
 **PR**: #534, **Issue**: #533
 
+### GROBID citation parsing (#538)
+
+352K unstructured Crossref citation strings parsed into structured fields (title, author, year) via GROBID 0.8.1 running locally in podman. 30 minutes for the full run at 200 citations/sec.
+
+| Metric | Count | Rate |
+|--------|-------|------|
+| Unique strings parsed | 351,978 | 100% |
+| Output rows | 355,016 | — |
+| Titles filled | 355,016 | 100% |
+| Authors filled | 297,288 | 84% |
+| Years filled | 342,078 | 96% |
+
+Results cached in `enrich_cache/grobid_parsed.jsonl` (keyed by text hash). `merge_citations.py` reads `ref_parsed.csv` as third input alongside Crossref and OpenAlex caches. New DVC step in `enrich_citations` stage.
+
+**PR**: #561, **Issue**: #538
+
+### Fuzzy ref matching (#539)
+
+GROBID-parsed refs matched against refined_works.csv using rapidfuzz token_sort_ratio ≥ 85 with year ±1 blocking. 3,414 new citation graph edges discovered — previously invisible references to IPCC reports, UNFCCC, Paris Agreement, Stern Review, etc.
+
+**PR**: #565, **Issue**: #539
+
+### Crossref DOI fallback (#569)
+
+`enrich_dois.py` now queries Crossref when OpenAlex returns no DOI match. Removed the `is_oa_only` skip that was hiding 8,920 works from DOI resolution. Tested on 20 works: 15% hit rate. Full run (~9,268 works, ~8.5 hours) pending.
+
+**PR**: #570, **Issue**: #569
+
+### Pipeline re-run results
+
+| Metric | v1.1 | v1.1.1 |
+|--------|------|--------|
+| Raw works | 42,922 | 42,916 |
+| Refined works | 31,713 | 31,712 |
+| Citations | 968,871 | 967,204 |
+| Refined citations | — | 834,221 |
+
 ---
 
 ## 2026-03-26 — Submitted to RDJ4HSS (data paper)
