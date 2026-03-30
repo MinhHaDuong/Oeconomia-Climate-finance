@@ -402,13 +402,13 @@ content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_
 	uv run python $<
 
 # Co-citation communities (compute: community assignments + summary table)
-content/tables/tab_community_summary.csv: scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
-	uv run python $< --output data/catalogs/communities.csv
+COMMUNITIES := data/catalogs/communities.csv
+$(COMMUNITIES): scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
+	uv run python $< --output $@
 
 # Co-citation communities (plot: network figure)
-content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py \
-		content/tables/tab_community_summary.csv
-	uv run python $< --output $@ --input data/catalogs/communities.csv
+content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES)
+	uv run python $< --output $@ --input $(COMMUNITIES)
 
 # KDE supplementary
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
