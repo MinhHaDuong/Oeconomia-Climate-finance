@@ -1090,3 +1090,44 @@ class TestOutputFlag:
             f"{len(violators)} scripts produce output but have no --output flag: "
             f"{sorted(violators)}"
         )
+
+    def test_output_flag_is_wired_through(self):
+        """--output must control actual output, not be a no-op.
+
+        Checks that args.output or io_args.output appears in the script
+        body beyond just argparse declaration and validate_io calls.
+        """
+        # Lines that merely declare/validate --output don't count
+        BOILERPLATE = {
+            "add_argument", "validate_io", "parse_io_args",
+            "parse_args", "parse_known_args", 'help=', 'help="',
+        }
+        no_ops = []
+        for f in Path(SCRIPTS_DIR).glob("*.py"):
+            src = f.read_text()
+            if "__name__" not in src or "__main__" not in src:
+                continue
+            if f.name in LIBRARY_SCRIPTS or f.name in self.OUTPUT_EXEMPT:
+                continue
+            if "--output" not in src and "parse_io_args" not in src:
+                continue
+            # Find lines that USE the output value
+            used = False
+            for line in src.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                # Must reference the output variable
+                if ".output" not in stripped and "output_path" not in stripped:
+                    continue
+                # Skip boilerplate lines
+                if any(bp in stripped for bp in BOILERPLATE):
+                    continue
+                used = True
+                break
+            if not used:
+                no_ops.append(f.name)
+        assert not no_ops, (
+            f"{len(no_ops)} scripts accept --output but never use it: "
+            f"{sorted(no_ops)}"
+        )
