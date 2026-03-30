@@ -21,5 +21,8 @@
   },
   "plot_fig_alluvial": {
     "content/figures/fig_alluvial.png": "d3c1def589b1f486180327a9a9c00f840cfcc3fd00d8a5d04b60dcdee8686841"
+  },
+  "plot_fig_breakpoints": {
+    "content/figures/fig_breakpoints.png": "1883b4db7f5a77b058bc6ccef7a81a13889796ccaa06006b3fe945e3ee26608e"
   }
 }

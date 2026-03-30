@@ -117,12 +117,21 @@ REGISTRY: list[dict] = [
             "content/figures/fig_alluvial.png",
         ],
     },
+    # --- Figures: breakpoints panel (depends on compute_breakpoints + clusters) ---
+    {
+        "name": "plot_fig_breakpoints",
+        "script": "plot_fig_breakpoints.py",
+        "args": ["--no-pdf"],
+        "outputs": [
+            "content/figures/fig_breakpoints.png",
+        ],
+    },
 ]
 
-# Scripts excluded from regression testing:
-# - compute_lexical: empty robustness table on 100 rows
-# - plot_fig_breakpoints: same (reads robustness table)
-# - analyze_bimodality: NaN in GMM with sparse 100-row TF-IDF
+# Scripts excluded from regression testing (exit gracefully but produce
+# no meaningful output on 100 rows):
+# - compute_lexical: no robust breakpoints → empty output (exits 0)
+# - analyze_bimodality: too few pole papers → exits 0
 # - plot_fig_seed_axis: not enough core papers for violins
 # - plot_fig45_pca_scatter: no bimodal PCs at 100 rows (exits 0)
 # - build_het_core: writes to CATALOGS_DIR (env-dependent path)
