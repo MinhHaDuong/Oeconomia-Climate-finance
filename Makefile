@@ -112,7 +112,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-save check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -517,6 +517,16 @@ smoke:
 # Catches unseeded randomness, leaking timestamps, floating-point non-determinism.
 determinism-check:
 	uv run pytest tests/test_determinism.py -v --tb=short
+
+# Regression hashes: compare Phase 2 output hashes against golden baseline.
+# Runs as pytest (one test per script, module-scoped fixture = scripts run once).
+#   make regression          — check against golden baseline
+#   make regression-save     — regenerate golden baseline (after intentional change)
+regression:
+	uv run pytest tests/test_regression.py -v --tb=short -m slow -k "test_regression_"
+
+regression-save:
+	uv run python scripts/regression_hashes.py --save
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.

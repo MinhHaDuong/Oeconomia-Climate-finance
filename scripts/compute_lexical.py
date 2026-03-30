@@ -69,10 +69,12 @@ if __name__ == "__main__":
     robust_path = os.path.join(TABLES_DIR, "tab_breakpoint_robustness.csv")
     try:
         robust_df = pd.read_csv(robust_path)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Missing {robust_path}. Run compute_breakpoints.py first."
-        ) from None
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        robust_df = pd.DataFrame()
+    if len(robust_df) == 0:
+        log.warning("No robust breakpoints in %s — writing empty output.", robust_path)
+        pd.DataFrame().to_csv(os.path.join(TABLES_DIR, "tab_lexical_tfidf.csv"), index=False)
+        raise SystemExit(0)
     detected_breaks = sorted(robust_df["year"].tolist()[:3])
     log.info("Detected break years (from tab_breakpoint_robustness.csv): %s", detected_breaks)
 

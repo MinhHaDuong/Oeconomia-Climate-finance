@@ -60,7 +60,10 @@ if args.censor_gap > 0:
 
 # --- Load tables ---
 bp_df = pd.read_csv(os.path.join(TABLES_DIR, TAB_BP))
-robust_df = pd.read_csv(os.path.join(TABLES_DIR, TAB_BP_ROBUST))
+try:
+    robust_df = pd.read_csv(os.path.join(TABLES_DIR, TAB_BP_ROBUST))
+except pd.errors.EmptyDataError:
+    robust_df = pd.DataFrame()
 robust_list = robust_df.to_dict("records")
 
 # Corpus size from alluvial table (used in title for --core-only mode)
@@ -86,9 +89,9 @@ for w in WINDOW_SIZES:
             label=f"JS div (w={w})", alpha=0.8)
 
 # Mark robust breakpoints (data-derived)
-for bp in robust_list[:3]:
+for i, bp in enumerate(robust_list[:3]):
     ax.axvspan(bp["year"] - 0.3, bp["year"] + 0.3, alpha=0.25, color="orange",
-               zorder=0, label="Data-derived break" if bp == robust_list[0] else "")
+               zorder=0, label="Data-derived break" if i == 0 else "")
 
 # Mark supplementary COP breaks
 for yr in supplementary:

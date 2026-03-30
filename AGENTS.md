@@ -22,6 +22,8 @@
 | `.claude/hooks/` | Hook scripts (on-start setup) |
 | `hooks/` | Git hooks (pre-commit, pre-push, post-checkout) |
 
+**Writing rules:** State the intent. Put mechanical details in the enforcing test, not in the rule.
+
 ## Bash tool: no compound commands
 
 Claude Code's permission system blocks wildcard matching across shell operators (`&&`, `||`, `;`, `|`). A pattern like `Bash(*gh api*)` will **not** match `source .env && gh api ...`. This is a security feature, not a bug.

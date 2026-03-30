@@ -152,12 +152,21 @@ log.info("Pole papers: %d efficiency, %d accountability, %d both", n_eff, n_acc,
 # Step 2: Compute pole centroids in embedding space
 # ============================================================
 
+if n_eff == 0 or n_acc == 0:
+    log.warning("Too few pole papers (eff=%d, acc=%d) for bimodality analysis. "
+                "Exiting gracefully.", n_eff, n_acc)
+    raise SystemExit(0)
+
 centroid_eff = embeddings[eff_mask].mean(axis=0)
 centroid_acc = embeddings[acc_mask].mean(axis=0)
 
 # Axis vector (efficiency - accountability), normalized
 axis = centroid_eff - centroid_acc
-axis = axis / np.linalg.norm(axis)
+norm = np.linalg.norm(axis)
+if norm < 1e-10:
+    log.warning("Pole centroids are identical — axis has zero norm. Exiting.")
+    raise SystemExit(0)
+axis = axis / norm
 
 # Explained variance: what fraction of total variance lies along this axis?
 projections = embeddings @ axis
@@ -313,11 +322,15 @@ acc_tfidf = X_tfidf[acc_mask.values].mean(axis=0).A1
 
 # Lexical axis
 lex_axis = eff_tfidf - acc_tfidf
-lex_axis = lex_axis / np.linalg.norm(lex_axis)
-
-# Project all papers
-lex_scores = X_tfidf.dot(lex_axis)
-df["lex_score"] = lex_scores - np.median(lex_scores)
+lex_norm = np.linalg.norm(lex_axis)
+if lex_norm < 1e-10 or np.any(np.isnan(lex_axis)):
+    log.warning("Lexical axis degenerate (norm=%.2e or NaN). Skipping lexical analysis.", lex_norm)
+    df["lex_score"] = 0.0
+else:
+    lex_axis = lex_axis / lex_norm
+    # Project all papers
+    lex_scores = X_tfidf.dot(lex_axis)
+    df["lex_score"] = lex_scores - np.median(lex_scores)
 
 # Bimodality on lexical axis
 lex_vals = df["lex_score"].values

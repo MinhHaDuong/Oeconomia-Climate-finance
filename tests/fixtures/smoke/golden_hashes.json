@@ -1,0 +1,31 @@
+{
+  "build_het_core": {
+    "tests/fixtures/smoke/het_mostcited_50.csv": "3c962705efc33469e6d5f8a24a5698ac3f249a0110760ea53b0ca2597c928522"
+  },
+  "compute_breakpoints": {
+    "content/tables/tab_breakpoint_robustness.csv": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "content/tables/tab_breakpoints.csv": "d8d5360881d92583c3e2ac7b509574def8a1b95a51151bee31af1fc31fd12c7b"
+  },
+  "compute_clusters": {
+    "content/tables/cluster_labels.json": "aaa73ef6218a92766a9ac649ec097b37f67f6cc3352e5a87c5ab9fbd0ab60330",
+    "content/tables/tab_alluvial.csv": "caddb1ed64d9cfff01212d7bda9bb445c3040a238b06ba1befc0d6815450d5fb"
+  },
+  "plot_fig1_bars": {
+    "content/figures/fig_bars.png": "5c5bb484ebc90049ec6040d81f0eaa60f59f9d824a7c26f5f0ce282a71016932"
+  },
+  "plot_fig1_bars_v1": {
+    "content/figures/fig_bars_v1.png": "e8e794c689b3edc51e31957a4e3276049ebbb8908cdc71a9c379875516e76222"
+  },
+  "plot_fig2_breaks": {
+    "content/figures/fig_breaks.png": "029a3856aa189131690be860e7f749f997109165b60d8e6266c8ea8b34ecfbd6"
+  },
+  "plot_fig2_composition": {
+    "content/figures/fig_composition.png": "8784ff61f2a529763bad6c22e210522084a1af65f6977077e0131b45db2bd58f"
+  },
+  "plot_fig_alluvial": {
+    "content/figures/fig_alluvial.png": "d3c1def589b1f486180327a9a9c00f840cfcc3fd00d8a5d04b60dcdee8686841"
+  },
+  "plot_fig_breakpoints": {
+    "content/figures/fig_breakpoints.png": "1883b4db7f5a77b058bc6ccef7a81a13889796ccaa06006b3fe945e3ee26608e"
+  }
+}
