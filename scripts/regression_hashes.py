@@ -354,6 +354,7 @@ def save_golden(hashes: dict[str, dict[str, str]]) -> None:
     """Save golden hashes to disk."""
     with open(GOLDEN_PATH, "w") as f:
         json.dump(hashes, f, indent=2, sort_keys=True)
+        f.write("\n")
     log.info("Golden hashes saved to %s", GOLDEN_PATH)
 
 
