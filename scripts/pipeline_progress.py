@@ -12,6 +12,8 @@ sort_dois_by_priority
     Sort a list of DOIs by descending priority score.
 """
 
+from typing import Any
+
 import logging
 import signal
 import subprocess
@@ -20,11 +22,14 @@ import time
 from collections.abc import Callable
 
 import pandas as pd
+from types import TracebackType
+
 from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
     Progress,
     SpinnerColumn,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
@@ -103,27 +108,27 @@ class WatchedProgress:
         self._start_watchdog()
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: object) -> bool:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
         self._stop_event.set()
         if self._watchdog_thread is not None:
             self._watchdog_thread.join(timeout=2)
         self._restore_sigterm_handler()
-        return self._progress.__exit__(exc_type, exc_val, exc_tb)  # type: ignore[return-value,no-any-return]
+        self._progress.__exit__(exc_type, exc_val, exc_tb)
 
-    def add_task(self, description: str, total: int = 100, **kwargs: object) -> int:
+    def add_task(self, description: str, total: int = 100, **kwargs: Any) -> TaskID:
         """Add a new task to the progress display."""
-        task_id: int = self._progress.add_task(description, total=total, **kwargs)
+        task_id = self._progress.add_task(description, total=total, **kwargs)
         with self._lock:
             self._last_advance[task_id] = time.monotonic()
         return task_id
 
-    def advance(self, task_id: int, advance: float = 1) -> None:
+    def advance(self, task_id: TaskID, advance: float = 1) -> None:
         """Advance a task and reset its stuck timer."""
         self._progress.advance(task_id, advance)
         with self._lock:
             self._last_advance[task_id] = time.monotonic()
 
-    def update(self, task_id: int, **kwargs: object) -> None:
+    def update(self, task_id: TaskID, **kwargs: Any) -> None:
         """Update task fields (description, total, etc.)."""
         self._progress.update(task_id, **kwargs)
         # If 'advance' or 'completed' changed, reset timer

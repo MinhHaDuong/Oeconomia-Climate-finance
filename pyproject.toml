@@ -52,6 +52,7 @@ corpus = [
 ]
 dev = [
     "fpdf2>=2.8.7",
+    "mypy>=1.10",
 ]
 
 [tool.pytest.ini_options]
