@@ -19,6 +19,7 @@ import os
 
 import pandas as pd
 import yaml
+from pipeline_text import normalize_text
 from utils import (
     BASE_DIR,
     CATALOGS_DIR,
@@ -167,6 +168,14 @@ def main():
     combined = _load_combined(files)
     if combined is None:
         return
+
+    # Normalize text fields — fix encoding artifacts from upstream aggregators
+    text_fields = ["title", "abstract", "first_author", "all_authors",
+                   "journal", "keywords"]
+    for col in text_fields:
+        if col in combined.columns:
+            combined[col] = combined[col].apply(
+                lambda x: normalize_text(x) if x else x)
 
     # Normalize DOIs
     combined["_doi_norm"] = combined["doi"].apply(normalize_doi)
