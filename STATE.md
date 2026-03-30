@@ -35,6 +35,7 @@ Under review (peer reviewers + data specialists).
 - DVC clean, 18 files pushed
 - Enrichment pipeline split into independent DVC stages (#428, #505)
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
+- God module split: `analyze_genealogy.py` (808L) → 3 scripts M/V architecture (#542), robustness block to `analyze_cocitation.py`
 - Infrastructure sprint (#508–#514): smoke pipeline, I/O discipline, Makefile namespaces, parameterized K, revision runbook, performance baseline
 - Feather handoff (#527, #528): Phase 2 reads Feather instead of CSV (~48s → ~1.5s cumulative parse time), `analyze_embeddings` removed from DVC pipeline, pyarrow added
 
@@ -48,4 +49,5 @@ None.
 - Finalize DMP on OPIDoR
 - ESHET-HES conference slides (Nice, May 26–29)
 - Remaining infrastructure: #513 (schema contracts), #515 (DAG viz), #516 (determinism checker), #428 (enrichment normalization)
+- 1-fig-1-script sweep: #546 (alluvial), #550 (bimodality), #551 (embeddings), #552 (cocitation)
 - #535: Parse unstructured Crossref refs (80K rows with empty metadata)
