@@ -283,10 +283,21 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 	uv run python $< --output $@ --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 # -- Data paper --
-# Semantic UMAP maps (3 co-produced figures)
-content/figures/fig_semantic.png content/figures/fig_semantic_lang.png content/figures/fig_semantic_period.png &: \
-		scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
+# Semantic clusters (computation only — no figures)
+SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
+
+$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
 	uv run python $<
+
+# Semantic UMAP maps (one parameterized plot script, 3 invocations)
+content/figures/fig_semantic.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
+	uv run python $< --color-by cluster --output $@
+
+content/figures/fig_semantic_lang.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
+	uv run python $< --color-by language --output $@
+
+content/figures/fig_semantic_period.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
+	uv run python $< --color-by period --output $@
 
 # -- Companion paper (quantitative) --
 # Structural break tables (independent of clustering)
@@ -343,7 +354,7 @@ content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/u
 
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab_pole_papers.csv content/figures/fig_semantic.png
+		$(REFINED) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
 	uv run python $<
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
