@@ -74,7 +74,7 @@ class TestSchemaRejectsBadData:
 
     def test_missing_required_column(self):
         from schemas import RefinedWorksSchema
-        import pandera as pa
+        import pandera.pandas as pa
         df = pd.DataFrame({"title": ["test"], "year": ["2020"]})
         with pytest.raises(pa.errors.SchemaError):
             RefinedWorksSchema.validate(df)

@@ -11,8 +11,8 @@ Used by:
 - tests/test_schema_contracts.py: verify fixture and real data
 """
 
-import pandera as pa
-from pandera import Column, DataFrameSchema
+import pandera.pandas as pa
+from pandera.pandas import Column, DataFrameSchema
 
 # ---------------------------------------------------------------------------
 # refined_works.csv
