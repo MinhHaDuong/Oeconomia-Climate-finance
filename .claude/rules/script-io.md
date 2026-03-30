@@ -1,3 +1,9 @@
+---
+paths:
+  - "scripts/**/*.py"
+  - "Makefile"
+---
+
 # Script I/O Discipline
 
 When creating or modifying scripts in `scripts/`:

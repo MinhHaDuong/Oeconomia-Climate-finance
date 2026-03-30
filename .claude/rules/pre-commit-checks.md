@@ -1,3 +1,11 @@
+---
+paths:
+  - "dvc.lock"
+  - "dvc.yaml"
+  - "scripts/**/*.py"
+  - "content/technical-report.qmd"
+---
+
 # Pre-commit Checks
 
 Run these checks mentally before every commit.
