@@ -479,7 +479,6 @@ archive-datapaper: check-corpus corpus-tables figures-datapaper
 # ── All checks (tests) ───────────────────────────────────
 check:
 	uv run pytest tests/ -v --tb=short
-	$(MAKE) regression
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
 check-fast:
@@ -495,13 +494,12 @@ smoke:
 determinism-check:
 	uv run pytest tests/test_determinism.py -v --tb=short
 
-# Regression hashes: run Phase 2 scripts on smoke data, compare output hashes
-# against golden baseline. Catches unintentional output changes from refactoring,
-# dependency upgrades, or parameter drift. Float tolerance: 8 significant digits.
+# Regression hashes: compare Phase 2 output hashes against golden baseline.
+# Runs as pytest (one test per script, module-scoped fixture = scripts run once).
 #   make regression          — check against golden baseline
 #   make regression-save     — regenerate golden baseline (after intentional change)
 regression:
-	uv run python scripts/regression_hashes.py --check
+	uv run pytest tests/test_regression.py -v --tb=short -m slow -k "test_regression_"
 
 regression-save:
 	uv run python scripts/regression_hashes.py --save
