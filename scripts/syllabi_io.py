@@ -1,9 +1,9 @@
 """I/O helpers and LLM utilities for the syllabi collection pipeline.
 
-Extracted from collect_syllabi.py to keep the main script under the
+Extracted from catalog_syllabi.py to keep the main script under the
 god-module 800-line threshold (see test_script_hygiene.py).
 
-Public API (all re-exported by collect_syllabi.py):
+Public API (all re-exported by catalog_syllabi.py):
   CHUNK_SIZE, CHUNK_OVERLAP, MAX_TEXT_CHARS
   load_jsonl, append_jsonl
   extract_pdf_text

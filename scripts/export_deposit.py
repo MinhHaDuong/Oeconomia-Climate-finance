@@ -8,7 +8,7 @@ climate_finance_corpus.csv with:
 - Intermediate columns (doi_norm, etc.) dropped
 
 Usage:
-    uv run python scripts/prepare_deposit.py [--out-dir DIR]
+    uv run python scripts/export_deposit.py [--out-dir DIR]
 """
 
 import argparse
@@ -18,7 +18,7 @@ import sys
 import pandas as pd
 from utils import CATALOGS_DIR, get_logger
 
-log = get_logger("prepare_deposit")
+log = get_logger("export_deposit")
 
 # Individual flag columns to collapse into is_flagged + flag_reason
 FLAG_COLUMNS = [

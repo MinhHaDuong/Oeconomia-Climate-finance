@@ -66,7 +66,7 @@ class TestMergeCitations:
         ])
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)
@@ -83,7 +83,7 @@ class TestMergeCitations:
         ])
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)
@@ -98,7 +98,7 @@ class TestMergeCitations:
         _write_openalex(cache_dir, [])
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)
@@ -113,7 +113,7 @@ class TestMergeCitations:
         _write_openalex(cache_dir, [])
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)
@@ -124,7 +124,7 @@ class TestMergeCitations:
         """Merge should work even if one or both cache files are missing."""
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)
@@ -140,7 +140,7 @@ class TestMergeCitations:
         ])
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)
@@ -157,7 +157,7 @@ class TestMergeCitations:
         ])
         out = tmp_path / "citations.csv"
 
-        from merge_citations import merge_citations
+        from corpus_merge_citations import merge_citations
         merge_citations(cache_dir=str(cache_dir), output_path=str(out))
 
         result = pd.read_csv(out)

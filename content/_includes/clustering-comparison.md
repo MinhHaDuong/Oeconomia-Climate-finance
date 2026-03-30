@@ -1,7 +1,7 @@
 ## 7. Clustering Method and Representation Space Comparison
 <!-- WARNING: AI-generated, not human-reviewed -->
 
-**Script:** `scripts/compare_clustering.py`
+**Script:** `scripts/compute_clustering_comparison.py`
 
 ### 7.1 Motivation
 
@@ -36,7 +36,7 @@ Three corpus snapshots test clustering stability under perturbation:
 | Snapshot | Description | Size | Construction |
 |----------|-------------|------|--------------|
 | v1_tagged | `in_v1==1` subset of current corpus | 26,355 | Filtering flag set by `corpus_filter.py` |
-| full | v1.1 corpus (S2 + teaching expansion) | 27,315 | All works passing year/title filters | <!-- STALE: current analysis corpus is ~27,509; needs fresh compare_clustering run -->
+| full | v1.1 corpus (S2 + teaching expansion) | 27,315 | All works passing year/title filters | <!-- STALE: current analysis corpus is ~27,509; needs fresh compute_clustering_comparison run -->
 
 The v1_tagged and full snapshots overlap by 96.5% (960 works added in v1.1). This tests stability under the kind of marginal expansion that caused Errata 1.
 

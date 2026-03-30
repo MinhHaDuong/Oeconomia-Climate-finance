@@ -1,6 +1,6 @@
 """Classify, extract and normalize stages for the syllabi pipeline.
 
-Extracted from collect_syllabi.py to keep the main script under the
+Extracted from catalog_syllabi.py to keep the main script under the
 god-module 800-line threshold (see test_script_hygiene.py).
 
 Process = LLM calls + text parsing + DOI resolution.  No HTTP crawling here.
@@ -11,7 +11,7 @@ Public API (available from this module directly):
   _extract_cache_key, _load_extract_cache, _save_extract_cache_entry
   stage_classify, stage_extract, stage_normalize
 
-Re-exported by collect_syllabi.py (noqa F401):
+Re-exported by catalog_syllabi.py (noqa F401):
   EXTRACT_PROMPT, EXTRACT_CACHE_PATH
   _extract_cache_key, _extract_cache_lock, _load_extract_cache, _save_extract_cache_entry
 """

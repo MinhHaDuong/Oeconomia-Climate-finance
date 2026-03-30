@@ -4,7 +4,7 @@
 # post-hoc relevance filtering (concept-group check on abstract text).
 #
 # Informed by keyword mining of 1,406 core papers (cited_by_count >= 50)
-# run on 2026-03-10 via mine_openalex_keywords.py.
+# run on 2026-03-10 via enrich_openalex_keywords.py.
 #
 # Each term is searched via OpenAlex default.search (title + abstract + fulltext).
 #

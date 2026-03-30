@@ -87,7 +87,7 @@ def _scripts_with_main_guard():
 LIBRARY_SCRIPTS = {
     "utils.py", "plot_style.py", "filter_flags.py", "filter_flags_llm.py",
     "clustering_methods.py",
-    "detect_near_duplicates.py",
+    "qa_near_duplicates.py",
     "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
     "syllabi_io.py", "syllabi_process.py",
     "pipeline_text.py",
@@ -550,7 +550,7 @@ class TestArchiveBitInvariance:
 _PIPELINE_PREFIXES = (
     "compute_", "plot_", "enrich_", "catalog_", "qa_", "qc_",
     "build_", "export_", "analyze_", "filter_", "corpus_",
-    "summarize_", "compare_",
+    "summarize_",
 )
 
 
@@ -686,7 +686,7 @@ class TestPdfDiscipline:
         "analyze_100bn.py",
         "analyze_embeddings.py",
         "analyze_unfccc_topics.py",
-        "calibrate_reranker.py",
+        "compute_reranker_calibration.py",
         "plot_interactive_corpus.py",
     ]
 
@@ -781,7 +781,40 @@ class TestMarkerDiscipline:
 
 
 # ---------------------------------------------------------------------------
-# 11. analyze_* scripts must not produce figures (#551)
+# 11. Script naming convention (#547)
+# ---------------------------------------------------------------------------
+
+class TestScriptNaming:
+    """Every script in scripts/ must have a conforming prefix.
+
+    Allowed prefixes: catalog_, enrich_, qa_, qc_, corpus_, plot_,
+    analyze_, compute_, export_, summarize_, build_.
+
+    Library modules (no prefix needed) are listed in LIBRARY_MODULES.
+    """
+
+    PREFIXES = ("catalog_", "enrich_", "qa_", "qc_", "corpus_", "plot_",
+                "analyze_", "compute_", "export_", "summarize_", "build_")
+    LIBRARY_MODULES = {"utils.py", "plot_style.py", "script_io_args.py",
+                       "pipeline_io.py", "pipeline_loaders.py",
+                       "pipeline_progress.py", "pipeline_text.py",
+                       "filter_flags.py", "filter_flags_llm.py",
+                       "clustering_methods.py", "schemas.py",
+                       # syllabi sub-modules (extracted from catalog_syllabi.py)
+                       "syllabi_config.py", "syllabi_crossref.py",
+                       "syllabi_harvest.py", "syllabi_io.py",
+                       "syllabi_process.py"}
+
+    def test_all_scripts_have_conforming_prefix(self):
+        for f in Path(SCRIPTS_DIR).glob("*.py"):
+            if f.name.startswith("_") or f.name in self.LIBRARY_MODULES:
+                continue
+            assert any(f.name.startswith(p) for p in self.PREFIXES), \
+                f"{f.name} has non-conforming prefix"
+
+
+# ---------------------------------------------------------------------------
+# 12. analyze_* scripts must not produce figures (#551)
 # ---------------------------------------------------------------------------
 
 class TestAnalyzeNoFigures:
@@ -810,7 +843,7 @@ class TestAnalyzeNoFigures:
 
 
 # ---------------------------------------------------------------------------
-# 12. 1-figure-1-script: each plot script produces exactly one output type
+# 13. 1-figure-1-script: each plot script produces exactly one output type
 # ---------------------------------------------------------------------------
 
 class TestSingleOutputType:

@@ -450,7 +450,7 @@ class TestRerankerCache:
         assert scores.std() > 0.001, \
             f"Score std = {scores.std():.6f} — degenerate distribution" + _diagnosis(
                 "Model not loaded correctly or all inputs identical",
-                "Re-run calibrate_reranker.py; check model download",
+                "Re-run compute_reranker_calibration.py; check model download",
                 "30 min",
                 "Flag 6 is non-functional — no relevance filtering",
             )
@@ -458,7 +458,7 @@ class TestRerankerCache:
         assert scores.median() < 0.1, \
             f"Median score = {scores.median():.4f} — expected < 0.1" + _diagnosis(
                 "Query may be too generic, matching everything",
-                "Re-run calibrate_reranker.py with query optimization",
+                "Re-run compute_reranker_calibration.py with query optimization",
                 "~1 hour",
                 "Flag 6 underfiring — irrelevant papers not caught",
             )

@@ -8,7 +8,7 @@ Writes to enrich_cache/crossref_refs.csv (append-only, persistent).
 The cache IS the data — no separate "done" file. A DOI is done if it
 has rows (real refs or sentinel) in the cache.
 
-The downstream merge_citations.py step reads this cache + the OpenAlex
+The downstream corpus_merge_citations.py step reads this cache + the OpenAlex
 cache and produces the DVC-tracked citations.csv.
 
 Usage:
@@ -216,7 +216,7 @@ def main():
 
         # Append real refs to cache.
         # Note: mode='a' can leave a partial last line on crash.
-        # merge_citations.py reads with on_bad_lines="warn" to tolerate this.
+        # corpus_merge_citations.py reads with on_bad_lines="warn" to tolerate this.
         if refs:
             batch_df = pd.DataFrame(refs, columns=REFS_COLUMNS)
             batch_df.to_csv(CACHE_PATH, mode="a", header=False, index=False)

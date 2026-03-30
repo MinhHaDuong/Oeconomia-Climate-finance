@@ -18,7 +18,7 @@ import pandas as pd
 from rapidfuzz import fuzz
 from utils import BASE_DIR, CATALOGS_DIR, get_logger, normalize_doi
 
-log = get_logger("verify_bibliography")
+log = get_logger("qa_bibliography")
 
 # --- Paths ---
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")

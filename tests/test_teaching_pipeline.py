@@ -3,8 +3,8 @@
 Verifies that:
 - build_teaching_yaml.py converts CSV → YAML correctly
 - build_teaching_yaml.py works without manual catalog (CSV-only)
-- collect_syllabi.py PDF extraction includes table content
-- collect_syllabi.py extract stage uses chunk overlap
+- catalog_syllabi.py PDF extraction includes table content
+- catalog_syllabi.py extract stage uses chunk overlap
 - build_teaching_canon.py reads from data/ (not config/)
 - dvc.yaml references the right paths
 """
@@ -117,11 +117,11 @@ class TestBuildTeachingYaml:
 
 
 class TestScraperPdfExtraction:
-    """Tests for PDF text extraction in collect_syllabi.py."""
+    """Tests for PDF text extraction in catalog_syllabi.py."""
 
     def test_extract_pdf_text_captures_cell_content(self, tmp_path):
         """extract_text() captures text in bordered cells without table extraction."""
-        from collect_syllabi import extract_pdf_text
+        from catalog_syllabi import extract_pdf_text
         from fpdf import FPDF
 
         # Build a PDF with bordered cells (table-like layout)
@@ -146,7 +146,7 @@ class TestScraperPdfExtraction:
 
     def test_text_limit_increased(self):
         """Text truncation should allow at least 200KB to cover long PDFs like Harvard FECS."""
-        from collect_syllabi import MAX_TEXT_CHARS
+        from catalog_syllabi import MAX_TEXT_CHARS
         assert MAX_TEXT_CHARS >= 200000
 
     def test_extract_pdf_text_no_table_duplication(self, tmp_path):
@@ -156,7 +156,7 @@ class TestScraperPdfExtraction:
         duplicate text already captured by extract_text(), confusing the LLM
         in overlapping chunks. Body text alone is sufficient.
         """
-        from collect_syllabi import extract_pdf_text
+        from catalog_syllabi import extract_pdf_text
         from fpdf import FPDF
 
         # Build a PDF with a table-like structure
@@ -184,12 +184,12 @@ class TestScraperChunkOverlap:
 
     def test_chunk_overlap_constant_exists(self):
         """Extract stage should define a chunk overlap to avoid splitting refs."""
-        from collect_syllabi import CHUNK_OVERLAP
+        from catalog_syllabi import CHUNK_OVERLAP
         assert CHUNK_OVERLAP >= 500, "Overlap should be ≥500 chars"
 
     def test_chunks_overlap(self):
         """Chunks produced for extraction should overlap with matching content."""
-        from collect_syllabi import make_chunks
+        from catalog_syllabi import make_chunks
 
         # Use distinguishable characters so overlap assertion is meaningful
         text = "".join(str(i % 10) for i in range(10000))
@@ -203,7 +203,7 @@ class TestScraperChunkOverlap:
 
     def test_chunks_reject_bad_overlap(self):
         """make_chunks raises ValueError if overlap >= chunk_size."""
-        from collect_syllabi import make_chunks
+        from catalog_syllabi import make_chunks
         with pytest.raises(ValueError):
             make_chunks("hello", chunk_size=100, overlap=100)
 
@@ -311,43 +311,43 @@ class TestScraperCoverage:
 
 
 class TestCleanDoi:
-    """Tests for _clean_doi in collect_syllabi.py."""
+    """Tests for _clean_doi in catalog_syllabi.py."""
 
     def test_strips_https_doi_org_prefix(self):
         """DOIs with https://doi.org/ prefix are cleaned."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi("https://doi.org/10.1257/aer.104.5.544") == "10.1257/aer.104.5.544"
 
     def test_strips_http_dx_doi_prefix(self):
         """DOIs with http://dx.doi.org/ prefix are cleaned."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi("http://dx.doi.org/10.1234/test") == "10.1234/test"
 
     def test_strips_publisher_url(self):
         """DOIs embedded in publisher URLs are extracted."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi("https://onlinelibrary.wiley.com/doi/full/10.1111/1475-679X.12481") == "10.1111/1475-679x.12481"
 
     def test_clean_doi_already_clean(self):
         """Clean DOIs are returned lowercase unchanged."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi("10.1234/test") == "10.1234/test"
 
     def test_clean_doi_none_empty(self):
         """None and empty string return empty string."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi(None) == ""
         assert _clean_doi("") == ""
 
     def test_clean_doi_non_doi_url(self):
         """Non-DOI URLs (SSRN, HDL) are returned empty."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi("https://ssrn.com/abstract=4565220") == ""
         assert _clean_doi("http://hdl.handle.net/10419/237920") == ""
 
     def test_clean_doi_double_prefix(self):
         """DOIs with doi: inside URL are cleaned."""
-        from collect_syllabi import _clean_doi
+        from catalog_syllabi import _clean_doi
         assert _clean_doi("https://doi.org/doi:10.1038/nclimate3255") == "10.1038/nclimate3255"
 
 

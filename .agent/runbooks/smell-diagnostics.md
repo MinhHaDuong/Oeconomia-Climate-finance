@@ -75,7 +75,7 @@ UserWarning: Module length smells (>500 lines):
   analyze_bimodality.py (673L) — analysis + visualization mixed (12 plot functions, 8 analysis functions)
   analyze_genealogy.py (798L) — analysis + visualization mixed (9 plot functions, 11 analysis functions)
   utils.py (717L) — multiple responsibilities (HTTP retry, config loading, data I/O, normalization)
-  collect_syllabi.py (855L) — large data constants (4 prompt/URL lists = 134 lines)
+  catalog_syllabi.py (855L) — large data constants (4 prompt/URL lists = 134 lines)
 ```
 
 And for function complexity:

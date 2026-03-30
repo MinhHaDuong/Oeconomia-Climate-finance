@@ -110,7 +110,7 @@ for _, row in cit.iterrows():
 # Filter to pre-2007 references
 # ============================================================
 
-# Use row-level year filter (same as compare_communities_across_windows.py):
+# Use row-level year filter (same as compute_temporal_communities.py):
 # a ref is "pre-CUTOFF" if ANY citation row for it has ref_year <= cutoff.
 # This avoids missing refs where year is populated in some rows but not others.
 cit["ref_year_num"] = pd.to_numeric(cit["ref_year"], errors="coerce")

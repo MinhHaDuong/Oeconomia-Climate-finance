@@ -12,11 +12,11 @@ Each stage reads the previous stage's output and writes JSONL checkpoints.
 Interruptible: re-run any stage to resume from checkpoint.
 
 Usage:
-    python scripts/collect_syllabi.py --stage search [--limit N]
-    python scripts/collect_syllabi.py --stage fetch
-    python scripts/collect_syllabi.py --stage classify
-    python scripts/collect_syllabi.py --stage extract
-    python scripts/collect_syllabi.py --stage normalize
+    python scripts/catalog_syllabi.py --stage search [--limit N]
+    python scripts/catalog_syllabi.py --stage fetch
+    python scripts/catalog_syllabi.py --stage classify
+    python scripts/catalog_syllabi.py --stage extract
+    python scripts/catalog_syllabi.py --stage normalize
 """
 
 import argparse
@@ -64,7 +64,7 @@ from utils import (
     save_csv,
 )
 
-log = get_logger("collect_syllabi")
+log = get_logger("catalog_syllabi")
 
 # --- Paths ---
 SYLLABI_DIR = os.path.join(DATA_DIR, "syllabi")

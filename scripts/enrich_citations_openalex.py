@@ -9,7 +9,7 @@ The cache IS the data — no separate done-file. A DOI is done if it has
 rows (real refs or sentinel) in the cache, OR if it already appears in
 openalex_citations.csv (catalog-stage harvest).
 
-The downstream merge_citations.py step reads this cache + the Crossref
+The downstream corpus_merge_citations.py step reads this cache + the Crossref
 cache and produces the DVC-tracked citations.csv.
 
 Two-phase approach:

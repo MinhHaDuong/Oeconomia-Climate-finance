@@ -262,7 +262,7 @@ def main():
     for status, count in status_counts.items():
         log.info("  %s: %d", status, count)
 
-    # Cache-only: join_enrichments.py applies summaries to the monolith (#428)
+    # Cache-only: enrich_join.py applies summaries to the monolith (#428)
 
     elapsed = time.time() - t0
     counters = {

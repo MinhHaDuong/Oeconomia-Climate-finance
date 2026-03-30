@@ -137,7 +137,7 @@ When adding a new enrichment script: put incremental state in `enrich_cache/<nam
 # Citation enrichment (Crossref + OpenAlex run in parallel, then merge)
 uv run python scripts/enrich_citations_batch.py                  # Crossref → enrich_cache/crossref_refs.csv
 uv run python scripts/enrich_citations_openalex.py               # OpenAlex → enrich_cache/openalex_refs.csv
-uv run python scripts/merge_citations.py                         # Concat caches → citations.csv (the DVC output)
+uv run python scripts/corpus_merge_citations.py                         # Concat caches → citations.csv (the DVC output)
 uv run python scripts/qa_citations.py                            # Verify citation quality (n=300, accuracy + completeness)
 # Or simply: make citations  (runs all four; Crossref + OpenAlex in parallel)
 
@@ -182,11 +182,11 @@ The OpenAlex enrichment uses a two-phase approach:
 1. Batch-fetch `referenced_works` (list of OpenAlex IDs) for each corpus DOI via filter endpoint
 2. Batch-resolve OpenAlex IDs → DOIs + title/year/journal via `openalex:W1|W2|...` filter
 
-Both scripts are resumable via cache-is-data: each writes to its own persistent cache in `enrich_cache/` (`crossref_refs.csv`, `openalex_refs.csv`). A DOI is "done" if it has rows in the cache. No separate done-files. `merge_citations.py` concats both caches into `citations.csv` (the DVC output), which DVC can safely wipe — merge regenerates it in seconds.
+Both scripts are resumable via cache-is-data: each writes to its own persistent cache in `enrich_cache/` (`crossref_refs.csv`, `openalex_refs.csv`). A DOI is "done" if it has rows in the cache. No separate done-files. `corpus_merge_citations.py` concats both caches into `citations.csv` (the DVC output), which DVC can safely wipe — merge regenerates it in seconds.
 
 ## Intellectual traditions (Table 1)
 
-Empirical detection via co-citation community detection is implemented (`analyze_cocitation.py`, `compare_communities_across_windows.py`). Analysis across four time windows (pre-2007, pre-2015, pre-2020, full) reveals:
+Empirical detection via co-citation community detection is implemented (`analyze_cocitation.py`, `compute_temporal_communities.py`). Analysis across four time windows (pre-2007, pre-2015, pre-2020, full) reveals:
 
 - Pre-2007: 18 small, distinct communities — econometrics, institutions, adaptation, aid, CDM, etc.
 - Pre-2015: merger into mega-community (97 papers), modularity drops to 0.14

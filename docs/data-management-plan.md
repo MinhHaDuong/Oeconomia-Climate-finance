@@ -21,7 +21,7 @@ around climate finance (1990–2024). The principal datasets are:
 
 | Dataset | Format | Size | Origin |
 |---------|--------|------|--------|
-| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 42,922 rows raw (31,713 after filtering) | Merged from 6 sources; deposit artifact via `prepare_deposit.py` |
+| climate_finance_corpus.csv | CSV (UTF-8, RFC 4180) | 42,922 rows raw (31,713 after filtering) | Merged from 6 sources; deposit artifact via `export_deposit.py` |
 | embeddings.npz | NumPy compressed archive | 38,479 × 1024 float32 | Computed (BGE-M3 sentence-transformer) |
 | citations.csv | CSV | 968,871 citation pairs | Extracted via Crossref + OpenAlex |
 | Per-source catalogs (×6) | CSV | Variable | API harvests + manual exports |

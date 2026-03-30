@@ -231,7 +231,7 @@ corpus-validate: $(REFINED)
 content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
 	uv run python $<
 
-content/tables/tab_venues.md: scripts/make_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
+content/tables/tab_venues.md: scripts/export_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
 	uv run python $<
 
 content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md &: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
@@ -566,7 +566,7 @@ regression:
 	uv run pytest tests/test_regression.py -v --tb=short -m integration -k "test_regression_"
 
 regression-save:
-	uv run python scripts/regression_hashes.py --save
+	uv run python scripts/compute_regression_hashes.py --save
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.

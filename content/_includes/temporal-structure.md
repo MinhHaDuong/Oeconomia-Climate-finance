@@ -1,7 +1,7 @@
 ## 8. Temporal Structure Analysis
 <!-- WARNING: AI-generated, not human-reviewed -->
 
-**Script:** `scripts/compare_clustering.py` (multi-space silhouette), `scripts/analyze_space_interactions.py`
+**Script:** `scripts/compute_clustering_comparison.py` (multi-space silhouette), `scripts/analyze_space_interactions.py`
 
 Section 7 establishes that the full corpus shows weak cluster structure. But this static picture may obscure temporal dynamics: did the field once have clear boundaries that later dissolved? This section examines how cluster structure evolves over time in each representation space.
 

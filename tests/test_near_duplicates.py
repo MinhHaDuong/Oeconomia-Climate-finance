@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
-from detect_near_duplicates import detect_near_duplicate_groups
+from qa_near_duplicates import detect_near_duplicate_groups
 
 
 # ============================================================
@@ -226,7 +226,7 @@ class TestEdgeCases:
         Regression test: em-dash was previously stripped without leaving a
         space, producing 'conferenceurgent' instead of 'conference urgent'.
         """
-        from detect_near_duplicates import _normalize_text
+        from qa_near_duplicates import _normalize_text
 
         colon = _normalize_text("COP27 Conference: Urgent Action")
         emdash = _normalize_text("COP27 Conference—Urgent Action")

@@ -293,7 +293,7 @@ def main() -> None:
             log.info("Checkpoint: %d/%d (resolved=%d, not_found=%d)",
                      i + 1, len(to_process), resolved, not_found)
 
-    # Final save — cache only, join_enrichments.py applies to the monolith (#428)
+    # Final save — cache only, enrich_join.py applies to the monolith (#428)
     save_cache(cache)
     log.info("Done. Resolved: %d, Not found: %d. Cache: %s",
              resolved, not_found, CACHE_FILE)

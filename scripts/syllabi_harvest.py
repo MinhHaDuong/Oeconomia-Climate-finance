@@ -1,6 +1,6 @@
 """Search and fetch stages for the syllabi collection pipeline.
 
-Extracted from collect_syllabi.py to keep the main script under the
+Extracted from catalog_syllabi.py to keep the main script under the
 god-module 800-line threshold (see test_script_hygiene.py).
 
 Harvest = web crawling + HTTP + PDF download.  No LLM calls here.

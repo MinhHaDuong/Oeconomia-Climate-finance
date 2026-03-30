@@ -1,6 +1,6 @@
 """Data constants for the syllabi collection pipeline.
 
-Extracted from collect_syllabi.py to keep the main script under the
+Extracted from catalog_syllabi.py to keep the main script under the
 800-line module-length wall. These are pure configuration data — search
 queries and seed URLs — with no logic.
 """

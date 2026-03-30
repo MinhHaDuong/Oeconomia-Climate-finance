@@ -11,12 +11,12 @@ Produces citations.csv with REFS_COLUMNS schema, deduplicated on
 (source_doi, ref_doi). Sentinel rows are excluded.
 
 This script is the final step of the ref_match DVC stage.
-It runs after ref_match_corpus.py (which fuzzy-matches parsed refs to corpus).
+It runs after corpus_ref_match.py (which fuzzy-matches parsed refs to corpus).
 DVC may wipe citations.csv before a re-run — this merge regenerates it
 from the persistent caches in seconds, with no API calls.
 
 Usage:
-    uv run python scripts/merge_citations.py
+    uv run python scripts/corpus_merge_citations.py
 """
 
 import argparse
@@ -25,7 +25,7 @@ import os
 import pandas as pd
 from utils import CATALOGS_DIR, REFS_COLUMNS, get_logger, normalize_doi, save_csv
 
-log = get_logger("merge_citations")
+log = get_logger("corpus_merge_citations")
 
 CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 CROSSREF_CACHE = os.path.join(CACHE_DIR, "crossref_refs.csv")

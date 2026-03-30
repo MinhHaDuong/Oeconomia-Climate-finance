@@ -194,9 +194,9 @@ stages:
   # `dvc repro join_enrichments` reads whatever caches exist on disk.
   # Use `make corpus-enrich` to run all enrichment stages first.
   join_enrichments:
-    cmd: uv run python scripts/join_enrichments.py
+    cmd: uv run python scripts/enrich_join.py
     deps:
-      - scripts/join_enrichments.py
+      - scripts/enrich_join.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_text.py
@@ -217,11 +217,11 @@ stages:
       uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv & p1=$!;
       uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv & p2=$!;
       wait $p1 && wait $p2 &&
-      uv run python scripts/parse_citations_grobid.py
+      uv run python scripts/corpus_parse_citations_grobid.py
     deps:
       - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
-      - scripts/parse_citations_grobid.py
+      - scripts/corpus_parse_citations_grobid.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_loaders.py
@@ -305,10 +305,10 @@ stages:
   # Writes enrich_cache/ref_matches.csv, then merges all citation caches
   # (crossref + openalex + grobid + ref_matches) into citations.csv.
   ref_match:
-    cmd: uv run python scripts/ref_match_corpus.py && uv run python scripts/merge_citations.py
+    cmd: uv run python scripts/corpus_ref_match.py && uv run python scripts/corpus_merge_citations.py
     deps:
-      - scripts/ref_match_corpus.py
-      - scripts/merge_citations.py
+      - scripts/corpus_ref_match.py
+      - scripts/corpus_merge_citations.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_text.py
