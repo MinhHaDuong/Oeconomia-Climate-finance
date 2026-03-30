@@ -1,21 +1,14 @@
 """Regression tests: Phase 2 script outputs vs golden hash baseline.
 
-Runs deterministic scripts on the 100-row smoke fixture, hashes outputs
-(with float-rounding tolerance for CSV/JSON), and compares against
-golden_hashes.json checked into the smoke fixture directory.
+The actual regression check runs via `make regression` (called by `make check`).
+This file tests that the infrastructure is wired up correctly.
 
-This catches unintentional output changes introduced by refactoring,
-dependency upgrades, or parameter drift. When a change is intentional,
-update the golden baseline: `uv run python scripts/regression_hashes.py --save`
-and commit with an explanation.
-
-Floats are rounded to 8 significant digits before hashing, so
-insignificant floating-point noise across platforms does not trigger
-false positives.
+When a change is intentional, update the baseline:
+    uv run python scripts/regression_hashes.py --save
+and commit with an explanation of why outputs changed.
 """
 
 import os
-import subprocess
 import sys
 
 import pytest
@@ -25,9 +18,8 @@ REGRESSION_SCRIPT = os.path.join(ROOT, "scripts", "regression_hashes.py")
 GOLDEN_PATH = os.path.join(ROOT, "tests", "fixtures", "smoke", "golden_hashes.json")
 
 
-@pytest.mark.integration
-class TestRegressionHashes:
-    """Phase 2 outputs match the golden hash baseline."""
+class TestRegressionBaseline:
+    """Golden hash baseline exists and is maintained."""
 
     def test_golden_hashes_exist(self):
         assert os.path.exists(GOLDEN_PATH), (
@@ -35,26 +27,12 @@ class TestRegressionHashes:
             "uv run python scripts/regression_hashes.py --save"
         )
 
-    @pytest.mark.slow
-    def test_outputs_match_golden(self):
-        """Run all registered scripts and compare against golden baseline."""
-        if not os.path.exists(GOLDEN_PATH):
-            pytest.skip("Golden hashes not yet generated")
-
-        result = subprocess.run(
-            [sys.executable, REGRESSION_SCRIPT, "--check"],
-            capture_output=True, text=True,
-            timeout=300,
-            env={
-                **os.environ,
-                "PYTHONHASHSEED": "0",
-                "SOURCE_DATE_EPOCH": "0",
-                "MPLBACKEND": "Agg",
-            },
-        )
-        assert result.returncode == 0, (
-            f"Regression check failed:\n{result.stdout}\n{result.stderr}"
-        )
+    def test_golden_hashes_valid_json(self):
+        import json
+        with open(GOLDEN_PATH) as f:
+            data = json.load(f)
+        assert isinstance(data, dict)
+        assert len(data) > 0, "Golden hashes file is empty"
 
 
 class TestRegressionInfra:

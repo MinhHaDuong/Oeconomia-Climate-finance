@@ -479,6 +479,7 @@ archive-datapaper: check-corpus corpus-tables figures-datapaper
 # ── All checks (tests) ───────────────────────────────────
 check:
 	uv run pytest tests/ -v --tb=short
+	$(MAKE) regression
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 20s).
 check-fast:
