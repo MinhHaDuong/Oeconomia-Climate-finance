@@ -439,7 +439,7 @@ STEPS = {
 def main():
     parser = argparse.ArgumentParser(description="Enrich missing abstracts")
     parser.add_argument("--output", default=None,
-                        help="Output path (for pipeline tracking)")
+                        help="Stamp file path — written on success (DVC output)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show counts, don't modify data")
     parser.add_argument("--step", type=int, default=0,
@@ -581,6 +581,12 @@ def main():
     log.info("Run report: %s", report_path)
     _log_event("complete", elapsed_seconds=round(elapsed, 1),
                total_filled=counters["total_filled"], report_path=report_path)
+
+    if args.output:
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(time.strftime("%Y-%m-%dT%H:%M:%S%z") + "\n")
+        log.info("Stamp: %s", args.output)
 
 
 if __name__ == "__main__":

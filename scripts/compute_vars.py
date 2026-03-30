@@ -460,7 +460,7 @@ def write_yaml(v, path):
 
 # ── Main ─────────────────────────────────────────────────────
 
-def main():
+def main(output_dir):
     v = {}
     corpus_stats(v)
     embedding_stats(v)
@@ -477,7 +477,7 @@ def main():
         if missing:
             log.warning("%s: %d variables missing: %s", doc_name, len(missing), missing)
             all_missing.extend(f"{doc_name}:{k}" for k in missing)
-        path = os.path.join(CONTENT_DIR, f"{doc_name}-vars.yml")
+        path = os.path.join(output_dir, f"{doc_name}-vars.yml")
         write_yaml(doc_v, path)
 
     if all_missing:
@@ -491,4 +491,4 @@ if __name__ == "__main__":
     validate_io(output=io_args.output)
     # --output receives the primary output path (first vars file);
     # all sibling vars files are co-produced in the same directory.
-    main()
+    main(os.path.dirname(io_args.output))

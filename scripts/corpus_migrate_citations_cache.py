@@ -52,8 +52,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="One-time migration: split v1 citations.csv into source caches")
     parser.add_argument("--output", default=None,
-                        help="Output path (for pipeline tracking)")
-    parser.parse_args()
+                        help="Stamp file path — written on success")
+    args = parser.parse_args()
 
     crossref_cache = os.path.join(CACHE_DIR, "crossref_refs.csv")
     openalex_cache = os.path.join(CACHE_DIR, "openalex_refs.csv")
@@ -110,6 +110,13 @@ def main():
     from corpus_merge_citations import merge_citations
     n = merge_citations()
     log.info("Migration complete: %d rows in citations.csv", n)
+
+    if args.output:
+        import time
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(time.strftime("%Y-%m-%dT%H:%M:%S%z") + "\n")
+        log.info("Stamp: %s", args.output)
 
 
 if __name__ == "__main__":

@@ -42,16 +42,12 @@ DEPOSIT_RENAMES = {"from_scispsace": "from_scispace"}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", default=None,
-                        help="Output path (for pipeline tracking)")
-    parser.add_argument(
-        "--out-dir",
-        default=os.path.join(CATALOGS_DIR, "deposit"),
-        help="Output directory for deposit files",
-    )
+    default_out = os.path.join(CATALOGS_DIR, "deposit", "climate_finance_corpus.csv")
+    parser.add_argument("--output", default=default_out,
+                        help="Output CSV path (default: %(default)s)")
     args = parser.parse_args()
 
-    os.makedirs(args.out_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     # --- Read extended_works.csv (has quality flags) ---
     extended_path = os.path.join(CATALOGS_DIR, "extended_works.csv")
@@ -92,7 +88,7 @@ def main():
         log.info("Renamed columns: %s", renames)
 
     # --- Write ---
-    out_path = os.path.join(args.out_dir, "climate_finance_corpus.csv")
+    out_path = args.output
     df.to_csv(out_path, index=False)
     log.info("Wrote %s (%d rows, %d columns)", out_path, n_total, len(df.columns))
 
@@ -119,7 +115,7 @@ def main():
             log.error(e)
         sys.exit(1)
 
-    log.info("Deposit files ready in %s", args.out_dir)
+    log.info("Deposit files ready in %s", os.path.dirname(args.output))
 
 
 if __name__ == "__main__":

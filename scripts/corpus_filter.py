@@ -563,7 +563,7 @@ def main():
     parser.add_argument("--v1-identifiers", default=None,
                         help="Path to v1 identifiers file (default: config/v1_identifiers.txt.gz)")
     parser.add_argument("--output", default=None,
-                        help="Output path (for pipeline tracking)")
+                        help="Output works CSV path (alias for --works-output)")
     args = parser.parse_args()
 
     if args.cheap:
@@ -582,7 +582,7 @@ def main():
         default_output = os.path.join(CATALOGS_DIR, "refined_works.csv")
 
     works_input = args.works_input or default_input
-    works_output = args.works_output or default_output
+    works_output = args.works_output or args.output or default_output
 
     v1_path = args.v1_identifiers
 

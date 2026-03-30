@@ -273,7 +273,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Enrich missing language tags via OpenAlex + local detection")
     parser.add_argument("--output", default=None,
-                        help="Output path (for pipeline tracking)")
+                        help="Stamp file path — written on success (DVC output)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show counts, don't modify data")
     parser.add_argument("--works-input",
@@ -373,6 +373,12 @@ def main():
 
     report_path = save_run_report(counters, run_id, "enrich_language")
     log.info("Run report: %s", report_path)
+
+    if args.output:
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(time.strftime("%Y-%m-%dT%H:%M:%S%z") + "\n")
+        log.info("Stamp: %s", args.output)
 
 
 if __name__ == "__main__":
