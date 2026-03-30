@@ -45,6 +45,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash(*git commit*)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before committing, verify: (1) If dvc.lock is staged, confirm recorded hashes exist in local cache — if not, run dvc repro/commit first. (2) Re-read any file you modified or relied on — fix stale numbers, dead references, or outdated status in this same commit. (3) If you changed a pipeline script interface or data schema, update content/technical-report.qmd."
+          }
+        ]
+      }
     ]
   }
 }
