@@ -131,15 +131,20 @@ class TestLoaderErrors:
 
     def test_load_refined_citations_raises_when_missing(self, tmp_path):
         import pipeline_loaders
-        orig = pipeline_loaders.REFINED_CITATIONS_PATH
+        orig_csv = pipeline_loaders.REFINED_CITATIONS_PATH
+        orig_feather = pipeline_loaders.REFINED_CITATIONS_FEATHER
         pipeline_loaders.REFINED_CITATIONS_PATH = os.path.join(
             str(tmp_path), "refined_citations.csv"
         )
+        pipeline_loaders.REFINED_CITATIONS_FEATHER = os.path.join(
+            str(tmp_path), "refined_citations.feather"
+        )
         try:
-            with pytest.raises(FileNotFoundError, match="refined_citations.csv"):
+            with pytest.raises(FileNotFoundError, match="refined_citations"):
                 pipeline_loaders.load_refined_citations()
         finally:
-            pipeline_loaders.REFINED_CITATIONS_PATH = orig
+            pipeline_loaders.REFINED_CITATIONS_PATH = orig_csv
+            pipeline_loaders.REFINED_CITATIONS_FEATHER = orig_feather
 
     def test_load_refined_embeddings_returns_array(self, tmp_path):
         import pipeline_loaders
@@ -160,14 +165,19 @@ class TestLoaderErrors:
         df = pd.DataFrame({"source_doi": ["10.1/a"], "ref_doi": ["10.1/b"]})
         csv_path = tmp_path / "refined_citations.csv"
         df.to_csv(csv_path, index=False)
-        orig = pipeline_loaders.REFINED_CITATIONS_PATH
+        orig_csv = pipeline_loaders.REFINED_CITATIONS_PATH
+        orig_feather = pipeline_loaders.REFINED_CITATIONS_FEATHER
         pipeline_loaders.REFINED_CITATIONS_PATH = str(csv_path)
+        pipeline_loaders.REFINED_CITATIONS_FEATHER = os.path.join(
+            str(tmp_path), "refined_citations.feather"
+        )
         try:
             result = pipeline_loaders.load_refined_citations()
             assert "source_doi" in result.columns
             assert len(result) == 1
         finally:
-            pipeline_loaders.REFINED_CITATIONS_PATH = orig
+            pipeline_loaders.REFINED_CITATIONS_PATH = orig_csv
+            pipeline_loaders.REFINED_CITATIONS_FEATHER = orig_feather
 
 
 # ---------------------------------------------------------------------------
