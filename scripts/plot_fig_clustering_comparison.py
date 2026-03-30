@@ -6,7 +6,7 @@ Reads:  content/tables/tab_clustering_ari.csv
 Writes: content/figures/fig_clustering_ari.png
         content/figures/fig_clustering_perturbation.png
         content/figures/fig_clustering_optimal_k.png
-        (+ .pdf variants unless --no-pdf)
+        (+ .pdf variants with --pdf)
 
 Three figures in one script because they share data from a single
 comparison run (compare_clustering.py) and always appear together in
@@ -31,22 +31,22 @@ FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 
-def _save(fig, stem, no_pdf=False):
-    """Save PNG always; PDF unless no_pdf."""
+def _save(fig, stem, pdf=False):
+    """Save PNG always; PDF when pdf=True."""
     os.makedirs(FIGURES_DIR, exist_ok=True)
     png_path = os.path.join(FIGURES_DIR, f"{stem}.png")
     fig.savefig(png_path, dpi=150, bbox_inches="tight")
     log.info("Saved %s → %s", stem, png_path)
-    if not no_pdf:
+    if pdf:
         pdf_path = os.path.join(FIGURES_DIR, f"{stem}.pdf")
         fig.savefig(pdf_path, dpi=300, bbox_inches="tight")
         log.info("Saved %s → %s", stem, pdf_path)
 
 
-def generate_figures(ari_table, perturbation_table, optimal_k, no_pdf=False):
+def generate_figures(ari_table, perturbation_table, optimal_k, pdf=False):
     """Generate comparison figures for the technical report.
 
-    Always produces PNG. Skips PDF when no_pdf=True, matching the --no-pdf
+    Always produces PNG. Also saves PDF when pdf=True, matching the --pdf
     convention used by all plot_* scripts in this project.
 
     Three figures:
@@ -77,7 +77,7 @@ def generate_figures(ari_table, perturbation_table, optimal_k, no_pdf=False):
         plt.colorbar(im, ax=ax, label="Adjusted Rand Index")
         ax.set_title("Cross-snapshot clustering stability (ARI)")
         plt.tight_layout()
-        _save(fig, "fig_clustering_ari", no_pdf=no_pdf)
+        _save(fig, "fig_clustering_ari", pdf=pdf)
         plt.close()
 
     # Figure 2: Perturbation stability bar chart
@@ -97,7 +97,7 @@ def generate_figures(ari_table, perturbation_table, optimal_k, no_pdf=False):
                     f"{row['mean_ari']:.3f}±{row['std_ari']:.3f}",
                     ha="center", fontsize=9)
         plt.tight_layout()
-        _save(fig, "fig_clustering_perturbation", no_pdf=no_pdf)
+        _save(fig, "fig_clustering_perturbation", pdf=pdf)
         plt.close()
 
     # Figure 3: Silhouette scores + HDBSCAN sweep
@@ -143,7 +143,7 @@ def generate_figures(ari_table, perturbation_table, optimal_k, no_pdf=False):
             ax.grid(True, alpha=0.3)
 
         plt.tight_layout()
-        _save(fig, "fig_clustering_optimal_k", no_pdf=no_pdf)
+        _save(fig, "fig_clustering_optimal_k", pdf=pdf)
         plt.close()
 
 
@@ -151,8 +151,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Plot clustering comparison figures (ARI, perturbation, silhouette)"
     )
-    parser.add_argument("--no-pdf", action="store_true",
-                        help="Skip PDF generation (PNG only)")
+    parser.add_argument("--pdf", action="store_true",
+                        help="Also save PDF output")
     parser.add_argument(
         "--ari",
         default=os.path.join(TABLES_DIR, "tab_clustering_ari.csv"),
@@ -197,7 +197,7 @@ def main():
         log.error("No input data found. Run compare_clustering.py first.")
         raise SystemExit(1)
 
-    generate_figures(ari_table, perturbation_table, optimal_k, no_pdf=args.no_pdf)
+    generate_figures(ari_table, perturbation_table, optimal_k, pdf=args.pdf)
     log.info("Done.")
 
 

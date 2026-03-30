@@ -4,7 +4,7 @@ Stacked bar chart showing total corpus size and the subset mentioning
 "climate finance" in title or abstract. For Oeconomia submission.
 
 Usage:
-    uv run python scripts/plot_fig1_bars.py --output content/figures/fig_bars.png [--no-pdf] [--v1-only]
+    uv run python scripts/plot_fig1_bars.py --output content/figures/fig_bars.png [--pdf] [--v1-only]
 """
 
 import os
@@ -41,8 +41,8 @@ def main():
 
     import argparse
     parser = argparse.ArgumentParser(description="Plot Fig 1 bar chart")
-    parser.add_argument("--no-pdf", action="store_true",
-                        help="Skip PDF output")
+    parser.add_argument("--pdf", action="store_true",
+                        help="Also save PDF output")
     parser.add_argument("--v1-only", action="store_true",
                         help="Restrict to v1.0-submission corpus (in_v1==1)")
     args = parser.parse_args(extra)
@@ -143,7 +143,7 @@ def main():
 
     # --- Save ---
     out_path = os.path.splitext(io_args.output)[0]  # save_figure adds extension
-    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+    save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
     plt.close(fig)
 
 

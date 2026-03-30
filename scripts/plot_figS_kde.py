@@ -1,7 +1,7 @@
 """Grayscale KDE of the efficiency-accountability axis scores for the supplement.
 
 Produces:
-- content/figures/figS_kde.png (+.pdf unless --no-pdf)
+- content/figures/figS_kde.png (+.pdf if --pdf)
 """
 
 import argparse
@@ -22,7 +22,7 @@ apply_style()
 
 def main():
     parser = argparse.ArgumentParser(description="KDE of bimodality axis scores")
-    parser.add_argument("--no-pdf", action="store_true", help="Skip PDF output")
+    parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
     args = parser.parse_args()
 
     # Load scores
@@ -85,7 +85,7 @@ def main():
     fig.tight_layout()
 
     out_path = os.path.join(BASE_DIR, "content", "figures", "fig_kde")
-    save_figure(fig, out_path, no_pdf=args.no_pdf, dpi=DPI)
+    save_figure(fig, out_path, pdf=args.pdf, dpi=DPI)
     plt.close(fig)
 
 

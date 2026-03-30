@@ -1,7 +1,7 @@
 """Fig: multi-space silhouette comparison (semantic vs lexical vs citation).
 
 Reads:  content/tables/clustering_multi_space.json
-Writes: content/figures/fig_clustering_spaces.png (+ .pdf unless --no-pdf)
+Writes: content/figures/fig_clustering_spaces.png (+ .pdf with --pdf)
 
 Bar chart comparing KMeans silhouette scores across three representation
 spaces: semantic embeddings (1024D), lexical TF-IDF (→ 100D SVD), and
@@ -24,12 +24,12 @@ FIGURES_DIR = os.path.join(BASE_DIR, "content", "figures")
 TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 
-def plot_multi_space_figure(space_results, no_pdf=False):
+def plot_multi_space_figure(space_results, pdf=False):
     """Bar chart comparing silhouette scores across representation spaces.
 
     Reads the multi-space silhouette results (semantic, lexical, citation)
     and produces a grouped bar chart showing silhouette at each k value.
-    Output: fig_clustering_spaces.png (and .pdf unless no_pdf).
+    Output: fig_clustering_spaces.png (and .pdf with --pdf).
     """
     os.makedirs(FIGURES_DIR, exist_ok=True)
 
@@ -81,7 +81,7 @@ def plot_multi_space_figure(space_results, no_pdf=False):
     png_path = os.path.join(FIGURES_DIR, "fig_clustering_spaces.png")
     fig.savefig(png_path, dpi=150, bbox_inches="tight")
     log.info("Saved multi-space figure → %s", png_path)
-    if not no_pdf:
+    if pdf:
         pdf_path = os.path.join(FIGURES_DIR, "fig_clustering_spaces.pdf")
         fig.savefig(pdf_path, dpi=300, bbox_inches="tight")
         log.info("Saved multi-space figure → %s", pdf_path)
@@ -92,8 +92,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Plot multi-space silhouette comparison figure"
     )
-    parser.add_argument("--no-pdf", action="store_true",
-                        help="Skip PDF generation (PNG only)")
+    parser.add_argument("--pdf", action="store_true",
+                        help="Also save PDF output")
     parser.add_argument(
         "--input",
         default=os.path.join(TABLES_DIR, "clustering_multi_space.json"),
@@ -109,7 +109,7 @@ def main():
     with open(args.input) as f:
         space_results = json.load(f)
 
-    plot_multi_space_figure(space_results, no_pdf=args.no_pdf)
+    plot_multi_space_figure(space_results, pdf=args.pdf)
     log.info("Done.")
 
 
