@@ -12,5 +12,14 @@
   },
   "plot_fig1_bars_v1": {
     "content/figures/fig_bars_v1.png": "e8e794c689b3edc51e31957a4e3276049ebbb8908cdc71a9c379875516e76222"
+  },
+  "plot_fig2_breaks": {
+    "content/figures/fig_breaks.png": "029a3856aa189131690be860e7f749f997109165b60d8e6266c8ea8b34ecfbd6"
+  },
+  "plot_fig2_composition": {
+    "content/figures/fig_composition.png": "8784ff61f2a529763bad6c22e210522084a1af65f6977077e0131b45db2bd58f"
+  },
+  "plot_fig_alluvial": {
+    "content/figures/fig_alluvial.png": "d3c1def589b1f486180327a9a9c00f840cfcc3fd00d8a5d04b60dcdee8686841"
   }
 }

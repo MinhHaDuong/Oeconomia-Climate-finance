@@ -50,6 +50,7 @@ FIGURES_DIR = CONTENT_DIR / "figures"
 # ---------------------------------------------------------------------------
 
 REGISTRY: list[dict] = [
+    # --- Compute (order matters: downstream scripts read their outputs) ---
     {
         "name": "compute_breakpoints",
         "script": "compute_breakpoints.py",
@@ -68,6 +69,7 @@ REGISTRY: list[dict] = [
             "content/tables/cluster_labels.json",
         ],
     },
+    # --- Figures: bars ---
     {
         "name": "plot_fig1_bars",
         "script": "plot_fig1_bars.py",
@@ -87,7 +89,44 @@ REGISTRY: list[dict] = [
             "content/figures/fig_bars_v1.png",
         ],
     },
+    # --- Figures: breaks and composition (depend on compute_* outputs) ---
+    {
+        "name": "plot_fig2_breaks",
+        "script": "plot_fig2_breaks.py",
+        "args": ["--no-pdf"],
+        "outputs": [
+            "content/figures/fig_breaks.png",
+        ],
+    },
+    {
+        "name": "plot_fig2_composition",
+        "script": "plot_fig2_composition.py",
+        "args": [
+            "--output", str(FIGURES_DIR / "fig_composition.png"), "--no-pdf",
+        ],
+        "outputs": [
+            "content/figures/fig_composition.png",
+        ],
+    },
+    # --- Figures: alluvial (depends on compute_clusters) ---
+    {
+        "name": "plot_fig_alluvial",
+        "script": "plot_fig_alluvial.py",
+        "args": ["--no-pdf"],
+        "outputs": [
+            "content/figures/fig_alluvial.png",
+        ],
+    },
 ]
+
+# Scripts excluded from regression testing:
+# - compute_lexical: empty robustness table on 100 rows
+# - plot_fig_breakpoints: same (reads robustness table)
+# - analyze_bimodality: NaN in GMM with sparse 100-row TF-IDF
+# - plot_fig_seed_axis: not enough core papers for violins
+# - plot_fig45_pca_scatter: no bimodal PCs at 100 rows (exits 0)
+# - build_het_core: writes to CATALOGS_DIR (env-dependent path)
+# - export_corpus_table: needs unified_works.csv (Phase 1 artifact)
 
 
 def _smoke_env() -> dict[str, str]:
