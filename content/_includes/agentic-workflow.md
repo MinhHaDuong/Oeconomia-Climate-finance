@@ -36,7 +36,7 @@ The pipeline was initially a flat Makefile. Migrating to DVC (issues #101--#104)
 
 ### Worktrees for parallel agent work
 
-Git worktrees allow multiple branches to be checked out simultaneously in separate directories. The project uses worktrees extensively: each ticket gets its own worktree (`git worktree add ../t{N}-description -b t{N}-description`), enabling parallel agent sessions to work on independent tasks without interfering with each other. A post-checkout hook automatically symlinks the `.env` file from the main worktree, ensuring scripts find their API keys and data paths in any worktree.
+Git worktrees allow multiple branches to be checked out simultaneously in separate directories. The project uses worktrees extensively: each agent conversation runs in its own throwaway worktree via Claude Code's built-in `EnterWorktree` tool, enabling parallel sessions to work on independent tasks without interfering with each other. A `.worktreeinclude` file ensures that `.env` and `.dvc/config.local` are auto-copied into each worktree, so scripts find their API keys and data paths without manual setup.
 
 ### Pre-commit hooks as quality gates
 
