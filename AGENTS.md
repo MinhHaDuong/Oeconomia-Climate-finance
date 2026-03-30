@@ -22,6 +22,8 @@
 | `.claude/hooks/` | Hook scripts (on-start setup) |
 | `hooks/` | Git hooks (pre-commit, pre-push, post-checkout) |
 
+**Writing rules:** State the intent. Put mechanical details in the enforcing test, not in the rule.
+
 ## Dragon Dreaming workflow
 
 Every task passes through four phases. Announce transitions inline: `[Phase → Phase] reason`.
