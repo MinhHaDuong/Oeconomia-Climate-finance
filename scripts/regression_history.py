@@ -40,7 +40,7 @@ SCRIPTS = [
     {
         "name": "compute_breakpoints",
         "script": "scripts/compute_breakpoints.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "outputs": [
             "content/tables/tab_breakpoints.csv",
             "content/tables/tab_breakpoint_robustness.csv",
@@ -49,7 +49,7 @@ SCRIPTS = [
     {
         "name": "compute_clusters",
         "script": "scripts/compute_clusters.py",
-        "args": ["--no-pdf"],
+        "args": [],
         "outputs": [
             "content/tables/tab_alluvial.csv",
             "content/tables/cluster_labels.json",

@@ -98,4 +98,4 @@ scikit-learn's KMeans delegates to platform-specific BLAS routines (OpenBLAS, MK
 - Citation enrichment timing may vary due to Crossref index updates
 - LLM audit (requires `OPENROUTER_API_KEY`; can be skipped with `--skip-llm`)
 
-All scripts support a `--no-pdf` flag to skip PDF generation and produce PNG only.
+Plotting scripts accept a `--pdf` flag to also save PDF output alongside PNG.

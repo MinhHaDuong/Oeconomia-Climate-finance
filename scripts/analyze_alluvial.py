@@ -25,8 +25,8 @@ SCRIPT_FLAGS = {
     "scripts/compute_breakpoints.py": {"--core-only", "--censor-gap", "--robustness"},
     "scripts/compute_clusters.py":    {"--core-only", "--breaks"},
     "scripts/compute_lexical.py":     set(),
-    "scripts/plot_fig_breakpoints.py": {"--core-only", "--censor-gap", "--no-pdf"},
-    "scripts/plot_fig_alluvial.py":    {"--core-only", "--censor-gap", "--no-pdf"},
+    "scripts/plot_fig_breakpoints.py": {"--core-only", "--censor-gap", "--pdf"},
+    "scripts/plot_fig_alluvial.py":    {"--core-only", "--censor-gap", "--pdf"},
 }
 
 parser = argparse.ArgumentParser(description="Full alluvial pipeline (deprecated)")

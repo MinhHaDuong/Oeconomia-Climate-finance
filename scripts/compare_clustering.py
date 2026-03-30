@@ -266,8 +266,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Compare clustering methods across corpus snapshots"
     )
-    parser.add_argument("--no-pdf", action="store_true",
-                        help="Skip PDF generation (PNG only)")
+    parser.add_argument("--pdf", action="store_true",
+                        help="Also save PDF output")
     parser.add_argument("--no-perturbation", action="store_true",
                         help="Skip perturbation stability (saves time)")
     parser.add_argument("--n-perturbation", type=int, default=10,
@@ -312,8 +312,8 @@ def main():
 
     # Generate figures — delegates to dedicated plot_fig_*.py scripts
     generate_figures(ari_table, perturbation_table, optimal_k,
-                     no_pdf=args.no_pdf)
-    plot_multi_space_figure(space_results, no_pdf=args.no_pdf)
+                     pdf=args.pdf)
+    plot_multi_space_figure(space_results, pdf=args.pdf)
 
     log.info("Comparison complete.")
 
