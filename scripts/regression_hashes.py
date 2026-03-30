@@ -126,6 +126,15 @@ REGISTRY: list[dict] = [
             "content/figures/fig_breakpoints.png",
         ],
     },
+    # --- Build: HET core selection (writes to CATALOGS_DIR = fixture dir) ---
+    {
+        "name": "build_het_core",
+        "script": "build_het_core.py",
+        "args": [],
+        "outputs": [
+            "tests/fixtures/smoke/het_mostcited_50.csv",
+        ],
+    },
 ]
 
 # Scripts excluded from regression testing (exit gracefully but produce
@@ -134,7 +143,6 @@ REGISTRY: list[dict] = [
 # - analyze_bimodality: too few pole papers → exits 0
 # - plot_fig_seed_axis: not enough core papers for violins
 # - plot_fig45_pca_scatter: no bimodal PCs at 100 rows (exits 0)
-# - build_het_core: writes to CATALOGS_DIR (env-dependent path)
 # - export_corpus_table: needs unified_works.csv (Phase 1 artifact)
 
 
