@@ -232,7 +232,7 @@ content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scr
 	uv run python $< --output $@
 
 content/tables/tab_venues.md: scripts/export_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
-	uv run python $<
+	uv run python $< --output $@
 
 content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md &: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
 	uv run python $< --output $@

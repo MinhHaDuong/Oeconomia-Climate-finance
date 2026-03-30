@@ -1068,7 +1068,7 @@ class TestOutputFlag:
         "compute_regression_history.py", "qa_bibliography.py",
         "qa_missing_references.py", "analyze_unfccc_topics.py",
         # Not in ticket #549 scope — future migration
-        "build_het_core.py", "export_tab_venues.py",
+        "build_het_core.py",
         "plot_genealogy.py", "plot_genealogy_html.py",
         "plot_fig_traditions.py", "analyze_genealogy.py",
     }
@@ -1102,6 +1102,10 @@ class TestOutputFlag:
         ("export_citation_coverage.py",
          ["--input", f"{SMOKE}/refined_works.csv", f"{SMOKE}/refined_citations.csv"], ".md"),
         ("export_language_table.py", ["--input", f"{SMOKE}/refined_works.csv"], ".md"),
+        ("export_tab_venues.py",
+         ["--refined-works", f"{SMOKE}/refined_works.csv",
+          "--pole-papers", f"{SMOKE}/tab_pole_papers.csv",
+          "--min-papers", "1", "--core-threshold", "0"], ".md"),
         ("summarize_core_venues.py",
          ["--core", f"{SMOKE}/refined_works.csv"], ".csv"),
     ]
