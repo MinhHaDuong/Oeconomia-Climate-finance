@@ -38,6 +38,7 @@ Under review (peer reviewers + data specialists).
 - Crossref DOI fallback: enrich_dois now queries Crossref when OpenAlex has no DOI, 9,268 candidates unlocked (#569)
 - DVC clean, 18 files pushed
 - Enrichment pipeline split into independent DVC stages (#428, #505)
+- Test suite: check-fast < 10s (4 xdist workers), mypy enabled, 0 skips, 0 warnings
 - Code smells cleared: all ruff C901/PLR0912/PLR0915 smell thresholds pass (#507)
 - PDF output now opt-in (`--pdf`): `save_figure()` default flipped (#544), phantom flag removed from non-plotting scripts (#545)
 - God module split: `analyze_genealogy.py` (808L) → 3 scripts M/V architecture (#542), robustness block to `analyze_cocitation.py`
