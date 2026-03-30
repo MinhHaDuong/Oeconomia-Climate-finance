@@ -5,8 +5,6 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
-import pytest
-
 from pipeline_text import normalize_text
 
 

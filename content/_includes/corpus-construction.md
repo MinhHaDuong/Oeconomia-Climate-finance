@@ -71,7 +71,7 @@ This imbalance likely reflects a harvesting bias. Business schools (Harvard, NYU
 
 ### Merge and deduplication
 
-The merge script (`scripts/catalog_merge.py`) applies two deduplication passes:
+The merge script (`scripts/catalog_merge.py`) first normalizes all text fields (titles, abstracts, author names, journals, keywords) to fix encoding artifacts inherited from upstream aggregators: HTML entities are decoded, mojibake from double-encoded UTF-8 is repaired, and invisible characters (zero-width spaces, soft hyphens, BOM markers) are stripped. It then applies two deduplication passes:
 
 1. **DOI-based deduplication:** DOIs are normalized (lowercased, URL prefix stripped). Records sharing the same DOI are merged using a source priority order: openalex > scopus > istex > bibcnrs > scispace > grey > teaching. The maximum `cited_by_count` across duplicates is retained; other fields use the best non-empty value following source priority.
 2. **Title+year deduplication:** Records without DOIs are grouped by normalized title (lowercased, punctuation stripped) and year. Groups are merged using the same priority logic.
