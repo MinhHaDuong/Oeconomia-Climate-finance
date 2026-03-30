@@ -4,6 +4,7 @@
 Reads source-specific cache files from enrich_cache/:
   - crossref_refs.csv   (source_doi, ref_doi, ref_title, ..., ref_raw)
   - openalex_refs.csv   (source_doi, ref_oa_id, ref_doi, ref_title, ...)
+  - ref_parsed.csv      (GROBID-parsed unstructured refs, REFS_COLUMNS schema)
 
 Produces citations.csv with REFS_COLUMNS schema, deduplicated on
 (source_doi, ref_doi). Sentinel rows are excluded.
@@ -81,6 +82,15 @@ def merge_citations(cache_dir=None, output_path=None):
         frames.append(oa_mapped)
     else:
         log.info("No OpenAlex cache at %s", openalex_path)
+
+    # Read GROBID-parsed cache — already has REFS_COLUMNS schema
+    grobid_path = os.path.join(cache_dir, "ref_parsed.csv")
+    if os.path.exists(grobid_path):
+        gp = pd.read_csv(grobid_path, dtype=str, keep_default_na=False)
+        log.info("GROBID parsed cache: %d rows", len(gp))
+        frames.append(gp)
+    else:
+        log.info("No GROBID parsed cache at %s", grobid_path)
 
     if not frames:
         log.info("No cache files found — writing empty citations.csv")
