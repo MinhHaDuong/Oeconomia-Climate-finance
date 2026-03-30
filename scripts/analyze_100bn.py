@@ -388,7 +388,6 @@ def main():
     parser = argparse.ArgumentParser(
         description="Analyze the $100bn climate finance accounting sub-literature"
     )
-    parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
     _args = parser.parse_args()
 
     os.makedirs(TABLES_DIR, exist_ok=True)

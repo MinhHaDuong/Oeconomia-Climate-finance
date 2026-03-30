@@ -219,14 +219,12 @@ class TestBuildArgv:
 
     SCRIPT_FLAGS = {
         "scripts/compute_breakpoints.py": {
-            "--core-only", "--censor-gap", "--robustness", "--no-pdf",
+            "--core-only", "--censor-gap", "--robustness",
         },
         "scripts/compute_clusters.py": {
-            "--core-only", "--no-pdf", "--breaks",
+            "--core-only", "--breaks",
         },
-        "scripts/compute_lexical.py": {
-            "--no-pdf",
-        },
+        "scripts/compute_lexical.py": set(),
     }
 
     @staticmethod
@@ -240,36 +238,34 @@ class TestBuildArgv:
             argv.extend(["--censor-gap", str(args.censor_gap)])
         if args.robustness and "--robustness" in accepted:
             argv.append("--robustness")
-        if args.no_pdf and "--no-pdf" in accepted:
-            argv.append("--no-pdf")
         if args.breaks and "--breaks" in accepted:
             argv.extend(["--breaks", args.breaks])
         return argv
 
     def test_core_only_forwarded_to_breakpoints(self):
         args = Namespace(core_only=True, censor_gap=0, robustness=False,
-                         no_pdf=False, breaks=None)
+                         breaks=None)
         argv = self._build_argv("scripts/compute_breakpoints.py",
                                 args, self.SCRIPT_FLAGS)
         assert "--core-only" in argv
 
     def test_core_only_forwarded_to_clusters(self):
         args = Namespace(core_only=True, censor_gap=0, robustness=False,
-                         no_pdf=False, breaks=None)
+                         breaks=None)
         argv = self._build_argv("scripts/compute_clusters.py",
                                 args, self.SCRIPT_FLAGS)
         assert "--core-only" in argv
 
     def test_core_only_not_forwarded_to_lexical(self):
         args = Namespace(core_only=True, censor_gap=0, robustness=False,
-                         no_pdf=False, breaks=None)
+                         breaks=None)
         argv = self._build_argv("scripts/compute_lexical.py",
                                 args, self.SCRIPT_FLAGS)
         assert "--core-only" not in argv
 
     def test_censor_gap_only_to_breakpoints(self):
         args = Namespace(core_only=False, censor_gap=2, robustness=False,
-                         no_pdf=False, breaks=None)
+                         breaks=None)
         bp_argv = self._build_argv("scripts/compute_breakpoints.py",
                                    args, self.SCRIPT_FLAGS)
         cl_argv = self._build_argv("scripts/compute_clusters.py",
@@ -279,7 +275,7 @@ class TestBuildArgv:
 
     def test_robustness_only_to_breakpoints(self):
         args = Namespace(core_only=False, censor_gap=0, robustness=True,
-                         no_pdf=False, breaks=None)
+                         breaks=None)
         bp_argv = self._build_argv("scripts/compute_breakpoints.py",
                                    args, self.SCRIPT_FLAGS)
         cl_argv = self._build_argv("scripts/compute_clusters.py",
@@ -290,16 +286,9 @@ class TestBuildArgv:
         assert "--robustness" not in cl_argv
         assert "--robustness" not in lx_argv
 
-    def test_no_pdf_forwarded_to_all(self):
-        args = Namespace(core_only=False, censor_gap=0, robustness=False,
-                         no_pdf=True, breaks=None)
-        for script in self.SCRIPT_FLAGS:
-            argv = self._build_argv(script, args, self.SCRIPT_FLAGS)
-            assert "--no-pdf" in argv
-
     def test_breaks_forwarded_to_clusters_only(self):
         args = Namespace(core_only=False, censor_gap=0, robustness=False,
-                         no_pdf=False, breaks="2007,2013")
+                         breaks="2007,2013")
         bp_argv = self._build_argv("scripts/compute_breakpoints.py",
                                    args, self.SCRIPT_FLAGS)
         cl_argv = self._build_argv("scripts/compute_clusters.py",
@@ -312,30 +301,28 @@ class TestBuildArgv:
 
     def test_no_flags_gives_empty(self):
         args = Namespace(core_only=False, censor_gap=0, robustness=False,
-                         no_pdf=False, breaks=None)
+                         breaks=None)
         for script in self.SCRIPT_FLAGS:
             assert self._build_argv(script, args, self.SCRIPT_FLAGS) == []
 
     def test_all_flags_combined(self):
         args = Namespace(core_only=True, censor_gap=3, robustness=True,
-                         no_pdf=True, breaks="2007,2015")
+                         breaks="2007,2015")
         bp = self._build_argv("scripts/compute_breakpoints.py",
                               args, self.SCRIPT_FLAGS)
         cl = self._build_argv("scripts/compute_clusters.py",
                               args, self.SCRIPT_FLAGS)
         lx = self._build_argv("scripts/compute_lexical.py",
                               args, self.SCRIPT_FLAGS)
-        # breakpoints gets: --core-only, --censor-gap 3, --robustness, --no-pdf
+        # breakpoints gets: --core-only, --censor-gap 3, --robustness
         assert "--core-only" in bp
         assert "--censor-gap" in bp
         assert "--robustness" in bp
-        assert "--no-pdf" in bp
         assert "--breaks" not in bp
-        # clusters gets: --core-only, --no-pdf, --breaks
+        # clusters gets: --core-only, --breaks
         assert "--core-only" in cl
-        assert "--no-pdf" in cl
         assert "--breaks" in cl
         assert "--robustness" not in cl
         assert "--censor-gap" not in cl
-        # lexical gets: --no-pdf only
-        assert lx == ["--no-pdf"]
+        # lexical gets nothing (no flags accepted)
+        assert lx == []

@@ -6,7 +6,6 @@ Writes: tab_alluvial.csv, cluster_labels.json, tab_core_shares.csv
 
 Flags:
   --core-only  Restrict to highly-cited papers (cited_by_count >= 50)
-  --no-pdf     Accepted for interface compatibility; no-op (no figures generated)
 
 Note: Period boundaries are hard-coded to the manuscript three-act structure
 (2007, 2015). They are independent of the break detection in compute_breakpoints.py.
@@ -44,7 +43,6 @@ os.makedirs(TABLES_DIR, exist_ok=True)
 
 # --- Args ---
 parser = argparse.ArgumentParser(description="Compute alluvial tables and cluster labels")
-parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
 parser.add_argument("--core-only", action="store_true",
                     help="Restrict to core papers (cited_by_count >= 50)")
 parser.add_argument("--breaks", type=str, default=None,

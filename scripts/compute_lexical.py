@@ -4,9 +4,6 @@ Reads:  refined_works.csv,
         tab_breakpoint_robustness.csv (to derive detected break years)
 Writes: tab_lexical_tfidf.csv (all break years + control years, with p-values)
 
-Flags:
-  --no-pdf  Accepted for interface compatibility; no-op (no figures generated)
-
 Note: The lexical TF-IDF *figures* are produced by plot_fig_lexical_tfidf.py.
 
 Exports (for import by plot_fig_lexical_tfidf.py):
@@ -53,7 +50,6 @@ if __name__ == "__main__":
 
     # --- Args ---
     parser = argparse.ArgumentParser(description="Compute lexical TF-IDF table at break years")
-    parser.add_argument("--no-pdf", action="store_true", help="No-op (no figures generated here)")
     parser.add_argument("--core-only", action="store_true",
                         help="Not supported (lexical analysis uses full corpus). Prints warning.")
     args = parser.parse_args()

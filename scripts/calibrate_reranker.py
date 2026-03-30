@@ -445,8 +445,6 @@ def main():
                         help="Export boundary cases for human review")
     parser.add_argument("--queries-only", action="store_true",
                         help="Only print generated queries, don't score")
-    parser.add_argument("--no-pdf", action="store_true",
-                        help="(ignored, for pipeline compat)")
     args = parser.parse_args()
     calibrate(args)
 
