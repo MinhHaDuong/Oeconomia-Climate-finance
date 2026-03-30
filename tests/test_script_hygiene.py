@@ -661,6 +661,7 @@ class TestPdfDiscipline:
 
     # Scripts known to produce no figures (confirmed: no save_figure/savefig)
     NON_PLOTTING = [
+        "analyze_bimodality.py",
         "compute_breakpoints.py",
         "compute_clusters.py",
         "compute_lexical.py",

@@ -50,7 +50,8 @@ for s in utils.py pipeline_loaders.py pipeline_io.py pipeline_progress.py \
          pipeline_text.py plot_style.py plot_fig1_bars.py \
          plot_fig2_composition.py compute_clusters.py build_het_core.py \
          export_core_venues_markdown.py summarize_core_venues.py \
-         make_tab_venues.py export_citation_coverage.py analyze_bimodality.py; do
+         make_tab_venues.py export_citation_coverage.py analyze_bimodality.py \
+         plot_bimodality.py plot_bimodality_lexical.py plot_bimodality_keywords.py; do
     cp "scripts/$s" "$TMP/scripts/"
 done
 
