@@ -50,8 +50,6 @@ None.
 
 ## Next actions
 
-- Send Errata 1 to Oeconomia editor
-- Finalize DMP on OPIDoR
 - ESHET-HES conference slides (Nice, May 26–29)
 - Remaining infrastructure: #515 (DAG viz), #428 (enrichment normalization)
 - 1-fig-1-script sweep: #546 (alluvial), #550 (bimodality), #551 (embeddings), #552 (cocitation), #559 (filter_flags LLM extraction)
