@@ -309,7 +309,7 @@ content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv 
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output content/tables/tab_alluvial.csv
 
 # Clustering — v1 frozen from reproducibility archive (not re-clustered).
 # KMeans is unstable to small corpus perturbations; re-clustering the v1
@@ -390,7 +390,7 @@ content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED)
-	uv run python $< --core-only
+	uv run python $< --output content/tables/tab_alluvial_core.csv --core-only
 
 # Core-only figures
 content/figures/fig_breakpoints_core.png: \
@@ -577,7 +577,7 @@ BENCH_OUT := benchmarks/timings.jsonl
 benchmark: check-corpus
 	@mkdir -p benchmarks
 	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py --output content/tables/tab_breakpoints.csv
-	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py
+	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py --output content/tables/tab_alluvial.csv
 	$(BENCH) analyze_bimodality $(BENCH_OUT) uv run python scripts/analyze_bimodality.py
 	$(BENCH) plot_fig1_bars $(BENCH_OUT) uv run python scripts/plot_fig1_bars.py
 	@echo "Benchmark results: $(BENCH_OUT)"

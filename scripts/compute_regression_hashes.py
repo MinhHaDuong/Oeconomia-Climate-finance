@@ -64,7 +64,7 @@ REGISTRY: list[dict] = [
     {
         "name": "compute_clusters",
         "script": "compute_clusters.py",
-        "args": [],
+        "args": ["--output", "content/tables/tab_alluvial.csv"],
         "deps": [],
         "outputs": [
             "content/tables/tab_alluvial.csv",
