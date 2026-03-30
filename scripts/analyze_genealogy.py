@@ -311,7 +311,8 @@ def main():
     works, cit, doi_meta, doi_to_cluster = load_data()
     backbone_dois = select_backbone(works, doi_meta)
     backbone_dois, lineage = assign_lineages(backbone_dois, doi_meta, doi_to_cluster)
-    build_citation_dag(backbone_dois, cit)  # logs edge count
+    # Edge count logged for diagnostics; renderers reconstruct DAG from CSV
+    build_citation_dag(backbone_dois, cit)
     positions = compute_layout(backbone_dois, lineage, doi_meta)
     save_lineage_table(backbone_dois, lineage, positions, doi_meta, args.output)
 
