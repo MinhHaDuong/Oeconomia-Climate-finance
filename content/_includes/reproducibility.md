@@ -52,6 +52,22 @@ All generated data lives outside the repository at `~/data/projets/Oeconomia-Cli
 | Bimodality analysis | ~1 min |
 | Citation genealogy | ~1 min |
 
+### Polars evaluation
+
+We benchmarked Polars 1.39 against pandas 2.2 on the actual pipeline data (31,713 refined works, 835,455 citations) to evaluate a potential migration. Each operation was measured over three runs (median reported), after one warmup, on a single machine.
+
+| Operation | pandas | Polars | Speedup |
+|---|---|---|---|
+| CSV read refined works | 0.54 s | 0.11 s | 5× |
+| CSV read citations | 2.87 s | 0.09 s | 33× |
+| GroupBy aggregation | 0.04 s | 0.02 s | 2× |
+| Left join | 6 ms | 2 ms | 3× |
+| String filter | 24 ms | 7 ms | 3× |
+| Sort | 8 ms | 2 ms | 3× |
+| CSV write | 0.70 s | 0.04 s | 17× |
+
+Polars is 3--33× faster on CSV I/O and 2--3× faster on in-memory operations, thanks to its Rust-based columnar engine. However, the absolute gains are small: the entire Phase 2 benchmark completes in under 15 seconds with pandas. The real bottlenecks are network-bound Phase 1 stages (API harvesting, citation enrichment). Migrating 108 Python files from pandas to Polars' incompatible API would also require conversion at every scikit-learn, matplotlib, and numpy boundary. We therefore retain pandas, noting that `pd.read_csv(..., engine="pyarrow")` offers a ~3× CSV speedup with no API changes if needed in the future.
+
 ### Cross-machine reproducibility
 
 Figures and tables are **byte-identical** across machines when `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=0` are set (the Makefile exports both).
