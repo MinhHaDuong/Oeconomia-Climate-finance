@@ -168,17 +168,19 @@ class TestBackwardCompatibility:
 class TestPhase1OutputContract:
     """Verify outputs respect Phase 1 contract."""
 
-    def test_refined_works_csv_schema(self, temp_catalogs):
+    def test_refined_works_csv_schema(self):
         """refined_works.csv has expected core columns."""
-        refined_path = temp_catalogs / "refined_works.csv"
+        from utils import CATALOGS_DIR
 
-        if not refined_path.exists():
-            pytest.skip("refined_works.csv not yet created (OK for unit test)")
+        refined_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
 
-        df = pd.read_csv(refined_path, dtype=str)
+        if not os.path.exists(refined_path):
+            pytest.skip("refined_works.csv not found in CATALOGS_DIR")
+
+        df = pd.read_csv(refined_path, dtype=str, nrows=1)
         # Core contract columns
         for col in ["source", "doi", "title"]:
-            assert col in df.columns or df.empty, f"Missing core column: {col}"
+            assert col in df.columns, f"Missing core column: {col}"
 
     def test_embeddings_npz_format(self, temp_catalogs):
         """embeddings.npz is valid numpy format."""
