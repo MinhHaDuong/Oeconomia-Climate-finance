@@ -1,7 +1,6 @@
 """Semantic landscape scatter plot, colored by a chosen variable.
 
-Reads semantic_clusters.csv (produced by analyze_embeddings.py) and
-refined_works.csv (for language/period metadata). Produces one figure
+Reads semantic_clusters.csv (produced by analyze_embeddings.py). Produces one figure
 per invocation, parameterized by --color-by {cluster, language, period}.
 
 Usage:
