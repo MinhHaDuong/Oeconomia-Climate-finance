@@ -305,14 +305,18 @@ class TestEnrichDois:
     def test_load_cache_handles_empty_file(self, tmp_path):
         """load_cache() returns {} when cache file is empty (DVC stub)."""
         import enrich_dois
-        orig_cache = enrich_dois.CACHE_FILE
+        cache = enrich_dois._cache
+        orig_path = cache._path
+        orig_data = cache._data
         try:
             empty_file = tmp_path / "doi_resolved.csv"
             empty_file.write_text("")
-            enrich_dois.CACHE_FILE = str(empty_file)
+            cache._path = str(empty_file)
+            cache._data = None  # reset memoized state
             assert enrich_dois.load_cache() == {}
         finally:
-            enrich_dois.CACHE_FILE = orig_cache
+            cache._path = orig_path
+            cache._data = orig_data
 
 
 # ============================================================

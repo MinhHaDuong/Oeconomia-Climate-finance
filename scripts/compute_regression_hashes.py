@@ -98,7 +98,7 @@ REGISTRY: list[dict] = [
         "args": [],
         "deps": [],
         "outputs": [
-            "tests/fixtures/smoke/het_mostcited_50.csv",
+            "tests/fixtures/smoke/catalogs/het_mostcited_50.csv",
         ],
     },
     # --- Wave 2: depend on compute_* outputs ---
