@@ -17,9 +17,10 @@ tar xzf climate-finance-analysis.tar.gz
 cd climate-finance-analysis
 
 # Option A: native (requires uv)
-uv sync          # install Python dependencies (pinned in uv.lock)
-make             # rebuild all figures and tables from data
-make verify      # check outputs match expected checksums
+uv sync              # install Python dependencies (pinned in uv.lock)
+make corpus-handoff  # (optional) convert CSV to Feather for ~30× faster reads
+make                 # rebuild all figures and tables from data
+make verify          # check outputs match expected checksums
 
 # Option B: container (requires podman or docker, no other install needed)
 podman build -t climate-finance .

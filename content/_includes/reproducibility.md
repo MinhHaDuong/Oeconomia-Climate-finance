@@ -83,7 +83,7 @@ Feather is 20--50× faster than CSV, and both binary formats halve disk usage th
 
 **Cumulative cost.** The CSV parse cost is paid independently by each script: 16 Phase 2 scripts read `refined_works.csv` and 9 read `refined_citations.csv`, with no cross-script caching. A full `make analysis-figures` run thus spends ~0.65 s × 16 + ~4.2 s × 9 ≈ 48 seconds on CSV parsing alone. With Feather this drops to ~1.5 seconds.
 
-**Decision.** Phase 1 continues to write CSV (human-readable, diff-friendly, DVC-tracked). A format conversion step at the Phase 1→2 handoff produces Feather files that Phase 2 scripts read. Each phase tracks its own inputs: Phase 1 outputs are DVC-stored (expensive to regenerate); Phase 2 outputs are verified by hash (cheap to regenerate). This requires adding pyarrow as a dependency and modifying the handoff step (write) and `pipeline_loaders.py` (read). See #527 for the first step: removing the one Phase 2 stage that is currently misplaced in the DVC pipeline.
+**Implementation.** CSV remains the canonical archival format — human-readable, diff-friendly, and shipped in reproducibility archives. An optional `make corpus-handoff` step converts CSV to Feather for developers iterating on Phase 2 scripts. The Phase 2 loaders (`pipeline_loaders.py`) prefer Feather when present and fall back to CSV transparently.
 
 ### Cross-machine reproducibility
 

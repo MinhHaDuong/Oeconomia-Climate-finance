@@ -14,6 +14,7 @@
 #   make analysis-figures   Regenerate all figures
 #   make analysis-stats     Recompute computed variables
 #   make corpus             Full Phase 1 pipeline (padme only)
+#   make corpus-handoff     Convert CSV→Feather for faster Phase 2 reads (optional)
 #   make corpus-sync        Pull data from padme (doudou only)
 #   make archive-manuscript Minimal package for Oeconomia reviewers
 #   make archive-datapaper  Full pipeline package for data paper
