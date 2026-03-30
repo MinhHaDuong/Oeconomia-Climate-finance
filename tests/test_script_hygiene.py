@@ -552,6 +552,33 @@ class TestNoBarePrint:
 # 8. Type annotations on core modules (mypy)
 # ---------------------------------------------------------------------------
 
+class TestNoPhaseTwoInDvc:
+    """Phase 2 scripts must not be DVC stages (#527).
+
+    Phase 2 (analyze_*, compute_*, plot_*, export_*) is fast and deterministic —
+    outputs are Makefile targets, not DVC-tracked artifacts. Only Phase 1
+    (catalog_*, enrich_*, corpus_*) belongs in dvc.yaml.
+    """
+
+    # summarize_abstracts is Phase 1 enrichment (writes to enrich_cache/), not Phase 2
+    PHASE2_PREFIXES = ("analyze_", "compute_", "plot_", "export_")
+
+    def test_no_phase2_stages_in_dvc(self):
+        import yaml
+
+        dvc_path = os.path.join(REPO, "dvc.yaml")
+        with open(dvc_path) as f:
+            dvc = yaml.safe_load(f)
+        phase2_stages = [
+            s for s in dvc.get("stages", {})
+            if s.startswith(self.PHASE2_PREFIXES)
+        ]
+        assert phase2_stages == [], (
+            f"Phase 2 stages found in dvc.yaml (should be Makefile targets): "
+            f"{phase2_stages}"
+        )
+
+
 _MYPY_AVAILABLE = subprocess.run(
     ["uv", "run", "mypy", "--version"], capture_output=True
 ).returncode == 0

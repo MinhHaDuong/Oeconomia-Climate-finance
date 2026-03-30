@@ -34,13 +34,11 @@ class TestKFromConfig:
                     "should read from config/analysis.yaml"
                 )
 
-    def test_dvc_yaml_lists_config_as_dependency(self):
-        """analyze_embeddings stage must depend on config/analysis.yaml."""
+    def test_analyze_embeddings_not_in_dvc(self):
+        """analyze_embeddings is Phase 2 — must NOT be a DVC stage (#527)."""
         dvc_path = os.path.join(os.path.dirname(__file__), "..", "dvc.yaml")
         with open(dvc_path) as f:
             dvc = yaml.safe_load(f)
-        stage = dvc.get("stages", {}).get("analyze_embeddings", {})
-        deps = [str(d) for d in stage.get("deps", [])]
-        assert any("analysis.yaml" in d for d in deps), (
-            "analyze_embeddings stage must list config/analysis.yaml in deps"
+        assert "analyze_embeddings" not in dvc.get("stages", {}), (
+            "analyze_embeddings is Phase 2 — should be a Makefile target, not DVC"
         )

@@ -5,7 +5,7 @@ Verifies:
 - analyze_embeddings.py exists and consumes embeddings.npz (produces semantic_clusters.csv)
 - dvc.yaml enrich_embeddings stage runs enrich_embeddings.py (not analyze_embeddings.py)
 - dvc.yaml enrich_embeddings stage outputs only embeddings.npz
-- A Phase 2 analyze_embeddings stage exists in dvc.yaml with semantic_clusters.csv output
+- analyze_embeddings is a Makefile target, not a DVC stage (#527)
 """
 
 import os
@@ -48,21 +48,9 @@ class TestDVCStages:
         assert any("embeddings.npz" in o for o in out_strs)
         assert not any("semantic_clusters" in o for o in out_strs)
 
-    def test_analyze_embeddings_stage_exists(self):
-        """A Phase 2 analyze_embeddings stage must exist."""
-        assert "analyze_embeddings" in self.stages
-
-    def test_analyze_embeddings_depends_on_embeddings_npz(self):
-        """analyze_embeddings stage must depend on embeddings.npz."""
-        deps = self.stages["analyze_embeddings"]["deps"]
-        dep_strs = [str(d) for d in deps]
-        assert any("embeddings.npz" in d for d in dep_strs)
-
-    def test_analyze_embeddings_outputs_clusters(self):
-        """analyze_embeddings stage must output semantic_clusters.csv."""
-        outs = self.stages["analyze_embeddings"]["outs"]
-        out_strs = [str(o) for o in outs]
-        assert any("semantic_clusters" in o for o in out_strs)
+    def test_analyze_embeddings_not_in_dvc(self):
+        """analyze_embeddings is Phase 2 — must NOT be a DVC stage (#527)."""
+        assert "analyze_embeddings" not in self.stages
 
 
 class TestScriptFiles:
