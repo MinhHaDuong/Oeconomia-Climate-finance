@@ -20,9 +20,9 @@ argument-hint: <issue-number>
    ```
 4. Read the files listed in **Relevant files**.
 5. Write the first test from the **Test** section of the ticket.
-6. Run `make check-fast` — confirm the test fails (Red).
-7. Announce `[Planning → Doing]`, then begin: Red → Green → Refactor.
-8. Create the PR when `make check` passes.
+6. Run `make check-fast` — confirm the test fails.
+7. Announce `[Planning → Doing]`, then implement until `make check` passes.
+8. Create the PR.
 9. Review according to `/review-pr`.
 10. Fix all comments regardless of severity.
 11. Repeat 9–10 up to 3 times. If still not clean, escalate (see workflow rules).
