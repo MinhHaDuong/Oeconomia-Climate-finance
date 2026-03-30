@@ -217,21 +217,17 @@ stages:
       uv run python scripts/enrich_citations_batch.py --works-input data/catalogs/enriched_works.csv & p1=$!;
       uv run python scripts/enrich_citations_openalex.py --works-input data/catalogs/enriched_works.csv & p2=$!;
       wait $p1 && wait $p2 &&
-      uv run python scripts/parse_citations_grobid.py &&
-      uv run python scripts/merge_citations.py
+      uv run python scripts/parse_citations_grobid.py
     deps:
       - scripts/enrich_citations_batch.py
       - scripts/enrich_citations_openalex.py
       - scripts/parse_citations_grobid.py
-      - scripts/merge_citations.py
       - scripts/utils.py
       - scripts/pipeline_io.py
       - scripts/pipeline_loaders.py
       - scripts/pipeline_progress.py
       - scripts/pipeline_text.py
       - data/catalogs/enriched_works.csv
-    outs:
-      - data/catalogs/citations.csv
 
   # Phase 1b.4: Citation QC — verify against Crossref ground truth
   qa_citations:
@@ -300,6 +296,23 @@ stages:
     outs:
       - data/catalogs/refined_works.csv
       - data/catalogs/corpus_audit.csv
+
+  # Phase 1d.1: Match parsed citation refs to corpus works (#539)
+  # Fuzzy-matches GROBID-parsed refs (from enrich_cache/ref_parsed.csv) against
+  # refined_works.csv to discover ref_doi for refs that cite corpus works.
+  # Writes enrich_cache/ref_matches.csv, then merges all citation caches
+  # (crossref + openalex + grobid + ref_matches) into citations.csv.
+  ref_match:
+    cmd: uv run python scripts/ref_match_corpus.py && uv run python scripts/merge_citations.py
+    deps:
+      - scripts/ref_match_corpus.py
+      - scripts/merge_citations.py
+      - scripts/utils.py
+      - scripts/pipeline_io.py
+      - scripts/pipeline_text.py
+      - data/catalogs/refined_works.csv
+    outs:
+      - data/catalogs/citations.csv
 
   # Phase 1e: Align → refined_embeddings.npz + refined_citations.csv
   # Produces row-aligned Phase 2 contract artifacts:
