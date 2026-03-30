@@ -874,3 +874,77 @@ class TestSingleOutputType:
             f"Plot scripts producing both PNG and HTML (split into separate scripts): "
             + ", ".join(violations)
         )
+
+
+# ---------------------------------------------------------------------------
+# 14. Rules state intent only — mechanical details live in tests/hooks
+# ---------------------------------------------------------------------------
+
+
+class TestRulesIntentOnly:
+    """Rule files must state intent, not duplicate mechanical details.
+
+    When a rule encodes the same list, threshold, or pattern that an
+    enforcing test or hook already contains, the two copies drift apart.
+    The rule should point to the test; the test is the source of truth.
+    """
+
+    RULES_DIR = os.path.join(REPO, ".claude", "rules")
+
+    def _read_rule(self, name):
+        with open(os.path.join(self.RULES_DIR, name)) as f:
+            return f.read()
+
+    def test_coding_no_typed_module_list(self):
+        """coding.md must not enumerate typed modules
+        (TestTypingCoreModules owns that list)."""
+        content = self._read_rule("coding.md")
+        for mod in TestTypingCoreModules.TYPED_MODULES:
+            assert mod not in content, (
+                f"coding.md lists '{mod}' — that belongs in "
+                f"TestTypingCoreModules.TYPED_MODULES, not the rule"
+            )
+
+    def test_coding_no_typing_syntax_examples(self):
+        """coding.md must not list typing syntax
+        (ruff UP rules enforce this)."""
+        content = self._read_rule("coding.md")
+        syntax_examples = ["list[str]", "dict[str", "Union[", "Optional["]
+        found = [s for s in syntax_examples if s in content]
+        assert not found, (
+            f"coding.md contains typing syntax examples {found} — "
+            f"ruff UP rules in TestRuffModernPython enforce this"
+        )
+
+    def test_git_no_hook_details(self):
+        """git.md must not itemize pre-commit hook thresholds
+        (hooks/pre-commit is the source)."""
+        content = self._read_rule("git.md")
+        assert ">500KB" not in content, (
+            "git.md specifies file size threshold — "
+            "hooks/pre-commit owns that"
+        )
+
+    def test_script_io_no_code_template(self):
+        """script-io.md must not contain Python code blocks
+        (agent should read a migrated script as example)."""
+        content = self._read_rule("script-io.md")
+        assert "```python" not in content, (
+            "script-io.md contains a Python code template — "
+            "the agent should read a migrated script as the example"
+        )
+
+    def test_coding_no_architecture_sections(self):
+        """coding.md must not contain project architecture docs
+        (those live in architecture.md)."""
+        content = self._read_rule("coding.md")
+        arch_headers = [
+            "## Data location",
+            "## Project structure",
+            "## Pipeline phases",
+        ]
+        found = [h for h in arch_headers if h in content]
+        assert not found, (
+            f"coding.md contains architecture sections {found} — "
+            f"these belong in architecture.md"
+        )

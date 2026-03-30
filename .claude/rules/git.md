@@ -1,7 +1,7 @@
 # Git Discipline
 
 - **Always work on a branch.** Branch naming: `t{N}-short-description` (Doing), `explore-{topic}` (Dreaming), or `submission/{journal}-{document}` (submission tracking). Main is read-only except for STATE housekeeping.
-- **Enforced by pre-commit hook**: no commits on `main`, `CLAUDE.md` locked, no secrets, no large files (>500KB), no conflict markers.
+- **Enforced by pre-commit hook** — see `hooks/pre-commit` for specifics.
 - **`.worktreeinclude`**: auto-copies `.env` and `.dvc/config.local` into worktrees created by `EnterWorktree`.
 - **Git hooks** live in `hooks/`. After cloning: `make setup`. Agents: set automatically at session start.
 - **Agent identity**: machine user `HDMX-coding-agent`. Credentials (`AGENT_GH_TOKEN`, `AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`) from `.env`.
