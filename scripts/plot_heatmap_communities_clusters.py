@@ -228,6 +228,17 @@ def _render_heatmap(heatmap_data, cluster_short, out_stem, pdf):
     plt.close(fig)
 
 
+def _resolve_inputs(input_list):
+    """Resolve works, embeddings, and citations paths from --input."""
+    works_path = (
+        input_list[0] if input_list
+        else os.path.join(CATALOGS_DIR, "refined_works.csv")
+    )
+    emb_path = input_list[1] if input_list and len(input_list) >= 2 else None
+    cit_path = input_list[2] if input_list and len(input_list) >= 3 else None
+    return works_path, emb_path, cit_path
+
+
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output, inputs=io_args.input)
@@ -239,26 +250,11 @@ def main():
     args = parser.parse_args(extra)
 
     apply_style()
-    import community as community_louvain  # noqa: F401
-    import matplotlib.pyplot as plt
-    import networkx as nx  # noqa: F401
     from sklearn.cluster import KMeans
 
     out_stem = os.path.splitext(io_args.output)[0]
 
-    # --- Input resolution ---
-    works_path = (
-        io_args.input[0] if io_args.input
-        else os.path.join(CATALOGS_DIR, "refined_works.csv")
-    )
-    if io_args.input and len(io_args.input) >= 2:
-        emb_path = io_args.input[1]
-    else:
-        emb_path = None
-    if io_args.input and len(io_args.input) >= 3:
-        cit_path = io_args.input[2]
-    else:
-        cit_path = None
+    works_path, emb_path, cit_path = _resolve_inputs(io_args.input)
 
     cluster_short = load_cluster_labels()
 

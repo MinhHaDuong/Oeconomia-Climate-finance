@@ -77,21 +77,21 @@ def _plot_break_year(tdf, break_year, figures_dir, n_show=20,
     ax.text(-sig_99, len(terms) + 0.3, "p<.01", fontsize=7,
             ha="center", color="black", alpha=0.5)
 
-    ax.set_xlabel("DTF-IDF (after - before)", fontsize=11)
+    ax.set_xlabel("\u0394TF-IDF (after \u2212 before)", fontsize=11)
     if xlim is not None:
         ax.set_xlim(xlim)
 
     ax.axhline(n_show - 0.5, color="grey", linewidth=0.5,
                linestyle="--", alpha=0.5)
 
-    ax.annotate(f"<- Before {break_year}  (n={n_before})", xy=(0, 0),
+    ax.annotate(f"\u2190 Before {break_year}  (n={n_before})", xy=(0, 0),
                 xytext=(0.02, 0.02), textcoords="axes fraction",
                 fontsize=10, color="#457B9D", fontweight="bold")
-    ax.annotate(f"After {break_year} ->  (n={n_after})", xy=(0, 1),
+    ax.annotate(f"After {break_year} \u2192  (n={n_after})", xy=(0, 1),
                 xytext=(0.75, 0.97), textcoords="axes fraction",
                 fontsize=10, color="#E63946", fontweight="bold")
 
-    after_label = f"{break_year+1}-{break_year+window_after}"
+    after_label = f"{break_year+1}\u2013{break_year+window_after}"
     ax.set_title(
         f"Lexical comparison around {break_year}\n"
         f"(before {break_year}: {n_before} abstracts, "
