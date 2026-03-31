@@ -16,7 +16,7 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 | Script | Outputs | Verdict | Reason |
 |--------|---------|---------|--------|
 | `compute_vars.py` | `manuscript-vars.yml`, `technical-report-vars.yml`, `data-paper-vars.yml`, `companion-paper-vars.yml` | acceptable | Single computation populates per-document variable subsets from one shared dict. Splitting would duplicate all the stat-gathering logic. |
-| `compute_breakpoints.py` | `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv` (+ core variants via `--core-only`, + `tab_k_sensitivity.csv` via `--robustness`) | acceptable | Robustness table is derived from the breakpoint detection in the same run. The k-sensitivity table is gated behind a `--robustness` flag — a separate entry point in the Makefile already exists. Core variants use `--core-only`. |
+| `compute_breakpoints.py` | `tab_breakpoints.csv`, `tab_breakpoint_robustness.csv`, `tab_k_sensitivity.csv` (+ core variants via `--core-only`) | **done** (#594) | Refactored: three mutually exclusive modes (`default`, `--robustness`, `--k-sensitivity`), each writing one file to `--output`. |
 | `compute_clusters.py` | `tab_alluvial.csv`, `cluster_labels.json`, `tab_core_shares.csv` (+ core variants via `--core-only`) | acceptable | The cluster labels and alluvial cross-tab are joint products of one clustering run. `tab_core_shares.csv` is a filtered view of the same clustering. Splitting would require serializing/deserializing intermediate cluster assignments. |
 | `analyze_bimodality.py` | `tab_bimodality.csv`, `tab_axis_detection.csv`, `tab_pole_papers.csv` (+ core variants) | **done** (#550) | Tables-only after split. Three figures moved to `plot_bimodality.py`, `plot_bimodality_lexical.py`, `plot_bimodality_keywords.py`. |
 | `analyze_embeddings.py` | `semantic_clusters.csv` | **done** (#551) | Split: `analyze_embeddings.py` produces data only; `plot_semantic.py --color-by {cluster,language,period}` produces one figure per invocation. |
@@ -30,8 +30,8 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 ## Summary
 
 - **Total multi-output scripts in Phase 2 pipeline**: 11
-- **Acceptable** (tightly coupled outputs): 8
-- **Splittable** (independent outputs): 3
+- **Acceptable** (tightly coupled outputs): 7
+- **Splittable** (independent outputs): 4
 
 ### Splittable cases
 

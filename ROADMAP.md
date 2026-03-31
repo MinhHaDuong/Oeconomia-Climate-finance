@@ -68,3 +68,4 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - Text normalization (#533): ftfy + html.unescape at merge funnel point, fixes ~3,000 rows with encoding artifacts from upstream aggregators
 - GROBID citation parsing (#538): 352K unstructured Crossref refs → structured title/author/year via local GROBID (podman), 200 cit/sec, JSONL cache
 - Crossref DOI fallback (#569): `enrich_dois` queries Crossref when OpenAlex has no DOI, 9,268 OA-only candidates unlocked
+- 1-output-per-invocation (#594): `compute_breakpoints.py` refactored to 3 mutually exclusive modes, Makefile targets split from grouped `&:` to separate `--output $@` rules
