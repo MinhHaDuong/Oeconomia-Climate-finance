@@ -93,6 +93,73 @@ def _draw_flows(ax, period_labels, x_positions, col_width, period_stacks, n_clus
             ax.add_patch(patch)
 
 
+def _draw_column_bars(ax, period_labels, x_positions, col_width, period_stacks,
+                      n_clusters, palette, core_only, core_crosstab):
+    """Draw stacked column bars for each period."""
+    for pi, period in enumerate(period_labels):
+        x = x_positions[pi]
+        stacks = period_stacks[period]
+        for c in range(n_clusters):
+            if c not in stacks:
+                continue
+            s = stacks[c]
+            if s["height"] <= 0:
+                continue
+            rect = plt.Rectangle(
+                (x - col_width, s["bottom"]), 2 * col_width, s["height"],
+                facecolor=palette[c], edgecolor="white", linewidth=0.5, alpha=0.9,
+            )
+            ax.add_patch(rect)
+            if s["height"] > 0.04:
+                label = f'{s["count"]}'
+                if not core_only and core_crosstab is not None:
+                    n_core = int(core_crosstab.loc[period, c]) if period in core_crosstab.index else 0
+                    pct = n_core / s["count"] * 100 if s["count"] > 0 else 0
+                    label += f'\n({pct:.0f}% core)'
+                ax.text(x, s["bottom"] + s["height"] / 2,
+                        label, ha="center", va="center",
+                        fontsize=4.5, color="black", fontweight="bold",
+                        linespacing=1.2)
+
+
+def _draw_legend_labels(ax, last_stacks, cluster_labels, n_clusters, x_bar_edge, palette):
+    """Draw legend labels with leader lines to the right of the last column."""
+    label_items = []
+    for c in range(n_clusters):
+        if c not in last_stacks:
+            continue
+        s = last_stacks[c]
+        if s["height"] <= 0:
+            continue
+        label_text = cluster_labels.get(c, f"Cluster {c}").replace(" / ", "\n")
+        n_lines = label_text.count("\n") + 1
+        label_items.append({
+            "c": c, "y_band": s["bottom"] + s["height"] / 2,
+            "text": label_text, "height": n_lines * 0.026,
+        })
+
+    label_items.sort(key=lambda it: it["y_band"])
+    n_labels = len(label_items)
+    total_label_height = sum(it["height"] for it in label_items)
+    spacing = (0.95 - total_label_height) / max(n_labels - 1, 1)
+    y_cursor = 0.02
+    for it in label_items:
+        it["y_label"] = y_cursor + it["height"] / 2
+        y_cursor += it["height"] + spacing
+
+    x_label = x_bar_edge + 0.06
+    for it in label_items:
+        ax.annotate(
+            "", xy=(x_bar_edge + 0.003, it["y_band"]),
+            xytext=(x_label - 0.005, it["y_label"]),
+            arrowprops=dict(arrowstyle="-", color=palette[it["c"]] * 0.6,
+                            lw=0.7, connectionstyle="arc3,rad=0.0"),
+        )
+        ax.text(x_label, it["y_label"],
+                it["text"], ha="left", va="center", fontsize=5.5,
+                linespacing=1.3, color=palette[it["c"]] * 0.6)
+
+
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output)
@@ -147,29 +214,8 @@ def main():
     fig, ax = plt.subplots(figsize=(7, 3.5))
 
     # Draw column bars
-    for pi, period in enumerate(period_labels):
-        x = x_positions[pi]
-        stacks = period_stacks[period]
-        for c in range(n_clusters):
-            if c not in stacks:
-                continue
-            s = stacks[c]
-            if s["height"] > 0:
-                rect = plt.Rectangle(
-                    (x - col_width, s["bottom"]), 2 * col_width, s["height"],
-                    facecolor=palette[c], edgecolor="white", linewidth=0.5, alpha=0.9,
-                )
-                ax.add_patch(rect)
-                if s["height"] > 0.04:
-                    label = f'{s["count"]}'
-                    if not args.core_only and core_crosstab is not None:
-                        n_core = int(core_crosstab.loc[period, c]) if period in core_crosstab.index else 0
-                        pct = n_core / s["count"] * 100 if s["count"] > 0 else 0
-                        label += f'\n({pct:.0f}% core)'
-                    ax.text(x, s["bottom"] + s["height"] / 2,
-                            label, ha="center", va="center",
-                            fontsize=4.5, color="black", fontweight="bold",
-                            linespacing=1.2)
+    _draw_column_bars(ax, period_labels, x_positions, col_width, period_stacks,
+                      n_clusters, palette, args.core_only, core_crosstab)
 
     _draw_flows(ax, period_labels, x_positions, col_width, period_stacks, n_clusters, palette)
 
@@ -179,41 +225,8 @@ def main():
                 fontsize=6, fontweight="bold")
 
     # Legend labels with leader lines
-    label_items = []
-    for c in range(n_clusters):
-        if c not in last_stacks:
-            continue
-        s = last_stacks[c]
-        if s["height"] <= 0:
-            continue
-        label_text = cluster_labels.get(c, f"Cluster {c}").replace(" / ", "\n")
-        n_lines = label_text.count("\n") + 1
-        label_items.append({
-            "c": c, "y_band": s["bottom"] + s["height"] / 2,
-            "text": label_text, "height": n_lines * 0.026,
-        })
-
-    label_items.sort(key=lambda it: it["y_band"])
-    n_labels = len(label_items)
-    total_label_height = sum(it["height"] for it in label_items)
-    spacing = (0.95 - total_label_height) / max(n_labels - 1, 1)
-    y_cursor = 0.02
-    for it in label_items:
-        it["y_label"] = y_cursor + it["height"] / 2
-        y_cursor += it["height"] + spacing
-
-    x_bar_edge = x_positions[-1] + col_width
-    x_label = x_bar_edge + 0.06
-    for it in label_items:
-        ax.annotate(
-            "", xy=(x_bar_edge + 0.003, it["y_band"]),
-            xytext=(x_label - 0.005, it["y_label"]),
-            arrowprops=dict(arrowstyle="-", color=palette[it["c"]] * 0.6,
-                            lw=0.7, connectionstyle="arc3,rad=0.0"),
-        )
-        ax.text(x_label, it["y_label"],
-                it["text"], ha="left", va="center", fontsize=5.5,
-                linespacing=1.3, color=palette[it["c"]] * 0.6)
+    _draw_legend_labels(ax, last_stacks, cluster_labels, n_clusters,
+                        x_positions[-1] + col_width, palette)
 
     ax.set_xlim(-0.06, 0.95)
     ax.set_ylim(-0.06, 1.0)

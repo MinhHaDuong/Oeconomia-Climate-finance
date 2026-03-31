@@ -107,15 +107,18 @@ def _label_clusters(df, core_only):
     return cluster_labels
 
 
-def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
-    """Compute a label for a single cluster from TF-IDF distinctiveness."""
-    c_mask = df["cluster"].values == c
-    if c_mask.sum() == 0:
-        return f"Cluster {c}"
+def _rank_cluster_terms(X_label, c_mask, label_features, corpus_mean):
+    """Score and rank candidate terms for a cluster by TF-IDF distinctiveness.
 
+    Returns (candidates, promoted, bigram_dist, unigram_dist) where:
+    - candidates: [(term, score), ...] bigrams first then unigrams
+    - promoted: set of bigrams worth preferring over their unigram parts
+    - bigram_dist / unigram_dist: full distinctiveness lookup for merge step
+    """
     c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
     distinctiveness = c_mean - corpus_mean
 
+    # Collect top distinctive terms, split by ngram type
     uni_candidates = []
     bi_candidates = []
     for i in np.argsort(distinctiveness)[::-1]:
@@ -137,52 +140,56 @@ def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
             break
     candidates = bi_candidates + uni_candidates
 
+    # Promote bigrams that are at least half as strong as their best unigram
     unigram_scores = {t: s for t, s in candidates if " " not in t}
-    bigrams = [(t, s) for t, s in candidates if " " in t]
     promoted = set()
-    for bigram, bi_score in bigrams:
+    for bigram, bi_score in [(t, s) for t, s in candidates if " " in t]:
         parts = bigram.split()
         best_uni = max((unigram_scores.get(p, 0) for p in parts), default=0)
         if best_uni > 0 and bi_score >= best_uni * 0.5:
             promoted.add(bigram)
 
-    max_words = 10
-    scored, used_tokens = _select_label_terms(candidates, promoted, max_words)
-
-    # Merge adjacent unigrams into bigrams where possible
+    # Distribution dicts for the merge step
     bigram_dist = {label_features[i]: distinctiveness[i]
                    for i in range(len(label_features)) if " " in label_features[i]}
     unigram_dist = {label_features[i]: distinctiveness[i]
                     for i in range(len(label_features)) if " " not in label_features[i]}
+
+    return candidates, promoted, bigram_dist, unigram_dist
+
+
+def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
+    """Compute a label for a single cluster from TF-IDF distinctiveness.
+
+    Pipeline: rank terms → select (promoted first) → merge unigram pairs → re-select.
+    """
+    c_mask = df["cluster"].values == c
+    if c_mask.sum() == 0:
+        return f"Cluster {c}"
+
+    candidates, promoted, bigram_dist, unigram_dist = _rank_cluster_terms(
+        X_label, c_mask, label_features, corpus_mean
+    )
+    max_words = 10
+    scored, used_tokens = _select_label_terms(
+        candidates, promoted, max_words, [], set()
+    )
     scored, used_tokens = _merge_unigram_pairs(
         scored, used_tokens, bigram_dist, unigram_dist
     )
-
-    # Fill remaining slots
-    for term, _ in candidates:
-        if _word_count(scored) >= max_words:
-            break
-        if _word_count(scored) + len(term.split()) > max_words:
-            continue
-        tokens = set(term.split())
-        if tokens.issubset(used_tokens):
-            continue
-        stems = {t.rstrip("s") for t in tokens}
-        used_stems = {t.rstrip("s") for t in used_tokens}
-        if stems.issubset(used_stems):
-            continue
-        if " " in term and term not in promoted:
-            continue
-        scored.append(term)
-        used_tokens.update(tokens)
-
+    # Re-select: merging may have freed word budget
+    scored, used_tokens = _select_label_terms(
+        candidates, promoted, max_words, scored, used_tokens
+    )
     return " / ".join(scored) if scored else f"Cluster {c}"
 
 
-def _select_label_terms(candidates, promoted, max_words):
-    """Select label terms prioritizing promoted bigrams, respecting word budget."""
-    scored = []
-    used_tokens = set()
+def _select_label_terms(candidates, promoted, max_words, scored, used_tokens):
+    """Select label terms prioritizing promoted bigrams, respecting word budget.
+
+    Accepts initial scored/used_tokens so it can be called again after merge
+    to fill freed slots — the dedup-by-stem logic prevents double-adding.
+    """
     # Promoted bigrams first
     for term, _ in candidates:
         if term not in promoted:
@@ -246,6 +253,51 @@ def _merge_unigram_pairs(scored, used_tokens, bigram_dist, unigram_dist):
     return scored, used_tokens
 
 
+def _save_core_shares(df, alluvial_data, period_labels, cite_threshold, suffix, out_dir):
+    """Compute and save core-paper share crosstab."""
+    core_mask_full = df["cited_by_count"] >= cite_threshold
+    core_crosstab = pd.crosstab(df.loc[core_mask_full, "period"],
+                                df.loc[core_mask_full, "cluster"])
+    core_crosstab = core_crosstab.reindex(period_labels, fill_value=0)
+    for c in alluvial_data.columns:
+        if c not in core_crosstab.columns:
+            core_crosstab[c] = 0
+    core_shares_file = f"tab_core_shares{suffix}.csv"
+    core_shares_path = os.path.join(out_dir, core_shares_file) if out_dir else core_shares_file
+    core_crosstab.to_csv(core_shares_path)
+    log.info("Saved core shares table -> %s", core_shares_path)
+
+
+def _check_ari_alignment(df):
+    """Check KMeans/Louvain alignment via Adjusted Rand Index."""
+    cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
+    if not os.path.exists(cocit_path):
+        log.warning("communities.csv not found, skipping ARI alignment check.")
+        return
+
+    log.info("=== KMeans / Louvain alignment check ===")
+    cocit = pd.read_csv(cocit_path)
+    df["doi_norm"] = df["doi"].apply(normalize_doi)
+    cocit["doi_norm"] = cocit["doi"].apply(normalize_doi)
+
+    merged = df.merge(cocit[["doi_norm", "community"]], on="doi_norm", how="inner")
+    n_overlap = len(merged)
+    log.info("Papers in both KMeans and Louvain: n = %d", n_overlap)
+
+    if n_overlap < 10:
+        log.info("  Too few overlapping papers (%d) for meaningful ARI.", n_overlap)
+        return
+
+    ari = adjusted_rand_score(merged["cluster"], merged["community"])
+    log.info("Adjusted Rand Index: %.3f", ari)
+    if ari < 0.2:
+        log.info("  -> Weak alignment: semantic and citation communities capture different dimensions.")
+    elif ari < 0.5:
+        log.info("  -> Moderate alignment: broad correspondence with notable divergences.")
+    else:
+        log.info("  -> Strong alignment: embedding-based and citation-based structure converge.")
+
+
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output)
@@ -295,30 +347,7 @@ def main():
         log.info("  Cluster %d: %d", c, n)
 
     # ── Step 3: ARI alignment check with Louvain communities ──
-    cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
-    if os.path.exists(cocit_path):
-        log.info("=== KMeans / Louvain alignment check ===")
-        cocit = pd.read_csv(cocit_path)
-        df["doi_norm"] = df["doi"].apply(normalize_doi)
-        cocit["doi_norm"] = cocit["doi"].apply(normalize_doi)
-
-        merged = df.merge(cocit[["doi_norm", "community"]], on="doi_norm", how="inner")
-        n_overlap = len(merged)
-        log.info("Papers in both KMeans and Louvain: n = %d", n_overlap)
-
-        if n_overlap >= 10:
-            ari = adjusted_rand_score(merged["cluster"], merged["community"])
-            log.info("Adjusted Rand Index: %.3f", ari)
-            if ari < 0.2:
-                log.info("  -> Weak alignment: semantic and citation communities capture different dimensions.")
-            elif ari < 0.5:
-                log.info("  -> Moderate alignment: broad correspondence with notable divergences.")
-            else:
-                log.info("  -> Strong alignment: embedding-based and citation-based structure converge.")
-        else:
-            log.info("  Too few overlapping papers (%d) for meaningful ARI.", n_overlap)
-    else:
-        log.warning("communities.csv not found, skipping ARI alignment check.")
+    _check_ari_alignment(df)
 
     # ── Step 4: Segment into manuscript periods ──
     _p_cfg = _cfg["periodization"]
@@ -354,17 +383,7 @@ def main():
     log.info("Period x Cluster distribution:\n%s", alluvial_data)
 
     if not args.core_only:
-        core_mask_full = df["cited_by_count"] >= cite_threshold
-        core_crosstab = pd.crosstab(df.loc[core_mask_full, "period"],
-                                    df.loc[core_mask_full, "cluster"])
-        core_crosstab = core_crosstab.reindex(period_labels, fill_value=0)
-        for c in alluvial_data.columns:
-            if c not in core_crosstab.columns:
-                core_crosstab[c] = 0
-        core_shares_file = f"tab_core_shares{suffix}.csv"
-        core_shares_path = os.path.join(out_dir, core_shares_file) if out_dir else core_shares_file
-        core_crosstab.to_csv(core_shares_path)
-        log.info("Saved core shares table -> %s", core_shares_path)
+        _save_core_shares(df, alluvial_data, period_labels, cite_threshold, suffix, out_dir)
 
     # ── Step 6: Label communities from abstract TF-IDF ──
     cluster_labels = _label_clusters(df, args.core_only)

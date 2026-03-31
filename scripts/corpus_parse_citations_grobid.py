@@ -155,6 +155,31 @@ def call_grobid(text: str, grobid_url: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Output assembly
+# ---------------------------------------------------------------------------
+
+def _build_output_rows(unstructured, cache, cr):
+    """Assemble output rows from parsed cache entries."""
+    rows = []
+    for key, (_text, indices) in unstructured.items():
+        parsed = cache.get(key)
+        if not parsed or not parsed.get("title"):
+            continue
+        for idx in indices:
+            rows.append({
+                "source_doi": cr.at[idx, "source_doi"],
+                "source_id": "",
+                "ref_doi": cr.at[idx, "ref_doi"],
+                "ref_title": parsed["title"],
+                "ref_first_author": parsed["first_author"],
+                "ref_year": parsed["year"],
+                "ref_journal": parsed.get("journal", ""),
+                "ref_raw": cr.at[idx, "ref_raw"],
+            })
+    return rows
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -239,32 +264,7 @@ def main():
     log.info("Parsed %d new strings, cache total: %d", parsed_count, len(cache))
 
     # Build ref_parsed.csv: one row per (source_doi, parsed ref)
-    rows = []
-    filled_title = 0
-    filled_author = 0
-    filled_year = 0
-    for key, (text, indices) in unstructured.items():
-        parsed = cache.get(key)
-        if not parsed or not parsed.get("title"):
-            continue
-        for idx in indices:
-            row = {
-                "source_doi": cr.at[idx, "source_doi"],
-                "source_id": "",
-                "ref_doi": cr.at[idx, "ref_doi"],
-                "ref_title": parsed["title"],
-                "ref_first_author": parsed["first_author"],
-                "ref_year": parsed["year"],
-                "ref_journal": parsed.get("journal", ""),
-                "ref_raw": cr.at[idx, "ref_raw"],
-            }
-            rows.append(row)
-            if parsed["title"]:
-                filled_title += 1
-            if parsed["first_author"]:
-                filled_author += 1
-            if parsed["year"]:
-                filled_year += 1
+    rows = _build_output_rows(unstructured, cache, cr)
 
     if rows:
         result = pd.DataFrame(rows, columns=REFS_COLUMNS)
@@ -273,6 +273,11 @@ def main():
         log.info("Wrote %d rows to %s", len(result), OUTPUT_PATH)
     else:
         log.info("No parsed results to write.")
+
+    # Compute fill stats from output rows
+    filled_title = sum(1 for r in rows if r["ref_title"])
+    filled_author = sum(1 for r in rows if r["ref_first_author"])
+    filled_year = sum(1 for r in rows if r["ref_year"])
 
     elapsed = time.time() - t0
     log.info("Done in %.0fs: %d titles, %d authors, %d years filled",
