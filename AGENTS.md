@@ -7,8 +7,8 @@
 | File | Purpose | When to consult |
 |------|---------|-----------------|
 | `README.md` | Project vision, repo structure, build commands | Onboarding, orientation |
-| `ROADMAP.md` | Milestones, deliverables, what's done | Starting work, picking tasks |
-| `STATE.md` | Current decisions, blockers, stats | Before any task (snapshot of now) |
+| `ROADMAP.md` | Forward-looking milestones with checkboxes | Starting work, picking tasks |
+| `STATE.md` | Snapshot of now: status, stats, blockers, next actions | Before any task |
 | `.env` | Project secrets + machine paths (gitignored) | Script execution, agent identity |
 | `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
 
