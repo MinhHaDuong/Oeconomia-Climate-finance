@@ -140,6 +140,30 @@ class TestRegressionInfra:
             "Makefile missing 'regression' target"
         )
 
+    def test_no_stage_intermediates_function(self):
+        """_stage_intermediates was removed: Wave 2 scripts now accept --input,
+        so the harness no longer needs to copy intermediates into content/."""
+        import scripts.compute_regression_hashes as mod
+        assert not hasattr(mod, "_stage_intermediates"), (
+            "compute_regression_hashes still has _stage_intermediates; "
+            "Wave 2 scripts should accept --input instead"
+        )
+        assert not hasattr(mod, "_cleanup_intermediates"), (
+            "compute_regression_hashes still has _cleanup_intermediates; "
+            "remove it along with _stage_intermediates"
+        )
+
+    def test_wave2_registry_entries_have_input_args(self):
+        """Wave 2 scripts (with deps) must pass --input in their REGISTRY args,
+        so the harness can point them at the tmp directory directly."""
+        for entry in REGISTRY:
+            if entry["deps"]:
+                assert "--input" in entry["args"], (
+                    f"REGISTRY[{entry['name']}] has deps {entry['deps']} "
+                    "but no --input in args — Wave 2 scripts need --input "
+                    "to avoid intermediate staging"
+                )
+
 
 class TestRedirectArgs:
     """Unit tests for _redirect_args path rewriting."""
