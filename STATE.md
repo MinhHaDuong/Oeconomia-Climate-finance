@@ -18,7 +18,7 @@ Errata 1 ready in `release/2026-03-23 Oeconomia errata/` (Figure 2 label fix).
 ## Corpus (v1.1.1)
 
 6 sources, 42,916 raw → 31,712 refined works, 38,479 embeddings, 967,204 citations.
-Test suite: 664 tests, check-fast < 10s, mypy enabled.
+Test suite: 667 tests, check-fast < 10s, mypy enabled.
 
 ## Blockers
 
@@ -28,7 +28,6 @@ None.
 
 - ESHET-HES conference slides (Nice, May 26–29)
 - #569: Run overnight Crossref DOI resolution (~1,400 new DOIs expected)
-- #602: Circuit breaker for non-OpenAlex API loops
 - #567: Redesign ref_match_corpus (caching, progress, smarter algorithm)
 - 1-fig-1-script sweep: #546, #550, #551, #552, #559
 - #515: DAG visualization
