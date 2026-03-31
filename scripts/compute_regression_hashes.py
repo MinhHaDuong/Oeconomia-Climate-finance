@@ -38,9 +38,6 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_DIR = ROOT / "tests" / "fixtures" / "smoke"
 GOLDEN_PATH = FIXTURE_DIR / "golden_hashes.json"
 SCRIPTS_DIR = ROOT / "scripts"
-CONTENT_DIR = ROOT / "content"
-TABLES_DIR = CONTENT_DIR / "tables"
-FIGURES_DIR = CONTENT_DIR / "figures"
 
 # ---------------------------------------------------------------------------
 # Script registry: (script, args, output_files)
@@ -83,7 +80,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig1_bars",
         "script": "plot_fig1_bars.py",
-        "args": ["--output", str(FIGURES_DIR / "fig_bars.png")],
+        "args": ["--output", "content/figures/fig_bars.png"],
         "deps": [],
         "outputs": [
             "content/figures/fig_bars.png",
@@ -93,7 +90,7 @@ REGISTRY: list[dict] = [
         "name": "plot_fig1_bars_v1",
         "script": "plot_fig1_bars.py",
         "args": [
-            "--output", str(FIGURES_DIR / "fig_bars_v1.png"),
+            "--output", "content/figures/fig_bars_v1.png",
             "--v1-only",
         ],
         "deps": [],
@@ -114,7 +111,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig2_breaks",
         "script": "plot_fig2_breaks.py",
-        "args": [],
+        "args": ["--output", "content/figures/fig_breaks.png"],
         "deps": ["compute_breakpoints"],
         "outputs": [
             "content/figures/fig_breaks.png",
@@ -124,7 +121,7 @@ REGISTRY: list[dict] = [
         "name": "plot_fig2_composition",
         "script": "plot_fig2_composition.py",
         "args": [
-            "--output", str(FIGURES_DIR / "fig_composition.png"),
+            "--output", "content/figures/fig_composition.png",
         ],
         "deps": ["compute_clusters"],
         "outputs": [
@@ -254,52 +251,54 @@ def _hash_output(path: Path) -> str:
         return _sha256_bytes(f.read())
 
 
-def _backup_outputs() -> dict[str, Path | None]:
-    """Back up existing output files that scripts will overwrite."""
-    import tempfile
-    backup_dir = Path(tempfile.mkdtemp(prefix="regression_backup_"))
-    backups: dict[str, Path | None] = {}
-    for entry in REGISTRY:
-        for rel_path in entry["outputs"]:
-            abs_path = ROOT / rel_path
-            if abs_path.exists():
-                dst = backup_dir / rel_path
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(abs_path, dst)
-                backups[rel_path] = dst
-            else:
-                backups[rel_path] = None
-    backups["__dir__"] = backup_dir
-    return backups
+def _redirect_args(args: list[str], output_root: Path) -> list[str]:
+    """Rewrite --output and --input paths to use output_root instead of ROOT.
+
+    Paths that start with a known relative prefix (content/, tests/) are
+    redirected to output_root/<relpath>. Absolute paths under ROOT are
+    converted to relative first.
+    """
+    result: list[str] = []
+    for arg in args:
+        p = Path(arg)
+        # Absolute path under ROOT → make relative
+        if p.is_absolute():
+            try:
+                rel = p.relative_to(ROOT)
+                arg = str(rel)
+            except ValueError:
+                result.append(arg)
+                continue
+        # Relative path starting with content/ or tests/ → redirect
+        if arg.startswith(("content/", "tests/")):
+            redirected = output_root / arg
+            redirected.parent.mkdir(parents=True, exist_ok=True)
+            result.append(str(redirected))
+        else:
+            result.append(arg)
+    return result
 
 
-def _restore_outputs(backups: dict[str, Path | None]) -> None:
-    """Restore backed-up files and clean up temp dir."""
-    backup_dir = backups.pop("__dir__", None)
-    for rel_path, backup_path in backups.items():
-        abs_path = ROOT / rel_path
-        if backup_path is not None:
-            shutil.copy2(backup_path, abs_path)
-        elif abs_path.exists():
-            # File was created by regression run but didn't exist before
-            abs_path.unlink()
-    if backup_dir and backup_dir.exists():
-        shutil.rmtree(backup_dir)
+def _run_one(
+    entry: dict, env: dict, output_root: Path,
+) -> tuple[str, dict[str, str]]:
+    """Run one script, return (name, {file: hash}) or raise on failure.
 
-
-def _run_one(entry: dict, env: dict) -> tuple[str, dict[str, str]]:
-    """Run one script, return (name, {file: hash}) or raise on failure."""
+    output_root controls where --output paths are redirected. When it equals
+    ROOT, behavior is unchanged (CLI / --update-golden path).
+    """
     name = entry["name"]
     script = str(SCRIPTS_DIR / entry["script"])
+    redirected_args = _redirect_args(entry["args"], output_root)
     proc = subprocess.run(
-        [sys.executable, script, *entry["args"]],
+        [sys.executable, script, *redirected_args],
         capture_output=True, text=True, env=env, timeout=120,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"{name} failed (exit {proc.returncode}):\n{proc.stderr[:500]}")
     hashes: dict[str, str] = {}
     for rel_path in entry["outputs"]:
-        abs_path = ROOT / rel_path
+        abs_path = output_root / rel_path
         if not abs_path.exists():
             raise FileNotFoundError(f"{name}: missing output {rel_path}")
         hashes[rel_path] = _hash_output(abs_path)
@@ -322,29 +321,107 @@ def _resolve_waves() -> list[list[dict]]:
     return waves
 
 
-def run_and_hash() -> dict[str, dict[str, str]]:
+def _stage_intermediates(
+    wave_results: dict[str, dict[str, str]],
+    output_root: Path,
+) -> list[tuple[Path, Path | None]]:
+    """Copy Wave N outputs into content/ dirs so Wave N+1 scripts can read them.
+
+    Wave 2+ scripts hardcode reads from BASE_DIR/content/tables/ (via
+    pipeline_loaders.BASE_DIR). When output_root != ROOT we must place
+    intermediate CSV/JSON files where those scripts expect them.
+
+    Returns list of (dst_path, backup_path_or_None) for restoration.
+    If the destination already existed, it is backed up to a temp file
+    so it can be restored with original content AND timestamps.
+    """
+    import tempfile
+
+    if output_root == ROOT:
+        return []  # no redirection — files are already in place
+
+    staged: list[tuple[Path, Path | None]] = []
+    for file_hashes in wave_results.values():
+        for rel_path in file_hashes:
+            src = output_root / rel_path
+            dst = ROOT / rel_path
+            if src.exists() and src.suffix in (".csv", ".json"):
+                # Back up original file (preserving timestamps) for restoration
+                backup: Path | None = None
+                if dst.exists():
+                    fd, tmp_name = tempfile.mkstemp(
+                        prefix="staged_backup_", suffix=dst.suffix,
+                    )
+                    os.close(fd)
+                    backup = Path(tmp_name)
+                    shutil.copy2(dst, backup)
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                staged.append((dst, backup))
+    return staged
+
+
+def _cleanup_intermediates(staged: list[tuple[Path, Path | None]]) -> None:
+    """Restore or remove intermediate files that were staged for Wave 2+ reads."""
+    for path, backup in staged:
+        if backup is not None:
+            # Restore original file with original timestamps
+            shutil.copy2(backup, path)
+            backup.unlink()
+        elif path.exists():
+            path.unlink()
+
+
+def run_and_hash(
+    output_root: Path | None = None,
+) -> dict[str, dict[str, str]]:
     """Run scripts in parallel waves, return {script_name: {file: sha256}}.
 
-    Wave 1 (5 scripts, no deps) runs in parallel.
-    Wave 2 (4 scripts, depend on wave 1) runs in parallel after wave 1.
+    Parameters
+    ----------
+    output_root : Path or None
+        Directory used as prefix for script --output paths.
+        Defaults to ROOT (current behavior for CLI / --update-golden).
+
+    Wave 1 (independent scripts) runs in parallel.
+    Wave 2 (dependent scripts) runs in parallel after wave 1.
+    Between waves, intermediate outputs (CSV/JSON) are staged into
+    content/ so that Wave 2 scripts can read them via hardcoded paths.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    TABLES_DIR.mkdir(parents=True, exist_ok=True)
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    if output_root is None:
+        output_root = ROOT
+
+    # Ensure output directories exist
+    (output_root / "content" / "tables").mkdir(parents=True, exist_ok=True)
+    (output_root / "content" / "figures").mkdir(parents=True, exist_ok=True)
+    # build_het_core writes to tests/fixtures/smoke/catalogs/
+    (output_root / "tests" / "fixtures" / "smoke" / "catalogs").mkdir(
+        parents=True, exist_ok=True,
+    )
 
     env = _smoke_env()
     results: dict[str, dict[str, str]] = {}
     waves = _resolve_waves()
+    staged: list[tuple[Path, Path | None]] = []
 
-    for i, wave in enumerate(waves):
-        log.info("Wave %d: %s", i + 1, [e["name"] for e in wave])
-        with ThreadPoolExecutor(max_workers=len(wave)) as pool:
-            futures = {pool.submit(_run_one, e, env): e["name"] for e in wave}
-            for future in as_completed(futures):
-                name, hashes = future.result()  # raises on failure
-                results[name] = hashes
-                log.info("  %s: %d outputs", name, len(hashes))
+    try:
+        for i, wave in enumerate(waves):
+            log.info("Wave %d: %s", i + 1, [e["name"] for e in wave])
+            with ThreadPoolExecutor(max_workers=len(wave)) as pool:
+                futures = {
+                    pool.submit(_run_one, e, env, output_root): e["name"]
+                    for e in wave
+                }
+                for future in as_completed(futures):
+                    name, hashes = future.result()  # raises on failure
+                    results[name] = hashes
+                    log.info("  %s: %d outputs", name, len(hashes))
+            # Stage intermediates for next wave's reads
+            staged.extend(_stage_intermediates(results, output_root))
+    finally:
+        _cleanup_intermediates(staged)
 
     return results
 
@@ -413,11 +490,12 @@ def main():
                        help="Print current hashes to stdout (no file I/O)")
     args = parser.parse_args()
 
-    backups = _backup_outputs()
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix="regression_"))
     try:
-        current = run_and_hash()
+        current = run_and_hash(output_root=tmp)
     finally:
-        _restore_outputs(backups)
+        shutil.rmtree(tmp, ignore_errors=True)
 
     if args.dump:
         print(json.dumps(current, indent=2, sort_keys=True))

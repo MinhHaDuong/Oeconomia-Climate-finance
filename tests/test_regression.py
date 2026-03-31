@@ -15,8 +15,7 @@ When a change is intentional:
 
 import json
 import os
-import subprocess
-import sys
+import time
 
 import pytest
 
@@ -24,8 +23,11 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
 GOLDEN_PATH = os.path.join(ROOT, "tests", "fixtures", "smoke", "golden_hashes.json")
 
+import sys  # noqa: E402
 sys.path.insert(0, SCRIPTS_DIR)
-from compute_regression_hashes import REGISTRY, _hash_output, _smoke_env  # noqa: E402
+from compute_regression_hashes import (  # noqa: E402
+    REGISTRY, ROOT as HARNESS_ROOT, _hash_output, _redirect_args, _smoke_env,
+)
 from pathlib import Path  # noqa: E402
 
 sys.path.pop(0)
@@ -39,80 +41,27 @@ def _load_golden() -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Shared fixture: run scripts in dependency order, backup/restore outputs
+# Shared fixture: run scripts with outputs redirected to tmp
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
 def regression_outputs(tmp_path_factory):
-    """Run scripts in parallel waves, return {name: {file: hash}}.
+    """Run scripts in parallel waves, return (results, errors, start_time).
 
     Uses module scope — all scripts run once per test session.
-    Wave 1 (5 independent scripts) and wave 2 (4 dependent scripts)
-    each run in parallel via ThreadPoolExecutor.
+    Outputs are redirected to a temporary directory via run_and_hash(output_root=...),
+    so the real content/ tree is never touched.
     """
-    import shutil
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    from compute_regression_hashes import _resolve_waves
+    from compute_regression_hashes import run_and_hash
 
-    tmp = tmp_path_factory.mktemp("regression_backup")
-    env = _smoke_env()
+    start_time = time.time()
+    tmp = tmp_path_factory.mktemp("regression_outputs")
 
-    # Backup existing outputs
-    backups: dict[str, Path | None] = {}
-    for entry in REGISTRY:
-        for rel_path in entry["outputs"]:
-            abs_path = ROOT_PATH / rel_path
-            if abs_path.exists():
-                dst = tmp / rel_path
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(abs_path, dst)
-                backups[rel_path] = dst
-            else:
-                backups[rel_path] = None
-
-    # Ensure output dirs exist
-    (ROOT_PATH / "content" / "tables").mkdir(parents=True, exist_ok=True)
-    (ROOT_PATH / "content" / "figures").mkdir(parents=True, exist_ok=True)
-
-    # Run scripts in parallel waves
-    results: dict[str, dict[str, str]] = {}
-    errors: dict[str, str] = {}
-
-    def _run_entry(entry):
-        name = entry["name"]
-        script = os.path.join(SCRIPTS_DIR, entry["script"])
-        proc = subprocess.run(
-            [sys.executable, script, *entry["args"]],
-            capture_output=True, text=True, env=env, timeout=120,
-        )
-        if proc.returncode != 0:
-            return name, None, proc.stderr[:500]
-        hashes = {}
-        for rel_path in entry["outputs"]:
-            abs_path = ROOT_PATH / rel_path
-            if abs_path.exists():
-                hashes[rel_path] = _hash_output(abs_path)
-        return name, hashes, None
-
-    for wave in _resolve_waves():
-        with ThreadPoolExecutor(max_workers=len(wave)) as pool:
-            futures = [pool.submit(_run_entry, e) for e in wave]
-            for future in as_completed(futures):
-                name, hashes, err = future.result()
-                if err:
-                    errors[name] = err
-                else:
-                    results[name] = hashes
-
-    # Restore backups
-    for rel_path, backup_path in backups.items():
-        abs_path = ROOT_PATH / rel_path
-        if backup_path is not None:
-            shutil.copy2(backup_path, abs_path)
-        elif abs_path.exists():
-            abs_path.unlink()
-
-    return results, errors
+    try:
+        results = run_and_hash(output_root=tmp)
+        return results, {}, start_time
+    except Exception as exc:
+        return {}, {"__harness__": str(exc)[:500]}, start_time
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +74,7 @@ def _make_test(entry):
 
     @pytest.mark.integration
     def test_func(regression_outputs):
-        results, errors = regression_outputs
+        results, errors, _start_time = regression_outputs
         if name in errors:
             pytest.fail(f"{name} failed to run:\n{errors[name]}")
 
@@ -190,6 +139,43 @@ class TestRegressionInfra:
         assert re.search(r"^regression\s*:", content, re.MULTILINE), (
             "Makefile missing 'regression' target"
         )
+
+
+class TestRedirectArgs:
+    """Unit tests for _redirect_args path rewriting."""
+
+    def test_relative_content_path_redirected(self, tmp_path):
+        args = ["--output", "content/figures/fig_bars.png"]
+        result = _redirect_args(args, tmp_path)
+        assert result[0] == "--output"
+        assert result[1] == str(tmp_path / "content" / "figures" / "fig_bars.png")
+
+    def test_absolute_path_under_root_redirected(self, tmp_path):
+        abs_path = str(HARNESS_ROOT / "content" / "tables" / "tab.csv")
+        args = ["--output", abs_path]
+        result = _redirect_args(args, tmp_path)
+        assert result[1] == str(tmp_path / "content" / "tables" / "tab.csv")
+
+    def test_non_content_arg_unchanged(self, tmp_path):
+        args = ["--robustness", "--v1-only"]
+        result = _redirect_args(args, tmp_path)
+        assert result == ["--robustness", "--v1-only"]
+
+    def test_tests_path_redirected(self, tmp_path):
+        args = ["--output", "tests/fixtures/smoke/catalogs/het_mostcited_50.csv"]
+        result = _redirect_args(args, tmp_path)
+        assert "tests/fixtures/smoke/catalogs" in result[1]
+        assert str(tmp_path) in result[1]
+
+    def test_all_registry_args_use_relative_paths(self):
+        """All REGISTRY entries should use relative (not absolute) paths in args."""
+        for entry in REGISTRY:
+            for arg in entry["args"]:
+                if arg.startswith("--"):
+                    continue
+                assert not Path(arg).is_absolute(), (
+                    f"REGISTRY[{entry['name']}] has absolute path in args: {arg}"
+                )
 
 
 class TestRegressionIsolation:
