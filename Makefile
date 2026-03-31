@@ -569,7 +569,7 @@ regression:
 	uv run pytest tests/test_regression.py -v --tb=short -m integration -k "test_regression_"
 
 regression-save:
-	uv run python scripts/compute_regression_hashes.py --save
+	uv run python scripts/compute_regression_hashes.py --save-golden
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.
