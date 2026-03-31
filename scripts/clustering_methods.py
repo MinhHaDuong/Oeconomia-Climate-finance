@@ -9,7 +9,7 @@ guard), importable from compute_clustering_comparison.py and tests.
 
 Methods:
 - KMeans (sklearn): fast, deterministic, sensitive to k
-- HDBSCAN (hdbscan): density-based, auto-detects noise, k-free
+- HDBSCAN (sklearn): density-based, auto-detects noise, k-free
 - Spectral (sklearn): affinity-based, subsampled for large corpora
 
 Space builders:
