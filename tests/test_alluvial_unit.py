@@ -220,7 +220,7 @@ class TestBuildArgv:
 
     SCRIPT_FLAGS = {
         "scripts/compute_breakpoints.py": {
-            "--core-only", "--censor-gap", "--robustness",
+            "--core-only", "--censor-gap", "--robustness", "--k-sensitivity",
         },
         "scripts/compute_clusters.py": {
             "--core-only", "--breaks",

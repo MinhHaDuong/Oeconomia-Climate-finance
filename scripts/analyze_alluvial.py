@@ -23,7 +23,7 @@ import sys
 
 # Which flags each sub-script accepts
 SCRIPT_FLAGS = {
-    "scripts/compute_breakpoints.py": {"--core-only", "--censor-gap", "--robustness"},
+    "scripts/compute_breakpoints.py": {"--core-only", "--censor-gap", "--robustness", "--k-sensitivity"},
     "scripts/compute_clusters.py":    {"--core-only", "--breaks"},
     "scripts/compute_lexical.py":     set(),
     "scripts/plot_fig_breakpoints.py": {"--core-only", "--censor-gap", "--pdf"},
