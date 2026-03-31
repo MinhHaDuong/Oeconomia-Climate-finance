@@ -94,7 +94,7 @@ Errata 1 (Figure 2 label fix) ready in `release/2026-03-23 Oeconomia errata/`.
 
 ## Project documentation
 
-See `STATE.md` for current status, `ROADMAP.md` for milestones, `AGENTS.md` for AI workflow.
+See `STATE.md` for current status, `ROADMAP.md` for milestones, `AGENTS.md` for AI workflow. Pipeline architecture is documented in `.claude/rules/architecture.md`.
 
 ## Contact
 

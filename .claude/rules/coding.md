@@ -34,7 +34,7 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
 ## Testing
 
 - Tests live in `tests/test_<module>.py`. A new script or changed behavior starts with a test.
-- `make check-fast`: unit tests + prose lint, < 10 s — run during development.
+- `make check-fast`: unit tests + prose lint, < 30 s — run during development.
 - `make check`: full suite including integration + slow tests — run before opening a PR.
 - Acceptance tests (e.g., `make corpus-validate`) are the top-level contract — never weaken without discussion.
 

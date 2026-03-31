@@ -21,6 +21,7 @@ import pytest
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 AGENTS_MD = os.path.join(ROOT, "AGENTS.md")
+ARCHITECTURE_MD = os.path.join(ROOT, ".claude", "rules", "architecture.md")
 CODING_GUIDELINES_MD = os.path.join(ROOT, ".claude", "rules", "coding.md")
 ARCHITECTURE_MD = os.path.join(ROOT, ".claude", "rules", "architecture.md")
 README_MD = os.path.join(ROOT, "README.md")
@@ -143,10 +144,10 @@ class TestReproducibilityMd:
 # ---------------------------------------------------------------------------
 
 class TestReadmeMd:
-    """README.md is vision-only; pipeline details live in .claude/rules/coding.md."""
+    """README.md is vision-only; pipeline details live in .claude/rules/architecture.md."""
 
-    def test_points_to_coding_rules(self):
-        """README.md should reference coding rules for pipeline details."""
+    def test_points_to_architecture_rules(self):
+        """README.md should reference architecture rules for pipeline details."""
         text = read(README_MD)
-        assert "coding" in text, \
-            "README.md should reference .claude/rules/coding.md"
+        assert "architecture" in text.lower(), \
+            "README.md should reference .claude/rules/architecture.md"
