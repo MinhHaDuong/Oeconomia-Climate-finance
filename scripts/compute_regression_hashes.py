@@ -6,7 +6,7 @@ against an existing one.
 
 Usage:
     # Generate golden hashes (first time or after intentional change):
-    uv run python scripts/compute_regression_hashes.py --save-golden
+    uv run python scripts/compute_regression_hashes.py --update-golden
 
     # Compare current outputs against golden baseline:
     uv run python scripts/compute_regression_hashes.py --check
@@ -354,7 +354,7 @@ def load_golden() -> dict[str, dict[str, str]]:
     if not GOLDEN_PATH.exists():
         raise FileNotFoundError(
             f"Golden hashes not found at {GOLDEN_PATH}. "
-            "Run with --save-golden to create the baseline."
+            "Run with --update-golden to create the baseline."
         )
     with open(GOLDEN_PATH) as f:
         return json.load(f)
@@ -405,7 +405,7 @@ def main():
         description="Regression testing via output hashing"
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--save-golden", action="store_true",
+    group.add_argument("--update-golden", action="store_true",
                        help="Generate and save golden hashes")
     group.add_argument("--check", action="store_true",
                        help="Compare current outputs against golden hashes")
@@ -423,7 +423,7 @@ def main():
         print(json.dumps(current, indent=2, sort_keys=True))
         return
 
-    if args.save_golden:
+    if args.update_golden:
         save_golden(current)
         print(f"Golden hashes saved ({sum(len(v) for v in current.values())} files)")
         return

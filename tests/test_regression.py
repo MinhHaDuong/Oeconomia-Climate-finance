@@ -8,7 +8,7 @@ Run as part of `make check` (via pytest). One test per script, so
 failures pinpoint exactly which script's output changed.
 
 When a change is intentional:
-    uv run python scripts/compute_regression_hashes.py --save-golden
+    uv run python scripts/compute_regression_hashes.py --update-golden
     git add tests/fixtures/smoke/golden_hashes.json
     # commit with explanation of why outputs changed
 """
@@ -132,7 +132,7 @@ def _make_test(entry):
         golden = _load_golden()
         assert name in golden, (
             f"{name} not in golden_hashes.json. Run: "
-            "uv run python scripts/compute_regression_hashes.py --save-golden"
+            "uv run python scripts/compute_regression_hashes.py --update-golden"
         )
         assert name in results, f"{name} produced no outputs"
 
@@ -143,7 +143,7 @@ def _make_test(entry):
                 f"{name}: {os.path.basename(rel_path)} changed\n"
                 f"  golden:  {expected_hash[:16]}...\n"
                 f"  current: {actual_hash[:16]}...\n"
-                "If intentional: uv run python scripts/compute_regression_hashes.py --save-golden"
+                "If intentional: uv run python scripts/compute_regression_hashes.py --update-golden"
             )
 
     test_func.__name__ = f"test_regression_{name}"
@@ -166,7 +166,7 @@ class TestRegressionInfra:
     def test_golden_hashes_exist(self):
         assert os.path.exists(GOLDEN_PATH), (
             "Golden hashes not found. Generate with: "
-            "uv run python scripts/compute_regression_hashes.py --save-golden"
+            "uv run python scripts/compute_regression_hashes.py --update-golden"
         )
 
     def test_golden_hashes_valid_json(self):
@@ -180,7 +180,7 @@ class TestRegressionInfra:
         missing = registry_names - golden_names
         assert not missing, (
             f"Golden hashes missing for: {missing}. "
-            "Run: uv run python scripts/compute_regression_hashes.py --save-golden"
+            "Run: uv run python scripts/compute_regression_hashes.py --update-golden"
         )
 
     def test_makefile_has_regression_target(self):
