@@ -190,3 +190,38 @@ class TestRegressionInfra:
         assert re.search(r"^regression\s*:", content, re.MULTILINE), (
             "Makefile missing 'regression' target"
         )
+
+
+class TestRegressionIsolation:
+    """Regression outputs must not touch content/ directories."""
+
+    @pytest.mark.integration
+    def test_regression_outputs_do_not_touch_content_dir(self, regression_outputs):
+        """After regression_outputs runs, no file under content/figures/ or
+        content/tables/ should have been created or modified.
+
+        The fixture should redirect all outputs to a tmp directory, so the
+        real content/ tree stays untouched.
+        """
+        import time
+
+        # regression_outputs already ran (module-scoped fixture).
+        # Check that it returned a start_time we can compare against.
+        results, errors, start_time = regression_outputs
+
+        content_dirs = [
+            ROOT_PATH / "content" / "figures",
+            ROOT_PATH / "content" / "tables",
+        ]
+        touched = []
+        for d in content_dirs:
+            if not d.exists():
+                continue
+            for f in d.iterdir():
+                if f.is_file() and f.stat().st_mtime > start_time:
+                    touched.append(str(f.relative_to(ROOT_PATH)))
+
+        assert not touched, (
+            f"Regression fixture modified files in content/:\n"
+            + "\n".join(f"  {p}" for p in touched)
+        )
