@@ -5,7 +5,7 @@ Reads:  content/tables/tab_alluvial.csv
         content/tables/tab_core_shares.csv  (optional: full corpus only, for "% core" labels)
 Writes: content/figures/fig_alluvial.png  (and core/censor variants)
 
-Flags: --core-only, --censor-gap N, --pdf
+Flags: --core-only, --pdf
 
 Usage:
     uv run python scripts/plot_fig_alluvial.py --output content/figures/fig_alluvial.png
@@ -104,8 +104,6 @@ def main():
     parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
     parser.add_argument("--core-only", action="store_true",
                         help="Use core-only variant of input tables")
-    parser.add_argument("--censor-gap", type=int, default=0,
-                        help="Load censor-gap variant")
     args = parser.parse_args(extra)
 
     if args.core_only:

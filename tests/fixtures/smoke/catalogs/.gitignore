@@ -5,3 +5,4 @@
 !refined_embeddings.npz
 !refined_citations.csv
 !tab_pole_papers.csv
+!tab_lexical_tfidf.csv

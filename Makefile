@@ -368,7 +368,7 @@ content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/pl
 
 # PCA scatter (unsupervised)
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
@@ -429,7 +429,7 @@ content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywor
 
 # Pre-2007 co-citation traditions network
 content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $<
+	uv run python $< --output $@
 
 # Co-citation communities (compute: community assignments + summary table)
 COMMUNITIES := data/catalogs/communities.csv
@@ -463,8 +463,7 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 # dynamic, so we use a sentinel file to track freshness).
 .lexical_tfidf.stamp: scripts/plot_fig_lexical_tfidf.py scripts/plot_style.py \
 		content/tables/tab_lexical_tfidf.csv
-	uv run python $<
-	@touch $@
+	uv run python $< --output $@
 
 # DVC pipeline DAG (data paper)
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml

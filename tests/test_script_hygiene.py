@@ -1067,8 +1067,6 @@ class TestOutputFlag:
         "build_smoke_fixture.py", "compute_regression_hashes.py",
         "compute_regression_history.py", "qa_bibliography.py",
         "qa_missing_references.py", "analyze_unfccc_topics.py",
-        # Not in ticket #549 scope — future migration
-        "plot_fig_traditions.py",
     }
 
     def test_all_producing_scripts_accept_output(self):
@@ -1106,6 +1104,19 @@ class TestOutputFlag:
           "--min-papers", "1", "--core-threshold", "0"], ".md"),
         ("summarize_core_venues.py",
          ["--core", f"{SMOKE}/refined_works.csv"], ".csv"),
+        # Remaining Phase 2 plot scripts (#549 wave 2)
+        ("plot_fig45_pca_scatter.py",
+         ["--input", f"{SMOKE}/refined_works.csv",
+          f"{SMOKE}/refined_embeddings.npz"], ".png"),
+        ("plot_fig_lexical_tfidf.py",
+         ["--input", f"{SMOKE}/tab_lexical_tfidf.csv"], ".stamp"),
+        ("plot_fig_traditions.py",
+         ["--input", f"{SMOKE}/refined_works.csv",
+          f"{SMOKE}/refined_citations.csv"], ".png"),
+        ("plot_heatmap_communities_clusters.py",
+         ["--input", f"{SMOKE}/refined_works.csv",
+          f"{SMOKE}/refined_embeddings.npz",
+          f"{SMOKE}/refined_citations.csv"], ".png"),
     ]
 
     @pytest.mark.integration
