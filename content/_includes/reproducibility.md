@@ -6,7 +6,7 @@
 uv sync    # installs all dependencies from pyproject.toml
 ```
 
-Key packages: pandas, numpy, scikit-learn, scipy, matplotlib, seaborn, sentence-transformers, torch (CPU or CUDA, selected via `--extra cpu` or `--extra cu130`), networkx, python-louvain, hdbscan, umap-learn, adjustText, diptest (optional). Python >= 3.10.
+Key packages: pandas, numpy, scikit-learn, scipy, matplotlib, seaborn, sentence-transformers, torch (CPU or CUDA, selected via `--extra cpu` or `--extra cu130`), networkx, python-louvain, umap-learn, adjustText, diptest (optional). Python >= 3.10.
 
 ### Execution
 
