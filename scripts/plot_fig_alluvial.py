@@ -114,7 +114,11 @@ def main():
         label_file = "cluster_labels.json"
 
     # --- Load tables ---
-    alluvial_data = pd.read_csv(os.path.join(TABLES_DIR, tab_al), index_col=0)
+    # --input takes precedence over default path for the alluvial CSV
+    if io_args.input:
+        alluvial_data = pd.read_csv(io_args.input[0], index_col=0)
+    else:
+        alluvial_data = pd.read_csv(os.path.join(TABLES_DIR, tab_al), index_col=0)
     alluvial_data.columns = alluvial_data.columns.astype(int)
     period_labels = alluvial_data.index.tolist()
     n_periods = len(period_labels)
