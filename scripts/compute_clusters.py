@@ -107,8 +107,18 @@ def _label_clusters(df, core_only):
     return cluster_labels
 
 
-def _collect_candidates(label_features, distinctiveness):
-    """Collect unigram and bigram candidates ranked by distinctiveness."""
+def _rank_cluster_terms(X_label, c_mask, label_features, corpus_mean):
+    """Score and rank candidate terms for a cluster by TF-IDF distinctiveness.
+
+    Returns (candidates, promoted, bigram_dist, unigram_dist) where:
+    - candidates: [(term, score), ...] bigrams first then unigrams
+    - promoted: set of bigrams worth preferring over their unigram parts
+    - bigram_dist / unigram_dist: full distinctiveness lookup for merge step
+    """
+    c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
+    distinctiveness = c_mean - corpus_mean
+
+    # Collect top distinctive terms, split by ngram type
     uni_candidates = []
     bi_candidates = []
     for i in np.argsort(distinctiveness)[::-1]:
@@ -128,70 +138,58 @@ def _collect_candidates(label_features, distinctiveness):
                 uni_candidates.append((term, float(distinctiveness[i])))
         if len(uni_candidates) >= 30 and len(bi_candidates) >= 20:
             break
-    return bi_candidates + uni_candidates
+    candidates = bi_candidates + uni_candidates
 
-
-def _fill_remaining_slots(scored, used_tokens, candidates, promoted, max_words):
-    """Fill remaining label slots from unused candidates."""
-    for term, _ in candidates:
-        if _word_count(scored) >= max_words:
-            break
-        if _word_count(scored) + len(term.split()) > max_words:
-            continue
-        tokens = set(term.split())
-        if tokens.issubset(used_tokens):
-            continue
-        stems = {t.rstrip("s") for t in tokens}
-        used_stems = {t.rstrip("s") for t in used_tokens}
-        if stems.issubset(used_stems):
-            continue
-        if " " in term and term not in promoted:
-            continue
-        scored.append(term)
-        used_tokens.update(tokens)
-
-
-def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
-    """Compute a label for a single cluster from TF-IDF distinctiveness."""
-    c_mask = df["cluster"].values == c
-    if c_mask.sum() == 0:
-        return f"Cluster {c}"
-
-    c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
-    distinctiveness = c_mean - corpus_mean
-
-    candidates = _collect_candidates(label_features, distinctiveness)
-
+    # Promote bigrams that are at least half as strong as their best unigram
     unigram_scores = {t: s for t, s in candidates if " " not in t}
-    bigrams = [(t, s) for t, s in candidates if " " in t]
     promoted = set()
-    for bigram, bi_score in bigrams:
+    for bigram, bi_score in [(t, s) for t, s in candidates if " " in t]:
         parts = bigram.split()
         best_uni = max((unigram_scores.get(p, 0) for p in parts), default=0)
         if best_uni > 0 and bi_score >= best_uni * 0.5:
             promoted.add(bigram)
 
-    max_words = 10
-    scored, used_tokens = _select_label_terms(candidates, promoted, max_words)
-
-    # Merge adjacent unigrams into bigrams where possible
+    # Distribution dicts for the merge step
     bigram_dist = {label_features[i]: distinctiveness[i]
                    for i in range(len(label_features)) if " " in label_features[i]}
     unigram_dist = {label_features[i]: distinctiveness[i]
                     for i in range(len(label_features)) if " " not in label_features[i]}
+
+    return candidates, promoted, bigram_dist, unigram_dist
+
+
+def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
+    """Compute a label for a single cluster from TF-IDF distinctiveness.
+
+    Pipeline: rank terms → select (promoted first) → merge unigram pairs → re-select.
+    """
+    c_mask = df["cluster"].values == c
+    if c_mask.sum() == 0:
+        return f"Cluster {c}"
+
+    candidates, promoted, bigram_dist, unigram_dist = _rank_cluster_terms(
+        X_label, c_mask, label_features, corpus_mean
+    )
+    max_words = 10
+    scored, used_tokens = _select_label_terms(
+        candidates, promoted, max_words, [], set()
+    )
     scored, used_tokens = _merge_unigram_pairs(
         scored, used_tokens, bigram_dist, unigram_dist
     )
-
-    _fill_remaining_slots(scored, used_tokens, candidates, promoted, max_words)
-
+    # Re-select: merging may have freed word budget
+    scored, used_tokens = _select_label_terms(
+        candidates, promoted, max_words, scored, used_tokens
+    )
     return " / ".join(scored) if scored else f"Cluster {c}"
 
 
-def _select_label_terms(candidates, promoted, max_words):
-    """Select label terms prioritizing promoted bigrams, respecting word budget."""
-    scored = []
-    used_tokens = set()
+def _select_label_terms(candidates, promoted, max_words, scored, used_tokens):
+    """Select label terms prioritizing promoted bigrams, respecting word budget.
+
+    Accepts initial scored/used_tokens so it can be called again after merge
+    to fill freed slots — the dedup-by-stem logic prevents double-adding.
+    """
     # Promoted bigrams first
     for term, _ in candidates:
         if term not in promoted:
