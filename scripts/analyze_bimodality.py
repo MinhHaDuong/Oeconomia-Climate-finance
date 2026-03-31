@@ -175,7 +175,7 @@ def _save_all_tables(*, df, n_eff, n_acc, n_both, bic1, bic2, delta_bic,
                      dip_pvalue, explained_frac, corr, lg1, lg2, lex_vals,
                      lex_dbic, main_axis_label, best_corr, best_dbic,
                      best_idx, explained, period_stats, component_rows,
-                     emb_component_rows, axis_detection, output_path,
+                     emb_component_rows, output_path,
                      out_dir, tab_axis, tab_pole):
     """Step 7: Save all output tables (bimodality summary, axis detection, pole papers)."""
     summary_rows = [{
@@ -468,7 +468,7 @@ def main():
     emb_component_rows = _embedding_pca_detection(embeddings, df, explained_frac)
 
     # ── Step 6: Embedding PCA -- axis detection table ──
-    axis_detection = _build_axis_detection_table(
+    _build_axis_detection_table(
         embeddings, axis, explained_frac, tfidf, X_tfidf
     )
 
@@ -481,7 +481,7 @@ def main():
         main_axis_label=main_axis_label, best_corr=best_corr,
         best_dbic=best_dbic, best_idx=best_idx, explained=explained,
         period_stats=period_stats, component_rows=component_rows,
-        emb_component_rows=emb_component_rows, axis_detection=axis_detection,
+        emb_component_rows=emb_component_rows,
         output_path=io_args.output, out_dir=out_dir,
         tab_axis=tab_axis, tab_pole=tab_pole,
     )
