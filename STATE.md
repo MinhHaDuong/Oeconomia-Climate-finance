@@ -37,3 +37,4 @@ None.
 
 - Waiting for corpus 1.1.2 to finish building
 - ESHET-HES conference slides (Nice, May 26–29)
+- Charles Gide conference paper (Vannes, July 2–4; paper due June 15)
