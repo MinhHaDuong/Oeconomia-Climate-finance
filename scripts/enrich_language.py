@@ -21,8 +21,11 @@ import time
 import pandas as pd
 from utils import (
     CATALOGS_DIR,
+    CONSECUTIVE_FAIL_LIMIT,
     MAILTO,
     OPENALEX_API_KEY,
+    RateLimitExhausted,
+    check_rate_limit,
     detect_language,
     get_logger,
     is_valid_iso639_1,
@@ -97,6 +100,7 @@ def pass1_fetch_by_doi(dois, cache, counters,
         return
 
     batch_size = 50
+    consecutive_failures = 0
     for i in range(0, len(to_query), batch_size):
         batch = to_query[i:i + batch_size]
         doi_filter = build_oa_doi_filter(batch)
@@ -114,17 +118,28 @@ def pass1_fetch_by_doi(dois, cache, counters,
                 jitter_max=retry_jitter,
                 counters=counters,
             )
+            check_rate_limit(resp, "api.openalex.org")
             if resp.status_code != 200:
                 log.warning("DOI batch %d: HTTP %d, skipping (not caching)",
                             i, resp.status_code)
                 counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
                 continue  # don't cache — allow retry on next run
+            consecutive_failures = 0
             for r in resp.json().get("results", []):
                 doi_raw = r.get("doi", "")
                 lang = r.get("language") or ""
                 doi_norm = normalize_doi(doi_raw)
                 if doi_norm:
                     cache[doi_norm] = lang
+        except RateLimitExhausted:
+            consecutive_failures += 1
+            log.warning("Rate limit exhausted (%d/%d consecutive)",
+                        consecutive_failures, CONSECUTIVE_FAIL_LIMIT)
+            if consecutive_failures >= CONSECUTIVE_FAIL_LIMIT:
+                log.error("Aborting Pass 1 DOI: %d consecutive rate-limit failures.",
+                          CONSECUTIVE_FAIL_LIMIT)
+                break
+            continue
         except Exception as e:
             log.warning("DOI batch %d failed: %s", i, e)
             counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
@@ -165,6 +180,7 @@ def pass1_fetch_by_openalex_id(df, cache, counters,
         return
 
     batch_size = 50
+    consecutive_failures = 0
     for i in range(0, len(to_query), batch_size):
         batch = to_query[i:i + batch_size]
         id_filter = "|".join(batch)
@@ -182,16 +198,27 @@ def pass1_fetch_by_openalex_id(df, cache, counters,
                 jitter_max=retry_jitter,
                 counters=counters,
             )
+            check_rate_limit(resp, "api.openalex.org")
             if resp.status_code != 200:
                 log.warning("OA-ID batch %d: HTTP %d, skipping (not caching)",
                             i, resp.status_code)
                 counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1
                 continue  # don't cache — allow retry on next run
+            consecutive_failures = 0
             for r in resp.json().get("results", []):
                 oa_id = r.get("id", "").replace("https://openalex.org/", "")
                 lang = r.get("language") or ""
                 if oa_id:
                     cache[oa_id] = lang
+        except RateLimitExhausted:
+            consecutive_failures += 1
+            log.warning("Rate limit exhausted (%d/%d consecutive)",
+                        consecutive_failures, CONSECUTIVE_FAIL_LIMIT)
+            if consecutive_failures >= CONSECUTIVE_FAIL_LIMIT:
+                log.error("Aborting Pass 1 OA-ID: %d consecutive rate-limit failures.",
+                          CONSECUTIVE_FAIL_LIMIT)
+                break
+            continue
         except Exception as e:
             log.warning("OA-ID batch %d failed: %s", i, e)
             counters["pass1_errors"] = counters.get("pass1_errors", 0) + 1

@@ -487,8 +487,13 @@ class TestRetryParameterPlumbing:
         captured = {}
 
         class DummyResponse:
+            status_code = 200
+
             def json(self):
                 return {"results": []}
+
+            def raise_for_status(self):
+                return None
 
         def fake_retry_get(url, **kwargs):
             captured.update(kwargs)
@@ -515,8 +520,13 @@ class TestRetryParameterPlumbing:
         captured = {}
 
         class DummyResponse:
+            status_code = 200
+
             def json(self):
                 return {"results": []}
+
+            def raise_for_status(self):
+                return None
 
         def fake_retry_get(url, **kwargs):
             captured.update(kwargs)
