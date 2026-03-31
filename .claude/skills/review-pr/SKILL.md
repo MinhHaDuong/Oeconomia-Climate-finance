@@ -15,7 +15,11 @@ Spin multiple agents in parallel, each with a distinct perspective. Run all agen
 
 1. **Read the issue** linked to the PR. Note the exit criteria.
 2. **Read the diff**: `gh pr diff $ARGUMENTS`
-3. **Launch review agents** in parallel:
+3. **Assess risk level** and determine proportional depth (see table below).
+4. **On first review cycle**, add a risk label to the PR:
+   - Trivial → add label `review:trivial` (merge gate requires 1 cycle)
+   - Standard or above → add label `review:standard` (merge gate requires 2 cycles)
+5. **Launch review agents** in parallel:
 
 | Agent | Focus | Key question |
 |---|---|---|
@@ -56,7 +60,7 @@ Trace references in: `content/technical-report.qmd`, `content/data-paper.qmd`, `
 3. **Deduplicate** findings across agents.
 4. **Run tests**: `make check`
 5. **Run build**: `make manuscript` (if prose changed)
-6. **Post a single review** via `gh pr review`, attributing each finding to its perspective.
+6. **Post a single review** via `gh pr review`, attributing each finding to its perspective. Include `<!-- review-cycle: N -->` at the top of the review body (N = 1, 2, 3…) so the merge gate can count cycles.
 
 ## Code-quality escalation
 

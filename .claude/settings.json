@@ -48,6 +48,24 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Bash(*gh pr create*)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "PR created. You MUST now run /review-pr on the PR number returned above. Do not proceed to any other task until the review is complete."
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__github__create_pull_request",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "PR created. You MUST now run /review-pr on the PR number returned above. Do not proceed to any other task until the review is complete."
+          }
+        ]
+      },
+      {
         "matcher": "Bash(*merge*)",
         "hooks": [
           {
@@ -58,6 +76,24 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "Bash(*gh pr merge*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-reviews.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__github__merge_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-reviews.sh"
+          }
+        ]
+      },
       {
         "matcher": "Bash(*git commit*)",
         "hooks": [
