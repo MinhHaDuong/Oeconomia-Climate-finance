@@ -8,11 +8,14 @@ Verifies:
 - Titles below similarity threshold cache empty string
 - author parameter: author-keyed cache takes priority, falls back to title-only
 - search_doi passes author to OpenAlex search string when provided
+- RateLimitExhausted raised on 429 responses (circuit breaker)
 """
 
 import os
 import sys
 from unittest.mock import patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
@@ -241,14 +244,20 @@ class TestResolveDoi:
         from enrich_dois import search_doi
 
         # Mock OpenAlex: no results
-        oa_response = type("R", (), {"json": lambda self: {"results": []}})()
+        oa_response = type("R", (), {
+            "status_code": 200, "raise_for_status": lambda self: None,
+            "json": lambda self: {"results": []},
+        })()
         # Mock Crossref: returns a match
-        cr_response = type("R", (), {"json": lambda self: {
-            "message": {"items": [{
-                "DOI": "10.1017/CBO9780511817434",
-                "title": ["The Economics of Climate Change"],
-            }]}
-        }})()
+        cr_response = type("R", (), {
+            "status_code": 200, "raise_for_status": lambda self: None,
+            "json": lambda self: {
+                "message": {"items": [{
+                    "DOI": "10.1017/CBO9780511817434",
+                    "title": ["The Economics of Climate Change"],
+                }]}
+            },
+        })()
 
         with patch("enrich_dois.polite_get") as mock_get:
             # First call = OpenAlex (no results), second = Crossref (match)
@@ -264,18 +273,24 @@ class TestResolveDoi:
         from enrich_dois import search_doi
 
         # OA returns a low-sim match with an OA ID
-        oa_response = type("R", (), {"json": lambda self: {"results": [{
-            "doi": "https://doi.org/10.9999/wrong",
-            "title": "Totally Different Paper",
-            "id": "https://openalex.org/W999",
-        }]}})()
+        oa_response = type("R", (), {
+            "status_code": 200, "raise_for_status": lambda self: None,
+            "json": lambda self: {"results": [{
+                "doi": "https://doi.org/10.9999/wrong",
+                "title": "Totally Different Paper",
+                "id": "https://openalex.org/W999",
+            }]},
+        })()
         # Crossref returns a good match
-        cr_response = type("R", (), {"json": lambda self: {
-            "message": {"items": [{
-                "DOI": "10.1017/CBO9780511817434",
-                "title": ["The Economics of Climate Change"],
-            }]}
-        }})()
+        cr_response = type("R", (), {
+            "status_code": 200, "raise_for_status": lambda self: None,
+            "json": lambda self: {
+                "message": {"items": [{
+                    "DOI": "10.1017/CBO9780511817434",
+                    "title": ["The Economics of Climate Change"],
+                }]}
+            },
+        })()
 
         with patch("enrich_dois.polite_get") as mock_get:
             mock_get.side_effect = [oa_response, cr_response]
@@ -288,11 +303,14 @@ class TestResolveDoi:
         """When OpenAlex returns a good match, Crossref is not queried."""
         from enrich_dois import search_doi
 
-        oa_response = type("R", (), {"json": lambda self: {"results": [{
-            "doi": "https://doi.org/10.1234/oa-match",
-            "title": "Climate Finance Overview",
-            "id": "https://openalex.org/W123",
-        }]}})()
+        oa_response = type("R", (), {
+            "status_code": 200, "raise_for_status": lambda self: None,
+            "json": lambda self: {"results": [{
+                "doi": "https://doi.org/10.1234/oa-match",
+                "title": "Climate Finance Overview",
+                "id": "https://openalex.org/W123",
+            }]},
+        })()
 
         with patch("enrich_dois.polite_get") as mock_get:
             mock_get.return_value = oa_response
@@ -323,3 +341,30 @@ class TestResolveDoi:
             assert saved[title_keys[0]] == "10.1234/saved"
 
         _title_cache.clear()
+
+    def test_search_openalex_raises_on_429(self):
+        """_search_openalex raises RateLimitExhausted when API returns 429."""
+        from enrich_dois import RateLimitExhausted, _search_openalex
+
+        mock_resp = type("R", (), {"status_code": 429})()
+        with patch("enrich_dois.polite_get", return_value=mock_resp):
+            with pytest.raises(RateLimitExhausted):
+                _search_openalex("Some Title")
+
+    def test_search_crossref_raises_on_429(self):
+        """_search_crossref raises RateLimitExhausted when API returns 429."""
+        from enrich_dois import RateLimitExhausted, _search_crossref
+
+        mock_resp = type("R", (), {"status_code": 429})()
+        with patch("enrich_dois.polite_get", return_value=mock_resp):
+            with pytest.raises(RateLimitExhausted):
+                _search_crossref("Some Title")
+
+    def test_search_doi_propagates_rate_limit(self):
+        """search_doi lets RateLimitExhausted propagate (not swallowed)."""
+        from enrich_dois import RateLimitExhausted, search_doi
+
+        mock_resp = type("R", (), {"status_code": 429})()
+        with patch("enrich_dois.polite_get", return_value=mock_resp):
+            with pytest.raises(RateLimitExhausted):
+                search_doi("Some Title")

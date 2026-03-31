@@ -35,6 +35,11 @@ CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "doi_resolved.csv")
 TITLE_SIM_THRESHOLD = 0.85
 OPENALEX_SEARCH_URL = "https://api.openalex.org/works"
+CONSECUTIVE_FAIL_LIMIT = 5  # abort after this many consecutive API failures
+
+
+class RateLimitExhausted(Exception):
+    """Raised when an API returns 429 after all retries are exhausted."""
 
 
 class _DiskCache:
@@ -137,7 +142,12 @@ def _search_openalex(title: str) -> tuple[str | None, str | None, float]:
 
     try:
         resp = polite_get(OPENALEX_SEARCH_URL, params=params, delay=1.0)
+        if resp.status_code == 429:
+            raise RateLimitExhausted("OpenAlex rate limit after retries")
+        resp.raise_for_status()
         results = resp.json().get("results", [])
+    except RateLimitExhausted:
+        raise
     except Exception as e:
         log.warning("OpenAlex search failed for '%s': %s", title[:60], e)
         return None, None, 0.0
@@ -164,7 +174,12 @@ def _search_crossref(title: str) -> tuple[str | None, float]:
     }
     try:
         resp = polite_get(CROSSREF_SEARCH_URL, params=params, delay=1.0)
+        if resp.status_code == 429:
+            raise RateLimitExhausted("Crossref rate limit after retries")
+        resp.raise_for_status()
         items = resp.json().get("message", {}).get("items", [])
+    except RateLimitExhausted:
+        raise
     except Exception as e:
         log.warning("Crossref search failed for '%s': %s", title[:60], e)
         return None, 0.0
@@ -307,6 +322,7 @@ def main() -> None:
     # Process
     resolved = 0
     not_found = 0
+    consecutive_failures = 0
     has_author_col = "first_author" in to_process.columns
     for i, (idx, row) in enumerate(to_process.iterrows()):
         title = str(row["title"])
@@ -314,7 +330,23 @@ def main() -> None:
         sid = row["source_id"]
         author = str(row["first_author"]) if has_author_col else None
 
-        doi, oa_id, sim = search_doi(title, year, author=author)
+        try:
+            doi, oa_id, sim = search_doi(title, year, author=author)
+            consecutive_failures = 0  # reset on any successful API call
+        except RateLimitExhausted:
+            consecutive_failures += 1
+            log.warning("Rate limit exhausted (%d/%d consecutive)",
+                        consecutive_failures, CONSECUTIVE_FAIL_LIMIT)
+            if consecutive_failures >= CONSECUTIVE_FAIL_LIMIT:
+                log.error("Aborting: %d consecutive rate-limit failures. "
+                          "Cache saved — re-run to resume.",
+                          CONSECUTIVE_FAIL_LIMIT)
+                save_cache(cache)
+                flush_cache()
+                raise SystemExit(1)
+            cache[sid] = ""
+            not_found += 1
+            continue
 
         if doi and sim >= TITLE_SIM_THRESHOLD:
             cache[sid] = doi
