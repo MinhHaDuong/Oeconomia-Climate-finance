@@ -21,6 +21,14 @@ Submitted data paper to RDJ4HSS (diamond OA).
 - [ ] Revise and Resubmit
 - [ ] Present at conference
 
+## Charles Gide conference (Vannes, July 2-4)
+
+21st International Colloquium of the Charles Gide Association, theme "Crises". Abstract accepted.
+
+- [ ] Write conference paper (due 2026-06-15)
+- [ ] Present at Vannes (2026-07-02 to 04)
+- [ ] Consider submission to RHPE special issue on "Crises" (call post-conference)
+
 ## Next articles
 
 - [ ] **Companion methods paper** — How can embedding-based clustering reveal intellectual structure in a heterogeneous, policy-entangled scholarly field? Contribution: a replicable pipeline for mapping fields where bibliometric boundaries are contested. Journals: Quantitative Science Studies, Scientometrics.
