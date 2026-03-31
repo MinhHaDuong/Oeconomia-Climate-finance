@@ -15,8 +15,8 @@ Do not skip steps.
 
 1. **Reflect**: what worked, what didn't, what was surprising.
 2. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found.
-3. **Update STATE.md**: refresh stats, remove resolved blockers.
-4. **Update ROADMAP.md**: check off completed items, note new ones.
+3. **Update STATE.md**: rewrite per spec in `.claude/rules/state-roadmap.md`. Delete completed next-actions. No changelog.
+4. **Update ROADMAP.md**: check off completed items. Delete items checked off before this session. See `.claude/rules/state-roadmap.md`.
 5. **Update technical-report.qmd** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/end-session`.
 7. **Commit** the updates on the current branch (before merging).

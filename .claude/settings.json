@@ -46,6 +46,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash(*merge*)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "PR merged — run /celebrate if this completes a ticket."
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash(*git commit*)",
