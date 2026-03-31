@@ -18,7 +18,7 @@ import pytest
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 sys.path.insert(0, SCRIPTS_DIR)
 
-from catalog_openalex import (
+from openalex_pool import (
     build_filter,
     read_last_run_date,
     write_last_run_date,
@@ -63,13 +63,13 @@ class TestQueryDates:
         """Missing sidecar returns empty dict."""
         path = tmp_path / "_query_dates.json"
         # Also need to patch LAST_RUN_PATH so fallback doesn't find stale file
-        import catalog_openalex
-        old = catalog_openalex.LAST_RUN_PATH
-        catalog_openalex.LAST_RUN_PATH = str(tmp_path / "_last_run.txt")
+        import openalex_pool
+        old = openalex_pool.LAST_RUN_PATH
+        openalex_pool.LAST_RUN_PATH = str(tmp_path / "_last_run.txt")
         try:
             result = load_query_dates(str(path))
         finally:
-            catalog_openalex.LAST_RUN_PATH = old
+            openalex_pool.LAST_RUN_PATH = old
         assert result == {}
 
     def test_fallback_to_legacy(self, tmp_path):
@@ -78,13 +78,13 @@ class TestQueryDates:
         legacy_path = tmp_path / "_last_run.txt"
         legacy_path.write_text("2026-03-10\n")
 
-        import catalog_openalex
-        old = catalog_openalex.LAST_RUN_PATH
-        catalog_openalex.LAST_RUN_PATH = str(legacy_path)
+        import openalex_pool
+        old = openalex_pool.LAST_RUN_PATH
+        openalex_pool.LAST_RUN_PATH = str(legacy_path)
         try:
             result = load_query_dates(str(json_path))
         finally:
-            catalog_openalex.LAST_RUN_PATH = old
+            openalex_pool.LAST_RUN_PATH = old
         assert result == {"_global": "2026-03-10"}
 
     def test_per_query_date_used(self):
@@ -131,13 +131,13 @@ class TestLegacySidecar:
 
 class TestBudgetCapture:
     def test_capture_budget_from_header(self):
-        from catalog_openalex import capture_budget
+        from openalex_pool import capture_budget
         mock_resp = MagicMock()
         mock_resp.headers = {"X-RateLimit-Remaining-USD": "4.23"}
         assert capture_budget(mock_resp) == "4.23"
 
     def test_capture_budget_missing_header(self):
-        from catalog_openalex import capture_budget
+        from openalex_pool import capture_budget
         mock_resp = MagicMock()
         mock_resp.headers = {}
         assert capture_budget(mock_resp) == "?"

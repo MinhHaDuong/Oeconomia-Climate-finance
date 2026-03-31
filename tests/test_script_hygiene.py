@@ -820,7 +820,9 @@ class TestScriptNaming:
                        # syllabi sub-modules (extracted from catalog_syllabi.py)
                        "syllabi_config.py", "syllabi_crossref.py",
                        "syllabi_harvest.py", "syllabi_io.py",
-                       "syllabi_process.py"}
+                       "syllabi_process.py",
+                       # pool sub-module (extracted from catalog_openalex.py)
+                       "openalex_pool.py"}
 
     def test_all_scripts_have_conforming_prefix(self):
         for f in Path(SCRIPTS_DIR).glob("*.py"):
