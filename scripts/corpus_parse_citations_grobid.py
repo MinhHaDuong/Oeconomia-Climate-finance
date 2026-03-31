@@ -155,6 +155,44 @@ def call_grobid(text: str, grobid_url: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Output assembly
+# ---------------------------------------------------------------------------
+
+def _build_output_rows(unstructured, cache, cr):
+    """Assemble output rows from parsed cache entries.
+
+    Returns (rows, filled_title, filled_author, filled_year).
+    """
+    rows = []
+    filled_title = 0
+    filled_author = 0
+    filled_year = 0
+    for key, (_text, indices) in unstructured.items():
+        parsed = cache.get(key)
+        if not parsed or not parsed.get("title"):
+            continue
+        for idx in indices:
+            row = {
+                "source_doi": cr.at[idx, "source_doi"],
+                "source_id": "",
+                "ref_doi": cr.at[idx, "ref_doi"],
+                "ref_title": parsed["title"],
+                "ref_first_author": parsed["first_author"],
+                "ref_year": parsed["year"],
+                "ref_journal": parsed.get("journal", ""),
+                "ref_raw": cr.at[idx, "ref_raw"],
+            }
+            rows.append(row)
+            if parsed["title"]:
+                filled_title += 1
+            if parsed["first_author"]:
+                filled_author += 1
+            if parsed["year"]:
+                filled_year += 1
+    return rows, filled_title, filled_author, filled_year
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -239,32 +277,9 @@ def main():
     log.info("Parsed %d new strings, cache total: %d", parsed_count, len(cache))
 
     # Build ref_parsed.csv: one row per (source_doi, parsed ref)
-    rows = []
-    filled_title = 0
-    filled_author = 0
-    filled_year = 0
-    for key, (text, indices) in unstructured.items():
-        parsed = cache.get(key)
-        if not parsed or not parsed.get("title"):
-            continue
-        for idx in indices:
-            row = {
-                "source_doi": cr.at[idx, "source_doi"],
-                "source_id": "",
-                "ref_doi": cr.at[idx, "ref_doi"],
-                "ref_title": parsed["title"],
-                "ref_first_author": parsed["first_author"],
-                "ref_year": parsed["year"],
-                "ref_journal": parsed.get("journal", ""),
-                "ref_raw": cr.at[idx, "ref_raw"],
-            }
-            rows.append(row)
-            if parsed["title"]:
-                filled_title += 1
-            if parsed["first_author"]:
-                filled_author += 1
-            if parsed["year"]:
-                filled_year += 1
+    rows, filled_title, filled_author, filled_year = _build_output_rows(
+        unstructured, cache, cr
+    )
 
     if rows:
         result = pd.DataFrame(rows, columns=REFS_COLUMNS)
