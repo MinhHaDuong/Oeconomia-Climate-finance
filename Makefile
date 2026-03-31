@@ -301,9 +301,11 @@ content/figures/fig_semantic_period.png: scripts/plot_semantic.py scripts/utils.
 
 # -- Companion paper (quantitative) --
 # Structural break tables (independent of clustering)
-content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv &: \
-		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --output content/tables/tab_breakpoints.csv
+content/tables/tab_breakpoints.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --output $@
+
+content/tables/tab_breakpoint_robustness.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --output $@ --robustness
 
 # Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
@@ -383,9 +385,11 @@ content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils
 
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only: structural break tables
-content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv &: \
-		scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --output content/tables/tab_breakpoints_core.csv --core-only
+content/tables/tab_breakpoints_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --output $@ --core-only
+
+content/tables/tab_breakpoint_robustness_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+	uv run python $< --output $@ --robustness --core-only
 
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
@@ -446,9 +450,9 @@ content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.p
 		content/tables/tab_breakpoint_robustness.csv
 	uv run python $< --output $@
 
-# K-sensitivity table (diagnostic, --robustness flag)
+# K-sensitivity table
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
-	uv run python $< --output content/tables/tab_breakpoints.csv --robustness
+	uv run python $< --output $@ --k-sensitivity
 
 # K-sensitivity figure
 content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \

@@ -40,9 +40,17 @@ SCRIPTS = [
     {
         "name": "compute_breakpoints",
         "script": "scripts/compute_breakpoints.py",
-        "args": [],
+        "args": ["--output", "content/tables/tab_breakpoints.csv"],
         "outputs": [
             "content/tables/tab_breakpoints.csv",
+        ],
+    },
+    {
+        "name": "compute_breakpoint_robustness",
+        "script": "scripts/compute_breakpoints.py",
+        "args": ["--output", "content/tables/tab_breakpoint_robustness.csv",
+                 "--robustness"],
+        "outputs": [
             "content/tables/tab_breakpoint_robustness.csv",
         ],
     },

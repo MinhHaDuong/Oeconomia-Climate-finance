@@ -42,7 +42,7 @@ def main():
     k_path = io_args.input[0] if io_args.input else args.k_sensitivity
     if not os.path.exists(k_path):
         raise FileNotFoundError(
-            f"Missing {k_path}. Run: uv run python scripts/compute_breakpoints.py --robustness"
+            f"Missing {k_path}. Run: uv run python scripts/compute_breakpoints.py --k-sensitivity --output {k_path}"
         )
     k_df = pd.read_csv(k_path)
     k_values = [int(col.replace("js_k", "")) for col in k_df.columns if col.startswith("js_k")]
