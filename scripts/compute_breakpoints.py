@@ -1,24 +1,26 @@
 """Structural break detection from embedding-based divergence series.
 
 Reads:  refined_works.csv, refined_embeddings.npz
-Writes: tab_breakpoints.csv, tab_breakpoint_robustness.csv
-        tab_k_sensitivity.csv (--robustness only)
+Writes: one table per invocation to --output, depending on mode:
 
-Flags:
+  (default)        tab_breakpoints.csv       — divergence series
+  --robustness     tab_breakpoint_robustness.csv — robust breakpoint ranking
+  --k-sensitivity  tab_k_sensitivity.csv     — k sweep (k=4,5,6,7)
+
+Other flags:
   --core-only     Restrict to highly-cited papers (cited_by_count >= 50)
   --censor-gap N  Censor N transition years before each test point (default: 0)
-  --robustness    Also run k-sensitivity table (k=4,5,6,7)
 
 Note: The k-sensitivity *figure* is produced by plot_fig_k_sensitivity.py.
 
 Usage:
     uv run python scripts/compute_breakpoints.py --output content/tables/tab_breakpoints.csv
+    uv run python scripts/compute_breakpoints.py --output content/tables/tab_breakpoint_robustness.csv --robustness
     uv run python scripts/compute_breakpoints.py --output content/tables/tab_breakpoints_core.csv --core-only
-    uv run python scripts/compute_breakpoints.py --output content/tables/tab_k_sensitivity.csv --robustness
+    uv run python scripts/compute_breakpoints.py --output content/tables/tab_k_sensitivity.csv --k-sensitivity
 """
 
 import argparse
-import os
 import warnings
 
 import numpy as np
@@ -27,7 +29,7 @@ from scipy.spatial.distance import cosine as cosine_dist
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 from script_io_args import parse_io_args, validate_io
-from utils import BASE_DIR, get_logger, load_analysis_corpus
+from utils import get_logger, load_analysis_corpus
 
 log = get_logger("compute_breakpoints")
 
@@ -163,38 +165,11 @@ def find_robust_breakpoints(candidates_by_w, window_sizes):
     return sorted(robust, key=lambda x: -x["mean_z"])
 
 
-# ============================================================
-# Main
-# ============================================================
-
-def main():
-    io_args, extra = parse_io_args()
-    validate_io(output=io_args.output)
-
-    parser = argparse.ArgumentParser(description="Compute structural break tables")
-    parser.add_argument("--robustness", action="store_true",
-                        help="Run k-sensitivity analysis")
-    parser.add_argument("--core-only", action="store_true",
-                        help="Restrict to core papers (cited_by_count >= 50)")
-    parser.add_argument("--censor-gap", type=int, default=0,
-                        help="Number of transition years to censor before each test point")
-    args = parser.parse_args(extra)
-
-    # ── Step 1: Load data + embeddings ──
-    df, embeddings = load_analysis_corpus(core_only=args.core_only)
-    log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
-
-    n_min = 20 if args.core_only else 30
-    window_sizes = [2, 3, 4]
-
-    # ── Step 2: Sliding-window divergence series ──
-    log.info("=== Structural break detection ===")
-    log.info("Window sizes: %s, start year: 2005, n_min: %d, censor_gap: %d",
-             window_sizes, n_min, args.censor_gap)
-
+def _compute_divergence_table(df, embeddings, n_min, window_sizes, censor_gap):
+    """Steps 1-2: compute divergence series and z-scores, return DataFrame."""
     div_results = compute_divergence_series(
         df, embeddings, K_DEFAULT, window_sizes, n_min,
-        start_year=2005, end_year=2023, censor_gap=args.censor_gap
+        start_year=2005, end_year=2023, censor_gap=censor_gap
     )
 
     years = list(range(2005, 2024))
@@ -214,14 +189,11 @@ def main():
             else:
                 bp_df[f"z_{col}"] = np.nan
 
-    # Derive companion file path from --output
-    out_dir = os.path.dirname(io_args.output)
-    out_stem = os.path.basename(io_args.output)
+    return bp_df
 
-    bp_df.to_csv(io_args.output, index=False)
-    log.info("Saved divergence table -> %s", io_args.output)
 
-    # ── Step 3: Detect robust breakpoints ──
+def _compute_robustness_table(bp_df, df, window_sizes):
+    """Steps 3-4: detect robust breakpoints and check volume confounds."""
     bp_indexed = bp_df.set_index("year")
     candidates = {"js": {}, "cos": {}}
     for metric in ["js", "cos"]:
@@ -266,11 +238,6 @@ def main():
     robust_list.sort(key=lambda x: -x["combined_z"])
 
     robust_df = pd.DataFrame(robust_list)
-    # Companion file: replace "breakpoints" with "breakpoint_robustness" in filename
-    robust_name = out_stem.replace("breakpoints", "breakpoint_robustness")
-    robust_path = os.path.join(out_dir, robust_name) if out_dir else robust_name
-    robust_df.to_csv(robust_path, index=False)
-    log.info("Saved robustness table -> %s", robust_path)
 
     log.info("=== Robust breakpoints ===")
     for bp in robust_list[:5]:
@@ -280,7 +247,7 @@ def main():
     detected_breaks = sorted([bp["year"] for bp in robust_list[:3]])
     log.info("Detected robust breakpoints: %s", detected_breaks)
 
-    # ── Step 4: Volume confound check ──
+    # Volume confound check
     log.info("=== Volume confound check ===")
     yearly_counts = df.groupby("year").size()
     growth_rate = yearly_counts.pct_change().dropna()
@@ -298,28 +265,77 @@ def main():
                 flag = " *** CONFOUNDED" if abs(r) > 0.5 else ""
                 log.info("  %s vs volume growth: r=%.3f, p=%.3f%s", col, r, p, flag)
 
-    # ── Step 5: K-sensitivity table (--robustness only) ──
-    if args.robustness and not args.core_only:
-        log.info("=== Robustness: k-sensitivity (k=4,5,6,7) ===")
-        k_values = [4, 5, 6, 7]
-        k_results = {}
+    return robust_df
 
-        for k in k_values:
-            log.info("  Running k=%d...", k)
-            res = compute_divergence_series(
-                df, embeddings, k, [3], n_min,
-                start_year=2005, end_year=2023, censor_gap=args.censor_gap
-            )
-            k_results[k] = res[3]["js"]
 
-        k_data = {"year": years}
-        for k in k_values:
-            k_data[f"js_k{k}"] = [k_results[k].get(y, np.nan) for y in years]
-        k_df = pd.DataFrame(k_data)
-        k_path = os.path.join(out_dir, "tab_k_sensitivity.csv") if out_dir else "tab_k_sensitivity.csv"
-        k_df.to_csv(k_path, index=False)
-        log.info("Saved k-sensitivity table -> %s", k_path)
-        log.info("Run plot_fig_k_sensitivity.py to generate the figure.")
+def _compute_k_sensitivity_table(df, embeddings, n_min, censor_gap):
+    """Step 5: k-sensitivity sweep (k=4,5,6,7)."""
+    log.info("=== Robustness: k-sensitivity (k=4,5,6,7) ===")
+    k_values = [4, 5, 6, 7]
+    k_results = {}
+    years = list(range(2005, 2024))
+
+    for k in k_values:
+        log.info("  Running k=%d...", k)
+        res = compute_divergence_series(
+            df, embeddings, k, [3], n_min,
+            start_year=2005, end_year=2023, censor_gap=censor_gap
+        )
+        k_results[k] = res[3]["js"]
+
+    k_data = {"year": years}
+    for k in k_values:
+        k_data[f"js_k{k}"] = [k_results[k].get(y, np.nan) for y in years]
+    return pd.DataFrame(k_data)
+
+
+# ============================================================
+# Main
+# ============================================================
+
+def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    parser = argparse.ArgumentParser(description="Compute structural break tables")
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument("--robustness", action="store_true",
+                            help="Output robust breakpoint ranking table")
+    mode_group.add_argument("--k-sensitivity", action="store_true",
+                            help="Output k-sensitivity sweep table (k=4,5,6,7)")
+    parser.add_argument("--core-only", action="store_true",
+                        help="Restrict to core papers (cited_by_count >= 50)")
+    parser.add_argument("--censor-gap", type=int, default=0,
+                        help="Number of transition years to censor before each test point")
+    args = parser.parse_args(extra)
+
+    # ── Step 1: Load data + embeddings ──
+    df, embeddings = load_analysis_corpus(core_only=args.core_only)
+    log.info("Loaded %d works, embeddings shape: %s", len(df), embeddings.shape)
+
+    n_min = 20 if args.core_only else 30
+    window_sizes = [2, 3, 4]
+
+    if args.k_sensitivity:
+        # K-sensitivity mode: independent computation, writes directly
+        k_df = _compute_k_sensitivity_table(df, embeddings, n_min, args.censor_gap)
+        k_df.to_csv(io_args.output, index=False)
+        log.info("Saved k-sensitivity table -> %s", io_args.output)
+    else:
+        # Default and --robustness share the divergence computation
+        log.info("=== Structural break detection ===")
+        log.info("Window sizes: %s, start year: 2005, n_min: %d, censor_gap: %d",
+                 window_sizes, n_min, args.censor_gap)
+
+        bp_df = _compute_divergence_table(df, embeddings, n_min, window_sizes, args.censor_gap)
+
+        if args.robustness:
+            robust_df = _compute_robustness_table(bp_df, df, window_sizes)
+            robust_df.to_csv(io_args.output, index=False)
+            log.info("Saved robustness table -> %s", io_args.output)
+        else:
+            bp_df.to_csv(io_args.output, index=False)
+            log.info("Saved divergence table -> %s", io_args.output)
 
     log.info("Done.")
 
