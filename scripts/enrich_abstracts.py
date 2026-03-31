@@ -365,12 +365,15 @@ def _fetch_s2_abstract(doi, request_timeout, max_retries, retry_backoff, retry_j
             jitter_max=retry_jitter,
             counters=s2_counters,
         )
+        check_rate_limit(resp, "Semantic Scholar")
         if resp.status_code == 200:
             ab = clean_abstract(resp.json().get("abstract", "") or "")
             return ab, "success" if ab else "empty"
         if resp.status_code in (404, 400):
             return "", "4xx"
         return "", "5xx"
+    except RateLimitExhausted:
+        raise
     except requests.exceptions.HTTPError as e:
         status = e.response.status_code if e.response is not None else 0
         return "", "4xx" if status in (404, 400) else "5xx"
@@ -404,9 +407,24 @@ def step4_semantic_scholar(df, counters, checkpoint_every=50,
     # S2 is slow (3s/request) — log every 10 regardless of checkpoint_every
     s2_log_every = min(checkpoint_every, 10)
     s2_counters = {}
+    consecutive_failures = 0
     for i, (idx, doi) in enumerate(to_query):
-        ab, status = _fetch_s2_abstract(
-            doi, request_timeout, max_retries, retry_backoff, retry_jitter, s2_counters)
+        try:
+            ab, status = _fetch_s2_abstract(
+                doi, request_timeout, max_retries, retry_backoff, retry_jitter,
+                s2_counters)
+            consecutive_failures = 0
+        except RateLimitExhausted:
+            consecutive_failures += 1
+            log.warning("S2 rate limit exhausted (%d/%d consecutive)",
+                        consecutive_failures, CONSECUTIVE_FAIL_LIMIT)
+            if consecutive_failures >= CONSECUTIVE_FAIL_LIMIT:
+                log.error("Aborting Step 4: %d consecutive rate-limit failures. "
+                          "Cache saved — re-run to resume.",
+                          CONSECUTIVE_FAIL_LIMIT)
+                save_cache("s2_abstracts", cache)
+                raise
+            continue
         cache[doi] = ab
 
         counter_key = f"step4_{status}"

@@ -34,6 +34,7 @@ from utils import (
     CONFIG_DIR,
     WORKS_COLUMNS,
     append_to_pool,
+    check_rate_limit,
     get_logger,
     load_pool_ids,
     load_pool_records,
@@ -149,6 +150,7 @@ def fetch_query(search_term, delay, limit, existing_ids, pool_file):
             "limit": per_page,
         }
         resp = s2_get(S2_API, params=params, delay=delay)
+        check_rate_limit(resp, "Semantic Scholar")
         data = resp.json()
 
         total = data.get("total", 0)
@@ -189,6 +191,7 @@ def dry_run_query(search_term, delay):
     """Check how many results a query would return."""
     params = {"query": search_term, "limit": 1}
     resp = s2_get(S2_API, params=params, delay=delay)
+    check_rate_limit(resp, "Semantic Scholar")
     data = resp.json()
     return data.get("total", 0)
 
