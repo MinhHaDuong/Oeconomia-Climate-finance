@@ -61,8 +61,11 @@ def main():
                         help="Path to cluster labels JSON (default: cluster_labels.json)")
     args = parser.parse_args(extra)
 
-    # Load data
-    csv_path = args.alluvial or os.path.join(BASE_DIR, "content", "tables", "tab_alluvial.csv")
+    # Load data — --input takes precedence, then --alluvial, then default
+    if io_args.input:
+        csv_path = io_args.input[0]
+    else:
+        csv_path = args.alluvial or os.path.join(BASE_DIR, "content", "tables", "tab_alluvial.csv")
     df = pd.read_csv(csv_path, index_col=0)
 
     # Convert to percentages

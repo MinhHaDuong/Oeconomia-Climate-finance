@@ -60,14 +60,25 @@ def main():
         tab_bp_robust = tab_bp_robust.replace(".csv", f"{suffix}.csv")
 
     # --- Load tables ---
-    bp_df = pd.read_csv(os.path.join(TABLES_DIR, tab_bp))
+    # --input takes precedence: expects 3 paths in order:
+    #   breakpoints.csv, breakpoint_robustness.csv, alluvial.csv
+    if io_args.input:
+        bp_path = io_args.input[0]
+        robust_path = io_args.input[1] if len(io_args.input) > 1 else os.path.join(TABLES_DIR, tab_bp_robust)
+        al_path = io_args.input[2] if len(io_args.input) > 2 else os.path.join(TABLES_DIR, tab_al)
+    else:
+        bp_path = os.path.join(TABLES_DIR, tab_bp)
+        robust_path = os.path.join(TABLES_DIR, tab_bp_robust)
+        al_path = os.path.join(TABLES_DIR, tab_al)
+
+    bp_df = pd.read_csv(bp_path)
     try:
-        robust_df = pd.read_csv(os.path.join(TABLES_DIR, tab_bp_robust))
+        robust_df = pd.read_csv(robust_path)
     except pd.errors.EmptyDataError:
         robust_df = pd.DataFrame()
     robust_list = robust_df.to_dict("records")
 
-    alluvial_df = pd.read_csv(os.path.join(TABLES_DIR, tab_al), index_col=0)
+    alluvial_df = pd.read_csv(al_path, index_col=0)
     n_corpus = int(alluvial_df.values.sum())
 
     # --- Plot ---

@@ -211,21 +211,8 @@ def _get_commit_info(sha: str) -> str:
     return result.stdout.strip()
 
 
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Historical regression analysis across commits"
-    )
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--commits", nargs="+",
-                       help="Specific commit SHAs to test")
-    group.add_argument("--range", type=str,
-                       help="Git range (e.g., bfa63c7..HEAD)")
-    group.add_argument("--since-smoke", action="store_true",
-                       help="Test all merge commits since smoke pipeline was added")
-    args = parser.parse_args()
-
+def _resolve_commits(args) -> list[str]:
+    """Turn the three mutually exclusive input modes into an oldest-first commit list."""
     if args.since_smoke:
         # Smoke pipeline was added at bfa63c7 (merged as 0fdd302)
         result = subprocess.run(
@@ -247,37 +234,11 @@ def main():
         commits.reverse()
     else:
         commits = args.commits
+    return commits
 
-    print(f"Testing {len(commits)} commits...")
-    print()
 
-    tmp_base = Path(tempfile.mkdtemp(prefix="regression_history_"))
-
-    all_results: list[tuple[str, str, dict]] = []
-    try:
-        for sha in commits:
-            info = _get_commit_info(sha)
-            print(f"  {info} ...", end=" ", flush=True)
-            try:
-                hashes = _run_at_commit(sha, tmp_base)
-                all_results.append((sha, info, hashes))
-                n_ok = sum(
-                    1 for h in hashes.values()
-                    for v in h.values()
-                    if v not in ("__missing__", "__error__") and not v.startswith("__")
-                )
-                n_err = sum(1 for h in hashes.values() if "__error__" in h)
-                if n_err:
-                    print(f"  {n_ok} hashed, {n_err} errors")
-                else:
-                    print(f"  {n_ok} outputs hashed")
-            except Exception as e:
-                print(f"  FAILED: {e}")
-                all_results.append((sha, info, {"__error__": str(e)}))
-    finally:
-        shutil.rmtree(tmp_base, ignore_errors=True)
-
-    # --- Report ---
+def _print_report(all_results: list[tuple[str, str, dict]]) -> None:
+    """Compare consecutive commits, print diffs and final hash table."""
     print()
     print("=" * 72)
     print("REGRESSION HISTORY REPORT")
@@ -333,6 +294,55 @@ def main():
             continue
         for f, h in sorted(files.items()):
             print(f"  {script:25s}  {os.path.basename(f):40s}  {h[:16]}...")
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Historical regression analysis across commits"
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--commits", nargs="+",
+                       help="Specific commit SHAs to test")
+    group.add_argument("--range", type=str,
+                       help="Git range (e.g., bfa63c7..HEAD)")
+    group.add_argument("--since-smoke", action="store_true",
+                       help="Test all merge commits since smoke pipeline was added")
+    args = parser.parse_args()
+
+    commits = _resolve_commits(args)
+
+    print(f"Testing {len(commits)} commits...")
+    print()
+
+    tmp_base = Path(tempfile.mkdtemp(prefix="regression_history_"))
+
+    all_results: list[tuple[str, str, dict]] = []
+    try:
+        for sha in commits:
+            info = _get_commit_info(sha)
+            print(f"  {info} ...", end=" ", flush=True)
+            try:
+                hashes = _run_at_commit(sha, tmp_base)
+                all_results.append((sha, info, hashes))
+                n_ok = sum(
+                    1 for h in hashes.values()
+                    for v in h.values()
+                    if v not in ("__missing__", "__error__") and not v.startswith("__")
+                )
+                n_err = sum(1 for h in hashes.values() if "__error__" in h)
+                if n_err:
+                    print(f"  {n_ok} hashed, {n_err} errors")
+                else:
+                    print(f"  {n_ok} outputs hashed")
+            except Exception as e:
+                print(f"  FAILED: {e}")
+                all_results.append((sha, info, {"__error__": str(e)}))
+    finally:
+        shutil.rmtree(tmp_base, ignore_errors=True)
+
+    _print_report(all_results)
 
 
 if __name__ == "__main__":

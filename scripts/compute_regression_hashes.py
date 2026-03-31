@@ -6,7 +6,7 @@ against an existing one.
 
 Usage:
     # Generate golden hashes (first time or after intentional change):
-    uv run python scripts/compute_regression_hashes.py --save
+    uv run python scripts/compute_regression_hashes.py --update-golden
 
     # Compare current outputs against golden baseline:
     uv run python scripts/compute_regression_hashes.py --check
@@ -38,9 +38,6 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_DIR = ROOT / "tests" / "fixtures" / "smoke"
 GOLDEN_PATH = FIXTURE_DIR / "golden_hashes.json"
 SCRIPTS_DIR = ROOT / "scripts"
-CONTENT_DIR = ROOT / "content"
-TABLES_DIR = CONTENT_DIR / "tables"
-FIGURES_DIR = CONTENT_DIR / "figures"
 
 # ---------------------------------------------------------------------------
 # Script registry: (script, args, output_files)
@@ -83,7 +80,7 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig1_bars",
         "script": "plot_fig1_bars.py",
-        "args": ["--output", str(FIGURES_DIR / "fig_bars.png")],
+        "args": ["--output", "content/figures/fig_bars.png"],
         "deps": [],
         "outputs": [
             "content/figures/fig_bars.png",
@@ -93,7 +90,7 @@ REGISTRY: list[dict] = [
         "name": "plot_fig1_bars_v1",
         "script": "plot_fig1_bars.py",
         "args": [
-            "--output", str(FIGURES_DIR / "fig_bars_v1.png"),
+            "--output", "content/figures/fig_bars_v1.png",
             "--v1-only",
         ],
         "deps": [],
@@ -111,10 +108,14 @@ REGISTRY: list[dict] = [
         ],
     },
     # --- Wave 2: depend on compute_* outputs ---
+    # Each entry passes --input pointing at the intermediate files produced
+    # by Wave 1. _redirect_args rewrites these to the tmp directory, so the
+    # harness never touches real content/.
     {
         "name": "plot_fig2_breaks",
         "script": "plot_fig2_breaks.py",
-        "args": [],
+        "args": ["--output", "content/figures/fig_breaks.png",
+                 "--input", "content/tables/tab_breakpoints.csv"],
         "deps": ["compute_breakpoints"],
         "outputs": [
             "content/figures/fig_breaks.png",
@@ -124,7 +125,8 @@ REGISTRY: list[dict] = [
         "name": "plot_fig2_composition",
         "script": "plot_fig2_composition.py",
         "args": [
-            "--output", str(FIGURES_DIR / "fig_composition.png"),
+            "--output", "content/figures/fig_composition.png",
+            "--input", "content/tables/tab_alluvial.csv",
         ],
         "deps": ["compute_clusters"],
         "outputs": [
@@ -134,7 +136,8 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_alluvial",
         "script": "plot_fig_alluvial.py",
-        "args": ["--output", "content/figures/fig_alluvial.png"],
+        "args": ["--output", "content/figures/fig_alluvial.png",
+                 "--input", "content/tables/tab_alluvial.csv"],
         "deps": ["compute_clusters"],
         "outputs": [
             "content/figures/fig_alluvial.png",
@@ -143,7 +146,10 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_breakpoints",
         "script": "plot_fig_breakpoints.py",
-        "args": ["--output", "content/figures/fig_breakpoints.png"],
+        "args": ["--output", "content/figures/fig_breakpoints.png",
+                 "--input", "content/tables/tab_breakpoints.csv",
+                 "content/tables/tab_breakpoint_robustness.csv",
+                 "content/tables/tab_alluvial.csv"],
         "deps": ["compute_breakpoints", "compute_breakpoint_robustness",
                  "compute_clusters"],
         "outputs": [
@@ -254,52 +260,54 @@ def _hash_output(path: Path) -> str:
         return _sha256_bytes(f.read())
 
 
-def _backup_outputs() -> dict[str, Path | None]:
-    """Back up existing output files that scripts will overwrite."""
-    import tempfile
-    backup_dir = Path(tempfile.mkdtemp(prefix="regression_backup_"))
-    backups: dict[str, Path | None] = {}
-    for entry in REGISTRY:
-        for rel_path in entry["outputs"]:
-            abs_path = ROOT / rel_path
-            if abs_path.exists():
-                dst = backup_dir / rel_path
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(abs_path, dst)
-                backups[rel_path] = dst
-            else:
-                backups[rel_path] = None
-    backups["__dir__"] = backup_dir
-    return backups
+def _redirect_args(args: list[str], output_root: Path) -> list[str]:
+    """Rewrite --output and --input paths to use output_root instead of ROOT.
+
+    Paths that start with a known relative prefix (content/, tests/) are
+    redirected to output_root/<relpath>. Absolute paths under ROOT are
+    converted to relative first.
+    """
+    result: list[str] = []
+    for arg in args:
+        p = Path(arg)
+        # Absolute path under ROOT → make relative
+        if p.is_absolute():
+            try:
+                rel = p.relative_to(ROOT)
+                arg = str(rel)
+            except ValueError:
+                result.append(arg)
+                continue
+        # Relative path starting with content/ or tests/ → redirect
+        if arg.startswith(("content/", "tests/")):
+            redirected = output_root / arg
+            redirected.parent.mkdir(parents=True, exist_ok=True)
+            result.append(str(redirected))
+        else:
+            result.append(arg)
+    return result
 
 
-def _restore_outputs(backups: dict[str, Path | None]) -> None:
-    """Restore backed-up files and clean up temp dir."""
-    backup_dir = backups.pop("__dir__", None)
-    for rel_path, backup_path in backups.items():
-        abs_path = ROOT / rel_path
-        if backup_path is not None:
-            shutil.copy2(backup_path, abs_path)
-        elif abs_path.exists():
-            # File was created by regression run but didn't exist before
-            abs_path.unlink()
-    if backup_dir and backup_dir.exists():
-        shutil.rmtree(backup_dir)
+def _run_one(
+    entry: dict, env: dict, output_root: Path,
+) -> tuple[str, dict[str, str]]:
+    """Run one script, return (name, {file: hash}) or raise on failure.
 
-
-def _run_one(entry: dict, env: dict) -> tuple[str, dict[str, str]]:
-    """Run one script, return (name, {file: hash}) or raise on failure."""
+    output_root controls where --output paths are redirected. When it equals
+    ROOT, behavior is unchanged (CLI / --update-golden path).
+    """
     name = entry["name"]
     script = str(SCRIPTS_DIR / entry["script"])
+    redirected_args = _redirect_args(entry["args"], output_root)
     proc = subprocess.run(
-        [sys.executable, script, *entry["args"]],
+        [sys.executable, script, *redirected_args],
         capture_output=True, text=True, env=env, timeout=120,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"{name} failed (exit {proc.returncode}):\n{proc.stderr[:500]}")
     hashes: dict[str, str] = {}
     for rel_path in entry["outputs"]:
-        abs_path = ROOT / rel_path
+        abs_path = output_root / rel_path
         if not abs_path.exists():
             raise FileNotFoundError(f"{name}: missing output {rel_path}")
         hashes[rel_path] = _hash_output(abs_path)
@@ -322,16 +330,34 @@ def _resolve_waves() -> list[list[dict]]:
     return waves
 
 
-def run_and_hash() -> dict[str, dict[str, str]]:
+def run_and_hash(
+    output_root: Path | None = None,
+) -> dict[str, dict[str, str]]:
     """Run scripts in parallel waves, return {script_name: {file: sha256}}.
 
-    Wave 1 (5 scripts, no deps) runs in parallel.
-    Wave 2 (4 scripts, depend on wave 1) runs in parallel after wave 1.
+    Parameters
+    ----------
+    output_root : Path or None
+        Directory used as prefix for script --output paths.
+        Defaults to ROOT (current behavior for CLI / --update-golden).
+
+    Wave 1 (independent scripts) runs in parallel.
+    Wave 2 (dependent scripts) runs in parallel after wave 1.
+    Wave 2 scripts receive --input args pointing at the tmp directory,
+    so no intermediate staging into content/ is needed.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    TABLES_DIR.mkdir(parents=True, exist_ok=True)
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    if output_root is None:
+        output_root = ROOT
+
+    # Ensure output directories exist
+    (output_root / "content" / "tables").mkdir(parents=True, exist_ok=True)
+    (output_root / "content" / "figures").mkdir(parents=True, exist_ok=True)
+    # build_het_core writes to tests/fixtures/smoke/catalogs/
+    (output_root / "tests" / "fixtures" / "smoke" / "catalogs").mkdir(
+        parents=True, exist_ok=True,
+    )
 
     env = _smoke_env()
     results: dict[str, dict[str, str]] = {}
@@ -340,7 +366,10 @@ def run_and_hash() -> dict[str, dict[str, str]]:
     for i, wave in enumerate(waves):
         log.info("Wave %d: %s", i + 1, [e["name"] for e in wave])
         with ThreadPoolExecutor(max_workers=len(wave)) as pool:
-            futures = {pool.submit(_run_one, e, env): e["name"] for e in wave}
+            futures = {
+                pool.submit(_run_one, e, env, output_root): e["name"]
+                for e in wave
+            }
             for future in as_completed(futures):
                 name, hashes = future.result()  # raises on failure
                 results[name] = hashes
@@ -354,7 +383,7 @@ def load_golden() -> dict[str, dict[str, str]]:
     if not GOLDEN_PATH.exists():
         raise FileNotFoundError(
             f"Golden hashes not found at {GOLDEN_PATH}. "
-            "Run with --save to create the baseline."
+            "Run with --update-golden to create the baseline."
         )
     with open(GOLDEN_PATH) as f:
         return json.load(f)
@@ -405,7 +434,7 @@ def main():
         description="Regression testing via output hashing"
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--save", action="store_true",
+    group.add_argument("--update-golden", action="store_true",
                        help="Generate and save golden hashes")
     group.add_argument("--check", action="store_true",
                        help="Compare current outputs against golden hashes")
@@ -413,17 +442,18 @@ def main():
                        help="Print current hashes to stdout (no file I/O)")
     args = parser.parse_args()
 
-    backups = _backup_outputs()
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix="regression_"))
     try:
-        current = run_and_hash()
+        current = run_and_hash(output_root=tmp)
     finally:
-        _restore_outputs(backups)
+        shutil.rmtree(tmp, ignore_errors=True)
 
     if args.dump:
         print(json.dumps(current, indent=2, sort_keys=True))
         return
 
-    if args.save:
+    if args.update_golden:
         save_golden(current)
         print(f"Golden hashes saved ({sum(len(v) for v in current.values())} files)")
         return

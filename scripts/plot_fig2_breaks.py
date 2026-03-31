@@ -35,8 +35,11 @@ def main():
     parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
     args = parser.parse_args(extra)
 
-    # Load data
-    csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_breakpoints.csv")
+    # Load data — use --input if provided, else default path
+    if io_args.input:
+        csv_path = io_args.input[0]
+    else:
+        csv_path = os.path.join(BASE_DIR, "content", "tables", "tab_breakpoints.csv")
     df = pd.read_csv(csv_path)
     years = df["year"].values
     z_js = df["z_js_w3"].values

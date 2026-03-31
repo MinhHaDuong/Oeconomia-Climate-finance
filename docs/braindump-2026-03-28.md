@@ -4,6 +4,8 @@ Both papers under review. Waiting mode — good time for infrastructure and prep
 
 ## Regression testing via input/output hashing
 
+> **DONE** — `scripts/compute_regression_hashes.py`, golden baseline in `tests/fixtures/smoke/golden_hashes.json`, `tests/test_regression.py`. Makefile: `make regression`, `make regression-update`.
+
 Each script maps inputs to outputs. Track (hash_in, hash_out) per script per commit.
 
 **Two use cases:**
@@ -14,6 +16,8 @@ Each script maps inputs to outputs. Track (hash_in, hash_out) per script per com
 Basically a content-addressable audit trail for the pipeline. DVC already tracks file hashes — the gap is connecting them to script identity and making diffs across commits easy to inspect.
 
 ## Organize into sub-projects
+
+> **DONE** (lighter variant) — Single repo, namespaced Makefile targets (`corpus-*`, `analysis-*`, `manuscript-*`, `archive-*`). No separate repos or Makefiles per sub-project — Claude's review correctly predicted the ceremony wasn't worth it.
 
 The repo has grown into four distinct concerns with different lifecycles:
 
@@ -42,6 +46,8 @@ Eases two **PAIN POINTS**:
 * quarto does not pollutes project root and rebuild everything all the time
 
 ## Script I/O discipline
+
+> **DONE** — `scripts/script_io_args.py` (`parse_io_args`, `validate_io`), `tests/test_io_discipline.py`. Migrated scripts use `--output`/`--input`. Rule in `.claude/rules/script-io.md`. Migration ongoing as scripts are touched.
 
 **Scripts take input file(s) and output file (singular) as arguments.** No hardcoded filenames.
 
@@ -95,6 +101,8 @@ Every figure/table script looks the same. Steps 1–2 could be a shared `argpars
 
 ## Performance monitoring and Polars evaluation
 
+> **DONE** — Timing: `scripts/time_target.sh` (JSONL), `make benchmark`, `tests/test_perf_baseline.py`. Polars benchmarked in `content/_includes/reproducibility.md` — 3–33× faster but 108-file migration not worth it, retained pandas. Also evaluated Parquet/Feather.
+
 Analysis phase is getting slow. Before switching anything, instrument first:
 
 - **Add timing to scripts** — each `run()` logs wall time and peak memory (e.g., `time.perf_counter` + `tracemalloc`). Makefile captures per-target timing via `time` or a wrapper.
@@ -114,25 +122,25 @@ Note: Polars reads CSV/Parquet natively, so it fits the handoff pattern (corpus 
 
 ## More pipeline guardrails
 
-**Determinism checker** — run each script twice with same inputs, diff outputs. Catches leaking timestamps, unseeded randomness, dict ordering, floating-point non-determinism. Fails the PR if outputs differ.
+**Determinism checker** (**DONE** — `tests/test_determinism.py`, `make determinism-check`) — run each script twice with same inputs, diff outputs. Catches leaking timestamps, unseeded randomness, dict ordering, floating-point non-determinism. Fails the PR if outputs differ.
 
-**Dead asset detection** — walk the Makefile DAG + `import` graph, flag scripts that no target depends on and data files that no script reads. Prevents accumulation of orphan artifacts post-refactor.
+**Dead asset detection** (**NOT DONE**) — walk the Makefile DAG + `import` graph, flag scripts that no target depends on and data files that no script reads. Prevents accumulation of orphan artifacts post-refactor.
 
-**Dependency graph as a figure** — auto-generate a DAG visualization from Makefile + DVC (`make dag` target). `graphviz` from `dvc dag --dot` + Makefile parsing. Useful for the technical report and for onboarding.
+**Dependency graph as a figure** (**DONE** — `scripts/plot_fig_dag.py`, `content/figures/fig_dag.png`) — auto-generate a DAG visualization from Makefile + DVC (`make dag` target). `graphviz` from `dvc dag --dot` + Makefile parsing. Useful for the technical report and for onboarding.
 
-**Script complexity budget** — enforce that `run()` is the only function above a cyclomatic complexity threshold per script. Everything else (arg parsing, I/O) should be trivial. Ruff `C901` already exists — the twist is scoping it: low threshold globally, higher allowance only for functions named `run`.
+**Script complexity budget** (**NOT DONE**) — enforce that `run()` is the only function above a cyclomatic complexity threshold per script. Everything else (arg parsing, I/O) should be trivial. Ruff `C901` already exists — the twist is scoping it: low threshold globally, higher allowance only for functions named `run`.
 
-**Memory high-water-mark regression test** — record peak RSS per script in a `.json` baseline. CI compares against it, flags >20% regressions. Catches accidental quadratic memory (e.g., building a full matrix instead of streaming) before the corpus grows and it becomes a crash.
+**Memory high-water-mark regression test** (**NOT DONE** — `time_target.sh` records RSS but no baseline comparison) — record peak RSS per script in a `.json` baseline. CI compares against it, flags >20% regressions. Catches accidental quadratic memory (e.g., building a full matrix instead of streaming) before the corpus grows and it becomes a crash.
 
-**Schema contracts at handoff boundaries** — each script declares expected input schema (column names, dtypes, non-null constraints) and output schema. Validated before `run()` starts. Catches silent column renames, type drift, and missing fields at the point of failure, not three scripts downstream.
+**Schema contracts at handoff boundaries** (**DONE** — `scripts/schemas.py` with Pandera, `tests/test_schema_contracts.py`) — each script declares expected input schema (column names, dtypes, non-null constraints) and output schema. Validated before `run()` starts. Catches silent column renames, type drift, and missing fields at the point of failure, not three scripts downstream.
 
-**Smoke pipeline with tiny corpus** — **PAIN POINT**: tests fail when data is not available, which is the case in new worktrees and in isolated environments used by agents. Fix: a 100-row fixture subset that runs the full pipeline end-to-end in <30 seconds. Versioned alongside tests, checked into git (not DVC). `make smoke` vs `make corpus`. Every worktree and every agent sandbox can run the full test suite out of the box, no `dvc pull` required.
+**Smoke pipeline with tiny corpus** (**DONE** — `scripts/build_smoke_fixture.py`, `tests/test_smoke_pipeline.py`, `tests/fixtures/smoke/`, `make smoke`) — **PAIN POINT**: tests fail when data is not available, which is the case in new worktrees and in isolated environments used by agents. Fix: a 100-row fixture subset that runs the full pipeline end-to-end in <30 seconds. Versioned alongside tests, checked into git (not DVC). `make smoke` vs `make corpus`. Every worktree and every agent sandbox can run the full test suite out of the box, no `dvc pull` required.
 
-**Provenance sidecar files** — each output gets a `.provenance.json` next to it: git commit, script path, input hashes, parameters used, wall time. Any figure or CSV can answer "what exactly produced me?" without digging through git. Trivially generated by the shared `save()` in the canonical `main()`.
+**Provenance sidecar files** (**NOT DONE** — DVC already tracks this via `dvc.lock`) — each output gets a `.provenance.json` next to it: git commit, script path, input hashes, parameters used, wall time. Any figure or CSV can answer "what exactly produced me?" without digging through git. Trivially generated by the shared `save()` in the canonical `main()`.
 
-**Config drift detection** — diff all config/parameter files (`_variables.yml`, clustering params, embedding model names) across commits. Alert in PR review when a parameter changed but the commit message doesn't mention it. Silent parameter changes are the most common source of unreproducible results.
+**Config drift detection** (**NOT DONE** — commit discipline covers this per Claude's review) — diff all config/parameter files (`_variables.yml`, clustering params, embedding model names) across commits. Alert in PR review when a parameter changed but the commit message doesn't mention it. Silent parameter changes are the most common source of unreproducible results.
 
-**Data quality dashboard** — summary stats per corpus version (row counts, null rates, distribution moments, duplicate rates) saved as a JSON snapshot. Diff across versions to detect drift. Catches upstream API changes (OpenAlex schema evolving, S2 returning fewer fields) before they corrupt downstream analysis.
+**Data quality dashboard** (**PARTIAL** — `scripts/compute_vars.py` generates stats into Quarto docs, no standalone snapshots) — summary stats per corpus version (row counts, null rates, distribution moments, duplicate rates) saved as a JSON snapshot. Diff across versions to detect drift. Catches upstream API changes (OpenAlex schema evolving, S2 returning fewer fields) before they corrupt downstream analysis.
 
 ## Review (Claude Opus 4.6, 2026-03-28)
 

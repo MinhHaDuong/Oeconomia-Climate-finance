@@ -112,7 +112,7 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-save check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -280,7 +280,7 @@ content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py
 # Fig 2 (composition): frozen v1 archive data + corrected labels
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
-	uv run python $< --output $@ --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
+	uv run python $< --output $@ --input config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 # -- Data paper --
 # Semantic clusters (computation only — no figures)
@@ -324,13 +324,13 @@ content/figures/fig_breakpoints.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py \
 		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
 		content/tables/tab_alluvial.csv
-	uv run python $< --output $@
+	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv content/tables/tab_alluvial.csv
 
 # Alluvial figure (static PNG)
 content/figures/fig_alluvial.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $< --output $@
+	uv run python $< --output $@ --input content/tables/tab_alluvial.csv
 
 # Alluvial figure (interactive HTML)
 content/figures/fig_alluvial.html: \
@@ -341,7 +341,7 @@ content/figures/fig_alluvial.html: \
 # Period divergence curves
 content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py \
 		content/tables/tab_breakpoints.csv
-	uv run python $< --output $@
+	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv
 
 # Bimodality tables (computation only — figures are separate targets below)
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
@@ -401,12 +401,12 @@ content/figures/fig_breakpoints_core.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py \
 		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
 		content/tables/tab_alluvial_core.csv
-	uv run python $< --output $@ --core-only
+	uv run python $< --output $@ --core-only --input content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv content/tables/tab_alluvial_core.csv
 
 content/figures/fig_alluvial_core.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
-	uv run python $< --output $@ --core-only
+	uv run python $< --output $@ --core-only --input content/tables/tab_alluvial_core.csv
 
 # Bimodality core variant tables
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
@@ -564,12 +564,12 @@ determinism-check:
 # Regression hashes: compare Phase 2 output hashes against golden baseline.
 # Runs as pytest (one test per script, module-scoped fixture = scripts run once).
 #   make regression          — check against golden baseline
-#   make regression-save     — regenerate golden baseline (after intentional change)
+#   make regression-update   — regenerate golden baseline (after intentional change)
 regression:
 	uv run pytest tests/test_regression.py -v --tb=short -m integration -k "test_regression_"
 
-regression-save:
-	uv run python scripts/compute_regression_hashes.py --save
+regression-update:
+	uv run python scripts/compute_regression_hashes.py --update-golden
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.

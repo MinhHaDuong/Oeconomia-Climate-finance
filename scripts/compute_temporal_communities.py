@@ -238,7 +238,7 @@ def detect_communities(cutoff_year, top_n, min_cocit, resolution, random_state):
     # Build co-citation matrix
     log.info("  Building co-citation matrix...")
     cocit_matrix = lil_matrix((actual_n, actual_n), dtype=np.float64)
-    for ref_list in source_groups.values():
+    for ref_list in source_groups.values:
         refs_in_top = [r for r in ref_list if r in top_set]
         if len(refs_in_top) < 2:
             continue
