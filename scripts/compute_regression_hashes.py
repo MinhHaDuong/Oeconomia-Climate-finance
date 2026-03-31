@@ -108,10 +108,14 @@ REGISTRY: list[dict] = [
         ],
     },
     # --- Wave 2: depend on compute_* outputs ---
+    # Each entry passes --input pointing at the intermediate files produced
+    # by Wave 1. _redirect_args rewrites these to the tmp directory, so the
+    # harness never touches real content/.
     {
         "name": "plot_fig2_breaks",
         "script": "plot_fig2_breaks.py",
-        "args": ["--output", "content/figures/fig_breaks.png"],
+        "args": ["--output", "content/figures/fig_breaks.png",
+                 "--input", "content/tables/tab_breakpoints.csv"],
         "deps": ["compute_breakpoints"],
         "outputs": [
             "content/figures/fig_breaks.png",
@@ -122,6 +126,7 @@ REGISTRY: list[dict] = [
         "script": "plot_fig2_composition.py",
         "args": [
             "--output", "content/figures/fig_composition.png",
+            "--input", "content/tables/tab_alluvial.csv",
         ],
         "deps": ["compute_clusters"],
         "outputs": [
@@ -131,7 +136,8 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_alluvial",
         "script": "plot_fig_alluvial.py",
-        "args": ["--output", "content/figures/fig_alluvial.png"],
+        "args": ["--output", "content/figures/fig_alluvial.png",
+                 "--input", "content/tables/tab_alluvial.csv"],
         "deps": ["compute_clusters"],
         "outputs": [
             "content/figures/fig_alluvial.png",
@@ -140,7 +146,10 @@ REGISTRY: list[dict] = [
     {
         "name": "plot_fig_breakpoints",
         "script": "plot_fig_breakpoints.py",
-        "args": ["--output", "content/figures/fig_breakpoints.png"],
+        "args": ["--output", "content/figures/fig_breakpoints.png",
+                 "--input", "content/tables/tab_breakpoints.csv",
+                 "content/tables/tab_breakpoint_robustness.csv",
+                 "content/tables/tab_alluvial.csv"],
         "deps": ["compute_breakpoints", "compute_breakpoint_robustness",
                  "compute_clusters"],
         "outputs": [
@@ -321,57 +330,6 @@ def _resolve_waves() -> list[list[dict]]:
     return waves
 
 
-def _stage_intermediates(
-    wave_results: dict[str, dict[str, str]],
-    output_root: Path,
-) -> list[tuple[Path, Path | None]]:
-    """Copy Wave N outputs into content/ dirs so Wave N+1 scripts can read them.
-
-    Wave 2+ scripts hardcode reads from BASE_DIR/content/tables/ (via
-    pipeline_loaders.BASE_DIR). When output_root != ROOT we must place
-    intermediate CSV/JSON files where those scripts expect them.
-
-    Returns list of (dst_path, backup_path_or_None) for restoration.
-    If the destination already existed, it is backed up to a temp file
-    so it can be restored with original content AND timestamps.
-    """
-    import tempfile
-
-    if output_root == ROOT:
-        return []  # no redirection — files are already in place
-
-    staged: list[tuple[Path, Path | None]] = []
-    for file_hashes in wave_results.values():
-        for rel_path in file_hashes:
-            src = output_root / rel_path
-            dst = ROOT / rel_path
-            if src.exists() and src.suffix in (".csv", ".json"):
-                # Back up original file (preserving timestamps) for restoration
-                backup: Path | None = None
-                if dst.exists():
-                    fd, tmp_name = tempfile.mkstemp(
-                        prefix="staged_backup_", suffix=dst.suffix,
-                    )
-                    os.close(fd)
-                    backup = Path(tmp_name)
-                    shutil.copy2(dst, backup)
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
-                staged.append((dst, backup))
-    return staged
-
-
-def _cleanup_intermediates(staged: list[tuple[Path, Path | None]]) -> None:
-    """Restore or remove intermediate files that were staged for Wave 2+ reads."""
-    for path, backup in staged:
-        if backup is not None:
-            # Restore original file with original timestamps
-            shutil.copy2(backup, path)
-            backup.unlink()
-        elif path.exists():
-            path.unlink()
-
-
 def run_and_hash(
     output_root: Path | None = None,
 ) -> dict[str, dict[str, str]]:
@@ -385,8 +343,8 @@ def run_and_hash(
 
     Wave 1 (independent scripts) runs in parallel.
     Wave 2 (dependent scripts) runs in parallel after wave 1.
-    Between waves, intermediate outputs (CSV/JSON) are staged into
-    content/ so that Wave 2 scripts can read them via hardcoded paths.
+    Wave 2 scripts receive --input args pointing at the tmp directory,
+    so no intermediate staging into content/ is needed.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -404,24 +362,18 @@ def run_and_hash(
     env = _smoke_env()
     results: dict[str, dict[str, str]] = {}
     waves = _resolve_waves()
-    staged: list[tuple[Path, Path | None]] = []
 
-    try:
-        for i, wave in enumerate(waves):
-            log.info("Wave %d: %s", i + 1, [e["name"] for e in wave])
-            with ThreadPoolExecutor(max_workers=len(wave)) as pool:
-                futures = {
-                    pool.submit(_run_one, e, env, output_root): e["name"]
-                    for e in wave
-                }
-                for future in as_completed(futures):
-                    name, hashes = future.result()  # raises on failure
-                    results[name] = hashes
-                    log.info("  %s: %d outputs", name, len(hashes))
-            # Stage intermediates for next wave's reads
-            staged.extend(_stage_intermediates(results, output_root))
-    finally:
-        _cleanup_intermediates(staged)
+    for i, wave in enumerate(waves):
+        log.info("Wave %d: %s", i + 1, [e["name"] for e in wave])
+        with ThreadPoolExecutor(max_workers=len(wave)) as pool:
+            futures = {
+                pool.submit(_run_one, e, env, output_root): e["name"]
+                for e in wave
+            }
+            for future in as_completed(futures):
+                name, hashes = future.result()  # raises on failure
+                results[name] = hashes
+                log.info("  %s: %d outputs", name, len(hashes))
 
     return results
 
