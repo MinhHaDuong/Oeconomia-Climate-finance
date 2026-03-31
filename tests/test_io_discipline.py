@@ -100,3 +100,40 @@ class TestMigratedScripts:
         )
         assert result.returncode != 0
         assert "output" in result.stderr.lower()
+
+    def test_plot_fig45_pca_scatter_requires_output(self):
+        """plot_fig45_pca_scatter.py rejects invocation without --output."""
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "plot_fig45_pca_scatter.py")],
+            capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        assert "output" in result.stderr.lower()
+
+    def test_plot_fig_lexical_tfidf_requires_output(self):
+        """plot_fig_lexical_tfidf.py rejects invocation without --output."""
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "plot_fig_lexical_tfidf.py")],
+            capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        assert "output" in result.stderr.lower()
+
+    def test_plot_fig_traditions_requires_output(self):
+        """plot_fig_traditions.py rejects invocation without --output."""
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR, "plot_fig_traditions.py")],
+            capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        assert "output" in result.stderr.lower()
+
+    def test_plot_heatmap_communities_clusters_requires_output(self):
+        """plot_heatmap_communities_clusters.py rejects without --output."""
+        result = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS_DIR,
+             "plot_heatmap_communities_clusters.py")],
+            capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        assert "output" in result.stderr.lower()
