@@ -69,3 +69,4 @@ Before this repo can serve the AEDIST project, the reusable harness must be spli
 - GROBID citation parsing (#538): 352K unstructured Crossref refs → structured title/author/year via local GROBID (podman), 200 cit/sec, JSONL cache
 - Crossref DOI fallback (#569): `enrich_dois` queries Crossref when OpenAlex has no DOI, 9,268 OA-only candidates unlocked
 - 1-output-per-invocation (#594): `compute_breakpoints.py` refactored to 3 mutually exclusive modes, Makefile targets split from grouped `&:` to separate `--output $@` rules
+- I/O discipline complete (#549): all Phase 2 scripts accept `--output`/`--input` via `parse_io_args()`, 10 blackbox smoke tests, Makefile passes `$@`

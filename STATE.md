@@ -46,6 +46,7 @@ Under review (peer reviewers + data specialists).
 - Infrastructure sprint (#508–#514): smoke pipeline, I/O discipline, Makefile namespaces, parameterized K, revision runbook, performance baseline
 - Feather handoff (#527, #528): Phase 2 reads Feather instead of CSV (~48s → ~1.5s cumulative parse time), `analyze_embeddings` removed from DVC pipeline, pyarrow added
 - Circuit breaker for API loops (#590, #598): all OpenAlex scripts abort after 5 consecutive 429s instead of retrying indefinitely; shared `check_rate_limit()` helper in `pipeline_io.py`
+- I/O discipline complete (#549): all Phase 2 scripts accept `--output` (required) and `--input` (optional), Makefile passes `$@`, 10 blackbox smoke tests
 
 ## Blockers
 
