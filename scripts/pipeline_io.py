@@ -55,6 +55,21 @@ OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")
 # Retry budgets — single source of truth for polite_get and retry_get defaults
 POLITE_MAX_RETRIES = 3   # catalog scrapers (quick, many URLs)
 RETRY_MAX_RETRIES = 5    # enrichment fetchers (heavy, fewer URLs)
+CONSECUTIVE_FAIL_LIMIT = 5  # circuit breaker: abort after this many consecutive 429s
+
+
+class RateLimitExhausted(Exception):
+    """Raised when an API returns 429 after all retries are exhausted."""
+
+
+def check_rate_limit(resp: requests.Response, api_name: str = "") -> None:
+    """Raise RateLimitExhausted if response is 429.
+
+    Call after polite_get/retry_get in any API loop.
+    """
+    if resp.status_code == 429:
+        label = f" by {api_name}" if api_name else ""
+        raise RateLimitExhausted(f"Rate limit exhausted{label} after retries")
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +136,9 @@ def retry_get(url: str, params: dict[str, Any] | None = None,
     if counters is None:
         counters = {}
 
+    from urllib.parse import urlparse
+    host = urlparse(url).hostname or url
+
     last_exc = None
     for attempt in range(max_retries):
         try:
@@ -147,15 +165,15 @@ def retry_get(url: str, params: dict[str, Any] | None = None,
             if attempt == max_retries - 1:
                 # Return the 429 response instead of raising — lets callers
                 # inspect budget headers and degrade gracefully.
-                _log.warning("Rate limited (429) after %d attempts, returning response.",
-                             max_retries)
+                _log.warning("Rate limited (429) by %s after %d attempts, returning response.",
+                             host, max_retries)
                 return resp
             retry_after = min(
                 int(resp.headers.get("Retry-After", backoff_base ** (attempt + 1))), 120
             )
             jitter = random.uniform(0, min(jitter_max * 2, 2))
             wait = retry_after + jitter
-            _log.warning("Rate limited (429), waiting %.1fs...", wait)
+            _log.warning("Rate limited (429) by %s, waiting %.1fs...", host, wait)
             time.sleep(wait)
             continue
         if resp.status_code >= 500:

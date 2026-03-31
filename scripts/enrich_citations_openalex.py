@@ -30,6 +30,7 @@ from utils import (
     CATALOGS_DIR,
     MAILTO,
     OPENALEX_API_KEY,
+    check_rate_limit,
     get_logger,
     make_run_id,
     normalize_doi,
@@ -73,6 +74,8 @@ def openalex_get(params, delay=0.15, counters=None,
         jitter_max=retry_jitter,
         counters=counters,
     )
+    check_rate_limit(resp, "api.openalex.org")
+    resp.raise_for_status()
     return resp.json()
 
 

@@ -28,7 +28,7 @@ rm -rf "$TMP/code/.dvc" "$TMP/code/attic" "$TMP/code/.claude"
 # ── Data: deposit files ──────────────────────────────────
 echo "  Preparing deposit CSV (dropping abstracts)..."
 cd "$PROJ_ROOT"
-uv run python scripts/export_deposit.py --out-dir "$TMP/data"
+uv run python scripts/export_deposit.py --output "$TMP/data/climate_finance_corpus.csv"
 
 echo "  Copying embeddings, citations, and source catalogs..."
 cp -L "$DATA_DIR/embeddings.npz" "$TMP/data/"

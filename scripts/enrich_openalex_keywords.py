@@ -15,7 +15,14 @@ import os
 from collections import Counter
 
 import pandas as pd
-from utils import CATALOGS_DIR, MAILTO, OPENALEX_API_KEY, get_logger, polite_get
+from utils import (
+    CATALOGS_DIR,
+    MAILTO,
+    OPENALEX_API_KEY,
+    check_rate_limit,
+    get_logger,
+    polite_get,
+)
 
 log = get_logger("enrich_openalex_keywords")
 
@@ -43,6 +50,8 @@ def fetch_openalex_metadata(dois, batch_size=50):
         if OPENALEX_API_KEY:
             params["api_key"] = OPENALEX_API_KEY
         resp = polite_get(OA_API, params=params, delay=0.15)
+        check_rate_limit(resp, "api.openalex.org")
+        resp.raise_for_status()
         data = resp.json()
         results.extend(data.get("results", []))
         log.info("  Fetched %d/%d DOIs (%d found)",

@@ -55,6 +55,7 @@ Do NOT type: `main()` bodies, plot scripts, DataFrame column access, or one-off 
 - **No `sys.path` hacks.** Use proper packaging (`pyproject.toml`).
 - **Centralize research parameters.** Constants belong in `config/analysis.yaml`, read via `load_analysis_config()`.
 - **Every entry point gets argparse.** If `__name__ == "__main__"` exists, it gets an `ArgumentParser`.
+- **Loops on API calls check return status and have a circuit breaker.** Abort after N consecutive failures rather than retrying indefinitely (#590).
 
 ## Python style (3.10+)
 

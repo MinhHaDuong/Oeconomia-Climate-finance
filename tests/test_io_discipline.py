@@ -137,3 +137,38 @@ class TestMigratedScripts:
         )
         assert result.returncode != 0
         assert "output" in result.stderr.lower()
+
+
+class TestComputeBreakpointsOneOutput:
+    """compute_breakpoints.py writes exactly one file to --output (#594)."""
+
+    def test_no_companion_files(self):
+        """Default mode must not write stem-derived companion files."""
+        source_path = os.path.join(SCRIPTS_DIR, "compute_breakpoints.py")
+        with open(source_path) as f:
+            source = f.read()
+        # The script should not derive companion filenames from the output stem
+        assert 'out_stem.replace(' not in source, (
+            "compute_breakpoints.py still derives companion filenames from "
+            "--output stem; each mode should write only to io_args.output"
+        )
+
+    def test_k_sensitivity_not_hardcoded(self):
+        """K-sensitivity output path must come from --output, not hardcoded."""
+        source_path = os.path.join(SCRIPTS_DIR, "compute_breakpoints.py")
+        with open(source_path) as f:
+            source = f.read()
+        assert '"tab_k_sensitivity.csv"' not in source, (
+            "compute_breakpoints.py still hardcodes tab_k_sensitivity.csv; "
+            "k-sensitivity mode should write to io_args.output"
+        )
+
+    def test_mutually_exclusive_modes(self):
+        """--robustness and --k-sensitivity should be mutually exclusive."""
+        source_path = os.path.join(SCRIPTS_DIR, "compute_breakpoints.py")
+        with open(source_path) as f:
+            source = f.read()
+        assert "add_mutually_exclusive_group" in source, (
+            "compute_breakpoints.py should use mutually exclusive argument "
+            "group for --robustness and --k-sensitivity"
+        )

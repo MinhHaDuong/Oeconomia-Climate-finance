@@ -58,6 +58,15 @@ REGISTRY: list[dict] = [
         "deps": [],
         "outputs": [
             "content/tables/tab_breakpoints.csv",
+        ],
+    },
+    {
+        "name": "compute_breakpoint_robustness",
+        "script": "compute_breakpoints.py",
+        "args": ["--output", "content/tables/tab_breakpoint_robustness.csv",
+                 "--robustness"],
+        "deps": [],
+        "outputs": [
             "content/tables/tab_breakpoint_robustness.csv",
         ],
     },
@@ -135,7 +144,8 @@ REGISTRY: list[dict] = [
         "name": "plot_fig_breakpoints",
         "script": "plot_fig_breakpoints.py",
         "args": ["--output", "content/figures/fig_breakpoints.png"],
-        "deps": ["compute_breakpoints", "compute_clusters"],
+        "deps": ["compute_breakpoints", "compute_breakpoint_robustness",
+                 "compute_clusters"],
         "outputs": [
             "content/figures/fig_breakpoints.png",
         ],
