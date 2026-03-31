@@ -510,7 +510,7 @@ def _download_tiers(tiers, args, existing_ids, query_dates, global_from_date,
                 if OPENALEX_API_KEY:
                     probe_params["api_key"] = OPENALEX_API_KEY
                 probe_resp = polite_get(OA_API, params=probe_params,
-                                        delay=args.delay)
+                                        delay=args.delay, max_retries=1)
                 budget_start = capture_budget(probe_resp)
                 if probe_resp.status_code == 429:
                     log.warning("Rate limited on budget probe — budget exhausted.")
@@ -626,15 +626,19 @@ def main():
         return
 
     # Capture budget at end of run via a lightweight probe
-    try:
-        end_params = {"filter": 'default.search:"climate finance"',
-                      "per_page": 1, "mailto": MAILTO}
-        if OPENALEX_API_KEY:
-            end_params["api_key"] = OPENALEX_API_KEY
-        end_resp = polite_get(OA_API, params=end_params, delay=args.delay)
-        budget_end = capture_budget(end_resp)
-    except Exception:
-        budget_end = "?"
+    # Skip when budget was already exhausted — no point probing again
+    if budget_exhausted(budget_start or "?"):
+        budget_end = budget_start
+    else:
+        try:
+            end_params = {"filter": 'default.search:"climate finance"',
+                          "per_page": 1, "mailto": MAILTO}
+            if OPENALEX_API_KEY:
+                end_params["api_key"] = OPENALEX_API_KEY
+            end_resp = polite_get(OA_API, params=end_params, delay=args.delay)
+            budget_end = capture_budget(end_resp)
+        except Exception:
+            budget_end = "?"
 
     log.info("=" * 60)
     log.info("Download complete. %d new records added to pool.", grand_total)
