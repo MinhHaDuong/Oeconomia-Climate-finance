@@ -26,12 +26,14 @@ def corpus_table():
     return pd.read_csv(CSV_PATH)
 
 
+@pytest.mark.slow
 def test_required_columns(corpus_table):
     """Table must have Raw, Refined, and Unique columns."""
     for col in ("Raw", "Refined", "Unique"):
         assert col in corpus_table.columns, f"Missing column: {col}"
 
 
+@pytest.mark.slow
 def test_raw_counts_use_from_columns(corpus_table):
     """Raw counts must reflect from_* totals, not primary-source fallback.
 
@@ -51,6 +53,7 @@ def test_raw_counts_use_from_columns(corpus_table):
     )
 
 
+@pytest.mark.slow
 def test_unique_column_plausible(corpus_table):
     """Unique must be <= Refined for every source."""
     data_rows = corpus_table[corpus_table["Source"] != "TOTAL"]
@@ -61,6 +64,7 @@ def test_unique_column_plausible(corpus_table):
             )
 
 
+@pytest.mark.slow
 def test_total_row_present(corpus_table):
     """A TOTAL row must exist."""
     total = corpus_table[corpus_table["Source"] == "TOTAL"]
