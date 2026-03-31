@@ -97,12 +97,15 @@ REFS_COLUMNS = [
 # Re-exports from pipeline_io
 # ---------------------------------------------------------------------------
 from pipeline_io import (
+    CONSECUTIVE_FAIL_LIMIT,
     MAILTO,
     OPENALEX_API_KEY,
     POLITE_MAX_RETRIES,
     RETRY_MAX_RETRIES,
+    RateLimitExhausted,
     append_checkpoint,
     append_to_pool,
+    check_rate_limit,
     dedup_courses,
     delete_checkpoint,
     load_checkpoint,

@@ -55,6 +55,21 @@ OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")
 # Retry budgets — single source of truth for polite_get and retry_get defaults
 POLITE_MAX_RETRIES = 3   # catalog scrapers (quick, many URLs)
 RETRY_MAX_RETRIES = 5    # enrichment fetchers (heavy, fewer URLs)
+CONSECUTIVE_FAIL_LIMIT = 5  # circuit breaker: abort after this many consecutive 429s
+
+
+class RateLimitExhausted(Exception):
+    """Raised when an API returns 429 after all retries are exhausted."""
+
+
+def check_rate_limit(resp: requests.Response, api_name: str = "") -> None:
+    """Raise RateLimitExhausted if response is 429.
+
+    Call after polite_get/retry_get in any API loop.
+    """
+    if resp.status_code == 429:
+        label = f" by {api_name}" if api_name else ""
+        raise RateLimitExhausted(f"Rate limit exhausted{label} after retries")
 
 
 # ---------------------------------------------------------------------------

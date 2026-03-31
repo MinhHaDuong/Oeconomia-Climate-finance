@@ -21,8 +21,10 @@ from difflib import SequenceMatcher
 import pandas as pd
 from utils import (
     CATALOGS_DIR,
+    CONSECUTIVE_FAIL_LIMIT,
     MAILTO,
     OPENALEX_API_KEY,
+    RateLimitExhausted,
     get_logger,
     normalize_doi,
     normalize_title,
@@ -35,11 +37,6 @@ CACHE_DIR = os.path.join(CATALOGS_DIR, "enrich_cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "doi_resolved.csv")
 TITLE_SIM_THRESHOLD = 0.85
 OPENALEX_SEARCH_URL = "https://api.openalex.org/works"
-CONSECUTIVE_FAIL_LIMIT = 5  # abort after this many consecutive API failures
-
-
-class RateLimitExhausted(Exception):
-    """Raised when an API returns 429 after all retries are exhausted."""
 
 
 class _DiskCache:
