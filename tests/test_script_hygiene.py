@@ -1138,3 +1138,27 @@ class TestOutputFlag:
             f"{script} exited 0 but --output {out_path} was not created. "
             f"The script ignores --output and writes elsewhere."
         )
+
+
+class TestNoValuesCallOnSeries:
+    """Pandas Series .values is a property, not a method (#604).
+
+    source_groups.values() raises TypeError at runtime because
+    .values returns a numpy array, which is not callable.
+    """
+
+    COCITATION_SCRIPTS = [
+        "scripts/analyze_communities_clusters.py",
+        "scripts/compute_temporal_communities.py",
+        "scripts/archive_traditions/detect_traditions_v2.py",
+        "scripts/archive_traditions/detect_traditions_pre2015.py",
+        "scripts/archive_traditions/detect_traditions_pre2020.py",
+    ]
+
+    @pytest.mark.parametrize("script", COCITATION_SCRIPTS)
+    def test_source_groups_uses_property_not_method(self, script):
+        """Verify source_groups.values is used, not source_groups.values()."""
+        src = Path(script).read_text()
+        assert "source_groups.values()" not in src, (
+            f"{script} uses source_groups.values() — should be .values (property)"
+        )
