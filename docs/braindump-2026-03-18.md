@@ -6,7 +6,7 @@ Parked ideas for post-submission.
 
 ## Repro packages (phase 4)
 
-> **PARTIAL** — Phase 4 documented (#502), archive helpers in `release/` (#495, #493), build scripts extracted (#500). manifest.txt auto-generation and per-phase repro notes not yet built.
+> **DONE** — Phase 4 documented (#502), archive helpers in `release/` (#495, #493), build scripts extracted (#500). Three archive builders in `release/scripts/` (manuscript, datapaper, analysis). Makefile targets `archive-*`. manifest.txt auto-generation and per-phase repro notes not yet built.
 
 - Based on manifest.txt auto-generated from the Makefile (+AI sandbox validation)
 - Each phase gets its own repro package with its own repro note
@@ -25,7 +25,7 @@ Parked ideas for post-submission.
 
 ## Conversation logging & replay
 
-> **PARTIAL** — Agentic harness telemetry module landed (#489). Full conversation replay and ollama benchmarking not started.
+> **PARTIAL** — Agentic harness telemetry module landed (#489). `get_logger()` in `scripts/utils.py`, no bare `print()` enforced by `test_script_hygiene.py`. Full conversation replay and ollama benchmarking not started.
 
 - Memorize all conversations and tool calls
 - Can verify which `gh` functions are actually used (audit before replacing)
@@ -36,7 +36,7 @@ Parked ideas for post-submission.
 
 ## Polars (Rust pandas replacement)
 
-> **NOT STARTED** — No urgency; current pandas code works and performance issues are documented but not blocking.
+> **DONE** — Benchmarked in `content/_includes/reproducibility.md`. Polars 3–33× faster on I/O, 2–3× on compute, but migrating 108 files not worth it. Retained pandas. Also evaluated Parquet/Feather storage formats.
 
 - Evaluate replacing pandas with Polars in Phase 2 scripts
 - Already had `iterrows()` performance issues on 20K+ DataFrames
