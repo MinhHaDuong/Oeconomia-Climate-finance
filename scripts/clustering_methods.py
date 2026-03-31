@@ -50,13 +50,13 @@ def cluster_kmeans(X, k=6, random_state=42, init="k-means++"):
 
 def cluster_hdbscan(X, min_cluster_size=50, min_samples=None):
     """HDBSCAN density-based clustering. Returns labels with -1 for noise."""
-    import hdbscan
+    from sklearn.cluster import HDBSCAN
 
-    clusterer = hdbscan.HDBSCAN(
+    clusterer = HDBSCAN(
         min_cluster_size=min_cluster_size,
         min_samples=min_samples,
         metric="euclidean",
-        core_dist_n_jobs=1,
+        n_jobs=1,
     )
     return clusterer.fit_predict(X)
 

@@ -42,7 +42,7 @@ corpus = [
     "dvc-ssh>=4.2.2",
     "sentence-transformers",
     "umap-learn",
-    "hdbscan",
+
     "python-louvain",
     "beautifulsoup4",
     "pdfplumber",
