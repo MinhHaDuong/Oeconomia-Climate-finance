@@ -22,10 +22,13 @@ import re
 import pandas as pd
 from utils import (
     CATALOGS_DIR,
+    CONSECUTIVE_FAIL_LIMIT,
     RAW_DIR,
     REFS_COLUMNS,
+    RateLimitExhausted,
     WORKS_COLUMNS,
     append_to_pool,
+    check_rate_limit,
     get_logger,
     load_collect_config,
     load_pool_records,
@@ -173,6 +176,7 @@ def fetch_istex_api(base_query, year_min=None, year_max=None):
         "from": offset,
     }
     resp = polite_get(ISTEX_API, params=params, delay=0.5)
+    check_rate_limit(resp, "ISTEX")
     data = resp.json()
     total = data.get("total", 0)
     log.info("ISTEX API: %d results for query (years: %s–%s)",
@@ -186,6 +190,7 @@ def fetch_istex_api(base_query, year_min=None, year_max=None):
             "from": offset,
         }
         resp = polite_get(ISTEX_API, params=params, delay=0.5)
+        check_rate_limit(resp, "ISTEX")
         data = resp.json()
         hits = data.get("hits", [])
 
