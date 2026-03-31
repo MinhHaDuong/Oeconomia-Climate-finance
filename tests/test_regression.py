@@ -189,8 +189,6 @@ class TestRegressionIsolation:
         The fixture should redirect all outputs to a tmp directory, so the
         real content/ tree stays untouched.
         """
-        import time
-
         # regression_outputs already ran (module-scoped fixture).
         # Check that it returned a start_time we can compare against.
         results, errors, start_time = regression_outputs
