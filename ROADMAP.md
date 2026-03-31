@@ -2,23 +2,37 @@
 
 ## North star
 
-Climate finance crystallized as an economic object by ~2009. Everything since — including the fierce $100bn accounting disputes and the $300bn NCQG — has been fought within the categories established at that moment. This paper traces how economists and institutions co-produced those categories.
+Building toward a book on international climate finance between solidarity and profit. This repo is the research infrastructure: a 30K-work corpus, analysis pipeline, and the articles that test each piece of the argument before it becomes a chapter.
 
-## Current milestone: Under review
+## Oeconomia manuscript next steps
 
-Manuscript submitted to Oeconomia (Varia) 2026-03-18. Data paper submitted to RDJ4HSS 2026-03-26. Waiting for referee reports (~3 months).
+Submitted to Oeconomia (Varia) on 2026-03-18. Waiting for referee reports (~3 months).
 
+- [ ] Wait for reviewers feedback
+- [ ] Revise and Resubmit
 - [ ] Prepare ESHET-HES conference slides (Nice, May 26–29, 2026)
 - [ ] Continue Tier 1 reading plan (defence against reviewer questions)
 
-## Next milestone: Transfer to AEDIST
+## Data paper manuscript next steps
 
-Before this repo can serve the AEDIST project, the reusable harness must be split out.
+Submitted data paper to RDJ4HSS (diamond OA).
 
-- [ ] Extract harness into standalone repo (#391)
+- [ ] Wait for reviewers feedback
+- [ ] Revise and Resubmit
+- [ ] Present at conference
 
-## Backlog
+## Next articles
 
-- Companion methods paper (Scientometrics/QSS): parked for post-acceptance
-- JETP query: add concept filter to exclude physics journal noise
-- Offline ticket system (PR #385)
+- [ ] **Companion methods paper** — How can embedding-based clustering reveal intellectual structure in a heterogeneous, policy-entangled scholarly field? Contribution: a replicable pipeline for mapping fields where bibliometric boundaries are contested. Journals: Quantitative Science Studies, Scientometrics.
+- [ ] **OECD vs. Oxfam** — How do competing accounting frameworks produce divergent truths from the same financial flows? Contribution: a sociology-of-quantification case study showing how measurement conventions perform political positions on North-South climate debt. Requires document-to-evidence extraction capabilities (cf. [AEDIST](https://github.com/MinhHaDuong/aedist) stage 2). Journals: Accounting, Organizations and Society; Social Studies of Science.
+- [ ] **MDB greening pivot** — How did multilateral development banks reframe existing portfolios as "climate finance" without changing what they fund? Contribution: an economization analysis of institutional relabeling as performative category work. Requires document-to-evidence extraction capabilities (cf. AEDIST stage 2). Journals: Review of International Political Economy, New Political Economy.
+- [ ] **Carbon markets as failed performativity** — Why did the CDM fail to produce the efficient abatement market it modeled, and is Article 6 repeating the same design flaws? Contribution: a MacKenzie-style analysis of how market devices for North-South carbon transfers failed to perform the world they assumed. Journals: Economy and Society, Journal of Cultural Economy.
+- [ ] **Sectoral deals vs. global targets** — Why are sector-by-sector technology cooperation agreements more effective than aggregate financial pledges? Contribution: a comparative policy analysis using the Montreal Protocol as benchmark, arguing the NCQG $300bn target repeats the $100bn's structural failure. Journals: Climate Policy, Global Environmental Politics.
+
+## Milestones
+
+- **Project start (2026-02-18)**: repo created, first commit, manuscript plan, corpus pipeline design
+- **v1.0 — Oeconomia submission (2026-03-18)**: tag v1.0, corpus pipeline (6 sources, DVC, teaching scraper), analysis (embeddings, clustering, figures), manuscript (all sections, house style, AI-tell sweep), submission packaging (Zenodo, HAL, cover letter)
+- **v1.1 — RDJ4HSS data paper (2026-03-26)**: tag v1.1, data paper drafted and submitted, companion paper outlined, reproducibility archives
+- **v1.1.1 — Pipeline refactor (2026-03)**: enrichment split into 4 independent DVC stages (#428), code smell cleanup (#507), agent harness consolidation, script I/O discipline (#547, #549)
+- **v1.1.2 — Citation enrichment (in progress)**: GROBID reference parsing (#539), Crossref DOI fallback, circuit breakers (#590, #598), citation hardening (#529)

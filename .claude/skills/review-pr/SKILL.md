@@ -33,7 +33,7 @@ Spin multiple agents in parallel, each with a distinct perspective. Run all agen
 
 ### Doc propagation checklist
 
-Trace references in: `content/technical-report.qmd`, `content/data-paper.qmd`, `content/manuscript.qmd`, `content/*-vars.yml`, `docs/`, `README.md`, `STATE.md`, `ROADMAP.md`, config files.
+Trace references in: `content/technical-report.qmd`, `content/data-paper.qmd`, `content/manuscript.qmd`, `content/*-vars.yml`, `docs/`, `README.md`, `STATE.md`, `ROADMAP.md`, `.claude/rules/architecture.md`, config files.
 
 ### Proportional depth
 

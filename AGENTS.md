@@ -2,16 +2,6 @@
 
 > `CLAUDE.md` contains only `@AGENTS.md` — do not modify it (enforced by pre-commit hook).
 
-## Information sources
-
-| File | Purpose | When to consult |
-|------|---------|-----------------|
-| `README.md` | Project vision, repo structure, build commands | Onboarding, orientation |
-| `ROADMAP.md` | Forward-looking milestones with checkboxes | Starting work, picking tasks |
-| `STATE.md` | Snapshot of now: status, stats, blockers, next actions | Before any task |
-| `.env` | Project secrets + machine paths (gitignored) | Script execution, agent identity |
-| `content/technical-report.qmd` | Full data pipeline documentation | Understanding methodology |
-
 ## Configuration
 
 | Location | Purpose |
@@ -21,14 +11,6 @@
 | `.claude/settings.json` | SessionStart hook, permissions |
 | `.claude/hooks/` | Hook scripts (on-start setup) |
 | `hooks/` | Git hooks (pre-commit, pre-push, post-checkout) |
-
-**Writing rules:** State the intent. Put mechanical details in the enforcing test, not in the rule.
-
-## Bash tool: no compound commands
-
-Claude Code's permission system blocks wildcard matching across shell operators (`&&`, `||`, `;`, `|`). A pattern like `Bash(*gh api*)` will **not** match `source .env && gh api ...`. This is a security feature, not a bug.
-
-**Rule**: never chain commands with `&&` in a single Bash tool call. Use separate Bash calls instead — each call matches its own permission pattern. Chaining is fine inside shell scripts (hooks, Makefile recipes) since those run outside the permission system.
 
 ## Dragon Dreaming workflow
 
@@ -51,7 +33,17 @@ Explore alternatives, design strategies, prototype approaches. Use GitHub Issues
 ### Doing
 Runs in a fresh context — the ticket is the only input. Launch via `/start-ticket`.
 
-Test first. Fix the pattern, not just the instance. Clean up. `make check-fast` between commits, `make check` before PR. Then `/review-pr` — up to three review/fix cycles.
+Autonomous execution using test-driven development. The inner cycle is:
+
+1. **Red**: write a failing test that defines the expected behavior. Commit.
+2. **Green**: write the minimum code to make it pass. Commit.
+3. **Refactor**: clean up, then confirm tests still pass. Use `make check-fast` during development. Commit.
+4. **PR**: Pass `make check` gate, then push and open a PR.
+5. **Review**: `/review-pr` or `/review-pr-prose`.
+6. **Fix**: Fix all issues. Nits: fix them. Code smells: ultrathink architectural improvements.
+7. **Iterate**: Up to three review/fix cycles.
+
+Use `make check-fast` during development, `make check` before opening a PR.
 
 ### Celebrating (autonomous)
 Runs via `/celebrate`. Celebrating is not a formality — it closes the energy cycle. Reflect on what was accomplished and learned, acknowledge contributions, release the context.
@@ -68,7 +60,7 @@ The agent must always know and declare its current DD phase.
 
 | Skill | When | Purpose |
 |-------|------|---------|
-| `/start-ticket N` | Starting work on a GitHub issue | Enter worktree, write first test, transition to Doing |
+| `/start-ticket N` | Starting work on a GitHub issue | Create worktree, write first test, transition to Doing |
 | `/celebrate` | After completing a ticket | Reflect, update STATE/ROADMAP, clean up |
 | `/end-session` | User ends a work session | Push branches, run tests, refresh STATE |
 | `/new-ticket` | Creating a GitHub issue | Write handoff document with test spec |
@@ -86,7 +78,14 @@ When issue exploration leads to multiple action items, open one ticket for each 
 
 ### Wave cycle
 
-Work in waves. Each wave: pick ripe tickets, run them in parallel conversations (each auto-isolated via `EnterWorktree`), `/review-pr` each, `/celebrate` or re-ticket with diagnosis. Read feedback memories before the next wave. Clean up between waves.
+1. **Select** — pick ripe tickets (dependencies met, blockers cleared).
+2. **Launch** — each ticket in its own worktree, independent tickets in parallel.
+3. **Verify** — review each PR in a fresh-context worktree (`/review-pr`).
+4. **Learn** — for each result:
+   - **Success**: `/celebrate`, save what worked as feedback memory.
+   - **Failure**: diagnose root cause, save lesson, re-ticket with diagnosis.
+5. **Adapt** — read feedback memories before planning the next wave.
+6. **Clean up** — worktrees, branches, stale PRs. Then start the next wave.
 
 ## Conversation scope
 

@@ -2,59 +2,60 @@
 
 **Title:** Counting Climate Finance: How an Economic Object Was Made (1990–2024)
 
-## Vision
-
-This project analyzes the history of climate finance as an economic object, examining how economists and institutions (OECD DAC, UNFCCC, multilateral development banks) co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable between 1990–2024.
-
-It is intellectual history that uses climate finance as a case study for understanding how economists create governable objects through quantification.
-
-## Rationale
-
-Publishing a few articles to lay the groundwork for a book project described in `docs/projet livre - pitch.md`
+How economists and institutions co-produced the categories, metrics, and accounting frameworks that made climate finance measurable and governable.
 
 ## Documents
 
-| Document | File | Target journal | Status |
-|----------|------|----------------|--------|
-| Manuscript | `content/manuscript.qmd` | Œconomia (Varia) | Draft, revising |
+| Document | File | Journal | Status |
+|----------|------|---------|--------|
+| Manuscript | `content/manuscript.qmd` | Œconomia (Varia) | Submitted 2026-03-18, under review |
+| Data paper | `content/data-paper.qmd` | RDJ4HSS (diamond OA) | Submitted 2026-03-26, under review |
 | Technical report | `content/technical-report.qmd` | HAL working paper | Complete |
-| Data paper | `content/data-paper.qmd` | Scientific Data | Outline + reused sections |
 | Companion paper | `content/companion-paper.qmd` | Scientometrics / QSS | Outline |
 
-All four are Quarto documents sharing fragments via `{{< include >}}` from `content/_includes/`.
+All four are Quarto documents sharing fragments via `content/_includes/`.
 
-## Key themes
+## Setup
 
-1. **Categorization:** How OECD DAC categories (grants/loans, bilateral/multilateral, Rio markers) structured climate finance
-2. **Quantification:** Grant-equivalent methodology, face value debates, mobilized private finance accounting
-3. **Controversies:** OECD vs. Oxfam methodologies, additionality, double counting
-4. **Actors:** Economists as policy experts (Jan Corfee-Morlot, Nicholas Stern, HLPF 2010)
-5. **Governance:** $100bn commitment → $300bn NCQG transition (Copenhagen to Baku)
+Prerequisites: [Quarto](https://quarto.org/docs/get-started/) ≥ 1.4, [TinyTeX](https://quarto.org/docs/output-formats/pdf-engine.html) or full TeX Live with XeLaTeX, [uv](https://docs.astral.sh/uv/).
 
-## Theoretical framework
+```bash
+make setup                              # install git hooks
+uv sync                                 # Phase 2/3 deps (figures + manuscript)
+uv sync --group corpus --extra cpu      # Phase 1 deps (CPU torch, for doudou)
+uv sync --group corpus --extra cu130    # Phase 1 deps (CUDA 13.0, for padme)
+uv run dvc cache dir /path/to/dvc-cache # store blobs outside sync/backup dirs
+uv run dvc pull                         # download corpus data (~1.3 GB) from padme
+```
 
-- **Sociology of quantification:** Desrosières (commensuration), Porter (trust in numbers)
-- **Performativity:** Callon, MacKenzie (how metrics shape reality)
-- **Economization:** Fourcade, Çalışkan
-- **History of economic thought:** Development economics + environmental economics genealogy
-- **STS:** Boundary work, infrastructures of knowledge
+The DVC cache directory should be outside Nextcloud-synced or snapshotted directories.
 
-## North star
+On padme (the DVC remote host), also run once:
 
-The ideal state the project works towards:
+```bash
+uv run dvc remote modify --local padme url /data/projets/dvc/oeconomia-climate-finance
+uv run dvc cache dir /data/projets/dvc-cache/oeconomia
+```
 
-1. All tests pass (`make check` is green)
-2. No code smells
-3. `make corpus` is idempotent — completes doing nothing when already up to date
-4. `make papers` is idempotent — completes doing nothing when already up to date
-5. All open PRs pass review without defects or nits
-6. All open issues explored and well defined, ready to tackle
+## Usage
 
-## Prerequisites
+**Padme is the data authority.** The corpus pipeline (Phase 1) runs on padme. Doudou only pulls data — never pushes.
 
-- **[Quarto](https://quarto.org/docs/get-started/)** (≥ 1.4) — document rendering
-- **[TinyTeX](https://quarto.org/docs/output-formats/pdf-engine.html)** or full TeX Live with XeLaTeX — PDF output
-- **[uv](https://docs.astral.sh/uv/)** — Python dependency management
+```bash
+# On padme — build corpus (auto-pushes data, auto-commits dvc.lock):
+make corpus
+
+# On doudou — sync and build:
+git pull && uv run dvc pull             # get updated data
+make figures                            # regenerate figures and tables (~2 min)
+make manuscript                         # build PDF (requires figures)
+make papers                             # build all 3 companion documents
+
+# Validation and packaging:
+make corpus-validate                    # acceptance tests on corpus
+make archive-analysis                   # reproducibility archive (data + scripts)
+make archive-manuscript                 # manuscript archive (figures + Quarto)
+```
 
 ## Repository structure
 
@@ -71,104 +72,29 @@ The ideal state the project works towards:
 │   └── tables/                       # Generated tables (gitignored)
 ├── output/                           # Quarto rendered output (gitignored)
 ├── config/                           # Pipeline parameters (YAML)
-├── Makefile                          # Build: make corpus, make figures, make manuscript, make archive-*
+├── Makefile                          # Build: make corpus, make figures, make manuscript
 ├── dvc.yaml                          # Phase 1 pipeline DAG (DVC stages)
 ├── data/                             # DVC-managed data (dvc pull to populate)
 │   ├── catalogs/                    #   Corpus CSVs, embeddings, caches
 │   └── pool/                        #   Raw API responses (gzipped JSONL)
 ├── scripts/                          # Python analysis pipeline
 ├── docs/                             # Guidelines, journal info, book project notes
-├── release/                          # Phase 4: reproducibility archives & submissions. Append-only.
+├── release/                          # Reproducibility archives & submissions (append-only)
 └── attic/                            # Old stuff to delete when paper is accepted
 ```
 
-## Data
+## Release
 
-Corpus data (~1.3 GB) lives in `data/` and is version-controlled with
-[DVC](https://dvc.org/). Git tracks `.dvc` pointer files (hashes); the actual
-data is stored in the DVC remote on padme.
+| Submission | Date | Zenodo | HAL | Git tag |
+|------------|------|--------|-----|---------|
+| Œconomia (Varia) | 2026-03-18 | [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) | [hal-05558422v1](https://hal.science/hal-05558422v1) | `v1.0-submission` |
+| RDJ4HSS (data paper) | 2026-03-26 | [10.5281/zenodo.19236130](https://doi.org/10.5281/zenodo.19236130) | — | `v1.1-rdj-submitted` |
 
-### Setup (first time after cloning)
-
-```bash
-uv sync                                 # Phase 2/3 deps only
-uv sync --group corpus --extra cpu       # add Phase 1 deps (CPU torch)
-uv sync --group corpus --extra cu130     # ...or CUDA 13 torch on GPU machines
-uv run dvc cache dir /path/to/dvc-cache  # store blobs outside sync/backup dirs
-uv run dvc pull                          # download data (~1.3 GB) from padme
-```
-
-The DVC cache directory should be outside Nextcloud-synced or snapshotted directories.
-Example paths: `/home/user/data/projets/Oeconomia-Climate-finance/dvc-cache` (doudou),
-`/data/projets/dvc-cache/oeconomia` (padme).
-
-### Two-machine workflow (padme → doudou)
-
-**Padme is the data authority.** The corpus pipeline runs on padme (GPU,
-fast network to APIs). Doudou only pulls data — never pushes.
-
-```bash
-# On padme — run the corpus pipeline (auto-pushes data, auto-commits dvc.lock):
-make corpus
-
-# On doudou — sync and use:
-git pull                                 # get updated .dvc pointers
-uv run dvc pull                          # download the new data
-make figures && make manuscript          # Phase 2 + 3 (no DVC needed)
-```
-
-### Dependency groups
-
-| Group | Install command | Who needs it |
-|-------|----------------|--------------|
-| (default) | `uv sync` | Phase 2 (figures) and Phase 3 (manuscript) users |
-| corpus + cpu | `uv sync --group corpus --extra cpu` | Phase 1 on doudou (no GPU) |
-| corpus + cu130 | `uv sync --group corpus --extra cu130` | Phase 1 on padme (CUDA 13.0 GPU) |
-
-### DVC on padme (the remote host)
-
-Since padme hosts the DVC remote, run these once after cloning:
-
-```bash
-uv run dvc remote modify --local padme url /data/projets/dvc/oeconomia-climate-finance
-uv run dvc cache dir /data/projets/dvc-cache/oeconomia
-```
-
-The remote override avoids SSH loopback (padme accessing itself). Both
-settings are stored in `.dvc/config.local` (gitignored, machine-specific).
-
-### Building documents
-
-`content/figures/` and `content/tables/` are gitignored — they are 100% script-generated.
-After pulling data, regenerate them before building documents:
-
-```bash
-make corpus-validate  # run acceptance tests on corpus
-make figures          # regenerate all figures and tables (~2 min)
-make manuscript       # build PDF (requires figures)
-make archive-analysis # Phase 4: reproducibility archive (data + scripts)
-make archive-manuscript # Phase 4: manuscript archive (pre-built figures + Quarto)
-```
+Errata 1 (Figure 2 label fix) ready in `release/2026-03-23 Oeconomia errata/`.
 
 ## Project documentation
 
-| File | Purpose |
-|------|---------|
-| `AGENTS.md` | AI workflow orchestration, Dragon Dreaming phases, git discipline |
-| `ROADMAP.md` | Milestones: what's done, what's next |
-| `STATE.md` | Current snapshot: stats, blockers, active PRs |
-| `.claude/rules/writing.md` | Manuscript prose style, language polish rules |
-| `.claude/rules/coding.md` | Pipeline phases, script reference, conventions |
-| `.claude/rules/oeconomia-style.md` | Journal house style |
-| `.claude/skills/` | Workflow skills (slash commands): `/start-ticket`, `/celebrate`, `/review-pr`, etc. |
-
-## Release
-
-Submitted to Œconomia on 2026-03-18.
-
-- **Zenodo**: [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) — reproducibility archives (analysis + manuscript)
-- **HAL**: [hal-05558422v1](https://hal.science/hal-05558422v1) — preprint
-- **Git tag**: `v1.0-submission`
+See `STATE.md` for current status, `ROADMAP.md` for milestones, `AGENTS.md` for AI workflow.
 
 ## Contact
 

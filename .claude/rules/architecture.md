@@ -1,31 +1,24 @@
 ---
 paths:
-  - "scripts/**/*.py"
-  - "tests/**/*.py"
-  - "Makefile"
-  - "dvc.yaml"
-  - "config/**/*"
+  - "**/*"
 ---
 
-# Project Architecture
-
-## Data location
-
-Data lives **outside the repo**, at `CLIMATE_FINANCE_DATA` in `.env`.
-`scripts/utils.py` reads `.env` and exports `DATA_DIR`, `CATALOGS_DIR`, `EMBEDDINGS_PATH`. Never hardcode `data/catalogs/` relative to the repo.
+# Architecture
 
 ## Project structure
 
 Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragments in `content/_includes/`:
 
 - `content/manuscript.qmd` — main article (self-contained)
-- `technical-report.qmd` — pipeline documentation (composed of includes)
-- `data-paper.qmd` — corpus data paper
-- `companion-paper.qmd` — methods companion
+- `content/technical-report.qmd` — pipeline documentation (composed of includes)
+- `content/data-paper.qmd` — corpus data paper
+- `content/companion-paper.qmd` — methods companion
 
 ## Pipeline phases
 
-**Phase 1 — Corpus building** (slow, API-dependent, run rarely).
+The pipeline has four phases. Each phase's scripts follow a naming convention and have clear input/output contracts. **Never let a later phase trigger an earlier one.**
+
+**Phase 1 — Corpus building** (slow, API-dependent, run rarely on padme).
 - Scripts: `catalog_*`, `enrich_*`, `qa_*`, `qc_*`, `corpus_*`
 - Four steps with intermediate artifacts:
   1. **corpus-discover**: merge sources → `unified_works.csv`
@@ -45,6 +38,11 @@ Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragm
 - Scripts: `release/scripts/build_*_archive.sh`
 - Templates: `release/templates/` (Makefiles, READMEs, Dockerfiles shipped in archives)
 - Reads Phase 2/3 outputs; produces `*.tar.gz` reproducibility archives
+
+## Data location
+
+Data lives **outside the repo**, at `CLIMATE_FINANCE_DATA` in `.env`.
+`scripts/utils.py` reads `.env` and exports `DATA_DIR`, `CATALOGS_DIR`, `EMBEDDINGS_PATH`. Never hardcode `data/catalogs/` relative to the repo.
 
 ## Incremental caches vs DVC outputs
 
