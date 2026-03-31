@@ -765,6 +765,7 @@ dependencies = [
     { name = "pytest-timeout" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "rapidfuzz" },
     { name = "requests" },
     { name = "requests-mock" },
     { name = "rich" },
@@ -792,7 +793,6 @@ corpus = [
     { name = "hdbscan" },
     { name = "pdfplumber" },
     { name = "python-louvain" },
-    { name = "rapidfuzz" },
     { name = "sentence-transformers" },
     { name = "umap-learn" },
 ]
@@ -818,6 +818,7 @@ requires-dist = [
     { name = "pytest-timeout" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "pyyaml" },
+    { name = "rapidfuzz" },
     { name = "requests" },
     { name = "requests-mock" },
     { name = "rich", specifier = ">=13.0" },
@@ -838,7 +839,6 @@ corpus = [
     { name = "hdbscan" },
     { name = "pdfplumber" },
     { name = "python-louvain" },
-    { name = "rapidfuzz" },
     { name = "sentence-transformers" },
     { name = "umap-learn" },
 ]
