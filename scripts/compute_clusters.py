@@ -107,15 +107,8 @@ def _label_clusters(df, core_only):
     return cluster_labels
 
 
-def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
-    """Compute a label for a single cluster from TF-IDF distinctiveness."""
-    c_mask = df["cluster"].values == c
-    if c_mask.sum() == 0:
-        return f"Cluster {c}"
-
-    c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
-    distinctiveness = c_mean - corpus_mean
-
+def _collect_candidates(label_features, distinctiveness):
+    """Collect unigram and bigram candidates ranked by distinctiveness."""
     uni_candidates = []
     bi_candidates = []
     for i in np.argsort(distinctiveness)[::-1]:
@@ -135,7 +128,39 @@ def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
                 uni_candidates.append((term, float(distinctiveness[i])))
         if len(uni_candidates) >= 30 and len(bi_candidates) >= 20:
             break
-    candidates = bi_candidates + uni_candidates
+    return bi_candidates + uni_candidates
+
+
+def _fill_remaining_slots(scored, used_tokens, candidates, promoted, max_words):
+    """Fill remaining label slots from unused candidates."""
+    for term, _ in candidates:
+        if _word_count(scored) >= max_words:
+            break
+        if _word_count(scored) + len(term.split()) > max_words:
+            continue
+        tokens = set(term.split())
+        if tokens.issubset(used_tokens):
+            continue
+        stems = {t.rstrip("s") for t in tokens}
+        used_stems = {t.rstrip("s") for t in used_tokens}
+        if stems.issubset(used_stems):
+            continue
+        if " " in term and term not in promoted:
+            continue
+        scored.append(term)
+        used_tokens.update(tokens)
+
+
+def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
+    """Compute a label for a single cluster from TF-IDF distinctiveness."""
+    c_mask = df["cluster"].values == c
+    if c_mask.sum() == 0:
+        return f"Cluster {c}"
+
+    c_mean = np.asarray(X_label[c_mask].mean(axis=0)).flatten()
+    distinctiveness = c_mean - corpus_mean
+
+    candidates = _collect_candidates(label_features, distinctiveness)
 
     unigram_scores = {t: s for t, s in candidates if " " not in t}
     bigrams = [(t, s) for t, s in candidates if " " in t]
@@ -158,23 +183,7 @@ def _label_single_cluster(c, df, X_label, label_features, corpus_mean):
         scored, used_tokens, bigram_dist, unigram_dist
     )
 
-    # Fill remaining slots
-    for term, _ in candidates:
-        if _word_count(scored) >= max_words:
-            break
-        if _word_count(scored) + len(term.split()) > max_words:
-            continue
-        tokens = set(term.split())
-        if tokens.issubset(used_tokens):
-            continue
-        stems = {t.rstrip("s") for t in tokens}
-        used_stems = {t.rstrip("s") for t in used_tokens}
-        if stems.issubset(used_stems):
-            continue
-        if " " in term and term not in promoted:
-            continue
-        scored.append(term)
-        used_tokens.update(tokens)
+    _fill_remaining_slots(scored, used_tokens, candidates, promoted, max_words)
 
     return " / ".join(scored) if scored else f"Cluster {c}"
 
@@ -246,6 +255,51 @@ def _merge_unigram_pairs(scored, used_tokens, bigram_dist, unigram_dist):
     return scored, used_tokens
 
 
+def _save_core_shares(df, alluvial_data, period_labels, cite_threshold, suffix, out_dir):
+    """Compute and save core-paper share crosstab."""
+    core_mask_full = df["cited_by_count"] >= cite_threshold
+    core_crosstab = pd.crosstab(df.loc[core_mask_full, "period"],
+                                df.loc[core_mask_full, "cluster"])
+    core_crosstab = core_crosstab.reindex(period_labels, fill_value=0)
+    for c in alluvial_data.columns:
+        if c not in core_crosstab.columns:
+            core_crosstab[c] = 0
+    core_shares_file = f"tab_core_shares{suffix}.csv"
+    core_shares_path = os.path.join(out_dir, core_shares_file) if out_dir else core_shares_file
+    core_crosstab.to_csv(core_shares_path)
+    log.info("Saved core shares table -> %s", core_shares_path)
+
+
+def _check_ari_alignment(df):
+    """Check KMeans/Louvain alignment via Adjusted Rand Index."""
+    cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
+    if not os.path.exists(cocit_path):
+        log.warning("communities.csv not found, skipping ARI alignment check.")
+        return
+
+    log.info("=== KMeans / Louvain alignment check ===")
+    cocit = pd.read_csv(cocit_path)
+    df["doi_norm"] = df["doi"].apply(normalize_doi)
+    cocit["doi_norm"] = cocit["doi"].apply(normalize_doi)
+
+    merged = df.merge(cocit[["doi_norm", "community"]], on="doi_norm", how="inner")
+    n_overlap = len(merged)
+    log.info("Papers in both KMeans and Louvain: n = %d", n_overlap)
+
+    if n_overlap < 10:
+        log.info("  Too few overlapping papers (%d) for meaningful ARI.", n_overlap)
+        return
+
+    ari = adjusted_rand_score(merged["cluster"], merged["community"])
+    log.info("Adjusted Rand Index: %.3f", ari)
+    if ari < 0.2:
+        log.info("  -> Weak alignment: semantic and citation communities capture different dimensions.")
+    elif ari < 0.5:
+        log.info("  -> Moderate alignment: broad correspondence with notable divergences.")
+    else:
+        log.info("  -> Strong alignment: embedding-based and citation-based structure converge.")
+
+
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output)
@@ -295,30 +349,7 @@ def main():
         log.info("  Cluster %d: %d", c, n)
 
     # ── Step 3: ARI alignment check with Louvain communities ──
-    cocit_path = os.path.join(CATALOGS_DIR, "communities.csv")
-    if os.path.exists(cocit_path):
-        log.info("=== KMeans / Louvain alignment check ===")
-        cocit = pd.read_csv(cocit_path)
-        df["doi_norm"] = df["doi"].apply(normalize_doi)
-        cocit["doi_norm"] = cocit["doi"].apply(normalize_doi)
-
-        merged = df.merge(cocit[["doi_norm", "community"]], on="doi_norm", how="inner")
-        n_overlap = len(merged)
-        log.info("Papers in both KMeans and Louvain: n = %d", n_overlap)
-
-        if n_overlap >= 10:
-            ari = adjusted_rand_score(merged["cluster"], merged["community"])
-            log.info("Adjusted Rand Index: %.3f", ari)
-            if ari < 0.2:
-                log.info("  -> Weak alignment: semantic and citation communities capture different dimensions.")
-            elif ari < 0.5:
-                log.info("  -> Moderate alignment: broad correspondence with notable divergences.")
-            else:
-                log.info("  -> Strong alignment: embedding-based and citation-based structure converge.")
-        else:
-            log.info("  Too few overlapping papers (%d) for meaningful ARI.", n_overlap)
-    else:
-        log.warning("communities.csv not found, skipping ARI alignment check.")
+    _check_ari_alignment(df)
 
     # ── Step 4: Segment into manuscript periods ──
     _p_cfg = _cfg["periodization"]
@@ -354,17 +385,7 @@ def main():
     log.info("Period x Cluster distribution:\n%s", alluvial_data)
 
     if not args.core_only:
-        core_mask_full = df["cited_by_count"] >= cite_threshold
-        core_crosstab = pd.crosstab(df.loc[core_mask_full, "period"],
-                                    df.loc[core_mask_full, "cluster"])
-        core_crosstab = core_crosstab.reindex(period_labels, fill_value=0)
-        for c in alluvial_data.columns:
-            if c not in core_crosstab.columns:
-                core_crosstab[c] = 0
-        core_shares_file = f"tab_core_shares{suffix}.csv"
-        core_shares_path = os.path.join(out_dir, core_shares_file) if out_dir else core_shares_file
-        core_crosstab.to_csv(core_shares_path)
-        log.info("Saved core shares table -> %s", core_shares_path)
+        _save_core_shares(df, alluvial_data, period_labels, cite_threshold, suffix, out_dir)
 
     # ── Step 6: Label communities from abstract TF-IDF ──
     cluster_labels = _label_clusters(df, args.core_only)
