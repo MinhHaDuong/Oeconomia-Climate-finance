@@ -8,7 +8,7 @@ climate_finance_corpus.csv with:
 - Intermediate columns (doi_norm, etc.) dropped
 
 Usage:
-    uv run python scripts/export_deposit.py [--out-dir DIR]
+    uv run python scripts/export_deposit.py --output FILE
 """
 
 import os
