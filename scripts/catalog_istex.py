@@ -22,10 +22,8 @@ import re
 import pandas as pd
 from utils import (
     CATALOGS_DIR,
-    CONSECUTIVE_FAIL_LIMIT,
     RAW_DIR,
     REFS_COLUMNS,
-    RateLimitExhausted,
     WORKS_COLUMNS,
     append_to_pool,
     check_rate_limit,
