@@ -33,13 +33,13 @@ INPUT=$(cat)
 # For mcp__github__merge_pull_request: parse from pull_number field
 PR_NUMBER=""
 
-# Try MCP tool input first (has pull_number field)
+# Try MCP tool input first (pullNumber camelCase, or pull_number snake_case)
 PR_NUMBER=$(echo "$INPUT" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 ti = data.get('tool_input', {})
-# MCP merge tool uses 'pull_number'
-pn = ti.get('pull_number', '')
+# MCP merge tool sends 'pullNumber' (camelCase); accept snake_case as fallback
+pn = ti.get('pullNumber', '') or ti.get('pull_number', '')
 if pn:
     print(pn)
     sys.exit(0)
@@ -66,12 +66,13 @@ fi
 
 # Count reviews by the agent on this PR.
 # Pipe through python3 instead of --jq for testability with mock gh.
-AGENT_LOGIN="${AGENT_GIT_NAME:-HDMX-coding-agent}"
+# Hardcode the machine user login — AGENT_GIT_NAME is a git author name, not a GitHub login.
+AGENT_LOGIN="HDMX-coding-agent"
 REVIEW_COUNT=$(gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" 2>/dev/null \
     | python3 -c "
 import sys, json
 reviews = json.load(sys.stdin)
-count = sum(1 for r in reviews if r.get('user',{}).get('login') in ('$AGENT_LOGIN', 'HDMX-coding-agent'))
+count = sum(1 for r in reviews if r.get('user',{}).get('login') == '$AGENT_LOGIN')
 print(count)
 " 2>/dev/null) || REVIEW_COUNT=0
 

@@ -60,7 +60,7 @@ Trace references in: `content/technical-report.qmd`, `content/data-paper.qmd`, `
 3. **Deduplicate** findings across agents.
 4. **Run tests**: `make check`
 5. **Run build**: `make manuscript` (if prose changed)
-6. **Post a single review** via `gh pr review`, attributing each finding to its perspective. Include `<!-- review-cycle: N -->` at the top of the review body (N = 1, 2, 3…) so the merge gate can count cycles.
+6. **Post a single review** via `gh pr review`, attributing each finding to its perspective. Include `<!-- review-pr-marker -->` at the top of the review body for identification. The merge gate counts review objects posted by the agent, not markers.
 
 ## Code-quality escalation
 

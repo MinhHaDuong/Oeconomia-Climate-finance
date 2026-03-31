@@ -8,14 +8,14 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 HOOK_SCRIPT = Path(__file__).parent.parent / ".claude" / "hooks" / "check-reviews.sh"
 
 
-def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None) -> dict:
+def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None,
+             tmp_path: Path | None = None) -> dict:
     """Run check-reviews.sh with mocked stdin and gh CLI.
 
     Parameters
@@ -25,6 +25,8 @@ def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None) -
     gh_responses : dict
         Mapping of gh api URL fragments to JSON response strings.
         A mock `gh` script returns these based on the first positional arg.
+    tmp_path : Path
+        Temporary directory for mock scripts (from pytest fixture).
 
     Returns
     -------
@@ -45,8 +47,8 @@ def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None) -
             )
     mock_gh += "echo '[]'\nexit 0\n"
 
-    # Write mock gh to a temp location
-    mock_dir = project_dir / ".test_tmp"
+    # Write mock gh to pytest-managed temp dir
+    mock_dir = tmp_path or (project_dir / ".test_tmp")
     mock_dir.mkdir(exist_ok=True)
     mock_gh_path = mock_dir / "gh"
     mock_gh_path.write_text(mock_gh)
@@ -59,24 +61,20 @@ def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None) -
     env["AGENT_GH_TOKEN"] = "fake-token"
     env["AGENT_GIT_NAME"] = "HDMX-coding-agent"
 
-    try:
-        result = subprocess.run(
-            ["bash", str(HOOK_SCRIPT)],
-            input=tool_input_json,
-            capture_output=True,
-            text=True,
-            env=env,
-            timeout=10,
-        )
-        stdout_json = json.loads(result.stdout) if result.stdout.strip() else {}
-        return {
-            "returncode": result.returncode,
-            "stdout": stdout_json,
-            "stderr": result.stderr,
-        }
-    finally:
-        mock_gh_path.unlink(missing_ok=True)
-        mock_dir.rmdir()
+    result = subprocess.run(
+        ["bash", str(HOOK_SCRIPT)],
+        input=tool_input_json,
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=10,
+    )
+    stdout_json = json.loads(result.stdout) if result.stdout.strip() else {}
+    return {
+        "returncode": result.returncode,
+        "stdout": stdout_json,
+        "stderr": result.stderr,
+    }
 
 
 def make_bash_input(command: str) -> str:
@@ -86,7 +84,7 @@ def make_bash_input(command: str) -> str:
 
 def make_mcp_input(pull_number: int) -> str:
     """Create hook stdin JSON for an MCP merge tool call."""
-    return json.dumps({"tool_input": {"pull_number": pull_number}})
+    return json.dumps({"tool_input": {"pullNumber": pull_number}})
 
 
 # --- Core gate logic ---
@@ -95,7 +93,7 @@ def make_mcp_input(pull_number: int) -> str:
 class TestMergeGate:
     """Merge gate blocks or allows based on review count vs. threshold."""
 
-    def test_zero_reviews_blocks(self):
+    def test_zero_reviews_blocks(self, tmp_path):
         """0 reviews, no trivial label → deny (need 2)."""
         result = run_hook(
             make_bash_input("gh pr merge 42"),
@@ -103,12 +101,13 @@ class TestMergeGate:
                 "pulls/42/reviews": "[]",
                 "issues/42/labels": "[]",
             },
+            tmp_path=tmp_path,
         )
         assert result["returncode"] == 0
         decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
         assert decision == "deny"
 
-    def test_one_review_no_trivial_blocks(self):
+    def test_one_review_no_trivial_blocks(self, tmp_path):
         """1 review, no trivial label → deny (need 2)."""
         reviews = json.dumps([{"user": {"login": "HDMX-coding-agent"}}])
         result = run_hook(
@@ -117,11 +116,12 @@ class TestMergeGate:
                 "pulls/42/reviews": reviews,
                 "issues/42/labels": "[]",
             },
+            tmp_path=tmp_path,
         )
         decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
         assert decision == "deny"
 
-    def test_one_review_with_trivial_allows(self):
+    def test_one_review_with_trivial_allows(self, tmp_path):
         """1 review + review:trivial label → allow (need 1)."""
         reviews = json.dumps([{"user": {"login": "HDMX-coding-agent"}}])
         labels = json.dumps([{"name": "review:trivial"}])
@@ -131,11 +131,12 @@ class TestMergeGate:
                 "pulls/42/reviews": reviews,
                 "issues/42/labels": labels,
             },
+            tmp_path=tmp_path,
         )
         decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
         assert decision == "allow"
 
-    def test_two_reviews_allows(self):
+    def test_two_reviews_allows(self, tmp_path):
         """2 reviews, no trivial label → allow (need 2)."""
         reviews = json.dumps([
             {"user": {"login": "HDMX-coding-agent"}},
@@ -147,6 +148,7 @@ class TestMergeGate:
                 "pulls/42/reviews": reviews,
                 "issues/42/labels": "[]",
             },
+            tmp_path=tmp_path,
         )
         decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
         assert decision == "allow"
@@ -158,7 +160,7 @@ class TestMergeGate:
 class TestPRNumberExtraction:
     """Hook extracts PR number from various tool input formats."""
 
-    def test_bash_gh_pr_merge(self):
+    def test_bash_gh_pr_merge(self, tmp_path):
         """Extracts from 'gh pr merge 42'."""
         reviews = json.dumps([
             {"user": {"login": "HDMX-coding-agent"}},
@@ -170,12 +172,13 @@ class TestPRNumberExtraction:
                 "pulls/42/reviews": reviews,
                 "issues/42/labels": "[]",
             },
+            tmp_path=tmp_path,
         )
         # If it found PR 42, it will have queried reviews — allow proves extraction worked
         assert result["stdout"]["hookSpecificOutput"]["permissionDecision"] == "allow"
 
-    def test_mcp_merge_tool(self):
-        """Extracts from MCP tool input with pull_number field."""
+    def test_mcp_merge_tool(self, tmp_path):
+        """Extracts from MCP tool input with pullNumber (camelCase)."""
         reviews = json.dumps([
             {"user": {"login": "HDMX-coding-agent"}},
             {"user": {"login": "HDMX-coding-agent"}},
@@ -186,18 +189,20 @@ class TestPRNumberExtraction:
                 "pulls/42/reviews": reviews,
                 "issues/42/labels": "[]",
             },
+            tmp_path=tmp_path,
         )
         assert result["stdout"]["hookSpecificOutput"]["permissionDecision"] == "allow"
 
-    def test_no_pr_number_allows(self):
+    def test_no_pr_number_allows(self, tmp_path):
         """If PR number can't be determined, allow (don't block git merge)."""
         result = run_hook(
             json.dumps({"tool_input": {"command": "git merge feature-branch"}}),
+            tmp_path=tmp_path,
         )
         decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
         assert decision == "allow"
 
-    def test_url_format(self):
+    def test_url_format(self, tmp_path):
         """Extracts PR number from URL in command."""
         reviews = json.dumps([
             {"user": {"login": "HDMX-coding-agent"}},
@@ -211,5 +216,6 @@ class TestPRNumberExtraction:
                 "pulls/42/reviews": reviews,
                 "issues/42/labels": "[]",
             },
+            tmp_path=tmp_path,
         )
         assert result["stdout"]["hookSpecificOutput"]["permissionDecision"] == "allow"
