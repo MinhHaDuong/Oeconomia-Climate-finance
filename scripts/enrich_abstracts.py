@@ -27,10 +27,13 @@ import requests
 from pipeline_text import normalize_text
 from utils import (
     CATALOGS_DIR,
+    CONSECUTIVE_FAIL_LIMIT,
     MAILTO,
     OPENALEX_API_KEY,
     RAW_DIR,
+    RateLimitExhausted,
     WatchedProgress,
+    check_rate_limit,
     get_logger,
     make_run_id,
     normalize_doi,
@@ -188,6 +191,7 @@ def step2_openalex(df, counters, checkpoint_every=50,
     # Batch query (50 per request)
     batch_size = 50
     batches_done = 0
+    consecutive_failures = 0
     for i in range(0, len(to_query), batch_size):
         batch = to_query[i:i + batch_size]
         ids = [sid for _, sid in batch]
@@ -211,6 +215,9 @@ def step2_openalex(df, counters, checkpoint_every=50,
                 jitter_max=retry_jitter,
                 counters=counters,
             )
+            check_rate_limit(resp, "api.openalex.org")
+            resp.raise_for_status()
+            consecutive_failures = 0
             results = {
                 r["id"].replace("https://openalex.org/", ""):
                     reconstruct_abstract(r.get("abstract_inverted_index"))
@@ -218,6 +225,14 @@ def step2_openalex(df, counters, checkpoint_every=50,
             }
             for sid in ids:
                 cache[sid] = results.get(sid, "")
+        except RateLimitExhausted:
+            consecutive_failures += 1
+            log.warning("Rate limit exhausted (%d/%d consecutive)",
+                        consecutive_failures, CONSECUTIVE_FAIL_LIMIT)
+            if consecutive_failures >= CONSECUTIVE_FAIL_LIMIT:
+                log.error("Aborting Step 2: %d consecutive rate-limit failures.",
+                          CONSECUTIVE_FAIL_LIMIT)
+                break
         except Exception as e:
             log.warning("Batch %d failed: %s", i, e)
             counters["step2_errors"] = counters.get("step2_errors", 0) + 1
