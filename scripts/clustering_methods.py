@@ -56,6 +56,7 @@ def cluster_hdbscan(X, min_cluster_size=50, min_samples=None):
         min_cluster_size=min_cluster_size,
         min_samples=min_samples,
         metric="euclidean",
+        copy=True,
         n_jobs=1,
     )
     return clusterer.fit_predict(X)
