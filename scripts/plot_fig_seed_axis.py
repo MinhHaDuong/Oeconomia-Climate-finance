@@ -6,7 +6,6 @@ scatter plot for the manuscript figure.
 
 Produces:
 - figures/fig_seed_axis_core.{png,pdf}
-- tables/tab_seed_axis_core.csv
 
 Usage:
     uv run python scripts/plot_fig_seed_axis.py --output content/figures/fig_seed_axis_core.png [--pdf]
@@ -20,9 +19,7 @@ import numpy as np
 import pandas as pd
 from plot_style import DARK, DPI, FIGWIDTH, MED, apply_style
 from script_io_args import parse_io_args, validate_io
-from sklearn.mixture import GaussianMixture
 from utils import (
-    BASE_DIR,
     CATALOGS_DIR,
     get_logger,
     load_analysis_config,
@@ -32,8 +29,6 @@ from utils import (
 )
 
 log = get_logger("plot_fig_seed_axis")
-
-TABLES_DIR = os.path.join(BASE_DIR, "content", "tables")
 
 # Pole vocabularies (same as analyze_bimodality.py)
 EFFICIENCY_TERMS = {
@@ -99,35 +94,14 @@ def _compute_seed_axis(df, embeddings):
     df["score"] = embeddings @ axis_vec
 
 
-def _compute_period_stats(df, periods):
-    """Compute per-period score distributions and bimodality tests."""
-    stats_rows = []
+def _split_by_period(df, periods):
+    """Split scores into per-period arrays."""
     period_data = {}
-
     for period_label, (y_start, y_end) in periods.items():
         pmask = (df["year"] >= y_start) & (df["year"] <= y_end)
-        pscores = df.loc[pmask, "score"].values
-        period_data[period_label] = pscores
-
-        n = len(pscores)
-        median_val = np.median(pscores) if n > 0 else np.nan
-        mean_val = np.mean(pscores) if n > 0 else np.nan
-        dbic = np.nan
-        if n >= 20:
-            col = pscores.reshape(-1, 1)
-            g1 = GaussianMixture(n_components=1, random_state=42).fit(col)
-            g2 = GaussianMixture(n_components=2, random_state=42).fit(col)
-            dbic = g1.bic(col) - g2.bic(col)
-
-        stats_rows.append({
-            "period": period_label, "n_papers": n,
-            "median": round(median_val, 4), "mean": round(mean_val, 4),
-            "bimodal_dbic": round(dbic, 1) if not np.isnan(dbic) else None,
-        })
-        log.info("  %s: n=%d, median=%.3f, mean=%.3f, DBIC=%.0f",
-                 period_label, n, median_val, mean_val, dbic)
-
-    return stats_rows, period_data
+        period_data[period_label] = df.loc[pmask, "score"].values
+        log.info("  %s: n=%d", period_label, len(period_data[period_label]))
+    return period_data
 
 
 def _plot_violins(period_data, periods, period_subtitles, period_fills):
@@ -195,17 +169,12 @@ def main():
 
     df, embeddings = _load_core_data(cfg)
     _compute_seed_axis(df, embeddings)
-    stats_rows, period_data = _compute_period_stats(df, periods)
+    period_data = _split_by_period(df, periods)
 
     fig = _plot_violins(period_data, periods, period_subtitles, period_fills)
     out_stem = os.path.splitext(io_args.output)[0]
     save_figure(fig, out_stem, pdf=args.pdf, dpi=DPI)
     plt.close()
-
-    os.makedirs(TABLES_DIR, exist_ok=True)
-    csv_path = os.path.join(TABLES_DIR, "tab_seed_axis_core.csv")
-    pd.DataFrame(stats_rows).to_csv(csv_path, index=False)
-    log.info("Saved -> %s", csv_path)
     log.info("Done.")
 
 

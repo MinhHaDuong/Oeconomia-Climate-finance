@@ -38,5 +38,4 @@ On core ({{< meta corpus_core >}} papers), no PC passes ΔBIC > 200. Unsupervise
 
 ### Data outputs
 
-- `tab_seed_axis_core.csv` -- seed axis metadata (variance, ΔBIC, pole terms)
 - `tab_pca_components.csv` -- unsupervised PC metadata
