@@ -456,7 +456,7 @@ content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/uti
 	uv run python $< --output $@ --k-sensitivity
 
 # K-sensitivity figure
-content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
+content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py $(CONFIG) \
 		content/tables/tab_k_sensitivity.csv
 	uv run python $< --output $@
 
