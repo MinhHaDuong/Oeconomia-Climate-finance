@@ -43,7 +43,7 @@ Autonomous execution using test-driven development. The inner cycle is:
 3. **Refactor**: clean up, then confirm tests still pass. Use `make check-fast` during development. Commit.
 4. **PR**: Pass `make check` gate, then push and open a PR.
 
-Use `make check-fast` during development, `make check` before opening a PR.
+Use `make check-fast` during development, `make check` before opening a PR. Makefile truth: prerequisites and targets must match each script's actual file reads and writes.
 
 ### Verify
 Review each PR before merging:
