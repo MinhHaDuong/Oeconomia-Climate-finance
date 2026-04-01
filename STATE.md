@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-03-31
+Last updated: 2026-04-01
 
 ## Status: TWO PAPERS SUBMITTED
 
@@ -35,6 +35,7 @@ None.
 
 ## Next actions
 
+- Review and merge PR #628 (Imperial Dragon harness extraction)
 - Waiting for corpus 1.1.2 to finish building
 - ESHET-HES conference slides (Nice, May 26–29)
 - Charles Gide conference paper (Vannes, July 2–4; paper due June 15)

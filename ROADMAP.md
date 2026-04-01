@@ -44,3 +44,4 @@ Submitted data paper to RDJ4HSS (diamond OA).
 - **v1.1 — RDJ4HSS data paper (2026-03-26)**: tag v1.1, data paper drafted and submitted, companion paper outlined, reproducibility archives
 - **v1.1.1 — Pipeline refactor (2026-03)**: enrichment split into 4 independent DVC stages (#428), code smell cleanup (#507), agent harness consolidation, script I/O discipline (#547, #549)
 - **v1.1.2 — Citation enrichment (in progress)**: GROBID reference parsing (#539), Crossref DOI fallback, circuit breakers (#590, #598), citation hardening (#529)
+- **Imperial Dragon harness (2026-04-01)**: workflow renamed from Dragon Dreaming (4 phases) to Imperial Dragon (5 claws), generic harness extracted to ~/.claude/ (#628)
