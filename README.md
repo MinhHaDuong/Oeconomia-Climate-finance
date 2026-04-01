@@ -96,6 +96,10 @@ Errata 1 (Figure 2 label fix) ready in `release/2026-03-23 Oeconomia errata/`.
 
 See `STATE.md` for current status, `ROADMAP.md` for milestones, `AGENTS.md` for AI workflow. Pipeline architecture is documented in `.claude/rules/architecture.md`.
 
+## AI agent configuration
+
+The project `.claude/` directory contains only project-specific rules (writing style, architecture, submission workflow). Generic rules, skills, and hooks live in `~/.claude/` as part of the [Imperial Dragon Harness](https://github.com/MinhHaDuong/agentic-harness). See `AGENTS.md` for the full configuration map.
+
 ## Contact
 
 minh.ha-duong@cnrs.fr

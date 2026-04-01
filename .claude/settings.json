@@ -1,24 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(*make*)",
-      "Bash(*uv sync*)",
-      "Bash(*uv run *)",
-      "Bash(*uv add *)",
-      "Bash(*python3 *)",
-      "Bash(*git *)",
-      "Bash(*gh issue *)",
-      "Bash(*gh pr *)",
-      "Bash(*gh api*)",
       "Bash(*dvc *)",
       "Bash(*quarto *)",
-      "Read",
-      "Glob",
-      "Grep",
-      "Skill",
-      "WebSearch",
-      "Edit(/.claude/**)",
-      "WebFetch(domain:docs.astral.sh)"
+      "Edit(/.claude/**)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -31,59 +16,12 @@
       "Bash(*git rebase*)"
     ],
     "additionalDirectories": [
-      "/home/haduong/CNRS/html/src"
+      "/home/haduong/CNRS/html/src",
+      "/home/haduong/CNRS/papiers/actif/Oeconomia - Climate finance/.claude/hooks",
+      "/home/haduong/.claude/docs"
     ]
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/on-start.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash(*gh pr create*)",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "PR created. You MUST now run /review-pr on the PR number returned above. Do not proceed to any other task until the review is complete."
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__github__create_pull_request",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "PR created. You MUST now run /review-pr on the PR number returned above. Do not proceed to any other task until the review is complete."
-          }
-        ]
-      },
-      {
-        "matcher": "Bash(*gh pr merge*)",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "PR merged — run /celebrate if this completes a ticket."
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__github__merge_pull_request",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "PR merged — run /celebrate if this completes a ticket."
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash(*gh pr merge*)",
