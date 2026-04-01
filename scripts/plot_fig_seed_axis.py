@@ -57,35 +57,17 @@ def _count_pole_terms(text, terms):
     return sum(1 for t in terms if t in text)
 
 
-def main():
-    io_args, extra = parse_io_args()
-    validate_io(output=io_args.output)
+def _load_core_data(cfg):
+    """Load refined works + embeddings, filter to core subset."""
+    year_min = cfg["periodization"]["year_min"]
+    year_max = cfg["periodization"]["year_max"]
+    cite_threshold = cfg["clustering"]["cite_threshold"]
 
-    parser = argparse.ArgumentParser(description="Seed-axis violin plot (Fig seed)")
-    parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
-    args = parser.parse_args(extra)
-
-    apply_style()
-
-    _cfg = load_analysis_config()
-    cite_threshold = _cfg["clustering"]["cite_threshold"]
-    _year_min = _cfg["periodization"]["year_min"]
-    _year_max = _cfg["periodization"]["year_max"]
-
-    _period_tuples, _period_labels = load_analysis_periods()
-    periods = dict(zip(_period_labels, _period_tuples))
-    _subtitles = ["", "(Bali)", "(Paris)"]
-    period_subtitles = dict(zip(_period_labels, _subtitles))
-    _fills = ["#CCCCCC", "#999999", "#666666"]
-    period_fills = dict(zip(_period_labels, _fills))
-
-    # ── Load data + embeddings ──
-    log.info("Loading data...")
     works = pd.read_csv(os.path.join(CATALOGS_DIR, "refined_works.csv"))
     works["year"] = pd.to_numeric(works["year"], errors="coerce")
 
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
-    in_range = (works["year"] >= _year_min) & (works["year"] <= _year_max)
+    in_range = (works["year"] >= year_min) & (works["year"] <= year_max)
     df = works[has_title & in_range].copy().reset_index(drop=True)
 
     embeddings = load_refined_embeddings()[(has_title & in_range).values]
@@ -101,22 +83,24 @@ def main():
 
     df["year"] = df["year"].astype(int)
     df["abstract_lower"] = df["abstract"].str.lower()
+    return df, embeddings
 
-    # ── Compute seed axis ──
+
+def _compute_seed_axis(df, embeddings):
+    """Project papers onto the efficiency-accountability axis."""
     df["eff_count"] = df["abstract_lower"].apply(lambda t: _count_pole_terms(t, EFFICIENCY_TERMS))
     df["acc_count"] = df["abstract_lower"].apply(lambda t: _count_pole_terms(t, ACCOUNTABILITY_TERMS))
-
     eff_mask = df["eff_count"] >= 2
     acc_mask = df["acc_count"] >= 2
     log.info("Pole papers: %d efficiency, %d accountability", eff_mask.sum(), acc_mask.sum())
 
-    centroid_eff = embeddings[eff_mask].mean(axis=0)
-    centroid_acc = embeddings[acc_mask].mean(axis=0)
-    axis_vec = centroid_eff - centroid_acc
+    axis_vec = embeddings[eff_mask].mean(axis=0) - embeddings[acc_mask].mean(axis=0)
     axis_vec = axis_vec / np.linalg.norm(axis_vec)
     df["score"] = embeddings @ axis_vec
 
-    # ── Per-period statistics ──
+
+def _compute_period_stats(df, periods):
+    """Compute per-period score distributions and bimodality tests."""
     stats_rows = []
     period_data = {}
 
@@ -143,9 +127,12 @@ def main():
         log.info("  %s: n=%d, median=%.3f, mean=%.3f, DBIC=%.0f",
                  period_label, n, median_val, mean_val, dbic)
 
-    # ── Violin plot ──
-    fig, axes = plt.subplots(1, 3, figsize=(FIGWIDTH, FIGWIDTH * 0.6), sharey=True)
+    return stats_rows, period_data
 
+
+def _plot_violins(period_data, periods, period_subtitles, period_fills):
+    """Draw three-panel violin plot, return (fig, axes, medians)."""
+    fig, axes = plt.subplots(1, 3, figsize=(FIGWIDTH, FIGWIDTH * 0.6), sharey=True)
     period_labels_list = list(periods.keys())
     medians = [np.median(period_data[p]) for p in period_labels_list]
 
@@ -175,8 +162,8 @@ def main():
         ax.set_xlim(-0.8, 0.8)
         ax.set_xticks([])
 
+    from matplotlib.patches import ConnectionPatch
     for i in range(len(period_labels_list) - 1):
-        from matplotlib.patches import ConnectionPatch
         con = ConnectionPatch(
             xyA=(0, medians[i]), coordsA=axes[i].transData,
             xyB=(0, medians[i + 1]), coordsB=axes[i + 1].transData,
@@ -186,19 +173,39 @@ def main():
 
     axes[0].set_ylim(-0.5, 0.5)
     axes[0].set_ylabel("\u2190 Accountability     Score     Efficiency \u2192", fontsize=7)
-
     plt.tight_layout()
+    return fig
+
+
+def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    parser = argparse.ArgumentParser(description="Seed-axis violin plot (Fig seed)")
+    parser.add_argument("--pdf", action="store_true", help="Also save PDF output")
+    args = parser.parse_args(extra)
+
+    apply_style()
+    cfg = load_analysis_config()
+
+    _period_tuples, _period_labels = load_analysis_periods()
+    periods = dict(zip(_period_labels, _period_tuples))
+    period_subtitles = dict(zip(_period_labels, ["", "(Bali)", "(Paris)"]))
+    period_fills = dict(zip(_period_labels, ["#CCCCCC", "#999999", "#666666"]))
+
+    df, embeddings = _load_core_data(cfg)
+    _compute_seed_axis(df, embeddings)
+    stats_rows, period_data = _compute_period_stats(df, periods)
+
+    fig = _plot_violins(period_data, periods, period_subtitles, period_fills)
     out_stem = os.path.splitext(io_args.output)[0]
     save_figure(fig, out_stem, pdf=args.pdf, dpi=DPI)
     plt.close()
 
-    # ── Save CSV ──
-    tab = pd.DataFrame(stats_rows)
     os.makedirs(TABLES_DIR, exist_ok=True)
     csv_path = os.path.join(TABLES_DIR, "tab_seed_axis_core.csv")
-    tab.to_csv(csv_path, index=False)
+    pd.DataFrame(stats_rows).to_csv(csv_path, index=False)
     log.info("Saved -> %s", csv_path)
-
     log.info("Done.")
 
 

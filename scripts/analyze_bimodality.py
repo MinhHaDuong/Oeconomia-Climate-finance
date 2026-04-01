@@ -311,96 +311,53 @@ def _build_axis_detection_table(embeddings, axis, explained_frac, tfidf, X_tfidf
     return result
 
 
-def main():
-    io_args, extra = parse_io_args()
-    validate_io(output=io_args.output)
-
-    parser = argparse.ArgumentParser(description="Bimodality analysis (tables only)")
-    parser.add_argument("--core-only", action="store_true",
-                        help="Restrict to core papers (cited_by_count >= 50)")
-    args = parser.parse_args(extra)
-
-    # Derive companion file paths from --output
-    out_dir = os.path.dirname(io_args.output)
-    if out_dir:
-        os.makedirs(out_dir, exist_ok=True)
-    out_stem = os.path.splitext(os.path.basename(io_args.output))[0]
-    suffix = out_stem.replace("tab_bimodality", "")  # e.g. "_core" or ""
-    tab_axis = f"tab_axis_detection{suffix}.csv"
-    tab_pole = f"tab_pole_papers{suffix}.csv"
-
-    # Three-act periods (from config)
-    _period_tuples, _period_labels = load_analysis_periods()
-    periods = dict(zip(_period_labels, _period_tuples))
-
-    # --- Load data + embeddings ---
-    df, embeddings = _load_bimodality_data(args.core_only)
-
-
-    # ── Step 1: Identify pole papers from abstracts ──
+def _identify_pole_papers(df):
+    """Step 1: Tag papers by pole-term frequency in abstracts."""
     df["eff_count"] = df["abstract_lower"].apply(lambda t: _count_pole_terms(t, EFFICIENCY_TERMS))
     df["acc_count"] = df["abstract_lower"].apply(lambda t: _count_pole_terms(t, ACCOUNTABILITY_TERMS))
-
     eff_mask = df["eff_count"] >= 2
     acc_mask = df["acc_count"] >= 2
+    log.info("Pole papers: %d efficiency, %d accountability, %d both",
+             eff_mask.sum(), acc_mask.sum(), (eff_mask & acc_mask).sum())
+    return eff_mask, acc_mask
 
-    n_eff = eff_mask.sum()
-    n_acc = acc_mask.sum()
-    n_both = (eff_mask & acc_mask).sum()
-    log.info("Pole papers: %d efficiency, %d accountability, %d both", n_eff, n_acc, n_both)
 
-    # ── Step 2: Compute pole centroids in embedding space ──
-    if n_eff == 0 or n_acc == 0:
-        log.warning("Too few pole papers (eff=%d, acc=%d) for bimodality analysis. "
-                    "Exiting gracefully.", n_eff, n_acc)
+def _compute_seed_axis(embeddings, eff_mask, acc_mask):
+    """Step 2–3: Build efficiency↔accountability axis from pole centroids."""
+    if eff_mask.sum() == 0 or acc_mask.sum() == 0:
+        log.warning("Too few pole papers (eff=%d, acc=%d). Exiting.", eff_mask.sum(), acc_mask.sum())
         raise SystemExit(0)
-
-    centroid_eff = embeddings[eff_mask].mean(axis=0)
-    centroid_acc = embeddings[acc_mask].mean(axis=0)
-
-    axis = centroid_eff - centroid_acc
+    axis = embeddings[eff_mask].mean(axis=0) - embeddings[acc_mask].mean(axis=0)
     norm = np.linalg.norm(axis)
     if norm < 1e-10:
         log.warning("Pole centroids are identical -- axis has zero norm. Exiting.")
         raise SystemExit(0)
     axis = axis / norm
-
     projections = embeddings @ axis
-    total_var = np.var(embeddings, axis=0).sum()
-    axis_var = np.var(projections)
-    explained_frac = axis_var / total_var
+    explained_frac = np.var(projections) / np.var(embeddings, axis=0).sum()
     log.info("Axis explains %.1f%% of total embedding variance", explained_frac * 100)
+    return axis, projections, explained_frac
 
-    # ── Step 3: Project all papers onto the axis ──
-    df["axis_score"] = projections
-    df["axis_score"] = df["axis_score"] - df["axis_score"].median()
 
-    # ── Step 4: Bimodality tests ──
+def _gmm_delta_bic(scores):
+    """Fit 1- and 2-component GMMs, return (bic1, bic2, delta_bic)."""
+    col = scores.reshape(-1, 1)
+    g1 = GaussianMixture(n_components=1, random_state=42).fit(col)
+    g2 = GaussianMixture(n_components=2, random_state=42).fit(col)
+    return g1.bic(col), g2.bic(col), g1.bic(col) - g2.bic(col)
+
+
+def _test_bimodality(df, periods):
+    """Step 4: GMM BIC + optional dip test, overall and per-period."""
     scores = df["axis_score"].values
-
-    gmm1 = GaussianMixture(n_components=1, random_state=42).fit(scores.reshape(-1, 1))
-    gmm2 = GaussianMixture(n_components=2, random_state=42).fit(scores.reshape(-1, 1))
-    bic1 = gmm1.bic(scores.reshape(-1, 1))
-    bic2 = gmm2.bic(scores.reshape(-1, 1))
-    delta_bic = bic1 - bic2
-
+    bic1, bic2, delta_bic = _gmm_delta_bic(scores)
     log.info("GMM BIC: 1-component=%.0f, 2-component=%.0f, dBIC=%.0f", bic1, bic2, delta_bic)
-    if delta_bic > 10:
-        log.info("-> Strong evidence for bimodality (dBIC > 10)")
-    elif delta_bic > 0:
-        log.info("-> Weak evidence for bimodality")
-    else:
-        log.info("-> Unimodal (1-component preferred)")
 
     dip_pvalue = None
     try:
         import diptest
         dip_stat, dip_pvalue = diptest.diptest(scores)
         log.info("Hartigan's dip test: statistic=%.4f, p=%.4f", dip_stat, dip_pvalue)
-        if dip_pvalue < 0.05:
-            log.info("-> Reject unimodality (p < 0.05)")
-        else:
-            log.info("-> Cannot reject unimodality")
     except ImportError:
         log.info("diptest package not available, skipping Hartigan's dip test")
 
@@ -412,26 +369,24 @@ def main():
             period_stats.append({"period": period_label, "n": len(pscores),
                                  "delta_bic": None, "dip_p": None})
             continue
-
-        g1 = GaussianMixture(n_components=1, random_state=42).fit(pscores.reshape(-1, 1))
-        g2 = GaussianMixture(n_components=2, random_state=42).fit(pscores.reshape(-1, 1))
-        dbic = g1.bic(pscores.reshape(-1, 1)) - g2.bic(pscores.reshape(-1, 1))
-
+        _, _, dbic = _gmm_delta_bic(pscores)
         dp = None
         if dip_pvalue is not None:
             try:
                 _, dp = diptest.diptest(pscores)
             except (ValueError, RuntimeError):
                 pass
-
         period_stats.append({"period": period_label, "n": len(pscores),
                              "delta_bic": dbic, "dip_p": dp})
         log.info("%s (n=%d): dBIC=%.0f%s", period_label, len(pscores), dbic,
                  (", dip p=%.4f" % dp) if dp is not None else "")
 
-    # ── Step 5: TF-IDF axis (Method B) ──
-    log.info("=== Method B: TF-IDF lexical axis ===")
+    return bic1, bic2, delta_bic, dip_pvalue, period_stats
 
+
+def _compute_tfidf_axis(df, eff_mask, acc_mask):
+    """Step 5: Build TF-IDF lexical axis and correlate with embedding axis."""
+    log.info("=== Method B: TF-IDF lexical axis ===")
     abstracts = df["abstract"].fillna("").tolist()
     tfidf = TfidfVectorizer(
         max_features=10000, ngram_range=(1, 2),
@@ -440,13 +395,10 @@ def main():
     X_tfidf = tfidf.fit_transform(abstracts)
     log.info("TF-IDF matrix: %s", X_tfidf.shape)
 
-    eff_tfidf = X_tfidf[eff_mask.values].mean(axis=0).A1
-    acc_tfidf = X_tfidf[acc_mask.values].mean(axis=0).A1
-
-    lex_axis = eff_tfidf - acc_tfidf
+    lex_axis = X_tfidf[eff_mask.values].mean(axis=0).A1 - X_tfidf[acc_mask.values].mean(axis=0).A1
     lex_norm = np.linalg.norm(lex_axis)
     if lex_norm < 1e-10 or np.any(np.isnan(lex_axis)):
-        log.warning("Lexical axis degenerate (norm=%.2e or NaN). Skipping lexical analysis.", lex_norm)
+        log.warning("Lexical axis degenerate (norm=%.2e or NaN). Skipping.", lex_norm)
         df["lex_score"] = 0.0
     else:
         lex_axis = lex_axis / lex_norm
@@ -457,24 +409,48 @@ def main():
     lg1 = GaussianMixture(n_components=1, random_state=42).fit(lex_vals.reshape(-1, 1))
     lg2 = GaussianMixture(n_components=2, random_state=42).fit(lex_vals.reshape(-1, 1))
     lex_dbic = lg1.bic(lex_vals.reshape(-1, 1)) - lg2.bic(lex_vals.reshape(-1, 1))
-    log.info("Lexical dBIC: %.0f", lex_dbic)
+    corr = np.corrcoef(df["axis_score"].values, lex_vals)[0, 1]
+    log.info("Lexical dBIC: %.0f, correlation with embedding axis: r=%.3f", lex_dbic, corr)
+    return tfidf, X_tfidf, lg1, lg2, lex_vals, lex_dbic, corr
 
-    corr = np.corrcoef(df["axis_score"].values, df["lex_score"].values)[0, 1]
-    log.info("Correlation between embedding and TF-IDF axis scores: r=%.3f", corr)
 
-    # ── Steps 5b+5c: Unsupervised axis detection ──
+def main():
+    io_args, extra = parse_io_args()
+    validate_io(output=io_args.output)
+
+    parser = argparse.ArgumentParser(description="Bimodality analysis (tables only)")
+    parser.add_argument("--core-only", action="store_true",
+                        help="Restrict to core papers (cited_by_count >= 50)")
+    args = parser.parse_args(extra)
+
+    out_dir = os.path.dirname(io_args.output)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    out_stem = os.path.splitext(os.path.basename(io_args.output))[0]
+    suffix = out_stem.replace("tab_bimodality", "")
+    tab_axis = f"tab_axis_detection{suffix}.csv"
+    tab_pole = f"tab_pole_papers{suffix}.csv"
+
+    _period_tuples, _period_labels = load_analysis_periods()
+    periods = dict(zip(_period_labels, _period_tuples))
+
+    df, embeddings = _load_bimodality_data(args.core_only)
+    eff_mask, acc_mask = _identify_pole_papers(df)
+    axis, projections, explained_frac = _compute_seed_axis(embeddings, eff_mask, acc_mask)
+
+    df["axis_score"] = projections - np.median(projections)
+
+    bic1, bic2, delta_bic, dip_pvalue, period_stats = _test_bimodality(df, periods)
+    tfidf, X_tfidf, lg1, lg2, lex_vals, lex_dbic, corr = _compute_tfidf_axis(df, eff_mask, acc_mask)
+
     component_rows, main_axis_label, best_corr, best_dbic, best_idx, explained = \
         _tfidf_svd_detection(X_tfidf, tfidf, df)
     emb_component_rows = _embedding_pca_detection(embeddings, df, explained_frac)
+    _build_axis_detection_table(embeddings, axis, explained_frac, tfidf, X_tfidf)
 
-    # ── Step 6: Embedding PCA -- axis detection table ──
-    _build_axis_detection_table(
-        embeddings, axis, explained_frac, tfidf, X_tfidf
-    )
-
-    # ── Step 7: Save tables ──
     _save_all_tables(
-        df=df, n_eff=n_eff, n_acc=n_acc, n_both=n_both,
+        df=df, n_eff=eff_mask.sum(), n_acc=acc_mask.sum(),
+        n_both=(eff_mask & acc_mask).sum(),
         bic1=bic1, bic2=bic2, delta_bic=delta_bic, dip_pvalue=dip_pvalue,
         explained_frac=explained_frac, corr=corr, lg1=lg1, lg2=lg2,
         lex_vals=lex_vals, lex_dbic=lex_dbic,
