@@ -153,41 +153,45 @@ stages:
       size: 3822
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 290fa20a48c6a942ebea8d73228308c5
-      size: 80980579
+      md5: 49a615acb6f633e349e2c9fc7a844b5c
+      size: 81172742
     - path: scripts/corpus_filter.py
       hash: md5
-      md5: 423cd012c698e65b541ece949ee8d35c
-      size: 26823
+      md5: e382107f16a7529816d058a4c68ed51d
+      size: 26965
     - path: scripts/filter_flags.py
       hash: md5
-      md5: 037fef728e47e22203be6b6291192590
-      size: 25598
+      md5: d74cf1645e2bf1b5813498584f3aaea2
+      size: 10031
+    - path: scripts/filter_flags_llm.py
+      hash: md5
+      md5: 41af57f28f25c8c477540ee5116f1513
+      size: 17809
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/extended_works.csv
       hash: md5
-      md5: 9a5e49a0366d9a8d67e72ac349c3a479
-      size: 83745264
+      md5: a4b2931ca814a7d0424d110065d4ac10
+      size: 83974137
   filter:
     cmd: uv run python scripts/corpus_filter.py --filter --works-input 
       data/catalogs/extended_works.csv --works-output 
@@ -203,93 +207,97 @@ stages:
       size: 186713
     - path: data/catalogs/extended_works.csv
       hash: md5
-      md5: 9a5e49a0366d9a8d67e72ac349c3a479
-      size: 83745264
+      md5: a4b2931ca814a7d0424d110065d4ac10
+      size: 83974137
     - path: scripts/corpus_filter.py
       hash: md5
-      md5: 423cd012c698e65b541ece949ee8d35c
-      size: 26823
+      md5: e382107f16a7529816d058a4c68ed51d
+      size: 26965
     - path: scripts/filter_flags.py
       hash: md5
-      md5: 037fef728e47e22203be6b6291192590
-      size: 25598
+      md5: d74cf1645e2bf1b5813498584f3aaea2
+      size: 10031
+    - path: scripts/filter_flags_llm.py
+      hash: md5
+      md5: 41af57f28f25c8c477540ee5116f1513
+      size: 17809
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/corpus_audit.csv
       hash: md5
-      md5: 760efb51298e67b05e6b777af2ba256f
-      size: 6293910
+      md5: 401cbeecaa946832d031a6a64c761a71
+      size: 6337748
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: 4ac5a28944840cc042a56f6ecc35fc80
-      size: 62146324
+      md5: 44d42abd4a03aba615517a8328d81f96
+      size: 60918581
   align:
     cmd: uv run python scripts/corpus_align.py
     deps:
     - path: data/catalogs/citations.csv
       hash: md5
-      md5: ffd62a91be79ad7c007147dbd8b5cca0
-      size: 387384942
+      md5: 4e7525bd3955450ad96458843c453015
+      size: 393595835
     - path: data/catalogs/embeddings.npz
       hash: md5
-      md5: 984378dde1ce71775e076ed209e55def
-      size: 93113811
+      md5: caf5ad34d61acf5365c8368e3d62ed32
+      size: 93116189
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: 4ac5a28944840cc042a56f6ecc35fc80
-      size: 62146324
+      md5: 44d42abd4a03aba615517a8328d81f96
+      size: 60918581
     - path: scripts/corpus_align.py
       hash: md5
-      md5: d947f737be752ad28c114f853fe4f5af
-      size: 9231
+      md5: 05f2e24e9f8f7d6099a6a7451bb64f11
+      size: 9613
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/refined_citations.csv
       hash: md5
-      md5: ea5232372d577d68346a7509fce20c45
-      size: 333997928
+      md5: fbb4d058509f5273b0170b65da24ea26
+      size: 336934510
     - path: data/catalogs/refined_embeddings.npz
       hash: md5
-      md5: ecfaf7075c725409d11633c2d9d06ea3
-      size: 67613056
+      md5: 3118c2ef5467c46ccef3a1d28d76dbe3
+      size: 65946603
   catalog_bibcnrs:
     cmd: uv run python scripts/catalog_bibcnrs.py
     deps:
@@ -304,24 +312,24 @@ stages:
       size: 6269
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/bibcnrs_works.csv
       hash: md5
@@ -342,28 +350,28 @@ stages:
       size: 3663
     - path: scripts/build_teaching_yaml.py
       hash: md5
-      md5: 4ff184afd17d7eacafd17cfbafd18511
+      md5: d65a51326106bc88c26ef0865c6c8159
       size: 16292
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/teaching_works.csv
       hash: md5
@@ -378,33 +386,33 @@ stages:
       size: 848
     - path: data/pool/istex
       hash: md5
-      md5: 4ec85e916ba6d372d15c3419e3f90336.dir
-      size: 3421242
+      md5: 187b0455ab6ca7b96836f4b76f47154b.dir
+      size: 3452325
       nfiles: 1
     - path: scripts/catalog_istex.py
       hash: md5
-      md5: 3701d370c739da158e886b65b6882839
-      size: 8926
+      md5: b85c2fab44cd62ea7976a4b6a6ce54ec
+      size: 9024
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/istex_refs.csv
       hash: md5
@@ -423,37 +431,37 @@ stages:
       size: 848
     - path: config/openalex_queries.yaml
       hash: md5
-      md5: 4af44e7be58bd50103e5c8caf7bf65fe
-      size: 4690
+      md5: e10d7ead0b59c6992c63030f99f05d59
+      size: 4692
     - path: data/pool/openalex
       hash: md5
-      md5: d0fca3b63976a2b4b0a9ea067ea8f457.dir
+      md5: 3c7ea1a768f4d69ce163d658a2fd68a1.dir
       size: 83014170
       nfiles: 49
     - path: scripts/catalog_openalex.py
       hash: md5
-      md5: b13d7d11ae8d51ec652f0036b23995d8
-      size: 22543
+      md5: 39f715059c06e91b53abbac0d6492326
+      size: 12310
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/openalex_citations.csv
       hash: md5
@@ -480,28 +488,28 @@ stages:
       size: 9626
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/grey_works.csv
       hash: md5
-      md5: 142ead3623df66fd16981ed3ee2051d7
+      md5: 4efa97f03b411a1b88d72a292b21e180
       size: 815533
   catalog_merge:
     cmd: uv run python scripts/catalog_merge.py
@@ -512,7 +520,7 @@ stages:
       size: 53677
     - path: data/catalogs/grey_works.csv
       hash: md5
-      md5: 142ead3623df66fd16981ed3ee2051d7
+      md5: 4efa97f03b411a1b88d72a292b21e180
       size: 815533
     - path: data/catalogs/istex_works.csv
       hash: md5
@@ -536,24 +544,24 @@ stages:
       size: 8110
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/unified_works.csv
       hash: md5
@@ -619,44 +627,44 @@ stages:
       data/catalogs/enriched_works.csv & p1=$!; uv run python 
       scripts/enrich_citations_openalex.py --works-input 
       data/catalogs/enriched_works.csv & p2=$!; wait $p1 && wait $p2 && uv run 
-      python scripts/parse_citations_grobid.py
+      python scripts/corpus_parse_citations_grobid.py
     deps:
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 290fa20a48c6a942ebea8d73228308c5
-      size: 80980579
+      md5: 49a615acb6f633e349e2c9fc7a844b5c
+      size: 81172742
+    - path: scripts/corpus_parse_citations_grobid.py
+      hash: md5
+      md5: 6495d8bf41935ff2c8427ad31b507847
+      size: 10281
     - path: scripts/enrich_citations_batch.py
       hash: md5
-      md5: 64c01d671ea15a231cce86f94c201aee
-      size: 9996
+      md5: be91e8bfd5e60a0f22e36a0231e32412
+      size: 10387
     - path: scripts/enrich_citations_openalex.py
       hash: md5
-      md5: 69d92dc2ef467a59ee4e52a8e60d9aab
-      size: 16501
-    - path: scripts/parse_citations_grobid.py
-      hash: md5
-      md5: 7b2e362070d8d2f390529c4d616415e3
-      size: 9970
+      md5: 5aba8315a9b470b2b3665ea4d6b5b58d
+      size: 16982
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
   qc_citations:
     cmd: uv run python scripts/qc_citations.py --works-input 
       data/catalogs/enriched_works.csv
@@ -679,65 +687,65 @@ stages:
       size: 25696
   enrich_embeddings:
     cmd: uv run python scripts/enrich_embeddings.py --works-input 
-      data/catalogs/enriched_works.csv
+      data/catalogs/enriched_works.csv --output data/catalogs/embeddings.npz
     deps:
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 290fa20a48c6a942ebea8d73228308c5
-      size: 80980579
+      md5: 49a615acb6f633e349e2c9fc7a844b5c
+      size: 81172742
     - path: scripts/enrich_embeddings.py
       hash: md5
-      md5: 45cd3e176d543a310e9073d3909c548a
-      size: 9470
+      md5: 10f9dc4a719ba59048f0cbaab592d8e4
+      size: 9693
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/embeddings.npz
       hash: md5
-      md5: 984378dde1ce71775e076ed209e55def
-      size: 93113811
+      md5: caf5ad34d61acf5365c8368e3d62ed32
+      size: 93116189
   qa_citations:
     cmd: uv run python scripts/qa_citations.py --works-input 
       data/catalogs/enriched_works.csv
     deps:
     - path: data/catalogs/citations.csv
       hash: md5
-      md5: ffd62a91be79ad7c007147dbd8b5cca0
-      size: 387384942
+      md5: 4e7525bd3955450ad96458843c453015
+      size: 393595835
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 290fa20a48c6a942ebea8d73228308c5
-      size: 80980579
+      md5: 49a615acb6f633e349e2c9fc7a844b5c
+      size: 81172742
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_loaders.py
       hash: md5
       md5: b527ae1b0ed524615b215f7b26035329
       size: 14120
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
@@ -748,11 +756,11 @@ stages:
       size: 11979
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
   enrich_language:
     cmd: uv run python scripts/enrich_language.py --works-input 
-      data/catalogs/unified_works.csv && date -Iseconds > 
+      data/catalogs/unified_works.csv --output 
       data/catalogs/enrich_cache/.language.stamp
     deps:
     - path: data/catalogs/unified_works.csv
@@ -761,28 +769,28 @@ stages:
       size: 81002789
     - path: scripts/enrich_language.py
       hash: md5
-      md5: 52c75027b8f24da974673594d970afcf
-      size: 13270
+      md5: 23ed6d36d7fd76b54e1485861dbf04c7
+      size: 14866
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/enrich_cache/.language.stamp
       hash: md5
-      md5: 1eb90067232386425c2a24073ef5075a
-      size: 26
+      md5: 0ff00da3fdf7702b543dfffdfa757ced
+      size: 25
   enrich_dois:
     cmd: uv run python scripts/enrich_dois.py --works-input 
-      data/catalogs/unified_works.csv && date -Iseconds > 
+      data/catalogs/unified_works.csv --output 
       data/catalogs/enrich_cache/.dois.stamp
     deps:
     - path: data/catalogs/unified_works.csv
@@ -791,28 +799,28 @@ stages:
       size: 81002789
     - path: scripts/enrich_dois.py
       hash: md5
-      md5: 9828764c36176e119f0e4ee0a1eaa36a
-      size: 10632
+      md5: 128c08748c2f94a71320702a70ef6510
+      size: 13263
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/enrich_cache/.dois.stamp
       hash: md5
-      md5: 57599ec777f4265fde2b0e464d2c6916
-      size: 26
+      md5: ea5c72ae18c7990181c95b3c14baeb8d
+      size: 25
   enrich_abstracts:
     cmd: uv run python scripts/enrich_abstracts.py --works-input 
-      data/catalogs/unified_works.csv && date -Iseconds > 
+      data/catalogs/unified_works.csv --output 
       data/catalogs/enrich_cache/.abstracts.stamp
     deps:
     - path: data/catalogs/unified_works.csv
@@ -821,29 +829,29 @@ stages:
       size: 81002789
     - path: scripts/enrich_abstracts.py
       hash: md5
-      md5: ce2cc03fe04d4ca683917a2ae5d0e990
-      size: 20754
+      md5: d0ca06e31ec654129efdb65184bc0d5a
+      size: 22549
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_progress.py
       hash: md5
-      md5: f72111bce6dc8b97f918f7c976c6e012
-      size: 10283
+      md5: ce94115f5dc078e0d6cc3905ab8a81b2
+      size: 10313
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/enrich_cache/.abstracts.stamp
       hash: md5
-      md5: 9ca4088ba22d760fcfa2fc8e3e486d6f
-      size: 26
+      md5: a341efe0687beb884b6af9da00a45dfc
+      size: 25
   summarize_abstracts:
     cmd: uv run python scripts/summarize_abstracts.py --works-input 
       data/catalogs/unified_works.csv && date -Iseconds > 
@@ -855,99 +863,99 @@ stages:
       size: 81002789
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/summarize_abstracts.py
       hash: md5
-      md5: 4ae3babd59404475bfe5b664d58fae02
-      size: 9446
+      md5: a06e32bbec6644cd6408b43b9f11d092
+      size: 9441
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/enrich_cache/.summaries.stamp
       hash: md5
-      md5: 9f1c1a8eb3ff3cba07493b41f2c1c72f
+      md5: c0f8f591dc9e8b9faa6c39d67aa47d4c
       size: 26
   join_enrichments:
-    cmd: uv run python scripts/join_enrichments.py
+    cmd: uv run python scripts/enrich_join.py
     deps:
     - path: data/catalogs/enrich_cache/.abstracts.stamp
       hash: md5
-      md5: 9ca4088ba22d760fcfa2fc8e3e486d6f
-      size: 26
+      md5: a341efe0687beb884b6af9da00a45dfc
+      size: 25
     - path: data/catalogs/enrich_cache/.dois.stamp
       hash: md5
-      md5: 57599ec777f4265fde2b0e464d2c6916
-      size: 26
+      md5: ea5c72ae18c7990181c95b3c14baeb8d
+      size: 25
     - path: data/catalogs/enrich_cache/.language.stamp
       hash: md5
-      md5: 1eb90067232386425c2a24073ef5075a
-      size: 26
+      md5: 0ff00da3fdf7702b543dfffdfa757ced
+      size: 25
     - path: data/catalogs/enrich_cache/.summaries.stamp
       hash: md5
-      md5: 9f1c1a8eb3ff3cba07493b41f2c1c72f
+      md5: c0f8f591dc9e8b9faa6c39d67aa47d4c
       size: 26
     - path: data/catalogs/unified_works.csv
       hash: md5
       md5: 4b3c9c4bf0a54be5988017921350980f
       size: 81002789
-    - path: scripts/join_enrichments.py
+    - path: scripts/enrich_join.py
       hash: md5
-      md5: 4e3715cea051ab198e995925e93fda49
-      size: 7924
+      md5: 3cf20ef03c8ff0f2a29acb07d0df8d78
+      size: 7914
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/enriched_works.csv
       hash: md5
-      md5: 290fa20a48c6a942ebea8d73228308c5
-      size: 80980579
+      md5: 49a615acb6f633e349e2c9fc7a844b5c
+      size: 81172742
   ref_match:
-    cmd: uv run python scripts/ref_match_corpus.py && uv run python 
-      scripts/merge_citations.py
+    cmd: uv run python scripts/corpus_ref_match.py && uv run python 
+      scripts/corpus_merge_citations.py
     deps:
     - path: data/catalogs/refined_works.csv
       hash: md5
-      md5: 4ac5a28944840cc042a56f6ecc35fc80
-      size: 62146324
-    - path: scripts/merge_citations.py
+      md5: 44d42abd4a03aba615517a8328d81f96
+      size: 60918581
+    - path: scripts/corpus_merge_citations.py
       hash: md5
-      md5: 8461b134d252a6ab45551dee421384e5
-      size: 6719
+      md5: 2ff442d0c1b4d5d95884ab1b209c6ae1
+      size: 6733
+    - path: scripts/corpus_ref_match.py
+      hash: md5
+      md5: 7be95cd46ef3a609a368a7510959e4be
+      size: 9504
     - path: scripts/pipeline_io.py
       hash: md5
-      md5: e63543ba0f183f805081a6c97df3e1ae
-      size: 16788
+      md5: bdad5b875f2eb4ee72294a84687aa224
+      size: 17447
     - path: scripts/pipeline_text.py
       hash: md5
       md5: aa37b4857bc11535a71e3e664bc56dc0
       size: 10480
-    - path: scripts/ref_match_corpus.py
-      hash: md5
-      md5: 41bce7b44a9faeaff343fcee81972e2d
-      size: 4828
     - path: scripts/utils.py
       hash: md5
-      md5: 0d1955dc7d7113704407ca24c4926504
-      size: 5191
+      md5: c505a0618fa3cefdd91d65ea311a6a09
+      size: 5265
     outs:
     - path: data/catalogs/citations.csv
       hash: md5
-      md5: ffd62a91be79ad7c007147dbd8b5cca0
-      size: 387384942
+      md5: 4e7525bd3955450ad96458843c453015
+      size: 393595835
