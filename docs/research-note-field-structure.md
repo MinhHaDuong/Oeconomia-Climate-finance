@@ -4,7 +4,7 @@
 
 ### Abstract (250 words)
 
-How does the intellectual structure of a scholarly field relate to the political architecture it studies? We address this question for climate finance (1990–2024), a field that crystallized rapidly around the Copenhagen Accord (2009) and whose categories remain contested. Using a corpus of ~32,000 works, we compare three representations of the field's structure: semantic clusters derived from text embeddings (SPECTER2), communities derived from citation graph embeddings (node2vec), and the negotiation streams of the UNFCCC COP process (finance, mitigation, adaptation, loss & damage, markets, technology, transparency). The first two lenses are internal to the literature; the third is an external political classification that the field did not create but may have internalized.
+How does the intellectual structure of a scholarly field relate to the political architecture it studies? We address this question for climate finance (1990–2024), a field that crystallized rapidly around the Copenhagen Accord (2009) and whose categories remain contested. Using a corpus of ~32,000 works, we compare three representations of the field's structure: semantic clusters derived from text embeddings (bge-m3), communities derived from citation graph embeddings (node2vec), and the negotiation streams of the UNFCCC COP process (finance, mitigation, adaptation, loss & damage, markets, technology, transparency). The first two lenses are internal to the literature; the third is an external political classification that the field did not create but may have internalized.
 
 The three-way comparison yields a diagnostic. Where text clusters align with citation communities, the field has coherent subfields. Where they diverge, we find thematic silos (same topic, no citation exchange) or citation bridges (different topics, shared lineage). Overlaying the COP negotiation rooms tests a sharper question: did climate finance scholars organize their intellectual work around the categories of the negotiations, or did they develop an autonomous structure? If academic clusters map onto COP rooms, the field adopted the policy architecture. If citation communities map better than text clusters, intellectual genealogy tracks the negotiations more closely than thematic similarity. If neither maps well, the field has structural autonomy from the process it studies.
 
@@ -37,7 +37,7 @@ The core subset (~2,300 works cited ≥ 50 times) serves as a robustness check.
 #### 3. Method
 
 **Step 1 — Three partitions.** We produce three classifications of the corpus:
-- *Text partition*: k-means on SPECTER2 embeddings (k=6, from the Oeconomia paper).
+- *Text partition*: k-means on bge-m3 embeddings (k=6, from the Oeconomia paper).
 - *Graph partition*: node2vec embeddings (128 dimensions) on the citation graph, followed by Louvain community detection. We compare results at multiple resolutions to avoid dependence on a single granularity choice.
 - *COP partition*: each work is assigned to zero, one, or more negotiation streams based on keyword matching. Works not assignable to any stream are labelled "outside COP architecture."
 
