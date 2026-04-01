@@ -253,7 +253,14 @@ COMPUTED_STATS := content/technical-report-vars.yml \
 # Grouped target (&:) — one invocation writes all 3 files. Requires GNU Make >= 4.3.
 $(COMPUTED_STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
-		content/tables/tab_axis_detection.csv
+		content/tables/tab_axis_detection.csv \
+		$(wildcard $(UNIFIED)) \
+		$(wildcard $(DATA_DIR)/corpus_audit.csv) \
+		$(wildcard $(DATA_DIR)/embeddings.npz) \
+		$(wildcard $(REFINED_EMB)) \
+		$(wildcard $(DATA_DIR)/citations.csv) \
+		$(wildcard $(REFINED_CIT)) \
+		$(wildcard content/tables/qa_citations_report.json)
 	uv run python $< --output $@
 
 stats: $(COMPUTED_STATS)
@@ -261,7 +268,7 @@ stats: $(COMPUTED_STATS)
 # ── Tables (generated, included by Quarto) ──────────────
 
 # Core subset → venues table
-$(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
+$(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED) $(REFINED_CIT)
 	uv run python $< --output $@
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
@@ -287,7 +294,7 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 # Semantic clusters (computation only — no figures)
 SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
 
-$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(CONFIG) $(REFINED)
+$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(CONFIG) $(ENRICHED) $(DATA_DIR)/embeddings.npz
 	uv run python $< --output $@
 
 # Semantic UMAP maps (one parameterized plot script, 3 invocations)
@@ -373,7 +380,7 @@ content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/u
 
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py $(CONFIG) \
-		$(REFINED) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
+		$(REFINED) $(REFINED_CIT) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
 	uv run python $< --output $@
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py $(CONFIG) \
@@ -429,7 +436,7 @@ content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywor
 	uv run python $< --core-only --output $@
 
 # Pre-2007 co-citation traditions network
-content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
+content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED) $(REFINED_CIT)
 	uv run python $< --output $@
 
 # Co-citation communities (compute: community assignments + summary table)
@@ -438,7 +445,7 @@ $(COMMUNITIES): scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
 	uv run python $< --output $@
 
 # Co-citation communities (plot: network figure)
-content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES)
+content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES) $(REFINED_CIT)
 	uv run python $< --output $@ --input $(COMMUNITIES)
 
 # KDE supplementary
