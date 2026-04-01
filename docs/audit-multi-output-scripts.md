@@ -22,9 +22,9 @@ Reference: `docs/local-ai/2026-03-19-memo-harness-extraction.md`, idea #5 — "1
 | `analyze_embeddings.py` | `semantic_clusters.csv` | **done** (#551) | Split: `analyze_embeddings.py` produces data only; `plot_semantic.py --color-by {cluster,language,period}` produces one figure per invocation. |
 | `analyze_genealogy.py` | `fig_genealogy.png`, `fig_genealogy.html`, `tab_lineages.csv` (+ `tab_louvain_sensitivity.csv` via `--robustness`) | acceptable | The HTML is an interactive companion of the static PNG (same visualization, different format). The lineage table is the data behind the figure. These are tightly coupled. |
 | `plot_fig_alluvial.py` | `fig_alluvial.png` | split (#546) | Static PNG renderer. HTML extracted to `plot_alluvial_html.py`. |
-| `plot_fig45_pca_scatter.py` | `fig_pca_scatter.png`, `tab_pca_axes.csv` | acceptable | The CSV records axis metadata for the figure — a sidecar, not an independent product. |
+| `plot_fig45_pca_scatter.py` | `fig_pca_scatter.png` | **done** | Dropped unconsumed sidecar CSV. |
 | `plot_fig_seed_axis.py` | `fig_seed_axis_core.png` | **done** | Dropped unconsumed sidecar CSV. |
-| `analyze_cocitation.py` + `plot_cocitation.py` | `communities.csv`, `tab_community_summary.csv` / `fig_communities.png` | **split** (#552) | Compute script produces data + summary CSVs; plot script reads communities.csv and renders the network figure. |
+| `analyze_cocitation.py` + `plot_cocitation.py` | `communities.csv` / `fig_communities.png` | **done** | Dropped unconsumed sidecar CSVs (summary + sensitivity). Compute script produces `communities.csv` only; plot script reads it. |
 | `plot_fig_lexical_tfidf.py` | `fig_lexical_tfidf_{year}.png` (one per detected break year, dynamic) | acceptable | Multiple figures but they share the same logic, parameterized by break year. The dynamic set is inherently co-produced. |
 
 ## Summary

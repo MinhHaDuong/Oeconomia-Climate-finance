@@ -9,7 +9,6 @@ Two modes:
 
 Produces:
 - figures/fig_pca_scatter*.{png,pdf}: Scatter plot(s)
-- tables/tab_pca_components*.csv: Component metadata
 
 Usage:
     uv run python scripts/plot_fig45_pca_scatter.py --output content/figures/fig_pca_scatter.png [--pdf]
@@ -332,9 +331,7 @@ def main():
 
     out_stem = os.path.splitext(io_args.output)[0]
     out_dir = os.path.dirname(io_args.output)
-    tables_dir = os.path.join(BASE_DIR, "content", "tables")
     os.makedirs(out_dir or ".", exist_ok=True)
-    os.makedirs(tables_dir, exist_ok=True)
 
     works_path = (
         io_args.input[0] if io_args.input
@@ -351,14 +348,6 @@ def main():
     periods = dict(zip(_period_labels, _period_tuples))
     period_colors = dict(zip(
         _period_labels, ["#8da0cb", "#fc8d62", "#66c2a5"]))
-
-    if args.supervised:
-        suffix = "_core" if args.core_only else ""
-        tab_file = f"tab_seed_axis{suffix}.csv"
-    elif args.core_only:
-        tab_file = "tab_pca_components_core.csv"
-    else:
-        tab_file = "tab_pca_components.csv"
 
     # --- Load data + embeddings ---
     log.info("Loading data...")
@@ -410,12 +399,6 @@ def main():
                     cite_threshold, args.supervised, args.core_only,
                     out_stem, args.pdf)
 
-    # --- Save metadata table ---
-    tab_rows = [{k: v for k, v in ai.items() if k != "scores"}
-                for ai in axes_info]
-    pd.DataFrame(tab_rows).to_csv(
-        os.path.join(tables_dir, tab_file), index=False)
-    log.info("Saved -> tables/%s", tab_file)
     log.info("Done.")
 
 

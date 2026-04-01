@@ -36,6 +36,3 @@ On core ({{< meta corpus_core >}} papers), no PC passes ΔBIC > 200. Unsupervise
 
 ![Unsupervised PCA scatter: three bimodal components (full corpus).](figures/fig_pca_scatter.png){#fig-pca-scatter width=100%}
 
-### Data outputs
-
-- `tab_pca_components.csv` -- unsupervised PC metadata

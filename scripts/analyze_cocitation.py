@@ -7,10 +7,9 @@ Method (Small 1973, White & Griffith 1981):
 
 Produces:
 - data/catalogs/communities.csv: Community assignments for top-cited works
-- tables/tab_community_summary.csv: Top works per community
 
 Options:
-  --robustness    Louvain resolution sensitivity (R3)
+  --robustness    Louvain resolution sensitivity (logged, no file output)
 """
 
 import argparse
@@ -156,27 +155,6 @@ def save_community_data(G, partition, ref_counts, doi_to_meta, output_path):
     comm_df.to_csv(output_path, index=False)
     log.info("Saved community assignments -> %s", output_path)
 
-    # Summary table: top 5 works per community
-    summary_rows = []
-    for c in sorted(comm_df["community"].unique()):
-        members = comm_df[comm_df["community"] == c]
-        top5 = members.head(5)
-        for _, row in top5.iterrows():
-            summary_rows.append({
-                "community": c,
-                "community_size": len(members),
-                "author_year": row["label"],
-                "title": str(row["title"] or "")[:80],
-                "citations": row["citations"],
-            })
-
-    summary_df = pd.DataFrame(summary_rows)
-    tables_dir = os.path.join(BASE_DIR, "content", "tables")
-    os.makedirs(tables_dir, exist_ok=True)
-    summary_path = os.path.join(tables_dir, "tab_community_summary.csv")
-    summary_df.to_csv(summary_path, index=False)
-    log.info("Saved community summary -> %s", summary_path)
-
     log.info("=== Community profiles ===")
     for c in sorted(comm_df["community"].unique()):
         members = comm_df[comm_df["community"] == c]
@@ -188,7 +166,7 @@ def save_community_data(G, partition, ref_counts, doi_to_meta, output_path):
     return comm_df
 
 
-def run_robustness(G, tables_dir):
+def run_robustness(G):
     """Louvain resolution sensitivity analysis (R3)."""
     from sklearn.metrics import adjusted_rand_score
 
@@ -217,9 +195,6 @@ def run_robustness(G, tables_dir):
             sens_rows.append(row)
 
         sens_df = pd.DataFrame(sens_rows)
-        sens_path = os.path.join(tables_dir, "tab_louvain_sensitivity.csv")
-        sens_df.to_csv(sens_path, index=False)
-        log.info("Saved Louvain sensitivity -> %s", sens_path)
 
         # ARI between resolution levels
         log.info("  Pairwise ARI:")
@@ -285,8 +260,7 @@ def main():
 
     # --- Optional robustness ---
     if args.robustness:
-        tables_dir = os.path.join(BASE_DIR, "content", "tables")
-        run_robustness(G, tables_dir)
+        run_robustness(G)
 
     log.info("Done.")
 
