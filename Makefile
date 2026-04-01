@@ -260,7 +260,7 @@ stats: $(COMPUTED_STATS)
 # ── Tables (generated, included by Quarto) ──────────────
 
 # Core subset → venues table
-$(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED)
+$(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED) $(REFINED_CIT)
 	uv run python $< --output $@
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
@@ -372,7 +372,7 @@ content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/u
 
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
-		$(REFINED) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
+		$(REFINED) $(REFINED_CIT) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
 	uv run python $< --output $@
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
@@ -428,7 +428,7 @@ content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywor
 	uv run python $< --core-only --output $@
 
 # Pre-2007 co-citation traditions network
-content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)
+content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED) $(REFINED_CIT)
 	uv run python $< --output $@
 
 # Co-citation communities (compute: community assignments + summary table)
@@ -437,7 +437,7 @@ $(COMMUNITIES): scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
 	uv run python $< --output $@
 
 # Co-citation communities (plot: network figure)
-content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES)
+content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES) $(REFINED_CIT)
 	uv run python $< --output $@ --input $(COMMUNITIES)
 
 # KDE supplementary
