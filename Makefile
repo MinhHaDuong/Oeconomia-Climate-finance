@@ -25,6 +25,7 @@
 # Data lives in data/catalogs/ (managed by DVC).
 # Python scripts resolve the same path via utils.py (BASE_DIR/data).
 DATA_DIR     := data/catalogs
+CONFIG       := config/analysis.yaml
 BIB         := content/bibliography/main.bib
 CSL         := content/bibliography/oeconomia.csl
 SRC         := content/manuscript.qmd
@@ -270,15 +271,15 @@ content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py 
 
 # -- Manuscript (Oeconomia article) --
 # Fig 1 (bars): corpus growth per year
-content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
+content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@
 
 # Fig 1 v1 variant: restricted to submission corpus for manuscript stability
-content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
+content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@ --v1-only
 
 # Fig 2 (composition): frozen v1 archive data + corrected labels
-content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
+content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
 	uv run python $< --output $@ --input config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
@@ -286,7 +287,7 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 # Semantic clusters (computation only — no figures)
 SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
 
-$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
+$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@
 
 # Semantic UMAP maps (one parameterized plot script, 3 invocations)
@@ -301,16 +302,16 @@ content/figures/fig_semantic_period.png: scripts/plot_semantic.py scripts/utils.
 
 # -- Companion paper (quantitative) --
 # Structural break tables (independent of clustering)
-content/tables/tab_breakpoints.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+content/tables/tab_breakpoints.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@
 
-content/tables/tab_breakpoint_robustness.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+content/tables/tab_breakpoint_robustness.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@ --robustness
 
 # Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
-		scripts/compute_clusters.py scripts/utils.py $(REFINED)
+		scripts/compute_clusters.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output content/tables/tab_alluvial.csv
 
 # Clustering — v1 frozen from reproducibility archive (not re-clustered).
@@ -321,32 +322,32 @@ content/tables/tab_core_shares.csv &: \
 
 # Breakpoints figure
 content/figures/fig_breakpoints.png: \
-		scripts/plot_fig_breakpoints.py scripts/utils.py \
+		scripts/plot_fig_breakpoints.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
 		content/tables/tab_alluvial.csv
 	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv content/tables/tab_alluvial.csv
 
 # Alluvial figure (static PNG)
 content/figures/fig_alluvial.png: \
-		scripts/plot_fig_alluvial.py scripts/utils.py \
+		scripts/plot_fig_alluvial.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
 	uv run python $< --output $@ --input content/tables/tab_alluvial.csv
 
 # Alluvial figure (interactive HTML)
 content/figures/fig_alluvial.html: \
-		scripts/plot_alluvial_html.py scripts/utils.py \
+		scripts/plot_alluvial_html.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
 	uv run python $< --output $@
 
 # Period divergence curves
-content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py \
+content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_breakpoints.csv
 	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv
 
 # Bimodality tables (computation only — figures are separate targets below)
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
 content/tables/tab_pole_papers.csv &: \
-		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+		scripts/analyze_bimodality.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output content/tables/tab_bimodality.csv
 
 # Bimodality figures (each reads tab_pole_papers.csv)
@@ -363,55 +364,55 @@ content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py
 	uv run python $< --output $@
 
 # Seed-axis violin (core, manuscript figure)
-content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(REFINED)
+content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@
 
 # PCA scatter (unsupervised)
-content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(REFINED)
+content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@
 
 # Citation genealogy: model (lineage table) then renderers
-content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py \
+content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py $(CONFIG) \
 		$(REFINED) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
 	uv run python $< --output $@
 
-content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py \
+content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
 	uv run python $< --output $@
 
-content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py \
+content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
 	uv run python $< --output $@
 
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only: structural break tables
-content/tables/tab_breakpoints_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+content/tables/tab_breakpoints_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@ --core-only
 
-content/tables/tab_breakpoint_robustness_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+content/tables/tab_breakpoint_robustness_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@ --robustness --core-only
 
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
-		scripts/compute_clusters.py scripts/utils.py $(REFINED)
+		scripts/compute_clusters.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output content/tables/tab_alluvial_core.csv --core-only
 
 # Core-only figures
 content/figures/fig_breakpoints_core.png: \
-		scripts/plot_fig_breakpoints.py scripts/utils.py \
+		scripts/plot_fig_breakpoints.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
 		content/tables/tab_alluvial_core.csv
 	uv run python $< --output $@ --core-only --input content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv content/tables/tab_alluvial_core.csv
 
 content/figures/fig_alluvial_core.png: \
-		scripts/plot_fig_alluvial.py scripts/utils.py \
+		scripts/plot_fig_alluvial.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
 	uv run python $< --output $@ --core-only --input content/tables/tab_alluvial_core.csv
 
 # Bimodality core variant tables
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
 content/tables/tab_pole_papers_core.csv &: \
-		scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
+		scripts/analyze_bimodality.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output content/tables/tab_bimodality_core.csv --core-only
 
 # Bimodality core variant figures
@@ -428,7 +429,7 @@ content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywor
 	uv run python $< --core-only --output $@
 
 # Pre-2007 co-citation traditions network
-content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(REFINED)
+content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@
 
 # Co-citation communities (compute: community assignments + summary table)
@@ -441,7 +442,7 @@ content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py
 	uv run python $< --output $@ --input $(COMMUNITIES)
 
 # KDE supplementary
-content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py \
+content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_pole_papers.csv
 	uv run python $< --output $@
 
@@ -451,7 +452,7 @@ content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.p
 	uv run python $< --output $@
 
 # K-sensitivity table
-content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(REFINED)
+content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@ --k-sensitivity
 
 # K-sensitivity figure
@@ -461,12 +462,12 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py \
 
 # Lexical TF-IDF figures (one per detected break year; output filenames are
 # dynamic, so we use a sentinel file to track freshness).
-.lexical_tfidf.stamp: scripts/plot_fig_lexical_tfidf.py scripts/plot_style.py \
+.lexical_tfidf.stamp: scripts/plot_fig_lexical_tfidf.py scripts/plot_style.py $(CONFIG) \
 		content/tables/tab_lexical_tfidf.csv
 	uv run python $< --output $@
 
 # DVC pipeline DAG (data paper)
-content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py dvc.yaml
+content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py $(CONFIG) dvc.yaml
 	uv run python $< --output $@
 
 figures-manuscript: corpus-handoff $(MANUSCRIPT_FIGS)
