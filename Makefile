@@ -252,7 +252,14 @@ COMPUTED_STATS := content/technical-report-vars.yml \
 # Grouped target (&:) — one invocation writes all 3 files. Requires GNU Make >= 4.3.
 $(COMPUTED_STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		content/tables/tab_bimodality.csv content/tables/tab_bimodality_core.csv \
-		content/tables/tab_axis_detection.csv
+		content/tables/tab_axis_detection.csv \
+		$(wildcard $(UNIFIED)) \
+		$(wildcard $(DATA_DIR)/corpus_audit.csv) \
+		$(wildcard $(DATA_DIR)/embeddings.npz) \
+		$(wildcard $(REFINED_EMB)) \
+		$(wildcard $(DATA_DIR)/citations.csv) \
+		$(wildcard $(REFINED_CIT)) \
+		$(wildcard content/tables/qa_citations_report.json)
 	uv run python $< --output $@
 
 stats: $(COMPUTED_STATS)
