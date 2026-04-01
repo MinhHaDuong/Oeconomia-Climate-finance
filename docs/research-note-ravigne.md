@@ -4,54 +4,48 @@
 
 ### Question
 
-Did the IPCC assessment reports merely reflect the emerging scholarship on climate finance, or did they actively shape which definitions, frameworks, and authors became dominant? More specifically: does the timing and selectivity of IPCC citations explain why certain conceptions of climate finance crystallized while others were marginalized?
+Did the IPCC assessment reports merely reflect the emerging scholarship on climate finance, or did they shape which traditions became dominant? Does the timing and selectivity of IPCC citations explain why certain conceptions of climate finance crystallized while others were marginalized?
 
 ### Motivation
 
-Climate finance consolidated as a distinct field of economic inquiry between 2007 and 2014. The periodization follows institutional milestones — the Bali Action Plan (2007) and Copenhagen Accord (2009) open the crystallization period, the Paris Agreement (2015) marks the established field — and is visible in the publication volume curve. Embedding-based similarity analysis across the corpus is consistent with this three-act structure. The periodization coincides with IPCC assessment cycles: AR4 (2007), AR5 (2014), AR6 (2022). This raises a question: did the IPCC contribute to the crystallization, or merely document it?
+Climate finance consolidated as a field between 2007 and 2014. Embedding-based break detection on the Ha-Duong corpus identifies structural breaks at 2007 (cosine) and 2013 (Jensen-Shannon), consistent with institutional milestones (Bali Action Plan, Copenhagen Accord, Paris Agreement). These breaks coincide with IPCC assessment cycles: AR4 (2007), AR5 (2014), AR6 (2022). Did the IPCC contribute to the crystallization, or document it?
 
-The IPCC occupies a singular position in the science-policy interface. Its assessment reports are not primary research but synthesis — yet being cited in an IPCC report confers visibility, legitimacy, and influence on policy frameworks. If lead authors systematically cite their own work or favor particular research traditions, the IPCC functions not as a mirror but as a lens that bends the field.
+The IPCC is not primary research but synthesis — yet inclusion in an assessment report confers visibility, legitimacy, and policy influence. If lead authors favor particular traditions, the IPCC functions as a lens that bends the field.
 
 ### Data
 
-Four citation graphs — one for the field, three for the IPCC — matched by DOI.
+Four citation graphs, matched by DOI (academic works) and fuzzy title (grey literature).
 
-| Graph | Source | Nodes | What it captures | Period |
-|-------|--------|-------|------------------|--------|
-| G₀ | Ha-Duong corpus | ~32K works, ~970K citation edges | Intellectual structure of the field, clustered and periodized | 1990–2025 |
-| G₁ | AR4 WG III (2007) | Bibliography of finance chapter(s) | What the IPCC saw at the end of period I (before crystallization) | ≤2006 |
-| G₂ | AR5 WG III (2014) | idem | What the IPCC saw at the end of period II (crystallization) | ≤2013 |
-| G₃ | AR6 WG III (2022) | idem | What the IPCC saw in period III (established field) | ≤2021 |
+| Graph | Source | Size | What it captures | Period |
+|-------|--------|------|------------------|--------|
+| G₀ | Ha-Duong corpus | ~32K works, ~970K edges | Field structure: 6 clusters (k-means on bge-m3 embeddings), 3 periods | 1990–2025 |
+| G₁ | AR4 WG III ch. 13 | Bibliography | What the IPCC saw before crystallization | ≤2006 |
+| G₂ | AR5 WG III ch. 16 | Bibliography | What the IPCC saw at crystallization's end | ≤2013 |
+| G₃ | AR6 WG III ch. 15 | Bibliography | What the IPCC saw in the established field | ≤2021 |
 
-G₀ is embedded (SPECTER2), clustered into six intellectual traditions, and periodized along institutional milestones (2007, 2014). The citation graph records which corpus works cite IPCC reports, but not the reverse. G₁–G₃ provide the reverse: which works the IPCC selects from the literature. Joining the four graphs closes the citation loop.
+G₀'s citation graph records which corpus works cite IPCC reports; G₁–G₃ provide the reverse. Joining the four graphs closes the citation loop. One AR per period — not by design, but because the IPCC cycle roughly coincides with the field's breaks.
 
-One assessment report per period. The alignment is not designed — it is a consequence of the IPCC assessment cycle roughly coinciding with the field's institutional milestones.
-
-**Ha-Duong** provides G₀ (corpus, clusters, citation graph, embeddings). **Ravigné** provides G₁–G₃ (IPCC bibliographies, lead author metadata, self-citation measures).
+**Ha-Duong** provides G₀. **Ravigné** provides G₁–G₃ (IPCC bibliographies, lead author metadata, self-citation measures).
 
 ### Method
 
-Three phases: matching, corpus extension, and two comparative analyses.
-
 **Phase 0 — Matching and corpus extension.**
-Match G₁–G₃ bibliographies against G₀ by DOI. This yields two subsets: (a) matched works — IPCC-selected works already in the corpus, and (b) unmatched references — works cited by the IPCC but absent from G₀. The unmatched references are predominantly grey literature (World Bank, UNFCCC, OECD working papers) that the IPCC considered important enough to cite. Rather than treating low match rates as a problem, we use the unmatched references as a discovery mechanism: they identify grey literature that matters to the IPCC's view of the field. Those with retrievable metadata are added to G₀, extending the corpus precisely in the direction the IPCC points. The match rate itself is a finding: a low rate means the IPCC draws from a literature largely outside the academic corpus, which says something about the field's relationship to policy.
+Match G₁–G₃ against G₀ in two passes: DOI, then fuzzy title for grey literature lacking DOIs. This yields (a) matched works already in the corpus and (b) unmatched references absent from G₀. Climate finance's primary sources — OECD DAC reporting, CPI *Global Landscape* reports, UNFCCC Standing Committee assessments, World Bank documents — are grey literature, so a large unmatched set is expected. The match rate by source type and AR reveals G₀'s academic-database-first blind spot. Unmatched works with retrievable metadata are embedded (bge-m3) and added to G₀, extending the corpus where the IPCC points.
+
+**Institutional context.** IPCC lead authors face three competing mandates, acute for climate finance. They must cite recent results (renewal). Since 2011, following Glaciergate and the InterAcademy Council review, they must justify every non-peer-reviewed citation (Annex 2, IPCC 33rd Session, Abu Dhabi). Yet the field's knowledge base *is* grey literature. The path of least resistance: cite academic papers that themselves cite institutional reports, filtering the field through a proxy layer. The grey-lit share across AR4→AR5→AR6 thus reflects both the field's evolution and this procedural tightening.
 
 **Analysis 1 — Coverage and blind spots.**
-For each ARn, project matched works onto the six clusters. This yields a coverage vector per AR: e.g., AR4 = [15% development aid, 40% carbon markets, 5% adaptation, ...]. Compare coverage vectors across AR4 → AR5 → AR6. Does the IPCC broaden its coverage as the field grows, or does it remain locked into the same traditions? Which clusters are systematically under-represented? A chi-squared test against the null of proportional sampling. Visualization: radar plot, one polygon per AR. The unmatched references from Phase 0 can be embedded and projected onto the same clusters, showing where the IPCC looks *outside* the academic corpus.
+Project matched works onto the six clusters. This yields a coverage vector per AR. Compare across AR4→AR5→AR6: does the IPCC broaden its thematic coverage or stay locked in? Chi-squared test against proportional sampling. Embed unmatched references onto the same clusters to show where the IPCC looks outside the academic corpus. Visualization: radar plot, one polygon per AR.
 
 **Analysis 2 — Direction of renewal.**
-Ravigné has shown that the IPCC renews its references across assessment cycles — this is an institutional mandate given to lead authors. We take this result as given and ask: *in which direction* does renewal occur? For new entrants in each AR (G₂ \ G₁, G₃ \ (G₁ ∪ G₂)), we identify their cluster membership. Does the IPCC discover new intellectual traditions as it renews, or does it refresh within the same ones? If AR5 replaces old carbon market papers with new carbon market papers, renewal is cosmetic. If it brings in adaptation finance or climate risk work that was absent from AR4, the IPCC is broadening its view of the field. We further decompose new entrants into academic (matched in G₀) and grey literature (unmatched), testing whether broadening comes from academic diversification or from the incorporation of new policy sources.
+Ravigné has shown that the IPCC renews references across cycles (institutional mandate). We ask: *in which direction?* For new entrants in each AR (G₂ \ G₁, G₃ \ G₁∪G₂), identify cluster membership. If AR5 replaces old carbon market papers with new ones, renewal is cosmetic. If it brings in adaptation finance or climate risk, the IPCC is broadening. Decompose new entrants into academic (matched) and grey (unmatched) to test whether broadening comes from academic diversification or new policy sources — and whether the post-2011 procedural shift suppresses grey-lit renewal.
 
-**Synthesis.** Analysis 1 shows *what* the IPCC selects from the field. Analysis 2 shows *where renewal goes* — deeper into the same traditions or across new ones. Together, they test whether the IPCC's mandated renewal translates into genuine intellectual broadening or cosmetic updating within a stable thematic frame.
+**Synthesis.** Analysis 1 shows what the IPCC selects. Analysis 2 shows where renewal goes. Together they test whether mandated renewal translates into intellectual broadening or cosmetic updating within a stable frame.
 
 ### Relation to existing work
 
-Studies of IPCC citation patterns have examined geographic bias (Corbera et al. 2016), disciplinary composition (Bjurström and Polk 2011), and self-citation dynamics (Ravigné et al.). Our contribution is to add the *thematic* dimension: not just who or where the IPCC cites, but from which intellectual traditions within a specific field. The embedding-based cluster structure provides a map that prior work lacked.
-
-### Expected contribution
-
-An empirical paper showing patterns in how the IPCC selected from and shaped the climate finance literature across three assessment cycles. We do not claim to demonstrate causation — the analyses are descriptive — but we can characterize the IPCC's thematic coverage, its blind spots, and the direction of its renewal. Three assessment reports aligned with three periods provide a natural comparison. The grey literature extension (Phase 0) is a methodological contribution in its own right: using IPCC bibliographies as a discovery tool for policy-relevant literature that academic databases miss.
+Studies of IPCC citation patterns have examined geographic bias (Corbera et al. 2016), disciplinary composition (Bjurström and Polk 2011), and self-citation (Ravigné et al.). We add the thematic dimension: not just who or where the IPCC cites, but from which intellectual traditions within a specific field. The embedding-based cluster structure provides a map that prior work lacked. The grey-lit tension (Phase 0 + institutional context) connects to the literature on IPCC governance reform (IAC 2010) in a way that citation studies have not explored for individual subfields.
 
 ### Practical arrangement
 
-Each author contributes their existing pipeline and data. The joint work is the matching step (Phase 0) and the two comparative analyses. Division of labor: Ha-Duong provides G₀ (corpus, clusters, embeddings, citation graph); Ravigné provides G₁–G₃ (IPCC bibliographies, lead author metadata, self-citation analysis). Target: a research article (4,000–5,000 words) for Quantitative Science Studies or Scientometrics.
+Each author contributes their existing pipeline. Joint work: matching (Phase 0) and comparative analyses. Ha-Duong: G₀ (corpus, clusters, embeddings, citations). Ravigné: G₁–G₃ (IPCC bibliographies, lead author metadata, self-citation analysis). Target: 4,000–5,000 words for Quantitative Science Studies or Scientometrics.

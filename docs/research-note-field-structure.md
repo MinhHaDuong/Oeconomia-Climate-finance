@@ -26,7 +26,7 @@ The three periods of climate finance — prehistory (1990–2006), crystallizati
 
 The corpus comprises ~32,000 refined works from six sources (OpenAlex, ISTEX, bibCNRS, SciSpace, grey literature, teaching canon). Each work has:
 
-- A SPECTER2 embedding (768 dimensions), enabling text-based clustering
+- A sentence-transformer embedding (BAAI/bge-m3, 1024 dimensions), enabling text-based clustering
 - A position in the citation graph (~970,000 directed edges within the corpus), enabling graph-based community detection
 - Metadata: publication year, cited_by_count, cluster assignment (k=6), period assignment
 
