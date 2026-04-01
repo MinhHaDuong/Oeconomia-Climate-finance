@@ -286,7 +286,7 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 # Semantic clusters (computation only — no figures)
 SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
 
-$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(REFINED)
+$(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(ENRICHED) $(DATA_DIR)/embeddings.npz
 	uv run python $< --output $@
 
 # Semantic UMAP maps (one parameterized plot script, 3 invocations)
