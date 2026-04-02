@@ -458,6 +458,11 @@ content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.p
 		content/tables/tab_breakpoint_robustness.csv
 	uv run python $< --output $@
 
+# Multilingual epistemic structure (exploratory JSON report)
+content/tables/multilingual_report.json: scripts/analyze_multilingual.py scripts/utils.py \
+		scripts/build_het_core.py $(REFINED) $(REFINED_EMB) $(REFINED_CIT) $(SEMANTIC_CLUSTERS)
+	uv run python $< --output $@
+
 # K-sensitivity table
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
 	uv run python $< --output $@ --k-sensitivity
