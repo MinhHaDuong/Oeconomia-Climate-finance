@@ -30,7 +30,7 @@ The twist: the language axis and the geography axis are not the same thing. Glob
 
 ### Key results (expected)
 
-From the existing data:
+From corpus v1.1.1 (~31,000 refined works):
 
 - **Language distribution**: 93.1% English, 1.8% Portuguese, 1.3% German, 1.3% Spanish, 1.1% French, <1% each for Chinese, Japanese, Indonesian, Turkish, Korean, Russian. Non-English works: ~2,100 in semantic clusters.
 - **Cluster concentration**: Portuguese works cluster disproportionately in cluster 2 (3.6% vs 1.8% corpus-wide) — visible as a dense pocket in the UMAP at (x≈8–10, y≈10–12). German overrepresented in cluster 3 (2.0% vs 1.3%). Non-random distribution.
@@ -102,8 +102,8 @@ The paper's contribution is empirical: using multilingual sentence embeddings, w
 
 | ID | Title | Type | What it shows |
 |----|-------|------|--------------|
-| F1 | Semantic landscape by language | UMAP scatter | All works; English in grey (α=0.2), non-English highlighted by language. **Already exists**: `fig_semantic_lang.png`. Adapt for publication quality. |
-| F2 | Semantic landscape by quadrant | UMAP scatter | Same projection, colored by 4 quadrants (EN-N grey, EN-S blue, nonEN-N orange, nonEN-S red). Shows geographic vs linguistic separation. |
+| F1 | Semantic map by language | UMAP scatter | All works; English in grey (α=0.2), non-English highlighted by language. **Already exists**: `fig_semantic_lang.png`. Adapt for publication quality. |
+| F2 | Semantic map by quadrant | UMAP scatter | Same projection, colored by 4 quadrants (EN-N grey, EN-S blue, nonEN-N orange, nonEN-S red). Shows geographic vs linguistic separation. |
 | F3 | Isolation score distributions | Violin + strip plot | One violin per quadrant, showing full distribution of isolation scores. Horizontal lines at medians. Key comparison: EN-South vs nonEN-North. |
 | F4 | Isolation heatmap | Heatmap (4 quadrants × 6 clusters) | Mean isolation score per cell. Color gradient from low (integrated) to high (isolated). Reveals which quadrant × cluster combinations are most invisible. |
 | F5 | Citation flow diagram | Sankey or alluvial | Directed citation flows between quadrants: width proportional to citation count. Asymmetry visible as unequal band widths. |
