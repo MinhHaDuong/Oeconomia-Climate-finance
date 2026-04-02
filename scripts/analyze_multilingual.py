@@ -36,7 +36,7 @@ def classify_quadrant(row):
     if not lang:
         return None
 
-    is_en = lang in ("en", "eng", "en_us", "english")
+    is_en = not is_non_english(row)
     aff = str(row.get("affiliations", "") or "").lower().strip()
     if not aff:
         return None  # Cannot determine geography without affiliations
@@ -68,16 +68,18 @@ def compute_quadrant_stats(df):
     df["quadrant"] = df.apply(classify_quadrant, axis=1)
     classified = df.dropna(subset=["quadrant"])
 
+    total_classified = len(classified)
     result = {}
     for q in ["EN-N", "EN-S", "nonEN-N", "nonEN-S"]:
         subset = classified[classified["quadrant"] == q]
+        n = len(subset)
         result[q] = {
-            "n": int(len(subset)),
-            "pct": round(100 * len(subset) / len(classified), 2),
-            "mean_cited_by": round(float(subset["cited_by_count"].mean()), 1),
-            "median_cited_by": round(float(subset["cited_by_count"].median()), 1),
+            "n": int(n),
+            "pct": round(100 * n / total_classified, 2) if total_classified else 0.0,
+            "mean_cited_by": round(float(subset["cited_by_count"].mean()), 1) if n else 0.0,
+            "median_cited_by": round(float(subset["cited_by_count"].median()), 1) if n else 0.0,
         }
-    result["unclassified"] = int(len(df) - len(classified))
+    result["unclassified"] = int(len(df) - total_classified)
     return result
 
 
@@ -88,10 +90,9 @@ def compute_contingency(df, clusters_df):
         on="doi",
         how="inner",
     )
-    merged["lang_group"] = merged["language"].apply(
-        lambda x: x if x in ("en", "pt", "de", "es", "fr", "zh", "ja") else "other"
+    merged["lang_group"] = merged["language"].fillna("missing").apply(
+        lambda x: x if x in ("en", "pt", "de", "es", "fr", "zh", "ja", "missing") else "other"
     )
-    merged["lang_group"] = merged["lang_group"].fillna("missing")
 
     ct = pd.crosstab(merged["lang_group"], merged["semantic_cluster"])
     chi2, p, dof, expected = stats.chi2_contingency(ct)
@@ -176,8 +177,9 @@ def compute_isolation_scores(df, embeddings, k=10):
     dists = cosine_distances(sample_emb, en_north_emb)
     baseline_scores = []
     for row_dists in dists:
-        sorted_dists = np.sort(row_dists)
-        knn_dists = sorted_dists[1:k + 1]  # skip self
+        # partition k+1 smallest, skip self (index 0 after partition)
+        knn_dists = np.partition(row_dists, k + 1)[:k + 1]
+        knn_dists = np.sort(knn_dists)[1:]  # drop the self-distance (0)
         baseline_scores.append(float(np.mean(knn_dists)))
     baseline = np.array(baseline_scores)
     results["EN-N"] = {

@@ -14,6 +14,7 @@ sys.path.insert(0, SCRIPTS_DIR)
 from analyze_multilingual import (
     classify_quadrant,
     compute_citation_directionality,
+    compute_contingency,
     compute_core_composition,
     compute_isolation_scores,
     compute_language_stats,
@@ -98,6 +99,55 @@ class TestComputeQuadrantStats:
         })
         result = compute_quadrant_stats(df)
         assert result["unclassified"] == 1
+
+
+class TestComputeContingency:
+    """Unit tests for language x cluster contingency table."""
+
+    def test_basic_contingency(self):
+        df = pd.DataFrame({
+            "doi": ["d1", "d2", "d3", "d4"],
+            "language": ["en", "en", "pt", "de"],
+        })
+        clusters_df = pd.DataFrame({
+            "doi": ["d1", "d2", "d3", "d4"],
+            "semantic_cluster": [0, 1, 0, 1],
+        })
+        result = compute_contingency(df, clusters_df)
+        assert "chi2" in result
+        assert "p_value" in result
+        assert "dof" in result
+        assert "contingency_table" in result
+        assert isinstance(result["significant_cells"], list)
+
+    def test_missing_language_grouped(self):
+        """NaN languages should appear as 'missing', not crash."""
+        df = pd.DataFrame({
+            "doi": ["d1", "d2", "d3"],
+            "language": ["en", None, "en"],
+        })
+        clusters_df = pd.DataFrame({
+            "doi": ["d1", "d2", "d3"],
+            "semantic_cluster": [0, 0, 1],
+        })
+        result = compute_contingency(df, clusters_df)
+        # ct.to_dict() keys by column (cluster); lang_group is in the inner dict
+        first_cluster = result["contingency_table"][0]
+        assert "missing" in first_cluster
+
+    def test_rare_language_grouped_as_other(self):
+        """Languages not in the top-7 list should map to 'other'."""
+        df = pd.DataFrame({
+            "doi": ["d1", "d2", "d3", "d4"],
+            "language": ["en", "en", "ko", "tr"],
+        })
+        clusters_df = pd.DataFrame({
+            "doi": ["d1", "d2", "d3", "d4"],
+            "semantic_cluster": [0, 1, 0, 1],
+        })
+        result = compute_contingency(df, clusters_df)
+        first_cluster = result["contingency_table"][0]
+        assert "other" in first_cluster
 
 
 class TestComputeIsolationScores:
