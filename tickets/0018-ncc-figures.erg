@@ -1,6 +1,6 @@
 %erg v1
 Title: Adapt 4 figures for NCC format
-Status: open
+Status: closed
 Created: 2026-04-13
 Author: claude
 Blocked-by: 0017
@@ -9,6 +9,7 @@ Blocked-by: 0021
 --- log ---
 2026-04-13T21:03Z claude created
 2026-04-13T21:03Z claude note subtask of epic 0012; depends on format specs from 0017
+2026-04-13T21:33Z claude status closed — 4 scripts, Makefile targets, captions in docs/ncc-figure-captions.md
 
 --- body ---
 ## Context

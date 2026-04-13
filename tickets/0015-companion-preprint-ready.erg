@@ -1,6 +1,6 @@
 %erg v1
 Title: Make companion paper preprint-ready
-Status: open
+Status: closed
 Created: 2026-04-13
 Author: claude
 Blocked-by: 0021
@@ -8,6 +8,7 @@ Blocked-by: 0021
 --- log ---
 2026-04-13T21:03Z claude created
 2026-04-13T21:03Z claude note subtask of epic 0012; companion paper has ~8K words of prose, needs polish pass
+2026-04-13T21:33Z claude status closed — abstract added, comments removed, AI tells fixed, z-scores corrected
 
 --- body ---
 ## Context
