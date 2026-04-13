@@ -1,8 +1,8 @@
-**To:** Francesco Sergi, Managing Editor, Oeconomia
+**To:** Jean-Sébastien Lenfant, Editor-in-Chief, Oeconomia
 **From:** Minh Ha-Duong, CIRED/CNRS
 **Re:** Errata — "Inventing Climate Finance. From Incremental Costs to Strategic Ambiguity" (Varia submission of 2026-03-18)
 
-Dear Professor Sergi,
+Dear Professor Lenfant,
 
 During post-submission verification of the replication archive, I identified a labelling error in Figure 2 of my manuscript submitted on March 18. The data and percentages in the figure are unchanged; only the panel titles were incorrectly assigned to cluster panels.
 

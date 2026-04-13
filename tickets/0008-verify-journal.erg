@@ -1,30 +1,51 @@
 %erg v1
 Title: Verify target journal for multilingual paper
-Status: open
+Status: pending
 Created: 2026-04-13
 Author: claude
 
 --- log ---
 2026-04-13T15:45Z claude created
+2026-04-13T18:30Z claude status pending — awaiting Couperin eligibility response
+2026-04-13T18:30Z claude note research complete, all three original candidates eliminated (none diamond OA), email sent to F. Bordignon (ENPC library)
 
 --- body ---
 ## Context
-Diamond OA is required. Candidates from the research note:
-- Quantitative Science Studies (MIT Press) — likely diamond OA
-- Research Evaluation (OUP)
-- Science, Technology, & Human Values
+Target: 30+ citations. Diamond OA preferred, but Couperin-covered APC acceptable.
 
-Must verify OA model, word limits, submission format, and scope fit before
-committing to a target.
+## Research results (2026-04-13)
 
-## Actions
-1. WebFetch each journal's author guidelines page
-2. Confirm diamond OA status (no APC to author)
-3. Note word limits, formatting requirements, review timeline
-4. Recommend best fit based on paper's methodological + empirical angle
+### Original candidates — all eliminated
+- **QSS** (MIT Press/ISSI): Gold OA, APC $750 (ISSI) / $1,200. NOT diamond.
+- **Research Evaluation** (OUP): Hybrid, APC ~$3,000–4,500. NOT diamond.
+- **ST&HV** (SAGE/4S): Hybrid, APC ~$3,000+. NOT diamond.
 
-## Test
-Written recommendation with URLs and verified facts.
+### Diamond OA alternatives — insufficient citation potential
+- **Cultural Analytics** (Princeton): Diamond OA but scope mismatch (literary/cultural objects, not metascience). IF 1.1, H-index 12. Cannot reach 30 citations.
+- **ESTS** (4S): Diamond OA, 80-90% desk rejection, 5,000 word limit. Not viable.
+- **Revue d'anthropologie des connaissances**: Diamond OA, French. Citation ceiling too low.
+
+### Viable options (APC covered or low)
+| Priority | Journal | APC | Path to zero cost | 30+ cites |
+|----------|---------|-----|--------------------|-----------|
+| 1 | Scientometrics (Springer) | €2,200 | Couperin/ENPC — awaiting confirmation | Realistic (IF 3.5) |
+| 2 | JASIST (Wiley) | $3,480 | Couperin/ENPC — awaiting confirmation | Realistic |
+| 3 | QSS (MIT Press) | $750 | ISSI membership €75 + Garfield waiver | Realistic (IF 3.5, 5y: 6.6) |
+
+### Citation reality
+Multilingual embeddings for bibliometrics is novel but niche. Median expectation:
+5–10 citations in 3 years. 30+ = top 7–8%. Best strategy: frame as general
+methodological requirement for any cross-linguistic bibliometric study, not just
+climate finance.
+
+## Pending action
+Email sent 2026-04-13 to Frédérique Bordignon (frederique.bordignon@enpc.fr),
+ENPC library IST, asking about Couperin eligibility for Springer and Wiley via ENPC.
+
+## Decision tree
+- If Couperin covers Springer → Scientometrics
+- If Couperin covers Wiley → JASIST
+- If neither → QSS ($750 ISSI + waiver request)
 
 ## Exit criteria
 Journal chosen. Formatting requirements known.
