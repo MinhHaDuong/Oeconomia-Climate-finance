@@ -66,3 +66,6 @@ output/
 /.quarto/
 _variables.yml
 benchmarks/
+
+# git-erg compiled binary
+tickets/tools/go/erg

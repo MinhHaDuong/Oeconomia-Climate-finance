@@ -3,7 +3,8 @@
     "allow": [
       "Bash(*dvc *)",
       "Bash(*quarto *)",
-      "Edit(/.claude/**)"
+      "Edit(/.claude/**)",
+      "WebSearch"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -47,6 +48,18 @@
           {
             "type": "prompt",
             "prompt": "Before committing, verify: (1) If dvc.lock is staged, confirm recorded hashes exist in local cache — if not, run dvc repro/commit first. (2) Re-read any file you modified or relied on — fix stale numbers, dead references, or outdated status in this same commit. (3) If you changed a pipeline script interface or data schema, update content/technical-report.qmd."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(cat | jq -r '.tool_input.file_path // empty'); case \"$file\" in *.erg) erg validate tickets/ 2>&1 ;; esac",
+            "timeout": 10
           }
         ]
       }
