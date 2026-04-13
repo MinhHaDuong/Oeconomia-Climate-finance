@@ -1,0 +1,31 @@
+%erg v1
+Title: Verify target journal for multilingual paper
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0001
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Diamond OA is required. Candidates from the research note:
+- Quantitative Science Studies (MIT Press) — likely diamond OA
+- Research Evaluation (OUP)
+- Science, Technology, & Human Values
+
+Must verify OA model, word limits, submission format, and scope fit before
+committing to a target.
+
+## Actions
+1. WebFetch each journal's author guidelines page
+2. Confirm diamond OA status (no APC to author)
+3. Note word limits, formatting requirements, review timeline
+4. Recommend best fit based on paper's methodological + empirical angle
+
+## Test
+Written recommendation with URLs and verified facts.
+
+## Exit criteria
+Journal chosen. Formatting requirements known.

@@ -1,0 +1,26 @@
+%erg v1
+Title: Add temporal decomposition to multilingual analysis
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0003
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Research note Step 4: repeat isolation scores and citation directionality by
+period (pre-2007, 2007-2014, 2015-2024). Tests whether epistemic isolation
+decreases as the field matures or persists. Not yet in the script.
+
+## Actions
+1. Add period-stratified functions to analyze_multilingual.py
+2. Write tests for the new functions
+3. Run on padme, commit results to multilingual_report.json
+
+## Test
+test_analyze_multilingual.py::test_temporal_isolation passes.
+
+## Exit criteria
+Report includes temporal breakdown. Isolation trend is interpretable.

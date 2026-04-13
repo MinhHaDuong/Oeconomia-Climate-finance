@@ -1,0 +1,30 @@
+%erg v1
+Title: Run multilingual analysis script on padme
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0001
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+scripts/analyze_multilingual.py computes isolation scores, quadrant classification
+(English/non-English x Global North/South per OECD DAC), citation directionality,
+and language x cluster contingency. It reads refined_works.csv, embeddings.npz,
+and citations.csv — all existing Phase 1 outputs. No GPU needed.
+
+Makefile rule: `make content/tables/multilingual_report.json`
+
+## Actions
+1. SSH to padme, run the Makefile target
+2. Sync report back to doudou via `make corpus-sync`
+3. Inspect output: quadrant counts, unclassified fraction, isolation means
+
+## Test
+multilingual_report.json exists and contains keys: language_stats, quadrant_stats,
+isolation_k10, citation_flows, contingency, core_composition.
+
+## Exit criteria
+Report generated and committed to repo.

@@ -1,0 +1,25 @@
+%erg v1
+Title: Run robustness checks for multilingual paper
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0003
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Two robustness dimensions. Neighbor sensitivity already covered (k=5/10/20 in
+the script). Cluster granularity not yet tested.
+
+## Actions
+1. Recompute isolation scores and contingency at k=3, 4, 6, 8 clusters
+2. Report whether quadrant isolation patterns are stable across k values
+3. If k=6 results are fragile, identify which k is most robust
+
+## Test
+Report includes a robustness section with results at multiple k values.
+
+## Exit criteria
+Robustness assessment written. Main findings hold or scope is adjusted.

@@ -1,0 +1,26 @@
+%erg v1
+Title: Submit multilingual epistemic blind spots paper
+Status: open
+Created: 2026-04-13
+Author: user
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Bibliometric studies of climate finance use English-only databases and lexical
+methods. This paper argues that multilingual sentence embeddings (bge-m3) are a
+minimum methodological requirement, and uses them to document epistemic blind
+spots by language and geography.
+
+Research note: docs/research-note-multilingual.md (full paper outline, annotated
+bibliography, four hypotheses). Analysis script: scripts/analyze_multilingual.py
+(isolation scores, quadrant stats, citation directionality, contingency tables).
+Both on main.
+
+Standalone paper — no dependency on the Ravigné IPCC collaboration or any other
+planned paper. Target: diamond OA journal (QSS or equivalent), 6,000-8,000 words.
+
+## Exit criteria
+Paper submitted to a diamond OA journal with Zenodo archive.

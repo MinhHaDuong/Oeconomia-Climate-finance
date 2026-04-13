@@ -1,0 +1,45 @@
+%erg v1
+Title: Create figures for multilingual paper
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0004
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Research note originally specified 7 figures and 7 tables. Peer review simulation
+(5-agent panel, 2026-04-13) recommended trimming to 8 display items total.
+Scripts follow project convention: plot_* prefix, --output argument, Makefile rule.
+
+## Main paper (4 tables + 4 figures)
+
+Tables:
+- T2: Four-quadrant classification (2x2, counts + mean cited_by)
+- T4: Isolation scores by quadrant (summary stats + permutation test p-values)
+- T6: Citation directionality (N->N, N->S, S->N, S->S + asymmetry ratio)
+- T7: Temporal isolation trends (mean per quadrant x period + trend test)
+
+Figures:
+- F1+F2 merged: 2-panel UMAP scatter (left: by language, right: by quadrant)
+- F3: Isolation score violins (one per quadrant, medians marked)
+- F6: Temporal isolation lines (mean per quadrant across 3 periods)
+- F5: Citation flow Sankey (only if H3 proxy is validated; otherwise cut)
+
+## Supplementary (3 tables + 1 figure)
+- T1: Language composition → sentence in text, full table in supplement
+- T3: Language x cluster contingency (6x8, chi-squared) → supplement
+- T5: Orphan TF-IDF terms by quadrant → supplement
+- F7: Wordclouds → supplement (decorative)
+
+## Cut entirely
+- F4: Heatmap → redundant with T4
+- F1 standalone → merged into 2-panel F1+F2
+
+## Test
+4 figure PNGs in content/figures/, 4 tables in content/tables/.
+
+## Exit criteria
+Figures and tables generated, committed, and visually reviewed by user.

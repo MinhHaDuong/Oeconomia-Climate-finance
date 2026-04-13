@@ -1,0 +1,36 @@
+%erg v1
+Title: Fix isolation score density confound
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0002
+
+--- log ---
+2026-04-13T16:00Z claude created
+2026-04-13T16:00Z claude note identified by peer review simulation agent 3 (statistics)
+
+--- body ---
+## Context
+The isolation score computes mean cosine distance to k nearest EN-North neighbors.
+EN-North has ~22K works; other quadrants have ~1K-4K. Higher density means
+mechanically lower kNN distances for EN-North self-comparisons. The metric
+therefore overstates isolation for minority quadrants regardless of semantic content.
+
+This was flagged as a blocking issue (M6) by the statistics reviewer.
+
+## Actions
+1. Implement density-normalized isolation: subsample EN-North to match target
+   quadrant size before computing kNN distances. Repeat 100x, report mean.
+2. Alternative: use a null model — shuffle language/geography labels, recompute
+   isolation scores, compare observed vs. null distribution.
+3. Update analyze_multilingual.py with both approaches.
+4. Write tests.
+
+## Test
+test_analyze_multilingual.py::test_density_normalized_isolation passes.
+Subsampled isolation scores differ meaningfully from naive scores.
+
+## Exit criteria
+Report includes both naive and density-corrected isolation scores.
+Difference between them is characterized (if small, naive is fine; if large,
+density correction is essential and the paper uses corrected scores).

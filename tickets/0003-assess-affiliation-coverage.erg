@@ -1,0 +1,26 @@
+%erg v1
+Title: Assess affiliation coverage for go/no-go gate
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0002
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+The paper classifies works into four quadrants by language x geography. This
+requires author affiliation data from OpenAlex, estimated at 70-80% coverage.
+Works without affiliations cannot be classified, weakening the analysis.
+
+If fewer than 60% of works are classifiable, the quadrant analysis is unreliable
+and the paper must be rescoped or abandoned.
+
+## Actions
+1. Read multilingual_report.json: quadrant_stats.unclassified
+2. Compute classifiable fraction = 1 - unclassified / total
+3. Decide: >=60% proceed, <60% investigate whether coverage can be improved
+
+## Exit criteria
+Go/no-go decision recorded in ticket log with the coverage number.

@@ -1,0 +1,28 @@
+%erg v1
+Title: Submit multilingual paper
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0007
+Blocked-by: 0008
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Final submission step. Follows the same packaging process as the Oeconomia
+and RDJ4HSS submissions.
+
+## Actions
+1. /review-pr-prose on the draft — fix all issues
+2. Build Zenodo reproducibility archive
+3. Write cover letter
+4. Submit to chosen journal
+5. Tag repo, record in STATE.md
+
+## Test
+Zenodo DOI resolves. Submission confirmation received.
+
+## Exit criteria
+Paper submitted. STATE.md and ROADMAP.md updated.

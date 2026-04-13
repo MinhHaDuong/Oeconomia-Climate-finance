@@ -1,0 +1,32 @@
+%erg v1
+Title: Draft multilingual paper in Quarto
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0005
+Blocked-by: 0006
+Blocked-by: 0010
+Blocked-by: 0011
+
+--- log ---
+2026-04-13T15:45Z claude created
+
+--- body ---
+## Context
+Paper outline in docs/research-note-multilingual.md specifies seven sections
+with word counts. Annotated bibliography has 15+ references organized by stream.
+All analysis results, figures, and robustness checks must be complete before
+writing.
+
+## Actions
+1. Create content/multilingual-paper.qmd
+2. Write sections following the outline: introduction, related work, data,
+   method, results, discussion, conclusion
+3. Embed figures and tables from prior tickets
+4. Run make check-fast, verify rendering
+
+## Test
+make check-fast passes. Paper renders to PDF/DOCX without errors.
+
+## Exit criteria
+Complete draft reviewed by user. Ready for peer review simulation.

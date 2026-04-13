@@ -1,0 +1,36 @@
+%erg v1
+Title: Validate bge-m3 cross-lingual embedding quality
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0001
+
+--- log ---
+2026-04-13T16:00Z claude created
+2026-04-13T16:00Z claude note identified by peer review simulation agent 5 (adversarial)
+
+--- body ---
+## Context
+The paper's core argument is that multilingual embeddings place works in a shared
+semantic space regardless of language. This claim rests entirely on bge-m3's
+cross-lingual quality, which is assumed but never validated on our corpus.
+
+A reviewer will ask: does "finance climat" actually land near "climate finance"
+in bge-m3 space? If it doesn't, the entire methodology collapses.
+
+This was flagged as a blocking issue (M9) by the adversarial reviewer.
+
+## Actions
+1. Identify ~50 known-equivalent document pairs across languages in the corpus
+   (e.g., bilingual abstracts, translated titles, same report in EN and FR)
+2. Compute pairwise cosine similarity for these pairs
+3. Compare against random cross-lingual pairs as baseline
+4. Report in a table: mean similarity for equivalent pairs vs. random pairs
+5. One paragraph + one table in the paper's Data section
+
+## Test
+Equivalent pairs have significantly higher cosine similarity than random pairs
+(permutation test, p < 0.01).
+
+## Exit criteria
+Validation table exists. Cross-lingual quality is demonstrated, not assumed.
