@@ -62,11 +62,13 @@ Any null result is publishable: it would mean English-centrism is a coverage pro
 
 ### Outlet
 
-**Primary: Scientometrics** (Springer, Couperin may cover APC). Best fit for an empirical characterization of a field's epistemic structure.
+Diamond OA preferred. Candidates to investigate:
 
-**Alternative: Quantitative Science Studies** (MIT Press, $750 ISSI member). If reframed with a comparative methodology component (benchmarking multilingual vs. monolingual embeddings). They published Huang & Zhao (2024) on linguistic diversity.
+- **Quantitative Science Studies** (MIT Press) — diamond OA, good scope fit for methodology + empirical application. Published Huang & Zhao (2024) on linguistic diversity.
+- **Research Evaluation** (OUP) — if the epistemic argument is strong enough.
+- **Science, Technology, & Human Values** — STS framing.
 
-**If epistemic argument is strong: Research Evaluation** (OUP) or **Science, Technology, & Human Values** (STS framing).
+Journal selection requires verification (URLs, actual OA model, scope fit) before committing.
 
 Target length: 6,000–8,000 words. QSS has no explicit word limit; typical articles run 8,000–12,000.
 
