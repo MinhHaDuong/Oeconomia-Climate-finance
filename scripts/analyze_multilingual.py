@@ -8,11 +8,18 @@ Outputs a JSON report with all preliminary results.
 
 import json
 import os
+import resource
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.neighbors import NearestNeighbors
+
+
+def _log_mem(log, label):
+    """Log current RSS in MB."""
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+    log.info("[mem] %s: %.0f MB RSS", label, rss)
 
 from build_het_core import is_global_south, is_non_english
 from pipeline_loaders import (
@@ -85,8 +92,11 @@ def compute_quadrant_stats(df):
 
 def compute_contingency(df, clusters_df):
     """Table T3: language x cluster contingency table + chi-squared test."""
-    merged = df.merge(
-        clusters_df[["doi", "semantic_cluster"]],
+    # Drop null DOIs before merge to avoid cartesian product (~8K × 8K = 60M rows)
+    df_with_doi = df.dropna(subset=["doi"])
+    clusters_with_doi = clusters_df.dropna(subset=["doi"])
+    merged = df_with_doi.merge(
+        clusters_with_doi[["doi", "semantic_cluster"]],
         on="doi",
         how="inner",
     )
@@ -187,7 +197,7 @@ def compute_citation_directionality(df, citations_df):
     geo_map = {"EN-N": "N", "nonEN-N": "N", "EN-S": "S", "nonEN-S": "S"}
     df["geo"] = df["quadrant"].map(geo_map)
 
-    doi_geo = df.dropna(subset=["geo"]).set_index("doi")["geo"]
+    doi_geo = df.dropna(subset=["geo", "doi"]).set_index("doi")["geo"]
 
     # Vectorized: map source and ref DOIs to geography
     src_geo = citations_df["source_doi"].map(doi_geo)
@@ -249,40 +259,51 @@ def main():
     )
     df = df.reset_index(drop=True)
     log.info("Loaded %d works with %s embeddings", len(df), embeddings.shape)
+    _log_mem(log, "after load works+embeddings")
 
     log.info("Loading citations...")
     citations_df = load_refined_citations()
     log.info("Loaded %d citation edges", len(citations_df))
+    _log_mem(log, "after load citations")
 
     clusters_path = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
     clusters_df = pd.read_csv(clusters_path, low_memory=False)
     log.info("Loaded %d cluster assignments", len(clusters_df))
+    _log_mem(log, "after load clusters")
 
     report = {}
 
     log.info("Computing language stats...")
     report["language_stats"] = compute_language_stats(df)
+    _log_mem(log, "after language_stats")
 
     log.info("Computing quadrant stats...")
     report["quadrant_stats"] = compute_quadrant_stats(df)
+    _log_mem(log, "after quadrant_stats")
 
     log.info("Computing language x cluster contingency...")
     report["contingency"] = compute_contingency(df, clusters_df)
+    _log_mem(log, "after contingency")
 
     log.info("Computing isolation scores (k=10)...")
     report["isolation_k10"] = compute_isolation_scores(df, embeddings, k=10)
+    _log_mem(log, "after isolation k=10")
 
     log.info("Computing isolation scores (k=5)...")
     report["isolation_k5"] = compute_isolation_scores(df, embeddings, k=5)
+    _log_mem(log, "after isolation k=5")
 
     log.info("Computing isolation scores (k=20)...")
     report["isolation_k20"] = compute_isolation_scores(df, embeddings, k=20)
+    _log_mem(log, "after isolation k=20")
 
     log.info("Computing citation directionality...")
     report["citation_flows"] = compute_citation_directionality(df, citations_df)
+    _log_mem(log, "after citation_flows")
 
     log.info("Computing core composition...")
     report["core_composition"] = compute_core_composition(df)
+    _log_mem(log, "after core_composition")
 
     with open(args.output, "w") as f:
         json.dump(report, f, indent=2, default=str)
