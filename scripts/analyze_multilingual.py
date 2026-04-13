@@ -12,7 +12,7 @@ import os
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.metrics.pairwise import cosine_distances
+from sklearn.neighbors import NearestNeighbors
 
 from build_het_core import is_global_south, is_non_english
 from pipeline_loaders import (
@@ -118,16 +118,30 @@ def compute_contingency(df, clusters_df):
     }
 
 
+def _summarize_scores(scores, **extra):
+    """Return summary statistics for an array of isolation scores."""
+    result = {
+        "n": len(scores),
+        "mean": round(float(np.mean(scores)), 4),
+        "median": round(float(np.median(scores)), 4),
+        "std": round(float(np.std(scores)), 4),
+        "p10": round(float(np.percentile(scores, 10)), 4),
+        "p90": round(float(np.percentile(scores, 90)), 4),
+    }
+    result.update(extra)
+    return result
+
+
 def compute_isolation_scores(df, embeddings, k=10):
     """Compute semantic isolation score for each work.
 
     Isolation = mean cosine distance to k nearest EN-North neighbors.
+    Uses NearestNeighbors for memory-efficient KNN (avoids full pairwise matrix).
     """
     df = df.copy()
     df["quadrant"] = df.apply(classify_quadrant, axis=1)
     classified_mask = df["quadrant"].notna()
 
-    # Get EN-North indices
     en_north_mask = df["quadrant"] == "EN-N"
     en_north_indices = df.index[en_north_mask & classified_mask].tolist()
 
@@ -137,60 +151,31 @@ def compute_isolation_scores(df, embeddings, k=10):
 
     en_north_emb = embeddings[en_north_indices]
 
-    # Compute isolation for each classified non-EN-North work
+    # Build KNN index once; query returns only k distances per point
+    nn = NearestNeighbors(n_neighbors=k, metric="cosine", algorithm="brute")
+    nn.fit(en_north_emb)
+
     results = {}
     for quadrant in ["EN-S", "nonEN-N", "nonEN-S"]:
-        q_mask = df["quadrant"] == quadrant
-        q_indices = df.index[q_mask].tolist()
+        q_indices = df.index[df["quadrant"] == quadrant].tolist()
         if not q_indices:
             continue
-
         q_emb = embeddings[q_indices]
+        dists, _ = nn.kneighbors(q_emb)
+        scores = dists.mean(axis=1)
+        results[quadrant] = _summarize_scores(scores)
 
-        # Compute cosine distances to all EN-North works in chunks
-        chunk_size = 500
-        isolation_scores = []
-        for start in range(0, len(q_indices), chunk_size):
-            end = min(start + chunk_size, len(q_indices))
-            chunk_emb = q_emb[start:end]
-            dists = cosine_distances(chunk_emb, en_north_emb)
-            # Mean of k nearest neighbors
-            for row_dists in dists:
-                knn_dists = np.partition(row_dists, k)[:k]
-                isolation_scores.append(float(np.mean(knn_dists)))
-
-        scores = np.array(isolation_scores)
-        results[quadrant] = {
-            "n": len(scores),
-            "mean": round(float(np.mean(scores)), 4),
-            "median": round(float(np.median(scores)), 4),
-            "std": round(float(np.std(scores)), 4),
-            "p10": round(float(np.percentile(scores, 10)), 4),
-            "p90": round(float(np.percentile(scores, 90)), 4),
-        }
-
-    # EN-North baseline: distance to own quadrant (sampled)
+    # EN-North baseline (sampled, k+1 to drop self-match)
     sample_size = min(2000, len(en_north_indices))
     rng = np.random.RandomState(42)
     sample_idx = rng.choice(len(en_north_indices), sample_size, replace=False)
     sample_emb = en_north_emb[sample_idx]
-    dists = cosine_distances(sample_emb, en_north_emb)
-    baseline_scores = []
-    for row_dists in dists:
-        # partition k+1 smallest, skip self (index 0 after partition)
-        knn_dists = np.partition(row_dists, k + 1)[:k + 1]
-        knn_dists = np.sort(knn_dists)[1:]  # drop the self-distance (0)
-        baseline_scores.append(float(np.mean(knn_dists)))
-    baseline = np.array(baseline_scores)
-    results["EN-N"] = {
-        "n": len(baseline),
-        "mean": round(float(np.mean(baseline)), 4),
-        "median": round(float(np.median(baseline)), 4),
-        "std": round(float(np.std(baseline)), 4),
-        "p10": round(float(np.percentile(baseline, 10)), 4),
-        "p90": round(float(np.percentile(baseline, 90)), 4),
-        "note": f"baseline sample of {sample_size}",
-    }
+    nn_self = NearestNeighbors(n_neighbors=k + 1, metric="cosine", algorithm="brute")
+    nn_self.fit(en_north_emb)
+    dists, _ = nn_self.kneighbors(sample_emb)
+    # Drop nearest (self, distance ~0)
+    scores = dists[:, 1:].mean(axis=1)
+    results["EN-N"] = _summarize_scores(scores, note=f"baseline sample of {sample_size}")
 
     return results
 
