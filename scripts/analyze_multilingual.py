@@ -85,8 +85,11 @@ def compute_quadrant_stats(df):
 
 def compute_contingency(df, clusters_df):
     """Table T3: language x cluster contingency table + chi-squared test."""
-    merged = df.merge(
-        clusters_df[["doi", "semantic_cluster"]],
+    # Drop null DOIs before merge to avoid cartesian product (~8K × 8K = 60M rows)
+    df_with_doi = df.dropna(subset=["doi"])
+    clusters_with_doi = clusters_df.dropna(subset=["doi"])
+    merged = df_with_doi.merge(
+        clusters_with_doi[["doi", "semantic_cluster"]],
         on="doi",
         how="inner",
     )
@@ -187,7 +190,7 @@ def compute_citation_directionality(df, citations_df):
     geo_map = {"EN-N": "N", "nonEN-N": "N", "EN-S": "S", "nonEN-S": "S"}
     df["geo"] = df["quadrant"].map(geo_map)
 
-    doi_geo = df.dropna(subset=["geo"]).set_index("doi")["geo"]
+    doi_geo = df.dropna(subset=["geo", "doi"]).set_index("doi")["geo"]
 
     # Vectorized: map source and ref DOIs to geography
     src_geo = citations_df["source_doi"].map(doi_geo)
