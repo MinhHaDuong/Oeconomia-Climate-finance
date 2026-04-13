@@ -1,0 +1,57 @@
+%erg v1
+Title: Expand corpus to CNKI and SciELO for global coverage (paper C)
+Status: open
+Created: 2026-04-13
+Author: user
+
+--- log ---
+2026-04-13T19:30Z claude created
+2026-04-13T19:30Z claude note epic — corpus v2.0 for the book on $300 billion
+
+--- body ---
+## Context
+The current corpus (v1.1.1) is 93% English because its sources (OpenAlex,
+Semantic Scholar, ISTEX, bibCNRS, SciSpace) are predominantly English-indexed.
+For the book on the $300 billion NCQG, this is not credible: you can't write
+about North-South climate finance from English-only sources.
+
+Two major non-English sources are missing:
+- CNKI (China National Knowledge Infrastructure): Chinese-language scholarship.
+  China is the largest developing-country emitter AND the largest South-South
+  climate financier. CNRS institutional access available.
+- SciELO (Scientific Electronic Library Online): Portuguese/Spanish open access.
+  Brazilian development economics, deforestation finance.
+
+Adding these would raise non-English share from 7% to 20-30% and produce
+corpus v2.0.
+
+## Citation count problem
+CNKI papers are cited within CNKI. OpenAlex barely indexes Chinese citation
+links. A highly influential Chinese paper may show 3 cites in OpenAlex and
+200 in CNKI. The citation threshold (>=30 or >=50) applied uniformly would
+discard nearly everything added. Options:
+- Use database-native citation counts (apples and oranges)
+- Drop threshold for the multilingual analysis
+- Use threshold only for the book's main narrative, full corpus for the
+  "whose knowledge?" chapter
+
+## Deliverable
+Data paper for Scientific Data (Nature) or as v2.0 update to the RDJ4HSS
+submission. "The first genuinely multilingual corpus of climate finance
+scholarship: 50K+ works in 15+ languages."
+
+## Actions (sub-tickets to be created)
+1. CNKI access: verify API, bulk export, metadata schema
+2. SciELO catalog script: catalog_scielo.py (open API, OAI-PMH)
+3. CNKI catalog script: catalog_cnki.py
+4. Cross-database deduplication (DOI-based + fuzzy title matching)
+5. Re-embedding with bge-m3 (new works only, incremental)
+6. Cross-database citation linking
+7. QA/QC on expanded corpus
+8. Data paper draft
+
+## Test
+Non-English share of refined corpus > 15%.
+
+## Exit criteria
+Corpus v2.0 released on Zenodo. Data paper submitted.

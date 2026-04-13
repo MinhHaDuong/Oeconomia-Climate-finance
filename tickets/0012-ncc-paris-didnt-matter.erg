@@ -1,0 +1,54 @@
+%erg v1
+Title: Submit "Paris didn't matter" short piece to Nature Climate Change
+Status: open
+Created: 2026-04-13
+Author: user
+
+--- log ---
+2026-04-13T19:30Z claude created
+2026-04-13T19:30Z claude note epic — spawned from Imagine session reviewing companion paper publication strategy
+
+--- body ---
+## Context
+The companion methods paper contains a finding that is counterintuitive and
+highly citable but buried inside a framework validation: computational analysis
+of ~32,000 works shows climate finance scholarship crystallized around
+Copenhagen (2009), not Paris (2015). The field's conceptual categories haven't
+changed in 15 years. The core (cited >= 50) shows no structural break at all.
+
+This finding is currently used as "corroborative evidence" in the Oeconomia
+paper (under review) and as a validation example in the companion methods paper
+(draft). It leads in neither.
+
+Extracting it into a short, sharp piece for a high-visibility venue maximizes
+citation impact. Nature Climate Change publishes "Analysis" pieces (~2,000
+words, 4 figures). The argument targets everyone writing about climate finance
+governance — they'd need to cite it when discussing periodization.
+
+The companion methods paper becomes a preprint (arXiv/SocArXiv) providing full
+technical details, cited by the NCC piece.
+
+## Self-plagiarism management
+- Oeconomia paper (under review): uses the same break detection results as
+  corroboration. The NCC piece would frame differently (policy implications vs
+  intellectual history). Different audience, different argument. Cross-reference
+  explicitly.
+- Companion paper: released as preprint, not journal submission. The NCC piece
+  cites it for methods. No overlap issue with a preprint.
+
+## Actions
+1. Draft 2,000-word Analysis piece: "The categories we fight in"
+2. Lead with the finding: Paris produced no structural break
+3. Four figures: (a) sliding-window divergence showing 2009 peak, (b) core vs
+   full corpus comparison, (c) efficiency-accountability bimodality KDE,
+   (d) alluvial diagram showing stable cluster structure
+4. Release companion paper as preprint on SocArXiv
+5. Verify NCC "Analysis" format requirements
+6. Submit
+
+## Test
+Draft passes internal review: counterintuitive finding stated in first
+paragraph, policy implications clear, no overlap with Oeconomia framing.
+
+## Exit criteria
+Piece submitted to NCC. Companion preprint posted.

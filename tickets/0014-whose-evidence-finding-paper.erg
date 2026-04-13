@@ -1,0 +1,57 @@
+%erg v1
+Title: Submit "Whose evidence shapes climate policy?" finding paper (paper B)
+Status: open
+Created: 2026-04-13
+Author: user
+Blocked-by: 0013
+
+--- log ---
+2026-04-13T19:30Z claude created
+2026-04-13T19:30Z claude note epic — the high-impact empirical paper, depends on global corpus
+
+--- body ---
+## Context
+Built on the expanded v2.0 corpus (ticket 0013). Not a methods paper. Not a
+"we should include more languages" paper. An empirical finding about whose
+evidence shapes climate policy.
+
+Core argument: the $300 billion NCQG was constructed using evidence from one
+linguistic tradition. Chinese climate finance scholarship — from the world's
+largest developing-country emitter and South-South financier — was invisible
+to the process. Here's what it says. Here's what was missed.
+
+This is the paper that gets 30+ cites because every future climate finance
+review has to engage with it.
+
+## Framing (not methods, not advocacy)
+- Lead with the finding: "X% of global climate finance scholarship is
+  invisible to English-language reviews"
+- Show what's in the invisible part: specific Chinese traditions (South-South
+  cooperation, Belt-and-Road climate framing), Brazilian traditions
+  (deforestation finance, development economics)
+- The two-axis design (language x geography) disentangles linguistic from
+  epistemic barriers
+- Policy implication: the evidence base for climate finance governance is
+  structurally incomplete
+
+## Target venues (high visibility, large citing community)
+- Global Environmental Change (IF ~10, policy + social science audience)
+- World Development (IF ~5, development audience)
+- Nature Climate Change Analysis (IF ~30, short format, brutal acceptance)
+- Environmental Research Letters (IF ~6, open access)
+
+## Actions (sub-tickets to be created)
+1. Run multilingual analysis on v2.0 corpus
+2. Validate bge-m3 cross-lingual quality (ticket 0011, rebase on v2.0)
+3. Identify 5-10 specific non-English works/traditions as qualitative depth
+4. Citation directionality analysis with manual validation sample
+5. Draft 6,000-8,000 word paper
+6. Internal review (simulated peer panel)
+7. Submit
+
+## Test
+Draft passes the "so what?" test: a climate finance policymaker reads it and
+changes how they search for evidence.
+
+## Exit criteria
+Paper submitted to a venue with IF > 5.
