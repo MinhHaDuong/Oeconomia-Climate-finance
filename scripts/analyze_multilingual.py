@@ -12,15 +12,6 @@ import resource
 
 import numpy as np
 import pandas as pd
-from scipy import stats
-from sklearn.neighbors import NearestNeighbors
-
-
-def _log_mem(log, label):
-    """Log current RSS in MB."""
-    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-    log.info("[mem] %s: %.0f MB RSS", label, rss)
-
 from build_het_core import is_global_south, is_non_english
 from pipeline_loaders import (
     CATALOGS_DIR,
@@ -28,10 +19,18 @@ from pipeline_loaders import (
     load_refined_citations,
     load_refined_embeddings,
 )
+from scipy import stats
 from script_io_args import parse_io_args, validate_io
+from sklearn.neighbors import NearestNeighbors
 from utils import get_logger
 
 log = get_logger("analyze_multilingual")
+
+
+def _log_mem(label):
+    """Log current RSS in MB."""
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+    log.info("[mem] %s: %.0f MB RSS", label, rss)
 
 
 def classify_quadrant(row):
@@ -83,8 +82,12 @@ def compute_quadrant_stats(df):
         result[q] = {
             "n": int(n),
             "pct": round(100 * n / total_classified, 2) if total_classified else 0.0,
-            "mean_cited_by": round(float(subset["cited_by_count"].mean()), 1) if n else 0.0,
-            "median_cited_by": round(float(subset["cited_by_count"].median()), 1) if n else 0.0,
+            "mean_cited_by": round(float(subset["cited_by_count"].mean()), 1)
+            if n
+            else 0.0,
+            "median_cited_by": round(float(subset["cited_by_count"].median()), 1)
+            if n
+            else 0.0,
         }
     result["unclassified"] = int(len(df) - total_classified)
     return result
@@ -100,8 +103,16 @@ def compute_contingency(df, clusters_df):
         on="doi",
         how="inner",
     )
-    merged["lang_group"] = merged["language"].fillna("missing").apply(
-        lambda x: x if x in ("en", "pt", "de", "es", "fr", "zh", "ja", "missing") else "other"
+    merged["lang_group"] = (
+        merged["language"]
+        .fillna("missing")
+        .apply(
+            lambda x: (
+                x
+                if x in ("en", "pt", "de", "es", "fr", "zh", "ja", "missing")
+                else "other"
+            )
+        )
     )
 
     ct = pd.crosstab(merged["lang_group"], merged["semantic_cluster"])
@@ -185,7 +196,9 @@ def compute_isolation_scores(df, embeddings, k=10):
     dists, _ = nn_self.kneighbors(sample_emb)
     # Drop nearest (self, distance ~0)
     scores = dists[:, 1:].mean(axis=1)
-    results["EN-N"] = _summarize_scores(scores, note=f"baseline sample of {sample_size}")
+    results["EN-N"] = _summarize_scores(
+        scores, note=f"baseline sample of {sample_size}"
+    )
 
     return results
 
@@ -259,51 +272,51 @@ def main():
     )
     df = df.reset_index(drop=True)
     log.info("Loaded %d works with %s embeddings", len(df), embeddings.shape)
-    _log_mem(log, "after load works+embeddings")
+    _log_mem("after load works+embeddings")
 
     log.info("Loading citations...")
     citations_df = load_refined_citations()
     log.info("Loaded %d citation edges", len(citations_df))
-    _log_mem(log, "after load citations")
+    _log_mem("after load citations")
 
     clusters_path = os.path.join(CATALOGS_DIR, "semantic_clusters.csv")
     clusters_df = pd.read_csv(clusters_path, low_memory=False)
     log.info("Loaded %d cluster assignments", len(clusters_df))
-    _log_mem(log, "after load clusters")
+    _log_mem("after load clusters")
 
     report = {}
 
     log.info("Computing language stats...")
     report["language_stats"] = compute_language_stats(df)
-    _log_mem(log, "after language_stats")
+    _log_mem("after language_stats")
 
     log.info("Computing quadrant stats...")
     report["quadrant_stats"] = compute_quadrant_stats(df)
-    _log_mem(log, "after quadrant_stats")
+    _log_mem("after quadrant_stats")
 
     log.info("Computing language x cluster contingency...")
     report["contingency"] = compute_contingency(df, clusters_df)
-    _log_mem(log, "after contingency")
+    _log_mem("after contingency")
 
     log.info("Computing isolation scores (k=10)...")
     report["isolation_k10"] = compute_isolation_scores(df, embeddings, k=10)
-    _log_mem(log, "after isolation k=10")
+    _log_mem("after isolation k=10")
 
     log.info("Computing isolation scores (k=5)...")
     report["isolation_k5"] = compute_isolation_scores(df, embeddings, k=5)
-    _log_mem(log, "after isolation k=5")
+    _log_mem("after isolation k=5")
 
     log.info("Computing isolation scores (k=20)...")
     report["isolation_k20"] = compute_isolation_scores(df, embeddings, k=20)
-    _log_mem(log, "after isolation k=20")
+    _log_mem("after isolation k=20")
 
     log.info("Computing citation directionality...")
     report["citation_flows"] = compute_citation_directionality(df, citations_df)
-    _log_mem(log, "after citation_flows")
+    _log_mem("after citation_flows")
 
     log.info("Computing core composition...")
     report["core_composition"] = compute_core_composition(df)
-    _log_mem(log, "after core_composition")
+    _log_mem("after core_composition")
 
     with open(args.output, "w") as f:
         json.dump(report, f, indent=2, default=str)
