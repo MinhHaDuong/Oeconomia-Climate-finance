@@ -1,0 +1,30 @@
+%erg v1
+Title: Submit to Nature Climate Change
+Status: open
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0016
+Blocked-by: 0019
+
+--- log ---
+2026-04-13T21:03Z claude created
+2026-04-13T21:03Z claude note subtask of epic 0012; final step, gates on preprint posted + draft done
+
+--- body ---
+## Context
+Final step of epic 0012. Submit the "Paris didn't matter" Analysis piece
+to NCC once the companion preprint is posted (0016) and the draft is
+finalized (0019).
+
+## Actions
+1. Prepare submission package per NCC requirements (from 0017)
+2. Write cover letter highlighting the counterintuitive finding
+3. Include companion preprint DOI in manuscript references
+4. Submit via NCC editorial system
+5. Record submission date and confirmation number
+
+## Test
+Submission confirmation received from NCC editorial system.
+
+## Exit criteria
+Piece submitted. Companion preprint posted. Epic 0012 can be closed.
