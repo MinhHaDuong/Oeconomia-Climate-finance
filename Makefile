@@ -110,10 +110,15 @@ TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
                    content/figures/fig_semantic_lang.png \
                    content/figures/fig_semantic_period.png
 
-ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS)
+NCC_FIGS        := content/figures/fig_ncc_divergence.png \
+                   content/figures/fig_ncc_core_comparison.png \
+                   content/figures/fig_ncc_bimodality.png \
+                   content/figures/fig_ncc_alluvial.png
+
+ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS) $(NCC_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep stats check check-fast smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep figures-ncc stats check check-fast smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -482,10 +487,49 @@ content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py $(CONFI
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py $(CONFIG) dvc.yaml
 	uv run python $< --output $@
 
+# -- NCC Analysis (Nature Climate Change) --
+
+# Censor-gap k=2 breakpoint tables (intermediate for NCC figure a)
+content/tables/tab_breakpoints_censor2.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
+	uv run python $< --output $@ --censor-gap 2
+
+content/tables/tab_breakpoint_robustness_censor2.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
+	uv run python $< --output $@ --robustness --censor-gap 2
+
+# NCC Figure (a): Divergence with 2009 peak (baseline vs censor-gap k=2)
+content/figures/fig_ncc_divergence.png: \
+		scripts/plot_ncc_divergence.py scripts/utils.py $(CONFIG) \
+		content/tables/tab_breakpoints.csv \
+		content/tables/tab_breakpoints_censor2.csv \
+		content/tables/tab_breakpoint_robustness_censor2.csv
+	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoints_censor2.csv content/tables/tab_breakpoint_robustness_censor2.csv
+
+# NCC Figure (b): Core vs full corpus comparison panel
+content/figures/fig_ncc_core_comparison.png: \
+		scripts/plot_ncc_core_comparison.py scripts/utils.py $(CONFIG) \
+		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
+		content/tables/tab_alluvial.csv \
+		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
+		content/tables/tab_alluvial_core.csv
+	uv run python $< --output $@
+
+# NCC Figure (c): Bimodality KDE with period decomposition
+content/figures/fig_ncc_bimodality.png: \
+		scripts/plot_ncc_bimodality.py scripts/utils.py $(CONFIG) \
+		content/tables/tab_pole_papers.csv
+	uv run python $< --output $@
+
+# NCC Figure (d): Alluvial diagram (NCC format)
+content/figures/fig_ncc_alluvial.png: \
+		scripts/plot_ncc_alluvial.py scripts/utils.py $(CONFIG) \
+		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
+	uv run python $< --output $@ --input content/tables/tab_alluvial.csv
+
 figures-manuscript: corpus-handoff $(MANUSCRIPT_FIGS)
 figures-datapaper:  corpus-handoff $(DATAPAPER_FIGS)
 figures-companion:  corpus-handoff $(COMPANION_FIGS)
 figures-techrep:    corpus-handoff $(TECHREP_FIGS)
+figures-ncc:        corpus-handoff $(NCC_FIGS)
 figures: corpus-handoff $(ALL_FIGS) corpus-tables
 
 # ── Namespaced aliases (Phase 2) ────────────────────────
