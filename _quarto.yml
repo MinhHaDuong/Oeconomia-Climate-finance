@@ -3,6 +3,7 @@ project:
   output-dir: output
   render:
     - content/manuscript.qmd
+    - content/corpus-report.qmd
     - content/technical-report.qmd
     - content/data-paper.qmd
     - content/companion-paper.qmd

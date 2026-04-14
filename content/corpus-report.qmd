@@ -1,0 +1,55 @@
+---
+title: "Corpus Construction and Data Quality"
+subtitle: "Companion to 'Inventing Climate Finance' (submitted to *Oeconomia*)"
+author: "Minh Ha-Duong"
+date: "2026-04-14"
+metadata-files: [technical-report-vars.yml]
+bibliography: bibliography/main.bib
+format:
+  pdf:
+    pdf-engine: xelatex
+---
+
+This document describes how the corpus of {{< meta corpus_total >}} works on climate finance was assembled from {{< meta corpus_sources >}} sources, enriched, filtered, and validated. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files.
+
+All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
+
+\newpage
+
+# Corpus Construction
+
+{{< include _includes/corpus-construction.md >}}
+
+---
+
+{{< include _includes/corpus-enrichment.md >}}
+
+---
+
+{{< include _includes/corpus-filtering.md >}}
+
+\newpage
+
+# Data Quality
+
+{{< include _includes/metadata-quality.md >}}
+
+---
+
+{{< include _includes/embedding-quality.md >}}
+
+---
+
+{{< include _includes/citation-quality.md >}}
+
+\newpage
+
+# Corpus Structure
+
+{{< include _includes/core-vs-full.md >}}
+
+\newpage
+
+# Reproducibility
+
+{{< include _includes/reproducibility.md >}}
