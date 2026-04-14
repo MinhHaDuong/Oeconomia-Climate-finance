@@ -1,0 +1,45 @@
+%erg v1
+Title: Make analysis report modular with per-script includes
+Status: open
+Created: 2026-04-14
+Author: user
+Blocked-by: 0024
+
+--- log ---
+2026-04-14T14:42Z claude created
+2026-04-14T14:42Z claude note architectural change; do after companion merge (0024)
+
+--- body ---
+## Context
+The analysis report must grow linearly with the pipeline (one section per
+script) and support selective inclusion so that future papers can pull
+only the sections they need. Currently the .qmd hardcodes which includes
+to pull; adding a new script means editing the .qmd.
+
+## Design
+Each analysis script gets one include in _includes/ (already mostly true).
+The analysis report .qmd includes all of them. Future paper .qmd files
+include only their subset. The Makefile already controls which figures
+each document depends on.
+
+The convention:
+- One include per analysis script (e.g., _includes/structural-breaks.md
+  documents compute_breakpoints.py)
+- Each include is self-contained: method, inputs, outputs, results
+- The analysis report .qmd is just a table of contents with includes
+- A paper .qmd cherry-picks includes and adds interpretive prose
+
+## Actions
+1. Audit: every analysis script in scripts/ has a corresponding include
+2. Create missing includes for scripts that lack them
+3. Ensure each include declares its script, inputs, and outputs
+4. Document the convention in .claude/rules/architecture.md
+5. Verify the analysis report .qmd is just structure + includes
+
+## Test
+Add a hypothetical new analysis script. The only changes needed should
+be: the include file and one line in the .qmd.
+
+## Exit criteria
+One include per analysis script. Convention documented. Future papers
+can compose from the include pool without editing existing includes.
