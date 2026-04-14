@@ -56,7 +56,7 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 # Corpus Structure
 
-{{< include _includes/core-vs-full.md >}}
+{{< include _includes/core-vs-full-definition.md >}}
 
 \newpage
 

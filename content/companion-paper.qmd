@@ -165,7 +165,7 @@ A further asymmetry between the full corpus and the core reinforces this point. 
 
 ### 5.5 Core vs. full corpus comparison
 
-{{< include _includes/core-vs-full.md >}}
+{{< include _includes/core-vs-full-analysis.md >}}
 
 
 ## 6. Discussion

@@ -58,3 +58,9 @@ The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on cl
 ---
 
 {{< include _includes/cocitation-communities.md >}}
+
+\newpage
+
+# Core vs. Full Corpus
+
+{{< include _includes/core-vs-full-analysis.md >}}
