@@ -49,6 +49,9 @@ REFINED_CIT_FTH := $(DATA_DIR)/refined_citations.feather
 export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
+# ── Modular Makefile includes ────────────────────────────
+-include divergence.mk
+
 # ── Quarto ───────────────────────────────────────────────
 # ── Per-document include sets ────────────────────────────
 MANUSCRIPT_INCLUDES := content/tables/tab_venues.md

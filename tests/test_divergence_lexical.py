@@ -144,7 +144,7 @@ class TestPELT:
         result = detect_breaks_pelt(series, penalties=[3])
         assert isinstance(result, pd.DataFrame)
         if not result.empty:
-            assert "break_year" in result.columns
+            assert "break_years" in result.columns
 
 
 # ---------------------------------------------------------------------------
@@ -166,7 +166,7 @@ class TestSmokeEndToEnd:
         assert os.path.exists(output), "Output CSV not created"
         df = pd.read_csv(output)
         assert len(df) > 0, "Output CSV is empty"
-        assert set(df.columns) >= {"year", "method", "window", "hyperparams", "value"}
+        assert set(df.columns) >= {"year", "method", "channel", "window", "hyperparams", "value"}
         # All three methods present
         methods = set(df["method"].unique())
         assert "L1" in methods

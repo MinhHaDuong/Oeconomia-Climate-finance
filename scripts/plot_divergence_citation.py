@@ -191,7 +191,7 @@ def main():
     for _, row in df_breaks.iterrows():
         m = row["method"]
         pen = row["penalty"]
-        bp_str = str(row.get("breakpoints", ""))
+        bp_str = str(row.get("break_years", ""))
         bp_years = []
         for y_str in bp_str.split(";"):
             y_str = y_str.strip()

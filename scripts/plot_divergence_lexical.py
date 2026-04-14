@@ -69,11 +69,21 @@ def _load_data(output_path):
 
 
 def _get_break_years(breaks, method, penalty=BREAK_PENALTY):
-    """Get unique break years for a method at a given penalty."""
+    """Get unique break years for a method at a given penalty.
+
+    Handles the semicolon-separated break_years contract format.
+    """
     if breaks.empty:
         return []
     mask = (breaks["method"] == method) & (breaks["penalty"] == penalty)
-    return sorted(breaks.loc[mask, "break_year"].unique())
+    matched = breaks.loc[mask, "break_years"]
+    years = set()
+    for cell in matched.dropna():
+        for y in str(cell).split(";"):
+            y = y.strip()
+            if y:
+                years.add(int(y))
+    return sorted(years)
 
 
 def plot_l1(series, breaks, out_dir):

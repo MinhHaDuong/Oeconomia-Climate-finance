@@ -112,7 +112,7 @@ def _get_break_years(breaks_df, method, penalty=3):
     sub = breaks_df[mask]
     years = set()
     for _, row in sub.iterrows():
-        bp_str = str(row.get("breakpoint_years", ""))
+        bp_str = str(row.get("break_years", ""))
         if bp_str and bp_str != "nan":
             for y in bp_str.split(";"):
                 y = y.strip()

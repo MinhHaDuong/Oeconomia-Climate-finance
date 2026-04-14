@@ -33,6 +33,7 @@ import ruptures
 # -- path setup so imports resolve from scripts/ --
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from pipeline_loaders import load_analysis_config
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
@@ -40,12 +41,12 @@ log = get_logger("compute_divergence_semantic")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# ── Parameters ─────────────────────────────────────────────────────────────
+# ── Parameters (from config/analysis.yaml) ─────────────────────────────────
 
-WINDOW_SIZES = [2, 3, 4, 5]
-MIN_PAPERS = 5          # per-window minimum (smoke-safe; real data uses 30)
-MAX_SUBSAMPLE = 2000    # cap per side for tractability
-PELT_PENALTIES = [1, 3, 5]
+cfg = load_analysis_config()
+_div_cfg = cfg["divergence"]
+_sem_cfg = _div_cfg["semantic"]
+
 RNG = np.random.RandomState(42)
 
 
@@ -85,7 +86,7 @@ def _load_data(input_paths):
     return df, emb
 
 
-def _get_window_embeddings(df, emb, year, window, side):
+def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsample):
     """Extract embeddings for a time window.
 
     side='before': [year - window, year]
@@ -97,12 +98,12 @@ def _get_window_embeddings(df, emb, year, window, side):
         mask = (df["year"] >= year + 1) & (df["year"] <= year + 1 + window)
 
     idx = df.index[mask]
-    if len(idx) < MIN_PAPERS:
+    if len(idx) < min_papers:
         return None
 
     vecs = emb[idx]
-    if len(vecs) > MAX_SUBSAMPLE:
-        chosen = RNG.choice(len(vecs), MAX_SUBSAMPLE, replace=False)
+    if len(vecs) > max_subsample:
+        chosen = RNG.choice(len(vecs), max_subsample, replace=False)
         vecs = vecs[chosen]
     return vecs
 
@@ -141,15 +142,15 @@ def compute_mmd_rbf(X, Y, bandwidth):
     return max(float(mmd2), 0.0)
 
 
-def _run_s1(df, emb, years):
+def _run_s1(df, emb, years, min_papers, max_subsample):
     """S1: MMD with RBF kernel at 0.5x, 1x, 2x median bandwidth."""
     results = []
-    bandwidth_multipliers = [0.5, 1.0, 2.0]
+    bandwidth_multipliers = _sem_cfg["S1_MMD"]["bandwidth_multipliers"]
 
-    for w in WINDOW_SIZES:
+    for w in _div_cfg["windows"]:
         for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before")
-            Y = _get_window_embeddings(df, emb, y, w, "after")
+            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
+            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
             if X is None or Y is None:
                 continue
 
@@ -169,15 +170,15 @@ def _run_s1(df, emb, years):
 
 # ── S2: Energy distance ──────────────────────────────────────────────────
 
-def _run_s2(df, emb, years):
+def _run_s2(df, emb, years, min_papers, max_subsample):
     """S2: Energy distance (multivariate via dcor)."""
     import dcor
 
     results = []
-    for w in WINDOW_SIZES:
+    for w in _div_cfg["windows"]:
         for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before")
-            Y = _get_window_embeddings(df, emb, y, w, "after")
+            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
+            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
             if X is None or Y is None:
                 continue
 
@@ -194,16 +195,16 @@ def _run_s2(df, emb, years):
 
 # ── S3: Sliced Wasserstein ────────────────────────────────────────────────
 
-def _run_s3(df, emb, years):
+def _run_s3(df, emb, years, min_papers, max_subsample):
     """S3: Sliced Wasserstein distance with varying projection counts."""
     import ot
 
-    n_projections_list = [100, 500, 1000]
+    n_projections_list = _sem_cfg["S3_sliced_wasserstein"]["n_projections"]
     results = []
-    for w in WINDOW_SIZES:
+    for w in _div_cfg["windows"]:
         for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before")
-            Y = _get_window_embeddings(df, emb, y, w, "after")
+            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
+            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
             if X is None or Y is None:
                 continue
 
@@ -256,13 +257,13 @@ def compute_frechet_distance(X, Y):
     return float(max(mean_term + trace_term, 0.0))
 
 
-def _run_s4(df, emb, years):
+def _run_s4(df, emb, years, min_papers, max_subsample):
     """S4: Frechet distance (Gaussian fit)."""
     results = []
-    for w in WINDOW_SIZES:
+    for w in _div_cfg["windows"]:
         for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before")
-            Y = _get_window_embeddings(df, emb, y, w, "after")
+            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
+            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
             if X is None or Y is None:
                 continue
 
@@ -298,7 +299,7 @@ def detect_breaks_pelt(series_df):
     """Apply PELT to each (method, window, hyperparams) series.
 
     Returns a DataFrame with columns:
-        method, window, hyperparams, penalty, breakpoint_years
+        method, channel, window, hyperparams, penalty, break_years
     """
     rows = []
     grouped = series_df.groupby(["method", "window", "hyperparams"])
@@ -309,7 +310,7 @@ def detect_breaks_pelt(series_df):
         signal = grp["value"].values.reshape(-1, 1)
         years_arr = grp["year"].values
 
-        for pen in PELT_PENALTIES:
+        for pen in _div_cfg["pelt_penalties"]:
             try:
                 algo = ruptures.Pelt(model="rbf", min_size=2, jump=1)
                 result = algo.fit(signal).predict(pen=pen)
@@ -323,10 +324,11 @@ def detect_breaks_pelt(series_df):
 
             rows.append({
                 "method": method,
+                "channel": "semantic",
                 "window": window,
                 "hyperparams": hp,
                 "penalty": pen,
-                "breakpoint_years": ";".join(str(y) for y in bp_years),
+                "break_years": ";".join(str(y) for y in bp_years),
             })
     return pd.DataFrame(rows)
 
@@ -339,31 +341,45 @@ def main():
 
     df, emb = _load_data(io_args.input)
 
-    start_year = int(df["year"].min()) + max(WINDOW_SIZES)
-    end_year = int(df["year"].max()) - max(WINDOW_SIZES) - 1
+    windows = _div_cfg["windows"]
+    max_subsample = _div_cfg["max_subsample"]
+
+    # Use smoke-safe minimum when corpus is tiny
+    if len(df) < 200:
+        min_papers = _div_cfg["min_papers_smoke"]
+        log.info("Smoke mode: min_papers set to %d (n_works=%d)", min_papers, len(df))
+    else:
+        min_papers = _div_cfg["min_papers"]
+
+    start_year = int(df["year"].min()) + max(windows)
+    end_year = int(df["year"].max()) - max(windows) - 1
     if start_year > end_year:
         # Fallback: try smaller range
-        start_year = int(df["year"].min()) + min(WINDOW_SIZES)
-        end_year = int(df["year"].max()) - min(WINDOW_SIZES) - 1
+        start_year = int(df["year"].min()) + min(windows)
+        end_year = int(df["year"].max()) - min(windows) - 1
 
     log.info("Year range for divergence: %d-%d", start_year, end_year)
     years = list(range(start_year, end_year + 1))
 
     if not years:
         log.warning("No valid year range; writing empty CSV")
-        pd.DataFrame(columns=["year", "method", "window", "hyperparams", "value"]
+        pd.DataFrame(columns=["year", "method", "channel", "window", "hyperparams", "value"]
                      ).to_csv(io_args.output, index=False)
         return
 
     # Run all four methods
     all_results = []
-    all_results.extend(_run_s1(df, emb, years))
-    all_results.extend(_run_s2(df, emb, years))
-    all_results.extend(_run_s3(df, emb, years))
-    all_results.extend(_run_s4(df, emb, years))
+    all_results.extend(_run_s1(df, emb, years, min_papers, max_subsample))
+    all_results.extend(_run_s2(df, emb, years, min_papers, max_subsample))
+    all_results.extend(_run_s3(df, emb, years, min_papers, max_subsample))
+    all_results.extend(_run_s4(df, emb, years, min_papers, max_subsample))
 
     result_df = pd.DataFrame(all_results)
+    result_df["channel"] = "semantic"
     log.info("Computed %d divergence values across 4 methods", len(result_df))
+
+    # Enforce output column order: year,method,channel,window,hyperparams,value
+    result_df = result_df[["year", "method", "channel", "window", "hyperparams", "value"]]
 
     # PELT break detection
     breaks_df = detect_breaks_pelt(result_df)

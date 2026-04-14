@@ -17,11 +17,11 @@ G8: Betweenness centrality     — mean betweenness of largest connected compone
 
 Reads:
   refined_works.csv, refined_citations.csv
+  config/analysis.yaml (parameters via load_analysis_config)
 
 Writes:
-  Long-format CSV: year, method, window, hyperparams, value
-
-Also applies PELT break detection (ruptures) at penalties 1, 3, 5.
+  Long-format CSV: year, method, channel, window, hyperparams, value
+  Breaks CSV:      method, channel, window, hyperparams, penalty, break_years
 
 Usage:
     CLIMATE_FINANCE_DATA=tests/fixtures/smoke python3 scripts/compute_divergence_citation.py \
@@ -39,12 +39,24 @@ from scipy import sparse
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy, kendalltau
+from pipeline_loaders import load_analysis_config
 from script_io_args import parse_io_args, validate_io
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("compute_divergence_citation")
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+# ── Parameters (from config/analysis.yaml) ─────────────────────────────────
+
+cfg = load_analysis_config()
+_div_cfg = cfg["divergence"]
+_cit_cfg = _div_cfg["citation"]
+
+PELT_PENALTIES = _div_cfg["pelt_penalties"]
+G1_DAMPING = _cit_cfg["G1_pagerank"]["damping"]
+G4_N_COMMUNITIES = _cit_cfg["G4_cross_tradition"]["n_communities"]
+G8_MAX_NODES = _cit_cfg["G8_betweenness"]["max_nodes"]
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +150,7 @@ def compute_g1_pagerank_volatility(works, internal_edges, years):
             prev_nodes = None
             continue
 
-        pr = nx.pagerank(G, max_iter=200)
+        pr = nx.pagerank(G, alpha=G1_DAMPING, max_iter=200)
         nodes = sorted(pr.keys())
         ranks = np.array([pr[n] for n in nodes])
 
@@ -508,8 +520,8 @@ def compute_g8_betweenness(works, internal_edges, years):
         n = H.number_of_nodes()
 
         # Subsample for tractability
-        if n > 500:
-            bc = nx.betweenness_centrality(H, k=500)
+        if n > G8_MAX_NODES:
+            bc = nx.betweenness_centrality(H, k=G8_MAX_NODES)
         else:
             bc = nx.betweenness_centrality(H)
 
@@ -523,32 +535,38 @@ def compute_g8_betweenness(works, internal_edges, years):
 # PELT break detection
 # ---------------------------------------------------------------------------
 
-def detect_breaks_pelt(series_dict, penalties=(1, 3, 5)):
+def detect_breaks_pelt(series_dict, penalties=None):
     """Apply PELT to each method's time series.
 
     Parameters
     ----------
     series_dict : dict
         {method_name: {year: value, ...}}
-    penalties : tuple of float
-        Penalty values for PELT.
+    penalties : list of float | None
+        Penalty values for PELT. Defaults to PELT_PENALTIES from config.
 
     Returns
     -------
-    list of dict
-        Each dict: {method, penalty, breakpoints (list of years)}.
+    pd.DataFrame
+        Columns: method, channel, window, hyperparams, penalty, break_years
     """
-    results = []
+    if penalties is None:
+        penalties = PELT_PENALTIES
+
+    rows = []
     for method, yv in series_dict.items():
         years = sorted(yv.keys())
         vals = np.array([yv[y] for y in years])
         valid = ~np.isnan(vals)
         if valid.sum() < 4:
             for pen in penalties:
-                results.append({
+                rows.append({
                     "method": method,
+                    "channel": "citation",
+                    "window": "cumulative",
+                    "hyperparams": "",
                     "penalty": pen,
-                    "breakpoints": [],
+                    "break_years": "",
                 })
             continue
 
@@ -568,20 +586,20 @@ def detect_breaks_pelt(series_dict, penalties=(1, 3, 5)):
                 bkps = algo.fit(signal_2d).predict(pen=pen)
                 # bkps are 1-indexed positions; last is always len(signal)
                 bp_years = [years[b - 1] for b in bkps if b < len(years)]
-                results.append({
-                    "method": method,
-                    "penalty": pen,
-                    "breakpoints": bp_years,
-                })
             except Exception as exc:
                 log.debug("PELT failed for %s pen=%s: %s", method, pen, exc)
-                results.append({
-                    "method": method,
-                    "penalty": pen,
-                    "breakpoints": [],
-                })
+                bp_years = []
 
-    return results
+            rows.append({
+                "method": method,
+                "channel": "citation",
+                "window": "cumulative",
+                "hyperparams": "",
+                "penalty": pen,
+                "break_years": ";".join(str(y) for y in bp_years),
+            })
+
+    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -636,6 +654,7 @@ def main():
             rows.append({
                 "year": y,
                 "method": method,
+                "channel": "citation",
                 "window": "cumulative",
                 "hyperparams": "",
                 "value": val,
@@ -650,15 +669,7 @@ def main():
         log.info("  %s: %d/%d valid values", m, n_valid, len(years))
 
     # Apply PELT break detection
-    breaks = detect_breaks_pelt(all_series)
-    break_rows = []
-    for br in breaks:
-        break_rows.append({
-            "method": br["method"],
-            "penalty": br["penalty"],
-            "breakpoints": ";".join(str(y) for y in br["breakpoints"]),
-        })
-    df_breaks = pd.DataFrame(break_rows)
+    df_breaks = detect_breaks_pelt(all_series)
 
     # Save divergence series
     df_out.to_csv(io_args.output, index=False)

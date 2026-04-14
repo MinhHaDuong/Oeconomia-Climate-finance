@@ -56,7 +56,7 @@ class TestComputeDivergenceCitation:
             "--output", str(out),
         ])
         df = pd.read_csv(out)
-        assert set(df.columns) == {"year", "method", "window", "hyperparams", "value"}
+        assert set(df.columns) == {"year", "method", "channel", "window", "hyperparams", "value"}
 
     def test_all_eight_methods_present(self):
         out = self.tmp / "tab_citation_divergence.csv"
@@ -93,7 +93,7 @@ class TestComputeDivergenceCitation:
         df_br = pd.read_csv(breaks_path)
         assert "method" in df_br.columns
         assert "penalty" in df_br.columns
-        assert "breakpoints" in df_br.columns
+        assert "break_years" in df_br.columns
         # 8 methods x 3 penalties = 24 rows
         assert len(df_br) == 24
 

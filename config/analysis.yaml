@@ -10,3 +10,53 @@ periodization:
 clustering:
   k: 6                  # Number of KMeans clusters
   cite_threshold: 50    # Minimum cited_by_count for "core" papers
+
+# ── Cluster-free divergence panel (ticket 0026) ──────────────────────────
+# Each compute_divergence_*.py reads this section via load_analysis_config().
+#
+# Output contract (all three CSVs):
+#   Divergence: year,method,channel,window,hyperparams,value
+#   Breaks:     method,channel,window,hyperparams,penalty,break_years
+#     - break_years is semicolon-separated (e.g. "2007;2013")
+#     - channel is one of: semantic, lexical, citation
+#     - window is integer (years) or "cumulative" for citation graph methods
+
+divergence:
+  windows: [2, 3, 4, 5]
+  min_papers: 30          # per window minimum (override with 5 for smoke)
+  min_papers_smoke: 5     # auto-detected when n_works < 200
+  max_subsample: 2000     # cap per side for O(n²) methods
+  pelt_penalties: [1, 3, 5]
+  pelt_model: rbf
+  pelt_min_size: 2
+
+  semantic:
+    S1_MMD:
+      bandwidth_multipliers: [0.5, 1.0, 2.0]   # × median heuristic
+    S2_energy: {}                                # no hyperparams
+    S3_sliced_wasserstein:
+      n_projections: [100, 500, 1000]
+    S4_frechet: {}                               # Gaussian assumption
+
+  lexical:
+    tfidf_max_features: 5000
+    tfidf_min_df: 3
+    L1_js: {}                                    # uses shared windows
+    L2_novelty:
+      windows: [3, 5]                            # past/future window
+    L3_bursts:
+      top_n_terms: 100
+      z_threshold: 2.0
+
+  citation:
+    G1_pagerank:
+      damping: 0.85
+    G2_spectral: {}
+    G3_coupling_age: {}
+    G4_cross_tradition:
+      n_communities: 2                           # spectral bisection
+    G5_pref_attachment: {}
+    G6_entropy: {}
+    G7_disruption: {}
+    G8_betweenness:
+      max_nodes: 500                             # subsample for tractability

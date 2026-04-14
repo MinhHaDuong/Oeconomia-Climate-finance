@@ -49,7 +49,7 @@ class TestSemanticDivergenceSmoke:
         df = pd.read_csv(self.output_csv)
 
         # Expected columns
-        expected_cols = {"year", "method", "window", "hyperparams", "value"}
+        expected_cols = {"year", "method", "channel", "window", "hyperparams", "value"}
         assert expected_cols.issubset(set(df.columns)), (
             f"Missing columns: {expected_cols - set(df.columns)}"
         )
@@ -86,7 +86,7 @@ class TestSemanticDivergenceSmoke:
         assert os.path.exists(self.breaks_csv), "Breaks CSV not created"
         bdf = pd.read_csv(self.breaks_csv)
 
-        expected_cols = {"method", "window", "hyperparams", "penalty", "breakpoint_years"}
+        expected_cols = {"method", "channel", "window", "hyperparams", "penalty", "break_years"}
         assert expected_cols.issubset(set(bdf.columns)), (
             f"Missing break columns: {expected_cols - set(bdf.columns)}"
         )
