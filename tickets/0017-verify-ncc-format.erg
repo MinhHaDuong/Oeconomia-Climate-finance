@@ -1,0 +1,29 @@
+%erg v1
+Title: Verify NCC Analysis format requirements
+Status: closed
+Created: 2026-04-13
+Author: claude
+
+--- log ---
+2026-04-13T21:03Z claude created
+2026-04-13T21:03Z claude note subtask of epic 0012; parallel with 0015
+2026-04-13T21:10Z claude status closed — format specs documented in docs/ncc-format-specs.md
+
+--- body ---
+## Context
+Nature Climate Change publishes "Analysis" pieces. Need to confirm exact
+format specs before drafting (0019) or adapting figures (0018).
+
+## Actions
+1. WebFetch NCC author guidelines for Analysis articles
+2. Confirm: word limit, figure/table limit, reference limit
+3. Check figure format requirements (resolution, file types, panel layout)
+4. Note cover letter requirements and any editorial pre-submission inquiry process
+5. Check if NCC accepts preprint-posted companion papers as references
+6. Write findings to docs/ncc-format-specs.md
+
+## Test
+docs/ncc-format-specs.md exists with verified facts and source URLs.
+
+## Exit criteria
+All format constraints documented. Figure specs known for 0018.

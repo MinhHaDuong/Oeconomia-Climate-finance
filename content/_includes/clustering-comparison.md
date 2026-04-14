@@ -1,15 +1,15 @@
-## 7. Clustering Method and Representation Space Comparison
+## Clustering Method and Representation Space Comparison
 <!-- WARNING: AI-generated, not human-reviewed -->
 
 **Script:** `scripts/compute_clustering_comparison.py`
 
-### 7.1 Motivation
+### Motivation
 
 The manuscript partitions the corpus into six thematic clusters using KMeans on 1024-dimensional multilingual sentence embeddings. After the v1.0 submission, adding 0.6% new works reshuffled cluster assignments qualitatively --- five of six cluster titles mapped to wrong panels (Errata 1). This incident raises three questions: (1) How stable is KMeans compared to alternative methods? (2) Does natural cluster structure exist in the data? (3) Which representation space best captures the field's intellectual organization?
 
 We compare three clustering algorithms across three representation spaces and three corpus snapshots, producing a systematic evaluation that goes beyond method comparison to characterize the field's structure.
 
-### 7.2 Representation spaces
+### Representation spaces
 
 We construct three independent representations of the same corpus, each capturing a different dimension of similarity between works.
 
@@ -21,7 +21,7 @@ We construct three independent representations of the same corpus, each capturin
 
 The high SVD explained variance in citation space (97.4% vs. 19.2% in lexical) reflects the coupling matrix's sparsity: most work-pairs share zero references, concentrating variance in a few dominant components. This is a property of the matrix structure, not of rich low-dimensional structure.
 
-### 7.3 Clustering methods
+### Clustering methods
 
 **KMeans** (baseline). Partitions the space into *k* convex Voronoi cells minimizing within-cluster variance. Deterministic given a seed (random_state=42, n_init=20). Every point is assigned --- no noise class. Computational cost: O(nk) per iteration.
 
@@ -29,7 +29,7 @@ The high SVD explained variance in citation space (97.4% vs. 19.2% in lexical) r
 
 **Spectral clustering**. Constructs a nearest-neighbor affinity graph (15 neighbors), computes the graph Laplacian's bottom eigenvectors, and runs KMeans in the spectral embedding. Requires specifying *k*. Expected advantage: captures non-convex cluster shapes. Computational limitation: O(n³) eigendecomposition; for corpora exceeding 5,000 works, we subsample to 5,000, cluster spectrally, and assign remaining points to the nearest centroid (preserving spectral labels for sampled points).
 
-### 7.4 Cross-snapshot stability
+### Cross-snapshot stability
 
 Three corpus snapshots test clustering stability under perturbation:
 
@@ -52,7 +52,7 @@ The Adjusted Rand Index (ARI) measures agreement between two clusterings on shar
 
 **Interpretation.** KMeans is highly stable under marginal corpus expansion (ARI = 0.980). Spectral clustering is unstable (0.587), partly because the subsampling approximation introduces centroid-based assignment for 82% of works. HDBSCAN cannot find clusters: with `min_cluster_size=50`, it identifies only 3 clusters containing 2.3% of works, with the remaining 97.7% classified as noise. The semantic embedding space lacks density-separated regions.
 
-### 7.5 Perturbation stability
+### Perturbation stability
 
 We measure KMeans robustness by randomly dropping *f*% of works and re-clustering (10 repeats per drop fraction):
 
@@ -64,7 +64,7 @@ We measure KMeans robustness by randomly dropping *f*% of works and re-clusterin
 
 Mean ARI is high (~0.87) but standard deviation is substantial (~0.16). Most perturbations preserve cluster structure (ARI > 0.95 in the majority of runs), but approximately 1 in 10 runs produces a major reshuffle (ARI ≈ 0.5). This bimodal stability pattern --- usually stable, occasionally catastrophic --- explains the Errata 1 incident: a small corpus change happened to trigger a reshuffle of the KMeans partition boundaries.
 
-### 7.6 Multi-space structure comparison
+### Multi-space structure comparison
 
 The central question: does natural cluster structure exist in the climate finance corpus?
 
@@ -84,7 +84,7 @@ We compute KMeans silhouette scores for k = 3 to 12 in each space. The silhouett
 
 **Citation space** (silhouette: 0.052--0.108). The strongest structure, approximately 3× the semantic silhouette at k=6. HDBSCAN finds 20 density-based communities in this space (70.8% noise), far more than the 3 clusters (97.7% noise) found in the semantic space. Silhouette increases steadily with k, suggesting many fine-grained citation communities consistent with Louvain community detection results (Section 8).
 
-### 7.7 HDBSCAN noise analysis
+### HDBSCAN noise analysis
 
 HDBSCAN's noise classification provides insight into the density structure of each space:
 
@@ -95,7 +95,7 @@ HDBSCAN's noise classification provides insight into the density structure of ea
 
 The semantic space is almost uniformly dense --- no sparse separators between clusters. The citation space has moderate density variation: 20 communities emerge, but 70.8% of works sit in sparse boundary regions between them. This is consistent with a field where works increasingly cite across sub-communities.
 
-### 7.8 Cross-space independence
+### Cross-space independence
 
 To test whether the three spaces capture the same or independent structure, we compute the ARI between KMeans (k=6) assignments across spaces on shared works:
 
@@ -107,7 +107,7 @@ To test whether the three spaces capture the same or independent structure, we c
 
 The three spaces are **largely independent**. Semantic and lexical spaces show weak agreement (works about similar topics tend to use similar words), but neither aligns with citation structure. What a work is about, what words it uses, and what it cites capture three distinct dimensions of the field's organization.
 
-### 7.9 Language as a structuring variable
+### Language as a structuring variable
 
 The multilingual BGE-M3 model is designed to embed texts across languages in a shared space. We test whether language creates measurable clustering:
 
@@ -117,7 +117,7 @@ The multilingual BGE-M3 model is designed to embed texts across languages in a s
 
 The negative silhouette means the EN/non-EN split is *anti-clustered* --- non-English works are embedded within English-language topic regions, not in separate regions. Language does not create artificial boundaries in the semantic space.
 
-### 7.10 Core versus full corpus
+### Core versus full corpus
 
 Do highly-cited works (cited_by_count ≥ 50) show more clustering structure?
 
@@ -128,7 +128,7 @@ Do highly-cited works (cited_by_count ≥ 50) show more clustering structure?
 
 The core subset shows marginally higher but still near-zero silhouette. Highly-cited works span all thematic regions rather than concentrating in one cluster. High citation count is not a proxy for topical coherence.
 
-### 7.11 Discussion
+### Discussion
 
 **Finding 1: Climate finance is a continuum, not a typology.** All three representation spaces and all clustering methods converge on the same conclusion: the corpus has no well-separated clusters. The intellectual traditions identified in the manuscript are not discrete schools of thought but regions in a continuous field. This is consistent with the paper's qualitative narrative of overlapping, evolving perspectives.
 

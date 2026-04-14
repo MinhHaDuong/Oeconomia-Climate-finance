@@ -1,0 +1,35 @@
+%erg v1
+Title: Audit codebase and Makefile for NCC pipeline readiness
+Status: closed
+Created: 2026-04-13
+Author: claude
+
+--- log ---
+2026-04-13T21:07Z claude created
+2026-04-13T21:07Z claude note subtask of epic 0012; gates 0015 and 0018
+2026-04-13T21:10Z claude status closed — audit documented in docs/ncc-pipeline-audit.md
+
+--- body ---
+## Context
+Before adapting figures or polishing the companion paper, we need to know
+whether the existing pipeline supports the NCC deliverables cleanly or
+needs reorganization. The project has four Quarto outputs sharing includes,
+a Phase 2 analysis pipeline, and Makefile targets for each output. A new
+NCC piece may need its own Quarto document, figure targets, and vars file.
+
+## Actions
+1. Map which existing scripts/figures the NCC piece would reuse
+2. Check if current Makefile targets cover the NCC figures or need new ones
+3. Assess whether the companion paper build (make output/content/companion-paper.pdf)
+   works cleanly today
+4. Identify any shared includes that need NCC-specific variants vs reuse as-is
+5. Decide: does the NCC piece live in content/ as a 5th Quarto output, or
+   as a standalone document outside the Quarto project?
+6. Flag any reorganization needed before execution tickets start
+
+## Test
+Written assessment in docs/ or as a note on the ticket.
+
+## Exit criteria
+Clear decision on pipeline architecture for the NCC deliverables.
+Reorganization tasks (if any) identified and ticketed or folded into 0015/0018.

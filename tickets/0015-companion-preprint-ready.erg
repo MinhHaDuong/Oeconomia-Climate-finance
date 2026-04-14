@@ -1,0 +1,33 @@
+%erg v1
+Title: Make companion paper preprint-ready
+Status: closed
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0021
+
+--- log ---
+2026-04-13T21:03Z claude created
+2026-04-13T21:03Z claude note subtask of epic 0012; companion paper has ~8K words of prose, needs polish pass
+2026-04-13T21:33Z claude status closed — abstract added, comments removed, AI tells fixed, z-scores corrected
+
+--- body ---
+## Context
+The companion methods paper (content/companion-paper.qmd) is substantially
+written (~4,400 words + ~3,500 in includes) but needs a finishing pass before
+it can be posted as a preprint on SocArXiv. The NCC piece (0012) will cite
+this preprint for full technical details.
+
+## Actions
+1. Write abstract (~250 words)
+2. Place figures with explicit cross-references ({#fig-...})
+3. Resolve all HTML authoring comments (<!-- ... -->)
+4. Verify all {{< meta >}} variables render correctly
+5. Proofread for consistency, AI tells, and citation completeness
+6. Test build: make output/content/companion-paper.pdf
+
+## Test
+`make output/content/companion-paper.pdf` succeeds with no unresolved
+variables and no placeholder comments in the output.
+
+## Exit criteria
+PDF renders cleanly. Abstract present. All figures placed. Ready for upload.

@@ -1,7 +1,7 @@
 ## 11. Bibliometric Context: Positioning in the Literature
 <!-- WARNING: AI-generated, not human-reviewed -->
 
-### 11.1 Prior bibliometric studies of climate finance
+### Prior bibliometric studies of climate finance
 
 Several studies have mapped the climate finance literature bibliometrically. Our study differs from these in scope, methods, and — crucially — in reporting cluster validity.
 
@@ -11,7 +11,7 @@ Several studies have mapped the climate finance literature bibliometrically. Our
 
 **Corpus sizes in context.** Our corpus of ~31,000 works is 10--100× larger than any previous climate finance bibliometric study (315--3,275 papers). This matters: small corpora may produce artificially well-separated clusters by undersampling the boundary-spanning works that create continuity.
 
-### 11.2 How our approach differs
+### How our approach differs
 
 Our study is, to our knowledge, the first to:
 
@@ -23,7 +23,7 @@ Our study is, to our knowledge, the first to:
 
 4. **Apply formal change-point detection** to structural properties of the field, as opposed to counting publications over time.
 
-### 11.3 Contextualizing near-zero silhouette scores
+### Contextualizing near-zero silhouette scores
 
 Are near-zero silhouette scores typical or exceptional?
 
@@ -35,7 +35,7 @@ Are near-zero silhouette scores typical or exceptional?
 
 **Interpretation.** The near-zero silhouette is not an artifact but a genuine property of the field. It places climate finance among the "boundary-spanning" domains identified by Bascur et al. (2024) that inherently resist bibliometric clustering. This is itself a finding about the field's intellectual structure.
 
-### 11.4 Methodological contributions
+### Methodological contributions
 
 Our multi-space temporal analysis contributes three methodological insights:
 

@@ -1,0 +1,86 @@
+---
+title: "Corpus Construction and Data Quality"
+subtitle: "Companion to 'Inventing Climate Finance' (submitted to *Oeconomia*)"
+author: "Minh Ha-Duong"
+date: "2026-04-14"
+metadata-files: [technical-report-vars.yml]
+bibliography: bibliography/main.bib
+format:
+  pdf:
+    pdf-engine: xelatex
+    number-sections: true
+---
+
+This document describes how the corpus of {{< meta corpus_total >}} works on climate finance was assembled from {{< meta corpus_sources >}} sources, enriched, filtered, and validated. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files.
+
+All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
+
+# Pipeline Overview
+
+The corpus building pipeline is managed by DVC (Data Version Control). The five discovery stages run independently; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain. Enrichment runs on the full `unified_works.csv` so that all metadata is available when the flagging rules are evaluated. The extend step computes six quality flags for every work without removing any rows; the filter step applies the retention policy and writes `refined_works.csv` together with `corpus_audit.csv`. The align step produces the Phase 2 canonical inputs (`refined_embeddings.npz`, `refined_citations.csv`) from full enrichment caches.
+
+![DVC pipeline DAG — generated from `dvc.yaml` by `scripts/plot_fig_dag.py`.](figures/fig_dag.png){#fig-dag width=100%}
+
+\newpage
+
+# Corpus Construction
+
+{{< include _includes/corpus-construction.md >}}
+
+---
+
+{{< include _includes/corpus-enrichment.md >}}
+
+---
+
+{{< include _includes/corpus-filtering.md >}}
+
+\newpage
+
+# Data Quality
+
+{{< include tables/tab_corpus_sources.md >}}
+
+---
+
+{{< include _includes/metadata-quality.md >}}
+
+---
+
+{{< include _includes/embedding-quality.md >}}
+
+---
+
+{{< include _includes/citation-quality.md >}}
+
+\newpage
+
+# Corpus Contents
+
+![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
+
+![UMAP semantic map of the corpus, colored by cluster.](figures/fig_semantic.png){#fig-semantic width=100%}
+
+![UMAP semantic map, colored by publication period.](figures/fig_semantic_period.png){#fig-semantic-period width=100%}
+
+![UMAP semantic map, colored by language.](figures/fig_semantic_lang.png){#fig-semantic-lang width=100%}
+
+{{< include tables/tab_languages.md >}}
+
+{{< include _includes/core-vs-full-definition.md >}}
+
+\newpage
+
+# Software Environment
+
+{{< include _includes/reproducibility.md >}}
+
+\newpage
+
+# Annexes {.unnumbered}
+
+{{< include _includes/annex-crossencoder.md >}}
+
+---
+
+{{< include _includes/teaching-convergence.md >}}

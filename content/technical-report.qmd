@@ -1,44 +1,35 @@
 ---
-title: "Reproducibility Note: Corpus Construction and Bibliometric Analysis"
+title: "Analysis Methods and Results"
 subtitle: "Companion to 'Inventing Climate Finance' (submitted to *Oeconomia*)"
 author: "Minh Ha-Duong"
-date: "2026-03-16"
+date: "2026-04-14"
 metadata-files: [technical-report-vars.yml]
 bibliography: bibliography/main.bib
 format:
   pdf:
     pdf-engine: xelatex
+    number-sections: true
 ---
 
-This reproducibility note documents the computational pipeline behind the bibliometric analysis in "Inventing Climate Finance: From Incremental Costs to Strategic Ambiguity" (submitted to *Oeconomia*). It is not a standalone paper but a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files. Part I describes how the corpus of {{< meta corpus_total >}} works was assembled from {{< meta corpus_sources >}} sources, enriched, and filtered. Part II describes the analyses that transform this corpus into the manuscript's figures and tables, closing with environment setup, execution order, and cross-machine reproducibility.
+This document describes the analyses that transform the climate finance corpus (see the companion corpus report for construction and data quality) into the manuscript's figures and tables. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts.
 
 All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
 
-\newpage
+# Corpus Summary
 
-# Part I: Corpus Construction
+The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance (1990--2024), assembled from {{< meta corpus_sources >}} bibliographic sources (see the corpus report for construction details). Of these, {{< meta corpus_core >}} constitute a "core" subset (cited $\geq$ {{< meta corpus_core_threshold >}} times). Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions, `BAAI/bge-m3`) are available for {{< meta corpus_with_embeddings >}} works.
 
-{{< include _includes/corpus-construction.md >}}
-
----
-
-{{< include _includes/corpus-enrichment.md >}}
-
----
-
-{{< include _includes/corpus-filtering.md >}}
-
----
-
-{{< include _includes/core-vs-full.md >}}
+{{< include _includes/core-vs-full-analysis.md >}}
 
 \newpage
 
-# Part II: Analysis
+# Structural Break Detection
 
 {{< include _includes/structural-breaks.md >}}
 
 ---
+
+# Thematic Structure
 
 {{< include _includes/alluvial-diagram.md >}}
 
@@ -51,7 +42,9 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 <!-- WARNING: AI-generated include, not human-reviewed -->
 {{< include _includes/temporal-structure.md >}}
 
----
+\newpage
+
+# Polarization Analysis
 
 {{< include _includes/bimodality-analysis.md >}}
 
@@ -59,26 +52,12 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 {{< include _includes/pca-scatter.md >}}
 
----
+\newpage
+
+# Citation Analysis
 
 {{< include _includes/citation-genealogy.md >}}
 
 ---
 
 {{< include _includes/cocitation-communities.md >}}
-
----
-
-{{< include _includes/citation-quality.md >}}
-
----
-
-{{< include _includes/metadata-quality.md >}}
-
----
-
-{{< include _includes/embedding-quality.md >}}
-
----
-
-{{< include _includes/reproducibility.md >}}

@@ -1,0 +1,44 @@
+%erg v1
+Title: Draft NCC "Paris didn't matter" piece
+Status: closed
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0017
+Blocked-by: 0018
+Blocked-by: 0022
+Blocked-by: 0023
+
+--- log ---
+2026-04-13T21:03Z claude created
+2026-04-13T21:03Z claude note subtask of epic 0012; needs format specs and figures
+2026-04-13T21:45Z claude status closed — draft at content/ncc-analysis.qmd, 9 new bib entries
+
+--- body ---
+## Context
+Working title: "The categories we fight in." A ~2,000-word Analysis piece
+for Nature Climate Change. The core finding: computational analysis of
+~32,000 works shows climate finance scholarship crystallized around
+Copenhagen (2009), not Paris (2015). The field's conceptual categories
+haven't changed in 15 years.
+
+## Self-plagiarism management
+- Oeconomia paper (under review): uses same break detection as corroboration
+  for an intellectual history argument. Different audience, different framing.
+- Companion preprint (0016): provides full technical details. NCC piece cites it.
+- NCC framing: policy implications — if the categories haven't changed,
+  current governance debates are fought within a 15-year-old structure.
+
+## Actions
+1. Lead with the counterintuitive finding in paragraph 1
+2. Four figures from 0018
+3. Frame for policy audience: what does category stability mean for governance?
+4. Cite companion preprint for methods
+5. Cross-reference Oeconomia paper explicitly to manage overlap
+6. Internal review: AI-tell check, writing rules compliance
+
+## Test
+Draft passes internal review: finding in first paragraph, policy implications
+clear, no overlap with Oeconomia intellectual history framing.
+
+## Exit criteria
+Complete draft at NCC word limit, with figures placed and references formatted.

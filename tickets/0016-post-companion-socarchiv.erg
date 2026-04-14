@@ -1,0 +1,28 @@
+%erg v1
+Title: Post companion preprint on SocArXiv
+Status: closed
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0015
+
+--- log ---
+2026-04-13T21:03Z claude created
+2026-04-13T21:03Z claude note subtask of epic 0012; mechanical upload once 0015 is done
+2026-04-14T12:48Z claude status closed — won't do: parent epic 0012 cancelled
+
+--- body ---
+## Context
+The NCC piece (0012) cites the companion paper for full technical details.
+The companion must be publicly available with a DOI before NCC submission.
+
+## Actions
+1. Upload PDF to SocArXiv (osf.io/preprints/socarxiv)
+2. Set metadata: title, author, abstract, keywords, subject area
+3. Obtain DOI
+4. Record DOI in companion-paper-vars.yml for cross-referencing
+
+## Test
+DOI resolves to the uploaded preprint.
+
+## Exit criteria
+Preprint publicly accessible with a citable DOI.

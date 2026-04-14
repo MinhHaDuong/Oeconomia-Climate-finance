@@ -1,11 +1,11 @@
 ## 10. UNFCCC Negotiation Architecture and Academic Field Structure
 <!-- WARNING: AI-generated, not human-reviewed -->
 
-### 10.1 The co-production hypothesis
+### The co-production hypothesis
 
 The manuscript argues that climate finance was "invented" --- its categories co-produced by economists and institutions. If true, the organizational structure of UNFCCC negotiations should be reflected in the academic literature's internal organization. This section maps the evolution of negotiating bodies, tracks, and workstreams, then tests whether these diplomatic structures created measurable academic sub-literatures.
 
-### 10.2 UNFCCC finance architecture: four eras
+### UNFCCC finance architecture: four eras
 
 **Era 1: Single-track finance (1992--2006).** The Convention (1992) embedded "agreed full incremental costs" (Article 4.3) and "new and additional" resources as core financial obligations. The GEF served as the sole operating entity. No dedicated finance body existed; SBI handled guidance. The CDM (Kyoto Protocol Article 12, operational from 2005) generated \$15--24 billion in carbon revenues over 2001--2012, constituting a de facto private finance channel years before that concept entered negotiation language. Academic output was concentrated in carbon market economics (additionality, baselines, CDM methodology) with almost no connection to development economics.
 
@@ -15,7 +15,7 @@ The manuscript argues that climate finance was "invented" --- its categories co-
 
 **Era 4: Implementation and expansion (2015--present).** The Paris Agreement (2015) introduced Article 9 (finance obligations), Article 13 (enhanced transparency), Article 6 (carbon markets), and Article 2.1(c) (aligning all finance flows). The post-Paris agenda expanded to include the loss and damage fund (COP-27 Sharm el-Sheikh 2022, operationalized COP-28 Dubai 2023) and the New Collective Quantified Goal (NCQG, concluded COP-29 Baku 2024 at \$300 billion core, \$1.3 trillion aspirational). Each institution generated corresponding research: GCF evaluation, transparency methodology, Article 6 market design, loss attribution, and NCQG accounting.
 
-### 10.3 Five academic traditions mapped to negotiating tracks
+### Five academic traditions mapped to negotiating tracks
 
 | Negotiating track | Academic tradition | Institutional intermediaries | Peak period |
 |-------------------|-------------------|------|-------------|
@@ -25,7 +25,7 @@ The manuscript argues that climate finance was "invented" --- its categories co-
 | Green bonds, Art. 2.1(c) | Financial economics | World Bank (first green bond 2008), TCFD, FSB | 2016--present |
 | WIM, Santiago Network, L\&D Fund | Climate justice / loss attribution | WIM ExCom, attribution science | 2019--present |
 
-### 10.4 UNFCCC-guided topic classification: results
+### UNFCCC-guided topic classification: results
 
 We classify 27,315 works into eight UNFCCC negotiation tracks using keyword matching on titles, abstracts, and keywords. 21,430 works (78.5%) receive a topic; 5,885 remain unclassified.
 
@@ -52,7 +52,7 @@ We classify 27,315 works into eight UNFCCC negotiation tracks using keyword matc
 
 CDM dominance collapses after Bali 2007. Development, mitigation, and adaptation rise in parallel as their negotiating tracks are formalized. Green finance explodes from 0.4% to 7.7% after Paris Article 2.1(c). Governance grows 5× after the transparency framework is established.
 
-### 10.5 The anti-clustering test
+### The anti-clustering test
 
 If UNFCCC categories correspond to natural intellectual boundaries, works within the same category should be closer to each other than to works in other categories. We test this by computing the silhouette score of UNFCCC topic assignments in each representation space:
 
@@ -66,7 +66,7 @@ All three scores are near zero or negative. **The UNFCCC categories are anti-clu
 
 The ARI between UNFCCC topics and KMeans (k=6) on semantic embeddings is 0.126 (k=8: 0.128) --- weak but non-trivial agreement, suggesting that while the categorizations are not the same, they share some broad structure.
 
-### 10.6 Discussion
+### Discussion
 
 **The negotiation organized the field, not the other way around.** The topic evolution table (§10.4) shows that academic attention followed institutional creation with a lag of 1--3 years: CDM papers peaked after CDM operational rules were finalized (2005), adaptation papers rose after dedicated funds were created (2001--2010), green finance papers exploded after Article 2.1(c) created demand for "alignment" research (2015). Each negotiating room generated its academic constituency.
 

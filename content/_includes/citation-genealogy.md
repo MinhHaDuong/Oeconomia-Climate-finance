@@ -1,4 +1,4 @@
-## 10. Citation Genealogy
+## Citation Genealogy
 
 **Scripts:** `scripts/analyze_genealogy.py` (model), `scripts/plot_genealogy.py` (static figure), `scripts/plot_genealogy_html.py` (interactive)
 

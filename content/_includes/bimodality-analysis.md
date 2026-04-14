@@ -1,4 +1,4 @@
-## 8. Bimodality Analysis
+## Bimodality Analysis
 
 **Script:** `scripts/analyze_bimodality.py`
 

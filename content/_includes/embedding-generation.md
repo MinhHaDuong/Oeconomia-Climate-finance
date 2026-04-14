@@ -1,4 +1,4 @@
-## 3. Embedding Generation
+## Embedding Generation
 
 **Scripts:** `scripts/enrich_embeddings.py` (Phase 1: encoding), `scripts/analyze_embeddings.py` (Phase 2: UMAP + clustering)
 

@@ -1,12 +1,15 @@
 %erg v1
 Title: Submit "Paris didn't matter" short piece to Nature Climate Change
-Status: open
+Status: closed
 Created: 2026-04-13
 Author: user
 
 --- log ---
 2026-04-13T19:30Z claude created
 2026-04-13T19:30Z claude note epic — spawned from Imagine session reviewing companion paper publication strategy
+2026-04-13T21:03Z claude note decomposed into subtasks 0015-0020
+2026-04-13T21:07Z claude note added research/planning gates 0021-0023
+2026-04-14T12:48Z user status closed — won't do: "Paris didn't matter" oversells what the data shows; mid-2010s JS divergence is real signal; Oeconomia paper's cautious "corroborates" framing is correct, NCC inversion is not
 
 --- body ---
 ## Context
@@ -49,6 +52,19 @@ technical details, cited by the NCC piece.
 ## Test
 Draft passes internal review: counterintuitive finding stated in first
 paragraph, policy implications clear, no overlap with Oeconomia framing.
+
+## Subtasks
+| # | Title | Blocked by | Wave |
+|---|-------|------------|------|
+| 0021 | Audit codebase and Makefile for NCC readiness | — | 0 (research) |
+| 0022 | Literature review on the NCC message | — | 0 (research) |
+| 0023 | Research Article 6 relationship | — | 0 (research) |
+| 0015 | Make companion paper preprint-ready | 0021 | 1 |
+| 0017 | Verify NCC Analysis format requirements | — | 0 (research) |
+| 0016 | Post companion preprint on SocArXiv | 0015 | 2 |
+| 0018 | Adapt 4 figures for NCC format | 0017, 0021 | 2 |
+| 0019 | Draft NCC piece | 0017, 0018, 0022, 0023 | 3 |
+| 0020 | Submit to NCC | 0016, 0019 | 4 |
 
 ## Exit criteria
 Piece submitted to NCC. Companion preprint posted.

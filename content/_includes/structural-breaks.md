@@ -1,4 +1,4 @@
-## 5. Structural Break Detection
+## Structural Break Detection
 
 **Scripts:** `scripts/compute_alluvial.py` + `scripts/plot_fig_breakpoints.py`
 
@@ -56,11 +56,6 @@ One robust breakpoint is detected; a second is suggestive but below the robustne
 |------|-----------|---------------|------------|---------|---------|
 | 2007 | −0.15 | 1.51 | 1.51 | cosine only | 2 of 3 |
 | 2013 | 1.22 | 1.41 | 2.63 | both (weak) | 1 of 3 each |
-
-<!-- NOTE: z-scores recomputed from tab_breakpoints.csv on 2026-03-26.
-     Previous values (2.59 / 1.59 / "3 of 3") were from an earlier corpus version.
-     The 2013 break no longer meets the 2-of-3 windows robustness criterion.
-     The author should decide whether to relax the criterion or downgrade the claim. -->
 
 The 2007 break is driven by cosine distance (2 of 3 windows exceed z > 1.5) — a shift in the *semantic centre of mass* of the field, consistent with climate finance emerging as a distinct topic around the Bali Action Plan and the Stern Review's influence. The 2013 signal appears in both metrics but is below the robustness threshold (1 of 3 windows each); it may reflect a gradual redistribution across clusters rather than a sharp break, consistent with diversification into sub-specialties (green bonds, REDD+, adaptation finance) around the Warsaw International Mechanism.
 

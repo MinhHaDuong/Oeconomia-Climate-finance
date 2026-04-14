@@ -1,0 +1,36 @@
+%erg v1
+Title: Adapt 4 figures for NCC format
+Status: closed
+Created: 2026-04-13
+Author: claude
+Blocked-by: 0017
+Blocked-by: 0021
+
+--- log ---
+2026-04-13T21:03Z claude created
+2026-04-13T21:03Z claude note subtask of epic 0012; depends on format specs from 0017
+2026-04-13T21:33Z claude status closed — 4 scripts, Makefile targets, captions in docs/ncc-figure-captions.md
+
+--- body ---
+## Context
+The NCC piece needs four figures. The underlying data and plots mostly exist
+in the pipeline but need adaptation to NCC specifications (from 0017).
+
+## Figures
+(a) Sliding-window divergence showing 2009 peak — exists as break detection plot
+(b) Core vs full corpus comparison — exists in _includes/core-vs-full.md
+(c) Efficiency-accountability bimodality KDE — exists as bimodality plot
+(d) Alluvial diagram showing stable cluster structure — exists as alluvial plot
+
+## Actions
+1. Read NCC figure specs from docs/ncc-format-specs.md (0017 output)
+2. Adapt each figure to NCC resolution, dimensions, and panel layout
+3. Ensure figures are self-contained (readable without the text)
+4. Write NCC-specific plot scripts or parameterize existing ones
+5. Generate final figure files
+
+## Test
+Four figures render at NCC-required resolution and dimensions.
+
+## Exit criteria
+Four publication-ready figures in NCC format, with captions drafted.

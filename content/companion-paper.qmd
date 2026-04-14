@@ -4,30 +4,45 @@ author: "Minh Ha-Duong"
 date: "2026-03-05"
 metadata-files: [companion-paper-vars.yml]
 bibliography: bibliography/main.bib
+abstract: |
+  We present a framework for detecting structural breaks and polarization in
+  scientific literatures using sentence-transformer embeddings, and validate it
+  on a corpus of {{< meta corpus_total >}} works on climate finance (1990--2024).
+  The framework combines sliding-window divergence with dual metrics
+  (Jensen-Shannon on cluster proportions, cosine on embedding centroids),
+  a censored-gap variant that filters gradual transitions from genuine
+  discontinuities, supervised seed-axis projection with Gaussian mixture
+  bimodality testing, and a two-level design comparing the full corpus to a
+  citation-defined core ({{< meta corpus_core >}} works cited $\geq$
+  {{< meta corpus_core_threshold >}} times). Applied to climate finance, the
+  framework yields four findings. First, the censored-gap analysis converges
+  on a single dominant structural break at 2009 (Copenhagen), while the Paris
+  Agreement (2015) and Glasgow (2021) produce no comparable discontinuity.
+  Second, the core literature shows no structural break at all --- the
+  conceptual categories were established early and persisted. Third, a
+  bimodal efficiency--accountability divide is cross-validated across embedding
+  and lexical representations ($\Delta$BIC = {{< meta bim_dbic_embedding >}} and
+  {{< meta bim_dbic_tfidf >}}, correlation $r$ = {{< meta bim_corr >}}),
+  unimodal during the crystallization period (2007--2014) and bimodal after
+  2015. Fourth, this divide loads on PC2, not PC1 --- a secondary but
+  persistent axis that cuts diagonally across the field's topical structure.
+  The endogenously detected periodization contradicts the COP-milestone
+  chronology common in existing bibliometric studies and demonstrates the
+  framework's applicability to other fields where data-driven periodization
+  is desirable.
 format:
   pdf:
     pdf-engine: xelatex
 ---
 
-<!-- Target journal: Scientometrics or Quantitative Science Studies -->
-<!-- Status: detailed outline with {{< include >}} directives for method sections -->
-
 ## 1. Introduction
 
-<!-- ~1,000 words -->
-
-<!-- Opening: the problem of detecting structural change in scientific literatures -->
-
 How do scientific fields restructure themselves? Existing approaches to mapping the evolution of scholarly literatures---co-citation analysis, bibliographic coupling, topic models (LDA, STM)---typically impose a fixed topic structure or rely on discrete document-term representations that may miss gradual semantic shifts. We propose a framework for detecting *endogenous* structural breaks in scientific literatures using dense sentence-transformer embeddings and sliding-window divergence tests.
-
-<!-- Gap -->
 
 The bibliometrics literature has developed sophisticated tools for mapping static field structures (co-citation clusters, keyword co-occurrence networks) and for tracking topic proportions over time (dynamic topic models). However, two questions remain underaddressed:
 
 1. **Endogenous periodization**: At what points does a field's semantic structure change *most sharply*, as determined by the data rather than imposed from external events?
 2. **Polarization detection**: Can we identify and measure the emergence of opposed intellectual communities within a field, and distinguish this structure from mere thematic diversity?
-
-<!-- Contribution -->
 
 We address both questions with a unified framework built on multilingual sentence-transformer embeddings. The framework has three components:
 
@@ -37,26 +52,18 @@ We address both questions with a unified framework built on multilingual sentenc
 
 We validate the framework on the case of climate finance scholarship (1990--2024), a field whose evolution is well-documented and whose institutional history provides external benchmarks against which endogenous periodization can be assessed.
 
-<!-- Roadmap -->
-
 Section 2 reviews related work. Section 3 describes the corpus (cross-referencing the companion data descriptor). Sections 4 and 5 present the method and results. Section 6 discusses generalizability and limitations.
 
 
 ## 2. Related Work
 
-<!-- ~1,500 words -->
-
 ### 2.1 Topic models in scientometrics
-
-<!-- LDA [@blei2003], STM [@roberts2014], BERTopic [@grootendorst2022]. Strengths: interpretable topics, temporal dynamics via dynamic topic models. Limitations: bag-of-words assumption (LDA/STM), sensitivity to k, inability to detect continuous semantic drift within topics. -->
 
 Latent Dirichlet Allocation [LDA; @blei2003] remains the most widely used topic model in scientometrics. Each document is modelled as a finite mixture over latent topics, each topic a distribution over words. The Structural Topic Model [STM; @roberts2014] extends LDA by incorporating document-level covariates that can influence topic prevalence and content, making it attractive for bibliometric applications where metadata is rich. BERTopic [@grootendorst2022] reframes topic modelling as a clustering problem on pretrained transformer embeddings, avoiding the need to specify the number of topics *a priori*. Its "Topics over Time" module tracks topic prevalence across time slices.
 
 All three approaches have been applied to map scientific fields [for a recent comparison, see @xie_waltman2025]. However, they share limitations for temporal analysis. LDA and STM rely on bag-of-words representations, discarding word order and context. Dynamic topic models [@blei_lafferty2006] allow topic-word distributions to evolve, but each time-slice still operates on a bag-of-words likelihood, so within-topic semantic drift --- where the *same vocabulary* acquires new meaning --- remains invisible. BERTopic's temporal module tracks which words define a topic at each timestep but does not detect structural reorganisation of the topic space itself. Topic coherence correlates poorly with human interpretability [@chang2009], and embedding-based clustering can match LDA quality at lower computational cost [@sia2020].
 
 ### 2.2 Structural change detection in time series
-
-<!-- Statistical literature on change-point detection: CUSUM, Bai-Perron, binary segmentation. Application to scientometrics is rare. Most bibliometric "periodizations" are imposed from external events (policy milestones, institutional changes) rather than detected endogenously. -->
 
 The statistical literature on change-point detection is mature [for a selective review of over 140 methods, see @truong2020], but applications to bibliometric time series are rare. Most change-point methods operate on scalar or low-dimensional signals (CUSUM, Bai-Perron, PELT); adapting them to high-dimensional semantic spaces requires either dimensionality reduction or divergence-based summarisation.
 
@@ -66,24 +73,11 @@ The concept of endogenous periodization --- letting the data determine period bo
 
 ### 2.3 Embedding-based scientometrics
 
-<!-- Dense representations from BERT, SciBERT, sentence-transformers. Applications: document similarity, clustering, semantic search. Temporal analysis using embeddings is emerging but lacks established frameworks for break detection. -->
-
 Dense representations from pretrained transformers have transformed document-level scientometrics. SPECTER [@cohan2020] trains document embeddings using the citation graph as a supervision signal, producing representations that capture both textual content and relational structure. @puccetti2021 compared text-based (SciBERT, SPECTER) and graph-based (citation) embeddings for science-of-science applications, finding that they capture different but complementary facets of field structure. @constantino2025 showed that graph embeddings better reproduce formal disciplinary hierarchies, while text embeddings capture thematic similarity that cuts across official classifications.
 
 Temporal applications remain limited. @poetto2023 modelled each research topic as a vector and measured inter-topic distances year-by-year to track convergence and divergence in computer science --- one of the few studies analysing how embedding geometry *changes* over time, not just what it looks like at a single point. But no established framework exists for detecting structural breaks in embedding spaces. The gap is between static clustering (well-served by BERTopic and UMAP-based methods) and temporal break detection (which requires comparing embedding distributions across time windows). Our framework addresses this gap by combining sliding-window divergence on embedding-based cluster proportions with cosine distance on embedding centroids.
 
 ### 2.4 Climate finance bibliometrics
-
-<!-- Existing bibliometric studies of climate finance: mostly descriptive (publication counts, keyword analysis, co-authorship networks). No study has applied endogenous break detection or tested for bimodal community structure. -->
-
-<!-- NOTE (salvaged from notes.md): Core works are published in a distinctive venue ecology.
-Journal venues by prominence: Sustainability, Nature Climate Change, Climate Policy, Climatic Change,
-Review of Financial Studies, Journal of Financial Economics, Journal of Banking & Finance, Energy Economics.
-WP/report series: IMF Working Paper, OECD environment/economics/development co-operation working papers,
-World Bank policy research working papers, OECD/IEA climate change expert group papers,
-IMF Staff Climate Notes, IMF Staff Country Reports, World Bank eBook/report variants.
-Venue labels are heterogeneous (same institution appears under multiple strings);
-final tables should use canonicalized venue mapping. -->
 
 Existing bibliometric studies of climate finance are methodologically homogeneous. @care_weber2023 used co-citation, bibliographic coupling, and keyword co-occurrence (VOSviewer) to identify seven literature clusters, finding that climate finance remains insufficiently grounded in financial theory. @shang_jin2023 applied co-authorship networks and keyword analysis to a Scopus-based corpus, finding that research started around 2010 and is dominated by environmental science rather than finance. @maria_etal2023 combined complex network analysis with structural topic modelling (STM), the only study to apply a topic model to the green/climate finance literature.
 
@@ -91,8 +85,6 @@ All three studies periodize the field exogenously, by reference to policy milest
 
 
 ## 3. Data
-
-<!-- ~500 words. Cross-reference the data descriptor. -->
 
 The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance (1990--2024), assembled from {{< meta corpus_sources >}} bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< meta corpus_core >}} constitute a "core" subset (cited $\geq$ {{< meta corpus_core_threshold >}} times) representing the field's intellectual backbone. Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions) are available for all works with titles and publication years in range.
 
@@ -135,19 +127,9 @@ The corpus was designed for breadth ({{< meta corpus_sources >}} sources, five l
 
 ## 5. Results: Application to Climate Finance
 
-<!-- ~2,000 words -->
-
 ### 5.1 Structural breaks in the full corpus
 
-<!-- Key results from structural-breaks.md:
-- Baseline (k=0): breaks at 2007 (cosine, z=2.59) and 2013 (JS, z=1.59)
-- Censored k=1: 2008, 2013, 2015
-- Censored k=2: single break at 2009 (Copenhagen)
-- No break at 2015 (Paris) or 2021 (Glasgow)
-- Volume confound check: all correlations below |r|>0.5 threshold
--->
-
-The sliding-window divergence analysis (§4.2) detects two robust breakpoints in the full corpus at baseline (*k* = 0): **2007** (cosine only, mean z = 2.59, robust across all three window sizes) and **2013** (JS only, mean z = 1.59). The 2007 break is driven by cosine distance --- a shift in the semantic centre of mass consistent with climate finance emerging as a distinct topic around the Bali Action Plan. The 2013 break is driven by JS divergence --- a redistribution across clusters consistent with the diversification into sub-specialities (green bonds, REDD+, adaptation finance).
+The sliding-window divergence analysis (§4.2; see @fig-breakpoints for the full divergence profiles) detects two candidate breakpoints in the full corpus at baseline (*k* = 0): **2007** (cosine only, mean z = 1.51, detected in 2 of 3 window sizes) and **2013** (both metrics, combined z = 2.63, though each metric appears in only 1 of 3 windows). The 2007 break is driven by cosine distance --- a shift in the semantic centre of mass consistent with climate finance emerging as a distinct topic around the Bali Action Plan. The 2013 signal appears in both metrics but falls below the 2-of-3 windows robustness threshold; it may reflect a gradual redistribution across clusters rather than a sharp break, consistent with diversification into sub-specialties (green bonds, REDD+, adaptation finance).
 
 No break is detected near 2015 (Paris Agreement) or 2021 (Glasgow). The COP milestones that dominate policy narrative do not correspond to discontinuities in the scholarly literature's structure. All volume-confound correlations remain below |*r*| > 0.5 (range: −0.41 to +0.38), confirming that the breakpoints are not artifacts of corpus growth.
 
@@ -155,25 +137,13 @@ The censored-gap variant sharpens the picture. At *k* = 1, the cosine break migr
 
 ### 5.2 No break in the core subset
 
-<!-- Core (N=1,176): only break at 2023 (boundary artifact)
-- The influential papers show no thematic restructuring
-- Breaks in full corpus driven by influx of new, lower-cited scholarship
--->
-
 The core subset (~{{< meta corpus_core >}} papers, cited $\geq$ {{< meta corpus_core_threshold >}}) shows no structural break in the 2005--2020 range. The only robust signal is at 2023 (z = 7.15, both metrics), a boundary artifact: recent papers have not yet accumulated enough citations to enter the core. This signal persists unchanged through *k* = 1 and *k* = 2.
 
 The contrast between the full corpus and the core is the framework's most interpretable finding. The 2007--2009 breaks in the full corpus are driven by the influx of new, lower-cited scholarship working *within* categories that the core literature had already established. The influential papers --- the field's intellectual backbone --- show no thematic discontinuity across the entire observation period. The categories through which economists analyse climate finance (carbon markets, green bonds, adaptation, accountability) were set by the mid-2000s; what changed after Copenhagen was the volume and breadth of scholarship, not the conceptual structure. The two-level design provides a principled way to separate these two dynamics.
 
 ### 5.3 Efficiency--accountability polarization
 
-<!-- Bimodality results:
-- Embedding ΔBIC = 1,264 (full), 112 (core)
-- TF-IDF ΔBIC = 8,961 (full), 1,058 (core)
-- Embedding-lexical correlation r = 0.683
-- Per-period: unimodal during crystallization (ΔBIC = -12), strongly bimodal post-2015 (ΔBIC = 864)
--->
-
-The seed-axis projection (§4.4, Method A) detects a statistically significant bimodal structure along the efficiency--accountability axis. The two-component Gaussian mixture model is strongly preferred over a single component (ΔBIC = {{< meta bim_dbic_embedding >}} on embeddings), indicating that the corpus distributes into two distinct concentrations rather than a single mass. An independent lexical validation using TF-IDF representations (Method B) yields an even stronger signal (ΔBIC = {{< meta bim_dbic_tfidf >}}). The two representations correlate at *r* = {{< meta bim_corr >}}, confirming that both capture the same underlying structure rather than artifacts of their respective feature spaces.
+The seed-axis projection (§4.4, Method A) detects a statistically significant bimodal structure along the efficiency--accountability axis (@fig-kde; @fig-bimodality). The two-component Gaussian mixture model is strongly preferred over a single component (ΔBIC = {{< meta bim_dbic_embedding >}} on embeddings), indicating that the corpus distributes into two distinct concentrations rather than a single mass. An independent lexical validation using TF-IDF representations (Method B) yields an even stronger signal (ΔBIC = {{< meta bim_dbic_tfidf >}}). The two representations correlate at *r* = {{< meta bim_corr >}}, confirming that both capture the same underlying structure rather than artifacts of their respective feature spaces.
 
 The temporal decomposition reveals that this bimodal structure is not a permanent feature of the field. During the crystallization period (2007--2014), the distribution along the seed axis is unimodal (ΔBIC = {{< meta bim_dbic_2007_2014 >}}, n = {{< meta bim_n_2007_2014 >}}): efficiency-oriented and accountability-oriented work coexisted without sharp separation. Bimodality emerges in the established-field period (ΔBIC = {{< meta bim_dbic_post2015 >}}, n = {{< meta bim_n_post2015 >}}), when the two orientations crystallized into distinct communities with limited overlap. The pre-2007 period shows intermediate values (ΔBIC = {{< meta bim_dbic_pre2007 >}}, n = {{< meta bim_n_pre2007 >}}). This temporal pattern is substantively interpretable: the polarization sharpened as the field grew and the $100 billion accounting disputes intensified.
 
@@ -181,34 +151,7 @@ The core subset (cited $\geq$ {{< meta corpus_core_threshold >}}, ~{{< meta corp
 
 ### 5.4 The divide as PC2, not PC1
 
-<!-- PCA axis detection:
-- emb_PC2 (5.4% variance, cosine=0.557 with seed axis, ΔBIC=932) aligns with efficiency↔accountability
-- The divide is real but not the field's dominant axis
--->
-
-<!-- NOTE (salvaged from notes.md): HET interpretations of discovered axes.
-
-1. Seeded embedding axis (efficiency ↔ accountability): opposition between market-calculative
-   expertise (mobilization/leverage) and public-accounting expertise (additionality/equity/commensuration).
-   Strong global bimodality (ΔBIC=1264), strongest in 2015–2024.
-
-2. Seeded lexical axis: confirms the divide is visible in language-level categories, not only
-   in embedding geometry (ΔBIC=8961, r≈0.683 with embedding axis).
-
-3. Unsupervised lexical PCs:
-   - PC1: broad climate/development discourse vs multilingual/noise tail (low alignment to main divide)
-   - PC2: Kyoto/CDM mechanism vocabulary vs contemporary climate-finance/governance (chronological-regime axis)
-   - PC3 (main aligned): treaty-era climate/development framing vs green-finance/model/data framing (|r|≈0.583)
-   - PC4: financialization/development vs land-use/forestry/REDD (r≈0.371)
-   - PC5: carbon-market/trading vs renewable-energy project framing (topic-instrument axis)
-
-4. Unsupervised embedding PCs:
-   - emb_PC2 (r≈0.671, ΔBIC≈932) and emb_PC4 (r≈-0.598, ΔBIC≈450) recover the same cleavage.
-
-Bottom line: the main divide is robust across supervised/unsupervised, lexical/embedding representations;
-auxiliary axes capture period (Kyoto/CDM → green finance), sectoral domain, and policy-instrument differences. -->
-
-The bimodality results establish that the efficiency--accountability divide is real and cross-validated. But is it the field's primary axis of variation, or a secondary structure? PCA on the embedding space answers this question.
+The bimodality results establish that the efficiency--accountability divide is real and cross-validated. But is it the field's primary axis of variation, or a secondary structure? PCA on the embedding space answers this question (@fig-pca-scatter; @fig-seed-axis-core).
 
 PC1 ({{< meta pca_emb_pc1_var_pct >}}% of variance) separates adaptation and vulnerability research from CDM and engineering literature. Its correlation with the seed axis is negligible (*r* = 0.01). The field's dominant axis of variation is topical, not political: it distinguishes *what* papers study, not *how* they frame the policy problem.
 
@@ -222,12 +165,10 @@ A further asymmetry between the full corpus and the core reinforces this point. 
 
 ### 5.5 Core vs. full corpus comparison
 
-{{< include _includes/core-vs-full.md >}}
+{{< include _includes/core-vs-full-analysis.md >}}
 
 
 ## 6. Discussion
-
-<!-- ~1,000 words -->
 
 ### 6.1 Comparison with topic model approaches
 
@@ -274,31 +215,10 @@ The two-level design requires a meaningful criterion for defining the "core" ---
 
 ## 7. Conclusion
 
-<!-- ~500 words -->
-
-<!-- Summary of framework:
-1. Sliding-window divergence detects endogenous breaks in embedding space
-2. Censored-gap variant filters gradual transitions from genuine discontinuities
-3. Seed-axis projection + GMM bimodality testing identifies polarization
-4. Two-level (full/core) design disentangles volume from structure
-
-Key findings on climate finance:
-- Field crystallized around 2009 (Copenhagen), not 2015 (Paris)
-- Core literature shows no structural break — categories were set early
-- Efficiency↔accountability divide is real, bimodal, and constitutive
-- The divide is PC2, not PC1 — a secondary but persistent axis
-
-Future work:
-- Apply to other fields (AI ethics, sustainable finance, global health)
-- Incorporate citation dynamics into break detection
-- Test with domain-specific embedding models
-- Develop formal statistical tests for break significance
--->
-
 We have presented a framework for detecting structural breaks and polarization in scientific literatures using sentence-transformer embeddings. The framework combines four components: (1) sliding-window divergence with dual metrics (Jensen-Shannon on cluster proportions, cosine on embedding centroids) for endogenous break detection; (2) a censored-gap variant that filters gradual transitions from genuine discontinuities; (3) supervised seed-axis projection with Gaussian mixture bimodality testing for polarization detection; and (4) a two-level design (full corpus vs. citation-defined core) that disentangles volume-driven from structure-driven change.
 
 Applied to climate finance scholarship (1990--2024, {{< meta corpus_total >}} works), the framework yields four findings. First, the field crystallized around 2009 (Copenhagen), not 2015 (Paris): the censored-gap analysis converges on a single dominant break at 2009, while Paris and Glasgow produce no comparable discontinuity. Second, the core literature shows no structural break at all --- the conceptual categories were established early and persisted. Third, the efficiency--accountability divide is real, cross-validated across embedding and lexical methods (ΔBIC = {{< meta bim_dbic_embedding >}} and {{< meta bim_dbic_tfidf >}} respectively, correlation *r* = {{< meta bim_corr >}}), and temporally structured: unimodal during crystallization, bimodal after 2015. Fourth, this divide is PC2, not PC1 --- a secondary but persistent axis that cuts diagonally across the field's topical structure.
 
-These findings validate the framework against a field with well-documented institutional history. The endogenously detected break (2009) aligns with the Copenhagen moment that historians identify as pivotal; the absence of breaks at Paris and Glasgow contradicts the policy-event periodization common in existing bibliometric studies [@care_weber2023; @shang_jin2023]. The framework thus adds empirical content to qualitative periodization.
+These findings validate the framework against a field with well-documented institutional history. The endogenously detected break (2009) aligns with the Copenhagen moment that historians identify as a turning point; the absence of breaks at Paris and Glasgow contradicts the policy-event periodization common in existing bibliometric studies [@care_weber2023; @shang_jin2023]. The framework thus adds empirical content to qualitative periodization.
 
 Future work should test the framework's sensitivity to embedding model choice (SciBERT, SPECTER2, ClimateBERT), incorporate citation dynamics into the break detection pipeline, and apply the method to other fields where endogenous periodization is desirable. The censored-gap variant warrants formal statistical characterisation --- its current implementation uses z-score heuristics rather than a distributional test for break significance.

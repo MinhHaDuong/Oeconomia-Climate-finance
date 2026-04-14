@@ -24,6 +24,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
+from pipeline_io import save_figure
 from plot_style import DARK, DPI, FIGWIDTH, apply_style
 from scipy.sparse import lil_matrix
 from script_io_args import parse_io_args, validate_io
