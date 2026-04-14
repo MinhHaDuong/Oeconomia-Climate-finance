@@ -3,15 +3,15 @@
 
 **Script:** `scripts/compute_clustering_comparison.py` (annual silhouette), BIC piecewise-constant model
 
-### 9.1 Motivation
+### Motivation
 
 Section 8 identifies a monotonic decline in cluster structure after a peak in the early 2000s. The manuscript uses period breaks at 2007 and 2015. Are these break-points supported by the data? This section applies formal change-point detection to the annual silhouette time series.
 
-### 9.2 Method
+### Method
 
 We compute KMeans silhouette (k=6) for each individual year (1999--2024) in both semantic and citation spaces. We then fit piecewise-constant models with 0, 1, 2, and 3 change-points and select using the Bayesian Information Criterion (BIC). Lower BIC indicates a better model (balancing fit against complexity). Additionally, we rank candidate break-points by maximum t-statistic for the difference in means before vs. after each year.
 
-### 9.3 Annual silhouette time series
+### Annual silhouette time series
 
 | Year | N | Semantic sil (k=6) | Citation sil (k=6) |
 |------|---|--------------------|--------------------|
@@ -42,7 +42,7 @@ We compute KMeans silhouette (k=6) for each individual year (1999--2024) in both
 | 2023 | 3,899 | 0.034 | 0.079 |
 | 2024 | 4,230 | 0.038 | 0.084 |
 
-### 9.4 BIC model selection
+### BIC model selection
 
 | Model | Semantic BIC | Citation BIC |
 |-------|-------------|-------------|
@@ -55,7 +55,7 @@ We compute KMeans silhouette (k=6) for each individual year (1999--2024) in both
 
 **Citation space**: BIC selects 3 breaks at **2007, 2012, and 2022**. The third break in 2022 captures a citation-space restructuring possibly associated with the Glasgow Financial Alliance (GFANZ, COP26 2021) and the post-COVID ESG boom.
 
-### 9.5 Strongest single break-point
+### Strongest single break-point
 
 | Space | Strongest break | t-statistic | Mean before | Mean after | Δ |
 |-------|----------------|-------------|-------------|-----------|---|
@@ -64,7 +64,7 @@ We compute KMeans silhouette (k=6) for each individual year (1999--2024) in both
 
 The citation space shows the sharpest single break at 2008, immediately after COP-13 Bali (December 2007). The semantic space's sharpest break is at 2012, coinciding with COP-18 Doha and the GCF operationalization.
 
-### 9.6 Discussion
+### Discussion
 
 **The 2007 break is robustly supported.** Both spaces include 2007 in their BIC-optimal models. This aligns with the manuscript's first period break and with the Stern Review (2006) / Bali Action Plan (COP-13, 2007), which expanded climate finance from carbon-market economics into a broader field.
 

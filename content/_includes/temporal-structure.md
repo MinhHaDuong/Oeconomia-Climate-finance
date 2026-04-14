@@ -5,11 +5,11 @@
 
 Section 7 establishes that the full corpus shows weak cluster structure. But this static picture may obscure temporal dynamics: did the field once have clear boundaries that later dissolved? This section examines how cluster structure evolves over time in each representation space.
 
-### 8.1 Method
+### Method
 
 We compute KMeans silhouette scores (k = 2 through 8) in rolling 5-year windows across all three representation spaces. For each window we report the best-k (highest silhouette) and its score. Windows with fewer than 100 works are excluded. Citation space requires at least 30 non-zero-coupling works per window.
 
-### 8.2 Results: structure over time
+### Results: structure over time
 
 | Window | N works | Semantic best-k (sil) | Lexical best-k (sil) | Citation best-k (sil) |
 |--------|---------|----------------------|---------------------|-----------------------|
@@ -24,7 +24,7 @@ We compute KMeans silhouette scores (k = 2 through 8) in rolling 5-year windows 
 | 2019--2023 | 11,352 | 3 (0.047) | 8 (0.113) | 8 (0.110) |
 | 2020--2024 | 14,532 | 3 (0.049) | 7 (0.115) | 8 (0.100) |
 
-### 8.3 A single structural transition, not three acts
+### A single structural transition, not three acts
 
 All three spaces agree on the temporal pattern: **structure peaks in the early-to-mid 2000s and declines monotonically thereafter.** The key observations:
 
@@ -36,7 +36,7 @@ All three spaces agree on the temporal pattern: **structure peaks in the early-t
 
 **No detectable 2015 break.** The manuscript's second period break at 2015 (Paris Agreement) does not appear as a structural transition in any representation space. Silhouette scores continue their smooth decline through 2015 without a local maximum, minimum, or inflection. This suggests that while Paris was a major institutional event, it did not reorganize the research community's structure. The field was already a diffuse continuum by 2015.
 
-### 8.4 Preferred number of clusters changes over time
+### Preferred number of clusters changes over time
 
 The optimal k shifts systematically:
 
@@ -46,7 +46,7 @@ The optimal k shifts systematically:
 
 This evolution matches the manuscript's narrative: the field transitions from pre-existing disciplinary clusters through a period of convergence (post-Copenhagen) to a new three-way organization (carbon markets, development/adaptation, financial economics).
 
-### 8.5 Cross-space agreement over time
+### Cross-space agreement over time
 
 We compute ARI between KMeans (k=6) assignments across each pair of spaces, per 5-year window:
 
@@ -66,7 +66,7 @@ We compute ARI between KMeans (k=6) assignments across each pair of spaces, per 
 
 **Interpretation.** The spaces capture largely independent dimensions throughout the field's history. What a work is about (semantic), what words it uses (lexical), and what it cites (citation) are three distinct fingerprints. This independence strengthens the case for multi-space analysis: any single representation captures at most one facet of the field's organization.
 
-### 8.6 Language structure over time
+### Language structure over time
 
 | Window | % non-English | k=2 EN/non-EN sil |
 |--------|--------------|-------------------|
@@ -78,7 +78,7 @@ We compute ARI between KMeans (k=6) assignments across each pair of spaces, per 
 
 The non-English share declines from 14.2% to 8.5% as English consolidates as the field's working language. The k=2 silhouette for the EN/non-EN split is near zero or negative throughout, becoming increasingly negative after 2010. **Language does not create clustering structure at any point in the field's history.** The negative silhouette after 2010 means non-English works are anti-clustered --- they are embedded within English-language topic regions, not in separate linguistic enclaves. The multilingual embedding model is working as intended.
 
-### 8.7 Core versus full structure over time
+### Core versus full structure over time
 
 | Window | N full | Sil full (k=6) | N core (≥50 cit) | Sil core (k=6) |
 |--------|--------|----------------|-------------------|----------------|
@@ -90,7 +90,7 @@ The non-English share declines from 14.2% to 8.5% as English consolidates as the
 
 The core (highly-cited) subset does not show more semantic structure than the full corpus in any period. In early windows, the core actually shows *less* structure (0.041 vs. 0.056), likely because the most-cited early works span across sub-communities rather than belonging exclusively to one. In the recent window (2020--2024), the core shows slightly more structure (0.042 vs. 0.034), likely because "core" in this period selects for older, more settled works from distinct traditions.
 
-### 8.8 Discussion
+### Discussion
 
 **The data detect one structural transition, centered around 2007.** Before 2007, the climate finance literature consists of a few distinct research programmes with specialized vocabularies, separate citation networks, and identifiable topical boundaries. After 2007 --- particularly after the Stern Review, the Bali Action Plan, and the Copenhagen Accord --- the field expands rapidly and these boundaries dissolve. The transition is gradual (2005--2010), not sharp.
 
