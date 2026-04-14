@@ -14,6 +14,10 @@ This document describes the analyses that transform the climate finance corpus (
 
 All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
 
+# Corpus Summary
+
+The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance (1990--2024), assembled from {{< meta corpus_sources >}} bibliographic sources (see the corpus report for construction details). Of these, {{< meta corpus_core >}} constitute a "core" subset (cited $\geq$ {{< meta corpus_core_threshold >}} times). Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions, `BAAI/bge-m3`) are available for {{< meta corpus_with_embeddings >}} works.
+
 \newpage
 
 # Structural Break Detection
