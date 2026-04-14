@@ -1,0 +1,38 @@
+%erg v1
+Title: Merge companion paper useful content into analysis report
+Status: open
+Created: 2026-04-14
+Author: claude
+
+--- log ---
+2026-04-14T14:37Z claude created
+2026-04-14T14:37Z claude note step 2 of tech rep restructuring; follows PR #649
+
+--- body ---
+## Context
+PR #649 split the tech rep structurally (corpus + analysis) and assessed
+the companion paper's three fatal problems. The analysis report is now a
+pipeline walkthrough with no "why." The companion paper has useful prose
+that should feed back in before the companion paper is retired.
+
+## Actions
+1. Section 2 (lit review) → introduction to the analysis report, motivating
+   the methods choices (why embeddings, why sliding-window divergence, why
+   not LDA/STM/BERTopic)
+2. Section 6.1 (comparison with topic models) → discussion section at the
+   end of the analysis report
+3. Section 6.4 (limitations) → add to analysis report (currently missing)
+4. Section 5.1 honesty correction → acknowledge mid-2010s JS divergence
+   signal, reframe from "no Paris break" to "Copenhagen was the dominant
+   founding shift, mid-2010s saw real redistribution"
+5. Delete companion-paper.qmd and remove from _quarto.yml
+6. Update architecture.md to reflect 3 documents not 4
+
+## Test
+Analysis report builds with `make output/content/technical-report.pdf`.
+No broken cross-references. Companion paper removed from render list.
+
+## Exit criteria
+Companion paper retired. Analysis report has introduction, discussion,
+limitations, and honest section 5.1. The analysis report reads as a
+self-contained technical document, not a pipeline walkthrough.
