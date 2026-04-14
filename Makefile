@@ -544,7 +544,7 @@ analysis-stats: stats
 
 manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
-papers: check-corpus output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
+papers: check-corpus output/content/corpus-report.pdf output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
 # ── Namespaced aliases (Phase 3) ────────────────────────
 manuscript-render: manuscript
@@ -558,6 +558,9 @@ output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT
 
 output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
 	quarto render $< --to docx
+
+output/content/corpus-report.pdf: content/corpus-report.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml
+	quarto render $< --to pdf
 
 output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(TECHREP_FIGS) $(COMPANION_FIGS) .lexical_tfidf.stamp
 	quarto render $< --to pdf
