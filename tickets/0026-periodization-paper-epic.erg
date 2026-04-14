@@ -8,6 +8,7 @@ Author: user
 2026-04-14T14:40Z claude created
 2026-04-14T14:40Z claude note epic — future paper, not current priority
 2026-04-14T15:30Z claude note expanded method panel: 5 semantic, 3 lexical, 6 citation graph, 3 meta-methods
+2026-04-14T16:00Z claude note added G7 disruption index, G8 betweenness centrality; literature review in docs/
 
 --- body ---
 ## Context
@@ -17,7 +18,7 @@ analysis has genuine signal. A proper paper needs continuous divergence
 methods — no clustering, no arbitrary k. Each method produces a time
 series; convergence across independent channels is the robustness signal.
 
-## Method panel (14 methods + 3 change point detectors)
+## Method panel (16 methods + 3 change point detectors)
 
 All methods are continuous (one value per window/year). Parameters
 (window size, kernel, functional form) are acceptable; the number of
@@ -48,7 +49,7 @@ drift rather than document-level distributional shift.
 L1 = global lexical divergence. L2 = separates what is new from what
 persists. L3 = identifies which specific terms carry the change.
 
-### Citation graph — 6 methods
+### Citation graph — 8 methods
 
 | ID | Method | Principle | Parameters | Library | Reference |
 |----|--------|-----------|------------|---------|-----------|
@@ -58,10 +59,12 @@ persists. L3 = identifies which specific terms carry the change.
 | G4 | Cross-tradition citation ratio | Define traditions by seed papers (not clustering). Track fraction of citations crossing tradition boundaries. 0 = silos, 1 = integration. | Seed selection | `networkx` | Leydesdorff (2007) JASIST; Rafols & Meyer (2010) |
 | G5 | Preferential attachment exponent drift | Estimate exponent α per time slice. α > 1 = growing concentration. Regime change in α = structural shift. | Estimation window | `scipy.optimize.curve_fit` | Barabási & Albert (1999) Science; Newman (2001) |
 | G6 | Citation entropy | Shannon entropy of incoming citation distribution per year. Low entropy = concentration around few authorities. | None | `scipy.stats.entropy` | Larivière et al. (2009) JASIST |
+| G7 | Disruption index CD | Measures whether a paper consolidates (citants cite its refs) or disrupts (citants ignore its refs). Aggregated per year as mean CD. | None | `networkx` + `numpy` | Funk & Owen-Smith (2017); Wu et al. (2019) Nature |
+| G8 | Betweenness centrality dynamics | Mean/max betweenness centrality per time slice in co-citation network. Peaks signal pivotal papers bridging communities. | Slice width | `networkx.betweenness_centrality` | Freeman (1979); Chen (2006) JASIST |
 
 ### Change point detection layer (3 meta-methods)
 
-Applied to all 14 time series above. Convergence across channels is
+Applied to all 16 time series above. Convergence across channels is
 the robustness criterion.
 
 | ID | Method | Principle | Library | Reference |
@@ -79,7 +82,7 @@ ruptures>=1.1.9   # PELT, BOCPD, Kernel CPD (CP1-CP3)
 pybursts>=0.1.1   # Burst detection (L3)
 ```
 
-Already available via scipy/networkx: S2, S4, S5, L1, L2, G1-G6.
+Already available via scipy/networkx: S2, S4, S5, L1, L2, G1-G8.
 
 ## Additional requirements
 
