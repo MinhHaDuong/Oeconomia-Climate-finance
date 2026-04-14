@@ -1,4 +1,4 @@
-### Aside: Teaching convergence
+## Teaching Convergence
 
 @tbl-teaching-canon lists the works from our corpus that appear on syllabi at 3 or more distinct institutions. No clear teaching canon has emerged: out of the scraped readings, only a handful converge across institutions.
 
