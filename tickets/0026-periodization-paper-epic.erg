@@ -1,0 +1,34 @@
+%erg v1
+Title: Periodization paper — continuous divergence + external validation
+Status: open
+Created: 2026-04-14
+Author: user
+
+--- log ---
+2026-04-14T14:40Z claude created
+2026-04-14T14:40Z claude note epic — future paper, not current priority
+
+--- body ---
+## Context
+The NCC epic (0012) was killed because "Paris didn't matter" oversold
+the data. But the periodization question is real and the existing
+analysis has genuine signal. A proper paper needs:
+
+1. Continuous divergence (MMD, energy distance, or sliced Wasserstein)
+   on embeddings — no clustering, no arbitrary k
+2. TF-IDF divergence as independent lexical signal (exposes language
+   boundaries that embeddings hide)
+3. Citation graph dynamics (2-3 methods from: community rewiring,
+   authority displacement, cross-tradition citation, preferential
+   attachment breakdown, bibliographic coupling age shift)
+4. External validation on 2-3 known-break corpora from OpenAlex
+   (COVID-19 in public health, AlexNet in AI/ML, 2008 financial crisis)
+5. Honest framing: Copenhagen was the dominant founding shift,
+   mid-2010s saw real redistribution, core shows no break
+
+## Not yet decomposed
+This is a future epic. Decompose when it becomes the next priority.
+
+## Exit criteria
+Paper submitted to a bibliometrics venue (QSS, Scientometrics, or
+similar). Validated on external cases. Honest about what the data shows.

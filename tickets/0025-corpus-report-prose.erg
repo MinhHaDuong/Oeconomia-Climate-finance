@@ -1,0 +1,33 @@
+%erg v1
+Title: Write connective prose for corpus report
+Status: open
+Created: 2026-04-14
+Author: claude
+Blocked-by: 0024
+
+--- log ---
+2026-04-14T14:40Z claude created
+2026-04-14T14:40Z claude note includes are placed but glue text is missing
+
+--- body ---
+## Context
+The corpus report reads as a pile of includes with section headings.
+The data paper reads well because it has connective prose around each
+table and figure. The corpus report needs the same treatment.
+
+## Actions
+1. Write introductory sentences before each table/figure explaining
+   what the reader is about to see and why it matters
+2. Write transitional paragraphs between sections
+3. Ensure the Pipeline Overview flows into Corpus Construction
+4. Ensure Corpus Contents section narrates the UMAP figures
+   (what do they show? what should the reader notice?)
+5. Fix CJK font rendering for bibCNRS query strings (xelatex
+   needs a CJK-capable font fallback)
+
+## Test
+Corpus report reads as a coherent document, not a collage.
+
+## Exit criteria
+A reviewer can read the corpus report start to finish without
+feeling they're jumping between disconnected fragments.
