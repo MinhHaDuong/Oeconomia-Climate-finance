@@ -57,7 +57,7 @@ class TestL1Unit:
                 "sustainable development goals poverty reduction",
             ] * 8,
         })
-        result = compute_l1(df, windows=(2,))
+        result = compute_l1(df, windows=(2,), min_papers=3)
         assert isinstance(result, pd.DataFrame)
         assert "year" in result.columns
         assert "method" in result.columns
@@ -76,7 +76,7 @@ class TestL1Unit:
                 "sustainable development goals poverty reduction",
             ] * 8,
         })
-        result = compute_l1(df, windows=(2,))
+        result = compute_l1(df, windows=(2,), min_papers=3)
         if not result.empty:
             assert result["value"].min() >= 0
             assert result["value"].max() <= 1
@@ -97,7 +97,7 @@ class TestL2Unit:
                 "sustainable development goals poverty reduction",
             ] * 8,
         })
-        result = compute_l2(df, windows=(3,))
+        result = compute_l2(df, windows=(3,), min_papers=3)
         assert isinstance(result, pd.DataFrame)
         if not result.empty:
             metrics = result["hyperparams"].str.extract(

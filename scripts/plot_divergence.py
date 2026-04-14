@@ -176,7 +176,7 @@ def _plot_one_method(div_df, breaks_df, method, out_stem):
     fig.tight_layout()
     fig.savefig(f"{out_stem}_{method}.png", dpi=DPI)
     plt.close(fig)
-    log.info("Saved %s_%method.png", out_stem, method)
+    log.info("Saved %s_%s.png", out_stem, method)
 
 
 def _draw_curves(ax, mdf, breaks_df, method):
