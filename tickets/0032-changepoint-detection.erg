@@ -1,0 +1,51 @@
+%erg v1
+Title: Apply change point detectors CP1-CP3 to all divergence series
+Status: open
+Created: 2026-04-14
+Author: claude
+Blocked-by: 0029
+Blocked-by: 0030
+Blocked-by: 0031
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 2, blocked by all three divergence tickets
+
+--- body ---
+## Context
+Tickets 0029-0031 each produce a CSV of divergence time series. This
+ticket applies three change point detection methods to all series and
+produces a convergence analysis.
+
+Reads: tab_semantic_divergence.csv, tab_lexical_divergence.csv,
+       tab_citation_divergence.csv
+Writes: content/tables/tab_changepoints.csv,
+        content/tables/tab_convergence.csv
+
+## Actions
+1. Create `scripts/compute_changepoints.py` following script-io discipline.
+2. Load all three divergence CSVs, iterate over each (method, hyperparams)
+   combination.
+3. Apply three detectors to each series:
+   - CP1: PELT (ruptures.Pelt) with penalty = "bic" and "mbic"
+   - CP2: BOCPD approximation via ruptures.Dynp (exact dynamic programming)
+   - CP3: Kernel CPD (ruptures.KernelCPD) with RBF kernel
+4. Output tab_changepoints.csv: one row per (method, hyperparams, detector,
+   penalty) with columns: detected_breaks (comma-separated years),
+   n_breaks, channel (semantic/lexical/citation).
+5. Convergence analysis (tab_convergence.csv): for each candidate year,
+   count how many (method × detector) combinations detected a break within
+   ±1 year. Columns: year, n_semantic, n_lexical, n_citation, n_total,
+   pct_methods.
+6. Add Makefile targets.
+
+## Test
+```python
+def test_changepoint_on_synthetic():
+    """Create synthetic series with known break at t=15, verify PELT finds it."""
+```
+
+## Exit criteria
+Convergence table shows, for each candidate year, the fraction of methods
+detecting a break. Years with convergence > 50% across all three channels
+are flagged as robust structural breaks.

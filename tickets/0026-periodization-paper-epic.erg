@@ -9,6 +9,7 @@ Author: user
 2026-04-14T14:40Z claude note epic — future paper, not current priority
 2026-04-14T15:30Z claude note expanded method panel: 5 semantic, 3 lexical, 6 citation graph, 3 meta-methods
 2026-04-14T16:00Z claude note added G7 disruption index, G8 betweenness centrality; literature review in docs/
+2026-04-14T16:30Z claude note decomposed into tickets 0029-0035; S5 deferred to padme
 
 --- body ---
 ## Context
@@ -98,8 +99,18 @@ corpora — this is the methodological gap.
 - Honest framing: Copenhagen was the dominant founding shift,
   mid-2010s saw real redistribution, core shows no break
 
-## Not yet decomposed
-This is a future epic. Decompose when it becomes the next priority.
+## Sub-tickets
+
+| Wave | Ticket | Description | Blocked by |
+|------|--------|-------------|------------|
+| 1 | 0029 | Semantic divergence S1-S4 | — |
+| 1 | 0030 | Lexical divergence L1-L3 | — |
+| 1 | 0031 | Citation graph divergence G1-G8 | — |
+| 2 | 0032 | Change point detection CP1-CP3 | 0029, 0030, 0031 |
+| 3 | 0033 | Multi-channel heatmap figure | 0032 |
+| 3 | 0034 | structural-breaks-v2 include | 0033 |
+| 4 | 0035 | Validation corpora (ISTEX/padme) | 0032 |
+| — | (S5) | Procrustes word embeddings | padme GPU, deferred |
 
 ## Exit criteria
 Paper submitted to a bibliometrics venue (QSS, Scientometrics, or

@@ -1,0 +1,45 @@
+%erg v1
+Title: Implement lexical divergence methods L1-L3
+Status: open
+Created: 2026-04-14
+Author: claude
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 1, parallelizable with 0029 and 0031
+
+--- body ---
+## Context
+Ticket 0026 defines three lexical methods that provide an independent
+signal from embeddings. These operate on raw abstract text.
+
+Reads: refined_works.csv (abstract column)
+Writes: content/tables/tab_lexical_divergence.csv
+
+## Actions
+1. Create `scripts/compute_divergence_lexical.py` following script-io
+   discipline.
+2. Implement three methods:
+   - L1: JS divergence on TF-IDF distributions between consecutive windows.
+     Use scipy.spatial.distance.jensenshannon on vocabulary vectors.
+   - L2: Novelty/Transience (Barron et al. 2018). For each document,
+     KL(doc || past_w) and KL(doc || future_w) using TF-IDF representations.
+     Aggregate per year: mean novelty, mean transience, mean resonance.
+     Windows: 3, 5 years.
+   - L3: Burst detection (Kleinberg via pybursts). Run on top-200 terms
+     by corpus frequency. Aggregate: count of terms in burst state per year.
+3. Parameter sweep: windows = [2, 3, 4, 5] for L1; past/future = [3, 5]
+   for L2; default params for L3.
+4. Subcorpus: full and core-only.
+5. Output: long-format CSV matching 0029 schema.
+6. Add Makefile target.
+
+## Test
+```python
+def test_lexical_divergence_smoke():
+    """Run L1-L3 on smoke fixture, verify output shape."""
+```
+
+## Exit criteria
+Script runs on full corpus in < 10 minutes (TF-IDF vectorization is the
+bottleneck). L1 and L2 produce smooth series. L3 produces integer counts.

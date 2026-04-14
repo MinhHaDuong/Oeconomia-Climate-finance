@@ -1,0 +1,42 @@
+%erg v1
+Title: Plot multi-channel structural break heatmap
+Status: open
+Created: 2026-04-14
+Author: claude
+Blocked-by: 0032
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 3, visualization
+
+--- body ---
+## Context
+The convergence table from ticket 0032 needs visualization. A heatmap
+(methods × years) with a convergence overlay is the key figure for the
+periodization paper.
+
+Reads: tab_changepoints.csv, tab_convergence.csv
+Writes: content/figures/fig_multichannel_breaks.pdf
+
+## Actions
+1. Create `scripts/plot_fig_multichannel_breaks.py` following script-io
+   discipline.
+2. Main panel: heatmap where rows = divergence methods (grouped by channel:
+   semantic, lexical, citation), columns = years, color = normalized
+   divergence value. Detected break years marked with dots or vertical lines.
+3. Bottom panel: convergence bar chart — for each year, stacked bars showing
+   how many methods per channel detected a break.
+4. Vertical dashed lines at years with > 50% cross-channel convergence.
+5. Use matplotlib, follow project style (seaborn-whitegrid, consistent
+   color palette).
+6. Add Makefile target.
+
+## Test
+```python
+def test_multichannel_figure_runs():
+    """Verify figure script produces a PDF without error on mock data."""
+```
+
+## Exit criteria
+Figure is readable, channels are visually distinguishable, convergence
+years are immediately apparent. The figure tells the story at a glance.

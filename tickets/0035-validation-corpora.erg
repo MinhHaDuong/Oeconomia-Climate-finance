@@ -1,0 +1,58 @@
+%erg v1
+Title: Acquire validation corpora for external break detection tests
+Status: open
+Created: 2026-04-14
+Author: claude
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 4, needs ISTEX access or padme for OpenAlex
+
+--- body ---
+## Context
+The periodization paper (ticket 0026, Option A) needs external validation:
+apply the same 16+3 methods to corpora with known structural breaks and
+verify the methods detect them. This establishes credibility before
+applying to climate finance.
+
+## Candidate corpora (known breaks)
+
+1. **Deep learning / computer vision (~2012)**
+   Known break: AlexNet (Krizhevsky et al. 2012) triggered the deep
+   learning revolution. Before: feature engineering + SVMs. After:
+   end-to-end neural networks. Sharp, well-documented transition.
+
+2. **Financial economics / crisis (~2008)**
+   Known break: global financial crisis. Before: efficient markets,
+   light regulation. After: systemic risk, macroprudential regulation.
+   Structural shift in research topics and citation patterns.
+
+3. **Virology / COVID-19 (~2020)**
+   Known break: pandemic. Massive influx of papers, new research
+   directions, cross-disciplinary entry. Very sharp, very recent.
+
+## Acquisition strategy
+- **ISTEX**: available from this container. Good for accessing full-text
+  French and international academic publications. Use ISTEX API to query
+  by field + date range, retrieve metadata + abstracts.
+- **OpenAlex**: needs API access (padme or API key). Broader coverage,
+  includes citations. Preferred for citation graph methods (G1-G8).
+- **Semantic Scholar**: alternative API, rate-limited but open.
+
+## Actions
+1. For each candidate corpus: query 3000-5000 works spanning 10 years
+   before and 10 years after the known break.
+2. Extract: title, abstract, year, citations (if available).
+3. Compute embeddings (BGE-M3 on padme, or use a lighter model locally).
+4. Run the full 16+3 pipeline from tickets 0029-0032.
+5. Verify: do the methods detect the known break? Which methods are most
+   sensitive? Which have false positives?
+
+## Test
+Each validation corpus produces a convergence table. The known break year
+must appear in the top-3 detected breaks for at least 10/16 methods.
+
+## Exit criteria
+At least 2 validation corpora processed. The methods detect known breaks
+reliably. False positive rate is characterized. Results documented in a
+validation include.

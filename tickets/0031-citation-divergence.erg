@@ -1,0 +1,63 @@
+%erg v1
+Title: Implement citation graph divergence methods G1-G8
+Status: open
+Created: 2026-04-14
+Author: claude
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 1, parallelizable with 0029 and 0030
+
+--- body ---
+## Context
+Ticket 0026 defines eight citation graph methods. These operate on
+citations.csv (the Phase 1 contract file) and produce one value per year.
+
+Reads: refined_works.csv, citations.csv
+Writes: content/tables/tab_citation_divergence.csv
+
+## Actions
+1. Create `scripts/compute_divergence_citation.py` following script-io
+   discipline.
+2. Build cumulative citation graph per year using networkx (directed graph,
+   nodes = work IDs, edges = citations with year attribute).
+3. Implement eight methods, each producing one value per year:
+   - G1: PageRank volatility — Kendall tau between PageRank vectors of
+     consecutive yearly snapshots.
+   - G2: Spectral gap — difference between 1st and 2nd eigenvalue of
+     normalized Laplacian of the largest connected component.
+   - G3: Bibliographic coupling age shift — median publication year of
+     shared references, tracked over time.
+   - G4: Cross-tradition citation ratio — define traditions by seed papers
+     (use existing tradition detection from the project). Track fraction
+     of citations crossing tradition boundaries.
+   - G5: Preferential attachment exponent — fit power law to degree
+     distribution per yearly snapshot via scipy.optimize.curve_fit.
+   - G6: Citation entropy — Shannon entropy of in-degree distribution.
+   - G7: Disruption index CD — for papers published in year y, compute
+     mean CD_i. Requires: for each paper i, count n_i (citing i not refs),
+     n_j (citing both), n_k (citing refs not i).
+   - G8: Betweenness centrality — mean betweenness in co-citation network
+     per yearly snapshot.
+4. Subcorpus: full and core-only.
+5. Output: long-format CSV matching 0029 schema.
+6. Add Makefile target.
+
+## Complexity notes
+- G7 (disruption index) is O(papers × avg_refs × avg_citers) — may need
+  batching or caching.
+- G2 and G8 are expensive on large graphs — compute on largest connected
+  component only, or subsample.
+- G4 needs seed papers — check existing tradition detection scripts in
+  scripts/archive_traditions/.
+
+## Test
+```python
+def test_citation_divergence_smoke():
+    """Build tiny citation graph, verify G1-G8 produce values."""
+```
+
+## Exit criteria
+All 8 methods produce yearly series from ~2000 to ~2023. G7 matches
+published disruption index properties (mean should decline over time
+per Wu et al. 2019).
