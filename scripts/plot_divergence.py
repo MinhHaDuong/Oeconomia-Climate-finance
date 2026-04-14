@@ -1,10 +1,9 @@
 """Unified divergence plot: one figure per method across all channels.
 
-Reads any tab_*_divergence.csv conforming to the output contract:
-    year, method, channel, window, hyperparams, value
+Reads tab_div_{method}.csv files conforming to DivergenceSchema:
+    year, channel, window, hyperparams, value
 
-and its companion _breaks.csv:
-    method, channel, window, hyperparams, penalty, break_years
+The method name is derived from the filename (tab_div_{method}.csv).
 
 Produces one PNG per unique method found in the data:
     {output_stem}_{method}.png
@@ -12,9 +11,9 @@ Produces one PNG per unique method found in the data:
 Usage:
     python3 scripts/plot_divergence.py \
         --output content/figures/fig_divergence.png \
-        --input content/tables/tab_semantic_divergence.csv \
-               content/tables/tab_lexical_divergence.csv \
-               content/tables/tab_citation_divergence.csv
+        --input content/tables/tab_div_S1_MMD.csv \
+               content/tables/tab_div_L1.csv \
+               content/tables/tab_div_G1_pagerank.csv ...
 """
 
 import os
@@ -72,19 +71,35 @@ METHOD_LABELS = {
     "L1": ("L1: JS divergence (TF-IDF)", "JS divergence"),
     "L2": ("L2: Novelty / Transience", "KL divergence"),
     "L3": ("L3: Term bursts", "Terms in burst"),
-    "G1_pagerank_volatility": ("G1: PageRank volatility", "1 − Kendall τ"),
-    "G2_spectral_gap": ("G2: Spectral gap", "λ₂ − λ₁"),
+    "G1_pagerank": ("G1: PageRank volatility", "1 − Kendall τ"),
+    "G2_spectral": ("G2: Spectral gap", "λ₂ − λ₁"),
     "G3_coupling_age": ("G3: Bibliographic coupling age", "Median ref year"),
     "G4_cross_tradition": ("G4: Cross-tradition ratio", "Cross-community fraction"),
     "G5_pref_attachment": ("G5: Pref. attachment exponent", "α"),
-    "G6_citation_entropy": ("G6: Citation entropy", "Shannon entropy"),
+    "G6_entropy": ("G6: Citation entropy", "Shannon entropy"),
     "G7_disruption": ("G7: Disruption index", "Mean CD"),
     "G8_betweenness": ("G8: Betweenness centrality", "Mean betweenness"),
 }
 
 
+def _extract_method_from_path(path):
+    """Extract method name from tab_div_{method}.csv filename.
+
+    Falls back to extracting from tab_{channel}_divergence.csv for legacy files.
+    """
+    basename = os.path.splitext(os.path.basename(path))[0]
+    # New convention: tab_div_{method}
+    if basename.startswith("tab_div_"):
+        return basename[len("tab_div_"):]
+    return None
+
+
 def _load_tables(input_paths):
-    """Load and concatenate divergence + breaks tables."""
+    """Load and concatenate divergence tables.
+
+    Supports both new (tab_div_{method}.csv, no 'method' column) and legacy
+    (tab_{channel}_divergence.csv, has 'method' column) formats.
+    """
     div_frames = []
     breaks_frames = []
 
@@ -93,8 +108,17 @@ def _load_tables(input_paths):
             log.warning("Input not found: %s", path)
             continue
         df = pd.read_csv(path)
-        # Enforce contract columns
-        expected = {"year", "method", "channel", "window", "hyperparams", "value"}
+
+        # New format: method derived from filename, columns have no 'method'
+        if "method" not in df.columns:
+            method = _extract_method_from_path(path)
+            if method is None:
+                log.warning("Cannot determine method from filename: %s", path)
+                continue
+            df["method"] = method
+
+        # Enforce minimum columns
+        expected = {"year", "channel", "window", "hyperparams", "value"}
         if not expected.issubset(set(df.columns)):
             log.warning("Skipping %s: missing columns %s",
                         path, expected - set(df.columns))
@@ -211,16 +235,11 @@ def main():
     validate_io(output=io_args.output)
 
     if not io_args.input:
-        # Default: look for all three divergence tables
+        # Default: look for all individual divergence CSVs
         tables_dir = os.path.join(os.path.dirname(os.path.dirname(io_args.output)),
                                   "tables")
-        io_args.input = [
-            os.path.join(tables_dir, f)
-            for f in ["tab_semantic_divergence.csv",
-                       "tab_lexical_divergence.csv",
-                       "tab_citation_divergence.csv"]
-            if os.path.exists(os.path.join(tables_dir, f))
-        ]
+        import glob
+        io_args.input = sorted(glob.glob(os.path.join(tables_dir, "tab_div_*.csv")))
 
     div_df, breaks_df = _load_tables(io_args.input)
 

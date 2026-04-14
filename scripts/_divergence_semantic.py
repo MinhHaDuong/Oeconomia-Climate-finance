@@ -1,59 +1,38 @@
-"""Semantic distributional divergence (S1-S4): cluster-free break detection.
+"""Semantic distributional divergence: implementation functions (S1-S4).
 
-Four methods compare embedding distributions between adjacent time windows,
-producing divergence series that can be screened for structural breaks.
+Private module — no main, no argparse. Called by compute_divergence.py.
 
 Methods:
   S1  MMD (Maximum Mean Discrepancy) with RBF kernel
   S2  Energy distance (multivariate)
   S3  Sliced Wasserstein distance
   S4  Frechet distance (Gaussian fit)
-
-Reads:  refined_works.csv, refined_embeddings.npz
-Writes: long-format CSV via --output
-
-Usage:
-    python3 scripts/compute_divergence_semantic.py \
-        --output content/tables/tab_semantic_divergence.csv
-
-    # Smoke fixture:
-    CLIMATE_FINANCE_DATA=tests/fixtures/smoke \
-        python3 scripts/compute_divergence_semantic.py \
-        --output content/tables/tab_semantic_divergence.csv
 """
 
 import os
-import sys
 import warnings
 
 import numpy as np
 import pandas as pd
-import ruptures
 
-# -- path setup so imports resolve from scripts/ --
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from pipeline_loaders import load_analysis_config
-from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
-log = get_logger("compute_divergence_semantic")
+log = get_logger("_divergence_semantic")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-# ── Parameters (from config/analysis.yaml) ─────────────────────────────────
-
-cfg = load_analysis_config()
-_div_cfg = cfg["divergence"]
-_sem_cfg = _div_cfg["semantic"]
 
 RNG = np.random.RandomState(42)
 
 
 # ── Data loading ───────────────────────────────────────────────────────────
 
-def _load_data(input_paths):
-    """Load works CSV and embeddings from CATALOGS_DIR or --input."""
+def load_semantic_data(input_paths):
+    """Load works CSV and embeddings from CATALOGS_DIR or --input.
+
+    Returns
+    -------
+    (df, emb) : tuple[pd.DataFrame, np.ndarray]
+    """
     from utils import CATALOGS_DIR
 
     if input_paths:
@@ -84,6 +63,33 @@ def _load_data(input_paths):
              len(df), emb.shape,
              int(df["year"].min()), int(df["year"].max()))
     return df, emb
+
+
+# ── Shared helpers ─────────────────────────────────────────────────────────
+
+def _get_years_and_params(df, emb, cfg):
+    """Derive year range and smoke-safe parameters from config.
+
+    Returns (years, min_papers, max_subsample, windows).
+    """
+    div_cfg = cfg["divergence"]
+    windows = div_cfg["windows"]
+    max_subsample = div_cfg["max_subsample"]
+
+    if len(df) < 200:
+        min_papers = div_cfg["min_papers_smoke"]
+        log.info("Smoke mode: min_papers set to %d (n_works=%d)", min_papers, len(df))
+    else:
+        min_papers = div_cfg["min_papers"]
+
+    start_year = int(df["year"].min()) + max(windows)
+    end_year = int(df["year"].max()) - max(windows) - 1
+    if start_year > end_year:
+        start_year = int(df["year"].min()) + min(windows)
+        end_year = int(df["year"].max()) - min(windows) - 1
+
+    years = list(range(start_year, end_year + 1))
+    return years, min_papers, max_subsample, windows
 
 
 def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsample):
@@ -125,7 +131,6 @@ def compute_mmd_rbf(X, Y, bandwidth):
     """MMD^2 with RBF kernel at given bandwidth (sigma^2)."""
     gamma = 1.0 / (2.0 * bandwidth) if bandwidth > 0 else 1.0
 
-    # Kernel values via squared Euclidean distances
     from scipy.spatial.distance import cdist
 
     K_XX = np.exp(-gamma * cdist(X, X, metric="sqeuclidean"))
@@ -142,12 +147,20 @@ def compute_mmd_rbf(X, Y, bandwidth):
     return max(float(mmd2), 0.0)
 
 
-def _run_s1(df, emb, years, min_papers, max_subsample):
-    """S1: MMD with RBF kernel at 0.5x, 1x, 2x median bandwidth."""
-    results = []
-    bandwidth_multipliers = _sem_cfg["S1_MMD"]["bandwidth_multipliers"]
+def compute_s1_mmd(df, emb, cfg):
+    """S1: MMD with RBF kernel at 0.5x, 1x, 2x median bandwidth.
 
-    for w in _div_cfg["windows"]:
+    Returns DataFrame with columns: year, window, hyperparams, value
+    """
+    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    if not years:
+        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+
+    sem_cfg = cfg["divergence"]["semantic"]
+    bandwidth_multipliers = sem_cfg["S1_MMD"]["bandwidth_multipliers"]
+
+    results = []
+    for w in windows:
         for y in years:
             X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
             Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
@@ -159,23 +172,30 @@ def _run_s1(df, emb, years, min_papers, max_subsample):
                 bw = med * mult
                 val = compute_mmd_rbf(X, Y, bw)
                 results.append({
-                    "year": int(y), "method": "S1_MMD",
-                    "window": w,
+                    "year": int(y),
+                    "window": str(w),
                     "hyperparams": f"bw={mult}x_median",
                     "value": val,
                 })
         log.info("S1 MMD window=%d done", w)
-    return results
+    return pd.DataFrame(results)
 
 
 # ── S2: Energy distance ──────────────────────────────────────────────────
 
-def _run_s2(df, emb, years, min_papers, max_subsample):
-    """S2: Energy distance (multivariate via dcor)."""
+def compute_s2_energy(df, emb, cfg):
+    """S2: Energy distance (multivariate via dcor).
+
+    Returns DataFrame with columns: year, window, hyperparams, value
+    """
     import dcor
 
+    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    if not years:
+        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+
     results = []
-    for w in _div_cfg["windows"]:
+    for w in windows:
         for y in years:
             X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
             Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
@@ -184,24 +204,33 @@ def _run_s2(df, emb, years, min_papers, max_subsample):
 
             val = float(dcor.energy_distance(X, Y))
             results.append({
-                "year": int(y), "method": "S2_energy",
-                "window": w,
+                "year": int(y),
+                "window": str(w),
                 "hyperparams": "default",
                 "value": val,
             })
         log.info("S2 energy window=%d done", w)
-    return results
+    return pd.DataFrame(results)
 
 
 # ── S3: Sliced Wasserstein ────────────────────────────────────────────────
 
-def _run_s3(df, emb, years, min_papers, max_subsample):
-    """S3: Sliced Wasserstein distance with varying projection counts."""
+def compute_s3_wasserstein(df, emb, cfg):
+    """S3: Sliced Wasserstein distance with varying projection counts.
+
+    Returns DataFrame with columns: year, window, hyperparams, value
+    """
     import ot
 
-    n_projections_list = _sem_cfg["S3_sliced_wasserstein"]["n_projections"]
+    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    if not years:
+        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+
+    sem_cfg = cfg["divergence"]["semantic"]
+    n_projections_list = sem_cfg["S3_sliced_wasserstein"]["n_projections"]
+
     results = []
-    for w in _div_cfg["windows"]:
+    for w in windows:
         for y in years:
             X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
             Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
@@ -213,13 +242,13 @@ def _run_s3(df, emb, years, min_papers, max_subsample):
                     X, Y, n_projections=n_proj, seed=42,
                 ))
                 results.append({
-                    "year": int(y), "method": "S3_sliced_wasserstein",
-                    "window": w,
+                    "year": int(y),
+                    "window": str(w),
                     "hyperparams": f"n_proj={n_proj}",
                     "value": val,
                 })
         log.info("S3 sliced Wasserstein window=%d done", w)
-    return results
+    return pd.DataFrame(results)
 
 
 # ── S4: Frechet distance ─────────────────────────────────────────────────
@@ -257,10 +286,17 @@ def compute_frechet_distance(X, Y):
     return float(max(mean_term + trace_term, 0.0))
 
 
-def _run_s4(df, emb, years, min_papers, max_subsample):
-    """S4: Frechet distance (Gaussian fit)."""
+def compute_s4_frechet(df, emb, cfg):
+    """S4: Frechet distance (Gaussian fit).
+
+    Returns DataFrame with columns: year, window, hyperparams, value
+    """
+    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    if not years:
+        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+
     results = []
-    for w in _div_cfg["windows"]:
+    for w in windows:
         for y in years:
             X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
             Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
@@ -284,118 +320,10 @@ def _run_s4(df, emb, years, min_papers, max_subsample):
 
             val = compute_frechet_distance(X_r, Y_r)
             results.append({
-                "year": int(y), "method": "S4_frechet",
-                "window": w,
+                "year": int(y),
+                "window": str(w),
                 "hyperparams": "gaussian",
                 "value": val,
             })
         log.info("S4 Frechet window=%d done", w)
-    return results
-
-
-# ── PELT break detection ─────────────────────────────────────────────────
-
-def detect_breaks_pelt(series_df):
-    """Apply PELT to each (method, window, hyperparams) series.
-
-    Returns a DataFrame with columns:
-        method, channel, window, hyperparams, penalty, break_years
-    """
-    rows = []
-    grouped = series_df.groupby(["method", "window", "hyperparams"])
-    for (method, window, hp), grp in grouped:
-        grp = grp.sort_values("year").dropna(subset=["value"])
-        if len(grp) < 3:
-            continue
-        signal = grp["value"].values.reshape(-1, 1)
-        years_arr = grp["year"].values
-
-        for pen in _div_cfg["pelt_penalties"]:
-            try:
-                algo = ruptures.Pelt(model="rbf", min_size=2, jump=1)
-                result = algo.fit(signal).predict(pen=pen)
-                # result contains change point indices (1-based, last is n)
-                bp_indices = [r for r in result if r < len(signal)]
-                bp_years = [int(years_arr[i]) for i in bp_indices]
-            except Exception as exc:
-                log.warning("PELT failed for %s w=%d %s pen=%d: %s",
-                            method, window, hp, pen, exc)
-                bp_years = []
-
-            rows.append({
-                "method": method,
-                "channel": "semantic",
-                "window": window,
-                "hyperparams": hp,
-                "penalty": pen,
-                "break_years": ";".join(str(y) for y in bp_years),
-            })
-    return pd.DataFrame(rows)
-
-
-# ── Main ─────────────────────────────────────────────────────────────────
-
-def main():
-    io_args, _extra = parse_io_args()
-    validate_io(output=io_args.output)
-
-    df, emb = _load_data(io_args.input)
-
-    windows = _div_cfg["windows"]
-    max_subsample = _div_cfg["max_subsample"]
-
-    # Use smoke-safe minimum when corpus is tiny
-    if len(df) < 200:
-        min_papers = _div_cfg["min_papers_smoke"]
-        log.info("Smoke mode: min_papers set to %d (n_works=%d)", min_papers, len(df))
-    else:
-        min_papers = _div_cfg["min_papers"]
-
-    start_year = int(df["year"].min()) + max(windows)
-    end_year = int(df["year"].max()) - max(windows) - 1
-    if start_year > end_year:
-        # Fallback: try smaller range
-        start_year = int(df["year"].min()) + min(windows)
-        end_year = int(df["year"].max()) - min(windows) - 1
-
-    log.info("Year range for divergence: %d-%d", start_year, end_year)
-    years = list(range(start_year, end_year + 1))
-
-    if not years:
-        log.warning("No valid year range; writing empty CSV")
-        pd.DataFrame(columns=["year", "method", "channel", "window", "hyperparams", "value"]
-                     ).to_csv(io_args.output, index=False)
-        return
-
-    # Run all four methods
-    all_results = []
-    all_results.extend(_run_s1(df, emb, years, min_papers, max_subsample))
-    all_results.extend(_run_s2(df, emb, years, min_papers, max_subsample))
-    all_results.extend(_run_s3(df, emb, years, min_papers, max_subsample))
-    all_results.extend(_run_s4(df, emb, years, min_papers, max_subsample))
-
-    result_df = pd.DataFrame(all_results)
-    result_df["channel"] = "semantic"
-    log.info("Computed %d divergence values across 4 methods", len(result_df))
-
-    # Enforce output column order: year,method,channel,window,hyperparams,value
-    result_df = result_df[["year", "method", "channel", "window", "hyperparams", "value"]]
-
-    # PELT break detection
-    breaks_df = detect_breaks_pelt(result_df)
-    log.info("PELT break detection: %d series analysed", len(breaks_df))
-
-    # Save divergence series
-    result_df.to_csv(io_args.output, index=False)
-    log.info("Saved divergence table -> %s", io_args.output)
-
-    # Save breaks as a companion file
-    breaks_path = os.path.splitext(io_args.output)[0] + "_breaks.csv"
-    breaks_df.to_csv(breaks_path, index=False)
-    log.info("Saved breaks table -> %s", breaks_path)
-
-    log.info("Done.")
-
-
-if __name__ == "__main__":
-    main()
+    return pd.DataFrame(results)
