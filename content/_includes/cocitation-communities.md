@@ -1,4 +1,4 @@
-## 11. Co-citation Community Detection Across Time Windows
+## Co-citation Community Detection Across Time Windows
 
 **Script:** `scripts/compute_temporal_communities.py`
 

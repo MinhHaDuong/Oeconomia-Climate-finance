@@ -8,6 +8,7 @@ bibliography: bibliography/main.bib
 format:
   pdf:
     pdf-engine: xelatex
+    number-sections: true
 ---
 
 This document describes the analyses that transform the climate finance corpus (see the companion corpus report for construction and data quality) into the manuscript's figures and tables. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts.

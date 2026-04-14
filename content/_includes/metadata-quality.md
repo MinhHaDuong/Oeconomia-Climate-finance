@@ -1,4 +1,4 @@
-## 13. Metadata Accuracy
+## Metadata Accuracy
 
 **Script:** `scripts/qa_metadata.py`
 

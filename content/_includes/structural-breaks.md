@@ -1,4 +1,4 @@
-## 5. Structural Break Detection
+## Structural Break Detection
 
 **Scripts:** `scripts/compute_alluvial.py` + `scripts/plot_fig_breakpoints.py`
 

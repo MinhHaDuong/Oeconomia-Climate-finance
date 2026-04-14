@@ -1,4 +1,4 @@
-## 2. Corpus Enrichment
+## Corpus Enrichment
 
 After discovery and merge, the pipeline enriches metadata and computes derived features before full filtering. Each enrichment script writes to its own cache in `enrich_cache/` (persistent, append-only); a final `enrich_join.py` assembles `enriched_works.csv` from the base table and all caches. This allows each enrichment to run independently without triggering others. A cheap pre-filter runs first to avoid wasting API calls on obviously irrelevant records.
 
@@ -53,10 +53,4 @@ Outputs:
 - `embeddings.npz`: Compressed embedding cache (vectors, DOI keys, model metadata) — Phase 1.
 - `semantic_clusters.csv`: KMeans cluster assignments with UMAP coordinates — Phase 2 (`analyze_embeddings.py`).
 
-Embeddings are needed for semantic outlier detection (flag 5 in §3) and for the alluvial and bimodality analyses. @fig-semantic shows the resulting 2D UMAP projection colored by KMeans cluster; @fig-semantic-period shows the same projection by publication period; @fig-semantic-lang shows it by language ({{< meta lang_english_pct >}}% English).
-
-![UMAP semantic map of the corpus, colored by cluster.](figures/fig_semantic.png){#fig-semantic width=100%}
-
-![UMAP semantic map, colored by publication period.](figures/fig_semantic_period.png){#fig-semantic-period width=100%}
-
-![UMAP semantic map, colored by language.](figures/fig_semantic_lang.png){#fig-semantic-lang width=100%}
+Embeddings are needed for semantic outlier detection (flag 5 in §3) and for the alluvial and bimodality analyses. See the Corpus Contents section for UMAP visualizations of the resulting semantic space.

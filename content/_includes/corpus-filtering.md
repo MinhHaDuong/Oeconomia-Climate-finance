@@ -1,4 +1,4 @@
-## 3. Corpus Filtering
+## Corpus Filtering
 
 The full filtering pass (`corpus_filter.py --apply`) runs after enrichment (§2) has populated abstracts, citations, and embeddings. It implements a four-phase pipeline applying six flags — three cheap flags that need no external data, and three that depend on enrichment outputs.
 
