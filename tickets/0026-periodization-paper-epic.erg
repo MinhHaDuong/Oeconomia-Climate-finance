@@ -84,6 +84,13 @@ pybursts>=0.1.1   # Burst detection (L3)
 
 Already available via scipy/networkx: S2, S4, S5, L1, L2, G1-G8.
 
+## Literature review
+
+See `docs/literature-review-structural-break-detection.md` for the full
+survey (12 sections, gap analysis). Key finding: distributional two-sample
+tests (MMD, energy, Wasserstein) have never been applied to bibliometric
+corpora — this is the methodological gap.
+
 ## Additional requirements
 
 - External validation on 2-3 known-break corpora from OpenAlex
