@@ -7,12 +7,13 @@ paths:
 
 ## Project structure
 
-Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragments in `content/_includes/`:
+Quarto multi-document project (`_quarto.yml`). Outputs share reusable fragments in `content/_includes/`:
 
 - `content/manuscript.qmd` — main article (self-contained)
-- `content/technical-report.qmd` — pipeline documentation (composed of includes)
-- `content/data-paper.qmd` — corpus data paper
-- `content/companion-paper.qmd` — methods companion
+- `content/corpus-report.qmd` — corpus construction, data quality, corpus contents
+- `content/technical-report.qmd` — analysis methods and results (composed of includes)
+- `content/data-paper.qmd` — corpus data paper (RDJ4HSS submission)
+- `content/companion-paper.qmd` — retired, being merged into technical-report (ticket 0024)
 
 ## Pipeline phases
 
