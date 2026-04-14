@@ -28,9 +28,19 @@ All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs
 
 {{< include _includes/corpus-filtering.md >}}
 
+![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
+
 \newpage
 
 # Data Quality
+
+{{< include tables/tab_corpus_sources.md >}}
+
+---
+
+{{< include tables/tab_languages.md >}}
+
+---
 
 {{< include _includes/metadata-quality.md >}}
 
