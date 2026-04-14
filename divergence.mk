@@ -84,7 +84,74 @@ $(DIV_FIG_STAMP): scripts/plot_divergence.py $(DIV_CSV_ALL)
 .PHONY: divergence-figures
 divergence-figures: $(DIV_FIG_STAMP)
 
+# ── Embedding sensitivity (ticket 0036) ─────────────────────────────────
+#
+# PCA dimensionality sweep and Johnson-Lindenstrauss random projections.
+# Tests whether structural breaks survive dimensionality reduction.
+
+SENS_SCRIPT := scripts/compute_embedding_sensitivity.py
+SENS_PLOT   := scripts/plot_embedding_sensitivity.py
+SENS_METHODS := S1_MMD S2_energy
+
+# Tables: one CSV per (method, projection) pair
+SENS_CSV_PCA := $(foreach m,$(SENS_METHODS),$(DIV_TABLES)/tab_sens_pca_$(m).csv)
+SENS_CSV_JL  := $(foreach m,$(SENS_METHODS),$(DIV_TABLES)/tab_sens_jl_$(m).csv)
+SENS_CSV_ALL := $(SENS_CSV_PCA) $(SENS_CSV_JL)
+
+$(foreach m,$(SENS_METHODS),$(eval \
+$(DIV_TABLES)/tab_sens_pca_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	python3 $(SENS_SCRIPT) --method $(m) --projection pca --output $$@))
+
+$(foreach m,$(SENS_METHODS),$(eval \
+$(DIV_TABLES)/tab_sens_jl_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	python3 $(SENS_SCRIPT) --method $(m) --projection jl --output $$@))
+
+# Figures: one PNG per (method, projection) pair
+SENS_FIG_STAMP := $(DIV_FIGS)/.sensitivity_figs.stamp
+
+$(SENS_FIG_STAMP): $(SENS_PLOT) $(SENS_CSV_ALL)
+	python3 $(SENS_PLOT) \
+		--output $(DIV_FIGS)/fig_sensitivity.png \
+		--input $(SENS_CSV_ALL)
+	touch $@
+
+.PHONY: sensitivity-tables
+sensitivity-tables: $(SENS_CSV_ALL)
+
+.PHONY: sensitivity-figures
+sensitivity-figures: $(SENS_FIG_STAMP)
+
+.PHONY: sensitivity
+sensitivity: sensitivity-tables sensitivity-figures
+
+# ── Changepoints (ticket 0032) ──────────────────────────────────────────
+#
+# Multi-detector change point analysis across all divergence series.
+# Produces: tab_changepoints.csv, tab_changepoints_convergence.csv,
+#           fig_convergence.png
+
+CP_SCRIPT  := scripts/compute_changepoints.py
+CP_PLOT    := scripts/plot_convergence.py
+CP_TABLE   := $(DIV_TABLES)/tab_changepoints.csv
+CP_CONV    := $(DIV_TABLES)/tab_changepoints_convergence.csv
+CP_FIG     := $(DIV_FIGS)/fig_convergence.png
+
+$(CP_TABLE) $(CP_CONV): $(CP_SCRIPT) $(DIV_CSV_ALL) $(DIV_CFG)
+	python3 $(CP_SCRIPT) --output $(CP_TABLE) --input $(DIV_CSV_ALL)
+
+$(CP_FIG): $(CP_PLOT) $(CP_TABLE) $(CP_CONV)
+	python3 $(CP_PLOT) --output $(CP_FIG) --input $(CP_TABLE)
+
+.PHONY: changepoints-tables
+changepoints-tables: $(CP_TABLE) $(CP_CONV)
+
+.PHONY: changepoints-figure
+changepoints-figure: $(CP_FIG)
+
+.PHONY: changepoints
+changepoints: changepoints-tables changepoints-figure
+
 # ── Top-level ────────────────────────────────────────────────────────────
 
 .PHONY: divergence
-divergence: divergence-tables divergence-figures
+divergence: divergence-tables divergence-figures changepoints
