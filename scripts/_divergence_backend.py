@@ -8,12 +8,12 @@ Resolves the ``backend`` key from config/analysis.yaml:
   cuda  → torch CUDA (raises if unavailable)
 """
 
-import numpy as np
 from utils import get_logger
 
 log = get_logger("_divergence_backend")
 
 _TORCH_AVAILABLE: bool | None = None
+_RESOLVED_BACKEND: str | None = None
 _VALID_BACKENDS = {"auto", "cpu", "cuda"}
 
 
@@ -58,6 +58,10 @@ def get_backend(cfg: dict) -> str:
         If ``backend: cuda`` but no CUDA-capable torch is found.
 
     """
+    global _RESOLVED_BACKEND
+    if _RESOLVED_BACKEND is not None:
+        return _RESOLVED_BACKEND
+
     setting = cfg["divergence"].get("backend", "auto")
     if setting not in _VALID_BACKENDS:
         raise ValueError(
@@ -65,29 +69,24 @@ def get_backend(cfg: dict) -> str:
         )
 
     if setting == "cpu":
-        log.info("Backend forced to NumPy (config: cpu)")
-        return "numpy"
-
-    has_cuda = _probe_torch()
-
-    if setting == "cuda":
-        if not has_cuda:
+        result = "numpy"
+    elif setting == "cuda":
+        if not _probe_torch():
             raise RuntimeError(
                 "Config requires backend: cuda but torch CUDA is not available"
             )
-        return "torch"
+        result = "torch"
+    else:
+        # auto
+        result = "torch" if _probe_torch() else "numpy"
 
-    # auto
-    return "torch" if has_cuda else "numpy"
+    log.info("Divergence backend: %s (config: %s)", result, setting)
+    _RESOLVED_BACKEND = result
+    return result
 
 
-def to_tensor(arr: np.ndarray) -> "torch.Tensor":
+def to_tensor(arr: "np.ndarray") -> "torch.Tensor":
     """Convert NumPy array to float32 torch tensor on CUDA."""
     import torch
 
     return torch.as_tensor(arr, dtype=torch.float32, device="cuda")
-
-
-def to_numpy(t: "torch.Tensor") -> np.ndarray:
-    """Move torch tensor back to NumPy on CPU."""
-    return t.detach().cpu().numpy()

@@ -57,6 +57,9 @@ matplotlib.rcParams.update(
 
 # ── Visual encoding ──────────────────────────────────────────────────────
 
+YEAR_MIN, YEAR_MAX = 1995, 2025
+YEAR_TICKS = list(range(YEAR_MIN, YEAR_MAX + 1, 5))
+
 WINDOW_STYLES = {2: "-", 3: "--", 4: "-.", 5: ":", "cumulative": "-"}
 COLORS = [
     "#1f77b4",
@@ -266,6 +269,10 @@ def _draw_curves(ax, mdf, breaks_df, method, aggregate="none", palette="auto"):
         for by in sorted(break_years):
             ax.axvline(by, color="red", linewidth=0.7, linestyle="--", alpha=0.7)
 
+    # Consistent axis range: 1995–2025 with 5-year ticks
+    ax.set_xlim(YEAR_MIN, YEAR_MAX)
+    ax.set_xticks(YEAR_TICKS)
+
     handles, labels = ax.get_legend_handles_labels()
     if handles:
         ncol = 2 if len(handles) <= 12 else 3
@@ -274,6 +281,8 @@ def _draw_curves(ax, mdf, breaks_df, method, aggregate="none", palette="auto"):
 
 def _draw_lines(ax, mdf):
     """One curve per (window, hyperparams) group, discrete colors."""
+    mdf = mdf.copy()
+    mdf["hyperparams"] = mdf["hyperparams"].fillna("default")
     groups = mdf.groupby(["window", "hyperparams"])
     color_idx = 0
     for (window, hp), grp in sorted(groups):

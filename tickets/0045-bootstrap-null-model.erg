@@ -1,0 +1,128 @@
+%erg v1
+Title: Growth-bias correction + significance testing for divergence
+Status: open
+Created: 2026-04-15
+Author: user
+
+--- log ---
+2026-04-15T23:00Z claude created from workplan review — growth-rate confound identified on first real data run
+2026-04-16T00:00Z claude reimagined — method-specific corrections + same-pool null on corrected series
+
+--- body ---
+## Context
+First real-data run (ticket 0042) revealed that 6+ of 15 divergence
+methods show monotone declining trends that track corpus growth, not
+structural change. Each method has a specific bias mechanism.
+
+## Design: two layers
+
+### Layer 1 — Method-specific growth-bias correction
+
+**S1-S4 (semantic): equal-n subsampling**
+Finite-sample bias inflates distances when windows have unequal sizes.
+Fix: subsample both windows to n = min(n_before, n_after, max_subsample).
+Repeat K=200 times for bootstrap CIs on the corrected divergence.
+
+**L1-L2 (lexical): equal-n + shared vocabulary**
+Same subsampling as S1-S4. Additionally, ensure TF-IDF is computed on
+the union vocabulary of both windows (verify current code does this).
+
+**G1, G2, G5, G6, G8 (citation, cumulative): sliding windows**
+Replace cumulative graph with sliding windows (w=2,3,4,5 years),
+matching the semantic methods. Compare graph(t-w, t) vs graph(t+1, t+w+1).
+Both windows now have locally comparable graph sizes.
+
+**G3, G4, G7 (structural properties): verify size-robustness**
+These measure per-paper or normalized properties. Verify empirically
+that they don't correlate with corpus size. If they do, apply
+per-year normalization.
+
+### Layer 2 — Same-pool null for significance
+
+After correction removes the growth trend, test whether the corrected
+before/after divergence exceeds random noise.
+
+For each (method, year, window):
+1. Pool all papers in [t-w, t+w+1].
+2. Split randomly into two equal halves (ignoring the before/after boundary).
+3. Compute the divergence between the random halves.
+4. Repeat N=500 times → null distribution at year t.
+5. p-value = fraction of null draws ≥ observed corrected divergence.
+
+This works because the correction has removed the trend — before and
+after are no longer systematically different under the null.
+
+### Pipeline
+```
+Raw data
+  → Layer 1: method-specific correction
+    → Corrected divergence (point estimate = bootstrap median)
+    → Layer 2: same-pool null on corrected data  [significance]
+      → p-value per (method, year)
+        → Convergence: which years significant across methods?
+Bootstrap CIs on data curves go in supplementary table (ticket 0047),
+not on figures.
+```
+
+## Actions
+
+### Correction implementation
+1. Add `equal_n=True` option to `_iter_window_pairs` in
+   `_divergence_semantic.py`. Subsample both sides to min(n_before,
+   n_after). Single pass — no bootstrap replicates by default.
+   Bootstrap K=200 for CIs is a separate step (ticket 0047).
+2. Refactor citation methods (G1, G2, G5, G6, G8) from cumulative
+   to sliding windows. Keep cumulative as legacy option.
+3. Verify L1-L2 use union vocabulary. Verify G3, G4, G7 are
+   size-robust.
+
+### Null model implementation
+4. New script: `compute_null_divergence.py`. For each (method, year,
+   window): pool papers, random-split N=500 times, compute divergence.
+   Output: null distribution quantiles per (method, year).
+5. New script: `compute_significance.py`. Compare corrected divergence
+   against null distribution → p-values.
+
+### Visualization A: null envelope on per-method plots
+6. Grey ribbon = null 95% CI. Observed corrected curve on top.
+   Where curve exits ribbon = significant. No bootstrap CI ribbon
+   on figures (goes in supplementary table, ticket 0047).
+
+### Variant reduction: max 4 curves per figure
+   - S1 MMD: w=2,3,4 × bw=1x_median only (drop w=5, drop 0.5x/2x)
+   - S2 energy: w=2,3,4 (no hyperparams → 3 curves)
+   - S3 Wasserstein: w=2,3,4 × n_proj=500 only (drop w=5, drop 100/1000)
+   - S4 Fréchet: w=2,3,4 (no hyperparams → 3 curves)
+   - L1-L3: w=2,3,4 (drop w=5)
+   - G methods: single curve (sliding window, one window size)
+   - Sensitivity: original + 256d + 32d only (drop 64/128/512)
+   Configure in config/analysis.yaml under a `plot` section, or
+   hardcode in plot_divergence.py as default display variants.
+
+### Visualization C: significance heatmap
+7. Replace raw z-score heatmap with significance heatmap.
+   Color = -log10(p-value). Grey = not significant. Hot = significant.
+   PELT on -log10(p) series for break detection.
+
+### Rate-of-change diagnostic (free, complementary)
+8. First-difference of corrected series. If 2003 spike survives
+   both correction and differentiation, it's robust.
+
+## Test
+```python
+def test_equal_n_removes_size_correlation():
+    """Corrected divergence should not correlate with min(n_before, n_after)."""
+
+def test_null_divergence_below_observed_at_known_break():
+    """On synthetic data with planted break, p < 0.05 at break year."""
+```
+
+## Exit criteria
+Each reported break has: corrected divergence ± CI, p-value from
+same-pool null, and survives first-difference diagnostic. The paper
+states significance after controlling for corpus growth.
+
+## Compute estimate
+Layer 1 (correction, single pass): same as current run (~3.5 min GPU).
+Layer 2 (null N=500 per year): ~8h GPU (one overnight run).
+Bootstrap CIs (ticket 0047, K=200): ~3h GPU (separate overnight run).
