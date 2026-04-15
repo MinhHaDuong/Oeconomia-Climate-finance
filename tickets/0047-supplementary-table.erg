@@ -1,0 +1,53 @@
+%erg v1
+Title: Supplementary table: bootstrap CIs on corrected divergence
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0045
+
+--- log ---
+2026-04-15T23:45Z claude created — keep figures clean, put estimation detail in table
+2026-04-16T00:15Z claude updated — owns the bootstrap K=200 computation, not computed by default
+
+--- body ---
+## Context
+Ticket 0045 produces corrected divergence (single pass, equal-n) and
+null p-values. This ticket adds bootstrap CIs for estimation
+uncertainty — not needed during development, only for the final paper.
+
+Separated from 0045 so the bootstrap K=200 run (~3h GPU) is not
+triggered during iterative dev cycles.
+
+## Actions
+
+### Bootstrap computation
+1. New script: `compute_divergence_bootstrap.py`.
+   - Reads corrected divergence config from 0045.
+   - For each (method, year, window): equal-n subsample K=200 times.
+   - Output: `content/tables/tab_divergence_bootstrap.csv` with
+     columns: method, year, window, hyperparams, replicate, value.
+2. Makefile target `bootstrap-tables` in divergence.mk.
+   Not a dependency of `divergence` — run explicitly.
+
+### Summary table
+3. New script: `export_divergence_summary.py`. Joins:
+   - corrected divergence (0045, single pass) → point estimate
+   - bootstrap replicates (this ticket) → median, q025, q975
+   - null distribution (0045) → null_median, null_q975, p-value
+   - significant (boolean, p < 0.05)
+4. Output: `content/tables/tab_divergence_summary.csv`
+5. Pandera schema in schemas.py.
+
+## Test
+```python
+def test_summary_table_has_all_methods_and_years():
+    """Every (method, year) pair from the divergence run appears."""
+```
+
+## Exit criteria
+Table is machine-readable, referenced from technical report as
+supplementary material. Not computed during `make divergence` —
+only via explicit `make bootstrap-tables divergence-summary`.
+
+## Compute estimate
+K=200 bootstrap on GPU: ~3h. One overnight run, after 0045 is done.

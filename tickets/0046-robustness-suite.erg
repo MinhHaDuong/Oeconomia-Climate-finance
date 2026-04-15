@@ -1,0 +1,86 @@
+%erg v1
+Title: Robustness suite: five bias checks for divergence pipeline
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0045
+
+--- log ---
+2026-04-15T23:30Z claude created — bias inventory from first real-data run
+
+--- body ---
+## Context
+The divergence pipeline has a growth-rate confound (ticket 0045) plus
+at least four other systematic biases that could produce spurious
+structural breaks. Each needs an explicit robustness check.
+
+The pattern for each check: restrict or transform the input, rerun
+the pipeline, compare break dates with the baseline. A break that
+survives all five checks is robust. One that vanishes under any
+check needs qualification in the paper.
+
+## R1: Citation truncation
+Recent papers have fewer citations (accumulation lag). The citation
+graph is systematically sparser near the present.
+
+**Check**: Censor the citation graph at T-5 (drop all citations
+involving papers published in the last 5 years of each window).
+Rerun G1-G8. If breaks shift toward the present, truncation is
+driving them.
+
+## R2: Embedding model bias
+BGE-M3 was trained on modern text. It may encode 1990s papers
+less faithfully, inflating early-year distributional distances.
+
+**Check**: Re-embed a sample (e.g. 5000 papers, stratified by
+decade) with a second model (SPECTER2 or all-MiniLM-L6-v2).
+Rerun S1-S4 on both embedding sets. If break dates are
+model-dependent, they reflect encoding quality, not content.
+
+## R3: Retrospective curation bias
+Early corpus = curated canonical works. Late corpus = comprehensive.
+This creates artificial homogeneity early, heterogeneity late.
+
+**Check**: Restrict to a consistently-sourced subset. Options:
+  (a) OpenAlex-only (broadest uniform source)
+  (b) DOI-only (excludes grey lit, which skews early)
+  (c) Journal articles only (excludes reports, working papers)
+Rerun full pipeline on each subset.
+
+## R4: Source coverage drift
+Different sources (OpenAlex, ISTEX, bibCNRS, grey lit) have
+different temporal profiles. Breaks could reflect source boundaries.
+
+**Check**: Stratify by source. Run divergence on each source
+independently. If a break appears in OpenAlex but not ISTEX,
+it's a coverage artifact.
+
+## R5: Abstract quality variation
+Short/missing abstracts produce poor embeddings and sparse TF-IDF.
+Their prevalence varies by period and source type.
+
+**Check**: Filter to abstracts > 100 words (or > 50 tokens).
+Compare corpus composition before/after filtering. Rerun S1-S4
+and L1-L2. If the declining trend attenuates, abstract quality
+was driving it.
+
+## Reporting
+For each check, produce a comparison table:
+
+  | Break year | Baseline | R1 | R2 | R3a | R3b | R4-OA | R5 |
+  |------------|----------|----|----|-----|-----|-------|----|
+  | 2003       | 60%      | ?  | ?  |  ?  |  ?  |   ?   |  ? |
+
+Breaks that survive all columns go in the paper without
+qualification. Breaks that fail any check get a caveat.
+
+## Test
+```python
+def test_robustness_table_has_all_checks():
+    """Verify the comparison table has columns for all 5 checks."""
+```
+
+## Exit criteria
+Each reported break is annotated: robust (survives all checks),
+qualified (survives most), or artifact (fails multiple checks).
+The paper's periodization rests only on robust breaks.
