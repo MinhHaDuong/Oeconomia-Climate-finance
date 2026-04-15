@@ -107,6 +107,7 @@ def validate_refined_embeddings(vectors, n_works):
     ------
     ValueError
         If row count doesn't match or dimensions are wrong.
+
     """
     if vectors.ndim != 2:
         raise ValueError(

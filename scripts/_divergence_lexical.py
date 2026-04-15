@@ -6,6 +6,7 @@ Methods:
   L1  JS divergence on TF-IDF distributions (sliding window)
   L2  Novelty / Transience / Resonance (Barron et al. 2018)
   L3  Burst detection (z-score term frequency, Kleinberg-style)
+
 """
 
 import os
@@ -16,7 +17,6 @@ import pandas as pd
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import entropy
 from sklearn.feature_extraction.text import TfidfVectorizer
-
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("_divergence_lexical")
@@ -37,6 +37,7 @@ def load_lexical_data(input_path):
     Returns
     -------
     pd.DataFrame
+
     """
     if isinstance(input_path, list):
         csv_path = input_path[0] if input_path else None

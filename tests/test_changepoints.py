@@ -9,7 +9,6 @@ Tests:
 import os
 import subprocess
 import sys
-import tempfile
 
 import numpy as np
 import pandas as pd
@@ -301,10 +300,10 @@ class TestSmoke:
         }
         assert set(breaks_df.columns) == expected_cols
 
-        # Convergence table should exist as sibling file
-        conv_path = os.path.splitext(output)[0] + "_convergence.csv"
-        assert os.path.exists(conv_path)
-        conv_df = pd.read_csv(conv_path)
+        # Convergence is now a separate script (compute_convergence.py);
+        # verify compute_convergence function works on this output.
+        from compute_changepoints import compute_convergence
+        conv_df = compute_convergence(breaks_df)
         conv_expected = {
             "year", "n_semantic", "n_lexical", "n_citation",
             "n_total", "pct_total", "methods_detecting",

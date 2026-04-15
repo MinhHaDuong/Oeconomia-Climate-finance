@@ -27,7 +27,6 @@ import glob
 import os
 import sys
 
-import numpy as np
 import pandas as pd
 import ruptures
 
@@ -194,6 +193,7 @@ def compute_breaks(div_df, pelt_penalties, dynp_n_bkps=None):
     DataFrame with columns:
         method, channel, window, hyperparams, detector, detector_params,
         break_years
+
     """
     if dynp_n_bkps is None:
         dynp_n_bkps = [1, 2, 3]
@@ -264,6 +264,39 @@ def compute_breaks(div_df, pelt_penalties, dynp_n_bkps=None):
     return pd.DataFrame(rows)
 
 
+_CONV_COLUMNS = ["year", "n_semantic", "n_lexical", "n_citation",
+                 "n_total", "pct_total", "methods_detecting"]
+
+
+def _parse_break_years(raw):
+    """Parse semicolon-separated break years string into a set of ints."""
+    if pd.isna(raw) or str(raw).strip() == "":
+        return set()
+    years = set()
+    for y_str in str(raw).split(";"):
+        y_str = y_str.strip()
+        if y_str:
+            try:
+                years.add(int(float(y_str)))
+            except ValueError:
+                pass
+    return years
+
+
+def _count_detections(breaks_df, candidate_year, tolerance=1):
+    """Count detections within ±tolerance of candidate_year, by channel."""
+    counts = {"semantic": 0, "lexical": 0, "citation": 0}
+    methods = set()
+    for _, row in breaks_df.iterrows():
+        row_years = _parse_break_years(row["break_years"])
+        if any(abs(y - candidate_year) <= tolerance for y in row_years):
+            channel = row["channel"]
+            if channel in counts:
+                counts[channel] += 1
+            methods.add(row["method"])
+    return counts, methods
+
+
 def compute_convergence(breaks_df):
     """Build convergence table: for each candidate year, count detections.
 
@@ -281,73 +314,34 @@ def compute_convergence(breaks_df):
     DataFrame with columns:
         year, n_semantic, n_lexical, n_citation, n_total, pct_total,
         methods_detecting
+
     """
     if breaks_df.empty:
-        return pd.DataFrame(columns=[
-            "year", "n_semantic", "n_lexical", "n_citation",
-            "n_total", "pct_total", "methods_detecting",
-        ])
+        return pd.DataFrame(columns=_CONV_COLUMNS)
 
-    # Parse all detected break years
     all_years = set()
-    for row_years in breaks_df["break_years"]:
-        if pd.isna(row_years) or str(row_years).strip() == "":
-            continue
-        for y in str(row_years).split(";"):
-            y = y.strip()
-            if y:
-                try:
-                    all_years.add(int(float(y)))
-                except ValueError:
-                    pass
+    for raw in breaks_df["break_years"]:
+        all_years |= _parse_break_years(raw)
 
     if not all_years:
-        return pd.DataFrame(columns=[
-            "year", "n_semantic", "n_lexical", "n_citation",
-            "n_total", "pct_total", "methods_detecting",
-        ])
+        return pd.DataFrame(columns=_CONV_COLUMNS)
 
-    # Total possible = number of (method x detector x params) combos
     total_possible = len(breaks_df)
-
-    # For each candidate year, count detections per channel
-    convergence_rows = []
+    rows = []
     for candidate_year in sorted(all_years):
-        counts = {"semantic": 0, "lexical": 0, "citation": 0}
-        methods_detecting = set()
-
-        for _, row in breaks_df.iterrows():
-            if pd.isna(row["break_years"]) or str(row["break_years"]).strip() == "":
-                continue
-            for y_str in str(row["break_years"]).split(";"):
-                y_str = y_str.strip()
-                if not y_str:
-                    continue
-                try:
-                    y = int(float(y_str))
-                except ValueError:
-                    continue
-                if abs(y - candidate_year) <= 1:
-                    channel = row["channel"]
-                    if channel in counts:
-                        counts[channel] += 1
-                    methods_detecting.add(row["method"])
-                    break  # count this row only once for this candidate year
-
+        counts, methods = _count_detections(breaks_df, candidate_year)
         n_total = sum(counts.values())
-        pct = round(n_total / total_possible, 4) if total_possible > 0 else 0.0
-
-        convergence_rows.append({
+        rows.append({
             "year": candidate_year,
             "n_semantic": counts["semantic"],
             "n_lexical": counts["lexical"],
             "n_citation": counts["citation"],
             "n_total": n_total,
-            "pct_total": pct,
-            "methods_detecting": ";".join(sorted(methods_detecting)),
+            "pct_total": round(n_total / total_possible, 4) if total_possible > 0 else 0.0,
+            "methods_detecting": ";".join(sorted(methods)),
         })
 
-    return pd.DataFrame(convergence_rows)
+    return pd.DataFrame(rows)
 
 
 def main():

@@ -7,6 +7,7 @@ Methods:
   S2  Energy distance (multivariate)
   S3  Sliced Wasserstein distance
   S4  Frechet distance (Gaussian fit)
+
 """
 
 import os
@@ -14,7 +15,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-
 from utils import get_logger
 
 log = get_logger("_divergence_semantic")
@@ -32,6 +32,7 @@ def load_semantic_data(input_paths):
     Returns
     -------
     (df, emb) : tuple[pd.DataFrame, np.ndarray]
+
     """
     from utils import CATALOGS_DIR
 

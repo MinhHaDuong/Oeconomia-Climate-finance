@@ -21,13 +21,13 @@ Usage:
         --output content/figures/fig_divergence_S1_MMD.png \
         --input content/tables/tab_div_S1_MMD.csv
 
-    # PCA sensitivity
-    python3 scripts/plot_divergence.py --style pca \
+    # PCA sensitivity (gradient palette)
+    python3 scripts/plot_divergence.py --palette gradient \
         --output content/figures/fig_sensitivity_pca_S1_MMD.png \
         --input content/tables/tab_sens_pca_S1_MMD.csv
 
-    # JL sensitivity
-    python3 scripts/plot_divergence.py --style jl \
+    # JL sensitivity (ribbon aggregate)
+    python3 scripts/plot_divergence.py --aggregate ribbon \
         --output content/figures/fig_sensitivity_jl_S2_energy.png \
         --input content/tables/tab_sens_jl_S2_energy.csv
 """
@@ -39,7 +39,6 @@ import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -268,12 +267,21 @@ def _draw_curves(ax, mdf, breaks_df, method, aggregate="none", palette="auto"):
 
     Parameters
     ----------
-    aggregate : "none" | "ribbon"
+    ax : matplotlib.axes.Axes
+        Target axes.
+    mdf : pd.DataFrame
+        Divergence data for one method.
+    breaks_df : pd.DataFrame
+        Break detection results (may be empty).
+    method : str
+        Method name, used to look up breaks.
+    aggregate : {"none", "ribbon"}
         "none": one curve per (window, hyperparams) group.
         "ribbon": median +/- IQR across replicate runs, grouped by dimension.
-    palette : "auto" | "gradient"
+    palette : {"auto", "gradient"}
         "auto": discrete colors per group.
         "gradient": light-to-dark by projection dimension, black baseline.
+
     """
     if aggregate == "ribbon":
         _draw_ribbon(ax, mdf)

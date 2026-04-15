@@ -230,7 +230,8 @@ class TestPlotSmoke:
         plot_result = subprocess.run(
             [
                 sys.executable,
-                os.path.join(SCRIPTS_DIR, "plot_embedding_sensitivity.py"),
+                os.path.join(SCRIPTS_DIR, "plot_divergence.py"),
+                "--palette", "gradient",
                 "--output", str(fig_out),
                 "--input", str(csv_out),
             ],
@@ -243,8 +244,8 @@ class TestPlotSmoke:
             f"Plot failed:\nstdout: {plot_result.stdout}\n"
             f"stderr: {plot_result.stderr}"
         )
-        # Check that the PNG was created (stem + method + projection)
-        expected_png = tmp_path / "fig_sensitivity_S2_energy_pca.png"
+        # Check that the PNG was created (stem + method)
+        expected_png = tmp_path / "fig_sensitivity_S2_energy.png"
         assert expected_png.exists(), (
             f"Expected {expected_png} but found: "
             f"{[f.name for f in tmp_path.iterdir()]}"

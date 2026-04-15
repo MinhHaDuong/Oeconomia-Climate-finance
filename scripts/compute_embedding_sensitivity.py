@@ -85,7 +85,6 @@ def _append_projection_tag(df, tag):
 
 def run_pca_sweep(df, emb, cfg, method_name):
     """Run PCA dimensionality sweep: project to d dims, compute divergence."""
-    import numpy as np
     from sklearn.decomposition import PCA
 
     func = _get_method_func(method_name)

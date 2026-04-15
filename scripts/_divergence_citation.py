@@ -11,6 +11,7 @@ Methods:
   G6  Citation entropy           -- Shannon entropy of in-degree distribution
   G7  Disruption index CD        -- mean CD per year (simplified)
   G8  Betweenness centrality     -- mean betweenness of largest connected component
+
 """
 
 import os
@@ -22,7 +23,6 @@ import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy, kendalltau
-
 from utils import CATALOGS_DIR, get_logger
 
 log = get_logger("_divergence_citation")
@@ -43,6 +43,7 @@ def load_citation_data(input_paths):
     Returns
     -------
     (works, citations, internal_edges) : tuple
+
     """
     if input_paths and len(input_paths) >= 2:
         works_path, cit_path = input_paths[0], input_paths[1]
@@ -254,6 +255,36 @@ def compute_g3_age_shift(works, citations, internal_edges, cfg):
 
 # ── G4: Cross-tradition citation ratio ────────────────────────────────────
 
+def _bisect_communities(G_und):
+    """Split an undirected graph into 2 communities.
+
+    Tries spectral bisection first, falls back to label propagation.
+    Returns dict {node: 0|1} or None on failure.
+    """
+    try:
+        from networkx.algorithms.community import spectral_bisection
+        c1, c2 = spectral_bisection(G_und)
+        return {n: 0 for n in c1} | {n: 1 for n in c2}
+    except Exception:
+        pass
+
+    try:
+        comms = list(nx.community.label_propagation_communities(G_und))
+        if len(comms) < 2:
+            return None
+        community = {}
+        for i, c in enumerate(comms[:2]):
+            for n in c:
+                community[n] = i
+        for i, c in enumerate(comms[2:]):
+            for n in c:
+                community[n] = i % 2
+        return community
+    except Exception as exc:
+        log.debug("G4 community detection failed: %s", exc)
+        return None
+
+
 def compute_g4_cross_trad(works, citations, internal_edges, cfg):
     """Fraction of new internal citations crossing a 2-community boundary.
 
@@ -267,7 +298,6 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
         log.info("G4: Too few internal edges (%d), skipping", len(internal_edges))
         return _dict_to_df({y: np.nan for y in years})
 
-    # Build full graph for community detection
     ref_year = int(np.median(years))
     G_full = _cumulative_graph(works, internal_edges, ref_year)
     G_und = G_full.to_undirected()
@@ -275,29 +305,9 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
     if G_und.number_of_nodes() < 4:
         return _dict_to_df({y: np.nan for y in years})
 
-    try:
-        from networkx.algorithms.community import spectral_bisection
-        c1, c2 = spectral_bisection(G_und)
-        community = {}
-        for n in c1:
-            community[n] = 0
-        for n in c2:
-            community[n] = 1
-    except Exception:
-        try:
-            comms = list(nx.community.label_propagation_communities(G_und))
-            if len(comms) < 2:
-                return _dict_to_df({y: np.nan for y in years})
-            community = {}
-            for i, c in enumerate(comms[:2]):
-                for n in c:
-                    community[n] = i
-            for i, c in enumerate(comms[2:]):
-                for n in c:
-                    community[n] = i % 2
-        except Exception as exc:
-            log.debug("G4 community detection failed: %s", exc)
-            return _dict_to_df({y: np.nan for y in years})
+    community = _bisect_communities(G_und)
+    if community is None:
+        return _dict_to_df({y: np.nan for y in years})
 
     for y in years:
         new_edges = internal_edges.loc[internal_edges["source_year"] == y,
