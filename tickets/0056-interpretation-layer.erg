@@ -1,0 +1,66 @@
+%erg v1
+Title: Implement interpretation layer for validated transition zones
+Status: open
+Created: 2026-04-15
+Author: claude
+Blocked-by: 0053
+
+--- log ---
+2026-04-15T15:30Z claude created
+2026-04-15T15:30Z claude note wave 2 of epic 0026; answers "what changed?"
+
+--- body ---
+## Context
+
+The companion paper detects transition zones (where Z > 2) and validates
+them across layers. The interpretation layer answers: *what* changed at
+each validated zone? Three outputs:
+
+1. **Discriminative terms** — which vocabulary shifted
+2. **Discriminative documents** — which papers are most characteristic
+3. **Community shifts** — how intellectual structure reorganized
+
+## Actions
+
+1. Create `scripts/compute_interpretation.py`:
+   - Accept `--zone` flag: "2007-2011" (start-end years)
+   - For the specified zone, compute:
+
+   a. **Discriminative terms** (two methods, decide later):
+      - Log-odds with Dirichlet prior (Monroe, Colaresi & Quinn 2008):
+        compare term frequencies before-zone vs after-zone
+      - C2ST coefficients on TF-IDF (from ticket 0053 sidecar export)
+      - Output: `tab_discrim_terms_{zone}.csv`
+        (term, log_odds, c2st_coeff, frequency_before, frequency_after)
+
+   b. **Discriminative documents**:
+      - C2ST predicted probabilities (from 0053 sidecar)
+      - Rank documents by P(after | document)
+      - Top 20 most "before-like" and "after-like" documents
+      - Output: `tab_discrim_docs_{zone}.csv`
+        (document_id, year, title, p_after, side)
+
+   c. **Community shifts** (from 0054 sidecar):
+      - Community sizes before vs after zone
+      - Documents that changed community
+      - Output: `tab_community_shifts_{zone}.csv`
+        (community_id, size_before, size_after, top_terms)
+
+2. Add Make targets (one per validated zone — zones determined at runtime).
+
+## Test
+
+```python
+def test_discriminative_terms_at_planted_break():
+    """Planted vocabulary shift should appear in top discriminative terms."""
+    # Before: documents with term "adaptation"
+    # After: documents with term "mitigation" instead
+    # log-odds for "mitigation" should be positive and high
+```
+
+## Exit criteria
+
+- Discriminative terms include known vocabulary shifts at each zone
+- Discriminative documents are plausible (correct period, relevant titles)
+- Community shift tables show restructuring at validated zones
+- Both log-odds and C2ST approaches produce results for comparison

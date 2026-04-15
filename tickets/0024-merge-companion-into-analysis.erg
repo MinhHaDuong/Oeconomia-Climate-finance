@@ -1,12 +1,13 @@
 %erg v1
 Title: Merge companion paper useful content into analysis report
-Status: open
+Status: closed
 Created: 2026-04-14
 Author: claude
 
 --- log ---
 2026-04-14T14:37Z claude created
 2026-04-14T14:37Z claude note step 2 of tech rep restructuring; follows PR #649
+2026-04-15T15:30Z claude status closed — companion paper stays standalone per epic 0026 reimagination
 
 --- body ---
 ## Context

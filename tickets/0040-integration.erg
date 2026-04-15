@@ -1,6 +1,6 @@
 %erg v1
 Title: Integration: wire divergence results into technical report
-Status: open
+Status: closed
 Created: 2026-04-15
 Author: user
 Blocked-by: 0034
@@ -8,6 +8,7 @@ Blocked-by: 0034
 --- log ---
 2026-04-15T20:00Z claude created
 2026-04-15T20:00Z claude note depends on structural-breaks-v2 include (0034)
+2026-04-15T15:30Z claude status closed — target is companion paper (0057), not tech report
 
 --- body ---
 ## Context

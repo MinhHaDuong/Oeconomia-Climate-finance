@@ -1,0 +1,67 @@
+%erg v1
+Title: Implement community divergence (Louvain + JS)
+Status: open
+Created: 2026-04-15
+Author: claude
+Blocked-by: 0048
+
+--- log ---
+2026-04-15T15:30Z claude created
+2026-04-15T15:30Z claude note wave 1 of epic 0026; lead method for graph layer
+
+--- body ---
+## Context
+
+The companion paper (epic 0026) uses community divergence as the lead
+graph method. For each year t, detect communities in the co-citation
+graph via Louvain, then compute JS divergence between community share
+vectors of before-window and after-window documents.
+
+This captures intellectual reorganization: when communities restructure,
+the distribution of documents across communities shifts.
+
+Blocked by 0048 (citation sliding windows) because we need sliding-window
+graphs, not cumulative ones.
+
+## Actions
+
+1. Create `scripts/_divergence_community.py`:
+   - `compute_community_divergence(df, cfg)` — for each (year, window):
+     a. Build sliding-window co-citation graphs (before, after) using
+        infrastructure from 0048
+     b. Run Louvain on the combined graph (stable community labels)
+     c. Compute community share vectors for before and after documents
+     d. JS divergence between share vectors
+   - Returns DataFrame with DivergenceSchema contract.
+
+2. Also export community membership tables for interpretation (0056):
+   - `tab_community_membership.csv`: (year, document_id, community_id)
+
+3. Register as `community_divergence` in dispatcher.
+
+4. Add config:
+   ```yaml
+   community:
+     algorithm: louvain
+     resolution: 1.0
+     random_seed: 42  # from config
+   ```
+
+5. Add dependency: `python-louvain` (community detection).
+
+## Test
+
+```python
+def test_community_divergence_detects_merge():
+    """Two separate clusters that merge should produce high JS."""
+    # Before: two disconnected components
+    # After: single connected component
+    # JS should be high (community structure changed)
+```
+
+## Exit criteria
+
+- Community divergence detects planted community restructuring
+- Louvain produces stable communities (seeded)
+- Community membership export for interpretation
+- `make check-fast` passes

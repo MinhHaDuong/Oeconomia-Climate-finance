@@ -1,5 +1,5 @@
 %erg v1
-Title: Periodization paper — continuous divergence + external validation
+Title: Companion paper — multi-layer structural change detection
 Status: open
 Created: 2026-04-14
 Author: user
@@ -11,115 +11,129 @@ Author: user
 2026-04-14T16:00Z claude note added G7 disruption index, G8 betweenness centrality; literature review in docs/
 2026-04-14T16:30Z claude note decomposed into tickets 0029-0035; S5 deferred to padme
 2026-04-15T20:00Z claude note added 0037-0042 from review: GPU, testing, robustness, integration, efficiency, real run
+2026-04-15T15:00Z claude note reimagined as companion to Oeconomia manuscript
+2026-04-15T15:00Z claude note lean method panel (6 methods, 3 layers), not 16-method zoo
+2026-04-15T15:00Z claude note ChatGPT note as scaffolding for methods section
 
 --- body ---
 ## Context
-The NCC epic (0012) was killed because "Paris didn't matter" oversold
-the data. But the periodization question is real and the existing
-analysis has genuine signal. A proper paper needs continuous divergence
-methods — no clustering, no arbitrary k. Each method produces a time
-series; convergence across independent channels is the robustness signal.
 
-## Method panel (16 methods + 3 change point detectors)
+The Oeconomia manuscript (intellectual history, submitted 2026-03-18)
+argues that climate finance crystallized as an economic object by ~2009.
+This companion paper provides the quantitative backbone: a framework
+for detecting and validating structural change in text corpora, applied
+to the climate finance literature.
 
-All methods are continuous (one value per window/year). Parameters
-(window size, kernel, functional form) are acceptable; the number of
-clusters is not.
+Adapted from ChatGPT note (docs/ChatGPT-20260415-MethodForAutoPeriodization-v1.md).
+Lean design: one lead method per representation layer, permutation
+Z-scores for inference, transition zones (not point breaks).
 
-### Semantic — 5 methods (embedding-based)
+## Epistemic stance
 
-| ID | Method | Principle | Parameters | Library | Reference |
-|----|--------|-----------|------------|---------|-----------|
-| S1 | MMD (Maximum Mean Discrepancy) | Kernel two-sample test between embedding distributions of consecutive windows | Kernel (RBF), bandwidth | `dcor` or custom with `scipy` | Gretton et al. (2012) JMLR |
-| S2 | Energy distance | Distribution-free two-sample test based on inter-point distances. No kernel to choose. | None (Euclidean) | `scipy.stats.energy_distance` | Székely & Rizzo (2004) JSPI; (2013) Ann. Stat. |
-| S3 | Sliced Wasserstein distance | Optimal transport approximated by random 1D projections | Number of projections | `pot.sliced_wasserstein_distance` | Bonneel et al. (2015) JMIV |
-| S4 | Fréchet distance (FID) | Model each period as multivariate Gaussian, compute Fréchet distance | Gaussian assumption | `scipy` (mean + covariance) | Dowson & Landau (1982) JMVA |
-| S5 | Procrustes alignment + residual rotation | Train word embeddings per period, align via orthogonal Procrustes, measure rotation magnitude | Vocabulary size, embedding dim | `scipy.linalg.orthogonal_procrustes` | Hamilton et al. (2016) ACL |
+The method detects candidate structural changes and validates them
+across independent representations. It does not claim to uniquely
+discover a true periodization. Social change is fuzzy — we report
+transition zones (year ranges where Z > 2), not single break years.
 
-S1–S4 apply directly to document embeddings (BGE-M3 already computed).
-S5 requires per-period word embeddings — captures term-level semantic
-drift rather than document-level distributional shift.
+## Method panel (6 methods, 3 layers)
 
-### Lexical — 3 methods
+Chosen for stability at small n and growing corpus. Permutation Z-scores
+normalize all methods against sample-size variation.
 
-| ID | Method | Principle | Parameters | Library | Reference |
-|----|--------|-----------|------------|---------|-----------|
-| L1 | JS divergence on term distributions | Jensen-Shannon between TF-IDF distributions of two windows. Independent of embeddings. | Vocabulary size, window | `scipy.spatial.distance.jensenshannon` | Lin (1991) IEEE Trans. IT |
-| L2 | Novelty / Transience | KL(doc‖past) = novelty, KL(doc‖future) = transience. Aggregated per year. Peaks of non-resonant novelty signal breaks. | Past/future window | `scipy.stats.entropy` (base KL) | Barron et al. (2018) PNAS |
-| L3 | Burst detection (Kleinberg) | Finite automaton on term frequencies. Detects acceleration without arbitrary threshold. Aggregate: count of terms in burst per year. | State transition cost | `pybursts` | Kleinberg (2003) KDD |
+| Layer | Lead | Robustness | Interpretation |
+|-------|------|------------|----------------|
+| Embedding | Energy distance | C2ST on PCA-32 | Discriminative directions + documents |
+| Lexical | JS divergence | C2ST on TF-IDF | Discriminative terms |
+| Graph | Community div (Louvain+JS) | Spectral gap | Community membership shifts |
 
-L1 = global lexical divergence. L2 = separates what is new from what
-persists. L3 = identifies which specific terms carry the change.
+**Design choices:**
+- Energy (not MMD): no kernel, no bandwidth, no hyperparameters, stable at n=30
+- Sliding windows, w=3 years (local change detection, not cumulative)
+- Z > 2 threshold (p ≈ 0.023, conservative one-sided)
+- Transition zones: year ranges where Z exceeds threshold
+- Multi-signal validation: do transition zones from independent layers overlap?
+- Two-pass censored-gap confirmation: detect zones, then censor transition
+  years and retest. Z still high → discontinuity. Z drops → gradual drift.
+- Discriminative terms: both log-odds (Monroe et al. 2008) and C2ST
+  coefficients — decide which to foreground after seeing results
 
-### Citation graph — 8 methods
+**Supplementary (available from existing pipeline):**
+- MMD, Wasserstein, Fréchet, L2/L3, G1/G3-G8 (15-method robustness)
+- PELT/DynP/KernelCPD changepoint detection
+- MC size-bias characterization, bootstrap CIs
 
-| ID | Method | Principle | Parameters | Library | Reference |
-|----|--------|-----------|------------|---------|-----------|
-| G1 | PageRank volatility | PageRank per time slice; Kendall τ displacement between consecutive slices. High displacement = authority restructuring. | Damping factor, slice width | `networkx.pagerank` + `scipy.stats.kendalltau` | Brin & Page (1998); Ghoshal & Barabási (2011) |
-| G2 | Spectral gap of Laplacian | Gap between 1st and 2nd eigenvalue of normalized Laplacian. Narrowing gap → emerging community structure. | None | `networkx.laplacian_matrix` + `scipy.linalg.eigsh` | Chung (1997); Chi et al. (2007) |
-| G3 | Bibliographic coupling age shift | For papers in year t, distribution of publication years of shared references. Shift = changing intellectual foundations. | Min coupling threshold | `networkx` + `numpy` | Kessler (1963); Klavans & Boyack (2017) |
-| G4 | Cross-tradition citation ratio | Define traditions by seed papers (not clustering). Track fraction of citations crossing tradition boundaries. 0 = silos, 1 = integration. | Seed selection | `networkx` | Leydesdorff (2007) JASIST; Rafols & Meyer (2010) |
-| G5 | Preferential attachment exponent drift | Estimate exponent α per time slice. α > 1 = growing concentration. Regime change in α = structural shift. | Estimation window | `scipy.optimize.curve_fit` | Barabási & Albert (1999) Science; Newman (2001) |
-| G6 | Citation entropy | Shannon entropy of incoming citation distribution per year. Low entropy = concentration around few authorities. | None | `scipy.stats.entropy` | Larivière et al. (2009) JASIST |
-| G7 | Disruption index CD | Measures whether a paper consolidates (citants cite its refs) or disrupts (citants ignore its refs). Aggregated per year as mean CD. | None | `networkx` + `numpy` | Funk & Owen-Smith (2017); Wu et al. (2019) Nature |
-| G8 | Betweenness centrality dynamics | Mean/max betweenness centrality per time slice in co-citation network. Peaks signal pivotal papers bridging communities. | Slice width | `networkx.betweenness_centrality` | Freeman (1979); Chen (2006) JASIST |
+## Paper structure (companion-paper.qmd)
 
-### Change point detection layer (3 meta-methods)
-
-Applied to all 16 time series above. Convergence across channels is
-the robustness criterion.
-
-| ID | Method | Principle | Library | Reference |
-|----|--------|-----------|---------|-----------|
-| CP1 | PELT | Exact segmentation in linear time. Multiple breaks, no need to fix their count. | `ruptures.Pelt` | Killick et al. (2012) JASA |
-| CP2 | BOCPD | Bayesian online detection. Outputs break probability at each point — no binary decision. | `ruptures` or `bayesian_changepoint_detection` | Adams & MacKay (2007) |
-| CP3 | Kernel CPD | CUSUM based on MMD. Suited to multivariate series. | `ruptures.KernelCPD` | Harchaoui et al. (2009) NIPS |
-
-## Dependencies to add
-
-```
-pot>=0.9.0        # Sliced Wasserstein (S3)
-dcor>=0.6.1       # MMD alternative (S1)
-ruptures>=1.1.9   # PELT, BOCPD, Kernel CPD (CP1-CP3)
-pybursts>=0.1.1   # Burst detection (L3)
-```
-
-Already available via scipy/networkx: S2, S4, S5, L1, L2, G1-G8.
-
-## Literature review
-
-See `docs/literature-review-structural-break-detection.md` for the full
-survey (12 sections, gap analysis). Key finding: distributional two-sample
-tests (MMD, energy, Wasserstein) have never been applied to bibliometric
-corpora — this is the methodological gap.
-
-## Additional requirements
-
-- External validation on 2-3 known-break corpora from OpenAlex
-  (COVID-19 in public health, AlexNet in AI/ML, 2008 financial crisis)
-- Honest framing: Copenhagen was the dominant founding shift,
-  mid-2010s saw real redistribution, core shows no break
+1. Introduction — endogenous periodization, multi-layer approach
+2. Related work (keep existing §2.1-2.4, add C2ST reference)
+3. Data (reuse §3, update corpus stats)
+4. Method
+   - 4.1 Objective and epistemic stance
+   - 4.2 Representations (embedding, lexical, graph)
+   - 4.3 Temporal segmentation (sliding windows, w=3)
+   - 4.4 Distributional comparison (Energy, JS, Louvain+JS)
+   - 4.5 Statistical inference (permutation Z-scores)
+   - 4.6 Transition zone detection + multi-signal validation
+   - 4.7 Censored-gap confirmation (two-pass)
+   - 4.8 Robustness (subsampling, sensitivity, PELT)
+   - 4.9 Interpretation (terms, documents, communities)
+5. Results — applied to climate finance corpus
+6. Discussion — generalizability, limitations, growth-bias honesty
+7. Supplementary — full 15-method results, MC characterization
 
 ## Sub-tickets
 
-| Wave | Ticket | Description | Blocked by |
-|------|--------|-------------|------------|
-| 1 | 0029 | Semantic divergence S1-S4 | — |
-| 1 | 0030 | Lexical divergence L1-L3 | — |
-| 1 | 0031 | Citation graph divergence G1-G8 | — |
-| 2 | 0032 | Change point detection CP1-CP3 | 0029, 0030, 0031 |
-| 3 | 0033 | Multi-channel heatmap figure | 0032 |
-| 3 | 0034 | structural-breaks-v2 include | 0033 |
-| 4 | 0035 | Validation corpora (ISTEX/padme) | 0032 |
-| 2 | 0036 | Embedding insensitivity (PCA + JL projections) | 0029 |
-| — | 0037 | GPU acceleration (torch backend S1-S4) | padme |
-| — | 0038 | Test strategy (golden values, fast/slow, coverage) | — |
-| — | 0039 | Pipeline robustness (seeds, fallbacks, validation) | — |
-| — | 0040 | Integration (wire into tech report, deprecate old) | 0034 |
-| — | 0041 | Pipeline efficiency (profiling, make -j, test speed) | 0038 |
-| — | 0042 | Run on real corpus (padme) | 0037, 0039 |
-| — | (S5) | Procrustes word embeddings | padme GPU, deferred |
+### Completed (from previous decomposition)
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| 0029 | Semantic S1-S4 | closed (PR #650) |
+| 0030 | Lexical L1-L3 | closed (PR #650) |
+| 0037 | GPU acceleration | closed (PR #654) |
+
+### Wave 0 — Foundation
+| Ticket | Description | Blocked by |
+|--------|-------------|------------|
+| 0045 | Equal-n growth-bias correction | — |
+| 0048 | Citation sliding windows | — |
+
+### Wave 1 — New methods
+| Ticket | Description | Blocked by |
+|--------|-------------|------------|
+| 0053 | C2ST classifier two-sample test | — |
+| 0054 | Community divergence (Louvain + JS) | 0048 |
+| 0055 | Permutation Z-score inference layer | — |
+
+### Wave 2 — Analysis
+| Ticket | Description | Blocked by |
+|--------|-------------|------------|
+| 0050 | Null model (6 methods) | 0045, 0055 |
+| 0056 | Interpretation layer | 0053 |
+
+### Wave 3 — Paper
+| Ticket | Description | Blocked by |
+|--------|-------------|------------|
+| 0057 | Inject scaffolding + rewrite companion | 0050, 0056 |
+| 0058 | Companion figures (4 canonical) | 0050, 0056 |
+
+### Wave 4 — Supplementary
+| Ticket | Description | Blocked by |
+|--------|-------------|------------|
+| 0051 | MC size-bias characterization | 0045 |
+| 0047 | Bootstrap CIs | 0050 |
+
+### Killed
+| Ticket | Reason |
+|--------|--------|
+| 0024 | Companion stays standalone, not merged into analysis report |
+| 0028 | Tech report is internal docs, not a publication |
+
+## Target venue
+
+QSS (Quantitative Science Studies) — open access, MIT Press, computational
+scientometrics audience, higher IF (~6.5).
 
 ## Exit criteria
-Paper submitted to a bibliometrics venue (QSS, Scientometrics, or
-similar). Validated on external cases. Honest about what the data shows.
+
+Companion paper submitted to QSS. Multi-layer framework validated on
+climate finance corpus. Transition zones reported with Z-scores and
+censored-gap confirmation. Honest about growth-bias correction.

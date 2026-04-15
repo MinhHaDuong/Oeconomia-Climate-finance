@@ -1,0 +1,67 @@
+%erg v1
+Title: Create companion paper figures (4 canonical outputs)
+Status: open
+Created: 2026-04-15
+Author: claude
+Blocked-by: 0050
+Blocked-by: 0056
+
+--- log ---
+2026-04-15T15:30Z claude created
+2026-04-15T15:30Z claude note wave 3 of epic 0026; 4 canonical figures
+
+--- body ---
+## Context
+
+The companion paper needs exactly 4 figures (ChatGPT note §9).
+All use corrected pipeline outputs (Z-scores, not raw values).
+
+## Figures
+
+### Figure 1: Z-score time series (multi-panel)
+- 3 panels (embedding, lexical, graph) or 1 panel with 3 lines
+- X-axis: year. Y-axis: Z-score.
+- Horizontal line at Z = 2 (significance threshold)
+- Shaded transition zones where Z > 2
+- Grey null 95% band as reference
+
+### Figure 2: Transition zone validation heatmap
+- Rows: methods (Energy, JS, Louvain+JS, C2ST-emb, C2ST-lex, Spectral)
+- Columns: years
+- Color: Z-score intensity
+- Highlight: validated zones (≥ 2 layers above threshold)
+- Shows multi-signal convergence at a glance
+
+### Figure 3: Discriminative terms (bar chart)
+- At each validated transition zone, top 10 terms by log-odds
+- Positive = over-represented after zone, negative = before
+- Grouped by zone
+
+### Figure 4: Community flow (optional, alluvial or sankey)
+- Community structure before and after each validated zone
+- Width proportional to community size
+- Flows show documents moving between communities
+- If too complex, replace with community size bar chart
+
+## Actions
+
+1. Create plot scripts following architecture rules:
+   - `scripts/plot_companion_zseries.py` → Figure 1
+   - `scripts/plot_companion_heatmap.py` → Figure 2
+   - `scripts/plot_companion_terms.py` → Figure 3
+   - `scripts/plot_companion_community.py` → Figure 4
+
+2. All use `save_figure()` from `pipeline_io.py`.
+
+3. Add Make targets in `divergence.mk` or new `companion.mk`.
+
+## Test
+
+Smoke test: each script runs on fixture data without error.
+
+## Exit criteria
+
+- 4 figures render from corrected pipeline outputs
+- Figures are byte-reproducible (save_figure, seeded)
+- All referenced in companion-paper.qmd
+- `make check-fast` passes

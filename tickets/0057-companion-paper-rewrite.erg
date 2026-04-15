@@ -1,0 +1,74 @@
+%erg v1
+Title: Inject ChatGPT scaffolding and rewrite companion paper methods
+Status: open
+Created: 2026-04-15
+Author: claude
+Blocked-by: 0050
+Blocked-by: 0056
+
+--- log ---
+2026-04-15T15:30Z claude created
+2026-04-15T15:30Z claude note wave 3 of epic 0026; paper writing
+
+--- body ---
+## Context
+
+companion-paper.qmd has good lit review and data sections but uses old
+methods (KMeans clusters, JS on proportions, cosine on centroids). The
+ChatGPT note (docs/ChatGPT-20260415-MethodForAutoPeriodization-v1.md)
+provides a clean methods framework. Inject as scaffolding, rewrite in
+project voice.
+
+## Actions
+
+1. Insert ChatGPT note §1-12 as HTML comments in companion-paper.qmd,
+   section by section, as scaffolding for the rewrite.
+
+2. Rewrite methods section (§4) following the plan:
+   - §4.1: Objective and epistemic stance
+   - §4.2: Representations (embedding PCA-32, TF-IDF, co-citation graph)
+   - §4.3: Temporal segmentation (sliding windows, w=3)
+   - §4.4: Distributional comparison (Energy, JS, Louvain+JS)
+   - §4.5: Statistical inference (permutation Z-scores, Z > 2 threshold)
+   - §4.6: Transition zone detection + multi-signal validation
+   - §4.7: Censored-gap confirmation (two-pass)
+   - §4.8: Robustness (equal-n subsampling, sensitivity, PELT)
+   - §4.9: Interpretation (terms, documents, communities)
+
+3. Delete old §4 (KMeans clusters) and old §5 (censored-gap, seed-axis).
+
+4. Write results section (§5) using corrected pipeline outputs:
+   - Z-score time series for 6 methods
+   - Transition zones with multi-signal validation
+   - Censored-gap confirmation results
+   - Interpretation at each validated zone
+   - Reference Oeconomia manuscript for historical interpretation
+
+5. Update abstract, introduction, discussion.
+
+6. Run `/review-pr-prose` — AI-tells auditor must pass on rewritten sections.
+
+## Writing rules
+
+- Ghost mode: Economist style, no AI tells
+- Show, don't tell: specific dates, documents, actors
+- Epistemic honesty: report what the data shows, not what we hoped
+
+## Test
+
+```python
+def test_companion_paper_sections():
+    """Companion paper has all required sections."""
+    text = Path("content/companion-paper.qmd").read_text()
+    for section in ["Objective", "Representations", "Temporal segmentation",
+                    "Distributional comparison", "Statistical inference",
+                    "Transition zone", "Censored-gap", "Interpretation"]:
+        assert section.lower() in text.lower()
+```
+
+## Exit criteria
+
+- All 9 method subsections written in project voice
+- Results section uses corrected pipeline outputs
+- `/review-pr-prose` passes (no AI tells)
+- `quarto render content/companion-paper.qmd` succeeds

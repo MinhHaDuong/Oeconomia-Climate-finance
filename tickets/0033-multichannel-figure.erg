@@ -1,6 +1,6 @@
 %erg v1
 Title: Plot multi-channel structural break heatmap
-Status: open
+Status: closed
 Created: 2026-04-14
 Author: claude
 Blocked-by: 0032
@@ -8,6 +8,7 @@ Blocked-by: 0032
 --- log ---
 2026-04-14T16:30Z claude created
 2026-04-14T16:30Z claude note wave 3, visualization
+2026-04-15T15:30Z claude status closed — superseded by 0058 (companion paper figures)
 
 --- body ---
 ## Context
