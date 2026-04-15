@@ -3,12 +3,10 @@ Title: Run divergence pipeline on real corpus (padme)
 Status: open
 Created: 2026-04-15
 Author: user
-Blocked-by: 0037
-Blocked-by: 0039
-
 --- log ---
 2026-04-15T20:00Z claude created
 2026-04-15T20:00Z claude note the actual scientific computation; blocked by robustness + GPU
+2026-04-15T21:00Z claude unblocked from 0037 and 0039 per workplan review — CPU run is fine, robustness is polish
 
 --- body ---
 ## Context

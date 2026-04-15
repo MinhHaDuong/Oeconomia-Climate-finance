@@ -167,11 +167,40 @@ def compute_mmd_rbf(X, Y, bandwidth):
     return max(float(mmd2), 0.0)
 
 
+def _mmd_rbf_torch(X, Y, bandwidth):
+    """MMD^2 via torch on CUDA — same algorithm as compute_mmd_rbf."""
+    import torch
+    from _divergence_backend import to_tensor
+
+    gamma = 1.0 / (2.0 * bandwidth) if bandwidth > 0 else 1.0
+    Xt = to_tensor(X)
+    Yt = to_tensor(Y)
+
+    K_XX = torch.exp(-gamma * torch.cdist(Xt, Xt).pow(2))
+    K_YY = torch.exp(-gamma * torch.cdist(Yt, Yt).pow(2))
+    K_XY = torch.exp(-gamma * torch.cdist(Xt, Yt).pow(2))
+
+    n = Xt.shape[0]
+    m = Yt.shape[0]
+
+    mmd2 = (
+        (K_XX.sum() - K_XX.trace()) / (n * (n - 1))
+        + (K_YY.sum() - K_YY.trace()) / (m * (m - 1))
+        - 2.0 * K_XY.mean()
+    )
+    return max(float(mmd2.item()), 0.0)
+
+
 def compute_s1_mmd(df, emb, cfg):
     """S1: MMD with RBF kernel at 0.5x, 1x, 2x median bandwidth.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
+    from _divergence_backend import get_backend
+
+    backend = get_backend(cfg)
+    mmd_fn = _mmd_rbf_torch if backend == "torch" else compute_mmd_rbf
+
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
@@ -194,7 +223,7 @@ def compute_s1_mmd(df, emb, cfg):
         med = _median_heuristic(X, Y, rng=rng)
         for mult in bandwidth_multipliers:
             bw = med * mult
-            val = compute_mmd_rbf(X, Y, bw)
+            val = mmd_fn(X, Y, bw)
             results.append(
                 {
                     "year": int(y),
@@ -211,20 +240,38 @@ def compute_s1_mmd(df, emb, cfg):
 # ── S2: Energy distance ──────────────────────────────────────────────────
 
 
+def _energy_distance_torch(X, Y):
+    """Energy distance via torch on CUDA.
+
+    E(X,Y) = 2*E[||X-Y||] - E[||X-X'||] - E[||Y-Y'||]
+    """
+    import torch
+    from _divergence_backend import to_tensor
+
+    Xt = to_tensor(X)
+    Yt = to_tensor(Y)
+
+    dXY = torch.cdist(Xt, Yt).mean()
+    dXX = torch.cdist(Xt, Xt).mean()
+    dYY = torch.cdist(Yt, Yt).mean()
+
+    return float((2.0 * dXY - dXX - dYY).item())
+
+
 def compute_s2_energy(df, emb, cfg):
-    """S2: Energy distance (multivariate via dcor).
+    """S2: Energy distance (multivariate via dcor or torch).
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    import dcor
+    from _divergence_backend import get_backend
+
+    backend = get_backend(cfg)
+
+    if backend == "numpy":
+        import dcor
 
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
-
-    # dcor.energy_distance is O(n**2) in the number of samples.
-    # Benchmark: 2000x1024 arrays -> ~X seconds on CPU.
-    # TODO: measure actual runtime on padme with real data.
-    # Subsampling via max_subsample in config caps n at 2000.
 
     years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
     if not years:
@@ -239,7 +286,10 @@ def compute_s2_energy(df, emb, cfg):
             log.info("S2 energy window=%d done", last_w)
         last_w = w
 
-        val = float(dcor.energy_distance(X, Y))
+        if backend == "torch":
+            val = _energy_distance_torch(X, Y)
+        else:
+            val = float(dcor.energy_distance(X, Y))
         results.append(
             {
                 "year": int(y),
@@ -259,9 +309,14 @@ def compute_s2_energy(df, emb, cfg):
 def compute_s3_wasserstein(df, emb, cfg):
     """S3: Sliced Wasserstein distance with varying projection counts.
 
+    POT natively supports torch tensors, so GPU dispatch is transparent.
+
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     import ot
+    from _divergence_backend import get_backend, to_tensor
+
+    backend = get_backend(cfg)
 
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
@@ -282,11 +337,16 @@ def compute_s3_wasserstein(df, emb, cfg):
             log.info("S3 sliced Wasserstein window=%d done", last_w)
         last_w = w
 
+        if backend == "torch":
+            Xt, Yt = to_tensor(X), to_tensor(Y)
+        else:
+            Xt, Yt = X, Y
+
         for n_proj in n_projections_list:
             val = float(
                 ot.sliced_wasserstein_distance(
-                    X,
-                    Y,
+                    Xt,
+                    Yt,
                     n_projections=n_proj,
                     seed=seed,
                 )
@@ -340,11 +400,51 @@ def compute_frechet_distance(X, Y):
     return float(max(mean_term + trace_term, 0.0))
 
 
+def _frechet_torch(X, Y):
+    """Frechet distance via torch on CUDA.
+
+    Uses eigendecomposition for matrix square root (more stable than sqrtm).
+    """
+    import torch
+    from _divergence_backend import to_tensor
+
+    Xt = to_tensor(X)
+    Yt = to_tensor(Y)
+
+    mu1 = Xt.mean(dim=0)
+    mu2 = Yt.mean(dim=0)
+
+    eps = 1e-6
+    C1 = torch.cov(Xt.T) + eps * torch.eye(Xt.shape[1], device=Xt.device)
+    C2 = torch.cov(Yt.T) + eps * torch.eye(Yt.shape[1], device=Yt.device)
+
+    diff = mu1 - mu2
+    mean_term = diff.dot(diff)
+
+    # Matrix square root via eigendecomposition: S = V diag(sqrt(λ)) V^T
+    def _sqrtm_eigh(M):
+        eigvals, eigvecs = torch.linalg.eigh(M)
+        eigvals = eigvals.clamp(min=0.0)
+        return eigvecs @ torch.diag(eigvals.sqrt()) @ eigvecs.T
+
+    sqrt_C1 = _sqrtm_eigh(C1)
+    product = sqrt_C1 @ C2 @ sqrt_C1
+    sqrt_product = _sqrtm_eigh(product)
+
+    trace_term = torch.trace(C1 + C2 - 2.0 * sqrt_product)
+    return float(max((mean_term + trace_term).item(), 0.0))
+
+
 def compute_s4_frechet(df, emb, cfg):
     """S4: Frechet distance (Gaussian fit).
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
+    from _divergence_backend import get_backend
+
+    backend = get_backend(cfg)
+    frechet_fn = _frechet_torch if backend == "torch" else compute_frechet_distance
+
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
@@ -377,7 +477,7 @@ def compute_s4_frechet(df, emb, cfg):
         else:
             X_r, Y_r = X, Y
 
-        val = compute_frechet_distance(X_r, Y_r)
+        val = frechet_fn(X_r, Y_r)
         results.append(
             {
                 "year": int(y),
