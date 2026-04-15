@@ -22,7 +22,6 @@ import os
 import re
 import subprocess
 import sys
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -36,6 +35,7 @@ ARCHIVE_DIR = os.path.join(SCRIPTS_DIR, "archive")
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _all_scripts():
     """Return sorted list of .py files in scripts/ and its subdirectories.
@@ -85,11 +85,17 @@ def _scripts_with_main_guard():
 # Scripts that are pure libraries (no __main__ guard, imported by others).
 # These are exempt from argparse checks (no __main__ guard).
 LIBRARY_SCRIPTS = {
-    "utils.py", "plot_style.py", "filter_flags.py", "filter_flags_llm.py",
+    "utils.py",
+    "plot_style.py",
+    "filter_flags.py",
+    "filter_flags_llm.py",
     "clustering_methods.py",
     "qa_near_duplicates.py",
-    "syllabi_config.py", "syllabi_crossref.py", "syllabi_harvest.py",
-    "syllabi_io.py", "syllabi_process.py",
+    "syllabi_config.py",
+    "syllabi_crossref.py",
+    "syllabi_harvest.py",
+    "syllabi_io.py",
+    "syllabi_process.py",
     "pipeline_text.py",
     "pipeline_io.py",
     "pipeline_loaders.py",
@@ -108,14 +114,16 @@ _SYSPATH_EXEMPT = {
     )
 }
 
-_RUFF_AVAILABLE = subprocess.run(
-    ["uv", "run", "ruff", "--version"], capture_output=True
-).returncode == 0
+_RUFF_AVAILABLE = (
+    subprocess.run(["uv", "run", "ruff", "--version"], capture_output=True).returncode
+    == 0
+)
 
 
 # ---------------------------------------------------------------------------
 # 1. No sys.path hacks
 # ---------------------------------------------------------------------------
+
 
 class TestNoSysPathHacks:
     """scripts/ must not contain sys.path.insert() calls.
@@ -143,6 +151,7 @@ class TestNoSysPathHacks:
 # ---------------------------------------------------------------------------
 # 2. Centralized research parameters
 # ---------------------------------------------------------------------------
+
 
 class TestCentralizedConstants:
     """Research parameters must come from config/analysis.yaml, not hardcoded.
@@ -173,6 +182,7 @@ class TestCentralizedConstants:
     def test_config_has_cite_threshold(self):
         """config/analysis.yaml must define clustering.cite_threshold."""
         import yaml
+
         config_path = os.path.join(REPO, "config", "analysis.yaml")
         with open(config_path) as f:
             cfg = yaml.safe_load(f)
@@ -185,6 +195,7 @@ class TestCentralizedConstants:
 # ---------------------------------------------------------------------------
 # 3. Every entry point gets argparse
 # ---------------------------------------------------------------------------
+
 
 class TestArgparsePresence:
     """Every script with __main__ guard must use argparse.
@@ -201,9 +212,11 @@ class TestArgparsePresence:
             if name in LIBRARY_SCRIPTS:
                 continue
             source = _read_script(name)
-            if ("argparse" not in source
-                    and "ArgumentParser" not in source
-                    and "parse_io_args" not in source):
+            if (
+                "argparse" not in source
+                and "ArgumentParser" not in source
+                and "parse_io_args" not in source
+            ):
                 violators.append(name)
         assert not violators, (
             f"{len(violators)} entry-point scripts lack argparse "
@@ -214,6 +227,7 @@ class TestArgparsePresence:
 # ---------------------------------------------------------------------------
 # 4. Ruff pyupgrade rules (modern Python 3.10+)
 # ---------------------------------------------------------------------------
+
 
 class TestRuffModernPython:
     """Ruff UP rules catch legacy typing imports and old-style unions.
@@ -227,10 +241,20 @@ class TestRuffModernPython:
     def test_no_legacy_typing(self):
         """No legacy typing imports (List, Dict, Tuple, Optional, Union)."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "UP006,UP007,UP035",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "UP006,UP007,UP035",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0, (
             f"Ruff found legacy typing patterns:\n{result.stdout}"
@@ -272,11 +296,22 @@ class TestFunctionComplexity:
     def test_mccabe_complexity(self):
         """No function exceeds McCabe complexity 25 (C901 wall)."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "C901",
-             "--config", "lint.mccabe.max-complexity = 25",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "C901",
+                "--config",
+                "lint.mccabe.max-complexity = 25",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0, (
             f"Ruff C901: functions too complex (McCabe > 25):\n{result.stdout}"
@@ -286,11 +321,22 @@ class TestFunctionComplexity:
     def test_function_length(self):
         """No function exceeds 120 statements (PLR0915 wall)."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "PLR0915",
-             "--config", "lint.pylint.max-statements = 120",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "PLR0915",
+                "--config",
+                "lint.pylint.max-statements = 120",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0, (
             f"Ruff PLR0915: functions with too many statements (> 120):\n"
@@ -301,15 +347,25 @@ class TestFunctionComplexity:
     def test_branch_count(self):
         """No function exceeds 25 branches (PLR0912 wall)."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "PLR0912",
-             "--config", "lint.pylint.max-branches = 25",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "PLR0912",
+                "--config",
+                "lint.pylint.max-branches = 25",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0, (
-            f"Ruff PLR0912: functions with too many branches (> 25):\n"
-            f"{result.stdout}"
+            f"Ruff PLR0912: functions with too many branches (> 25):\n{result.stdout}"
         )
 
     # --- Smells (warn, don't fail) ---
@@ -318,42 +374,78 @@ class TestFunctionComplexity:
     def test_mccabe_complexity_smell(self):
         """Warn when functions exceed McCabe complexity 15."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "C901",
-             "--config", "lint.mccabe.max-complexity = 15",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "C901",
+                "--config",
+                "lint.mccabe.max-complexity = 15",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         if result.returncode != 0:
             import warnings
+
             warnings.warn(f"C901 smells (complexity > 15):\n{result.stdout}")
 
     @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
     def test_function_length_smell(self):
         """Warn when functions exceed 80 statements."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "PLR0915",
-             "--config", "lint.pylint.max-statements = 80",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "PLR0915",
+                "--config",
+                "lint.pylint.max-statements = 80",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         if result.returncode != 0:
             import warnings
+
             warnings.warn(f"PLR0915 smells (statements > 80):\n{result.stdout}")
 
     @pytest.mark.skipif(not _RUFF_AVAILABLE, reason="ruff not available")
     def test_branch_count_smell(self):
         """Warn when functions exceed 15 branches."""
         result = subprocess.run(
-            ["uv", "run", "ruff", "check", "--select", "PLR0912",
-             "--config", "lint.pylint.max-branches = 15",
-             "--exclude", ARCHIVE_DIR,
-             "--no-fix", SCRIPTS_DIR],
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                "--select",
+                "PLR0912",
+                "--config",
+                "lint.pylint.max-branches = 15",
+                "--exclude",
+                ARCHIVE_DIR,
+                "--no-fix",
+                SCRIPTS_DIR,
+            ],
+            capture_output=True,
+            text=True,
         )
         if result.returncode != 0:
             import warnings
+
             warnings.warn(f"PLR0912 smells (branches > 15):\n{result.stdout}")
 
 
@@ -394,10 +486,10 @@ class TestModuleLength:
                 smelly.append((name, lines))
         if smelly:
             import warnings
+
             warnings.warn(
                 f"{len(smelly)} scripts exceed {self.SMELL_LINES} lines "
-                f"(consider splitting): "
-                + ", ".join(f"{n} ({l}L)" for n, l in smelly)
+                f"(consider splitting): " + ", ".join(f"{n} ({l}L)" for n, l in smelly)
             )
 
     def test_utils_facade_under_500_lines(self):
@@ -431,8 +523,12 @@ class TestModuleLength:
 
     def test_pipeline_modules_exist(self):
         """pipeline_text/io/loaders/progress.py must exist after split."""
-        for name in ("pipeline_text.py", "pipeline_io.py",
-                     "pipeline_loaders.py", "pipeline_progress.py"):
+        for name in (
+            "pipeline_text.py",
+            "pipeline_io.py",
+            "pipeline_loaders.py",
+            "pipeline_progress.py",
+        ):
             path = os.path.join(SCRIPTS_DIR, name)
             assert os.path.exists(path), (
                 f"{name} does not exist — create it as part of ticket #431 split"
@@ -442,6 +538,7 @@ class TestModuleLength:
 # ---------------------------------------------------------------------------
 # 6. Archive bit-invariance
 # ---------------------------------------------------------------------------
+
 
 class TestArchiveBitInvariance:
     """Refactoring must not change archive outputs.
@@ -463,7 +560,9 @@ class TestArchiveBitInvariance:
     def test_analysis_archive_has_verify_target(self):
         """The analysis archive Makefile must include a 'verify' target
         that checks md5sums, so reviewers can confirm bit-invariance."""
-        archive_mk = os.path.join(REPO, "release", "templates", "Makefile.analysis-manuscript")
+        archive_mk = os.path.join(
+            REPO, "release", "templates", "Makefile.analysis-manuscript"
+        )
         with open(archive_mk) as f:
             content = f.read()
         assert re.search(r"^verify\s*:", content, re.MULTILINE), (
@@ -494,9 +593,12 @@ class TestArchiveBitInvariance:
         # Each copied script must either be in the Makefile's dep graph
         # or be a utility (utils.py, plot_style.py)
         utilities = {
-            "utils.py", "plot_style.py",
-            "pipeline_loaders.py", "pipeline_io.py",
-            "pipeline_progress.py", "pipeline_text.py",
+            "utils.py",
+            "plot_style.py",
+            "pipeline_loaders.py",
+            "pipeline_io.py",
+            "pipeline_progress.py",
+            "pipeline_text.py",
         }
         for s in copied_scripts:
             if s in utilities:
@@ -520,7 +622,8 @@ class TestArchiveBitInvariance:
         # Extract ANALYSIS_OUTPUTS targets
         m_out = re.search(
             r"^ANALYSIS_OUTPUTS\s*:?=(.*?)(?=\n\S|\Z)",
-            mk, re.MULTILINE | re.DOTALL,
+            mk,
+            re.MULTILINE | re.DOTALL,
         )
         assert m_out, "ANALYSIS_OUTPUTS not found"
         output_paths = re.findall(r"content/\S+", m_out.group(1))
@@ -530,7 +633,8 @@ class TestArchiveBitInvariance:
             escaped = re.escape(out)
             rule_m = re.search(
                 rf"^{escaped}\b[^:]*:(.*?)$",
-                mk, re.MULTILINE,
+                mk,
+                re.MULTILINE,
             )
             if rule_m:
                 prereqs = rule_m.group(1)
@@ -550,8 +654,17 @@ class TestArchiveBitInvariance:
 # Pipeline script prefixes that must use logging, not print().
 # Scripts outside these prefixes (CLI tools, one-off utilities) are not checked.
 _PIPELINE_PREFIXES = (
-    "compute_", "plot_", "enrich_", "catalog_", "qa_", "qc_",
-    "build_", "export_", "analyze_", "filter_", "corpus_",
+    "compute_",
+    "plot_",
+    "enrich_",
+    "catalog_",
+    "qa_",
+    "qc_",
+    "build_",
+    "export_",
+    "analyze_",
+    "filter_",
+    "corpus_",
     "summarize_",
 )
 
@@ -582,9 +695,11 @@ class TestNoBarePrint:
                 continue
             tree = _parse_script(name)
             for node in ast.walk(tree):
-                if (isinstance(node, ast.Call)
+                if (
+                    isinstance(node, ast.Call)
                     and isinstance(node.func, ast.Name)
-                    and node.func.id == "print"):
+                    and node.func.id == "print"
+                ):
                     violators.append(name)
                     break
         assert not violators, (
@@ -596,6 +711,7 @@ class TestNoBarePrint:
 # ---------------------------------------------------------------------------
 # 8. Type annotations on core modules (mypy)
 # ---------------------------------------------------------------------------
+
 
 class TestNoPhaseTwoInDvc:
     """Phase 2 scripts must not be DVC stages (#527).
@@ -615,8 +731,7 @@ class TestNoPhaseTwoInDvc:
         with open(dvc_path) as f:
             dvc = yaml.safe_load(f)
         phase2_stages = [
-            s for s in dvc.get("stages", {})
-            if s.startswith(self.PHASE2_PREFIXES)
+            s for s in dvc.get("stages", {}) if s.startswith(self.PHASE2_PREFIXES)
         ]
         assert phase2_stages == [], (
             f"Phase 2 stages found in dvc.yaml (should be Makefile targets): "
@@ -647,9 +762,10 @@ class TestFeatherHandoff:
         )
 
 
-_MYPY_AVAILABLE = subprocess.run(
-    ["uv", "run", "mypy", "--version"], capture_output=True
-).returncode == 0
+_MYPY_AVAILABLE = (
+    subprocess.run(["uv", "run", "mypy", "--version"], capture_output=True).returncode
+    == 0
+)
 
 
 class TestTypingCoreModules:
@@ -672,19 +788,26 @@ class TestTypingCoreModules:
         """Core modules must pass mypy --disallow-untyped-defs."""
         paths = [os.path.join(SCRIPTS_DIR, m) for m in self.TYPED_MODULES]
         result = subprocess.run(
-            ["uv", "run", "mypy", "--ignore-missing-imports",
-             "--disallow-untyped-defs", "--follow-imports=silent",
-             "--no-error-summary"] + paths,
-            capture_output=True, text=True,
+            [
+                "uv",
+                "run",
+                "mypy",
+                "--ignore-missing-imports",
+                "--disallow-untyped-defs",
+                "--follow-imports=silent",
+                "--no-error-summary",
+            ]
+            + paths,
+            capture_output=True,
+            text=True,
         )
-        assert result.returncode == 0, (
-            f"mypy errors in core modules:\n{result.stdout}"
-        )
+        assert result.returncode == 0, f"mypy errors in core modules:\n{result.stdout}"
 
 
 # ---------------------------------------------------------------------------
 # 9. No phantom --pdf in non-plotting scripts
 # ---------------------------------------------------------------------------
+
 
 class TestPdfDiscipline:
     """Scripts that produce no figures should not accept --pdf.
@@ -711,9 +834,7 @@ class TestPdfDiscipline:
     def test_non_plotting_scripts_no_phantom_pdf_flag(self, script):
         path = os.path.join(SCRIPTS_DIR, script)
         src = Path(path).read_text()
-        assert '"--pdf"' not in src, (
-            f"{script} accepts --pdf but produces no figures"
-        )
+        assert '"--pdf"' not in src, f"{script} accepts --pdf but produces no figures"
 
 
 # ---------------------------------------------------------------------------
@@ -732,8 +853,8 @@ class TestAnalyzeNoFigures:
     # Pre-existing violations with open tickets for splitting.
     # Remove entries as they are fixed.
     KNOWN_VIOLATIONS = {
-        "analyze_bimodality.py",    # #550
-        "analyze_embeddings.py",    # #551
+        "analyze_bimodality.py",  # #550
+        "analyze_embeddings.py",  # #551
     }
 
     def test_analyze_scripts_no_save_figure_or_savefig(self):
@@ -788,7 +909,9 @@ class TestMarkerDiscipline:
                 source = f.read()
             uses_subprocess = "import subprocess" in source
             # Match actual decorator lines (any indent), not string mentions
-            uses_slow = bool(re.search(r"^\s*@pytest\.mark\.slow", source, re.MULTILINE))
+            uses_slow = bool(
+                re.search(r"^\s*@pytest\.mark\.slow", source, re.MULTILINE)
+            )
             if uses_subprocess and uses_slow:
                 violations.append(fname)
         assert not violations, (
@@ -801,6 +924,7 @@ class TestMarkerDiscipline:
 # 11. Script naming convention (#547)
 # ---------------------------------------------------------------------------
 
+
 class TestScriptNaming:
     """Every script in scripts/ must have a conforming prefix.
 
@@ -810,31 +934,54 @@ class TestScriptNaming:
     Library modules (no prefix needed) are listed in LIBRARY_MODULES.
     """
 
-    PREFIXES = ("catalog_", "enrich_", "qa_", "qc_", "corpus_", "plot_",
-                "analyze_", "compute_", "export_", "summarize_", "build_")
-    LIBRARY_MODULES = {"utils.py", "plot_style.py", "script_io_args.py",
-                       "pipeline_io.py", "pipeline_loaders.py",
-                       "pipeline_progress.py", "pipeline_text.py",
-                       "filter_flags.py", "filter_flags_llm.py",
-                       "clustering_methods.py", "schemas.py",
-                       # syllabi sub-modules (extracted from catalog_syllabi.py)
-                       "syllabi_config.py", "syllabi_crossref.py",
-                       "syllabi_harvest.py", "syllabi_io.py",
-                       "syllabi_process.py",
-                       # pool sub-module (extracted from catalog_openalex.py)
-                       "openalex_pool.py"}
+    PREFIXES = (
+        "catalog_",
+        "enrich_",
+        "qa_",
+        "qc_",
+        "corpus_",
+        "plot_",
+        "analyze_",
+        "compute_",
+        "export_",
+        "summarize_",
+        "build_",
+    )
+    LIBRARY_MODULES = {
+        "utils.py",
+        "plot_style.py",
+        "script_io_args.py",
+        "pipeline_io.py",
+        "pipeline_loaders.py",
+        "pipeline_progress.py",
+        "pipeline_text.py",
+        "filter_flags.py",
+        "filter_flags_llm.py",
+        "clustering_methods.py",
+        "schemas.py",
+        # syllabi sub-modules (extracted from catalog_syllabi.py)
+        "syllabi_config.py",
+        "syllabi_crossref.py",
+        "syllabi_harvest.py",
+        "syllabi_io.py",
+        "syllabi_process.py",
+        # pool sub-module (extracted from catalog_openalex.py)
+        "openalex_pool.py",
+    }
 
     def test_all_scripts_have_conforming_prefix(self):
         for f in Path(SCRIPTS_DIR).glob("*.py"):
             if f.name.startswith("_") or f.name in self.LIBRARY_MODULES:
                 continue
-            assert any(f.name.startswith(p) for p in self.PREFIXES), \
+            assert any(f.name.startswith(p) for p in self.PREFIXES), (
                 f"{f.name} has non-conforming prefix"
+            )
 
 
 # ---------------------------------------------------------------------------
 # 12. analyze_* scripts must not produce figures (#551)
 # ---------------------------------------------------------------------------
+
 
 class TestAnalyzeNoFigures:
     """analyze_* scripts should compute data, not produce figures.
@@ -865,6 +1012,7 @@ class TestAnalyzeNoFigures:
 # 13. 1-figure-1-script: each plot script produces exactly one output type
 # ---------------------------------------------------------------------------
 
+
 class TestSingleOutputType:
     """Each plot_* script should produce exactly one visual output type.
 
@@ -890,7 +1038,7 @@ class TestSingleOutputType:
             if has_static and has_html:
                 violations.append(name)
         assert not violations, (
-            f"Plot scripts producing both PNG and HTML (split into separate scripts): "
+            "Plot scripts producing both PNG and HTML (split into separate scripts): "
             + ", ".join(violations)
         )
 
@@ -940,8 +1088,7 @@ class TestRulesIntentOnly:
         (hooks/pre-commit is the source)."""
         content = self._read_rule("git.md")
         assert ">500KB" not in content, (
-            "git.md specifies file size threshold — "
-            "hooks/pre-commit owns that"
+            "git.md specifies file size threshold — hooks/pre-commit owns that"
         )
 
     def test_script_io_no_code_template(self):
@@ -1036,6 +1183,7 @@ class TestAlwaysLoadedContextBudget:
 # 15. I/O discipline: --output flag (#549)
 # ---------------------------------------------------------------------------
 
+
 class TestOutputFlag:
     """Every script that produces files must accept --output (#549).
 
@@ -1049,26 +1197,46 @@ class TestOutputFlag:
     # Scripts with __main__ that legitimately don't need --output:
     OUTPUT_EXEMPT = {
         # QA reporters (stdout / fixed JSON)
-        "qa_citations.py", "qa_detect_language.py", "qa_detect_type.py",
-        "qa_embeddings.py", "qa_metadata.py", "qa_word_count.py",
+        "qa_citations.py",
+        "qa_detect_language.py",
+        "qa_detect_type.py",
+        "qa_embeddings.py",
+        "qa_metadata.py",
+        "qa_word_count.py",
         # Catalog harvesters (DVC-managed)
-        "catalog_bibcnrs.py", "catalog_grey.py", "catalog_istex.py",
-        "catalog_merge.py", "catalog_openalex.py", "catalog_scispace.py",
-        "catalog_scopus.py", "catalog_semanticscholar.py",
+        "catalog_bibcnrs.py",
+        "catalog_grey.py",
+        "catalog_istex.py",
+        "catalog_merge.py",
+        "catalog_openalex.py",
+        "catalog_scispace.py",
+        "catalog_scopus.py",
+        "catalog_semanticscholar.py",
         # Teaching pipeline (DVC-managed or standalone)
-        "build_teaching_canon.py", "build_teaching_yaml.py",
-        "catalog_syllabi.py", "analyze_syllabi.py", "analyze_teaching_canon.py",
+        "build_teaching_canon.py",
+        "build_teaching_yaml.py",
+        "catalog_syllabi.py",
+        "analyze_syllabi.py",
+        "analyze_teaching_canon.py",
         # Interactive / exploratory tools
-        "compute_clustering_comparison.py", "compute_temporal_communities.py",
-        "analyze_communities_clusters.py", "plot_interactive_corpus.py",
+        "compute_clustering_comparison.py",
+        "compute_temporal_communities.py",
+        "analyze_communities_clusters.py",
+        "plot_interactive_corpus.py",
         "enrich_openalex_keywords.py",
         # DVC join/merge stages
-        "enrich_join.py", "corpus_merge_citations.py", "corpus_ref_match.py",
-        "summarize_abstracts.py", "corpus_parse_citations_grobid.py",
+        "enrich_join.py",
+        "corpus_merge_citations.py",
+        "corpus_ref_match.py",
+        "summarize_abstracts.py",
+        "corpus_parse_citations_grobid.py",
         # Tool / utility scripts
-        "build_smoke_fixture.py", "compute_regression_hashes.py",
-        "compute_regression_history.py", "qa_bibliography.py",
-        "qa_missing_references.py", "analyze_unfccc_topics.py",
+        "build_smoke_fixture.py",
+        "compute_regression_hashes.py",
+        "compute_regression_history.py",
+        "qa_bibliography.py",
+        "qa_missing_references.py",
+        "analyze_unfccc_topics.py",
     }
 
     def test_all_producing_scripts_accept_output(self):
@@ -1097,40 +1265,73 @@ class TestOutputFlag:
         ("plot_fig1_bars.py", ["--input", f"{SMOKE}/refined_works.csv"], ".png"),
         ("plot_fig_dag.py", [], ".png"),
         # Phase 2 exports
-        ("export_citation_coverage.py",
-         ["--input", f"{SMOKE}/refined_works.csv", f"{SMOKE}/refined_citations.csv"], ".md"),
+        (
+            "export_citation_coverage.py",
+            ["--input", f"{SMOKE}/refined_works.csv", f"{SMOKE}/refined_citations.csv"],
+            ".md",
+        ),
         ("export_language_table.py", ["--input", f"{SMOKE}/refined_works.csv"], ".md"),
-        ("export_tab_venues.py",
-         ["--refined-works", f"{SMOKE}/refined_works.csv",
-          "--pole-papers", f"{SMOKE}/tab_pole_papers.csv",
-          "--min-papers", "1", "--core-threshold", "0"], ".md"),
-        ("summarize_core_venues.py",
-         ["--core", f"{SMOKE}/refined_works.csv"], ".csv"),
+        (
+            "export_tab_venues.py",
+            [
+                "--refined-works",
+                f"{SMOKE}/refined_works.csv",
+                "--pole-papers",
+                f"{SMOKE}/tab_pole_papers.csv",
+                "--min-papers",
+                "1",
+                "--core-threshold",
+                "0",
+            ],
+            ".md",
+        ),
+        ("summarize_core_venues.py", ["--core", f"{SMOKE}/refined_works.csv"], ".csv"),
         # Remaining Phase 2 plot scripts (#549 wave 2)
-        ("plot_fig45_pca_scatter.py",
-         ["--input", f"{SMOKE}/refined_works.csv",
-          f"{SMOKE}/refined_embeddings.npz"], ".png"),
-        ("plot_fig_lexical_tfidf.py",
-         ["--input", f"{SMOKE}/tab_lexical_tfidf.csv"], ".stamp"),
-        ("plot_fig_traditions.py",
-         ["--input", f"{SMOKE}/refined_works.csv",
-          f"{SMOKE}/refined_citations.csv"], ".png"),
-        ("plot_heatmap_communities_clusters.py",
-         ["--input", f"{SMOKE}/refined_works.csv",
-          f"{SMOKE}/refined_embeddings.npz",
-          f"{SMOKE}/refined_citations.csv"], ".png"),
+        (
+            "plot_fig45_pca_scatter.py",
+            [
+                "--input",
+                f"{SMOKE}/refined_works.csv",
+                f"{SMOKE}/refined_embeddings.npz",
+            ],
+            ".png",
+        ),
+        (
+            "plot_fig_lexical_tfidf.py",
+            ["--input", f"{SMOKE}/tab_lexical_tfidf.csv"],
+            ".stamp",
+        ),
+        (
+            "plot_fig_traditions.py",
+            ["--input", f"{SMOKE}/refined_works.csv", f"{SMOKE}/refined_citations.csv"],
+            ".png",
+        ),
+        (
+            "plot_heatmap_communities_clusters.py",
+            [
+                "--input",
+                f"{SMOKE}/refined_works.csv",
+                f"{SMOKE}/refined_embeddings.npz",
+                f"{SMOKE}/refined_citations.csv",
+            ],
+            ".png",
+        ),
     ]
 
     @pytest.mark.integration
-    @pytest.mark.parametrize("script,extra_args,ext", BLACKBOX_SCRIPTS,
-                             ids=[s[0] for s in BLACKBOX_SCRIPTS])
+    @pytest.mark.parametrize(
+        "script,extra_args,ext", BLACKBOX_SCRIPTS, ids=[s[0] for s in BLACKBOX_SCRIPTS]
+    )
     def test_output_file_created(self, script, extra_args, ext, tmp_path):
         """Run script --output /tmp/... and verify the file appears."""
         import subprocess
+
         out_path = tmp_path / f"test_output{ext}"
         cmd = [
-            sys.executable, os.path.join(SCRIPTS_DIR, script),
-            "--output", str(out_path),
+            sys.executable,
+            os.path.join(SCRIPTS_DIR, script),
+            "--output",
+            str(out_path),
         ] + extra_args
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (
@@ -1140,6 +1341,236 @@ class TestOutputFlag:
             f"{script} exited 0 but --output {out_path} was not created. "
             f"The script ignores --output and writes elsewhere."
         )
+
+
+# ---------------------------------------------------------------------------
+# 16. save_figure() mandatory in plot scripts (arch rule 5)
+# ---------------------------------------------------------------------------
+
+
+class TestSaveFigureMandatory:
+    """Plot scripts must use save_figure() from pipeline_io.py, not .savefig().
+
+    save_figure() strips metadata for byte-reproducible PNGs. Calling
+    fig.savefig() directly bypasses this and breaks archive checksums.
+
+    Architecture rule 5: "All plot scripts use save_figure(fig, stem, dpi=N)
+    from pipeline_io.py — never call fig.savefig() directly."
+    """
+
+    # Pre-existing violations. Remove entries as they are migrated.
+    KNOWN_VIOLATIONS = {
+        "plot_fig_clustering_comparison.py",
+        "plot_fig_clustering_spaces.py",
+        "plot_fig_dag.py",
+    }
+
+    def test_plot_scripts_use_save_figure(self):
+        """No plot_* script may call .savefig() directly (use save_figure())."""
+        violations = []
+        for name in _all_scripts():
+            if not name.startswith("plot_"):
+                continue
+            if name in self.KNOWN_VIOLATIONS:
+                continue
+            src = _read_script(name)
+            if ".savefig(" in src:
+                violations.append(name)
+        assert not violations, (
+            f"plot_* scripts calling .savefig() directly "
+            f"(must use save_figure() from pipeline_io.py): {violations}"
+        )
+
+    def test_known_violations_not_stale(self):
+        """Every script in KNOWN_VIOLATIONS must still exist and still violate."""
+        all_names = set(_all_scripts())
+        for name in self.KNOWN_VIOLATIONS:
+            assert name in all_names, (
+                f"KNOWN_VIOLATIONS entry '{name}' no longer exists — remove it"
+            )
+            src = _read_script(name)
+            assert ".savefig(" in src, (
+                f"'{name}' no longer calls .savefig() — remove it from KNOWN_VIOLATIONS"
+            )
+
+
+# ---------------------------------------------------------------------------
+# 17. Random seeds from config (arch rule 7)
+# ---------------------------------------------------------------------------
+
+
+class TestNoHardcodedSeeds:
+    """Phase 2 scripts must read random seeds from config/analysis.yaml.
+
+    Architecture rule 7: "Every stochastic operation reads its seed from
+    config/analysis.yaml. No hardcoded seed=42 or RandomState(42)."
+
+    Detection: regex scan for literal integer arguments to known seed
+    parameters (random_state=N, seed=N) and RandomState(N) calls.
+    """
+
+    _PHASE2_PREFIXES = (
+        "analyze_",
+        "compute_",
+        "plot_",
+        "export_",
+        "summarize_",
+        "build_het_core",
+    )
+
+    # Pre-existing violations. Remove entries as they are migrated to config.
+    KNOWN_VIOLATIONS = {
+        "analyze_bimodality.py",
+        "analyze_cocitation.py",
+        "analyze_communities_clusters.py",
+        "analyze_embeddings.py",
+        "analyze_multilingual.py",
+        "analyze_unfccc_topics.py",
+        "compute_breakpoints.py",
+        "compute_clusters.py",
+        "compute_lexical.py",
+        "compute_temporal_communities.py",
+        "plot_alluvial_html.py",
+        "plot_bimodality.py",
+        "plot_cocitation.py",
+        "plot_fig45_pca_scatter.py",
+        "plot_fig_traditions.py",
+        "plot_figS_kde.py",
+        "plot_heatmap_communities_clusters.py",
+        "plot_ncc_bimodality.py",
+    }
+
+    # Patterns that indicate a hardcoded seed (literal int in seed position).
+    _SEED_PATTERNS = [
+        r"random_state\s*=\s*\d+",
+        r"(?<!\w)seed\s*=\s*\d+",
+        r"RandomState\(\s*\d+\s*\)",
+        r"np\.random\.seed\(\s*\d+\s*\)",
+        r"random\.seed\(\s*\d+\s*\)",
+        r"RANDOM_STATE\s*=\s*\d+",
+    ]
+
+    def _has_hardcoded_seed(self, source):
+        for pattern in self._SEED_PATTERNS:
+            if re.search(pattern, source):
+                return True
+        return False
+
+    def test_no_new_hardcoded_seeds(self):
+        """No Phase 2 script (outside known violations) may hardcode seeds."""
+        violations = []
+        for name in _all_scripts():
+            if not name.startswith(self._PHASE2_PREFIXES):
+                continue
+            if name in self.KNOWN_VIOLATIONS:
+                continue
+            src = _read_script(name)
+            if self._has_hardcoded_seed(src):
+                violations.append(name)
+        assert not violations, (
+            f"Phase 2 scripts with hardcoded seeds "
+            f"(must read from config/analysis.yaml): {violations}"
+        )
+
+    def test_known_violations_not_stale(self):
+        """Every script in KNOWN_VIOLATIONS must still exist and still violate."""
+        all_names = set(_all_scripts())
+        for name in sorted(self.KNOWN_VIOLATIONS):
+            assert name in all_names, (
+                f"KNOWN_VIOLATIONS entry '{name}' no longer exists — remove it"
+            )
+            src = _read_script(name)
+            assert self._has_hardcoded_seed(src), (
+                f"'{name}' no longer has hardcoded seeds — "
+                f"remove it from KNOWN_VIOLATIONS"
+            )
+
+
+# ---------------------------------------------------------------------------
+# 18. Corpus access through loaders only (arch rule 9)
+# ---------------------------------------------------------------------------
+
+
+class TestCorpusThroughLoaders:
+    """Phase 2 scripts must use pipeline_loaders, not direct pd.read_csv().
+
+    Architecture rule 9: "Never call pd.read_csv() / np.load() /
+    pd.read_feather() on contract files directly. Use pipeline_loaders."
+
+    Detection: scan for read_csv/np.load/read_feather near contract
+    filenames (refined_works, refined_embeddings, refined_citations).
+    """
+
+    _PHASE2_PREFIXES = (
+        "analyze_",
+        "compute_",
+        "plot_",
+        "export_",
+        "summarize_",
+        "build_het_core",
+    )
+
+    # The loader module itself is obviously exempt.
+    _EXEMPT = {"pipeline_loaders.py"}
+
+    # Pre-existing violations. Remove entries as they are migrated.
+    KNOWN_VIOLATIONS = {
+        "analyze_100bn.py",
+        "analyze_bimodality.py",
+        "analyze_cocitation.py",
+        "analyze_communities_clusters.py",
+        "analyze_genealogy.py",
+        "compute_temporal_communities.py",
+        "export_tab_venues.py",
+        "plot_alluvial_html.py",
+        "plot_fig_seed_axis.py",
+        "plot_interactive_corpus.py",
+    }
+
+    _CONTRACT_FILES = re.compile(r"refined_works|refined_citations|refined_embeddings")
+    _DIRECT_READ = re.compile(r"read_csv|read_feather|np\.load")
+
+    def _has_direct_contract_read(self, source):
+        """Return True if source reads a contract file without loaders."""
+        for line in source.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            if "pipeline_loaders" in line:
+                continue
+            if self._DIRECT_READ.search(line) and self._CONTRACT_FILES.search(line):
+                return True
+        return False
+
+    def test_no_new_direct_contract_reads(self):
+        """No Phase 2 script (outside known violations) may read contract
+        files directly — use pipeline_loaders instead."""
+        violations = []
+        for name in _all_scripts():
+            if not name.startswith(self._PHASE2_PREFIXES):
+                continue
+            if name in self._EXEMPT or name in self.KNOWN_VIOLATIONS:
+                continue
+            src = _read_script(name)
+            if self._has_direct_contract_read(src):
+                violations.append(name)
+        assert not violations, (
+            f"Phase 2 scripts reading contract files directly "
+            f"(must use pipeline_loaders): {violations}"
+        )
+
+    def test_known_violations_not_stale(self):
+        """Every script in KNOWN_VIOLATIONS must still exist and still violate."""
+        all_names = set(_all_scripts())
+        for name in sorted(self.KNOWN_VIOLATIONS):
+            assert name in all_names, (
+                f"KNOWN_VIOLATIONS entry '{name}' no longer exists — remove it"
+            )
+            src = _read_script(name)
+            assert self._has_direct_contract_read(src), (
+                f"'{name}' no longer reads contract files directly — "
+                f"remove it from KNOWN_VIOLATIONS"
+            )
 
 
 class TestNoValuesCallOnSeries:
