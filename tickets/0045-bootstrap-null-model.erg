@@ -66,20 +66,25 @@ not on figures.
 
 ## Actions
 
-### Correction implementation
+### Scope
+This ticket covers S1-S4 and L1-L3 only (7 methods).
+Citation methods (G1-G8) need a sliding-window refactor first
+(ticket 0048) before correction + null can apply to them.
+
+### Night 1 — Correction implementation
 1. Add `equal_n=True` option to `_iter_window_pairs` in
    `_divergence_semantic.py`. Subsample both sides to min(n_before,
    n_after). Single pass — no bootstrap replicates by default.
    Bootstrap K=200 for CIs is a separate step (ticket 0047).
-2. Refactor citation methods (G1, G2, G5, G6, G8) from cumulative
-   to sliding windows. Keep cumulative as legacy option.
-3. Verify L1-L2 use union vocabulary. Verify G3, G4, G7 are
-   size-robust.
+2. Apply equal-n to L1-L3 in `_divergence_lexical.py`.
+   Verify TF-IDF uses union vocabulary of both windows.
+3. Run corrected pipeline, compare with raw results.
 
-### Null model implementation
+### Night 2 — Null model implementation
 4. New script: `compute_null_divergence.py`. For each (method, year,
-   window): pool papers, random-split N=500 times, compute divergence.
-   Output: null distribution quantiles per (method, year).
+   window): pool papers in [t-w, t+w+1], random-split N=500 times
+   into equal halves, compute divergence on the corrected (equal-n)
+   data. Output: null distribution quantiles per (method, year).
 5. New script: `compute_significance.py`. Compare corrected divergence
    against null distribution → p-values.
 
@@ -122,7 +127,8 @@ Each reported break has: corrected divergence ± CI, p-value from
 same-pool null, and survives first-difference diagnostic. The paper
 states significance after controlling for corpus growth.
 
-## Compute estimate
-Layer 1 (correction, single pass): same as current run (~3.5 min GPU).
-Layer 2 (null N=500 per year): ~8h GPU (one overnight run).
-Bootstrap CIs (ticket 0047, K=200): ~3h GPU (separate overnight run).
+## Execution plan
+Night 1: Layer 1 correction (S1-S4 + L1-L3). Code change + run (~3.5 min GPU).
+Night 2: Layer 2 null (N=500 × 7 methods). Overnight GPU run (~8h).
+Later:   Ticket 0048 (citation sliding windows) → then null for G methods.
+Later:   Ticket 0047 (bootstrap CIs K=200). Separate overnight run (~3h).
