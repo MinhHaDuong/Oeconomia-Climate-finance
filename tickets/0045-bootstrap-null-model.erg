@@ -39,9 +39,24 @@ mechanically tied to corpus size.
 8. If 2003 appears in both raw and first-difference breaks, it
    survives the simplest detrending.
 
+### Visualization A: Null envelope on per-method plots
+9. Extend plot_divergence.py: accept optional bootstrap CSV.
+10. Draw grey ribbon (95% CI of null) behind the observed curve.
+11. Mark years where observed exits the ribbon (significant).
+12. One figure per method, same layout as current plots.
+
+### Visualization C: Detrended convergence heatmap
+13. Extend plot_convergence.py: z-score each method's series
+    against its bootstrap null (z = (observed - null_mean) / null_sd)
+    instead of against its own mean.
+14. Color scale becomes "SDs above null expectation" — every hot
+    cell has been tested against the growth confound.
+15. Run PELT on the null-z-scored series for break detection.
+16. This replaces the raw heatmap in the paper.
+
 ### Reporting
-9. Add bootstrap CIs to divergence figures (ribbon around mean).
-10. Convergence table: report which breaks survive size-matching.
+17. Convergence table: report which breaks survive size-matching,
+    with p-values from the bootstrap distribution.
 
 ## Test
 ```python
