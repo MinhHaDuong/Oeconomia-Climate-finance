@@ -1,75 +1,114 @@
 %erg v1
-Title: Size-matched bootstrap null model for divergence significance
+Title: Growth-bias correction + significance testing for divergence
 Status: open
 Created: 2026-04-15
 Author: user
 
 --- log ---
 2026-04-15T23:00Z claude created from workplan review — growth-rate confound identified on first real data run
+2026-04-16T00:00Z claude reimagined — method-specific corrections + same-pool null on corrected series
 
 --- body ---
 ## Context
 First real-data run (ticket 0042) revealed that 6+ of 15 divergence
 methods show monotone declining trends that track corpus growth, not
-structural change. The dominant "break" at 2003 may be an inflection
-point in the publication growth curve, not a genuine structural break.
+structural change. Each method has a specific bias mechanism.
 
-Methods affected: S1-S4 (finite-sample bias), G1/G5/G8 (cumulative
-graph dilution), L1/L2 (vocabulary averaging), G6 (entropy growth).
+## Design: two layers
 
-Methods less affected: G3 (reference age), G4 (cross-community ratio),
-G7 (disruption index) — these measure structural properties not
-mechanically tied to corpus size.
+### Layer 1 — Method-specific growth-bias correction
+
+**S1-S4 (semantic): equal-n subsampling**
+Finite-sample bias inflates distances when windows have unequal sizes.
+Fix: subsample both windows to n = min(n_before, n_after, max_subsample).
+Repeat K=200 times for bootstrap CIs on the corrected divergence.
+
+**L1-L2 (lexical): equal-n + shared vocabulary**
+Same subsampling as S1-S4. Additionally, ensure TF-IDF is computed on
+the union vocabulary of both windows (verify current code does this).
+
+**G1, G2, G5, G6, G8 (citation, cumulative): sliding windows**
+Replace cumulative graph with sliding windows (w=2,3,4,5 years),
+matching the semantic methods. Compare graph(t-w, t) vs graph(t+1, t+w+1).
+Both windows now have locally comparable graph sizes.
+
+**G3, G4, G7 (structural properties): verify size-robustness**
+These measure per-paper or normalized properties. Verify empirically
+that they don't correlate with corpus size. If they do, apply
+per-year normalization.
+
+### Layer 2 — Same-pool null for significance
+
+After correction removes the growth trend, test whether the corrected
+before/after divergence exceeds random noise.
+
+For each (method, year, window):
+1. Pool all papers in [t-w, t+w+1].
+2. Split randomly into two equal halves (ignoring the before/after boundary).
+3. Compute the divergence between the random halves.
+4. Repeat N=500 times → null distribution at year t.
+5. p-value = fraction of null draws ≥ observed corrected divergence.
+
+This works because the correction has removed the trend — before and
+after are no longer systematically different under the null.
+
+### Pipeline
+```
+Raw data
+  → Layer 1: method-specific correction
+    → Corrected divergence + bootstrap CIs  [estimation]
+    → Layer 2: same-pool null on corrected data  [significance]
+      → p-value per (method, year)
+        → Convergence: which years significant across methods?
+```
 
 ## Actions
 
-### Size-matched bootstrap (primary)
-1. Add `--bootstrap K` flag to compute_divergence.py dispatcher.
-2. For each (year, window) pair: subsample both sides to
-   n = min(n_before, n_after, max_subsample). Repeat K times.
-3. Output: mean, median, q025, q975 per (method, year, window).
-4. Schema: extend DivergenceSchema with bootstrap columns, or use
-   a separate BootstrapSchema.
-5. Run PELT on the mean bootstrap series — compare detected breaks
-   with the raw (unmatched) results.
+### Correction implementation
+1. Add `equal_n=True` option to `_iter_window_pairs` in
+   `_divergence_semantic.py`. Subsample both sides to min(n_before,
+   n_after). Return K=200 bootstrap replicates.
+2. Refactor citation methods (G1, G2, G5, G6, G8) from cumulative
+   to sliding windows. Keep cumulative as legacy option.
+3. Verify L1-L2 use union vocabulary. Verify G3, G4, G7 are
+   size-robust.
 
-### Rate-of-change diagnostic (complementary, free)
-6. Post-process existing tables: compute first-difference series.
-7. Run PELT on first-differences.
-8. If 2003 appears in both raw and first-difference breaks, it
-   survives the simplest detrending.
+### Null model implementation
+4. New script: `compute_null_divergence.py`. For each (method, year,
+   window): pool papers, random-split N=500 times, compute divergence.
+   Output: null distribution quantiles per (method, year).
+5. New script: `compute_significance.py`. Compare corrected divergence
+   against null distribution → p-values.
 
-### Visualization A: Null envelope on per-method plots
-9. Extend plot_divergence.py: accept optional bootstrap CSV.
-10. Draw grey ribbon (95% CI of null) behind the observed curve.
-11. Mark years where observed exits the ribbon (significant).
-12. One figure per method, same layout as current plots.
+### Visualization A: null envelope on per-method plots
+6. Grey ribbon = null 95% CI. Observed corrected curve on top.
+   Where curve exits ribbon = significant. Bootstrap CI as thinner
+   ribbon around the observed curve.
 
-### Visualization C: Detrended convergence heatmap
-13. Extend plot_convergence.py: z-score each method's series
-    against its bootstrap null (z = (observed - null_mean) / null_sd)
-    instead of against its own mean.
-14. Color scale becomes "SDs above null expectation" — every hot
-    cell has been tested against the growth confound.
-15. Run PELT on the null-z-scored series for break detection.
-16. This replaces the raw heatmap in the paper.
+### Visualization C: significance heatmap
+7. Replace raw z-score heatmap with significance heatmap.
+   Color = -log10(p-value). Grey = not significant. Hot = significant.
+   PELT on -log10(p) series for break detection.
 
-### Reporting
-17. Convergence table: report which breaks survive size-matching,
-    with p-values from the bootstrap distribution.
+### Rate-of-change diagnostic (free, complementary)
+8. First-difference of corrected series. If 2003 spike survives
+   both correction and differentiation, it's robust.
 
 ## Test
 ```python
-def test_bootstrap_reduces_early_year_variance():
-    """Size-matched bootstrap should produce tighter CIs than raw."""
+def test_equal_n_removes_size_correlation():
+    """Corrected divergence should not correlate with min(n_before, n_after)."""
+
+def test_null_divergence_below_observed_at_known_break():
+    """On synthetic data with planted break, p < 0.05 at break year."""
 ```
 
 ## Exit criteria
-Each reported break year has a p-value or CI. The paper can state:
-"The break at year X is significant at the 0.05 level after
-controlling for corpus growth" — or not.
+Each reported break has: corrected divergence ± CI, p-value from
+same-pool null, and survives first-difference diagnostic. The paper
+states significance after controlling for corpus growth.
 
 ## Compute estimate
-K=200, 4 semantic methods on GPU: ~3h overnight.
-Lexical methods (CPU): ~2h. Citation: negligible.
-Total: one overnight run.
+Layer 1 (correction + bootstrap K=200): ~3h GPU overnight.
+Layer 2 (null N=500 per year): ~8h GPU (can run in parallel).
+Total: two overnight runs, or one weekend run.
