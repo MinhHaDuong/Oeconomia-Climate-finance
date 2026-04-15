@@ -1,0 +1,70 @@
+%erg v1
+Title: Same-pool null model for divergence significance (S1-S4, L1-L3)
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0045
+
+--- log ---
+2026-04-16T01:00Z claude created — split from 0045 layer 2
+
+--- body ---
+## Context
+Ticket 0045 corrects for growth bias. This ticket tests whether
+the corrected divergence is statistically significant — i.e.,
+whether the before/after difference exceeds random noise.
+
+## Method
+For each (method, year, window):
+1. Pool all papers in [t-w, t+w+1].
+2. Split randomly into two equal halves (ignoring before/after).
+3. Compute divergence between the random halves (with equal-n).
+4. Repeat N=500 times → null distribution at year t.
+5. p-value = fraction of null draws ≥ observed corrected divergence.
+
+This works because ticket 0045 has removed the growth trend.
+Under the null (no break), a random split produces only
+sampling-noise divergence.
+
+## Actions
+1. New script: `compute_null_divergence.py`.
+   - Reads corrected divergence tables from ticket 0045.
+   - For each (method, year, window): pool + split N=500 times.
+   - Single process, loops internally (no 500 make invocations).
+   - GPU dispatch for S1-S4, CPU for L1-L3.
+   - Output: `content/tables/tab_null_{method}.csv` with columns:
+     method, year, window, null_median, null_q025, null_q975.
+2. New script: `compute_significance.py`.
+   - Joins corrected divergence with null quantiles.
+   - Output: `content/tables/tab_significance.csv` with columns:
+     method, year, window, observed, null_q975, p_value, significant.
+3. Makefile targets in divergence.mk: `null-tables`, `significance`.
+   Not dependencies of `divergence` — run explicitly.
+
+## Visualization A: null envelope on per-method plots
+4. Extend plot_divergence.py: accept optional null CSV.
+   Grey ribbon = null 95% CI. Corrected curve on top.
+   Where curve exits ribbon = significant.
+
+## Visualization C: significance heatmap
+5. New plot or extend plot_convergence.py.
+   Color = -log10(p_value). Grey = not significant.
+   PELT on -log10(p) series for break detection.
+   Replaces raw z-score heatmap in the paper.
+
+## Rate-of-change diagnostic (free, complementary)
+6. First-difference of corrected series from 0045. If 2003
+   spike survives both correction and differentiation → robust.
+
+## Test
+```python
+def test_null_divergence_below_observed_at_known_break():
+    """On synthetic data with planted break, p < 0.05 at break year."""
+```
+
+## Exit criteria
+Each reported break year has a p-value. The paper can state:
+"significant at the 0.05 level after controlling for corpus growth."
+
+## Compute
+N=500 × 7 methods × ~30 years × 3 windows. Overnight GPU run (~8h).
