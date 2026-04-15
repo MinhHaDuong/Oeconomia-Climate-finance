@@ -1,0 +1,56 @@
+# AI tells — wordlists for the prose review auditor
+# Used by /review-pr-prose, not loaded into every conversation.
+
+blacklisted_words:
+  - delve
+  - nuanced
+  - multifaceted
+  - pivotal
+  - crucial
+  - intricate
+  - comprehensive
+  - meticulous
+  - vibrant
+  - arguably
+  - showcasing
+  - underscores
+  - foster
+  - tapestry
+
+# These words are OK in specific contexts (annotated).
+conditional_words:
+  - word: robust
+    ok_when: "statistical sense (robust standard errors, robust estimation)"
+  - word: landscape
+    ok_when: "proper noun (CPI *Global Landscape of Climate Finance*)"
+
+blacklisted_phrases:
+  - "it is important to note"
+  - "in the realm of"
+  - "stands as a testament to"
+  - "plays a vital role"
+  - "the landscape of"
+  - "navigating the complexities"
+  - "the interplay between"
+  - "sheds light on"
+  - "a growing body of literature"
+  - "offers a lens through which"
+  - "it is worth noting"
+  - "cannot be overstated"
+
+density_limits:
+  contrast_farming:
+    pattern: '"not X, but Y" constructions'
+    max_per_document: 3
+    note: "each must be genuinely contrastive"
+  em_dashes:
+    max_per_paragraph: 2
+  sentence_initial_connectors:
+    words: ["Moreover", "Furthermore", "Additionally"]
+    max_per_section: 2
+
+patterns_to_flag:
+  - "compulsive tricolons — not every list needs exactly three items"
+  - "uniform sentence length — vary between short and long"
+  - "excessive hedging — perhaps, it might be argued that, to some extent"
+  - "over-explanation — In other words, That is to say"

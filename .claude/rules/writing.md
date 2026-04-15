@@ -54,33 +54,11 @@ This is not a policy paper or a technical report. It's intellectual history.
 - Balance institutional documents with critical scholarship
 - Include Global South perspectives
 
-## AI tells to eliminate
+## Ghost mode
 
-### Blacklisted words (target: 0 occurrences)
-
-delve, nuanced, multifaceted, pivotal, crucial, robust (unless statistical sense),
-intricate, comprehensive, meticulous, vibrant, arguably, showcasing, underscores,
-foster, tapestry, landscape (unless proper noun, e.g. CPI *Global Landscape*)
-
-### Blacklisted phrases (target: 0 occurrences)
-
-"it is important to note," "in the realm of," "stands as a testament to,"
-"plays a vital role," "the landscape of," "navigating the complexities,"
-"the interplay between," "sheds light on," "a growing body of literature,"
-"offers a lens through which," "it is worth noting," "cannot be overstated"
-
-### Density limits
-
-- **Contrast farming** ("not X, but Y"): ≤3 justified instances per document. Each must be genuinely contrastive.
-- **Em-dash density**: ≤2 per paragraph.
-- **Sentence-initial "Moreover/Furthermore/Additionally"**: ≤2 per section.
-
-### Other patterns to avoid
-
-- Compulsive tricolons: not every list needs exactly three items
-- Uniform sentence length: vary between short and long
-- Excessive hedging: cut "perhaps," "it might be argued that," "to some extent"
-- Over-explanation: trust the reader; cut "In other words," "That is to say,"
+Write in *The Economist* style: clear, direct, concrete, no filler. No AI tells.
+Internalize this — don't mechanically check a list while drafting.
+The `/review-pr-prose` panel includes a dedicated AI-tells auditor with full wordlists (`config/ai-tells.yml`).
 
 ## Testing
 
