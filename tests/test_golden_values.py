@@ -11,7 +11,6 @@ These tests catch silent changes in:
 """
 
 import os
-import subprocess
 import sys
 
 import numpy as np
@@ -22,38 +21,13 @@ SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
 FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "smoke")
 GOLDEN_DIR = os.path.join(FIXTURES_DIR, "golden")
 
-ALL_METHODS = [
-    "S1_MMD", "S2_energy", "S3_sliced_wasserstein", "S4_frechet",
-    "L1", "L2", "L3",
-    "G1_pagerank", "G2_spectral", "G3_coupling_age", "G4_cross_tradition",
-    "G5_pref_attachment", "G6_entropy", "G7_disruption", "G8_betweenness",
-]
+sys.path.insert(0, SCRIPTS_DIR)
+from compute_divergence import METHODS
+
+ALL_METHODS = sorted(METHODS.keys())
 
 
-def _smoke_env():
-    """Environment that redirects pipeline_loaders to fixture data."""
-    return {
-        **os.environ,
-        "CLIMATE_FINANCE_DATA": FIXTURES_DIR,
-        "PYTHONHASHSEED": "0",
-        "SOURCE_DATE_EPOCH": "0",
-    }
-
-
-def _run_compute(method, output_path, timeout=300):
-    """Run compute_divergence.py --method M --output P."""
-    return subprocess.run(
-        [
-            sys.executable,
-            os.path.join(SCRIPTS_DIR, "compute_divergence.py"),
-            "--method", method,
-            "--output", str(output_path),
-        ],
-        env=_smoke_env(),
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+from conftest import run_compute as _run_compute
 
 
 @pytest.mark.slow

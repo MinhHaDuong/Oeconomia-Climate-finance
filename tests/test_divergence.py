@@ -11,7 +11,6 @@ Tests:
 
 import copy
 import os
-import subprocess
 import sys
 
 import numpy as np
@@ -25,32 +24,7 @@ ROOT_DIR = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, SCRIPTS_DIR)
 
 
-def _smoke_env():
-    """Environment that redirects pipeline_loaders to fixture data."""
-    return {
-        **os.environ,
-        "CLIMATE_FINANCE_DATA": FIXTURES_DIR,
-        "PYTHONHASHSEED": "0",
-        "SOURCE_DATE_EPOCH": "0",
-    }
-
-
-def _run_compute(method, output_path, timeout=300):
-    """Run compute_divergence.py --method M --output P."""
-    result = subprocess.run(
-        [
-            sys.executable,
-            os.path.join(SCRIPTS_DIR, "compute_divergence.py"),
-            "--method", method,
-            "--output", str(output_path),
-        ],
-        env=_smoke_env(),
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
-    return result
-
+from conftest import run_compute as _run_compute
 
 # ---------------------------------------------------------------------------
 # Schema tests
@@ -310,7 +284,12 @@ class TestSeedReproducibility:
         pd.testing.assert_frame_equal(result_a, result_b)
 
     def test_different_seed_different_output(self):
-        """Running S1_MMD with different seeds gives different results."""
+        """Running S1_MMD with different seeds gives different results.
+
+        On the 100-row smoke fixture, windows are small enough that
+        subsampling may not trigger. If values are identical despite
+        different seeds, skip rather than silently pass.
+        """
         from _divergence_semantic import compute_s1_mmd
         df, emb = _load_smoke_semantic()
         cfg_a = _smoke_cfg(seed=42)
@@ -318,19 +297,10 @@ class TestSeedReproducibility:
         result_a = compute_s1_mmd(df, emb, cfg_a)
         result_b = compute_s1_mmd(df, emb, cfg_b)
         assert len(result_a) > 0, "S1_MMD produced no rows on smoke data"
-        # With different seeds, subsampling and median heuristic differ,
-        # so values should not be identical (unless data is too small to
-        # trigger subsampling -- in that case the test is vacuously true).
-        if len(result_a) == len(result_b):
-            values_differ = not np.allclose(
-                result_a["value"].values, result_b["value"].values,
-            )
-            # Only assert if subsampling actually occurred
-            if values_differ:
-                assert True
-            else:
-                # Data too small to trigger subsampling -- seeds don't matter
-                pass
+        if len(result_a) != len(result_b):
+            return  # different shapes = definitely different
+        if np.allclose(result_a["value"].values, result_b["value"].values):
+            pytest.skip("Smoke data too small to trigger seed-dependent subsampling")
 
 
 # ---------------------------------------------------------------------------
@@ -354,7 +324,7 @@ class TestMetricProperties:
         X, _ = random_arrays
 
         # S1: MMD
-        from _divergence_semantic import compute_mmd_rbf, _median_heuristic
+        from _divergence_semantic import _median_heuristic, compute_mmd_rbf
         med = _median_heuristic(X, X)
         mmd = compute_mmd_rbf(X, X, med)
         assert mmd < 0.05, f"MMD self-distance too large: {mmd}"
@@ -379,7 +349,7 @@ class TestMetricProperties:
         X, Y = random_arrays
 
         # S1: MMD
-        from _divergence_semantic import compute_mmd_rbf, _median_heuristic
+        from _divergence_semantic import _median_heuristic, compute_mmd_rbf
         med = _median_heuristic(X, Y)
         assert compute_mmd_rbf(X, Y, med) >= 0, "MMD returned negative"
 

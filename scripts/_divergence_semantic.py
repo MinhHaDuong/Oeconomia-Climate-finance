@@ -107,7 +107,7 @@ def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsampl
     vecs = emb[idx]
     if len(vecs) > max_subsample:
         if rng is None:
-            rng = np.random.RandomState(42)
+            raise ValueError("rng required when subsampling (pass from cfg random_seed)")
         chosen = rng.choice(len(vecs), max_subsample, replace=False)
         vecs = vecs[chosen]
     return vecs
@@ -137,7 +137,7 @@ def _median_heuristic(X, Y, n_sample=1000, rng=None):
     combined = np.vstack([X, Y])
     if len(combined) > n_sample:
         if rng is None:
-            rng = np.random.RandomState(42)
+            raise ValueError("rng required when subsampling (pass from cfg random_seed)")
         idx = rng.choice(len(combined), n_sample, replace=False)
         combined = combined[idx]
     from scipy.spatial.distance import pdist
