@@ -24,7 +24,7 @@ from _divergence_citation import (
 )
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
-from scipy.stats import entropy
+from scipy.stats import entropy, kendalltau
 from utils import get_logger
 
 log = get_logger("_citation_methods")
@@ -181,8 +181,6 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
         pr_a_map = dict(zip(nodes_a, vals_a))
         vec_b = np.array([pr_b_map.get(n, 0.0) for n in all_nodes])
         vec_a = np.array([pr_a_map.get(n, 0.0) for n in all_nodes])
-
-        from scipy.stats import kendalltau
 
         tau, _ = kendalltau(vec_b, vec_a)
         value = 1.0 - tau if not np.isnan(tau) else np.nan

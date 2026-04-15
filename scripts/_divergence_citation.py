@@ -8,7 +8,6 @@ This module provides:
   - _build_internal_edges() — filter to corpus-internal citation edges
   - _get_years() — year range from works
   - _cumulative_graph() — build DiGraph up to a year
-  - _incremental_graphs() — yield (year, G) pairs incrementally
   - _sliding_window_graph() — build DiGraph for a half-window (before/after)
   - _iter_sliding_pairs() — yield (year, window, G_before, G_after) pairs
   - _dict_to_df() — convert {year: value} to standard DataFrame
@@ -102,30 +101,6 @@ def _cumulative_graph(works, internal_edges, up_to_year):
     edges = internal_edges.loc[mask, ["source_doi", "ref_doi"]].values
     G.add_edges_from(edges)
     return G
-
-
-def _incremental_graphs(works, internal_edges, years):
-    """Yield (year, G) pairs, building the graph incrementally.
-
-    Each iteration adds that year's nodes and edges to the running graph.
-    The caller receives the *same* mutable DiGraph object each iteration
-    (so must not store references across iterations without copying).
-    """
-    nodes_by_year = works.groupby("year")["doi"].apply(list).to_dict()
-    edges_by_year = (
-        internal_edges.groupby("source_year")[["source_doi", "ref_doi"]]
-        .apply(lambda g: g.values.tolist())
-        .to_dict()
-    )
-    G = nx.DiGraph()
-    for y in years:
-        new_nodes = nodes_by_year.get(y, [])
-        if new_nodes:
-            G.add_nodes_from(new_nodes)
-        new_edges = edges_by_year.get(y, [])
-        if new_edges:
-            G.add_edges_from(new_edges)
-        yield y, G
 
 
 def _dict_to_df(results, hyperparams=""):
