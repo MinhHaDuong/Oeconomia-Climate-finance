@@ -97,6 +97,10 @@ def compute_l1_js(df, cfg):
     )
     vec.fit(all_texts)
 
+    equal_n = div_cfg.get("equal_n", False)
+    seed = div_cfg.get("random_seed", 42)
+    rng = np.random.RandomState(seed) if equal_n else None
+
     rows = []
     for w in windows:
         log.info("  L1 window=%d", w)
@@ -109,6 +113,14 @@ def compute_l1_js(df, cfg):
 
             if len(texts_before) < min_papers or len(texts_after) < min_papers:
                 continue
+
+            if equal_n and len(texts_before) != len(texts_after):
+                from _divergence_io import subsample_equal_n
+
+                result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
+                if result is None:
+                    continue
+                texts_before, texts_after = result
 
             X_before = vec.transform(texts_before)
             X_after = vec.transform(texts_after)

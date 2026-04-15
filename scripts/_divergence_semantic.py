@@ -15,6 +15,7 @@ import os
 import numpy as np
 import pandas as pd
 from pipeline_loaders import load_analysis_corpus
+from sklearn.decomposition import PCA
 from utils import get_logger
 
 log = get_logger("_divergence_semantic")
@@ -60,11 +61,12 @@ def load_semantic_data(input_paths):
 def _get_years_and_params(df, emb, cfg):
     """Derive year range and smoke-safe parameters from config.
 
-    Returns (years, min_papers, max_subsample, windows).
+    Returns (years, min_papers, max_subsample, windows, equal_n).
     """
     div_cfg = cfg["divergence"]
     windows = div_cfg["windows"]
     max_subsample = div_cfg["max_subsample"]
+    equal_n = div_cfg.get("equal_n", False)
 
     from _divergence_io import get_min_papers
 
@@ -77,7 +79,7 @@ def _get_years_and_params(df, emb, cfg):
         end_year = int(df["year"].max()) - min(windows) - 1
 
     years = list(range(start_year, end_year + 1))
-    return years, min_papers, max_subsample, windows
+    return years, min_papers, max_subsample, windows, equal_n
 
 
 def _get_window_embeddings(
@@ -108,10 +110,14 @@ def _get_window_embeddings(
     return vecs
 
 
-def _iter_window_pairs(df, emb, years, windows, min_papers, max_subsample, rng=None):
+def _iter_window_pairs(
+    df, emb, years, windows, min_papers, max_subsample, rng=None, equal_n=False
+):
     """Yield (year, window, X, Y) for each valid before/after window pair.
 
     Centralises the nested loop and skip logic shared by S1-S4.
+    When equal_n is True, the larger window is subsampled to match
+    the smaller, removing growth-rate bias (ticket 0045).
     """
     for w in windows:
         for y in years:
@@ -123,6 +129,15 @@ def _iter_window_pairs(df, emb, years, windows, min_papers, max_subsample, rng=N
             )
             if X is None or Y is None:
                 continue
+            if equal_n and len(X) != len(Y):
+                if rng is None:
+                    raise ValueError("rng required for equal_n subsampling")
+                from _divergence_io import subsample_equal_n
+
+                result = subsample_equal_n(X, Y, min_papers, rng)
+                if result is None:
+                    continue
+                X, Y = result
             yield y, w, X, Y
 
 
@@ -204,7 +219,9 @@ def compute_s1_mmd(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
@@ -214,7 +231,14 @@ def compute_s1_mmd(df, emb, cfg):
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(
-        df, emb, years, windows, min_papers, max_subsample, rng=rng
+        df,
+        emb,
+        years,
+        windows,
+        min_papers,
+        max_subsample,
+        rng=rng,
+        equal_n=equal_n,
     ):
         if last_w is not None and w != last_w:
             log.info("S1 MMD window=%d done", last_w)
@@ -275,14 +299,23 @@ def compute_s2_energy(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(
-        df, emb, years, windows, min_papers, max_subsample, rng=rng
+        df,
+        emb,
+        years,
+        windows,
+        min_papers,
+        max_subsample,
+        rng=rng,
+        equal_n=equal_n,
     ):
         if last_w is not None and w != last_w:
             log.info("S2 energy window=%d done", last_w)
@@ -323,7 +356,9 @@ def compute_s3_wasserstein(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
@@ -333,7 +368,14 @@ def compute_s3_wasserstein(df, emb, cfg):
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(
-        df, emb, years, windows, min_papers, max_subsample, rng=rng
+        df,
+        emb,
+        years,
+        windows,
+        min_papers,
+        max_subsample,
+        rng=rng,
+        equal_n=equal_n,
     ):
         if last_w is not None and w != last_w:
             log.info("S3 sliced Wasserstein window=%d done", last_w)
@@ -450,34 +492,40 @@ def compute_s4_frechet(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+
+    # Always PCA-reduce for Fréchet: (1) covariance needs n >> d,
+    # (2) sqrtm is O(d³), and (3) sensitivity analysis shows breaks
+    # are stable from d=32 to d=1024.
+
+    frechet_max_dim = cfg["divergence"]["semantic"]["S4_frechet"].get("max_dim", 256)
 
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(
-        df, emb, years, windows, min_papers, max_subsample, rng=rng
+        df,
+        emb,
+        years,
+        windows,
+        min_papers,
+        max_subsample,
+        rng=rng,
+        equal_n=equal_n,
     ):
         if last_w is not None and w != last_w:
             log.info("S4 Frechet window=%d done", last_w)
         last_w = w
-
-        # Frechet needs n > d for full-rank covariance.
-        # With smoke data, n << 1024, so we PCA-reduce first.
-        d = X.shape[1]
-        n_eff = min(len(X), len(Y))
-        if n_eff < d:
-            from sklearn.decomposition import PCA
-
-            n_components = max(2, n_eff - 1)
-            pca = PCA(n_components=n_components, random_state=seed)
-            combined = np.vstack([X, Y])
-            combined_r = pca.fit_transform(combined)
-            X_r = combined_r[: len(X)]
-            Y_r = combined_r[len(X) :]
-        else:
-            X_r, Y_r = X, Y
+        max_d = min(frechet_max_dim, min(len(X), len(Y)) - 1, X.shape[1])
+        n_components = max(2, max_d)
+        pca = PCA(n_components=n_components, random_state=seed)
+        combined = np.vstack([X, Y])
+        combined_r = pca.fit_transform(combined)
+        X_r = combined_r[: len(X)]
+        Y_r = combined_r[len(X) :]
 
         val = frechet_fn(X_r, Y_r)
         results.append(

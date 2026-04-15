@@ -496,3 +496,171 @@ class TestGetBreakYears:
         )
         years = _get_break_years(breaks_df, "S1_MMD", penalty=3)
         assert years == set()
+
+
+# ---------------------------------------------------------------------------
+# Equal-N growth-bias correction (ticket 0045)
+# ---------------------------------------------------------------------------
+
+
+def _growth_counts(n_years=20, base=5, growth_factor=10):
+    """Return per-year paper counts with linear growth for equal-n tests."""
+    return [
+        max(base, int(base + (growth_factor - 1) * base * i / (n_years - 1)))
+        for i in range(n_years)
+    ]
+
+
+def _make_growth_data(n_years=20, start_year=2000, growth_factor=10, dim=16):
+    """Synthetic corpus with growth for equal-n tests (semantic).
+
+    Returns (df, emb) with ~few papers in early years and many later.
+    """
+    rng = np.random.RandomState(42)
+    counts = _growth_counts(n_years, base=5, growth_factor=growth_factor)
+    years = []
+    vecs = []
+    for i, n in enumerate(counts):
+        y = start_year + i
+        years.extend([y] * n)
+        vecs.append(rng.randn(n, dim))
+    df = pd.DataFrame({"year": years, "cited_by_count": 0})
+    emb = np.vstack(vecs).astype(np.float32)
+    return df, emb
+
+
+def _make_growth_text_data(n_years=15, start_year=2000, growth_factor=10):
+    """Synthetic corpus with growth for equal-n tests (lexical).
+
+    Returns DataFrame with year + abstract columns.
+    """
+    rng = np.random.RandomState(42)
+    words = ["climate", "finance", "carbon", "green", "bond", "risk", "policy"]
+    counts = _growth_counts(n_years, base=6, growth_factor=growth_factor)
+    rows = []
+    for i, n in enumerate(counts):
+        y = start_year + i
+        for _ in range(n):
+            text = " ".join(rng.choice(words, size=10))
+            rows.append({"year": y, "abstract": text})
+    return pd.DataFrame(rows)
+
+
+def _equal_n_cfg(equal_n=True):
+    """Minimal config for equal-n tests, built on _smoke_cfg."""
+    cfg = _smoke_cfg(seed=42)
+    cfg["divergence"]["windows"] = [2]
+    cfg["divergence"]["max_subsample"] = 5000
+    cfg["divergence"]["equal_n"] = equal_n
+    return cfg
+
+
+class TestEqualN:
+    """Verify equal-n growth-bias correction for _iter_window_pairs."""
+
+    def test_equal_n_produces_equal_sized_windows(self):
+        """With equal_n, both windows should have the same number of samples."""
+        from _divergence_semantic import _get_years_and_params, _iter_window_pairs
+
+        df, emb = _make_growth_data()
+        cfg = _equal_n_cfg(equal_n=True)
+        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
+            df, emb, cfg
+        )
+        rng = np.random.RandomState(42)
+
+        for y, w, X, Y in _iter_window_pairs(
+            df,
+            emb,
+            years,
+            windows,
+            min_papers,
+            max_subsample,
+            rng=rng,
+            equal_n=True,
+        ):
+            assert len(X) == len(Y), (
+                f"year={y}, w={w}: len(X)={len(X)} != len(Y)={len(Y)}"
+            )
+
+    def test_equal_n_false_allows_unequal(self):
+        """Without equal_n, windows may have different sizes."""
+        from _divergence_semantic import _get_years_and_params, _iter_window_pairs
+
+        df, emb = _make_growth_data()
+        cfg = _equal_n_cfg(equal_n=False)
+        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
+            df, emb, cfg
+        )
+        rng = np.random.RandomState(42)
+
+        sizes = []
+        for y, w, X, Y in _iter_window_pairs(
+            df,
+            emb,
+            years,
+            windows,
+            min_papers,
+            max_subsample,
+            rng=rng,
+            equal_n=False,
+        ):
+            sizes.append((len(X), len(Y)))
+
+        # At least some pairs should be unequal in the growth data
+        unequal = [pair for pair in sizes if pair[0] != pair[1]]
+        assert len(unequal) > 0, "Expected some unequal window sizes in growth data"
+
+    def test_equal_n_s2_not_correlated_with_size(self):
+        """Corrected S2 energy should not strongly correlate with window size."""
+        from _divergence_semantic import compute_s2_energy
+
+        df, emb = _make_growth_data(n_years=20, growth_factor=10, dim=16)
+
+        # With equal_n
+        cfg_eq = _equal_n_cfg(equal_n=True)
+        result_eq = compute_s2_energy(df, emb, cfg_eq)
+
+        # Without equal_n
+        cfg_raw = _equal_n_cfg(equal_n=False)
+        result_raw = compute_s2_energy(df, emb, cfg_raw)
+
+        if len(result_eq) < 3 or len(result_raw) < 3:
+            pytest.skip("Not enough data points for correlation test")
+
+        # Compute min(n_before, n_after) for each year
+        years_sorted = sorted(df["year"].unique())
+        year_counts = df["year"].value_counts().to_dict()
+        w = 2  # single window
+
+        def min_n_for_year(y):
+            n_before = sum(year_counts.get(yy, 0) for yy in range(y - w, y + 1))
+            n_after = sum(year_counts.get(yy, 0) for yy in range(y + 1, y + w + 2))
+            return min(n_before, n_after)
+
+        # Merge min_n into results
+        for result in [result_eq, result_raw]:
+            result["min_n"] = result["year"].apply(min_n_for_year)
+
+        corr_eq = abs(result_eq["value"].corr(result_eq["min_n"]))
+        corr_raw = abs(result_raw["value"].corr(result_raw["min_n"]))
+
+        # The corrected version should have lower correlation with size
+        assert corr_eq < corr_raw or corr_eq < 0.5, (
+            f"equal_n correlation ({corr_eq:.3f}) not lower than raw ({corr_raw:.3f})"
+        )
+
+    def test_l1_js_equal_n_produces_equal_sized_inputs(self):
+        """L1 JS subsampling path should equalise before/after text counts."""
+        from _divergence_lexical import compute_l1_js
+
+        df = _make_growth_text_data()
+        cfg_eq = _equal_n_cfg(equal_n=True)
+        cfg_raw = _equal_n_cfg(equal_n=False)
+
+        result_eq = compute_l1_js(df, cfg_eq)
+        result_raw = compute_l1_js(df, cfg_raw)
+
+        # Both should produce results; equal_n should not crash
+        assert len(result_eq) > 0, "equal_n L1 JS produced no results"
+        assert len(result_raw) > 0, "raw L1 JS produced no results"

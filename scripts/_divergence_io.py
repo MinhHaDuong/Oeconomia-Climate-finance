@@ -30,6 +30,7 @@ def infer_channel(method_name):
 
 # ── Method name extraction ──────────────────────────────────────────────
 
+
 def extract_method_from_path(path):
     """Extract method name from divergence CSV filename.
 
@@ -38,7 +39,7 @@ def extract_method_from_path(path):
     """
     basename = os.path.splitext(os.path.basename(path))[0]
     if basename.startswith("tab_div_"):
-        return basename[len("tab_div_"):]
+        return basename[len("tab_div_") :]
     m = re.match(r"tab_sens_(?:pca|jl)_(.+)", basename)
     if m:
         return m.group(1)
@@ -46,6 +47,7 @@ def extract_method_from_path(path):
 
 
 # ── Divergence table loading ────────────────────────────────────────────
+
 
 def load_divergence_tables(input_paths):
     """Load and concatenate divergence CSVs, adding method from filename.
@@ -77,8 +79,9 @@ def load_divergence_tables(input_paths):
 
         expected = {"year", "channel", "window", "hyperparams", "value"}
         if not expected.issubset(set(df.columns)):
-            log.warning("Skipping %s: missing columns %s",
-                        path, expected - set(df.columns))
+            log.warning(
+                "Skipping %s: missing columns %s", path, expected - set(df.columns)
+            )
             continue
         div_frames.append(df)
 
@@ -87,13 +90,20 @@ def load_divergence_tables(input_paths):
             breaks_frames.append(pd.read_csv(breaks_path))
 
     div_df = pd.concat(div_frames, ignore_index=True) if div_frames else pd.DataFrame()
-    breaks_df = pd.concat(breaks_frames, ignore_index=True) if breaks_frames else pd.DataFrame()
-    log.info("Loaded %d divergence rows, %d break rows from %d files",
-             len(div_df), len(breaks_df), len(div_frames))
+    breaks_df = (
+        pd.concat(breaks_frames, ignore_index=True) if breaks_frames else pd.DataFrame()
+    )
+    log.info(
+        "Loaded %d divergence rows, %d break rows from %d files",
+        len(div_df),
+        len(breaks_df),
+        len(div_frames),
+    )
     return div_df, breaks_df
 
 
 # ── Smoke-mode parameter selection ──────────────────────────────────────
+
 
 def get_min_papers(n_works, cfg):
     """Return appropriate min_papers based on corpus size.
@@ -107,3 +117,25 @@ def get_min_papers(n_works, cfg):
         log.info("Smoke mode: n_works=%d < 200, min_papers=%d", n_works, mp)
         return mp
     return div_cfg.get("min_papers", 30)
+
+
+def subsample_equal_n(before, after, min_papers, rng):
+    """Subsample the larger collection to match the smaller.
+
+    Works on both numpy arrays and Python lists.
+    Returns (before_sub, after_sub), or None if min(len) < min_papers.
+    """
+    import numpy as np
+
+    n = min(len(before), len(after))
+    if n < min_papers:
+        return None
+    if len(before) > n:
+        idx = rng.choice(len(before), n, replace=False)
+        before = (
+            before[idx] if isinstance(before, np.ndarray) else [before[i] for i in idx]
+        )
+    if len(after) > n:
+        idx = rng.choice(len(after), n, replace=False)
+        after = after[idx] if isinstance(after, np.ndarray) else [after[i] for i in idx]
+    return before, after
