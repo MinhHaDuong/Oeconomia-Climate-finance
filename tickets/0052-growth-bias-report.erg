@@ -1,0 +1,111 @@
+%erg v1
+Title: Write research report on growth-rate bias in divergence statistics
+Status: open
+Created: 2026-04-15
+Author: claude
+Blocked-by: 0051
+
+--- log ---
+2026-04-15T14:00Z claude created
+2026-04-15T14:00Z claude note spawned from explore-trend-bias conversation
+
+--- body ---
+## Context
+
+The growth-rate bias is the central methodological challenge for the
+periodization paper. Before we can claim any structural break is real,
+we must demonstrate that our corrections remove the size confound while
+preserving sensitivity to genuine distributional shifts.
+
+This report synthesizes theory, code review, MC results (ticket 0051),
+and literature into a self-contained document for `docs/`. Findings feed
+both the technical report (`content/technical-report.qmd`) and the
+periodization article (`content/manuscript.qmd`).
+
+## Structure
+
+`docs/growth-rate-bias-report.md` with these sections:
+
+### 1. Problem statement
+- Formal setup: Sx(A, B) where |A|=N, |B|=N(1+g), A,B ~ f
+- The confound: corpus growth creates time-varying N and g
+- Empirical parameters: N(year), g(year) from the real corpus
+
+### 2. Theoretical analysis (per statistic)
+- **S1 (MMD):** Unbiased estimator has E=0 under H0, but max(·,0)
+  clipping creates O(1/sqrt(min(n,m))) positive bias. Cite Gretton
+  et al. 2012 for asymptotic null distribution.
+- **S2 (Energy):** V-statistic has O(1/n + 1/m) positive bias.
+  Cite Szekely & Rizzo 2004.
+- **S3 (Sliced Wasserstein):** Finite-sample bias ~ n^{-2/d} for
+  Wasserstein-p in dimension d. Cite Fournier & Guillin 2015.
+- **S4 (Frechet):** Bias ~ d·(1/n + 1/m). Best-studied case.
+  Cite Binkowski et al. 2018, Chong & Ngiam 2019.
+
+### 3. Current code review
+- What the code does: subsample to min(n, max_subsample) per side
+- What it achieves: caps computational cost, bounds worst-case asymmetry
+- What it misses: does not equalize sizes, does not remove absolute-size
+  declining trend, does not account for different window sizes
+
+### 4. Monte Carlo results (from ticket 0051)
+- Sx vs N at g=0: confirm theoretical scaling
+- Sx vs g at fixed N: quantify asymmetry effect
+- Correction strategies compared: natural, equal-n, fixed-M
+- Power analysis: signal-to-noise at planted break
+
+### 5. Literature review
+- Bias-corrected FID: Chong & Ngiam 2019 (extrapolation to n→inf)
+- Permutation tests for two-sample problems: Gretton et al. 2012
+- U-statistic theory for MMD: asymptotic null = weighted chi-squared
+- Bootstrap methods: Arcones & Gine 1992
+- Fixed-size comparison and power analysis
+- Density ratio estimation as alternative to distance-based methods
+
+### 6. Recommended approach
+- Primary: null model (ticket 0050) — assumption-free, produces
+  interpretable visualization (null band + observed curve)
+- Secondary: fixed-M as robustness check
+- For the article: plot null 95% CI band, mark where observed exits
+- For the technical report: full MC characterization tables
+
+### 7. Implications for the periodization argument
+- Which breaks survive correction? (preview, pending 0050 results)
+- How to frame size-dependence honestly in the article
+- Connection to the "economists construct categories" thesis:
+  even our measurement of structural change is sensitive to the
+  quantity of scholarship produced
+
+## Actions
+
+1. Draft sections 1-3 (theory + code review) from existing knowledge.
+2. Incorporate MC results from ticket 0051 into section 4.
+3. Conduct literature search for section 5 (key references above,
+   plus any relevant bibliometrics/scientometrics methodology papers).
+4. Write sections 6-7 (recommendations + implications).
+5. Add include hooks in technical-report.qmd pointing to relevant
+   tables and figures from ticket 0051.
+
+## Test
+
+```python
+def test_growth_bias_report_exists():
+    """Report file exists and has all required sections."""
+    import pathlib
+    report = pathlib.Path("docs/growth-rate-bias-report.md")
+    assert report.exists()
+    text = report.read_text()
+    for section in ["Problem statement", "Theoretical analysis",
+                    "Current code review", "Monte Carlo results",
+                    "Literature review", "Recommended approach",
+                    "Implications"]:
+        assert section in text, f"Missing section: {section}"
+```
+
+## Exit criteria
+
+- Report covers all four original research questions
+- MC results integrated with proper tables/figures
+- Literature review cites at least 5 methodological references
+- Recommendations are actionable (maps to tickets 0045, 0050)
+- Technical report includes reference to this analysis

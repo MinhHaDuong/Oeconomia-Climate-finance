@@ -1,0 +1,104 @@
+%erg v1
+Title: Monte Carlo characterization of Sx(f, N, g) size-dependence under H0
+Status: open
+Created: 2026-04-15
+Author: claude
+Blocked-by: 0045
+
+--- log ---
+2026-04-15T14:00Z claude created
+2026-04-15T14:00Z claude note spawned from explore-trend-bias conversation
+
+--- body ---
+## Context
+
+The divergence pipeline (S1-S4, L1-L3) shows monotone declining trends
+tracking corpus growth. Before fixing the code (0045) or testing
+significance (0050), we need to **characterize the bias quantitatively**
+under the null hypothesis. This experiment answers: how much of the observed
+signal is expected from sample-size variation alone?
+
+This is both a prerequisite for principled correction and a standalone
+finding for the technical report and periodization article.
+
+## Research questions
+
+1. **Is Sx increasing in g?** Given clouds A (N points) and B (N*(1+g)
+   points) drawn iid from the same distribution f, how does E[Sx(A,B)]
+   depend on g and N? Characterize for each of S1-S4.
+
+2. **What are the empirical parameters?** Extract the actual N(year),
+   g(year), and embedding distribution shape from the real corpus. These
+   parameterize the null model.
+
+3. **Current code error analysis.** The code subsamples each side to
+   min(n, 2000) independently. This gives Sx(f, n_before, n_after) with
+   possibly unequal sizes. Characterize: is the residual error
+   Sx(f, M, 0) - Sx(f, N, g) centered? skewed? What does its variance
+   look like?
+
+4. **Equal-n vs fixed-M vs natural sizes.** Compare three correction
+   strategies under MC: (a) current code (cap at 2000), (b) equal-n
+   (ticket 0045), (c) fixed-M across all years. Which removes the
+   declining trend? Which preserves power to detect a planted break?
+
+## Actions
+
+1. Extract empirical N(year) and g(year) from the real corpus
+   (`load_analysis_corpus`). Compute per-year paper counts for each
+   window size. Save as reference table.
+
+2. Fit a simple model of f: the empirical embedding distribution. Use
+   the pooled real embeddings (or a multivariate Gaussian fit) as the
+   null distribution for sampling.
+
+3. MC experiment 1 — **Sx vs N at g=0**: For each statistic S1-S4, draw
+   two samples of size N from f, compute Sx. Vary N in {50, 100, 200,
+   500, 1000, 2000, 5000}. Repeat 200 times per N. Plot E[Sx] and
+   Var[Sx] vs N. Fit the theoretical scaling (1/N for Frechet, etc.).
+
+4. MC experiment 2 — **Sx vs g at fixed N**: Fix N=500 (typical early
+   window). Vary g in {0, 0.2, 0.5, 1.0, 2.0}. Draw N from f and
+   N*(1+g) from f. Compute Sx. 200 repeats. Does Sx depend on g when
+   f is the same?
+
+5. MC experiment 3 — **Correction strategies**: Simulate the yearly
+   time series using empirical N(year). At each "year", draw
+   n_before(year) and n_after(year) from f. Compute Sx three ways:
+   (a) natural sizes, (b) equal-n = min(n_before, n_after),
+   (c) fixed-M = 200 (smallest viable). 200 repeats. Compare the
+   trend in E[Sx(year)] across strategies.
+
+6. MC experiment 4 — **Power at planted break**: Same as experiment 3,
+   but at year=2007, shift f by delta (add a small mean shift to
+   embeddings in the after-window). Does each correction strategy
+   detect the break? Plot signal-to-noise ratio.
+
+7. Produce summary tables and diagnostic plots. Output to
+   `content/tables/tab_mc_size_bias.csv` and
+   `content/figures/fig_mc_size_bias.png`.
+
+## Script
+
+`scripts/compute_mc_size_bias.py` — standalone Phase 2 script.
+Reads `config/analysis.yaml` for seeds and parameters.
+Accepts `--output` per script-io discipline.
+No dependency on divergence pipeline code (self-contained MC).
+
+## Test
+
+```python
+def test_mc_frechet_bias_scales_with_inverse_n():
+    """Frechet distance bias ~ d/n under H0 (known theoretical result).
+
+    Draw from N(0,I_d) with d=50. Compute FID at n=100 and n=400.
+    Assert FID(100) > 2 * FID(400) (bias ratio ~ 4:1, allow slack).
+    """
+```
+
+## Exit criteria
+
+- MC experiments 1-4 complete with 200+ repeats each
+- Theoretical scaling (1/N for Frechet, 1/sqrt(N) for MMD) confirmed or refuted
+- Clear recommendation on which correction strategy to use
+- Tables and figures ready for inclusion in technical report
