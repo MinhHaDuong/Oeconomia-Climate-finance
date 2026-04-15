@@ -503,18 +503,25 @@ class TestGetBreakYears:
 # ---------------------------------------------------------------------------
 
 
+def _growth_counts(n_years=20, base=5, growth_factor=10):
+    """Return per-year paper counts with linear growth for equal-n tests."""
+    return [
+        max(base, int(base + (growth_factor - 1) * base * i / (n_years - 1)))
+        for i in range(n_years)
+    ]
+
+
 def _make_growth_data(n_years=20, start_year=2000, growth_factor=10, dim=16):
-    """Synthetic corpus with exponential growth for equal-n tests.
+    """Synthetic corpus with growth for equal-n tests (semantic).
 
     Returns (df, emb) with ~few papers in early years and many later.
     """
     rng = np.random.RandomState(42)
+    counts = _growth_counts(n_years, base=5, growth_factor=growth_factor)
     years = []
     vecs = []
-    for i in range(n_years):
+    for i, n in enumerate(counts):
         y = start_year + i
-        # Linear growth: early years get few, later years get many
-        n = max(5, int(5 + (growth_factor - 1) * 5 * i / (n_years - 1)))
         years.extend([y] * n)
         vecs.append(rng.randn(n, dim))
     df = pd.DataFrame({"year": years, "cited_by_count": 0})
@@ -522,12 +529,26 @@ def _make_growth_data(n_years=20, start_year=2000, growth_factor=10, dim=16):
     return df, emb
 
 
-def _equal_n_cfg(equal_n=True):
-    """Minimal config for equal-n tests."""
-    from pipeline_loaders import load_analysis_config
+def _make_growth_text_data(n_years=15, start_year=2000, growth_factor=10):
+    """Synthetic corpus with growth for equal-n tests (lexical).
 
-    cfg = copy.deepcopy(load_analysis_config())
-    cfg["divergence"]["random_seed"] = 42
+    Returns DataFrame with year + abstract columns.
+    """
+    rng = np.random.RandomState(42)
+    words = ["climate", "finance", "carbon", "green", "bond", "risk", "policy"]
+    counts = _growth_counts(n_years, base=6, growth_factor=growth_factor)
+    rows = []
+    for i, n in enumerate(counts):
+        y = start_year + i
+        for _ in range(n):
+            text = " ".join(rng.choice(words, size=10))
+            rows.append({"year": y, "abstract": text})
+    return pd.DataFrame(rows)
+
+
+def _equal_n_cfg(equal_n=True):
+    """Minimal config for equal-n tests, built on _smoke_cfg."""
+    cfg = _smoke_cfg(seed=42)
     cfg["divergence"]["windows"] = [2]
     cfg["divergence"]["max_subsample"] = 5000
     cfg["divergence"]["equal_n"] = equal_n
@@ -633,18 +654,7 @@ class TestEqualN:
         """L1 JS subsampling path should equalise before/after text counts."""
         from _divergence_lexical import compute_l1_js
 
-        rng = np.random.RandomState(42)
-        words = ["climate", "finance", "carbon", "green", "bond", "risk", "policy"]
-        n_years = 15
-        rows = []
-        for i in range(n_years):
-            y = 2000 + i
-            n = max(6, int(6 + 4 * i))  # growth
-            for _ in range(n):
-                text = " ".join(rng.choice(words, size=10))
-                rows.append({"year": y, "abstract": text})
-        df = pd.DataFrame(rows)
-
+        df = _make_growth_text_data()
         cfg_eq = _equal_n_cfg(equal_n=True)
         cfg_raw = _equal_n_cfg(equal_n=False)
 

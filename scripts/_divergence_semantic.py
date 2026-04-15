@@ -130,15 +130,14 @@ def _iter_window_pairs(
             if X is None or Y is None:
                 continue
             if equal_n and len(X) != len(Y):
-                n = min(len(X), len(Y))
-                if n < min_papers:
-                    continue
                 if rng is None:
                     raise ValueError("rng required for equal_n subsampling")
-                if len(X) > n:
-                    X = X[rng.choice(len(X), n, replace=False)]
-                if len(Y) > n:
-                    Y = Y[rng.choice(len(Y), n, replace=False)]
+                from _divergence_io import subsample_equal_n
+
+                result = subsample_equal_n(X, Y, min_papers, rng)
+                if result is None:
+                    continue
+                X, Y = result
             yield y, w, X, Y
 
 
