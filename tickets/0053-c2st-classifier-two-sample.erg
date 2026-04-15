@@ -1,0 +1,71 @@
+%erg v1
+Title: Implement C2ST classifier two-sample test
+Status: open
+Created: 2026-04-15
+Author: claude
+
+--- log ---
+2026-04-15T15:30Z claude created
+2026-04-15T15:30Z claude note wave 1 of epic 0026; robustness for embedding + lexical layers
+
+--- body ---
+## Context
+
+The companion paper (epic 0026) uses C2ST as robustness check for both
+embedding and lexical layers. A logistic regression classifier tries to
+distinguish before-window from after-window documents. AUC = 0.5 means
+no change; AUC >> 0.5 means detectable structural shift.
+
+C2ST also provides the interpretation layer for free: classifier
+coefficients identify discriminative features, predicted probabilities
+rank discriminative documents.
+
+Reference: Lopez-Paz & Oquab (2017), "Revisiting Classifier Two-Sample
+Tests," ICLR.
+
+## Actions
+
+1. Create `scripts/_divergence_c2st.py` with two functions:
+   - `compute_c2st_embedding(df, emb, cfg)` — PCA to 32d, logistic
+     regression with balanced class weights, 5-fold CV. Returns AUC
+     per (year, window).
+   - `compute_c2st_lexical(df, emb, cfg)` — TF-IDF features (reuse
+     L1 vectorizer), same classifier setup. Returns AUC per (year, window).
+
+2. Both functions also export per-window artifacts:
+   - Top 20 coefficients (feature importance) per year
+   - Document-level predicted probabilities for interpretation (0056)
+   Export to sidecar CSVs: `tab_c2st_coefficients.csv`, `tab_c2st_documents.csv`
+
+3. Register in `compute_divergence.py` dispatcher as `C2ST_embedding`
+   and `C2ST_lexical`.
+
+4. Add config to `config/analysis.yaml`:
+   ```yaml
+   c2st:
+     pca_dim: 32
+     classifier: logistic
+     cv_folds: 5
+     class_weight: balanced
+   ```
+
+5. Add Make targets in `divergence.mk`.
+
+## Test
+
+```python
+def test_c2st_null_auc_near_half():
+    """Under H0 (same distribution), AUC should be near 0.5."""
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 32)  # same distribution
+    Y = rng.randn(100, 32)
+    auc = _compute_auc(X, Y, seed=42)
+    assert 0.35 < auc < 0.65, f"AUC={auc}, expected ~0.5 under H0"
+```
+
+## Exit criteria
+
+- C2ST AUC ≈ 0.5 on synthetic null, AUC > 0.7 on synthetic shift
+- Dispatcher integration works: `compute_divergence.py --method C2ST_embedding`
+- Coefficient and document exports pass schema validation
+- `make check-fast` passes

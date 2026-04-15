@@ -4,9 +4,11 @@ Status: open
 Created: 2026-04-15
 Author: user
 Blocked-by: 0045
+Blocked-by: 0055
 
 --- log ---
 2026-04-16T01:00Z claude created — split from 0045 layer 2
+2026-04-15T15:30Z claude note rescoped: use 0055 Z-score infrastructure, apply to 6 lead methods only
 
 --- body ---
 ## Context

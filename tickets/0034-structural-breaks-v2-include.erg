@@ -1,6 +1,6 @@
 %erg v1
 Title: Write structural-breaks-v2 include for technical report
-Status: open
+Status: closed
 Created: 2026-04-14
 Author: claude
 Blocked-by: 0033
@@ -9,6 +9,7 @@ Blocked-by: 0042
 --- log ---
 2026-04-14T16:30Z claude created
 2026-04-14T16:30Z claude note wave 3, documentation
+2026-04-15T15:30Z claude status closed — target is companion paper, not tech report
 
 --- body ---
 ## Context

@@ -1,6 +1,6 @@
 %erg v1
 Title: Make analysis report modular with per-script includes
-Status: open
+Status: closed
 Created: 2026-04-14
 Author: user
 Blocked-by: 0024
@@ -8,6 +8,7 @@ Blocked-by: 0024
 --- log ---
 2026-04-14T14:42Z claude created
 2026-04-14T14:42Z claude note architectural change; do after companion merge (0024)
+2026-04-15T15:30Z claude status closed — tech report is internal docs, companion paper is the publication target
 
 --- body ---
 ## Context

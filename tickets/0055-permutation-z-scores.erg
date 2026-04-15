@@ -1,0 +1,77 @@
+%erg v1
+Title: Implement permutation Z-score inference layer
+Status: open
+Created: 2026-04-15
+Author: claude
+
+--- log ---
+2026-04-15T15:30Z claude created
+2026-04-15T15:30Z claude note wave 1 of epic 0026; core inference for all methods
+
+--- body ---
+## Context
+
+The companion paper (epic 0026) uses permutation Z-scores as the
+universal inference layer. For each (method, year, window):
+
+1. Pool before + after documents
+2. Randomly shuffle labels (preserving sample sizes)
+3. Recompute the statistic
+4. Repeat B = 500 times
+5. Z(t) = (observed - mean_perm) / std_perm
+
+Z > 2 corresponds to p ≈ 0.023 (one-sided), the paper's significance
+threshold. Z-scores normalize across time despite varying sample sizes,
+solving the growth-bias problem at the inference layer.
+
+This replaces/subsumes ticket 0050 (same-pool null model) with a
+simpler, more general design.
+
+## Actions
+
+1. Create `scripts/compute_null_model.py`:
+   - Accept `--method` flag (same as compute_divergence.py)
+   - For the specified method, load data, iterate over (year, window)
+   - At each point: pool, permute B times, compute statistic each time
+   - Output: `tab_null_{method}.csv` with columns:
+     (year, window, observed, null_mean, null_std, z_score, p_value)
+
+2. The permutation must preserve the sliding-window structure:
+   - Pool documents in [t-w, t+w+1]
+   - Shuffle which documents are "before" vs "after"
+   - Preserve sizes: n_before shuffled docs, n_after shuffled docs
+
+3. Add config:
+   ```yaml
+   permutation:
+     n_perm: 500
+     scheme: local_pool
+     z_threshold: 2.0
+   ```
+
+4. Add Make targets: one per method (6 methods × 1 target each).
+
+5. Summary script: `scripts/compute_transition_zones.py`
+   - Read all tab_null_{method}.csv
+   - Identify transition zones: contiguous year ranges where Z > 2
+   - Multi-signal validation: zones that appear in ≥ 2 layers
+   - Output: `tab_transition_zones.csv`
+
+## Test
+
+```python
+def test_z_scores_null_distribution():
+    """Under H0, Z-scores should be approximately N(0,1)."""
+    # Generate 100 synthetic null years (same distribution)
+    # Compute Z-scores via permutation
+    # Kolmogorov-Smirnov test against N(0,1)
+    assert ks_pvalue > 0.05
+```
+
+## Exit criteria
+
+- Z-scores ~ N(0,1) under H0 (KS test on synthetic data)
+- Z > 2 detected at planted break in synthetic data
+- Transition zones correctly identified as contiguous Z > 2 ranges
+- Multi-signal validation: zones from ≥ 2 independent layers flagged
+- `make check-fast` passes
