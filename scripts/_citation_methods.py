@@ -3,6 +3,10 @@
 Each function takes (works, citations, internal_edges, cfg) and returns
 a DataFrame with columns: year, window, hyperparams, value.
 
+G1, G2, G5, G6, G8 use sliding windows (ticket 0048) to compare
+graph metrics between before/after windows, matching the semantic methods.
+G3, G4, G7 are per-year methods and use cumulative windows.
+
 Private module — no main, no argparse. Called via compute_divergence.py
 dispatcher.
 """
@@ -16,113 +20,207 @@ from _divergence_citation import (
     _cumulative_graph,
     _dict_to_df,
     _get_years,
-    _incremental_graphs,
+    _iter_sliding_pairs,
 )
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
-from scipy.stats import entropy, kendalltau
+from scipy.stats import entropy
 from utils import get_logger
 
 log = get_logger("_citation_methods")
 
 
-# ── G1: PageRank volatility ───────────────────────────────────────────────
+# ── Graph metric helpers (shared by sliding methods) ─────────────────────
+
+
+def _pagerank_vector(G, damping):
+    """Compute PageRank on a graph, return (nodes, values) or None."""
+    if G.number_of_nodes() < 3 or G.number_of_edges() < 1:
+        return None
+    pr = nx.pagerank(G, alpha=damping, max_iter=200)
+    nodes = sorted(pr.keys())
+    vals = np.array([pr[n] for n in nodes])
+    return nodes, vals
+
+
+def _spectral_gap(G_dir):
+    """Compute spectral gap of the normalized Laplacian (undirected)."""
+    G = G_dir.to_undirected()
+    if G.number_of_nodes() < 3:
+        return np.nan
+
+    components = list(nx.connected_components(G))
+    if not components:
+        return np.nan
+
+    lcc = max(components, key=len)
+    if len(lcc) < 3:
+        return np.nan
+
+    H = G.subgraph(lcc)
+    n = H.number_of_nodes()
+
+    try:
+        if n <= 200:
+            L = nx.normalized_laplacian_matrix(H).toarray()
+            eigenvalues = np.sort(np.linalg.eigvalsh(L))
+        else:
+            L = nx.normalized_laplacian_matrix(H).astype(float)
+            eigenvalues = np.sort(
+                eigsh(L, k=min(2, n - 1), which="SM", return_eigenvectors=False)
+            )
+        if len(eigenvalues) >= 2:
+            return float(eigenvalues[1] - eigenvalues[0])
+        return np.nan
+    except Exception as exc:
+        log.debug("Spectral gap computation failed: %s", exc)
+        return np.nan
+
+
+def _pa_exponent(G):
+    """Fit power-law exponent to in-degree distribution."""
+    in_degrees = np.array([d for _, d in G.in_degree()])
+    pos_deg = in_degrees[in_degrees > 0]
+    if len(pos_deg) < 10:
+        return np.nan
+
+    unique_k, counts = np.unique(pos_deg, return_counts=True)
+    if len(unique_k) < 2:
+        return np.nan
+    ccdf = np.cumsum(counts[::-1])[::-1] / len(pos_deg)
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            popt, _ = curve_fit(
+                _power_law,
+                unique_k.astype(float),
+                ccdf,
+                p0=[1.5, 1.0],
+                maxfev=5000,
+            )
+        return float(popt[0])
+    except (RuntimeError, ValueError, TypeError):
+        return np.nan
+
+
+def _citation_entropy(G):
+    """Shannon entropy of in-degree distribution."""
+    in_degrees = np.array([d for _, d in G.in_degree()])
+    pos_deg = in_degrees[in_degrees > 0]
+    if len(pos_deg) < 3:
+        return np.nan
+
+    _unique_k, counts = np.unique(pos_deg, return_counts=True)
+    return float(entropy(counts))
+
+
+def _mean_betweenness(G_dir, max_nodes):
+    """Mean betweenness centrality of largest connected component."""
+    G = G_dir.to_undirected()
+    if G.number_of_nodes() < 3:
+        return np.nan
+
+    components = list(nx.connected_components(G))
+    lcc = max(components, key=len)
+    if len(lcc) < 3:
+        return np.nan
+
+    H = G.subgraph(lcc)
+    n = H.number_of_nodes()
+
+    if n > max_nodes:
+        bc = nx.betweenness_centrality(H, k=max_nodes)
+    else:
+        bc = nx.betweenness_centrality(H)
+
+    vals = list(bc.values())
+    return float(np.mean(vals)) if vals else np.nan
+
+
+# ── G1: PageRank divergence (sliding) ────────────────────────────────────
 
 
 def compute_g1_pagerank(works, citations, internal_edges, cfg):
-    """Kendall tau displacement of PageRank rankings year-to-year.
+    """PageRank divergence between before/after sliding windows.
+
+    Computes Kendall tau distance between PageRank rankings of the
+    before and after windows. Common nodes are used for comparison.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     cit_cfg = cfg["divergence"]["citation"]
     damping = cit_cfg["G1_pagerank"]["damping"]
-    years = _get_years(works)
 
-    log.info("G1: PageRank volatility")
-    results = {}
-    prev_ranks = None
-    prev_nodes = None
+    log.info("G1: PageRank divergence (sliding)")
+    results = []
 
-    for y, G in _incremental_graphs(works, internal_edges, years):
-        if G.number_of_nodes() < 3 or G.number_of_edges() < 1:
-            results[y] = np.nan
-            prev_ranks = None
-            prev_nodes = None
+    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
+        pr_before = _pagerank_vector(G_before, damping)
+        pr_after = _pagerank_vector(G_after, damping)
+
+        if pr_before is None or pr_after is None:
+            results.append(
+                {"year": year, "window": str(w), "hyperparams": "", "value": np.nan}
+            )
             continue
 
-        pr = nx.pagerank(G, alpha=damping, max_iter=200)
-        nodes = sorted(pr.keys())
-        ranks = np.array([pr[n] for n in nodes])
+        nodes_b, vals_b = pr_before
+        nodes_a, vals_a = pr_after
 
-        if prev_ranks is not None and prev_nodes is not None:
-            common = sorted(set(nodes) & set(prev_nodes))
-            if len(common) >= 3:
-                curr_vals = np.array([pr[n] for n in common])
-                prev_map = dict(zip(prev_nodes, prev_ranks))
-                prev_vals = np.array([prev_map[n] for n in common])
-                tau, _ = kendalltau(curr_vals, prev_vals)
-                results[y] = 1.0 - tau if not np.isnan(tau) else np.nan
-            else:
-                results[y] = np.nan
-        else:
-            results[y] = np.nan
+        # Use all nodes from both windows (union) for comparison.
+        # Nodes absent from one window get PageRank = 0.
+        all_nodes = sorted(set(nodes_b) | set(nodes_a))
+        if len(all_nodes) < 3:
+            results.append(
+                {"year": year, "window": str(w), "hyperparams": "", "value": np.nan}
+            )
+            continue
 
-        prev_ranks = ranks
-        prev_nodes = nodes
+        pr_b_map = dict(zip(nodes_b, vals_b))
+        pr_a_map = dict(zip(nodes_a, vals_a))
+        vec_b = np.array([pr_b_map.get(n, 0.0) for n in all_nodes])
+        vec_a = np.array([pr_a_map.get(n, 0.0) for n in all_nodes])
 
-    return _dict_to_df(results)
+        from scipy.stats import kendalltau
+
+        tau, _ = kendalltau(vec_b, vec_a)
+        value = 1.0 - tau if not np.isnan(tau) else np.nan
+        results.append(
+            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+        )
+
+    return pd.DataFrame(results)
 
 
-# ── G2: Spectral gap ─────────────────────────────────────────────────────
+# ── G2: Spectral gap divergence (sliding) ────────────────────────────────
 
 
 def compute_g2_spectral(works, citations, internal_edges, cfg):
-    """Spectral gap of normalized Laplacian (undirected version).
+    """Spectral gap divergence between before/after sliding windows.
+
+    Computes the absolute difference in spectral gap of the normalized
+    Laplacian between before and after windows.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    years = _get_years(works)
-    log.info("G2: Spectral gap")
-    results = {}
+    log.info("G2: Spectral gap divergence (sliding)")
+    results = []
 
-    for y, G_dir in _incremental_graphs(works, internal_edges, years):
-        G = G_dir.to_undirected()
+    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
+        gap_before = _spectral_gap(G_before)
+        gap_after = _spectral_gap(G_after)
 
-        if G.number_of_nodes() < 3:
-            results[y] = np.nan
-            continue
+        if np.isnan(gap_before) or np.isnan(gap_after):
+            value = np.nan
+        else:
+            value = abs(gap_after - gap_before)
 
-        components = list(nx.connected_components(G))
-        if not components:
-            results[y] = np.nan
-            continue
+        results.append(
+            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+        )
 
-        lcc = max(components, key=len)
-        if len(lcc) < 3:
-            results[y] = np.nan
-            continue
-
-        H = G.subgraph(lcc)
-        n = H.number_of_nodes()
-
-        try:
-            if n <= 200:
-                L = nx.normalized_laplacian_matrix(H).toarray()
-                eigenvalues = np.sort(np.linalg.eigvalsh(L))
-            else:
-                L = nx.normalized_laplacian_matrix(H).astype(float)
-                eigenvalues = np.sort(
-                    eigsh(L, k=min(2, n - 1), which="SM", return_eigenvectors=False)
-                )
-            if len(eigenvalues) >= 2:
-                results[y] = float(eigenvalues[1] - eigenvalues[0])
-            else:
-                results[y] = np.nan
-        except Exception as exc:
-            log.debug("G2 eigsh failed for year %d: %s", y, exc)
-            results[y] = np.nan
-
-    return _dict_to_df(results)
+    return pd.DataFrame(results)
 
 
 # ── G3: Bibliographic coupling age shift ──────────────────────────────────
@@ -241,7 +339,7 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
     return _dict_to_df(results)
 
 
-# ── G5: Preferential attachment exponent ──────────────────────────────────
+# ── G5: Preferential attachment exponent divergence (sliding) ────────────
 
 
 def _power_law(x, alpha, c):
@@ -250,64 +348,60 @@ def _power_law(x, alpha, c):
 
 
 def compute_g5_pa_exponent(works, citations, internal_edges, cfg):
-    """Power-law exponent of cumulative in-degree distribution.
+    """Power-law exponent divergence between before/after sliding windows.
+
+    Computes the absolute difference in fitted power-law exponent
+    of the in-degree distribution between before and after windows.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    years = _get_years(works)
-    log.info("G5: Preferential attachment exponent")
-    results = {}
+    log.info("G5: Preferential attachment exponent divergence (sliding)")
+    results = []
 
-    for y, G in _incremental_graphs(works, internal_edges, years):
-        in_degrees = np.array([d for _, d in G.in_degree()])
-        pos_deg = in_degrees[in_degrees > 0]
-        if len(pos_deg) < 10:
-            results[y] = np.nan
-            continue
+    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
+        alpha_before = _pa_exponent(G_before)
+        alpha_after = _pa_exponent(G_after)
 
-        unique_k, counts = np.unique(pos_deg, return_counts=True)
-        ccdf = np.cumsum(counts[::-1])[::-1] / len(pos_deg)
+        if np.isnan(alpha_before) or np.isnan(alpha_after):
+            value = np.nan
+        else:
+            value = abs(alpha_after - alpha_before)
 
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                popt, _ = curve_fit(
-                    _power_law,
-                    unique_k.astype(float),
-                    ccdf,
-                    p0=[1.5, 1.0],
-                    maxfev=5000,
-                )
-            results[y] = float(popt[0])
-        except (RuntimeError, ValueError):
-            results[y] = np.nan
+        results.append(
+            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+        )
 
-    return _dict_to_df(results)
+    return pd.DataFrame(results)
 
 
-# ── G6: Citation entropy ──────────────────────────────────────────────────
+# ── G6: Citation entropy divergence (sliding) ────────────────────────────
 
 
 def compute_g6_entropy(works, citations, internal_edges, cfg):
-    """Shannon entropy of in-degree distribution per yearly snapshot.
+    """Shannon entropy divergence between before/after sliding windows.
+
+    Computes the absolute difference in Shannon entropy of the
+    in-degree distribution between before and after windows.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    years = _get_years(works)
-    log.info("G6: Citation entropy")
-    results = {}
+    log.info("G6: Citation entropy divergence (sliding)")
+    results = []
 
-    for y, G in _incremental_graphs(works, internal_edges, years):
-        in_degrees = np.array([d for _, d in G.in_degree()])
-        pos_deg = in_degrees[in_degrees > 0]
-        if len(pos_deg) < 3:
-            results[y] = np.nan
-            continue
+    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
+        ent_before = _citation_entropy(G_before)
+        ent_after = _citation_entropy(G_after)
 
-        unique_k, counts = np.unique(pos_deg, return_counts=True)
-        results[y] = float(entropy(counts))
+        if np.isnan(ent_before) or np.isnan(ent_after):
+            value = np.nan
+        else:
+            value = abs(ent_after - ent_before)
 
-    return _dict_to_df(results)
+        results.append(
+            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+        )
+
+    return pd.DataFrame(results)
 
 
 # ── G7: Disruption index CD ──────────────────────────────────────────────
@@ -396,43 +490,34 @@ def compute_g7_disruption(works, citations, internal_edges, cfg):
     return _dict_to_df(results)
 
 
-# ── G8: Betweenness centrality ────────────────────────────────────────────
+# ── G8: Betweenness centrality divergence (sliding) ──────────────────────
 
 
 def compute_g8_betweenness(works, citations, internal_edges, cfg):
-    """Mean betweenness centrality of nodes in the largest connected component.
+    """Betweenness centrality divergence between before/after sliding windows.
+
+    Computes the absolute difference in mean betweenness centrality
+    of the largest connected component between before and after windows.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     cit_cfg = cfg["divergence"]["citation"]
     max_nodes = cit_cfg["G8_betweenness"]["max_nodes"]
-    years = _get_years(works)
 
-    log.info("G8: Betweenness centrality dynamics")
-    results = {}
+    log.info("G8: Betweenness centrality divergence (sliding)")
+    results = []
 
-    for y, G_dir in _incremental_graphs(works, internal_edges, years):
-        G = G_dir.to_undirected()
+    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
+        bc_before = _mean_betweenness(G_before, max_nodes)
+        bc_after = _mean_betweenness(G_after, max_nodes)
 
-        if G.number_of_nodes() < 3:
-            results[y] = np.nan
-            continue
-
-        components = list(nx.connected_components(G))
-        lcc = max(components, key=len)
-        if len(lcc) < 3:
-            results[y] = np.nan
-            continue
-
-        H = G.subgraph(lcc)
-        n = H.number_of_nodes()
-
-        if n > max_nodes:
-            bc = nx.betweenness_centrality(H, k=max_nodes)
+        if np.isnan(bc_before) or np.isnan(bc_after):
+            value = np.nan
         else:
-            bc = nx.betweenness_centrality(H)
+            value = abs(bc_after - bc_before)
 
-        vals = list(bc.values())
-        results[y] = float(np.mean(vals)) if vals else np.nan
+        results.append(
+            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+        )
 
-    return _dict_to_df(results)
+    return pd.DataFrame(results)
