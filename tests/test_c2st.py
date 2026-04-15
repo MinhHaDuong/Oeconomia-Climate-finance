@@ -131,7 +131,7 @@ class TestC2STLexicalSchema:
                 rows.append({"year": y, "abstract": text})
         df = pd.DataFrame(rows)
 
-        result = compute_c2st_lexical(df, None, cfg)
+        result = compute_c2st_lexical(df, cfg)
         assert len(result) > 0, "compute_c2st_lexical produced no rows"
 
         result["channel"] = "lexical"

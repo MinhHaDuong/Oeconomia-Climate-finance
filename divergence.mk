@@ -26,6 +26,8 @@ DIV_DISPATCH := scripts/compute_divergence.py
 
 DIV_METHODS_SEM := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet
 DIV_METHODS_LEX := L1 L2 L3
+DIV_METHODS_C2ST_SEM := C2ST_embedding
+DIV_METHODS_C2ST_LEX := C2ST_lexical
 DIV_METHODS_CIT := G1_pagerank G2_spectral G3_coupling_age G4_cross_tradition \
                    G5_pref_attachment G6_entropy G7_disruption G8_betweenness
 
@@ -34,7 +36,8 @@ DIV_METHODS_CIT := G1_pagerank G2_spectral G3_coupling_age G4_cross_tradition \
 DIV_CSV_SEM := $(foreach m,$(DIV_METHODS_SEM),$(DIV_TABLES)/tab_div_$(m).csv)
 DIV_CSV_LEX := $(foreach m,$(DIV_METHODS_LEX),$(DIV_TABLES)/tab_div_$(m).csv)
 DIV_CSV_CIT := $(foreach m,$(DIV_METHODS_CIT),$(DIV_TABLES)/tab_div_$(m).csv)
-DIV_CSV_ALL := $(DIV_CSV_SEM) $(DIV_CSV_LEX) $(DIV_CSV_CIT)
+DIV_CSV_C2ST := $(foreach m,$(DIV_METHODS_C2ST_SEM) $(DIV_METHODS_C2ST_LEX),$(DIV_TABLES)/tab_div_$(m).csv)
+DIV_CSV_ALL := $(DIV_CSV_SEM) $(DIV_CSV_LEX) $(DIV_CSV_CIT) $(DIV_CSV_C2ST)
 
 # ── Semantic methods (depend on embeddings) ──────────────────────────────
 
@@ -54,10 +57,20 @@ $(foreach m,$(DIV_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_citation.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
 	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
 
+# ── C2ST methods (embedding variant depends on embeddings, lexical on REFINED) ─
+
+$(foreach m,$(DIV_METHODS_C2ST_SEM),$(eval \
+$(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_c2st.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+
+$(foreach m,$(DIV_METHODS_C2ST_LEX),$(eval \
+$(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_c2st.py $(REFINED) $(DIV_CFG) ; \
+	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+
 # ── Convenience targets ──────────────────────────────────────────────────
 
 .PHONY: divergence-semantic
-divergence-semantic: $(DIV_CSV_SEM)
+divergence-semantic: $(DIV_CSV_SEM) $(DIV_CSV_C2ST)
 
 .PHONY: divergence-lexical
 divergence-lexical: $(DIV_CSV_LEX)

@@ -166,7 +166,7 @@ class TestModuleFunctions:
     def test_dispatcher_registry_complete(self):
         from compute_divergence import METHODS
 
-        assert len(METHODS) == 15
+        assert len(METHODS) == 17
         # Verify all three channels present
         channels = {v[2] for v in METHODS.values()}
         assert channels == {"semantic", "lexical", "citation"}
