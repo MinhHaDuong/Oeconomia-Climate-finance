@@ -9,7 +9,6 @@ Methods:
 
 """
 
-import os
 import warnings
 
 import numpy as np
@@ -17,7 +16,7 @@ import pandas as pd
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import entropy
 from sklearn.feature_extraction.text import TfidfVectorizer
-from utils import CATALOGS_DIR, get_logger
+from utils import get_logger
 
 log = get_logger("_divergence_lexical")
 
@@ -25,6 +24,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 # ── Data loading ───────────────────────────────────────────────────────────
+
 
 def load_lexical_data(input_path):
     """Load refined_works.csv, keep only rows with non-null abstracts.
@@ -45,18 +45,22 @@ def load_lexical_data(input_path):
         csv_path = input_path
 
     if csv_path is None:
-        csv_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
+        csv_path = REFINED_WORKS_PATH
 
-    df = pd.read_csv(csv_path, usecols=["year", "abstract"],
-                     dtype={"year": "Int64"})
+    df = pd.read_csv(csv_path, usecols=["year", "abstract"], dtype={"year": "Int64"})
     df = df.dropna(subset=["abstract", "year"]).copy()
     df["year"] = df["year"].astype(int)
-    log.info("Loaded %d works with abstracts (years %d-%d)",
-             len(df), df["year"].min(), df["year"].max())
+    log.info(
+        "Loaded %d works with abstracts (years %d-%d)",
+        len(df),
+        df["year"].min(),
+        df["year"].max(),
+    )
     return df
 
 
 # ── Shared helpers ─────────────────────────────────────────────────────────
+
 
 def _smooth_distribution(v, eps=1e-10):
     """Add epsilon smoothing and normalize to a probability distribution."""
@@ -71,6 +75,7 @@ def _smooth_distribution(v, eps=1e-10):
 from _divergence_io import get_min_papers as _get_min_papers
 
 # ── L1: JS divergence on TF-IDF distributions ────────────────────────────
+
 
 def compute_l1_js(df, cfg):
     """JS divergence between TF-IDF of before/after windows per year.
@@ -108,8 +113,7 @@ def compute_l1_js(df, cfg):
             texts_before = df.loc[mask_before, "abstract"].tolist()
             texts_after = df.loc[mask_after, "abstract"].tolist()
 
-            if (len(texts_before) < min_papers or
-                    len(texts_after) < min_papers):
+            if len(texts_before) < min_papers or len(texts_after) < min_papers:
                 continue
 
             X_before = vec.transform(texts_before)
@@ -124,18 +128,21 @@ def compute_l1_js(df, cfg):
             q = _smooth_distribution(agg_after)
 
             js = float(jensenshannon(p, q))
-            rows.append({
-                "year": y,
-                "window": str(w),
-                "hyperparams": f"w={w}",
-                "value": js,
-            })
+            rows.append(
+                {
+                    "year": y,
+                    "window": str(w),
+                    "hyperparams": f"w={w}",
+                    "value": js,
+                }
+            )
 
     log.info("  L1: %d data points", len(rows))
     return pd.DataFrame(rows)
 
 
 # ── L2: Novelty / Transience / Resonance ──────────────────────────────────
+
 
 def compute_l2_novelty(df, cfg):
     """Novelty, transience, resonance per year from KL divergence.
@@ -178,8 +185,7 @@ def compute_l2_novelty(df, cfg):
             # Future: [y+1, y+w]
             future_mask = (doc_years >= y + 1) & (doc_years <= y + w)
 
-            if (past_mask.sum() < min_papers or
-                    future_mask.sum() < min_papers):
+            if past_mask.sum() < min_papers or future_mask.sum() < min_papers:
                 continue
 
             # Aggregate past and future TF-IDF
@@ -215,21 +221,26 @@ def compute_l2_novelty(df, cfg):
             mean_transience = float(np.mean(transiences))
             mean_resonance = mean_novelty - mean_transience
 
-            for metric, val in [("novelty", mean_novelty),
-                                ("transience", mean_transience),
-                                ("resonance", mean_resonance)]:
-                rows.append({
-                    "year": y,
-                    "window": str(w),
-                    "hyperparams": f"w={w},metric={metric}",
-                    "value": val,
-                })
+            for metric, val in [
+                ("novelty", mean_novelty),
+                ("transience", mean_transience),
+                ("resonance", mean_resonance),
+            ]:
+                rows.append(
+                    {
+                        "year": y,
+                        "window": str(w),
+                        "hyperparams": f"w={w},metric={metric}",
+                        "value": val,
+                    }
+                )
 
     log.info("  L2: %d data points", len(rows))
     return pd.DataFrame(rows)
 
 
 # ── L3: Burst detection ───────────────────────────────────────────────────
+
 
 def compute_l3_bursts(df, cfg):
     """Count terms in burst (z > threshold) per year.
@@ -288,12 +299,14 @@ def compute_l3_bursts(df, cfg):
     rows = []
     for i, y in enumerate(years):
         n_burst = int((z_matrix[i] > z_threshold).sum())
-        rows.append({
-            "year": y,
-            "window": "0",
-            "hyperparams": f"top={n_top_terms},z_thresh={z_threshold}",
-            "value": n_burst,
-        })
+        rows.append(
+            {
+                "year": y,
+                "window": "0",
+                "hyperparams": f"top={n_top_terms},z_thresh={z_threshold}",
+                "value": n_burst,
+            }
+        )
 
     log.info("  L3: %d data points", len(rows))
     return pd.DataFrame(rows)

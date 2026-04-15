@@ -14,7 +14,6 @@ Methods:
 
 """
 
-import os
 import warnings
 
 import networkx as nx
@@ -23,7 +22,7 @@ import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy, kendalltau
-from utils import CATALOGS_DIR, get_logger
+from utils import get_logger
 
 log = get_logger("_divergence_citation")
 
@@ -31,6 +30,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 # ── Data loading ───────────────────────────────────────────────────────────
+
 
 def load_citation_data(input_paths):
     """Load works and citations DataFrames.
@@ -46,18 +46,25 @@ def load_citation_data(input_paths):
 
     """
     if input_paths and len(input_paths) >= 2:
-        works_path, cit_path = input_paths[0], input_paths[1]
+        works_path = input_paths[0]
+        works = pd.read_csv(
+            works_path,
+            usecols=["doi", "year", "cited_by_count"],
+            dtype={"year": float},
+        )
+        citations = pd.read_csv(input_paths[1])
     else:
-        works_path = os.path.join(CATALOGS_DIR, "refined_works.csv")
-        cit_path = os.path.join(CATALOGS_DIR, "refined_citations.csv")
+        works = pd.read_csv(
+            REFINED_WORKS_PATH,
+            usecols=["doi", "year", "cited_by_count"],
+            dtype={"year": float},
+        )
+        citations = load_refined_citations()
 
-    works = pd.read_csv(works_path, usecols=["doi", "year", "cited_by_count"],
-                         dtype={"year": float})
     works = works.dropna(subset=["doi"]).copy()
     works["doi"] = works["doi"].str.strip().str.lower()
     works["year"] = works["year"].astype(int)
 
-    citations = pd.read_csv(cit_path)
     citations["source_doi"] = citations["source_doi"].fillna("").str.strip().str.lower()
     citations["ref_doi"] = citations["ref_doi"].fillna("").str.strip().str.lower()
     if "ref_year" in citations.columns:
@@ -65,8 +72,12 @@ def load_citation_data(input_paths):
 
     internal_edges = _build_internal_edges(works, citations)
 
-    log.info("Loaded %d works, %d citation rows, %d internal edges",
-             len(works), len(citations), len(internal_edges))
+    log.info(
+        "Loaded %d works, %d citation rows, %d internal edges",
+        len(works),
+        len(citations),
+        len(internal_edges),
+    )
     return works, citations, internal_edges
 
 
@@ -78,17 +89,21 @@ def _build_internal_edges(works, citations):
     corpus_dois = set(works["doi"].values)
     doi_to_year = dict(zip(works["doi"], works["year"]))
 
-    mask = (citations["source_doi"].isin(corpus_dois) &
-            citations["ref_doi"].isin(corpus_dois) &
-            (citations["ref_doi"] != ""))
+    mask = (
+        citations["source_doi"].isin(corpus_dois)
+        & citations["ref_doi"].isin(corpus_dois)
+        & (citations["ref_doi"] != "")
+    )
     internal = citations.loc[mask, ["source_doi", "ref_doi"]].copy()
     internal["source_year"] = internal["source_doi"].map(doi_to_year)
-    log.info("Internal edges: %d / %d total citation rows",
-             len(internal), len(citations))
+    log.info(
+        "Internal edges: %d / %d total citation rows", len(internal), len(citations)
+    )
     return internal
 
 
 # ── Shared helpers ─────────────────────────────────────────────────────────
+
 
 def _get_years(works):
     """Return full year range from works."""
@@ -137,16 +152,19 @@ def _dict_to_df(results, hyperparams=""):
     """Convert {year: value} dict to DataFrame with standard columns."""
     rows = []
     for y, val in sorted(results.items()):
-        rows.append({
-            "year": y,
-            "window": "cumulative",
-            "hyperparams": hyperparams,
-            "value": val,
-        })
+        rows.append(
+            {
+                "year": y,
+                "window": "cumulative",
+                "hyperparams": hyperparams,
+                "value": val,
+            }
+        )
     return pd.DataFrame(rows)
 
 
 # ── G1: PageRank volatility ───────────────────────────────────────────────
+
 
 def compute_g1_pagerank(works, citations, internal_edges, cfg):
     """Kendall tau displacement of PageRank rankings year-to-year.
@@ -194,6 +212,7 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
 
 # ── G2: Spectral gap ─────────────────────────────────────────────────────
 
+
 def compute_g2_spectral(works, citations, internal_edges, cfg):
     """Spectral gap of normalized Laplacian (undirected version).
 
@@ -229,9 +248,9 @@ def compute_g2_spectral(works, citations, internal_edges, cfg):
                 eigenvalues = np.sort(np.linalg.eigvalsh(L))
             else:
                 L = nx.normalized_laplacian_matrix(H).astype(float)
-                eigenvalues = np.sort(eigsh(L, k=min(2, n - 1),
-                                            which="SM",
-                                            return_eigenvectors=False))
+                eigenvalues = np.sort(
+                    eigsh(L, k=min(2, n - 1), which="SM", return_eigenvectors=False)
+                )
             if len(eigenvalues) >= 2:
                 results[y] = float(eigenvalues[1] - eigenvalues[0])
             else:
@@ -244,6 +263,7 @@ def compute_g2_spectral(works, citations, internal_edges, cfg):
 
 
 # ── G3: Bibliographic coupling age shift ──────────────────────────────────
+
 
 def compute_g3_age_shift(works, citations, internal_edges, cfg):
     """Median publication year of references for papers published each year.
@@ -263,9 +283,8 @@ def compute_g3_age_shift(works, citations, internal_edges, cfg):
             continue
 
         refs = citations.loc[
-            citations["source_doi"].isin(year_dois) &
-            citations["ref_year"].notna(),
-            "ref_year"
+            citations["source_doi"].isin(year_dois) & citations["ref_year"].notna(),
+            "ref_year",
         ]
         if len(refs) < 3:
             results[y] = np.nan
@@ -278,6 +297,7 @@ def compute_g3_age_shift(works, citations, internal_edges, cfg):
 
 # ── G4: Cross-tradition citation ratio ────────────────────────────────────
 
+
 def _bisect_communities(G_und):
     """Split an undirected graph into 2 communities.
 
@@ -286,6 +306,7 @@ def _bisect_communities(G_und):
     """
     try:
         from networkx.algorithms.community import spectral_bisection
+
         c1, c2 = spectral_bisection(G_und)
         return {n: 0 for n in c1} | {n: 1 for n in c2}
     except Exception:
@@ -333,8 +354,9 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
         return _dict_to_df({y: np.nan for y in years})
 
     for y in years:
-        new_edges = internal_edges.loc[internal_edges["source_year"] == y,
-                                        ["source_doi", "ref_doi"]]
+        new_edges = internal_edges.loc[
+            internal_edges["source_year"] == y, ["source_doi", "ref_doi"]
+        ]
         if len(new_edges) < 2:
             results[y] = np.nan
             continue
@@ -354,6 +376,7 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
 
 
 # ── G5: Preferential attachment exponent ──────────────────────────────────
+
 
 def _power_law(x, alpha, c):
     """Power-law CCDF: P(X >= x) = c * x^(-alpha)."""
@@ -380,8 +403,9 @@ def compute_g5_pa_exponent(works, citations, internal_edges, cfg):
         ccdf = np.cumsum(counts[::-1])[::-1] / len(pos_deg)
 
         try:
-            popt, _ = curve_fit(_power_law, unique_k.astype(float), ccdf,
-                                p0=[1.5, 1.0], maxfev=5000)
+            popt, _ = curve_fit(
+                _power_law, unique_k.astype(float), ccdf, p0=[1.5, 1.0], maxfev=5000
+            )
             results[y] = float(popt[0])
         except (RuntimeError, ValueError):
             results[y] = np.nan
@@ -390,6 +414,7 @@ def compute_g5_pa_exponent(works, citations, internal_edges, cfg):
 
 
 # ── G6: Citation entropy ──────────────────────────────────────────────────
+
 
 def compute_g6_entropy(works, citations, internal_edges, cfg):
     """Shannon entropy of in-degree distribution per yearly snapshot.
@@ -415,6 +440,7 @@ def compute_g6_entropy(works, citations, internal_edges, cfg):
 
 # ── G7: Disruption index CD ──────────────────────────────────────────────
 
+
 def _g7_ref_year_proxy(works, citations, years):
     """Proxy when internal edges are too sparse: IQR of ref_year."""
     results = {}
@@ -424,9 +450,8 @@ def _g7_ref_year_proxy(works, citations, years):
             results[y] = np.nan
             continue
         refs = citations.loc[
-            citations["source_doi"].isin(year_dois) &
-            citations["ref_year"].notna(),
-            "ref_year"
+            citations["source_doi"].isin(year_dois) & citations["ref_year"].notna(),
+            "ref_year",
         ]
         if len(refs) < 5:
             results[y] = np.nan
@@ -449,27 +474,22 @@ def compute_g7_disruption(works, citations, internal_edges, cfg):
     results = {}
 
     if len(internal_edges) < 5:
-        log.info("G7: Too few internal edges (%d), using ref_year shift proxy",
-                 len(internal_edges))
-        return _dict_to_df(_g7_ref_year_proxy(works, citations, years),
-                           hyperparams="mode=proxy")
+        log.info(
+            "G7: Too few internal edges (%d), using ref_year shift proxy",
+            len(internal_edges),
+        )
+        return _dict_to_df(
+            _g7_ref_year_proxy(works, citations, years), hyperparams="mode=proxy"
+        )
 
     corpus_dois = set(works["doi"].values)
 
     # Build paper_refs: {source_doi -> set of ref_dois} using vectorized filter
     corpus_cit = citations.loc[citations["source_doi"].isin(corpus_dois)]
-    paper_refs = (
-        corpus_cit.groupby("source_doi")["ref_doi"]
-        .apply(set)
-        .to_dict()
-    )
+    paper_refs = corpus_cit.groupby("source_doi")["ref_doi"].apply(set).to_dict()
 
     # Build paper_citers: {ref_doi -> set of source_dois} using vectorized groupby
-    paper_citers = (
-        internal_edges.groupby("ref_doi")["source_doi"]
-        .apply(set)
-        .to_dict()
-    )
+    paper_citers = internal_edges.groupby("ref_doi")["source_doi"].apply(set).to_dict()
 
     for y in years:
         year_papers = works.loc[works["year"] == y, "doi"].values
@@ -505,6 +525,7 @@ def compute_g7_disruption(works, citations, internal_edges, cfg):
 
 
 # ── G8: Betweenness centrality ────────────────────────────────────────────
+
 
 def compute_g8_betweenness(works, citations, internal_edges, cfg):
     """Mean betweenness centrality of nodes in the largest connected component.
