@@ -18,6 +18,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from _divergence_io import load_divergence_tables
 from pipeline_io import save_figure
 from plot_style import DARK, DPI, FIGWIDTH, MED, apply_style
 from script_io_args import parse_io_args, validate_io
@@ -55,39 +56,18 @@ CONVERGENCE_THRESHOLD = 0.50
 
 
 def _load_divergence_for_heatmap(breaks_path):
-    """Load breaks table and derive divergence data paths.
-
-    Uses the same directory as the breaks file to find divergence CSVs.
-    Returns (breaks_df, div_df) where div_df has method, year, z_value.
-    """
+    """Load breaks table and auto-discover divergence CSVs in same directory."""
     import glob as globmod
 
     breaks_df = pd.read_csv(breaks_path)
     tables_dir = os.path.dirname(breaks_path)
 
-    # Load divergence data (try new format then legacy)
     div_paths = sorted(globmod.glob(os.path.join(tables_dir, "tab_div_*.csv")))
     if not div_paths:
         div_paths = sorted(globmod.glob(
-            os.path.join(tables_dir, "tab_*_divergence.csv")
-        ))
+            os.path.join(tables_dir, "tab_*_divergence.csv")))
 
-    frames = []
-    for path in div_paths:
-        df = pd.read_csv(path)
-        if "method" not in df.columns:
-            basename = os.path.splitext(os.path.basename(path))[0]
-            if basename.startswith("tab_div_"):
-                df["method"] = basename[len("tab_div_"):]
-            else:
-                continue
-        frames.append(df)
-
-    if frames:
-        div_df = pd.concat(frames, ignore_index=True)
-    else:
-        div_df = pd.DataFrame()
-
+    div_df, _ = load_divergence_tables(div_paths)
     return breaks_df, div_df
 
 

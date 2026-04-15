@@ -127,8 +127,6 @@ def _pick_base_hp(df):
     return base_hps[0] if base_hps else ""
 
 
-# _extract_method_from_path and _load_tables live in _divergence_io.py
-
 
 def _get_break_years(breaks_df, method, penalty=BREAK_PENALTY):
     """Extract break years for a method at given penalty.
