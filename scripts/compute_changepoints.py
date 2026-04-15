@@ -324,6 +324,17 @@ def main():
     log.info("Loaded %d divergence rows across %d methods",
              len(div_df), div_df["method"].nunique())
 
+    # Year-range coherence check
+    methods = div_df.groupby("method")["year"].agg(["min", "max"])
+    year_min = methods["min"].max()  # latest start
+    year_max = methods["max"].min()  # earliest end
+    log.info("Year intersection: %d-%d (union: %d-%d)",
+             year_min, year_max, methods["min"].min(), methods["max"].max())
+    if methods["min"].nunique() > 1 or methods["max"].nunique() > 1:
+        log.warning("Methods cover different year ranges:")
+        for m, row in methods.iterrows():
+            log.warning("  %s: %d-%d", m, row["min"], row["max"])
+
     # Compute breaks
     breaks_df = compute_breaks(div_df, pelt_penalties, dynp_n_bkps)
     log.info("Computed %d break rows", len(breaks_df))

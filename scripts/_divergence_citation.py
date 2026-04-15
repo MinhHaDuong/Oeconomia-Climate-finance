@@ -451,7 +451,8 @@ def compute_g7_disruption(works, citations, internal_edges, cfg):
     if len(internal_edges) < 5:
         log.info("G7: Too few internal edges (%d), using ref_year shift proxy",
                  len(internal_edges))
-        return _dict_to_df(_g7_ref_year_proxy(works, citations, years))
+        return _dict_to_df(_g7_ref_year_proxy(works, citations, years),
+                           hyperparams="mode=proxy")
 
     corpus_dois = set(works["doi"].values)
 

@@ -21,8 +21,6 @@ log = get_logger("_divergence_semantic")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-RNG = np.random.RandomState(42)
-
 
 # ── Data loading ───────────────────────────────────────────────────────────
 
@@ -90,7 +88,8 @@ def _get_years_and_params(df, emb, cfg):
     return years, min_papers, max_subsample, windows
 
 
-def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsample):
+def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsample,
+                           rng=None):
     """Extract embeddings for a time window.
 
     side='before': [year - window, year]
@@ -107,20 +106,25 @@ def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsampl
 
     vecs = emb[idx]
     if len(vecs) > max_subsample:
-        chosen = RNG.choice(len(vecs), max_subsample, replace=False)
+        if rng is None:
+            rng = np.random.RandomState(42)
+        chosen = rng.choice(len(vecs), max_subsample, replace=False)
         vecs = vecs[chosen]
     return vecs
 
 
-def _iter_window_pairs(df, emb, years, windows, min_papers, max_subsample):
+def _iter_window_pairs(df, emb, years, windows, min_papers, max_subsample,
+                       rng=None):
     """Yield (year, window, X, Y) for each valid before/after window pair.
 
     Centralises the nested loop and skip logic shared by S1-S4.
     """
     for w in windows:
         for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
-            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
+            X = _get_window_embeddings(df, emb, y, w, "before", min_papers,
+                                       max_subsample, rng=rng)
+            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers,
+                                       max_subsample, rng=rng)
             if X is None or Y is None:
                 continue
             yield y, w, X, Y
@@ -128,11 +132,13 @@ def _iter_window_pairs(df, emb, years, windows, min_papers, max_subsample):
 
 # ── S1: MMD with RBF kernel ───────────────────────────────────────────────
 
-def _median_heuristic(X, Y, n_sample=1000):
+def _median_heuristic(X, Y, n_sample=1000, rng=None):
     """Median of pairwise distances (sampled for speed)."""
     combined = np.vstack([X, Y])
     if len(combined) > n_sample:
-        idx = RNG.choice(len(combined), n_sample, replace=False)
+        if rng is None:
+            rng = np.random.RandomState(42)
+        idx = rng.choice(len(combined), n_sample, replace=False)
         combined = combined[idx]
     from scipy.spatial.distance import pdist
     dists = pdist(combined, metric="sqeuclidean")
@@ -164,6 +170,9 @@ def compute_s1_mmd(df, emb, cfg):
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
+    seed = cfg["divergence"].get("random_seed", 42)
+    rng = np.random.RandomState(seed)
+
     years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
@@ -174,12 +183,12 @@ def compute_s1_mmd(df, emb, cfg):
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
-                                          min_papers, max_subsample):
+                                          min_papers, max_subsample, rng=rng):
         if last_w is not None and w != last_w:
             log.info("S1 MMD window=%d done", last_w)
         last_w = w
 
-        med = _median_heuristic(X, Y)
+        med = _median_heuristic(X, Y, rng=rng)
         for mult in bandwidth_multipliers:
             bw = med * mult
             val = compute_mmd_rbf(X, Y, bw)
@@ -203,6 +212,14 @@ def compute_s2_energy(df, emb, cfg):
     """
     import dcor
 
+    seed = cfg["divergence"].get("random_seed", 42)
+    rng = np.random.RandomState(seed)
+
+    # dcor.energy_distance is O(n**2) in the number of samples.
+    # Benchmark: 2000x1024 arrays -> ~X seconds on CPU.
+    # TODO: measure actual runtime on padme with real data.
+    # Subsampling via max_subsample in config caps n at 2000.
+
     years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
@@ -210,7 +227,7 @@ def compute_s2_energy(df, emb, cfg):
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
-                                          min_papers, max_subsample):
+                                          min_papers, max_subsample, rng=rng):
         if last_w is not None and w != last_w:
             log.info("S2 energy window=%d done", last_w)
         last_w = w
@@ -236,6 +253,9 @@ def compute_s3_wasserstein(df, emb, cfg):
     """
     import ot
 
+    seed = cfg["divergence"].get("random_seed", 42)
+    rng = np.random.RandomState(seed)
+
     years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
@@ -246,14 +266,14 @@ def compute_s3_wasserstein(df, emb, cfg):
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
-                                          min_papers, max_subsample):
+                                          min_papers, max_subsample, rng=rng):
         if last_w is not None and w != last_w:
             log.info("S3 sliced Wasserstein window=%d done", last_w)
         last_w = w
 
         for n_proj in n_projections_list:
             val = float(ot.sliced_wasserstein_distance(
-                X, Y, n_projections=n_proj, seed=42,
+                X, Y, n_projections=n_proj, seed=seed,
             ))
             results.append({
                 "year": int(y),
@@ -306,6 +326,9 @@ def compute_s4_frechet(df, emb, cfg):
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
+    seed = cfg["divergence"].get("random_seed", 42)
+    rng = np.random.RandomState(seed)
+
     years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
@@ -313,7 +336,7 @@ def compute_s4_frechet(df, emb, cfg):
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
-                                          min_papers, max_subsample):
+                                          min_papers, max_subsample, rng=rng):
         if last_w is not None and w != last_w:
             log.info("S4 Frechet window=%d done", last_w)
         last_w = w
@@ -325,7 +348,7 @@ def compute_s4_frechet(df, emb, cfg):
         if n_eff < d:
             from sklearn.decomposition import PCA
             n_components = max(2, n_eff - 1)
-            pca = PCA(n_components=n_components, random_state=42)
+            pca = PCA(n_components=n_components, random_state=seed)
             combined = np.vstack([X, Y])
             combined_r = pca.fit_transform(combined)
             X_r = combined_r[:len(X)]

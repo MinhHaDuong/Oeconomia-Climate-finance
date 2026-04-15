@@ -253,6 +253,7 @@ class TestConvergence:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.slow
 class TestSmoke:
     """Run compute_changepoints.py on available divergence data."""
 
@@ -309,3 +310,127 @@ class TestSmoke:
             "n_total", "pct_total", "methods_detecting",
         }
         assert set(conv_df.columns) == conv_expected
+
+
+# ---------------------------------------------------------------------------
+# compute_convergence.py CLI smoke test
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+class TestComputeConvergenceScript:
+    """Test compute_convergence.py CLI on synthetic changepoints data."""
+
+    def test_convergence_script_smoke(self, tmp_path):
+        """Run compute_convergence.py on changepoints output."""
+        # Create a synthetic changepoints CSV
+        breaks_df = pd.DataFrame({
+            "method": ["S1_MMD", "L1", "G1_pagerank", "S2_energy"],
+            "channel": ["semantic", "lexical", "citation", "semantic"],
+            "window": ["3", "3", "cumulative", "3"],
+            "hyperparams": ["", "", "", ""],
+            "detector": ["pelt", "pelt", "pelt", "pelt"],
+            "detector_params": ["pen=3", "pen=3", "pen=3", "pen=3"],
+            "break_years": ["2007;2013", "2007", "2013", "2008"],
+        })
+        input_path = tmp_path / "tab_changepoints.csv"
+        breaks_df.to_csv(input_path, index=False)
+
+        output_path = tmp_path / "tab_convergence.csv"
+        result = subprocess.run(
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "compute_convergence.py"),
+                "--output", str(output_path),
+                "--input", str(input_path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0, (
+            f"compute_convergence.py failed:\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+        assert output_path.exists(), "Convergence CSV not created"
+        conv_df = pd.read_csv(output_path)
+        expected_cols = {
+            "year", "n_semantic", "n_lexical", "n_citation",
+            "n_total", "pct_total", "methods_detecting",
+        }
+        assert set(conv_df.columns) == expected_cols
+        assert len(conv_df) > 0
+
+
+# ---------------------------------------------------------------------------
+# plot_convergence.py smoke test
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+class TestPlotConvergence:
+    """Test plot_convergence.py produces a PNG without error."""
+
+    def test_plot_convergence_smoke(self, tmp_path):
+        """plot_convergence.py produces a PNG without error."""
+        # Create synthetic divergence + changepoints data
+        years = list(range(2005, 2020))
+
+        # Divergence CSV
+        div_rows = []
+        for method in ["S1_MMD", "L1"]:
+            channel = "semantic" if method.startswith("S") else "lexical"
+            for y in years:
+                div_rows.append({
+                    "year": y, "channel": channel, "window": "3",
+                    "hyperparams": "default", "value": float(y - 2005) * 0.1,
+                })
+        div_df = pd.DataFrame(div_rows)
+        div_path = tmp_path / "tab_div_S1_MMD.csv"
+        div_s1 = div_df[div_df["channel"] == "semantic"]
+        div_s1.to_csv(div_path, index=False)
+
+        div_l1_path = tmp_path / "tab_div_L1.csv"
+        div_l1 = div_df[div_df["channel"] == "lexical"]
+        div_l1.to_csv(div_l1_path, index=False)
+
+        # Changepoints CSV
+        breaks_df = pd.DataFrame({
+            "method": ["S1_MMD", "L1"],
+            "channel": ["semantic", "lexical"],
+            "window": ["3", "3"],
+            "hyperparams": ["default", "default"],
+            "detector": ["pelt", "pelt"],
+            "detector_params": ["pen=3", "pen=3"],
+            "break_years": ["2010", "2010"],
+        })
+        breaks_path = tmp_path / "tab_changepoints.csv"
+        breaks_df.to_csv(breaks_path, index=False)
+
+        # Convergence CSV (sibling file)
+        from compute_changepoints import compute_convergence
+        conv_df = compute_convergence(breaks_df)
+        conv_path = tmp_path / "tab_changepoints_convergence.csv"
+        conv_df.to_csv(conv_path, index=False)
+
+        # Run plot
+        fig_out = tmp_path / "fig_convergence.png"
+        result = subprocess.run(
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "plot_convergence.py"),
+                "--output", str(fig_out),
+                "--input", str(breaks_path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0, (
+            f"plot_convergence.py failed:\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+        assert fig_out.exists(), (
+            f"Expected {fig_out} but found: "
+            f"{[f.name for f in tmp_path.iterdir()]}"
+        )

@@ -20,6 +20,7 @@ clustering:
 # Window is "2","3","4","5" or "cumulative" for citation graph methods.
 
 divergence:
+  random_seed: 42
   windows: [2, 3, 4, 5]
   min_papers: 30          # per window minimum (override with 5 for smoke)
   min_papers_smoke: 5     # auto-detected when n_works < 200

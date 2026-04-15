@@ -88,6 +88,8 @@ def run_pca_sweep(df, emb, cfg, method_name):
     """Run PCA dimensionality sweep: project to d dims, compute divergence."""
     from sklearn.decomposition import PCA
 
+    seed = cfg["divergence"].get("random_seed", 42)
+
     func = _get_method_func(method_name)
     sens_cfg = _make_sensitivity_cfg(cfg)
     frames = []
@@ -105,7 +107,7 @@ def run_pca_sweep(df, emb, cfg, method_name):
             log.info("Skipping PCA d=%d (>= max_components %d)", d, max_components)
             continue
         log.info("PCA projecting to d=%d", d)
-        pca = PCA(n_components=d, random_state=42)
+        pca = PCA(n_components=d, random_state=seed)
         emb_proj = pca.fit_transform(emb)
         result = func(df, emb_proj, sens_cfg)
         result = _append_projection_tag(result, f"pca_{d}")
@@ -121,6 +123,8 @@ def run_jl_sweep(df, emb, cfg, method_name):
     import pandas as pd
     from sklearn.random_projection import GaussianRandomProjection
 
+    base_seed = cfg["divergence"].get("random_seed", 42)
+
     func = _get_method_func(method_name)
     sens_cfg = _make_sensitivity_cfg(cfg)
     frames = []
@@ -130,7 +134,7 @@ def run_jl_sweep(df, emb, cfg, method_name):
             log.info("Skipping JL d=%d (>= original %d)", d, emb.shape[1])
             continue
         for r in range(JL_RUNS):
-            seed = 42 + r
+            seed = base_seed + r
             log.info("JL d=%d run=%02d (seed=%d)", d, r, seed)
             transformer = GaussianRandomProjection(
                 n_components=d, random_state=seed,

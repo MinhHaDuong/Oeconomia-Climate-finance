@@ -138,6 +138,7 @@ class TestPCABreakPreservation:
 # Smoke tests: run dispatcher on fixture data
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 @pytest.mark.integration
 class TestSmokePCA:
     """PCA sweep on 100-row smoke fixture."""
@@ -175,6 +176,7 @@ class TestSmokePCA:
         DivergenceSchema.validate(df)
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 class TestSmokeJL:
     """JL sweep on 100-row smoke fixture.
@@ -215,6 +217,7 @@ class TestSmokeJL:
 # Plot script smoke test
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 @pytest.mark.integration
 class TestPlotSmoke:
     """Verify plot script runs without error on PCA sensitivity output."""
