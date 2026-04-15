@@ -1,12 +1,13 @@
 %erg v1
 Title: GPU acceleration for semantic divergence methods S1-S4
-Status: open
+Status: in-progress
 Created: 2026-04-15
 Author: user
 
 --- log ---
 2026-04-15T20:00Z claude created
 2026-04-15T20:00Z claude note from simplify review; padme A4000 16GB
+2026-04-15T22:00Z claude status implemented — branch t0037-gpu-acceleration pushed, 8/8 tests pass
 
 --- body ---
 ## Context
