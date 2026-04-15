@@ -26,7 +26,12 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def load_semantic_data(input_paths):
-    """Load works CSV and embeddings from CATALOGS_DIR or --input.
+    """Load works CSV and embeddings.
+
+    Parameters
+    ----------
+    input_paths : list[str] | None
+        If provided, [works_csv, embeddings_npz] (used by tests).
 
     Returns
     -------
@@ -35,34 +40,27 @@ def load_semantic_data(input_paths):
     """
     if input_paths:
         csv_path = input_paths[0]
-        emb_path = input_paths[1] if len(input_paths) > 1 else None
-        if emb_path is None:
-            emb_path = os.path.join(os.path.dirname(csv_path), "refined_embeddings.npz")
-        df = pd.read_csv(csv_path, usecols=["year", "cited_by_count"])
+        emb_path = (
+            input_paths[1]
+            if len(input_paths) > 1
+            else os.path.join(os.path.dirname(csv_path), "refined_embeddings.npz")
+        )
         emb = np.load(emb_path)["vectors"]
     else:
-        df = pd.read_csv(REFINED_WORKS_PATH, usecols=["year", "cited_by_count"])
+        csv_path = REFINED_WORKS_PATH
         emb = load_refined_embeddings()
 
+    df = pd.read_csv(csv_path, usecols=["year", "cited_by_count"])
     df["year"] = df["year"].astype("Int64")
     df = df.dropna(subset=["year"]).reset_index(drop=True)
 
-    # Align: embeddings must match df rows
     if len(emb) != len(df):
-        n = min(len(emb), len(df))
-        log.warning(
-            "Row count mismatch (df=%d, emb=%d); truncating to %d", len(df), len(emb), n
+        raise RuntimeError(
+            f"Embedding/works row mismatch ({len(emb)} vs {len(df)}). "
+            "Re-run: make corpus-align"
         )
-        df = df.iloc[:n].reset_index(drop=True)
-        emb = emb[:n]
 
-    log.info(
-        "Loaded %d works, embeddings shape %s, years %d-%d",
-        len(df),
-        emb.shape,
-        int(df["year"].min()),
-        int(df["year"].max()),
-    )
+    log.info("Loaded %d works, embeddings %s", len(df), emb.shape)
     return df, emb
 
 

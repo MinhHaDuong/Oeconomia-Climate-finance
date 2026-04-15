@@ -33,47 +33,37 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 def load_citation_data(input_paths):
-    """Load works and citations DataFrames.
+    """Load works and citations, build internal edge list.
 
     Parameters
     ----------
     input_paths : list[str] | None
-        If provided, [works_path, citations_path].
+        If provided, [works_csv, citations_csv] (used by tests).
 
     Returns
     -------
     (works, citations, internal_edges) : tuple
 
     """
-    if input_paths and len(input_paths) >= 2:
-        works_path = input_paths[0]
-        works = pd.read_csv(
-            works_path,
-            usecols=["doi", "year", "cited_by_count"],
-            dtype={"year": float},
-        )
-        citations = pd.read_csv(input_paths[1])
-    else:
-        works = pd.read_csv(
-            REFINED_WORKS_PATH,
-            usecols=["doi", "year", "cited_by_count"],
-            dtype={"year": float},
-        )
-        citations = load_refined_citations()
-
+    works_path = (
+        input_paths[0] if input_paths and len(input_paths) >= 2 else REFINED_WORKS_PATH
+    )
+    works = pd.read_csv(
+        works_path,
+        usecols=["doi", "year", "cited_by_count"],
+        dtype={"year": float},
+    )
     works = works.dropna(subset=["doi"]).copy()
-    works["doi"] = works["doi"].str.strip().str.lower()
     works["year"] = works["year"].astype(int)
 
-    citations["source_doi"] = citations["source_doi"].fillna("").str.strip().str.lower()
-    citations["ref_doi"] = citations["ref_doi"].fillna("").str.strip().str.lower()
-    if "ref_year" in citations.columns:
-        citations["ref_year"] = pd.to_numeric(citations["ref_year"], errors="coerce")
+    if input_paths and len(input_paths) >= 2:
+        citations = pd.read_csv(input_paths[1])
+    else:
+        citations = load_refined_citations()
 
     internal_edges = _build_internal_edges(works, citations)
-
     log.info(
-        "Loaded %d works, %d citation rows, %d internal edges",
+        "Loaded %d works, %d citations, %d internal edges",
         len(works),
         len(citations),
         len(internal_edges),

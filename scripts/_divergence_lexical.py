@@ -32,26 +32,18 @@ def load_lexical_data(input_path):
     Parameters
     ----------
     input_path : str | list[str] | None
-        Path to refined_works.csv (or list whose first element is the path).
-
-    Returns
-    -------
-    pd.DataFrame
+        Path to refined_works.csv (used by tests).
 
     """
     if isinstance(input_path, list):
-        csv_path = input_path[0] if input_path else None
-    else:
-        csv_path = input_path
-
-    if csv_path is None:
-        csv_path = REFINED_WORKS_PATH
+        input_path = input_path[0] if input_path else None
+    csv_path = input_path or REFINED_WORKS_PATH
 
     df = pd.read_csv(csv_path, usecols=["year", "abstract"], dtype={"year": "Int64"})
     df = df.dropna(subset=["abstract", "year"]).copy()
     df["year"] = df["year"].astype(int)
     log.info(
-        "Loaded %d works with abstracts (years %d-%d)",
+        "Loaded %d works with abstracts (years %d–%d)",
         len(df),
         df["year"].min(),
         df["year"].max(),
