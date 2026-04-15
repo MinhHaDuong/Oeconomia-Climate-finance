@@ -56,10 +56,12 @@ after are no longer systematically different under the null.
 ```
 Raw data
   → Layer 1: method-specific correction
-    → Corrected divergence + bootstrap CIs  [estimation]
+    → Corrected divergence (point estimate = bootstrap median)
     → Layer 2: same-pool null on corrected data  [significance]
       → p-value per (method, year)
         → Convergence: which years significant across methods?
+Bootstrap CIs on data curves go in supplementary table (ticket 0047),
+not on figures.
 ```
 
 ## Actions
@@ -82,8 +84,19 @@ Raw data
 
 ### Visualization A: null envelope on per-method plots
 6. Grey ribbon = null 95% CI. Observed corrected curve on top.
-   Where curve exits ribbon = significant. Bootstrap CI as thinner
-   ribbon around the observed curve.
+   Where curve exits ribbon = significant. No bootstrap CI ribbon
+   on figures (goes in supplementary table, ticket 0047).
+
+### Variant reduction: max 4 curves per figure
+   - S1 MMD: w=2,3,4 × bw=1x_median only (drop w=5, drop 0.5x/2x)
+   - S2 energy: w=2,3,4 (no hyperparams → 3 curves)
+   - S3 Wasserstein: w=2,3,4 × n_proj=500 only (drop w=5, drop 100/1000)
+   - S4 Fréchet: w=2,3,4 (no hyperparams → 3 curves)
+   - L1-L3: w=2,3,4 (drop w=5)
+   - G methods: single curve (sliding window, one window size)
+   - Sensitivity: original + 256d + 32d only (drop 64/128/512)
+   Configure in config/analysis.yaml under a `plot` section, or
+   hardcode in plot_divergence.py as default display variants.
 
 ### Visualization C: significance heatmap
 7. Replace raw z-score heatmap with significance heatmap.
