@@ -23,8 +23,6 @@ import pytest
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(REPO, "scripts")
 MAKEFILE = os.path.join(REPO, "Makefile")
-# Archived scripts are preserved for reference but not subject to checks.
-ARCHIVE_DIR = os.path.join(SCRIPTS_DIR, "archive")
 
 # ---------------------------------------------------------------------------
 # Helpers (shared with test_script_hygiene.py — duplicated to avoid coupling)
@@ -52,6 +50,17 @@ def _read_script(name):
     with open(path) as f:
         return f.read()
 
+
+# Phase 2 script prefixes (used by multiple test classes).
+# summarize_* is Phase 1 enrichment (writes to enrich_cache/), not Phase 2.
+_PHASE2_PREFIXES = (
+    "analyze_",
+    "compute_",
+    "plot_",
+    "export_",
+    "summarize_",
+    "build_het_core",
+)
 
 # ---------------------------------------------------------------------------
 # Phase separation: Phase 2 not in DVC
@@ -243,15 +252,6 @@ class TestNoHardcodedSeeds:
     parameters (random_state=N, seed=N) and RandomState(N) calls.
     """
 
-    _PHASE2_PREFIXES = (
-        "analyze_",
-        "compute_",
-        "plot_",
-        "export_",
-        "summarize_",
-        "build_het_core",
-    )
-
     # Pre-existing violations. Remove entries as they are migrated to config.
     KNOWN_VIOLATIONS = {
         "analyze_bimodality.py",
@@ -294,7 +294,7 @@ class TestNoHardcodedSeeds:
         """No Phase 2 script (outside known violations) may hardcode seeds."""
         violations = []
         for name in _all_scripts():
-            if not name.startswith(self._PHASE2_PREFIXES):
+            if not name.startswith(_PHASE2_PREFIXES):
                 continue
             if name in self.KNOWN_VIOLATIONS:
                 continue
@@ -335,15 +335,6 @@ class TestCorpusThroughLoaders:
     filenames (refined_works, refined_embeddings, refined_citations).
     """
 
-    _PHASE2_PREFIXES = (
-        "analyze_",
-        "compute_",
-        "plot_",
-        "export_",
-        "summarize_",
-        "build_het_core",
-    )
-
     # The loader module itself is obviously exempt.
     _EXEMPT = {"pipeline_loaders.py"}
 
@@ -365,7 +356,11 @@ class TestCorpusThroughLoaders:
     _DIRECT_READ = re.compile(r"read_csv|read_feather|np\.load")
 
     def _has_direct_contract_read(self, source):
-        """Return True if source reads a contract file without loaders."""
+        """Return True if source reads a contract file without loaders.
+
+        Checks each non-comment line for both a direct-read call (read_csv,
+        np.load, read_feather) and a contract filename on the same line.
+        """
         for line in source.splitlines():
             stripped = line.strip()
             if stripped.startswith("#"):
@@ -381,7 +376,7 @@ class TestCorpusThroughLoaders:
         files directly — use pipeline_loaders instead."""
         violations = []
         for name in _all_scripts():
-            if not name.startswith(self._PHASE2_PREFIXES):
+            if not name.startswith(_PHASE2_PREFIXES):
                 continue
             if name in self._EXEMPT or name in self.KNOWN_VIOLATIONS:
                 continue
