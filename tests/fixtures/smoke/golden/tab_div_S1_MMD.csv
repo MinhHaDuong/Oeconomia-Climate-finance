@@ -26,11 +26,8 @@ year,window,hyperparams,value,channel
 2018,2,bw=0.5x_median,0.008905759282172854,semantic
 2018,2,bw=1.0x_median,0.007502364197146338,semantic
 2018,2,bw=2.0x_median,0.004868740997428844,semantic
-2019,2,bw=0.5x_median,0.003736312472472525,semantic
-2019,2,bw=1.0x_median,0.0030802780559824328,semantic
-2019,2,bw=2.0x_median,0.0019708636448765304,semantic
 2010,3,bw=0.5x_median,0.02950309659638828,semantic
-2010,3,bw=1.0x_median,0.020523964487530577,semantic
+2010,3,bw=1.0x_median,0.020523964487530355,semantic
 2010,3,bw=2.0x_median,0.012077384298700977,semantic
 2011,3,bw=0.5x_median,0.0027901088876768343,semantic
 2011,3,bw=1.0x_median,0.0024548011979341755,semantic
@@ -56,9 +53,6 @@ year,window,hyperparams,value,channel
 2018,3,bw=0.5x_median,0.009162711480231067,semantic
 2018,3,bw=1.0x_median,0.008002344713540221,semantic
 2018,3,bw=2.0x_median,0.005294866360400441,semantic
-2019,3,bw=0.5x_median,0.0016350541282942332,semantic
-2019,3,bw=1.0x_median,0.0011971749404673382,semantic
-2019,3,bw=2.0x_median,0.0007189899923842891,semantic
 2010,4,bw=0.5x_median,0.026688385325724817,semantic
 2010,4,bw=1.0x_median,0.019091697679036512,semantic
 2010,4,bw=2.0x_median,0.011421303420675377,semantic
@@ -86,15 +80,12 @@ year,window,hyperparams,value,channel
 2018,4,bw=0.5x_median,0.005814118174199412,semantic
 2018,4,bw=1.0x_median,0.005283274452295483,semantic
 2018,4,bw=2.0x_median,0.0035605674966547873,semantic
-2019,4,bw=0.5x_median,0.008003615129110409,semantic
-2019,4,bw=1.0x_median,0.00659807610925367,semantic
-2019,4,bw=2.0x_median,0.004246939731469279,semantic
 2010,5,bw=0.5x_median,0.026830417621727665,semantic
 2010,5,bw=1.0x_median,0.019429174986378195,semantic
 2010,5,bw=2.0x_median,0.011692345052969566,semantic
 2011,5,bw=0.5x_median,0.018985171825702363,semantic
 2011,5,bw=1.0x_median,0.014325794701067096,semantic
-2011,5,bw=2.0x_median,0.008831371681262912,semantic
+2011,5,bw=2.0x_median,0.008831371681263134,semantic
 2012,5,bw=0.5x_median,0.0,semantic
 2012,5,bw=1.0x_median,0.0,semantic
 2012,5,bw=2.0x_median,0.0,semantic
@@ -116,6 +107,3 @@ year,window,hyperparams,value,channel
 2018,5,bw=0.5x_median,0.00805232446134474,semantic
 2018,5,bw=1.0x_median,0.007019063926643643,semantic
 2018,5,bw=2.0x_median,0.004641242518124367,semantic
-2019,5,bw=0.5x_median,0.028590224225868988,semantic
-2019,5,bw=1.0x_median,0.017997032229676302,semantic
-2019,5,bw=2.0x_median,0.010181229016507976,semantic

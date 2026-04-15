@@ -331,8 +331,11 @@ def main():
     breaks_path = io_args.input[0]
     breaks_df, div_df = _load_divergence_for_heatmap(breaks_path)
 
-    # Load convergence table (sibling file)
-    conv_path = os.path.splitext(breaks_path)[0] + "_convergence.csv"
+    # Load convergence table (second --input, or sibling file)
+    if len(io_args.input) >= 2:
+        conv_path = io_args.input[1]
+    else:
+        conv_path = os.path.join(os.path.dirname(breaks_path), "tab_convergence.csv")
     if os.path.exists(conv_path):
         convergence_df = pd.read_csv(conv_path)
     else:

@@ -149,7 +149,7 @@ $(CV_TABLE): $(CV_SCRIPT) $(CP_TABLE)
 	python3 $(CV_SCRIPT) --output $@ --input $(CP_TABLE)
 
 $(CP_FIG): $(CP_PLOT) $(CP_TABLE) $(CV_TABLE)
-	python3 $(CP_PLOT) --output $@ --input $(CP_TABLE)
+	python3 $(CP_PLOT) --output $@ --input $(CP_TABLE) $(CV_TABLE)
 
 .PHONY: changepoints-tables
 changepoints-tables: $(CP_TABLE) $(CV_TABLE)

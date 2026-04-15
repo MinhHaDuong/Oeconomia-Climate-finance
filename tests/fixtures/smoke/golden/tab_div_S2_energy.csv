@@ -8,7 +8,6 @@ year,window,hyperparams,value,channel
 2016,2,default,0.13308262825012207,semantic
 2017,2,default,0.15145260095596313,semantic
 2018,2,default,0.1530705690383911,semantic
-2019,2,default,0.11257708072662354,semantic
 2010,3,default,0.2118370532989502,semantic
 2011,3,default,0.16128945350646973,semantic
 2012,3,default,0.14086377620697021,semantic
@@ -18,7 +17,6 @@ year,window,hyperparams,value,channel
 2016,3,default,0.11829906702041626,semantic
 2017,3,default,0.11333918571472168,semantic
 2018,3,default,0.106223464012146,semantic
-2019,3,default,0.08850711584091187,semantic
 2010,4,default,0.18469423055648804,semantic
 2011,4,default,0.15346825122833252,semantic
 2012,4,default,0.11202126741409302,semantic
@@ -28,7 +26,6 @@ year,window,hyperparams,value,channel
 2016,4,default,0.08169102668762207,semantic
 2017,4,default,0.09090793132781982,semantic
 2018,4,default,0.07788801193237305,semantic
-2019,4,default,0.07654565572738647,semantic
 2010,5,default,0.1718810796737671,semantic
 2011,5,default,0.1402471661567688,semantic
 2012,5,default,0.08688092231750488,semantic
@@ -38,4 +35,3 @@ year,window,hyperparams,value,channel
 2016,5,default,0.06529521942138672,semantic
 2017,5,default,0.06537395715713501,semantic
 2018,5,default,0.07051467895507812,semantic
-2019,5,default,0.09644168615341187,semantic
