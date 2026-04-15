@@ -1,12 +1,13 @@
 %erg v1
 Title: Implement lexical divergence methods L1-L3
-Status: open
+Status: closed
 Created: 2026-04-14
 Author: claude
 
 --- log ---
 2026-04-14T16:30Z claude created
 2026-04-14T16:30Z claude note wave 1, parallelizable with 0029 and 0031
+2026-04-15T14:30Z claude status closed — merged in PR #650
 
 --- body ---
 ## Context
