@@ -26,6 +26,7 @@ divergence:
   min_papers: 30          # per window minimum (override with 5 for smoke)
   min_papers_smoke: 5     # auto-detected when n_works < 200
   max_subsample: 2000     # cap per side for O(n²) methods
+  equal_n: true            # subsample both windows to min(n_before, n_after)
   pelt_penalties: [1, 3, 5]
   pelt_model: rbf
   pelt_min_size: 2
