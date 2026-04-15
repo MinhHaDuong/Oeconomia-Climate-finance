@@ -14,7 +14,7 @@ from utils import get_logger
 log = get_logger("_divergence_backend")
 
 _TORCH_AVAILABLE: bool | None = None
-_DEVICE: str | None = None
+_VALID_BACKENDS = {"auto", "cpu", "cuda"}
 
 
 def _probe_torch() -> bool:
@@ -59,6 +59,10 @@ def get_backend(cfg: dict) -> str:
 
     """
     setting = cfg["divergence"].get("backend", "auto")
+    if setting not in _VALID_BACKENDS:
+        raise ValueError(
+            f"Invalid backend {setting!r}, must be one of {_VALID_BACKENDS}"
+        )
 
     if setting == "cpu":
         log.info("Backend forced to NumPy (config: cpu)")

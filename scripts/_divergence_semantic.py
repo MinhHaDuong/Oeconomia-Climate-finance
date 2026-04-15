@@ -244,6 +244,8 @@ def _energy_distance_torch(X, Y):
     """Energy distance via torch on CUDA.
 
     E(X,Y) = 2*E[||X-Y||] - E[||X-X'||] - E[||Y-Y'||]
+
+    Uses V-statistic (includes diagonal) to match dcor.energy_distance.
     """
     import torch
     from _divergence_backend import to_tensor
