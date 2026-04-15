@@ -396,23 +396,9 @@ def main():
 
     # Save breaks table
     breaks_df.to_csv(io_args.output, index=False)
-    log.info("Saved breaks table -> %s", io_args.output)
+    log.info("Saved breaks table -> %s (%d rows)", io_args.output, len(breaks_df))
 
-    # Compute and save convergence table
-    convergence_df = compute_convergence(breaks_df)
-    conv_stem = os.path.splitext(io_args.output)[0]
-    conv_path = conv_stem + "_convergence.csv"
-    convergence_df.to_csv(conv_path, index=False)
-    log.info("Saved convergence table -> %s", conv_path)
-
-    # Summary
-    if not convergence_df.empty:
-        top = convergence_df.nlargest(5, "pct_total")
-        log.info("Top convergence years:")
-        for _, row in top.iterrows():
-            log.info("  %d: %.1f%% (%d detections, methods: %s)",
-                     row["year"], row["pct_total"] * 100,
-                     row["n_total"], row["methods_detecting"])
+    log.info("Done.")
 
 
 if __name__ == "__main__":

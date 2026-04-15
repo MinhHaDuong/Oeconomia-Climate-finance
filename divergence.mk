@@ -90,7 +90,7 @@ divergence-figures: $(DIV_FIG_STAMP)
 # Tests whether structural breaks survive dimensionality reduction.
 
 SENS_SCRIPT := scripts/compute_embedding_sensitivity.py
-SENS_PLOT   := scripts/plot_embedding_sensitivity.py
+SENS_PLOT   := scripts/plot_sensitivity.py
 SENS_METHODS := S1_MMD S2_energy
 
 # Tables: one CSV per (method, projection) pair
@@ -106,44 +106,53 @@ $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_TABLES)/tab_sens_jl_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
 	python3 $(SENS_SCRIPT) --method $(m) --projection jl --output $$@))
 
-# Figures: one PNG per (method, projection) pair
-SENS_FIG_STAMP := $(DIV_FIGS)/.sensitivity_figs.stamp
+# Figures: one PNG per (method, projection) pair — 1 invocation = 1 figure
+SENS_FIG_PCA := $(foreach m,$(SENS_METHODS),$(DIV_FIGS)/fig_sensitivity_pca_$(m).png)
+SENS_FIG_JL  := $(foreach m,$(SENS_METHODS),$(DIV_FIGS)/fig_sensitivity_jl_$(m).png)
+SENS_FIG_ALL := $(SENS_FIG_PCA) $(SENS_FIG_JL)
 
-$(SENS_FIG_STAMP): $(SENS_PLOT) $(SENS_CSV_ALL)
-	python3 $(SENS_PLOT) \
-		--output $(DIV_FIGS)/fig_sensitivity.png \
-		--input $(SENS_CSV_ALL)
-	touch $@
+$(foreach m,$(SENS_METHODS),$(eval \
+$(DIV_FIGS)/fig_sensitivity_pca_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_pca_$(m).csv ; \
+	python3 $(SENS_PLOT) --projection pca --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
+
+$(foreach m,$(SENS_METHODS),$(eval \
+$(DIV_FIGS)/fig_sensitivity_jl_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_jl_$(m).csv ; \
+	python3 $(SENS_PLOT) --projection jl --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
 
 .PHONY: sensitivity-tables
 sensitivity-tables: $(SENS_CSV_ALL)
 
 .PHONY: sensitivity-figures
-sensitivity-figures: $(SENS_FIG_STAMP)
+sensitivity-figures: $(SENS_FIG_ALL)
 
 .PHONY: sensitivity
 sensitivity: sensitivity-tables sensitivity-figures
 
 # ── Changepoints (ticket 0032) ──────────────────────────────────────────
 #
-# Multi-detector change point analysis across all divergence series.
-# Produces: tab_changepoints.csv, tab_changepoints_convergence.csv,
-#           fig_convergence.png
+# 1 script = 1 table:
+#   compute_changepoints.py → tab_changepoints.csv (breaks)
+#   compute_convergence.py  → tab_convergence.csv  (cross-method agreement)
+#   plot_convergence.py     → fig_convergence.png  (heatmap + bars)
 
 CP_SCRIPT  := scripts/compute_changepoints.py
+CV_SCRIPT  := scripts/compute_convergence.py
 CP_PLOT    := scripts/plot_convergence.py
 CP_TABLE   := $(DIV_TABLES)/tab_changepoints.csv
-CP_CONV    := $(DIV_TABLES)/tab_changepoints_convergence.csv
+CV_TABLE   := $(DIV_TABLES)/tab_convergence.csv
 CP_FIG     := $(DIV_FIGS)/fig_convergence.png
 
-$(CP_TABLE) $(CP_CONV): $(CP_SCRIPT) $(DIV_CSV_ALL) $(DIV_CFG)
-	python3 $(CP_SCRIPT) --output $(CP_TABLE) --input $(DIV_CSV_ALL)
+$(CP_TABLE): $(CP_SCRIPT) $(DIV_CSV_ALL) $(DIV_CFG)
+	python3 $(CP_SCRIPT) --output $@ --input $(DIV_CSV_ALL)
 
-$(CP_FIG): $(CP_PLOT) $(CP_TABLE) $(CP_CONV)
-	python3 $(CP_PLOT) --output $(CP_FIG) --input $(CP_TABLE)
+$(CV_TABLE): $(CV_SCRIPT) $(CP_TABLE)
+	python3 $(CV_SCRIPT) --output $@ --input $(CP_TABLE)
+
+$(CP_FIG): $(CP_PLOT) $(CP_TABLE) $(CV_TABLE)
+	python3 $(CP_PLOT) --output $@ --input $(CP_TABLE)
 
 .PHONY: changepoints-tables
-changepoints-tables: $(CP_TABLE) $(CP_CONV)
+changepoints-tables: $(CP_TABLE) $(CV_TABLE)
 
 .PHONY: changepoints-figure
 changepoints-figure: $(CP_FIG)
