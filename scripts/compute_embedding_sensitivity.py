@@ -30,13 +30,14 @@ from utils import get_logger
 
 log = get_logger("compute_embedding_sensitivity")
 
-# ── Method registry (semantic methods only) ──────────────────────────────
+# ── Method registry (semantic methods only, derived from dispatcher) ─────
+
+from compute_divergence import METHODS as _ALL_METHODS
 
 METHOD_FUNCS = {
-    "S1_MMD": "compute_s1_mmd",
-    "S2_energy": "compute_s2_energy",
-    "S3_sliced_wasserstein": "compute_s3_wasserstein",
-    "S4_frechet": "compute_s4_frechet",
+    name: info[1]
+    for name, info in _ALL_METHODS.items()
+    if info[2] == "semantic"
 }
 
 # ── Projection dimensions ────────────────────────────────────────────────

@@ -43,26 +43,18 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from _divergence_io import load_divergence_tables
+from pipeline_io import save_figure
+from plot_style import apply_style
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
 log = get_logger("plot_divergence")
 
+apply_style()
+# Override base style: larger titles, smaller legends for dense divergence plots
 matplotlib.rcParams.update({
-    "font.family": "serif",
-    "font.size": 8,
     "axes.titlesize": 10,
-    "axes.labelsize": 8,
-    "xtick.labelsize": 7,
-    "ytick.labelsize": 7,
     "legend.fontsize": 6,
-    "figure.dpi": 300,
-    "savefig.dpi": 300,
-    "axes.linewidth": 0.5,
-    "lines.linewidth": 0.8,
-    "axes.spines.top": False,
-    "axes.spines.right": False,
-    "axes.grid": False,
 })
 
 # ── Visual encoding ──────────────────────────────────────────────────────
@@ -203,7 +195,7 @@ def _plot_one_method(div_df, breaks_df, method, out_stem,
             axes[0].set_title(title)
             axes[-1].set_xlabel("Year")
             fig.tight_layout()
-            fig.savefig(f"{out_stem}_{method}.png", dpi=DPI)
+            save_figure(fig, f"{out_stem}_{method}", dpi=DPI)
             plt.close(fig)
             log.info("Saved %s_%s.png (%d panels)", out_stem, method, n_panels)
             return
@@ -214,7 +206,7 @@ def _plot_one_method(div_df, breaks_df, method, out_stem,
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     fig.tight_layout()
-    fig.savefig(f"{out_stem}_{method}.png", dpi=DPI)
+    save_figure(fig, f"{out_stem}_{method}", dpi=DPI)
     plt.close(fig)
     log.info("Saved %s_%s.png", out_stem, method)
 

@@ -112,6 +112,20 @@ def _get_window_embeddings(df, emb, year, window, side, min_papers, max_subsampl
     return vecs
 
 
+def _iter_window_pairs(df, emb, years, windows, min_papers, max_subsample):
+    """Yield (year, window, X, Y) for each valid before/after window pair.
+
+    Centralises the nested loop and skip logic shared by S1-S4.
+    """
+    for w in windows:
+        for y in years:
+            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
+            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
+            if X is None or Y is None:
+                continue
+            yield y, w, X, Y
+
+
 # ── S1: MMD with RBF kernel ───────────────────────────────────────────────
 
 def _median_heuristic(X, Y, n_sample=1000):
@@ -158,24 +172,25 @@ def compute_s1_mmd(df, emb, cfg):
     bandwidth_multipliers = sem_cfg["S1_MMD"]["bandwidth_multipliers"]
 
     results = []
-    for w in windows:
-        for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
-            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
-            if X is None or Y is None:
-                continue
+    last_w = None
+    for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
+                                          min_papers, max_subsample):
+        if last_w is not None and w != last_w:
+            log.info("S1 MMD window=%d done", last_w)
+        last_w = w
 
-            med = _median_heuristic(X, Y)
-            for mult in bandwidth_multipliers:
-                bw = med * mult
-                val = compute_mmd_rbf(X, Y, bw)
-                results.append({
-                    "year": int(y),
-                    "window": str(w),
-                    "hyperparams": f"bw={mult}x_median",
-                    "value": val,
-                })
-        log.info("S1 MMD window=%d done", w)
+        med = _median_heuristic(X, Y)
+        for mult in bandwidth_multipliers:
+            bw = med * mult
+            val = compute_mmd_rbf(X, Y, bw)
+            results.append({
+                "year": int(y),
+                "window": str(w),
+                "hyperparams": f"bw={mult}x_median",
+                "value": val,
+            })
+    if last_w is not None:
+        log.info("S1 MMD window=%d done", last_w)
     return pd.DataFrame(results)
 
 
@@ -193,21 +208,22 @@ def compute_s2_energy(df, emb, cfg):
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
     results = []
-    for w in windows:
-        for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
-            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
-            if X is None or Y is None:
-                continue
+    last_w = None
+    for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
+                                          min_papers, max_subsample):
+        if last_w is not None and w != last_w:
+            log.info("S2 energy window=%d done", last_w)
+        last_w = w
 
-            val = float(dcor.energy_distance(X, Y))
-            results.append({
-                "year": int(y),
-                "window": str(w),
-                "hyperparams": "default",
-                "value": val,
-            })
-        log.info("S2 energy window=%d done", w)
+        val = float(dcor.energy_distance(X, Y))
+        results.append({
+            "year": int(y),
+            "window": str(w),
+            "hyperparams": "default",
+            "value": val,
+        })
+    if last_w is not None:
+        log.info("S2 energy window=%d done", last_w)
     return pd.DataFrame(results)
 
 
@@ -228,24 +244,25 @@ def compute_s3_wasserstein(df, emb, cfg):
     n_projections_list = sem_cfg["S3_sliced_wasserstein"]["n_projections"]
 
     results = []
-    for w in windows:
-        for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
-            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
-            if X is None or Y is None:
-                continue
+    last_w = None
+    for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
+                                          min_papers, max_subsample):
+        if last_w is not None and w != last_w:
+            log.info("S3 sliced Wasserstein window=%d done", last_w)
+        last_w = w
 
-            for n_proj in n_projections_list:
-                val = float(ot.sliced_wasserstein_distance(
-                    X, Y, n_projections=n_proj, seed=42,
-                ))
-                results.append({
-                    "year": int(y),
-                    "window": str(w),
-                    "hyperparams": f"n_proj={n_proj}",
-                    "value": val,
-                })
-        log.info("S3 sliced Wasserstein window=%d done", w)
+        for n_proj in n_projections_list:
+            val = float(ot.sliced_wasserstein_distance(
+                X, Y, n_projections=n_proj, seed=42,
+            ))
+            results.append({
+                "year": int(y),
+                "window": str(w),
+                "hyperparams": f"n_proj={n_proj}",
+                "value": val,
+            })
+    if last_w is not None:
+        log.info("S3 sliced Wasserstein window=%d done", last_w)
     return pd.DataFrame(results)
 
 
@@ -294,34 +311,35 @@ def compute_s4_frechet(df, emb, cfg):
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
     results = []
-    for w in windows:
-        for y in years:
-            X = _get_window_embeddings(df, emb, y, w, "before", min_papers, max_subsample)
-            Y = _get_window_embeddings(df, emb, y, w, "after", min_papers, max_subsample)
-            if X is None or Y is None:
-                continue
+    last_w = None
+    for y, w, X, Y in _iter_window_pairs(df, emb, years, windows,
+                                          min_papers, max_subsample):
+        if last_w is not None and w != last_w:
+            log.info("S4 Frechet window=%d done", last_w)
+        last_w = w
 
-            # Frechet needs n > d for full-rank covariance.
-            # With smoke data, n << 1024, so we PCA-reduce first.
-            d = X.shape[1]
-            n_eff = min(len(X), len(Y))
-            if n_eff < d:
-                from sklearn.decomposition import PCA
-                n_components = max(2, n_eff - 1)
-                pca = PCA(n_components=n_components, random_state=42)
-                combined = np.vstack([X, Y])
-                combined_r = pca.fit_transform(combined)
-                X_r = combined_r[:len(X)]
-                Y_r = combined_r[len(X):]
-            else:
-                X_r, Y_r = X, Y
+        # Frechet needs n > d for full-rank covariance.
+        # With smoke data, n << 1024, so we PCA-reduce first.
+        d = X.shape[1]
+        n_eff = min(len(X), len(Y))
+        if n_eff < d:
+            from sklearn.decomposition import PCA
+            n_components = max(2, n_eff - 1)
+            pca = PCA(n_components=n_components, random_state=42)
+            combined = np.vstack([X, Y])
+            combined_r = pca.fit_transform(combined)
+            X_r = combined_r[:len(X)]
+            Y_r = combined_r[len(X):]
+        else:
+            X_r, Y_r = X, Y
 
-            val = compute_frechet_distance(X_r, Y_r)
-            results.append({
-                "year": int(y),
-                "window": str(w),
-                "hyperparams": "gaussian",
-                "value": val,
-            })
-        log.info("S4 Frechet window=%d done", w)
+        val = compute_frechet_distance(X_r, Y_r)
+        results.append({
+            "year": int(y),
+            "window": str(w),
+            "hyperparams": "gaussian",
+            "value": val,
+        })
+    if last_w is not None:
+        log.info("S4 Frechet window=%d done", last_w)
     return pd.DataFrame(results)

@@ -108,6 +108,31 @@ def _cumulative_graph(works, internal_edges, up_to_year):
     return G
 
 
+def _incremental_graphs(works, internal_edges, years):
+    """Yield (year, G) pairs, building the graph incrementally.
+
+    Each iteration adds that year's nodes and edges to the running graph.
+    The caller receives the *same* mutable DiGraph object each iteration
+    (so must not store references across iterations without copying).
+    """
+    # Pre-group nodes and edges by year for O(1) lookup
+    nodes_by_year = works.groupby("year")["doi"].apply(list).to_dict()
+    edges_by_year = (
+        internal_edges.groupby("source_year")[["source_doi", "ref_doi"]]
+        .apply(lambda g: g.values.tolist())
+        .to_dict()
+    )
+    G = nx.DiGraph()
+    for y in years:
+        new_nodes = nodes_by_year.get(y, [])
+        if new_nodes:
+            G.add_nodes_from(new_nodes)
+        new_edges = edges_by_year.get(y, [])
+        if new_edges:
+            G.add_edges_from(new_edges)
+        yield y, G
+
+
 def _dict_to_df(results, hyperparams=""):
     """Convert {year: value} dict to DataFrame with standard columns."""
     rows = []
@@ -137,8 +162,7 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
     prev_ranks = None
     prev_nodes = None
 
-    for y in years:
-        G = _cumulative_graph(works, internal_edges, y)
+    for y, G in _incremental_graphs(works, internal_edges, years):
         if G.number_of_nodes() < 3 or G.number_of_edges() < 1:
             results[y] = np.nan
             prev_ranks = None
@@ -179,8 +203,7 @@ def compute_g2_spectral(works, citations, internal_edges, cfg):
     log.info("G2: Spectral gap")
     results = {}
 
-    for y in years:
-        G_dir = _cumulative_graph(works, internal_edges, y)
+    for y, G_dir in _incremental_graphs(works, internal_edges, years):
         G = G_dir.to_undirected()
 
         if G.number_of_nodes() < 3:
@@ -316,15 +339,16 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
             results[y] = np.nan
             continue
 
-        cross = 0
-        total = 0
-        for _, row in new_edges.iterrows():
-            s, r = row["source_doi"], row["ref_doi"]
-            if s in community and r in community:
-                total += 1
-                if community[s] != community[r]:
-                    cross += 1
-        results[y] = cross / total if total > 0 else np.nan
+        ne = new_edges.copy()
+        ne["s_comm"] = ne["source_doi"].map(community)
+        ne["r_comm"] = ne["ref_doi"].map(community)
+        valid = ne.dropna(subset=["s_comm", "r_comm"])
+        total = len(valid)
+        if total == 0:
+            results[y] = np.nan
+            continue
+        cross = (valid["s_comm"] != valid["r_comm"]).sum()
+        results[y] = int(cross) / total
 
     return _dict_to_df(results)
 
@@ -345,8 +369,7 @@ def compute_g5_pa_exponent(works, citations, internal_edges, cfg):
     log.info("G5: Preferential attachment exponent")
     results = {}
 
-    for y in years:
-        G = _cumulative_graph(works, internal_edges, y)
+    for y, G in _incremental_graphs(works, internal_edges, years):
         in_degrees = np.array([d for _, d in G.in_degree()])
         pos_deg = in_degrees[in_degrees > 0]
         if len(pos_deg) < 10:
@@ -377,8 +400,7 @@ def compute_g6_entropy(works, citations, internal_edges, cfg):
     log.info("G6: Citation entropy")
     results = {}
 
-    for y in years:
-        G = _cumulative_graph(works, internal_edges, y)
+    for y, G in _incremental_graphs(works, internal_edges, years):
         in_degrees = np.array([d for _, d in G.in_degree()])
         pos_deg = in_degrees[in_degrees > 0]
         if len(pos_deg) < 3:
@@ -432,17 +454,21 @@ def compute_g7_disruption(works, citations, internal_edges, cfg):
         return _dict_to_df(_g7_ref_year_proxy(works, citations, years))
 
     corpus_dois = set(works["doi"].values)
-    paper_refs = {}
-    for _, row in citations.iterrows():
-        s = row["source_doi"]
-        r = row["ref_doi"]
-        if s in corpus_dois:
-            paper_refs.setdefault(s, set()).add(r)
 
-    paper_citers = {}
-    for _, row in internal_edges.iterrows():
-        src, ref = row["source_doi"], row["ref_doi"]
-        paper_citers.setdefault(ref, set()).add(src)
+    # Build paper_refs: {source_doi -> set of ref_dois} using vectorized filter
+    corpus_cit = citations.loc[citations["source_doi"].isin(corpus_dois)]
+    paper_refs = (
+        corpus_cit.groupby("source_doi")["ref_doi"]
+        .apply(set)
+        .to_dict()
+    )
+
+    # Build paper_citers: {ref_doi -> set of source_dois} using vectorized groupby
+    paper_citers = (
+        internal_edges.groupby("ref_doi")["source_doi"]
+        .apply(set)
+        .to_dict()
+    )
 
     for y in years:
         year_papers = works.loc[works["year"] == y, "doi"].values
@@ -491,8 +517,7 @@ def compute_g8_betweenness(works, citations, internal_edges, cfg):
     log.info("G8: Betweenness centrality dynamics")
     results = {}
 
-    for y in years:
-        G_dir = _cumulative_graph(works, internal_edges, y)
+    for y, G_dir in _incremental_graphs(works, internal_edges, years):
         G = G_dir.to_undirected()
 
         if G.number_of_nodes() < 3:
