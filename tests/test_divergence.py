@@ -543,7 +543,9 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=True)
-        years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
+            df, emb, cfg
+        )
         rng = np.random.RandomState(42)
 
         for y, w, X, Y in _iter_window_pairs(
@@ -566,7 +568,9 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=False)
-        years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
+            df, emb, cfg
+        )
         rng = np.random.RandomState(42)
 
         sizes = []
@@ -624,3 +628,29 @@ class TestEqualN:
         assert corr_eq < corr_raw or corr_eq < 0.5, (
             f"equal_n correlation ({corr_eq:.3f}) not lower than raw ({corr_raw:.3f})"
         )
+
+    def test_l1_js_equal_n_produces_equal_sized_inputs(self):
+        """L1 JS subsampling path should equalise before/after text counts."""
+        from _divergence_lexical import compute_l1_js
+
+        rng = np.random.RandomState(42)
+        words = ["climate", "finance", "carbon", "green", "bond", "risk", "policy"]
+        n_years = 15
+        rows = []
+        for i in range(n_years):
+            y = 2000 + i
+            n = max(6, int(6 + 4 * i))  # growth
+            for _ in range(n):
+                text = " ".join(rng.choice(words, size=10))
+                rows.append({"year": y, "abstract": text})
+        df = pd.DataFrame(rows)
+
+        cfg_eq = _equal_n_cfg(equal_n=True)
+        cfg_raw = _equal_n_cfg(equal_n=False)
+
+        result_eq = compute_l1_js(df, cfg_eq)
+        result_raw = compute_l1_js(df, cfg_raw)
+
+        # Both should produce results; equal_n should not crash
+        assert len(result_eq) > 0, "equal_n L1 JS produced no results"
+        assert len(result_raw) > 0, "raw L1 JS produced no results"

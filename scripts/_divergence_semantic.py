@@ -15,6 +15,7 @@ import os
 import numpy as np
 import pandas as pd
 from pipeline_loaders import load_analysis_corpus
+from sklearn.decomposition import PCA
 from utils import get_logger
 
 log = get_logger("_divergence_semantic")
@@ -60,11 +61,12 @@ def load_semantic_data(input_paths):
 def _get_years_and_params(df, emb, cfg):
     """Derive year range and smoke-safe parameters from config.
 
-    Returns (years, min_papers, max_subsample, windows).
+    Returns (years, min_papers, max_subsample, windows, equal_n).
     """
     div_cfg = cfg["divergence"]
     windows = div_cfg["windows"]
     max_subsample = div_cfg["max_subsample"]
+    equal_n = div_cfg.get("equal_n", False)
 
     from _divergence_io import get_min_papers
 
@@ -77,7 +79,7 @@ def _get_years_and_params(df, emb, cfg):
         end_year = int(df["year"].max()) - min(windows) - 1
 
     years = list(range(start_year, end_year + 1))
-    return years, min_papers, max_subsample, windows
+    return years, min_papers, max_subsample, windows, equal_n
 
 
 def _get_window_embeddings(
@@ -218,14 +220,14 @@ def compute_s1_mmd(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
     sem_cfg = cfg["divergence"]["semantic"]
     bandwidth_multipliers = sem_cfg["S1_MMD"]["bandwidth_multipliers"]
-
-    equal_n = cfg["divergence"].get("equal_n", False)
 
     results = []
     last_w = None
@@ -298,11 +300,11 @@ def compute_s2_energy(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
-
-    equal_n = cfg["divergence"].get("equal_n", False)
 
     results = []
     last_w = None
@@ -355,13 +357,14 @@ def compute_s3_wasserstein(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
     sem_cfg = cfg["divergence"]["semantic"]
     n_projections_list = sem_cfg["S3_sliced_wasserstein"]["n_projections"]
-    equal_n = cfg["divergence"].get("equal_n", False)
 
     results = []
     last_w = None
@@ -490,11 +493,17 @@ def compute_s4_frechet(df, emb, cfg):
     seed = cfg["divergence"].get("random_seed", 42)
     rng = np.random.RandomState(seed)
 
-    years, min_papers, max_subsample, windows = _get_years_and_params(df, emb, cfg)
+    years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
+        df, emb, cfg
+    )
     if not years:
         return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
-    equal_n = cfg["divergence"].get("equal_n", False)
+    # Always PCA-reduce for Fréchet: (1) covariance needs n >> d,
+    # (2) sqrtm is O(d³), and (3) sensitivity analysis shows breaks
+    # are stable from d=32 to d=1024.
+
+    frechet_max_dim = cfg["divergence"]["semantic"]["S4_frechet"].get("max_dim", 256)
 
     results = []
     last_w = None
@@ -511,15 +520,6 @@ def compute_s4_frechet(df, emb, cfg):
         if last_w is not None and w != last_w:
             log.info("S4 Frechet window=%d done", last_w)
         last_w = w
-
-        # Always PCA-reduce for Fréchet: (1) covariance needs n >> d,
-        # (2) sqrtm is O(d³), and (3) sensitivity analysis shows breaks
-        # are stable from d=32 to d=1024.
-        from sklearn.decomposition import PCA
-
-        frechet_max_dim = cfg["divergence"]["semantic"]["S4_frechet"].get(
-            "max_dim", 256
-        )
         max_d = min(frechet_max_dim, min(len(X), len(Y)) - 1, X.shape[1])
         n_components = max(2, max_d)
         pca = PCA(n_components=n_components, random_state=seed)
