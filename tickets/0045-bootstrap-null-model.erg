@@ -69,7 +69,8 @@ not on figures.
 ### Correction implementation
 1. Add `equal_n=True` option to `_iter_window_pairs` in
    `_divergence_semantic.py`. Subsample both sides to min(n_before,
-   n_after). Return K=200 bootstrap replicates.
+   n_after). Single pass — no bootstrap replicates by default.
+   Bootstrap K=200 for CIs is a separate step (ticket 0047).
 2. Refactor citation methods (G1, G2, G5, G6, G8) from cumulative
    to sliding windows. Keep cumulative as legacy option.
 3. Verify L1-L2 use union vocabulary. Verify G3, G4, G7 are
@@ -122,6 +123,6 @@ same-pool null, and survives first-difference diagnostic. The paper
 states significance after controlling for corpus growth.
 
 ## Compute estimate
-Layer 1 (correction + bootstrap K=200): ~3h GPU overnight.
-Layer 2 (null N=500 per year): ~8h GPU (can run in parallel).
-Total: two overnight runs, or one weekend run.
+Layer 1 (correction, single pass): same as current run (~3.5 min GPU).
+Layer 2 (null N=500 per year): ~8h GPU (one overnight run).
+Bootstrap CIs (ticket 0047, K=200): ~3h GPU (separate overnight run).
