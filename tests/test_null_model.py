@@ -210,7 +210,6 @@ class TestNullModelSchema:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.slow
 @pytest.mark.integration
 class TestSmokeNullModel:
     """Smoke tests for compute_null_model.py on fixture data."""
@@ -272,7 +271,6 @@ class TestSmokeNullModel:
         NullModelSchema.validate(df)
 
 
-@pytest.mark.slow
 @pytest.mark.integration
 class TestNullModelReusesYearWindow:
     """Null model should reuse year/window combos from tab_div_{method}.csv."""

@@ -165,6 +165,37 @@ def _make_lexical_statistic(vectorizer):
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _nan_row(year, window):
+    """Return a row dict with NaN values for skipped (year, window) pairs."""
+    return {
+        "year": year,
+        "window": str(window),
+        "observed": np.nan,
+        "null_mean": np.nan,
+        "null_std": np.nan,
+        "z_score": np.nan,
+        "p_value": np.nan,
+    }
+
+
+def _result_row(year, window, observed, null_mean, null_std, z, p):
+    """Return a row dict with computed permutation test results."""
+    return {
+        "year": year,
+        "window": str(window),
+        "observed": observed,
+        "null_mean": null_mean,
+        "null_std": null_std,
+        "z_score": z,
+        "p_value": p,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Per-channel permutation drivers
 # ---------------------------------------------------------------------------
 
@@ -203,52 +234,22 @@ def _run_semantic_permutations(method_name, div_df, cfg):
             df, emb, y, w, "after", min_papers, max_subsample, rng=rng
         )
         if X is None or Y is None:
-            rows.append(
-                {
-                    "year": y,
-                    "window": str(w),
-                    "observed": np.nan,
-                    "null_mean": np.nan,
-                    "null_std": np.nan,
-                    "z_score": np.nan,
-                    "p_value": np.nan,
-                }
-            )
+            rows.append(_nan_row(y, w))
             continue
 
         if equal_n and len(X) != len(Y):
             from _divergence_io import subsample_equal_n
 
-            result = subsample_equal_n(X, Y, min_papers, rng)
-            if result is None:
-                rows.append(
-                    {
-                        "year": y,
-                        "window": str(w),
-                        "observed": np.nan,
-                        "null_mean": np.nan,
-                        "null_std": np.nan,
-                        "z_score": np.nan,
-                        "p_value": np.nan,
-                    }
-                )
+            eq_result = subsample_equal_n(X, Y, min_papers, rng)
+            if eq_result is None:
+                rows.append(_nan_row(y, w))
                 continue
-            X, Y = result
+            X, Y = eq_result
 
         observed, null_mean, null_std, z, p = permutation_test(
             X, Y, statistic_fn, n_perm, rng
         )
-        rows.append(
-            {
-                "year": y,
-                "window": str(w),
-                "observed": observed,
-                "null_mean": null_mean,
-                "null_std": null_std,
-                "z_score": z,
-                "p_value": p,
-            }
-        )
+        rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
         log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
 
     return pd.DataFrame(rows)
@@ -299,52 +300,22 @@ def _run_lexical_permutations(method_name, div_df, cfg):
         texts_after = df.loc[mask_after, "abstract"].tolist()
 
         if len(texts_before) < min_papers or len(texts_after) < min_papers:
-            rows.append(
-                {
-                    "year": y,
-                    "window": str(w),
-                    "observed": np.nan,
-                    "null_mean": np.nan,
-                    "null_std": np.nan,
-                    "z_score": np.nan,
-                    "p_value": np.nan,
-                }
-            )
+            rows.append(_nan_row(y, w))
             continue
 
         if equal_n and len(texts_before) != len(texts_after):
             from _divergence_io import subsample_equal_n
 
-            result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
-            if result is None:
-                rows.append(
-                    {
-                        "year": y,
-                        "window": str(w),
-                        "observed": np.nan,
-                        "null_mean": np.nan,
-                        "null_std": np.nan,
-                        "z_score": np.nan,
-                        "p_value": np.nan,
-                    }
-                )
+            eq_result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
+            if eq_result is None:
+                rows.append(_nan_row(y, w))
                 continue
-            texts_before, texts_after = result
+            texts_before, texts_after = eq_result
 
         observed, null_mean, null_std, z, p = permutation_test(
             texts_before, texts_after, statistic_fn, n_perm, rng
         )
-        rows.append(
-            {
-                "year": y,
-                "window": str(w),
-                "observed": observed,
-                "null_mean": null_mean,
-                "null_std": null_std,
-                "z_score": z,
-                "p_value": p,
-            }
-        )
+        rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
         log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
 
     return pd.DataFrame(rows)
