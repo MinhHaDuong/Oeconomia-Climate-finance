@@ -10,6 +10,7 @@ Author: user
 2026-04-14T15:30Z claude note expanded method panel: 5 semantic, 3 lexical, 6 citation graph, 3 meta-methods
 2026-04-14T16:00Z claude note added G7 disruption index, G8 betweenness centrality; literature review in docs/
 2026-04-14T16:30Z claude note decomposed into tickets 0029-0035; S5 deferred to padme
+2026-04-15T20:00Z claude note added 0037-0042 from review: GPU, testing, robustness, integration, efficiency, real run
 
 --- body ---
 ## Context
@@ -111,6 +112,12 @@ corpora — this is the methodological gap.
 | 3 | 0034 | structural-breaks-v2 include | 0033 |
 | 4 | 0035 | Validation corpora (ISTEX/padme) | 0032 |
 | 2 | 0036 | Embedding insensitivity (PCA + JL projections) | 0029 |
+| — | 0037 | GPU acceleration (torch backend S1-S4) | padme |
+| — | 0038 | Test strategy (golden values, fast/slow, coverage) | — |
+| — | 0039 | Pipeline robustness (seeds, fallbacks, validation) | — |
+| — | 0040 | Integration (wire into tech report, deprecate old) | 0034 |
+| — | 0041 | Pipeline efficiency (profiling, make -j, test speed) | 0038 |
+| — | 0042 | Run on real corpus (padme) | 0037, 0039 |
 | — | (S5) | Procrustes word embeddings | padme GPU, deferred |
 
 ## Exit criteria

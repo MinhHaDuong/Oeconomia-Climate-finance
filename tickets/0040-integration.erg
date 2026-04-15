@@ -1,0 +1,53 @@
+%erg v1
+Title: Integration: wire divergence results into technical report
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0034
+
+--- log ---
+2026-04-15T20:00Z claude created
+2026-04-15T20:00Z claude note depends on structural-breaks-v2 include (0034)
+
+--- body ---
+## Context
+The divergence pipeline produces tables and figures but they are not
+yet wired into any document. The technical report needs updated
+structural breaks section. The old compute_breakpoints.py results
+coexist without conflict but create confusion.
+
+## Actions
+
+### Wire into technical report
+1. Complete ticket 0034: `content/_includes/structural-breaks-v2.md`.
+2. Update `content/technical-report.qmd` to include the new section.
+3. Reference the convergence figure and the per-method divergence figures.
+
+### Deprecate old breakpoints
+4. Add deprecation comment to `compute_breakpoints.py` header:
+   "Superseded by compute_divergence.py. Retained for comparison."
+5. Remove old breakpoint Makefile targets from the main Makefile
+   (or gate them behind a `legacy-breakpoints` target).
+6. Do NOT delete the old script — it serves as comparison baseline.
+
+### Add make check-divergence
+7. Add target to divergence.mk:
+   ```make
+   .PHONY: check-divergence
+   check-divergence:
+       python3 -m pytest tests/test_divergence.py tests/test_changepoints.py \
+           tests/test_embedding_sensitivity.py -v
+   ```
+
+### Parallel execution documentation
+8. Document in divergence.mk header comment:
+   `make -j15 divergence-tables` runs all 15 methods in parallel.
+   Tested: no race conditions (each script writes a distinct file).
+
+## Test
+`make technical-report` builds without error and includes the new
+structural breaks section.
+
+## Exit criteria
+New results visible in rendered technical report. Old results clearly
+marked as legacy. `make check-divergence` works. Parallel docs added.

@@ -1,0 +1,36 @@
+%erg v1
+Title: Run divergence pipeline on real corpus (padme)
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0037
+Blocked-by: 0039
+
+--- log ---
+2026-04-15T20:00Z claude created
+2026-04-15T20:00Z claude note the actual scientific computation; blocked by robustness + GPU
+
+--- body ---
+## Context
+Everything so far has been tested on the 100-row smoke fixture.
+The real corpus has ~28,400 works, 1024-dim embeddings, and a
+citation graph with thousands of internal edges. This ticket is
+the actual scientific computation.
+
+## Actions
+1. Sync branch to padme: `git pull`, `uv sync --extra cu130`.
+2. Install new deps: pot, dcor, ruptures.
+3. Run `make divergence-tables` (preferably with `-j4`).
+4. Run `make changepoints`.
+5. Run `make sensitivity`.
+6. Review outputs:
+   - Do the 15 divergence curves look reasonable?
+   - Does the convergence analysis identify clear break years?
+   - Is the embedding sensitivity stable (PCA/JL)?
+7. Compare with old results (compute_breakpoints.py output).
+8. If results are good, generate figures for the technical report.
+
+## Exit criteria
+All 15 methods produce non-degenerate series on real data.
+Convergence analysis identifies break years. Results documented
+in the technical report include (ticket 0034/0040).

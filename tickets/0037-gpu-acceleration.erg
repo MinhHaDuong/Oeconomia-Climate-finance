@@ -1,0 +1,48 @@
+%erg v1
+Title: GPU acceleration for semantic divergence methods S1-S4
+Status: open
+Created: 2026-04-15
+Author: user
+
+--- log ---
+2026-04-15T20:00Z claude created
+2026-04-15T20:00Z claude note from simplify review; padme A4000 16GB
+
+--- body ---
+## Context
+S1 (MMD) and S2 (energy distance) are O(n²) on 2000×1024 matrices.
+GPU acceleration via torch.cdist gives 10-50× speedup on these.
+S3 (sliced Wasserstein) gets free GPU via POT's torch backend.
+S4 (Fréchet) benefits moderately from torch.linalg.
+
+Total pipeline time: ~20 min CPU → ~5 min GPU (estimated).
+
+## Actions
+1. Add `backend: auto` to config/analysis.yaml divergence section.
+   Values: auto (GPU if available), cpu (force numpy), cuda (force GPU).
+2. Create `scripts/_divergence_backend.py`:
+   - `get_backend(cfg)` → "torch" or "numpy"
+   - `to_device(array)` → torch tensor on GPU or numpy array
+   - `to_numpy(tensor)` → numpy array
+3. In `_divergence_semantic.py`, add torch implementations:
+   - `_mmd_torch(X, Y, bandwidth)` using torch.cdist + torch.exp
+   - `_energy_torch(X, Y)` using torch.cdist (no dcor needed)
+   - `_wasserstein_torch(X, Y, n_proj)` using POT torch backend
+   - `_frechet_torch(X, Y)` using torch.linalg.eigh
+4. Dispatch: each compute function checks BACKEND and calls the
+   appropriate implementation.
+5. Memory: 2000×2000×4 bytes = 15 MB per kernel matrix. A4000
+   holds 1000+ of these. No memory concern.
+
+## Test
+```python
+@pytest.mark.slow
+def test_mmd_torch_matches_numpy():
+    """Verify torch and numpy implementations agree within tolerance."""
+```
+Smoke tests stay CPU (no GPU on CI/container). The torch path is
+tested only when GPU is available.
+
+## Exit criteria
+`make divergence-semantic` runs on padme GPU in < 1 min.
+CPU fallback produces identical results. Config switch works.

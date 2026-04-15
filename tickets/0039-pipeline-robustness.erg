@@ -1,0 +1,47 @@
+%erg v1
+Title: Pipeline robustness: seeds, fallbacks, year-range validation
+Status: open
+Created: 2026-04-15
+Author: user
+
+--- log ---
+2026-04-15T20:00Z claude created
+2026-04-15T20:00Z claude note from simplify review
+
+--- body ---
+## Context
+Several robustness gaps identified during code review.
+
+## Actions
+
+### Configurable random seed
+1. Add `random_seed: 42` to config/analysis.yaml divergence section.
+2. Replace all hardcoded `seed=42`, `random_state=42`,
+   `np.random.RandomState(42)` with config-driven seed.
+3. Single RNG instance per script invocation, seeded from config.
+
+### G7 disruption fallback transparency
+4. When G7 falls back to IQR-of-reference-age proxy (sparse internal
+   edges), tag the output: `hyperparams="mode=proxy"` instead of
+   empty string. Downstream code can distinguish real CD from proxy.
+
+### Year-range coherence validation
+5. In `compute_changepoints.py`, after loading all divergence CSVs,
+   warn if methods cover different year ranges. Log the intersection
+   and union. The convergence table should note which methods were
+   available for each year.
+
+### Energy distance subsampling guard
+6. Verify `dcor.energy_distance` runtime on 2000×1024 arrays.
+   If > 5 seconds, add subsampling (same cap as MMD).
+   Document the measured time in a code comment.
+
+## Test
+```python
+def test_seed_reproducibility():
+    """Same seed → same output. Different seed → different output."""
+```
+
+## Exit criteria
+All random operations seeded from config. G7 proxy is visible in output.
+Year-range warnings logged. Energy distance benchmarked.

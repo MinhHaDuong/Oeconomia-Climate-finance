@@ -1,0 +1,53 @@
+%erg v1
+Title: Test strategy: golden values, fast/slow split, missing coverage
+Status: open
+Created: 2026-04-15
+Author: user
+
+--- log ---
+2026-04-15T20:00Z claude created
+2026-04-15T20:00Z claude note from simplify review; 52 tests take 128s
+
+--- body ---
+## Context
+The test suite works but has gaps in strategy: no regression guards
+on numeric values, no fast/slow separation, and several scripts lack
+any test coverage.
+
+## Actions
+
+### Golden value regression tests
+1. Run all 15 methods on smoke fixture, save outputs to
+   `tests/fixtures/smoke/golden/tab_div_*.csv`.
+2. Add `test_golden_values.py`: for each method, compare output
+   against golden values with `np.allclose(atol=1e-6)`.
+3. Golden values are committed to git. Update when methods change
+   intentionally (not silently).
+
+### Fast/slow test split
+4. Mark all subprocess-spawning smoke tests with `@pytest.mark.slow`.
+5. Mark all tests that do real computation (S1-S4 on fixture) with
+   `@pytest.mark.slow`.
+6. Unit tests (schema, helpers, synthetic data) stay unmarked.
+7. Verify: `pytest -m "not slow"` < 10 seconds.
+8. Document: `make check-fast` runs `pytest -m "not slow"`,
+   `make check` runs all.
+
+### Missing test coverage
+9. `plot_convergence.py` — smoke test: produces PNG without error.
+10. `compute_convergence.py` (script) — smoke test via subprocess.
+11. `_get_break_years` with realistic breaks DataFrame — unit test
+    verifying both `detector_params` and legacy `penalty` formats.
+12. Property tests for S1-S4: distance(X, X) ≈ 0, distance(X, Y) ≥ 0.
+
+### Makefile test target
+13. Add `make check-divergence` target running only divergence tests.
+14. Add `make -n divergence` dry-run test verifying DAG integrity.
+
+## Test
+`pytest -m "not slow"` completes in < 10 seconds.
+`pytest` (all) completes in < 150 seconds.
+
+## Exit criteria
+Golden values committed. Fast/slow split working. All scripts have
+at least one test. Property tests for metric axioms.

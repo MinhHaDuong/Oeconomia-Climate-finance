@@ -1,0 +1,47 @@
+%erg v1
+Title: Pipeline efficiency: profiling, make -j, test speed
+Status: open
+Created: 2026-04-15
+Author: user
+
+--- log ---
+2026-04-15T20:00Z claude created
+2026-04-15T20:00Z claude note from simplify review efficiency discussion
+
+--- body ---
+## Context
+The pipeline has never been profiled on real data. Estimated ~20 min
+CPU, ~5 min GPU, but these are guesses. Test suite takes 128s which
+is too slow for make check-fast.
+
+## Actions
+
+### Profiling on real data
+1. On padme, run each of the 15 methods individually and record
+   wall-clock time. Output: `docs/profiling-divergence.md` with a
+   table of (method, n_papers, time_seconds, bottleneck).
+2. Identify the actual bottleneck (is it MMD? energy distance?
+   PageRank on 28k nodes?).
+
+### Make parallelism
+3. Test `make -j15 divergence-tables` on padme with real data.
+   Verify: no race conditions, correct outputs.
+4. Test `make -j4 divergence-tables` (realistic on 4-core machine).
+5. Document recommended -j value in divergence.mk header.
+
+### Test speed
+6. Profile the test suite: which tests take > 5s?
+7. Ensure `pytest -m "not slow"` < 10s (depends on 0038 for markers).
+
+### Sensitivity script efficiency
+8. The JL sweep does 20 projections × load embeddings once per
+   invocation. With 4 methods, that's 4 loads. Acceptable? Profile.
+9. If PCA sweep is slow, consider caching PCA-projected embeddings
+   per dimension (they're deterministic with fixed seed).
+
+## Test
+Profiling doc committed. Make -j tested on real data.
+
+## Exit criteria
+Actual timings documented. Bottleneck identified. Parallel make
+validated. Test suite fast path < 10s.
