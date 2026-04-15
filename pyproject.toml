@@ -28,6 +28,7 @@ dependencies = [
     "dcor>=0.6.1",
     "ruptures>=1.1.9",
     "pybursts>=0.1.1",
+    "python-louvain",
 ]
 
 [project.optional-dependencies]
