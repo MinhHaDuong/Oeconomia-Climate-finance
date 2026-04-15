@@ -1,0 +1,37 @@
+%erg v1
+Title: Supplementary table: corrected divergence with bootstrap CIs and p-values
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0045
+
+--- log ---
+2026-04-15T23:45Z claude created — keep figures clean, put estimation detail in table
+
+--- body ---
+## Context
+The per-method figures show one curve + one null ribbon (ticket 0045
+viz A). Bootstrap CIs on the observed curve are not shown — they
+would clutter the figure with a second ribbon per variant. But
+reviewers may ask about estimation uncertainty. Put it in a table.
+
+## Actions
+1. New script: `export_divergence_summary.py`. For each (method,
+   year, window), output one row with:
+   - corrected divergence: median, q025, q975 (bootstrap K=200)
+   - null: median, q975 (same-pool N=500)
+   - p-value
+   - significant (boolean, p < 0.05)
+2. Output: `content/tables/tab_divergence_summary.csv`
+3. Pandera schema in schemas.py.
+4. Makefile target in divergence.mk.
+
+## Test
+```python
+def test_summary_table_has_all_methods_and_years():
+    """Every (method, year) pair from the divergence run appears."""
+```
+
+## Exit criteria
+Table is machine-readable, referenced from technical report as
+supplementary material. Figures stay clean — one curve, one ribbon.
