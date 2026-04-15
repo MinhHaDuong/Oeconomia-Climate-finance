@@ -19,6 +19,7 @@ import warnings
 import networkx as nx
 import numpy as np
 import pandas as pd
+from pipeline_loaders import load_analysis_corpus, load_refined_citations
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy, kendalltau
@@ -45,21 +46,19 @@ def load_citation_data(input_paths):
     (works, citations, internal_edges) : tuple
 
     """
-    works_path = (
-        input_paths[0] if input_paths and len(input_paths) >= 2 else REFINED_WORKS_PATH
-    )
-    works = pd.read_csv(
-        works_path,
-        usecols=["doi", "year", "cited_by_count"],
-        dtype={"year": float},
-    )
-    works = works.dropna(subset=["doi"]).copy()
-    works["year"] = works["year"].astype(int)
-
     if input_paths and len(input_paths) >= 2:
+        works = pd.read_csv(
+            input_paths[0],
+            usecols=["doi", "year", "cited_by_count"],
+            dtype={"year": float},
+        )
+        works["year"] = works["year"].astype(int)
         citations = pd.read_csv(input_paths[1])
     else:
+        works, _ = load_analysis_corpus(with_embeddings=False)
         citations = load_refined_citations()
+
+    works = works.dropna(subset=["doi"]).copy()
 
     internal_edges = _build_internal_edges(works, citations)
     log.info(

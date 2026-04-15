@@ -13,6 +13,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from pipeline_loaders import load_analysis_corpus
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import entropy
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -27,7 +28,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def load_lexical_data(input_path):
-    """Load refined_works.csv, keep only rows with non-null abstracts.
+    """Load works with non-null abstracts.
 
     Parameters
     ----------
@@ -37,9 +38,14 @@ def load_lexical_data(input_path):
     """
     if isinstance(input_path, list):
         input_path = input_path[0] if input_path else None
-    csv_path = input_path or REFINED_WORKS_PATH
 
-    df = pd.read_csv(csv_path, usecols=["year", "abstract"], dtype={"year": "Int64"})
+    if input_path:
+        df = pd.read_csv(
+            input_path, usecols=["year", "abstract"], dtype={"year": "Int64"}
+        )
+    else:
+        df, _ = load_analysis_corpus(with_embeddings=False)
+
     df = df.dropna(subset=["abstract", "year"]).copy()
     df["year"] = df["year"].astype(int)
     log.info(

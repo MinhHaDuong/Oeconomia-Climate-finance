@@ -25,6 +25,8 @@ load_embeddings
     Load embedding vectors from the .npz cache (legacy path).
 load_refined_embeddings
     Load embedding vectors aligned 1:1 with refined_works.csv.
+load_refined_works
+    Load refined_works.csv (Feather-first) with type coercion, no filtering.
 load_refined_citations
     Load citation edges restricted to refined_works.csv source DOIs.
 load_analysis_corpus
@@ -84,12 +86,15 @@ REFINED_CITATIONS_PATH = os.path.join(CATALOGS_DIR, "refined_citations.csv")
 REFINED_WORKS_FEATHER = os.path.join(CATALOGS_DIR, "refined_works.feather")
 REFINED_CITATIONS_FEATHER = os.path.join(CATALOGS_DIR, "refined_citations.feather")
 
-_CLUSTER_LABELS_PATH = os.path.join(BASE_DIR, "content", "tables", "cluster_labels.json")
+_CLUSTER_LABELS_PATH = os.path.join(
+    BASE_DIR, "content", "tables", "cluster_labels.json"
+)
 
 
 # ---------------------------------------------------------------------------
 # Config loaders
 # ---------------------------------------------------------------------------
+
 
 def load_collect_config():
     """Load config/corpus_collect.yaml (Phase 1 collection parameters).
@@ -107,8 +112,12 @@ def load_collect_config():
         )
     with open(path) as f:
         cfg = yaml.safe_load(f)
-    if not isinstance(cfg.get("year_min"), int) or not isinstance(cfg.get("year_max"), int):
-        raise ValueError("year_min and year_max must be integers in corpus_collect.yaml")
+    if not isinstance(cfg.get("year_min"), int) or not isinstance(
+        cfg.get("year_max"), int
+    ):
+        raise ValueError(
+            "year_min and year_max must be integers in corpus_collect.yaml"
+        )
     if cfg["year_min"] > cfg["year_max"]:
         raise ValueError(
             f"year_min ({cfg['year_min']}) > year_max ({cfg['year_max']}) "
@@ -190,8 +199,7 @@ def load_analysis_periods(config_dir=None):
             )
         if msgs:
             warnings.warn(
-                "Analysis range exceeds collection range: "
-                + "; ".join(msgs),
+                "Analysis range exceeds collection range: " + "; ".join(msgs),
                 UserWarning,
                 stacklevel=2,
             )
@@ -202,6 +210,7 @@ def load_analysis_periods(config_dir=None):
 # ---------------------------------------------------------------------------
 # Corpus / embeddings / citations loaders
 # ---------------------------------------------------------------------------
+
 
 def load_cluster_labels(n_clusters=6):
     """Load cluster labels from cluster_labels.json.
@@ -274,6 +283,31 @@ def load_refined_embeddings():
     return np.load(REFINED_EMBEDDINGS_PATH)["vectors"]
 
 
+def load_refined_works():
+    """Load refined_works.csv (Feather-first) with standard type coercion.
+
+    Returns the full DataFrame with no row filtering. Year is coerced to
+    numeric, cited_by_count is coerced and NaN-filled to 0.
+
+    Use ``load_analysis_corpus()`` when you need year-range or core filtering.
+    """
+    if os.path.exists(REFINED_WORKS_FEATHER):
+        works = pd.read_feather(REFINED_WORKS_FEATHER)
+    else:
+        if not os.path.exists(REFINED_WORKS_PATH):
+            raise FileNotFoundError(
+                f"refined_works not found at {REFINED_WORKS_FEATHER} or "
+                f"{REFINED_WORKS_PATH}. "
+                "Run: make corpus-handoff"
+            )
+        works = pd.read_csv(REFINED_WORKS_PATH)
+    works["year"] = pd.to_numeric(works["year"], errors="coerce")
+    works["cited_by_count"] = pd.to_numeric(
+        works["cited_by_count"], errors="coerce"
+    ).fillna(0)
+    return works
+
+
 def load_refined_citations():
     """Load citation edges restricted to refined_works.csv source DOIs.
 
@@ -294,8 +328,9 @@ def load_refined_citations():
     return pd.read_csv(REFINED_CITATIONS_PATH, low_memory=False)
 
 
-def load_analysis_corpus(core_only=False, with_embeddings=True,
-                         cite_threshold=None, v1_only=False):
+def load_analysis_corpus(
+    core_only=False, with_embeddings=True, cite_threshold=None, v1_only=False
+):
     """Load refined_works.csv with standard filtering + optional embeddings.
 
     Applies: year coercion, title-present filter, year in [year_min, year_max]
@@ -317,11 +352,7 @@ def load_analysis_corpus(core_only=False, with_embeddings=True,
     year_min = cfg["periodization"]["year_min"]
     year_max = cfg["periodization"]["year_max"]
 
-    if os.path.exists(REFINED_WORKS_FEATHER):
-        works = pd.read_feather(REFINED_WORKS_FEATHER)
-    else:
-        works = pd.read_csv(REFINED_WORKS_PATH)
-    works["year"] = pd.to_numeric(works["year"], errors="coerce")
+    works = load_refined_works()
 
     has_title = works["title"].notna() & (works["title"].str.len() > 0)
     in_range = (works["year"] >= year_min) & (works["year"] <= year_max)
@@ -333,8 +364,7 @@ def load_analysis_corpus(core_only=False, with_embeddings=True,
                 "Re-run: uv run python scripts/corpus_filter.py --apply"
             )
         keep_mask = keep_mask & (works["in_v1"] == 1)
-        _log.info("v1_only: restricting to %d / %d rows",
-                  keep_mask.sum(), len(works))
+        _log.info("v1_only: restricting to %d / %d rows", keep_mask.sum(), len(works))
     keep_mask = keep_mask.values
     df = works[keep_mask].copy().reset_index(drop=True)
 
@@ -349,17 +379,14 @@ def load_analysis_corpus(core_only=False, with_embeddings=True,
             )
         embeddings = all_embeddings[keep_mask]
 
-    df["cited_by_count"] = pd.to_numeric(
-        df["cited_by_count"], errors="coerce"
-    ).fillna(0)
-
     if core_only:
         core_mask = df["cited_by_count"] >= cite_threshold
         core_indices = df.index[core_mask].values
         df = df.loc[core_mask].reset_index(drop=True)
         if embeddings is not None:
             embeddings = embeddings[core_indices]
-            assert len(df) == len(embeddings), \
+            assert len(df) == len(embeddings), (
                 "Embedding alignment error after core filtering"
+            )
 
     return df, embeddings

@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from pipeline_loaders import load_analysis_corpus
 from utils import get_logger
 
 log = get_logger("_divergence_semantic")
@@ -45,20 +46,12 @@ def load_semantic_data(input_paths):
             if len(input_paths) > 1
             else os.path.join(os.path.dirname(csv_path), "refined_embeddings.npz")
         )
+        df = pd.read_csv(csv_path, usecols=["year", "cited_by_count"])
+        df["year"] = df["year"].astype("Int64")
+        df = df.dropna(subset=["year"]).reset_index(drop=True)
         emb = np.load(emb_path)["vectors"]
     else:
-        csv_path = REFINED_WORKS_PATH
-        emb = load_refined_embeddings()
-
-    df = pd.read_csv(csv_path, usecols=["year", "cited_by_count"])
-    df["year"] = df["year"].astype("Int64")
-    df = df.dropna(subset=["year"]).reset_index(drop=True)
-
-    if len(emb) != len(df):
-        raise RuntimeError(
-            f"Embedding/works row mismatch ({len(emb)} vs {len(df)}). "
-            "Re-run: make corpus-align"
-        )
+        df, emb = load_analysis_corpus(with_embeddings=True)
 
     log.info("Loaded %d works, embeddings %s", len(df), emb.shape)
     return df, emb
