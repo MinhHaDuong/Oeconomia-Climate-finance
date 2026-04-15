@@ -1,0 +1,56 @@
+%erg v1
+Title: Embedding method insensitivity analysis (PCA + random projections)
+Status: open
+Created: 2026-04-14
+Author: user
+Blocked-by: 0029
+
+--- log ---
+2026-04-14T17:30Z claude created
+2026-04-14T17:30Z claude note levels 2+3 (PCA sweep + JL random projections); level 4 (multi-model) deferred to padme
+
+--- body ---
+## Context
+Reviewer concern: "your semantic breaks only hold for BGE-M3." The multi-
+channel design (lexical + citation channels are embedding-free) is the
+primary robustness argument. This ticket adds two cheap embedding-space
+robustness tests that run on existing embeddings without re-encoding.
+
+## Method
+
+### Level 2: PCA dimensionality sweep
+Project BGE-M3 embeddings (1024-dim) via PCA to d = [32, 64, 128, 256, 512].
+Run S1-S4 on each subspace. If breaks survive collapse from 1024 to 32,
+they depend on coarse geometry, not fine embedding structure.
+
+### Level 3: Johnson-Lindenstrauss random projections
+For each target dimension d in [64, 128, 256], generate 50 random
+projection matrices. Run S1-S4 on each projected space. Report: fraction
+of projections that detect each break year (±1 year tolerance). A break
+detected in >90% of projections is robust by probabilistic argument.
+
+### Level 4 (deferred to padme): multi-model re-embedding
+Re-encode abstracts with all-MiniLM-L6-v2 (384-dim, 80MB) and
+E5-large-v2 (1024-dim, 1.3GB). Run S1-S4 on each. Compare break dates.
+
+## Actions
+1. Create `scripts/compute_embedding_sensitivity.py`:
+   - Reads refined_embeddings.npz
+   - PCA sweep: 5 dimensionalities × 4 methods × 4 windows
+   - JL sweep: 3 dimensionalities × 50 projections × 4 methods × window=3
+   - Output: tab_embedding_sensitivity.csv (same contract + extra column
+     `projection` = "pca_32", "jl_128_run07", etc.)
+   - Apply PELT to each series
+2. Create figure: heatmap (projection variants × years), color = divergence,
+   break overlay. Stable columns = insensitive breaks.
+3. Add Makefile target to divergence.mk.
+
+## Test
+```python
+def test_embedding_sensitivity_smoke():
+    """Run PCA sweep on smoke fixture, verify output shape."""
+```
+
+## Exit criteria
+PCA sweep and 50 JL projections complete. Report shows which break years
+are stable across >90% of projection variants. Figure ready for paper.

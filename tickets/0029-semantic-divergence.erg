@@ -1,0 +1,46 @@
+%erg v1
+Title: Implement semantic distributional divergence methods S1-S4
+Status: open
+Created: 2026-04-14
+Author: claude
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 1, parallelizable with 0030 and 0031
+
+--- body ---
+## Context
+Ticket 0026 defines a panel of 16+3 continuous structural break detection
+methods. This ticket implements the four semantic methods that operate
+directly on existing BGE-M3 document embeddings (S5 deferred to padme).
+
+Reads: refined_works.csv, refined_embeddings.npz (Phase 1 contract)
+Writes: content/tables/tab_semantic_divergence.csv
+
+## Actions
+1. Create `scripts/compute_divergence_semantic.py` following script-io
+   discipline (--output, --input optional via CATALOGS_DIR default).
+2. Implement four methods, each producing one value per (year, window):
+   - S1: MMD with RBF kernel (bandwidth: median heuristic, 0.5×, 2×)
+   - S2: Energy distance (scipy.stats.energy_distance)
+   - S3: Sliced Wasserstein (pot.sliced_wasserstein_distance, projections: 100, 500, 1000)
+   - S4: Frechet distance (Gaussian fit: mean + covariance per window)
+3. Sliding window comparison: for each year y and window w, compare
+   embeddings from [y-w, y] vs [y+1, y+1+w].
+4. Parameter sweep: windows = [2, 3, 4, 5], subcorpus = [full, core-only].
+5. Output: long-format CSV with columns (year, method, window, subcorpus,
+   hyperparams, value).
+6. Add Makefile target.
+7. Subsample large windows to N=2000 per side for computational tractability
+   (MMD and energy distance are O(n²)).
+
+## Test
+```python
+def test_semantic_divergence_smoke():
+    """Run S1-S4 on the 200-row smoke fixture, verify output shape and no NaN."""
+```
+
+## Exit criteria
+Script runs on full corpus in < 5 minutes. Output CSV has one row per
+(year, method, window, subcorpus, hyperparams) combination. All four
+methods produce non-degenerate series (variance > 0).

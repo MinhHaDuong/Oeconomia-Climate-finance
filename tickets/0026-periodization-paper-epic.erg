@@ -7,27 +7,118 @@ Author: user
 --- log ---
 2026-04-14T14:40Z claude created
 2026-04-14T14:40Z claude note epic — future paper, not current priority
+2026-04-14T15:30Z claude note expanded method panel: 5 semantic, 3 lexical, 6 citation graph, 3 meta-methods
+2026-04-14T16:00Z claude note added G7 disruption index, G8 betweenness centrality; literature review in docs/
+2026-04-14T16:30Z claude note decomposed into tickets 0029-0035; S5 deferred to padme
+2026-04-15T20:00Z claude note added 0037-0042 from review: GPU, testing, robustness, integration, efficiency, real run
 
 --- body ---
 ## Context
 The NCC epic (0012) was killed because "Paris didn't matter" oversold
 the data. But the periodization question is real and the existing
-analysis has genuine signal. A proper paper needs:
+analysis has genuine signal. A proper paper needs continuous divergence
+methods — no clustering, no arbitrary k. Each method produces a time
+series; convergence across independent channels is the robustness signal.
 
-1. Continuous divergence (MMD, energy distance, or sliced Wasserstein)
-   on embeddings — no clustering, no arbitrary k
-2. TF-IDF divergence as independent lexical signal (exposes language
-   boundaries that embeddings hide)
-3. Citation graph dynamics (2-3 methods from: community rewiring,
-   authority displacement, cross-tradition citation, preferential
-   attachment breakdown, bibliographic coupling age shift)
-4. External validation on 2-3 known-break corpora from OpenAlex
-   (COVID-19 in public health, AlexNet in AI/ML, 2008 financial crisis)
-5. Honest framing: Copenhagen was the dominant founding shift,
-   mid-2010s saw real redistribution, core shows no break
+## Method panel (16 methods + 3 change point detectors)
 
-## Not yet decomposed
-This is a future epic. Decompose when it becomes the next priority.
+All methods are continuous (one value per window/year). Parameters
+(window size, kernel, functional form) are acceptable; the number of
+clusters is not.
+
+### Semantic — 5 methods (embedding-based)
+
+| ID | Method | Principle | Parameters | Library | Reference |
+|----|--------|-----------|------------|---------|-----------|
+| S1 | MMD (Maximum Mean Discrepancy) | Kernel two-sample test between embedding distributions of consecutive windows | Kernel (RBF), bandwidth | `dcor` or custom with `scipy` | Gretton et al. (2012) JMLR |
+| S2 | Energy distance | Distribution-free two-sample test based on inter-point distances. No kernel to choose. | None (Euclidean) | `scipy.stats.energy_distance` | Székely & Rizzo (2004) JSPI; (2013) Ann. Stat. |
+| S3 | Sliced Wasserstein distance | Optimal transport approximated by random 1D projections | Number of projections | `pot.sliced_wasserstein_distance` | Bonneel et al. (2015) JMIV |
+| S4 | Fréchet distance (FID) | Model each period as multivariate Gaussian, compute Fréchet distance | Gaussian assumption | `scipy` (mean + covariance) | Dowson & Landau (1982) JMVA |
+| S5 | Procrustes alignment + residual rotation | Train word embeddings per period, align via orthogonal Procrustes, measure rotation magnitude | Vocabulary size, embedding dim | `scipy.linalg.orthogonal_procrustes` | Hamilton et al. (2016) ACL |
+
+S1–S4 apply directly to document embeddings (BGE-M3 already computed).
+S5 requires per-period word embeddings — captures term-level semantic
+drift rather than document-level distributional shift.
+
+### Lexical — 3 methods
+
+| ID | Method | Principle | Parameters | Library | Reference |
+|----|--------|-----------|------------|---------|-----------|
+| L1 | JS divergence on term distributions | Jensen-Shannon between TF-IDF distributions of two windows. Independent of embeddings. | Vocabulary size, window | `scipy.spatial.distance.jensenshannon` | Lin (1991) IEEE Trans. IT |
+| L2 | Novelty / Transience | KL(doc‖past) = novelty, KL(doc‖future) = transience. Aggregated per year. Peaks of non-resonant novelty signal breaks. | Past/future window | `scipy.stats.entropy` (base KL) | Barron et al. (2018) PNAS |
+| L3 | Burst detection (Kleinberg) | Finite automaton on term frequencies. Detects acceleration without arbitrary threshold. Aggregate: count of terms in burst per year. | State transition cost | `pybursts` | Kleinberg (2003) KDD |
+
+L1 = global lexical divergence. L2 = separates what is new from what
+persists. L3 = identifies which specific terms carry the change.
+
+### Citation graph — 8 methods
+
+| ID | Method | Principle | Parameters | Library | Reference |
+|----|--------|-----------|------------|---------|-----------|
+| G1 | PageRank volatility | PageRank per time slice; Kendall τ displacement between consecutive slices. High displacement = authority restructuring. | Damping factor, slice width | `networkx.pagerank` + `scipy.stats.kendalltau` | Brin & Page (1998); Ghoshal & Barabási (2011) |
+| G2 | Spectral gap of Laplacian | Gap between 1st and 2nd eigenvalue of normalized Laplacian. Narrowing gap → emerging community structure. | None | `networkx.laplacian_matrix` + `scipy.linalg.eigsh` | Chung (1997); Chi et al. (2007) |
+| G3 | Bibliographic coupling age shift | For papers in year t, distribution of publication years of shared references. Shift = changing intellectual foundations. | Min coupling threshold | `networkx` + `numpy` | Kessler (1963); Klavans & Boyack (2017) |
+| G4 | Cross-tradition citation ratio | Define traditions by seed papers (not clustering). Track fraction of citations crossing tradition boundaries. 0 = silos, 1 = integration. | Seed selection | `networkx` | Leydesdorff (2007) JASIST; Rafols & Meyer (2010) |
+| G5 | Preferential attachment exponent drift | Estimate exponent α per time slice. α > 1 = growing concentration. Regime change in α = structural shift. | Estimation window | `scipy.optimize.curve_fit` | Barabási & Albert (1999) Science; Newman (2001) |
+| G6 | Citation entropy | Shannon entropy of incoming citation distribution per year. Low entropy = concentration around few authorities. | None | `scipy.stats.entropy` | Larivière et al. (2009) JASIST |
+| G7 | Disruption index CD | Measures whether a paper consolidates (citants cite its refs) or disrupts (citants ignore its refs). Aggregated per year as mean CD. | None | `networkx` + `numpy` | Funk & Owen-Smith (2017); Wu et al. (2019) Nature |
+| G8 | Betweenness centrality dynamics | Mean/max betweenness centrality per time slice in co-citation network. Peaks signal pivotal papers bridging communities. | Slice width | `networkx.betweenness_centrality` | Freeman (1979); Chen (2006) JASIST |
+
+### Change point detection layer (3 meta-methods)
+
+Applied to all 16 time series above. Convergence across channels is
+the robustness criterion.
+
+| ID | Method | Principle | Library | Reference |
+|----|--------|-----------|---------|-----------|
+| CP1 | PELT | Exact segmentation in linear time. Multiple breaks, no need to fix their count. | `ruptures.Pelt` | Killick et al. (2012) JASA |
+| CP2 | BOCPD | Bayesian online detection. Outputs break probability at each point — no binary decision. | `ruptures` or `bayesian_changepoint_detection` | Adams & MacKay (2007) |
+| CP3 | Kernel CPD | CUSUM based on MMD. Suited to multivariate series. | `ruptures.KernelCPD` | Harchaoui et al. (2009) NIPS |
+
+## Dependencies to add
+
+```
+pot>=0.9.0        # Sliced Wasserstein (S3)
+dcor>=0.6.1       # MMD alternative (S1)
+ruptures>=1.1.9   # PELT, BOCPD, Kernel CPD (CP1-CP3)
+pybursts>=0.1.1   # Burst detection (L3)
+```
+
+Already available via scipy/networkx: S2, S4, S5, L1, L2, G1-G8.
+
+## Literature review
+
+See `docs/literature-review-structural-break-detection.md` for the full
+survey (12 sections, gap analysis). Key finding: distributional two-sample
+tests (MMD, energy, Wasserstein) have never been applied to bibliometric
+corpora — this is the methodological gap.
+
+## Additional requirements
+
+- External validation on 2-3 known-break corpora from OpenAlex
+  (COVID-19 in public health, AlexNet in AI/ML, 2008 financial crisis)
+- Honest framing: Copenhagen was the dominant founding shift,
+  mid-2010s saw real redistribution, core shows no break
+
+## Sub-tickets
+
+| Wave | Ticket | Description | Blocked by |
+|------|--------|-------------|------------|
+| 1 | 0029 | Semantic divergence S1-S4 | — |
+| 1 | 0030 | Lexical divergence L1-L3 | — |
+| 1 | 0031 | Citation graph divergence G1-G8 | — |
+| 2 | 0032 | Change point detection CP1-CP3 | 0029, 0030, 0031 |
+| 3 | 0033 | Multi-channel heatmap figure | 0032 |
+| 3 | 0034 | structural-breaks-v2 include | 0033 |
+| 4 | 0035 | Validation corpora (ISTEX/padme) | 0032 |
+| 2 | 0036 | Embedding insensitivity (PCA + JL projections) | 0029 |
+| — | 0037 | GPU acceleration (torch backend S1-S4) | padme |
+| — | 0038 | Test strategy (golden values, fast/slow, coverage) | — |
+| — | 0039 | Pipeline robustness (seeds, fallbacks, validation) | — |
+| — | 0040 | Integration (wire into tech report, deprecate old) | 0034 |
+| — | 0041 | Pipeline efficiency (profiling, make -j, test speed) | 0038 |
+| — | 0042 | Run on real corpus (padme) | 0037, 0039 |
+| — | (S5) | Procrustes word embeddings | padme GPU, deferred |
 
 ## Exit criteria
 Paper submitted to a bibliometrics venue (QSS, Scientometrics, or

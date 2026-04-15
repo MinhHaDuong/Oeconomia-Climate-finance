@@ -1,0 +1,38 @@
+%erg v1
+Title: Write structural-breaks-v2 include for technical report
+Status: open
+Created: 2026-04-14
+Author: claude
+Blocked-by: 0033
+Blocked-by: 0042
+
+--- log ---
+2026-04-14T16:30Z claude created
+2026-04-14T16:30Z claude note wave 3, documentation
+
+--- body ---
+## Context
+The technical report needs an updated structural breaks section that
+documents the multi-channel approach and its results.
+
+Reads: tab_convergence.csv, fig_multichannel_breaks.pdf
+Writes: content/_includes/structural-breaks-v2.md
+
+## Actions
+1. Create `content/_includes/structural-breaks-v2.md` as a self-contained
+   include documenting:
+   - The 16-method panel (brief description of each)
+   - The change point detection layer (PELT, BOCPD, Kernel CPD)
+   - Results: which years show cross-channel convergence
+   - Comparison with previous results (JS divergence + cosine on KMeans)
+   - Parameter sensitivity analysis
+2. Reference the heatmap figure.
+3. Include the convergence table.
+4. Wire into content/technical-report.qmd.
+
+## Test
+`make technical-report` builds without error and the new section appears.
+
+## Exit criteria
+The include is self-contained, documents method + inputs + outputs + results,
+and can be cherry-picked by the future periodization paper.

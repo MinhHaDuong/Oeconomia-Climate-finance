@@ -5,4 +5,6 @@
 *
 !.gitignore
 !catalogs/
+!golden/
+!golden/**
 !golden_hashes.json

@@ -1,14 +1,16 @@
-"""Pandera schemas for Phase 1→2 contract files.
+"""Pandera schemas for pipeline contract files.
 
-Declares the expected shape of the 3 handoff artifacts:
-- refined_works.csv — corpus metadata
-- refined_citations.csv — citation edges
+Declares the expected shape of:
+- refined_works.csv — corpus metadata (Phase 1→2 contract)
+- refined_citations.csv — citation edges (Phase 1→2 contract)
 - refined_embeddings.npz — embedding vectors (validated via function)
+- DivergenceSchema — per-method divergence CSV (Phase 2 internal contract)
 
 Used by:
 - corpus_align.py (writer side): validate before writing
 - pipeline_loaders.py (reader side): validate on load
-- tests/test_schema_contracts.py: verify fixture and real data
+- compute_divergence.py: validate divergence output
+- tests/test_schema_contracts.py, tests/test_divergence.py
 """
 
 import pandera.pandas as pa
@@ -72,6 +74,22 @@ RefinedCitationsSchema = DataFrameSchema(
 )
 
 # ---------------------------------------------------------------------------
+# Divergence series CSV (Phase 2 internal contract)
+# ---------------------------------------------------------------------------
+
+DivergenceSchema = DataFrameSchema(
+    columns={
+        "year": Column(int),
+        "channel": Column(str, checks=pa.Check.isin(["semantic", "lexical", "citation"])),
+        "window": Column(str),          # "2", "3", "cumulative", etc.
+        "hyperparams": Column(str, nullable=True),
+        "value": Column(float, nullable=True),
+    },
+    strict=True,   # no extra columns allowed
+    coerce=True,   # coerce types on validation
+)
+
+# ---------------------------------------------------------------------------
 # refined_embeddings.npz
 # ---------------------------------------------------------------------------
 
@@ -89,6 +107,7 @@ def validate_refined_embeddings(vectors, n_works):
     ------
     ValueError
         If row count doesn't match or dimensions are wrong.
+
     """
     if vectors.ndim != 2:
         raise ValueError(
