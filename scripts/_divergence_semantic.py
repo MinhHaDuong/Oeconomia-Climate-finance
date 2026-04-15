@@ -77,11 +77,8 @@ def _get_years_and_params(df, emb, cfg):
     windows = div_cfg["windows"]
     max_subsample = div_cfg["max_subsample"]
 
-    if len(df) < 200:
-        min_papers = div_cfg["min_papers_smoke"]
-        log.info("Smoke mode: min_papers set to %d (n_works=%d)", min_papers, len(df))
-    else:
-        min_papers = div_cfg["min_papers"]
+    from _divergence_io import get_min_papers
+    min_papers = get_min_papers(len(df), cfg)
 
     start_year = int(df["year"].min()) + max(windows)
     end_year = int(df["year"].max()) - max(windows) - 1

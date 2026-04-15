@@ -39,10 +39,10 @@ import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from _divergence_io import load_divergence_tables
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
@@ -135,71 +135,28 @@ def _pick_base_hp(df):
     return base_hps[0] if base_hps else ""
 
 
-# ── Method name extraction ──────────────────────────────────────────────
-
-def _extract_method_from_path(path):
-    """Extract method name from filename.
-
-    Supports: tab_div_{method}.csv, tab_sens_pca_{method}.csv,
-    tab_sens_jl_{method}.csv.
-    """
-    basename = os.path.splitext(os.path.basename(path))[0]
-    if basename.startswith("tab_div_"):
-        return basename[len("tab_div_"):]
-    m = re.match(r"tab_sens_(?:pca|jl)_(.+)", basename)
-    if m:
-        return m.group(1)
-    return None
-
-
-def _load_tables(input_paths):
-    """Load and concatenate divergence tables.
-
-    Supports both new (tab_div_{method}.csv, no 'method' column) and legacy
-    (tab_{channel}_divergence.csv, has 'method' column) formats.
-    """
-    div_frames = []
-    breaks_frames = []
-
-    for path in input_paths:
-        if not os.path.exists(path):
-            log.warning("Input not found: %s", path)
-            continue
-        df = pd.read_csv(path)
-
-        # New format: method derived from filename, columns have no 'method'
-        if "method" not in df.columns:
-            method = _extract_method_from_path(path)
-            if method is None:
-                log.warning("Cannot determine method from filename: %s", path)
-                continue
-            df["method"] = method
-
-        # Enforce minimum columns
-        expected = {"year", "channel", "window", "hyperparams", "value"}
-        if not expected.issubset(set(df.columns)):
-            log.warning("Skipping %s: missing columns %s",
-                        path, expected - set(df.columns))
-            continue
-        div_frames.append(df)
-
-        # Look for companion breaks file
-        breaks_path = os.path.splitext(path)[0] + "_breaks.csv"
-        if os.path.exists(breaks_path):
-            breaks_frames.append(pd.read_csv(breaks_path))
-
-    div_df = pd.concat(div_frames, ignore_index=True) if div_frames else pd.DataFrame()
-    breaks_df = pd.concat(breaks_frames, ignore_index=True) if breaks_frames else pd.DataFrame()
-    log.info("Loaded %d divergence rows, %d break rows from %d files",
-             len(div_df), len(breaks_df), len(div_frames))
-    return div_df, breaks_df
+# _extract_method_from_path and _load_tables live in _divergence_io.py
 
 
 def _get_break_years(breaks_df, method, penalty=BREAK_PENALTY):
-    """Extract break years for a method at given penalty."""
+    """Extract break years for a method at given penalty.
+
+    Supports both the changepoints table (detector_params="pen=3") and
+    legacy per-method breaks (penalty=3 integer column).
+    """
     if breaks_df.empty or "break_years" not in breaks_df.columns:
         return set()
-    mask = (breaks_df["method"] == method) & (breaks_df["penalty"] == penalty)
+
+    # Filter by method
+    mask = breaks_df["method"] == method
+
+    # Match penalty: new format uses detector_params string, old uses penalty int
+    if "detector_params" in breaks_df.columns:
+        pen_str = f"pen={penalty}"
+        mask = mask & (breaks_df["detector_params"] == pen_str)
+    elif "penalty" in breaks_df.columns:
+        mask = mask & (breaks_df["penalty"] == penalty)
+
     years = set()
     for val in breaks_df.loc[mask, "break_years"].dropna():
         for y in str(val).split(";"):
@@ -388,7 +345,7 @@ def main():
         import glob
         io_args.input = sorted(glob.glob(os.path.join(tables_dir, "tab_div_*.csv")))
 
-    div_df, breaks_df = _load_tables(io_args.input)
+    div_df, breaks_df = load_divergence_tables(io_args.input)
 
     if div_df.empty:
         log.warning("No divergence data found; nothing to plot")

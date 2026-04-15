@@ -68,16 +68,7 @@ def _smooth_distribution(v, eps=1e-10):
     return v
 
 
-def _get_min_papers(df, cfg):
-    """Return smoke-safe min_papers."""
-    div_cfg = cfg["divergence"]
-    if len(df) < 200:
-        min_papers = div_cfg["min_papers_smoke"]
-        log.info("Smoke mode: n_works=%d < 200, min_papers=%d", len(df), min_papers)
-    else:
-        min_papers = div_cfg["min_papers"]
-    return min_papers
-
+from _divergence_io import get_min_papers as _get_min_papers
 
 # ── L1: JS divergence on TF-IDF distributions ────────────────────────────
 
@@ -90,7 +81,7 @@ def compute_l1_js(df, cfg):
     lex_cfg = div_cfg["lexical"]
 
     windows = div_cfg["windows"]
-    min_papers = _get_min_papers(df, cfg)
+    min_papers = _get_min_papers(len(df), cfg)
     tfidf_max_features = lex_cfg["tfidf_max_features"]
     tfidf_min_df = lex_cfg["tfidf_min_df"]
 
@@ -155,7 +146,7 @@ def compute_l2_novelty(df, cfg):
     lex_cfg = div_cfg["lexical"]
 
     l2_windows = lex_cfg["L2_novelty"]["windows"]
-    min_papers = _get_min_papers(df, cfg)
+    min_papers = _get_min_papers(len(df), cfg)
     tfidf_max_features = lex_cfg["tfidf_max_features"]
     tfidf_min_df = lex_cfg["tfidf_min_df"]
 

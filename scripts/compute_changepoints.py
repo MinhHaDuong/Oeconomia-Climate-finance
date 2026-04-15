@@ -32,6 +32,7 @@ import ruptures
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from _divergence_io import load_divergence_tables
 from pipeline_loaders import load_analysis_config
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -40,67 +41,6 @@ log = get_logger("compute_changepoints")
 
 # Minimum non-NaN points required to fit a detector
 MIN_POINTS = 5
-
-# Channel classification by method prefix
-METHOD_CHANNEL = {
-    "S": "semantic",
-    "L": "lexical",
-    "G": "citation",
-}
-
-
-def _infer_channel(method_name):
-    """Infer channel from method name prefix."""
-    for prefix, channel in METHOD_CHANNEL.items():
-        if method_name.startswith(prefix):
-            return channel
-    return "unknown"
-
-
-def _extract_method_from_path(path):
-    """Extract method name from tab_div_{method}.csv filename."""
-    basename = os.path.splitext(os.path.basename(path))[0]
-    if basename.startswith("tab_div_"):
-        return basename[len("tab_div_"):]
-    return None
-
-
-def _load_divergence_tables(input_paths):
-    """Load divergence CSVs, handling both new and legacy formats.
-
-    Returns a DataFrame with columns:
-        method, channel, year, window, hyperparams, value
-    """
-    frames = []
-    for path in input_paths:
-        if not os.path.exists(path):
-            log.warning("File not found: %s", path)
-            continue
-        df = pd.read_csv(path)
-
-        # New format: no 'method' column, method from filename
-        if "method" not in df.columns:
-            method = _extract_method_from_path(path)
-            if method is None:
-                log.warning("Cannot determine method from filename: %s", path)
-                continue
-            df["method"] = method
-
-        # Ensure channel column exists
-        if "channel" not in df.columns:
-            df["channel"] = df["method"].apply(_infer_channel)
-
-        expected = {"year", "method", "channel", "window", "hyperparams", "value"}
-        if not expected.issubset(set(df.columns)):
-            log.warning("Skipping %s: missing columns %s",
-                        path, expected - set(df.columns))
-            continue
-        frames.append(df[list(expected)])
-
-    if not frames:
-        return pd.DataFrame(columns=["method", "channel", "year",
-                                      "window", "hyperparams", "value"])
-    return pd.concat(frames, ignore_index=True)
 
 
 def _interpolate_signal(values):
@@ -372,7 +312,7 @@ def main():
     log.info("Input files: %s", [os.path.basename(p) for p in input_paths])
 
     # Load divergence data
-    div_df = _load_divergence_tables(input_paths)
+    div_df, _ = load_divergence_tables(input_paths)
     if div_df.empty:
         log.warning("No divergence data found; writing empty output")
         pd.DataFrame(columns=[

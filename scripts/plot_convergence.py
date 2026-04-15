@@ -41,12 +41,12 @@ CHANNEL_ORDER = ["semantic", "lexical", "citation"]
 METHOD_ORDER_SEM = ["S1_MMD", "S2_energy", "S3_sliced_wasserstein", "S4_frechet"]
 METHOD_ORDER_LEX = ["L1", "L2", "L3"]
 METHOD_ORDER_CIT = [
-    "G1_pagerank", "G1_pagerank_volatility",
-    "G2_spectral", "G2_spectral_gap",
-    "G3_coupling_age", "G3_age_shift",
+    "G1_pagerank",
+    "G2_spectral",
+    "G3_coupling_age",
     "G4_cross_tradition",
-    "G5_pref_attachment", "G5_pa_exponent",
-    "G6_entropy", "G6_citation_entropy",
+    "G5_pref_attachment",
+    "G6_entropy",
     "G7_disruption",
     "G8_betweenness",
 ]
@@ -165,15 +165,7 @@ def _build_heatmap_matrix(div_df):
     return matrix, method_labels, all_years, channel_bounds
 
 
-def _method_channel(method_name):
-    """Determine channel from method name prefix."""
-    if method_name.startswith("S"):
-        return "semantic"
-    if method_name.startswith("L"):
-        return "lexical"
-    if method_name.startswith("G"):
-        return "citation"
-    return "unknown"
+from _divergence_io import infer_channel as _method_channel
 
 
 def _get_pelt_breaks(breaks_df, method, penalty=3):

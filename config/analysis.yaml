@@ -12,14 +12,12 @@ clustering:
   cite_threshold: 50    # Minimum cited_by_count for "core" papers
 
 # ── Cluster-free divergence panel (ticket 0026) ──────────────────────────
-# Each compute_divergence_*.py reads this section via load_analysis_config().
+# compute_divergence.py --method X reads this section via load_analysis_config().
 #
-# Output contract (all three CSVs):
-#   Divergence: year,method,channel,window,hyperparams,value
-#   Breaks:     method,channel,window,hyperparams,penalty,break_years
-#     - break_years is semicolon-separated (e.g. "2007;2013")
-#     - channel is one of: semantic, lexical, citation
-#     - window is integer (years) or "cumulative" for citation graph methods
+# Output contract (one CSV per method, validated by DivergenceSchema):
+#   year(int), channel(str), window(str), hyperparams(str?), value(float?)
+# Channel is one of: semantic, lexical, citation.
+# Window is "2","3","4","5" or "cumulative" for citation graph methods.
 
 divergence:
   windows: [2, 3, 4, 5]
