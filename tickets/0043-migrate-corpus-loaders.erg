@@ -1,0 +1,66 @@
+%erg v1
+Title: Migrate direct corpus reads to pipeline_loaders (arch rule 9)
+Status: open
+Created: 2026-04-15
+Author: claude
+
+--- log ---
+2026-04-15T12:00Z claude created
+
+--- body ---
+## Context
+
+Architecture rule 9 (added in PR #650) forbids direct `pd.read_csv()` /
+`np.load()` / `pd.read_feather()` on contract files (`refined_works`,
+`refined_embeddings`, `refined_citations`). Scripts must use
+`pipeline_loaders`: `load_refined_works()`, `load_analysis_corpus()`,
+`load_refined_embeddings()`, `load_refined_citations()`.
+
+A sweep found 25+ violations across active scripts. Direct reads bypass
+Feather acceleration (20-50x), type coercion, error hints, and create
+coupling points that break when the corpus format changes.
+
+## Actions
+
+Migrate each script to use the appropriate loader. Group by severity:
+
+**High (3 direct reads each):**
+- `compute_vars.py` — lines 289, 426, 432
+- `analyze_100bn.py` — lines 229, 398, 402
+- `build_smoke_fixture.py` — lines 48, 81, 91
+- `qa_embeddings.py` — lines 77, 81, 342
+
+**Medium (1 direct read):**
+- `analyze_multilingual.py` — line 248
+- `plot_fig_seed_axis.py` — line 61
+- `plot_alluvial_html.py` — line 90
+- `analyze_genealogy.py` — line 54
+- `compute_temporal_communities.py` — line 55
+- `analyze_communities_clusters.py` — line 44
+- `plot_interactive_corpus.py` — line 76
+- `analyze_cocitation.py` — line 55
+- `analyze_bimodality.py` — line 148
+- `export_tab_venues.py` — line 41
+
+**Low (archive, not actively used):**
+- `archive/analyze_space_interactions.py`
+- `archive_traditions/detect_traditions_v{1,2,3}.py`
+- `archive_traditions/detect_traditions_pre{2015,2020}.py`
+
+**Special cases (may need path argument support):**
+- `corpus_align.py` — reads with `dtype=str, keep_default_na=False`
+  (intentionally raw, may be exempt)
+
+## Test
+
+```python
+def test_no_direct_corpus_reads():
+    """No Phase 2 script may read contract files directly."""
+    # Check for pd.read_csv/np.load on refined_* outside pipeline_loaders.py
+```
+
+## Exit criteria
+
+- All high/medium scripts use pipeline_loaders
+- Test enforces the rule (add to test_script_hygiene.py)
+- Archive scripts: fix or document as exempt

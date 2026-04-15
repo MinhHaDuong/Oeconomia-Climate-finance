@@ -1,0 +1,71 @@
+%erg v1
+Title: Add Pandera schema validation to CSV-writing scripts (arch rule 2)
+Status: open
+Created: 2026-04-15
+Author: claude
+
+--- log ---
+2026-04-15T12:05Z claude created
+
+--- body ---
+## Context
+
+Architecture rule 2 requires: "New CSV artifacts get a Pandera schema in
+`scripts/schemas.py` (strict=True, coerce=True). Validate at write time —
+if the schema fails, the script fails, Make stops."
+
+A sweep found 18 Phase 2 scripts that write CSVs without validation.
+Only `compute_divergence.py` and `compute_embedding_sensitivity.py`
+currently validate against `DivergenceSchema`.
+
+## Actions
+
+Add schemas to `scripts/schemas.py` and validate before each `.to_csv()`
+call. Group by analysis concern:
+
+**Structural change detection (PR #650 scripts):**
+- `compute_changepoints.py`
+- `compute_convergence.py`
+
+**Clustering / communities:**
+- `compute_clusters.py`
+- `compute_clustering_comparison.py`
+- `analyze_cocitation.py`
+- `analyze_communities_clusters.py` (if it writes CSV)
+
+**Corpus analysis:**
+- `analyze_embeddings.py`
+- `analyze_bimodality.py`
+- `analyze_100bn.py`
+- `analyze_genealogy.py`
+- `build_het_core.py`
+
+**Lexical / text:**
+- `compute_lexical.py`
+- `analyze_unfccc_topics.py`
+- `summarize_abstracts.py`
+
+**Teaching:**
+- `analyze_syllabi.py`
+- `analyze_teaching_canon.py`
+
+**Legacy breakpoints:**
+- `compute_breakpoints.py`
+
+**Export:**
+- `export_deposit.py`
+- `compute_reranker_calibration.py`
+
+## Test
+
+```python
+def test_csv_writes_have_schema():
+    """Every Phase 2 script that calls .to_csv() must validate first."""
+    # AST-scan for .to_csv() calls, verify preceding schema.validate()
+```
+
+## Exit criteria
+
+- Each CSV output has a schema in `scripts/schemas.py`
+- Validation happens at write time (not just at read time downstream)
+- Hygiene test enforces the rule for new scripts
