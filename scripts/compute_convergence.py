@@ -14,12 +14,8 @@ Usage:
 """
 
 import os
-import sys
 
 import pandas as pd
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from compute_changepoints import compute_convergence
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -35,7 +31,8 @@ def main():
         # Default: look for changepoints table
         tables_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "content", "tables",
+            "content",
+            "tables",
         )
         input_path = os.path.join(tables_dir, "tab_changepoints.csv")
     else:
@@ -47,16 +44,21 @@ def main():
     convergence_df = compute_convergence(breaks_df)
 
     convergence_df.to_csv(io_args.output, index=False)
-    log.info("Saved convergence table -> %s (%d rows)", io_args.output,
-             len(convergence_df))
+    log.info(
+        "Saved convergence table -> %s (%d rows)", io_args.output, len(convergence_df)
+    )
 
     if not convergence_df.empty:
         top = convergence_df.nlargest(5, "pct_total")
         log.info("Top convergence years:")
         for _, row in top.iterrows():
-            log.info("  %d: %.1f%% (%d detections, methods: %s)",
-                     row["year"], row["pct_total"] * 100,
-                     row["n_total"], row["methods_detecting"])
+            log.info(
+                "  %d: %.1f%% (%d detections, methods: %s)",
+                row["year"],
+                row["pct_total"] * 100,
+                row["n_total"],
+                row["methods_detecting"],
+            )
 
     log.info("Done.")
 

@@ -38,9 +38,12 @@ def _run_sensitivity(method, projection, output_path, timeout=300):
         [
             sys.executable,
             os.path.join(SCRIPTS_DIR, "compute_embedding_sensitivity.py"),
-            "--method", method,
-            "--projection", projection,
-            "--output", str(output_path),
+            "--method",
+            method,
+            "--projection",
+            projection,
+            "--output",
+            str(output_path),
         ],
         env=_smoke_env(),
         capture_output=True,
@@ -54,29 +57,34 @@ def _run_sensitivity(method, projection, output_path, timeout=300):
 # Unit tests for helper functions
 # ---------------------------------------------------------------------------
 
+
 class TestHelpers:
     """Test helper functions in compute_embedding_sensitivity."""
 
     def test_append_projection_tag_to_default(self):
         from compute_embedding_sensitivity import _append_projection_tag
+
         df = pd.DataFrame({"hyperparams": ["default"], "value": [1.0]})
         result = _append_projection_tag(df, "pca_64")
         assert result["hyperparams"].iloc[0] == "projection=pca_64"
 
     def test_append_projection_tag_to_existing(self):
         from compute_embedding_sensitivity import _append_projection_tag
+
         df = pd.DataFrame({"hyperparams": ["bw=1.0x_median"], "value": [1.0]})
         result = _append_projection_tag(df, "pca_128")
         assert result["hyperparams"].iloc[0] == "bw=1.0x_median;projection=pca_128"
 
     def test_append_projection_tag_empty_df(self):
         from compute_embedding_sensitivity import _append_projection_tag
+
         df = pd.DataFrame({"hyperparams": [], "value": []})
         result = _append_projection_tag(df, "original")
         assert len(result) == 0
 
     def test_make_sensitivity_cfg_overrides_windows(self):
         from compute_embedding_sensitivity import _make_sensitivity_cfg
+
         cfg = {"divergence": {"windows": [2, 3, 4, 5], "other": "keep"}}
         result = _make_sensitivity_cfg(cfg)
         assert result["divergence"]["windows"] == [3]
@@ -85,6 +93,7 @@ class TestHelpers:
 
     def test_method_func_registry_covers_all_semantic_methods(self):
         from compute_embedding_sensitivity import METHOD_FUNCS
+
         expected = {"S1_MMD", "S2_energy", "S3_sliced_wasserstein", "S4_frechet"}
         assert set(METHOD_FUNCS.keys()) == expected
 
@@ -92,6 +101,7 @@ class TestHelpers:
 # ---------------------------------------------------------------------------
 # PCA projection preserves break on synthetic data
 # ---------------------------------------------------------------------------
+
 
 class TestPCABreakPreservation:
     """Verify that PCA projection preserves a known distributional shift."""
@@ -112,10 +122,12 @@ class TestPCABreakPreservation:
 
         # Full-dim energy distance
         import dcor
+
         full_dist = dcor.energy_distance(X_before, X_after)
 
         # PCA to d=32
         from sklearn.decomposition import PCA
+
         pca = PCA(n_components=32, random_state=42)
         combined = np.vstack([X_before, X_after])
         combined_pca = pca.fit_transform(combined)
@@ -138,7 +150,7 @@ class TestPCABreakPreservation:
 # Smoke tests: run dispatcher on fixture data
 # ---------------------------------------------------------------------------
 
-@pytest.mark.slow
+
 @pytest.mark.integration
 class TestSmokePCA:
     """PCA sweep on 100-row smoke fixture."""
@@ -172,11 +184,11 @@ class TestSmokePCA:
         assert result.returncode == 0, result.stderr
 
         from schemas import DivergenceSchema
+
         df = pd.read_csv(out)
         DivergenceSchema.validate(df)
 
 
-@pytest.mark.slow
 @pytest.mark.integration
 class TestSmokeJL:
     """JL sweep on 100-row smoke fixture.
@@ -209,6 +221,7 @@ class TestSmokeJL:
         assert result.returncode == 0, result.stderr
 
         from schemas import DivergenceSchema
+
         df = pd.read_csv(out)
         DivergenceSchema.validate(df)
 
@@ -217,7 +230,7 @@ class TestSmokeJL:
 # Plot script smoke test
 # ---------------------------------------------------------------------------
 
-@pytest.mark.slow
+
 @pytest.mark.integration
 class TestPlotSmoke:
     """Verify plot script runs without error on PCA sensitivity output."""
@@ -234,9 +247,12 @@ class TestPlotSmoke:
             [
                 sys.executable,
                 os.path.join(SCRIPTS_DIR, "plot_divergence.py"),
-                "--palette", "gradient",
-                "--output", str(fig_out),
-                "--input", str(csv_out),
+                "--palette",
+                "gradient",
+                "--output",
+                str(fig_out),
+                "--input",
+                str(csv_out),
             ],
             env=_smoke_env(),
             capture_output=True,
@@ -244,12 +260,10 @@ class TestPlotSmoke:
             timeout=120,
         )
         assert plot_result.returncode == 0, (
-            f"Plot failed:\nstdout: {plot_result.stdout}\n"
-            f"stderr: {plot_result.stderr}"
+            f"Plot failed:\nstdout: {plot_result.stdout}\nstderr: {plot_result.stderr}"
         )
         # Check that the PNG was created (stem + method)
         expected_png = tmp_path / "fig_sensitivity_S2_energy.png"
         assert expected_png.exists(), (
-            f"Expected {expected_png} but found: "
-            f"{[f.name for f in tmp_path.iterdir()]}"
+            f"Expected {expected_png} but found: {[f.name for f in tmp_path.iterdir()]}"
         )

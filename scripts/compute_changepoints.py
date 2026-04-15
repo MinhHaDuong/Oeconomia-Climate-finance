@@ -25,13 +25,9 @@ Usage:
 
 import glob
 import os
-import sys
 
 import pandas as pd
 import ruptures
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from _divergence_io import load_divergence_tables
 from pipeline_loaders import load_analysis_config
 from script_io_args import parse_io_args, validate_io
@@ -139,8 +135,9 @@ def compute_breaks(div_df, pelt_penalties, dynp_n_bkps=None):
         dynp_n_bkps = [1, 2, 3]
 
     rows = []
-    groups = div_df.groupby(["method", "channel", "window", "hyperparams"],
-                            dropna=False)
+    groups = div_df.groupby(
+        ["method", "channel", "window", "hyperparams"], dropna=False
+    )
     n_groups = len(groups)
     log.info("Processing %d (method, window, hyperparams) groups", n_groups)
 
@@ -151,8 +148,9 @@ def compute_breaks(div_df, pelt_penalties, dynp_n_bkps=None):
 
         signal = _interpolate_signal(values)
         if signal is None:
-            log.debug("Skipping %s w=%s hp=%s: too few non-NaN points",
-                      method, window, hp)
+            log.debug(
+                "Skipping %s w=%s hp=%s: too few non-NaN points", method, window, hp
+            )
             continue
 
         # Reshape for ruptures (n_samples, 1)
@@ -165,47 +163,60 @@ def compute_breaks(div_df, pelt_penalties, dynp_n_bkps=None):
         # PELT
         for params, bkps in _run_pelt(sig, pelt_penalties):
             break_yrs = _idx_to_years(bkps)
-            rows.append({
-                "method": method,
-                "channel": channel,
-                "window": str(window),
-                "hyperparams": hp if pd.notna(hp) else "",
-                "detector": "pelt",
-                "detector_params": params,
-                "break_years": ";".join(str(y) for y in break_yrs),
-            })
+            rows.append(
+                {
+                    "method": method,
+                    "channel": channel,
+                    "window": str(window),
+                    "hyperparams": hp if pd.notna(hp) else "",
+                    "detector": "pelt",
+                    "detector_params": params,
+                    "break_years": ";".join(str(y) for y in break_yrs),
+                }
+            )
 
         # Dynp (BOCPD approximation)
         for params, bkps in _run_dynp(sig, dynp_n_bkps):
             break_yrs = _idx_to_years(bkps)
-            rows.append({
-                "method": method,
-                "channel": channel,
-                "window": str(window),
-                "hyperparams": hp if pd.notna(hp) else "",
-                "detector": "dynp",
-                "detector_params": params,
-                "break_years": ";".join(str(y) for y in break_yrs),
-            })
+            rows.append(
+                {
+                    "method": method,
+                    "channel": channel,
+                    "window": str(window),
+                    "hyperparams": hp if pd.notna(hp) else "",
+                    "detector": "dynp",
+                    "detector_params": params,
+                    "break_years": ";".join(str(y) for y in break_yrs),
+                }
+            )
 
         # Kernel CPD
         for params, bkps in _run_kernel_cpd(sig, pelt_penalties):
             break_yrs = _idx_to_years(bkps)
-            rows.append({
-                "method": method,
-                "channel": channel,
-                "window": str(window),
-                "hyperparams": hp if pd.notna(hp) else "",
-                "detector": "kernel_cpd",
-                "detector_params": params,
-                "break_years": ";".join(str(y) for y in break_yrs),
-            })
+            rows.append(
+                {
+                    "method": method,
+                    "channel": channel,
+                    "window": str(window),
+                    "hyperparams": hp if pd.notna(hp) else "",
+                    "detector": "kernel_cpd",
+                    "detector_params": params,
+                    "break_years": ";".join(str(y) for y in break_yrs),
+                }
+            )
 
     return pd.DataFrame(rows)
 
 
-_CONV_COLUMNS = ["year", "n_semantic", "n_lexical", "n_citation",
-                 "n_total", "pct_total", "methods_detecting"]
+_CONV_COLUMNS = [
+    "year",
+    "n_semantic",
+    "n_lexical",
+    "n_citation",
+    "n_total",
+    "pct_total",
+    "methods_detecting",
+]
 
 
 def _parse_break_years(raw):
@@ -271,15 +282,19 @@ def compute_convergence(breaks_df):
     for candidate_year in sorted(all_years):
         counts, methods = _count_detections(breaks_df, candidate_year)
         n_total = sum(counts.values())
-        rows.append({
-            "year": candidate_year,
-            "n_semantic": counts["semantic"],
-            "n_lexical": counts["lexical"],
-            "n_citation": counts["citation"],
-            "n_total": n_total,
-            "pct_total": round(n_total / total_possible, 4) if total_possible > 0 else 0.0,
-            "methods_detecting": ";".join(sorted(methods)),
-        })
+        rows.append(
+            {
+                "year": candidate_year,
+                "n_semantic": counts["semantic"],
+                "n_lexical": counts["lexical"],
+                "n_citation": counts["citation"],
+                "n_total": n_total,
+                "pct_total": round(n_total / total_possible, 4)
+                if total_possible > 0
+                else 0.0,
+                "methods_detecting": ";".join(sorted(methods)),
+            }
+        )
 
     return pd.DataFrame(rows)
 
@@ -300,36 +315,52 @@ def main():
     else:
         tables_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "content", "tables",
+            "content",
+            "tables",
         )
         # Try new-style first
         input_paths = sorted(glob.glob(os.path.join(tables_dir, "tab_div_*.csv")))
         if not input_paths:
             # Fall back to legacy combined files
-            input_paths = sorted(glob.glob(
-                os.path.join(tables_dir, "tab_*_divergence.csv")
-            ))
+            input_paths = sorted(
+                glob.glob(os.path.join(tables_dir, "tab_*_divergence.csv"))
+            )
     log.info("Input files: %s", [os.path.basename(p) for p in input_paths])
 
     # Load divergence data
     div_df, _ = load_divergence_tables(input_paths)
     if div_df.empty:
         log.warning("No divergence data found; writing empty output")
-        pd.DataFrame(columns=[
-            "method", "channel", "window", "hyperparams",
-            "detector", "detector_params", "break_years",
-        ]).to_csv(io_args.output, index=False)
+        pd.DataFrame(
+            columns=[
+                "method",
+                "channel",
+                "window",
+                "hyperparams",
+                "detector",
+                "detector_params",
+                "break_years",
+            ]
+        ).to_csv(io_args.output, index=False)
         return
 
-    log.info("Loaded %d divergence rows across %d methods",
-             len(div_df), div_df["method"].nunique())
+    log.info(
+        "Loaded %d divergence rows across %d methods",
+        len(div_df),
+        div_df["method"].nunique(),
+    )
 
     # Year-range coherence check
     methods = div_df.groupby("method")["year"].agg(["min", "max"])
     year_min = methods["min"].max()  # latest start
     year_max = methods["max"].min()  # earliest end
-    log.info("Year intersection: %d-%d (union: %d-%d)",
-             year_min, year_max, methods["min"].min(), methods["max"].max())
+    log.info(
+        "Year intersection: %d-%d (union: %d-%d)",
+        year_min,
+        year_max,
+        methods["min"].min(),
+        methods["max"].max(),
+    )
     if methods["min"].nunique() > 1 or methods["max"].nunique() > 1:
         log.warning("Methods cover different year ranges:")
         for m, row in methods.iterrows():

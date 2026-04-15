@@ -34,10 +34,12 @@ class TestDetectorsOnSynthetic:
         """Signal with a mean shift at index 15 (year 2015)."""
         rng = np.random.RandomState(42)
         n = 30
-        signal = np.concatenate([
-            rng.normal(0, 0.3, 15),
-            rng.normal(2, 0.3, 15),
-        ])
+        signal = np.concatenate(
+            [
+                rng.normal(0, 0.3, 15),
+                rng.normal(2, 0.3, 15),
+            ]
+        )
         years = np.arange(2000, 2000 + n)
         return signal, years
 
@@ -54,8 +56,9 @@ class TestDetectorsOnSynthetic:
         # Should detect at least one break near index 15
         assert len(bkps) > 0
         # At least one break within 3 of the true break point
-        assert any(abs(b - 15) <= 3 for b in bkps), \
+        assert any(abs(b - 15) <= 3 for b in bkps), (
             f"Expected break near 15, got {bkps}"
+        )
 
     def test_dynp_finds_break(self, synthetic_series):
         from compute_changepoints import _run_dynp
@@ -69,8 +72,7 @@ class TestDetectorsOnSynthetic:
         assert params == "n_bkps=1"
         assert len(bkps) == 1
         # Break should be near index 15
-        assert abs(bkps[0] - 15) <= 3, \
-            f"Expected break near 15, got {bkps[0]}"
+        assert abs(bkps[0] - 15) <= 3, f"Expected break near 15, got {bkps[0]}"
 
     def test_kernel_cpd_finds_break(self, synthetic_series):
         from compute_changepoints import _run_kernel_cpd
@@ -83,8 +85,9 @@ class TestDetectorsOnSynthetic:
         params, bkps = results[0]
         assert params == "pen=3"
         assert len(bkps) > 0
-        assert any(abs(b - 15) <= 3 for b in bkps), \
+        assert any(abs(b - 15) <= 3 for b in bkps), (
             f"Expected break near 15, got {bkps}"
+        )
 
     def test_pelt_multiple_penalties(self, synthetic_series):
         from compute_changepoints import _run_pelt
@@ -144,20 +147,27 @@ class TestComputeBreaks:
         years = list(range(2005, 2025))
         values = list(rng.normal(1, 0.1, 10)) + list(rng.normal(3, 0.1, 10))
 
-        div_df = pd.DataFrame({
-            "method": ["test_method"] * len(years),
-            "channel": ["semantic"] * len(years),
-            "year": years,
-            "window": ["3"] * len(years),
-            "hyperparams": [""] * len(years),
-            "value": values,
-        })
+        div_df = pd.DataFrame(
+            {
+                "method": ["test_method"] * len(years),
+                "channel": ["semantic"] * len(years),
+                "year": years,
+                "window": ["3"] * len(years),
+                "hyperparams": [""] * len(years),
+                "value": values,
+            }
+        )
 
         breaks_df = compute_breaks(div_df, pelt_penalties=[3])
 
         expected_cols = {
-            "method", "channel", "window", "hyperparams",
-            "detector", "detector_params", "break_years",
+            "method",
+            "channel",
+            "window",
+            "hyperparams",
+            "detector",
+            "detector_params",
+            "break_years",
         }
         assert set(breaks_df.columns) == expected_cols
         assert len(breaks_df) > 0
@@ -167,14 +177,16 @@ class TestComputeBreaks:
         from compute_changepoints import compute_breaks
 
         # Series with too few non-NaN points
-        div_df = pd.DataFrame({
-            "method": ["sparse"] * 4,
-            "channel": ["semantic"] * 4,
-            "year": [2010, 2011, 2012, 2013],
-            "window": ["3"] * 4,
-            "hyperparams": [""] * 4,
-            "value": [1.0, np.nan, np.nan, 2.0],
-        })
+        div_df = pd.DataFrame(
+            {
+                "method": ["sparse"] * 4,
+                "channel": ["semantic"] * 4,
+                "year": [2010, 2011, 2012, 2013],
+                "window": ["3"] * 4,
+                "hyperparams": [""] * 4,
+                "value": [1.0, np.nan, np.nan, 2.0],
+            }
+        )
 
         breaks_df = compute_breaks(div_df, pelt_penalties=[3])
         # Too few points: should produce empty output
@@ -192,21 +204,28 @@ class TestConvergence:
     def test_convergence_columns(self):
         from compute_changepoints import compute_convergence
 
-        breaks_df = pd.DataFrame({
-            "method": ["S1_MMD", "L1", "G1_pagerank"],
-            "channel": ["semantic", "lexical", "citation"],
-            "window": ["3", "3", "cumulative"],
-            "hyperparams": ["", "", ""],
-            "detector": ["pelt", "pelt", "pelt"],
-            "detector_params": ["pen=3", "pen=3", "pen=3"],
-            "break_years": ["2007;2013", "2007", "2013"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["S1_MMD", "L1", "G1_pagerank"],
+                "channel": ["semantic", "lexical", "citation"],
+                "window": ["3", "3", "cumulative"],
+                "hyperparams": ["", "", ""],
+                "detector": ["pelt", "pelt", "pelt"],
+                "detector_params": ["pen=3", "pen=3", "pen=3"],
+                "break_years": ["2007;2013", "2007", "2013"],
+            }
+        )
 
         conv_df = compute_convergence(breaks_df)
 
         expected_cols = {
-            "year", "n_semantic", "n_lexical", "n_citation",
-            "n_total", "pct_total", "methods_detecting",
+            "year",
+            "n_semantic",
+            "n_lexical",
+            "n_citation",
+            "n_total",
+            "pct_total",
+            "methods_detecting",
         }
         assert set(conv_df.columns) == expected_cols
         assert len(conv_df) > 0
@@ -214,15 +233,17 @@ class TestConvergence:
     def test_convergence_counts_within_tolerance(self):
         from compute_changepoints import compute_convergence
 
-        breaks_df = pd.DataFrame({
-            "method": ["A", "B", "C"],
-            "channel": ["semantic", "lexical", "citation"],
-            "window": ["3", "3", "3"],
-            "hyperparams": ["", "", ""],
-            "detector": ["pelt", "pelt", "pelt"],
-            "detector_params": ["pen=3", "pen=3", "pen=3"],
-            "break_years": ["2007", "2008", "2007"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["A", "B", "C"],
+                "channel": ["semantic", "lexical", "citation"],
+                "window": ["3", "3", "3"],
+                "hyperparams": ["", "", ""],
+                "detector": ["pelt", "pelt", "pelt"],
+                "detector_params": ["pen=3", "pen=3", "pen=3"],
+                "break_years": ["2007", "2008", "2007"],
+            }
+        )
 
         conv_df = compute_convergence(breaks_df)
 
@@ -234,15 +255,17 @@ class TestConvergence:
     def test_empty_breaks(self):
         from compute_changepoints import compute_convergence
 
-        breaks_df = pd.DataFrame({
-            "method": ["A"],
-            "channel": ["semantic"],
-            "window": ["3"],
-            "hyperparams": [""],
-            "detector": ["pelt"],
-            "detector_params": ["pen=3"],
-            "break_years": [""],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["A"],
+                "channel": ["semantic"],
+                "window": ["3"],
+                "hyperparams": [""],
+                "detector": ["pelt"],
+                "detector_params": ["pen=3"],
+                "break_years": [""],
+            }
+        )
 
         conv_df = compute_convergence(breaks_df)
         assert len(conv_df) == 0
@@ -253,7 +276,7 @@ class TestConvergence:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 class TestSmoke:
     """Run compute_changepoints.py on available divergence data."""
 
@@ -261,11 +284,10 @@ class TestSmoke:
     def divergence_csvs(self):
         """Find existing divergence CSVs (new-style or legacy)."""
         import glob
+
         paths = sorted(glob.glob(os.path.join(TABLES_DIR, "tab_div_*.csv")))
         if not paths:
-            paths = sorted(glob.glob(
-                os.path.join(TABLES_DIR, "tab_*_divergence.csv")
-            ))
+            paths = sorted(glob.glob(os.path.join(TABLES_DIR, "tab_*_divergence.csv")))
         if not paths:
             pytest.skip("No divergence CSVs available")
         return paths
@@ -276,7 +298,8 @@ class TestSmoke:
         cmd = [
             sys.executable,
             os.path.join(SCRIPTS_DIR, "compute_changepoints.py"),
-            "--output", output,
+            "--output",
+            output,
             "--input",
         ] + divergence_csvs
 
@@ -287,8 +310,9 @@ class TestSmoke:
             timeout=120,
         )
 
-        assert result.returncode == 0, \
+        assert result.returncode == 0, (
             f"Script failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+        )
 
         # Breaks table should exist
         assert os.path.exists(output)
@@ -296,18 +320,29 @@ class TestSmoke:
         assert len(breaks_df) > 0
 
         expected_cols = {
-            "method", "channel", "window", "hyperparams",
-            "detector", "detector_params", "break_years",
+            "method",
+            "channel",
+            "window",
+            "hyperparams",
+            "detector",
+            "detector_params",
+            "break_years",
         }
         assert set(breaks_df.columns) == expected_cols
 
         # Convergence is now a separate script (compute_convergence.py);
         # verify compute_convergence function works on this output.
         from compute_changepoints import compute_convergence
+
         conv_df = compute_convergence(breaks_df)
         conv_expected = {
-            "year", "n_semantic", "n_lexical", "n_citation",
-            "n_total", "pct_total", "methods_detecting",
+            "year",
+            "n_semantic",
+            "n_lexical",
+            "n_citation",
+            "n_total",
+            "pct_total",
+            "methods_detecting",
         }
         assert set(conv_df.columns) == conv_expected
 
@@ -317,22 +352,24 @@ class TestSmoke:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 class TestComputeConvergenceScript:
     """Test compute_convergence.py CLI on synthetic changepoints data."""
 
     def test_convergence_script_smoke(self, tmp_path):
         """Run compute_convergence.py on changepoints output."""
         # Create a synthetic changepoints CSV
-        breaks_df = pd.DataFrame({
-            "method": ["S1_MMD", "L1", "G1_pagerank", "S2_energy"],
-            "channel": ["semantic", "lexical", "citation", "semantic"],
-            "window": ["3", "3", "cumulative", "3"],
-            "hyperparams": ["", "", "", ""],
-            "detector": ["pelt", "pelt", "pelt", "pelt"],
-            "detector_params": ["pen=3", "pen=3", "pen=3", "pen=3"],
-            "break_years": ["2007;2013", "2007", "2013", "2008"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["S1_MMD", "L1", "G1_pagerank", "S2_energy"],
+                "channel": ["semantic", "lexical", "citation", "semantic"],
+                "window": ["3", "3", "cumulative", "3"],
+                "hyperparams": ["", "", "", ""],
+                "detector": ["pelt", "pelt", "pelt", "pelt"],
+                "detector_params": ["pen=3", "pen=3", "pen=3", "pen=3"],
+                "break_years": ["2007;2013", "2007", "2013", "2008"],
+            }
+        )
         input_path = tmp_path / "tab_changepoints.csv"
         breaks_df.to_csv(input_path, index=False)
 
@@ -341,8 +378,10 @@ class TestComputeConvergenceScript:
             [
                 sys.executable,
                 os.path.join(SCRIPTS_DIR, "compute_convergence.py"),
-                "--output", str(output_path),
-                "--input", str(input_path),
+                "--output",
+                str(output_path),
+                "--input",
+                str(input_path),
             ],
             capture_output=True,
             text=True,
@@ -355,8 +394,13 @@ class TestComputeConvergenceScript:
         assert output_path.exists(), "Convergence CSV not created"
         conv_df = pd.read_csv(output_path)
         expected_cols = {
-            "year", "n_semantic", "n_lexical", "n_citation",
-            "n_total", "pct_total", "methods_detecting",
+            "year",
+            "n_semantic",
+            "n_lexical",
+            "n_citation",
+            "n_total",
+            "pct_total",
+            "methods_detecting",
         }
         assert set(conv_df.columns) == expected_cols
         assert len(conv_df) > 0
@@ -367,7 +411,7 @@ class TestComputeConvergenceScript:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 class TestPlotConvergence:
     """Test plot_convergence.py produces a PNG without error."""
 
@@ -381,10 +425,15 @@ class TestPlotConvergence:
         for method in ["S1_MMD", "L1"]:
             channel = "semantic" if method.startswith("S") else "lexical"
             for y in years:
-                div_rows.append({
-                    "year": y, "channel": channel, "window": "3",
-                    "hyperparams": "default", "value": float(y - 2005) * 0.1,
-                })
+                div_rows.append(
+                    {
+                        "year": y,
+                        "channel": channel,
+                        "window": "3",
+                        "hyperparams": "default",
+                        "value": float(y - 2005) * 0.1,
+                    }
+                )
         div_df = pd.DataFrame(div_rows)
         div_path = tmp_path / "tab_div_S1_MMD.csv"
         div_s1 = div_df[div_df["channel"] == "semantic"]
@@ -395,20 +444,23 @@ class TestPlotConvergence:
         div_l1.to_csv(div_l1_path, index=False)
 
         # Changepoints CSV
-        breaks_df = pd.DataFrame({
-            "method": ["S1_MMD", "L1"],
-            "channel": ["semantic", "lexical"],
-            "window": ["3", "3"],
-            "hyperparams": ["default", "default"],
-            "detector": ["pelt", "pelt"],
-            "detector_params": ["pen=3", "pen=3"],
-            "break_years": ["2010", "2010"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["S1_MMD", "L1"],
+                "channel": ["semantic", "lexical"],
+                "window": ["3", "3"],
+                "hyperparams": ["default", "default"],
+                "detector": ["pelt", "pelt"],
+                "detector_params": ["pen=3", "pen=3"],
+                "break_years": ["2010", "2010"],
+            }
+        )
         breaks_path = tmp_path / "tab_changepoints.csv"
         breaks_df.to_csv(breaks_path, index=False)
 
         # Convergence CSV (sibling file)
         from compute_changepoints import compute_convergence
+
         conv_df = compute_convergence(breaks_df)
         conv_path = tmp_path / "tab_changepoints_convergence.csv"
         conv_df.to_csv(conv_path, index=False)
@@ -419,8 +471,10 @@ class TestPlotConvergence:
             [
                 sys.executable,
                 os.path.join(SCRIPTS_DIR, "plot_convergence.py"),
-                "--output", str(fig_out),
-                "--input", str(breaks_path),
+                "--output",
+                str(fig_out),
+                "--input",
+                str(breaks_path),
             ],
             capture_output=True,
             text=True,
@@ -431,6 +485,5 @@ class TestPlotConvergence:
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
         assert fig_out.exists(), (
-            f"Expected {fig_out} but found: "
-            f"{[f.name for f in tmp_path.iterdir()]}"
+            f"Expected {fig_out} but found: {[f.name for f in tmp_path.iterdir()]}"
         )

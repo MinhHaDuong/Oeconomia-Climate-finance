@@ -15,9 +15,6 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from _divergence_io import load_divergence_tables
 from pipeline_io import save_figure
 from plot_style import DARK, DPI, FIGWIDTH, MED, apply_style
@@ -64,8 +61,9 @@ def _load_divergence_for_heatmap(breaks_path):
 
     div_paths = sorted(globmod.glob(os.path.join(tables_dir, "tab_div_*.csv")))
     if not div_paths:
-        div_paths = sorted(globmod.glob(
-            os.path.join(tables_dir, "tab_*_divergence.csv")))
+        div_paths = sorted(
+            globmod.glob(os.path.join(tables_dir, "tab_*_divergence.csv"))
+        )
 
     div_df, _ = load_divergence_tables(div_paths)
     return breaks_df, div_df
@@ -186,7 +184,8 @@ def plot_convergence(breaks_df, div_df, convergence_df, output_stem):
         height_ratios.append(1)
 
     fig, axes = plt.subplots(
-        n_panels, 1,
+        n_panels,
+        1,
         figsize=(FIGWIDTH, 2.5 * n_panels),
         gridspec_kw={"height_ratios": height_ratios} if n_panels > 1 else None,
         squeeze=False,
@@ -204,9 +203,12 @@ def plot_convergence(breaks_df, div_df, convergence_df, output_stem):
 
         if matrix is not None and len(method_labels) > 0:
             im = ax.imshow(
-                matrix, aspect="auto", cmap="RdYlBu_r",
+                matrix,
+                aspect="auto",
+                cmap="RdYlBu_r",
                 interpolation="nearest",
-                vmin=-2, vmax=2,
+                vmin=-2,
+                vmax=2,
             )
             ax.set_xticks(range(len(years)))
             ax.set_xticklabels(years, rotation=45, ha="right", fontsize=5)
@@ -219,23 +221,40 @@ def plot_convergence(breaks_df, div_df, convergence_df, output_stem):
                 for by in break_yrs:
                     if by in years:
                         j = years.index(by)
-                        ax.plot(j, i, "ko", markersize=3, markerfacecolor="none",
-                                markeredgewidth=0.8)
+                        ax.plot(
+                            j,
+                            i,
+                            "ko",
+                            markersize=3,
+                            markerfacecolor="none",
+                            markeredgewidth=0.8,
+                        )
 
             # Channel labels on the right
             for ch, (start, end) in channel_bounds.items():
                 mid = (start + end) / 2
-                ax.text(len(years) + 0.5, mid, ch.capitalize(),
-                        ha="left", va="center", fontsize=6,
-                        color=CHANNEL_COLORS.get(ch, DARK),
-                        fontweight="bold")
+                ax.text(
+                    len(years) + 0.5,
+                    mid,
+                    ch.capitalize(),
+                    ha="left",
+                    va="center",
+                    fontsize=6,
+                    color=CHANNEL_COLORS.get(ch, DARK),
+                    fontweight="bold",
+                )
 
             fig.colorbar(im, ax=ax, label="z-score", shrink=0.6, pad=0.12)
-            ax.set_title("Divergence z-scores with PELT breaks (pen=3)",
-                         fontsize=8)
+            ax.set_title("Divergence z-scores with PELT breaks (pen=3)", fontsize=8)
         else:
-            ax.text(0.5, 0.5, "Insufficient data for heatmap",
-                    ha="center", va="center", transform=ax.transAxes)
+            ax.text(
+                0.5,
+                0.5,
+                "Insufficient data for heatmap",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+            )
 
     # ── Bottom panel: Convergence bars ──
     if has_bars:
@@ -251,30 +270,43 @@ def plot_convergence(breaks_df, div_df, convergence_df, output_stem):
             col = f"n_{ch}"
             if col in cdf.columns:
                 vals = cdf[col].values
-                ax.bar(x, vals, width, bottom=bottom,
-                       color=CHANNEL_COLORS[ch], label=ch.capitalize(),
-                       edgecolor="white", linewidth=0.3)
+                ax.bar(
+                    x,
+                    vals,
+                    width,
+                    bottom=bottom,
+                    color=CHANNEL_COLORS[ch],
+                    label=ch.capitalize(),
+                    edgecolor="white",
+                    linewidth=0.3,
+                )
                 bottom += vals
 
         # Threshold line
         total_possible = bottom.max() / CONVERGENCE_THRESHOLD if bottom.max() > 0 else 1
         if "pct_total" in cdf.columns:
             # Use actual total from data
-            total_possible = cdf["n_total"].max() / cdf["pct_total"].max() \
-                if cdf["pct_total"].max() > 0 else 1
+            total_possible = (
+                cdf["n_total"].max() / cdf["pct_total"].max()
+                if cdf["pct_total"].max() > 0
+                else 1
+            )
         threshold_y = total_possible * CONVERGENCE_THRESHOLD
-        ax.axhline(threshold_y, color=MED, linewidth=0.7, linestyle="--",
-                    label=f"{int(CONVERGENCE_THRESHOLD*100)}% threshold")
+        ax.axhline(
+            threshold_y,
+            color=MED,
+            linewidth=0.7,
+            linestyle="--",
+            label=f"{int(CONVERGENCE_THRESHOLD * 100)}% threshold",
+        )
 
         # Highlight years exceeding threshold
         for i, (_, row) in enumerate(cdf.iterrows()):
             if row.get("pct_total", 0) >= CONVERGENCE_THRESHOLD:
-                ax.axvspan(i - 0.45, i + 0.45, color="#FFD700",
-                           alpha=0.2, zorder=0)
+                ax.axvspan(i - 0.45, i + 0.45, color="#FFD700", alpha=0.2, zorder=0)
 
         ax.set_xticks(x)
-        ax.set_xticklabels([str(y) for y in years], rotation=45,
-                           ha="right", fontsize=6)
+        ax.set_xticklabels([str(y) for y in years], rotation=45, ha="right", fontsize=6)
         ax.set_ylabel("Detection count")
         ax.set_title("Cross-method convergence by channel", fontsize=8)
         ax.legend(loc="upper left", fontsize=6, frameon=False)

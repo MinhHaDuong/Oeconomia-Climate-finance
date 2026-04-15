@@ -18,10 +18,6 @@ Usage:
 
 import copy
 import os
-import sys
-
-# -- path setup so imports resolve from scripts/ --
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from pipeline_loaders import load_analysis_config
 from schemas import DivergenceSchema
@@ -35,9 +31,7 @@ log = get_logger("compute_embedding_sensitivity")
 from compute_divergence import METHODS as _ALL_METHODS
 
 METHOD_FUNCS = {
-    name: info[1]
-    for name, info in _ALL_METHODS.items()
-    if info[2] == "semantic"
+    name: info[1] for name, info in _ALL_METHODS.items() if info[2] == "semantic"
 }
 
 # ── Projection dimensions ────────────────────────────────────────────────
@@ -55,6 +49,7 @@ def _get_method_func(method_name):
         compute_s3_wasserstein,
         compute_s4_frechet,
     )
+
     funcs = {
         "compute_s1_mmd": compute_s1_mmd,
         "compute_s2_energy": compute_s2_energy,
@@ -78,8 +73,9 @@ def _append_projection_tag(df, tag):
         return df
     df = df.copy()
     df["hyperparams"] = df["hyperparams"].apply(
-        lambda hp: f"{hp};projection={tag}" if hp and hp != "default"
-        else f"projection={tag}"
+        lambda hp: (
+            f"{hp};projection={tag}" if hp and hp != "default" else f"projection={tag}"
+        )
     )
     return df
 
@@ -114,6 +110,7 @@ def run_pca_sweep(df, emb, cfg, method_name):
         frames.append(result)
 
     import pandas as pd
+
     combined = pd.concat(frames, ignore_index=True)
     return combined
 
@@ -137,7 +134,8 @@ def run_jl_sweep(df, emb, cfg, method_name):
             seed = base_seed + r
             log.info("JL d=%d run=%02d (seed=%d)", d, r, seed)
             transformer = GaussianRandomProjection(
-                n_components=d, random_state=seed,
+                n_components=d,
+                random_state=seed,
             )
             emb_proj = transformer.fit_transform(emb)
             result = func(df, emb_proj, sens_cfg)
@@ -153,6 +151,7 @@ def main():
     validate_io(output=io_args.output)
 
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", required=True, choices=METHOD_FUNCS.keys())
     parser.add_argument("--projection", required=True, choices=["pca", "jl"])
@@ -162,6 +161,7 @@ def main():
 
     # Load semantic data
     from _divergence_semantic import load_semantic_data
+
     df, emb = load_semantic_data(io_args.input)
 
     if args.projection == "pca":
@@ -179,8 +179,13 @@ def main():
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
     result.to_csv(io_args.output, index=False)
-    log.info("Saved %s %s (%d rows) -> %s",
-             args.method, args.projection, len(result), io_args.output)
+    log.info(
+        "Saved %s %s (%d rows) -> %s",
+        args.method,
+        args.projection,
+        len(result),
+        io_args.output,
+    )
 
 
 if __name__ == "__main__":

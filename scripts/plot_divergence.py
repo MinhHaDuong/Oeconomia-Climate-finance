@@ -35,13 +35,9 @@ Usage:
 import argparse
 import os
 import re
-import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from _divergence_io import load_divergence_tables
 from pipeline_io import save_figure
 from plot_style import apply_style
@@ -52,22 +48,32 @@ log = get_logger("plot_divergence")
 
 apply_style()
 # Override base style: larger titles, smaller legends for dense divergence plots
-matplotlib.rcParams.update({
-    "axes.titlesize": 10,
-    "legend.fontsize": 6,
-})
+matplotlib.rcParams.update(
+    {
+        "axes.titlesize": 10,
+        "legend.fontsize": 6,
+    }
+)
 
 # ── Visual encoding ──────────────────────────────────────────────────────
 
 WINDOW_STYLES = {2: "-", 3: "--", 4: "-.", 5: ":", "cumulative": "-"}
 COLORS = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#8c564b",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
 ]
-FIGWIDTH = 135 / 25.4   # ~5.3 inches
+FIGWIDTH = 135 / 25.4  # ~5.3 inches
 FIGHEIGHT = 3.2
 DPI = 300
-BREAK_PENALTY = 3        # default penalty for break overlay
+BREAK_PENALTY = 3  # default penalty for break overlay
 
 
 # ── Method display names ─────────────────────────────────────────────────
@@ -93,7 +99,13 @@ METHOD_LABELS = {
 
 # ── PCA / JL visual encoding ────────────────────────────────────────────
 
-PCA_COLORS = {32: "#bdbdbd", 64: "#969696", 128: "#737373", 256: "#525252", 512: "#252525"}
+PCA_COLORS = {
+    32: "#bdbdbd",
+    64: "#969696",
+    128: "#737373",
+    256: "#525252",
+    512: "#252525",
+}
 JL_COLORS = {64: "#1f77b4", 128: "#ff7f0e", 256: "#2ca02c"}
 
 
@@ -127,7 +139,6 @@ def _pick_base_hp(df):
     return base_hps[0] if base_hps else ""
 
 
-
 def _get_break_years(breaks_df, method, penalty=BREAK_PENALTY):
     """Extract break years for a method at given penalty.
 
@@ -159,8 +170,9 @@ def _get_break_years(breaks_df, method, penalty=BREAK_PENALTY):
     return years
 
 
-def _plot_one_method(div_df, breaks_df, method, out_stem,
-                     aggregate="none", palette="auto"):
+def _plot_one_method(
+    div_df, breaks_df, method, out_stem, aggregate="none", palette="auto"
+):
     """Plot one figure for a single method."""
     mdf = div_df[div_df["method"] == method].dropna(subset=["value"]).copy()
     if mdf.empty:
@@ -172,19 +184,30 @@ def _plot_one_method(div_df, breaks_df, method, out_stem,
     # L2 has sub-metrics (novelty, transience, resonance) encoded in hyperparams
     is_l2 = method == "L2" and aggregate == "none" and palette == "auto"
     if is_l2:
-        metrics = [hp for hp in mdf["hyperparams"].unique()
-                   if any(m in str(hp) for m in ["novelty", "transience", "resonance"])]
-        n_panels = max(1, len(set(
-            m.split(",")[1].split("=")[1] if "," in str(m) else "all"
-            for m in metrics
-        )))
+        metrics = [
+            hp
+            for hp in mdf["hyperparams"].unique()
+            if any(m in str(hp) for m in ["novelty", "transience", "resonance"])
+        ]
+        n_panels = max(
+            1,
+            len(
+                set(
+                    m.split(",")[1].split("=")[1] if "," in str(m) else "all"
+                    for m in metrics
+                )
+            ),
+        )
         if n_panels > 1:
-            fig, axes = plt.subplots(n_panels, 1, figsize=(FIGWIDTH, FIGHEIGHT * n_panels * 0.7),
-                                     sharex=True)
-            metric_names = sorted(set(
-                str(hp).split("metric=")[1] if "metric=" in str(hp) else "all"
-                for hp in mdf["hyperparams"].unique()
-            ))
+            fig, axes = plt.subplots(
+                n_panels, 1, figsize=(FIGWIDTH, FIGHEIGHT * n_panels * 0.7), sharex=True
+            )
+            metric_names = sorted(
+                set(
+                    str(hp).split("metric=")[1] if "metric=" in str(hp) else "all"
+                    for hp in mdf["hyperparams"].unique()
+                )
+            )
             for ax, metric_name in zip(axes, metric_names):
                 sub = mdf[mdf["hyperparams"].str.contains(metric_name, na=False)]
                 _draw_curves(ax, sub, breaks_df, method, aggregate, palette)
@@ -258,9 +281,19 @@ def _draw_lines(ax, mdf):
         w_key = int(window) if str(window).isdigit() else window
         ls = WINDOW_STYLES.get(w_key, "-")
         color = COLORS[color_idx % len(COLORS)]
-        label = f"w={window}" if hp in ("default", "", "cumulative") else f"w={window}, {hp}"
-        ax.plot(grp["year"], grp["value"], color=color, linestyle=ls,
-                linewidth=0.9, label=label)
+        label = (
+            f"w={window}"
+            if hp in ("default", "", "cumulative")
+            else f"w={window}, {hp}"
+        )
+        ax.plot(
+            grp["year"],
+            grp["value"],
+            color=color,
+            linestyle=ls,
+            linewidth=0.9,
+            label=label,
+        )
         color_idx += 1
 
 
@@ -277,14 +310,25 @@ def _draw_gradient(ax, mdf):
 
     orig = sub[sub["proj_type"] == "original"].sort_values("year")
     if not orig.empty:
-        ax.plot(orig["year"], orig["value"], color="black", linewidth=1.2,
-                label="original (1024d)", zorder=10)
+        ax.plot(
+            orig["year"],
+            orig["value"],
+            color="black",
+            linewidth=1.2,
+            label="original (1024d)",
+            zorder=10,
+        )
 
     for d in sorted(PCA_COLORS.keys()):
         pca_d = sub[sub["proj_dim"] == d].sort_values("year")
         if not pca_d.empty:
-            ax.plot(pca_d["year"], pca_d["value"],
-                    color=PCA_COLORS[d], linewidth=0.9, label=f"d={d}")
+            ax.plot(
+                pca_d["year"],
+                pca_d["value"],
+                color=PCA_COLORS[d],
+                linewidth=0.9,
+                label=f"d={d}",
+            )
 
 
 def _draw_ribbon(ax, mdf):
@@ -303,36 +347,45 @@ def _draw_ribbon(ax, mdf):
         dim_data = sub[sub["proj_dim"] == d]
         if dim_data.empty:
             continue
-        stats = dim_data.groupby("year")["value"].agg(
-            ["median", lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)]
-        ).reset_index()
+        stats = (
+            dim_data.groupby("year")["value"]
+            .agg(["median", lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)])
+            .reset_index()
+        )
         stats.columns = ["year", "median", "q25", "q75"]
         stats = stats.sort_values("year")
 
         color = JL_COLORS[d]
-        ax.fill_between(stats["year"], stats["q25"], stats["q75"],
-                        alpha=0.25, color=color)
-        ax.plot(stats["year"], stats["median"], color=color, linewidth=1.0,
-                label=f"d={d} (median ± IQR)")
+        ax.fill_between(
+            stats["year"], stats["q25"], stats["q75"], alpha=0.25, color=color
+        )
+        ax.plot(
+            stats["year"],
+            stats["median"],
+            color=color,
+            linewidth=1.0,
+            label=f"d={d} (median ± IQR)",
+        )
 
 
 # ── Main ────────────────────────────────────────────────────────────────
+
 
 def main():
     io_args, extra = parse_io_args()
     validate_io(output=io_args.output)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--aggregate", default="none",
-                        choices=["none", "ribbon"])
-    parser.add_argument("--palette", default="auto",
-                        choices=["auto", "gradient"])
+    parser.add_argument("--aggregate", default="none", choices=["none", "ribbon"])
+    parser.add_argument("--palette", default="auto", choices=["auto", "gradient"])
     args = parser.parse_args(extra)
 
     if not io_args.input:
-        tables_dir = os.path.join(os.path.dirname(os.path.dirname(io_args.output)),
-                                  "tables")
+        tables_dir = os.path.join(
+            os.path.dirname(os.path.dirname(io_args.output)), "tables"
+        )
         import glob
+
         io_args.input = sorted(glob.glob(os.path.join(tables_dir, "tab_div_*.csv")))
 
     div_df, breaks_df = load_divergence_tables(io_args.input)
@@ -342,13 +395,23 @@ def main():
         return
 
     methods = sorted(div_df["method"].unique())
-    log.info("Plotting %d methods (aggregate=%s, palette=%s): %s",
-             len(methods), args.aggregate, args.palette, methods)
+    log.info(
+        "Plotting %d methods (aggregate=%s, palette=%s): %s",
+        len(methods),
+        args.aggregate,
+        args.palette,
+        methods,
+    )
 
     for method in methods:
-        _plot_one_method(div_df, breaks_df, method,
-                         os.path.splitext(io_args.output)[0],
-                         aggregate=args.aggregate, palette=args.palette)
+        _plot_one_method(
+            div_df,
+            breaks_df,
+            method,
+            os.path.splitext(io_args.output)[0],
+            aggregate=args.aggregate,
+            palette=args.palette,
+        )
 
     log.info("Done.")
 
