@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 1 of epic 0026; robustness for embedding + lexical layers
+2026-04-15T18:00Z claude note reimagined: defer sidecar exports (coefficients, documents) to ticket 0056; reuse _iter_window_pairs + dispatcher pattern; S/M complexity
 
 --- body ---
 ## Context

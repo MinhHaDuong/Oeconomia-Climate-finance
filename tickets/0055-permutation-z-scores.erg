@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 1 of epic 0026; core inference for all methods
+2026-04-15T18:00Z claude note reimagined: split 0055a (null model+Z) from 0055b (transition zones); precedent in compute_lexical.py permutation test; start with 6-method lean panel
 
 --- body ---
 ## Context

@@ -6,6 +6,7 @@ Author: user
 
 --- log ---
 2026-04-16T00:30Z claude created — split from 0045, too large for overnight run
+2026-04-15T18:00Z claude note reimagined: reuse _iter_window_pairs pattern; risk: sparse graphs pre-2000 need min_nodes guard; G3/G4/G7 already non-cumulative, leave alone
 
 --- body ---
 ## Context
