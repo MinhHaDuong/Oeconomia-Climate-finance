@@ -8,7 +8,7 @@
 #   divergence-semantic  Compute semantic methods (S1-S4)
 #   divergence-lexical   Compute lexical methods (L1-L3)
 #   divergence-citation  Compute citation methods (G1-G8)
-#   divergence-tables    All 15 divergence CSVs
+#   divergence-tables    All 17 divergence CSVs
 #   divergence-figures   Plot one figure per method
 #   divergence           Both tables and figures
 #
@@ -36,7 +36,9 @@ DIV_METHODS_CIT := G1_pagerank G2_spectral G3_coupling_age G4_cross_tradition \
 DIV_CSV_SEM := $(foreach m,$(DIV_METHODS_SEM),$(DIV_TABLES)/tab_div_$(m).csv)
 DIV_CSV_LEX := $(foreach m,$(DIV_METHODS_LEX),$(DIV_TABLES)/tab_div_$(m).csv)
 DIV_CSV_CIT := $(foreach m,$(DIV_METHODS_CIT),$(DIV_TABLES)/tab_div_$(m).csv)
-DIV_CSV_C2ST := $(foreach m,$(DIV_METHODS_C2ST_SEM) $(DIV_METHODS_C2ST_LEX),$(DIV_TABLES)/tab_div_$(m).csv)
+DIV_CSV_C2ST_SEM := $(foreach m,$(DIV_METHODS_C2ST_SEM),$(DIV_TABLES)/tab_div_$(m).csv)
+DIV_CSV_C2ST_LEX := $(foreach m,$(DIV_METHODS_C2ST_LEX),$(DIV_TABLES)/tab_div_$(m).csv)
+DIV_CSV_C2ST := $(DIV_CSV_C2ST_SEM) $(DIV_CSV_C2ST_LEX)
 DIV_CSV_ALL := $(DIV_CSV_SEM) $(DIV_CSV_LEX) $(DIV_CSV_CIT) $(DIV_CSV_C2ST)
 
 # ── Semantic methods (depend on embeddings) ──────────────────────────────
@@ -70,10 +72,10 @@ $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_c2st.py $(RE
 # ── Convenience targets ──────────────────────────────────────────────────
 
 .PHONY: divergence-semantic
-divergence-semantic: $(DIV_CSV_SEM) $(DIV_CSV_C2ST)
+divergence-semantic: $(DIV_CSV_SEM) $(DIV_CSV_C2ST_SEM)
 
 .PHONY: divergence-lexical
-divergence-lexical: $(DIV_CSV_LEX)
+divergence-lexical: $(DIV_CSV_LEX) $(DIV_CSV_C2ST_LEX)
 
 .PHONY: divergence-citation
 divergence-citation: $(DIV_CSV_CIT)
