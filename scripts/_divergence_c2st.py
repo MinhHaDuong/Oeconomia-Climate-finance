@@ -25,7 +25,7 @@ log = get_logger("_divergence_c2st")
 # ── Core classifier ──────────────────────────────────────────────────────
 
 
-def _c2st_auc(X, Y, cv_folds=5, class_weight="balanced"):
+def _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=0):
     """Compute C2ST AUC: train a classifier to distinguish X from Y.
 
     Labels X as 0, Y as 1.  Returns mean cross-validated ROC AUC.
@@ -40,6 +40,8 @@ def _c2st_auc(X, Y, cv_folds=5, class_weight="balanced"):
         Number of cross-validation folds.
     class_weight : str
         Class weight strategy for LogisticRegressionCV.
+    seed : int
+        Random state for classifier reproducibility.
 
     Returns
     -------
@@ -55,7 +57,7 @@ def _c2st_auc(X, Y, cv_folds=5, class_weight="balanced"):
         cv=cv_folds,
         scoring="roc_auc",
         max_iter=1000,
-        random_state=0,
+        random_state=seed,
     )
     scores = cross_val_score(clf, features, labels, cv=cv_folds, scoring="roc_auc")
     return float(np.mean(scores))
@@ -113,7 +115,9 @@ def compute_c2st_embedding(df, emb, cfg):
         X_r = combined_r[: len(X)]
         Y_r = combined_r[len(X) :]
 
-        auc = _c2st_auc(X_r, Y_r, cv_folds=cv_folds, class_weight=class_weight)
+        auc = _c2st_auc(
+            X_r, Y_r, cv_folds=cv_folds, class_weight=class_weight, seed=seed
+        )
         results.append(
             {
                 "year": int(y),
@@ -193,7 +197,11 @@ def compute_c2st_lexical(df, cfg):
             X_after = vec.transform(texts_after).toarray()
 
             auc = _c2st_auc(
-                X_before, X_after, cv_folds=cv_folds, class_weight=class_weight
+                X_before,
+                X_after,
+                cv_folds=cv_folds,
+                class_weight=class_weight,
+                seed=seed,
             )
             results.append(
                 {

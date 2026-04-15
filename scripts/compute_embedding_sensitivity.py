@@ -31,7 +31,9 @@ log = get_logger("compute_embedding_sensitivity")
 from compute_divergence import METHODS as _ALL_METHODS
 
 METHOD_FUNCS = {
-    name: info[1] for name, info in _ALL_METHODS.items() if info[2] == "semantic"
+    name: info[1]
+    for name, info in _ALL_METHODS.items()
+    if info[2] == "semantic" and info[0] == "_divergence_semantic"
 }
 
 # ── Projection dimensions ────────────────────────────────────────────────
