@@ -42,6 +42,7 @@ The pipeline has four phases. Each phase's scripts follow a naming convention an
 6. **Config-driven parameters.** All research parameters in `config/analysis.yaml`, read via `load_analysis_config()`. No hardcoded constants for values that might change (windows, seeds, thresholds).
 7. **Random seeds from config.** Every stochastic operation reads its seed from `config/analysis.yaml`. No hardcoded `seed=42` or `RandomState(42)`.
 8. **Dispatcher pattern.** When multiple methods share data loading and output contract, use a single dispatch script with `--method X` (e.g., `compute_divergence.py`). Method implementations live in private modules (`_divergence_semantic.py`, etc.). Shared I/O helpers in `_divergence_io.py`.
+9. **Corpus access through loaders only.** Never call `pd.read_csv()` / `np.load()` / `pd.read_feather()` on contract files (`refined_works`, `refined_embeddings`, `refined_citations`) directly. Use `pipeline_loaders`: `load_refined_works()` (thin read + type coercion), `load_analysis_corpus()` (filtered + optional embeddings), `load_refined_embeddings()`, `load_refined_citations()`. Direct reads bypass Feather acceleration, type coercion, and error hints — and create coupling points that break when the corpus format changes. (Legacy scripts are migrated as touched.)
 
 **Phase 3 — Render** (Quarto → PDF/DOCX):
 - Reads Phase 2 outputs. Build artifacts go to `output/` (gitignored).
