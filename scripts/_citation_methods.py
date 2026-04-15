@@ -11,6 +11,7 @@ import warnings
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 from _divergence_citation import (
     _cumulative_graph,
     _dict_to_df,
@@ -144,10 +145,13 @@ def compute_g3_age_shift(works, citations, internal_edges, cfg):
             results[y] = np.nan
             continue
 
-        refs = citations.loc[
-            citations["source_doi"].isin(year_dois) & citations["ref_year"].notna(),
-            "ref_year",
-        ]
+        refs = pd.to_numeric(
+            citations.loc[
+                citations["source_doi"].isin(year_dois) & citations["ref_year"].notna(),
+                "ref_year",
+            ],
+            errors="coerce",
+        ).dropna()
         if len(refs) < 3:
             results[y] = np.nan
             continue

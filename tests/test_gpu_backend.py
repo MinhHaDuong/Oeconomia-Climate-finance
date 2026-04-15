@@ -60,6 +60,13 @@ def cfg_cpu():
 class TestBackendDispatch:
     """get_backend returns correct value for each config setting."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_backend_cache(self, monkeypatch):
+        """Clear cached backend before each test so config takes effect."""
+        import _divergence_backend
+
+        monkeypatch.setattr(_divergence_backend, "_RESOLVED_BACKEND", None)
+
     def test_cpu_setting(self, cfg_cpu):
         from _divergence_backend import get_backend
 
@@ -77,14 +84,12 @@ class TestBackendDispatch:
         assert get_backend(cfg) == "torch"
 
     def test_invalid_cuda_raises(self, monkeypatch):
-        # Temporarily pretend CUDA is unavailable
         import _divergence_backend
         from _divergence_backend import get_backend
 
         monkeypatch.setattr(_divergence_backend, "_TORCH_AVAILABLE", False)
         with pytest.raises(RuntimeError, match="cuda"):
             get_backend({"divergence": {"backend": "cuda"}})
-        # Reset cached state
         monkeypatch.setattr(_divergence_backend, "_TORCH_AVAILABLE", None)
 
 

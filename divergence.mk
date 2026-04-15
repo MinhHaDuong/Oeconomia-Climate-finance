@@ -40,19 +40,19 @@ DIV_CSV_ALL := $(DIV_CSV_SEM) $(DIV_CSV_LEX) $(DIV_CSV_CIT)
 
 $(foreach m,$(DIV_METHODS_SEM),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	python3 $(DIV_DISPATCH) --method $(m) --output $$@))
+	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── Lexical methods (depend on REFINED only) ─────────────────────────────
 
 $(foreach m,$(DIV_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
-	python3 $(DIV_DISPATCH) --method $(m) --output $$@))
+	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── Citation methods (depend on REFINED + REFINED_CIT) ───────────────────
 
 $(foreach m,$(DIV_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_citation.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
-	python3 $(DIV_DISPATCH) --method $(m) --output $$@))
+	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── Convenience targets ──────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ divergence-tables: $(DIV_CSV_ALL)
 DIV_FIG_STAMP := $(DIV_FIGS)/.divergence_figs.stamp
 
 $(DIV_FIG_STAMP): scripts/plot_divergence.py $(DIV_CSV_ALL)
-	python3 scripts/plot_divergence.py \
+	uv run python scripts/plot_divergence.py \
 		--output $(DIV_FIGS)/fig_divergence.png \
 		--input $(DIV_CSV_ALL)
 	touch $@
@@ -100,11 +100,11 @@ SENS_CSV_ALL := $(SENS_CSV_PCA) $(SENS_CSV_JL)
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_TABLES)/tab_sens_pca_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	python3 $(SENS_SCRIPT) --method $(m) --projection pca --output $$@))
+	uv run python $(SENS_SCRIPT) --method $(m) --projection pca --output $$@))
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_TABLES)/tab_sens_jl_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	python3 $(SENS_SCRIPT) --method $(m) --projection jl --output $$@))
+	uv run python $(SENS_SCRIPT) --method $(m) --projection jl --output $$@))
 
 # Figures: one PNG per (method, projection) pair — 1 invocation = 1 figure
 SENS_FIG_PCA := $(foreach m,$(SENS_METHODS),$(DIV_FIGS)/fig_sensitivity_pca_$(m).png)
@@ -113,11 +113,11 @@ SENS_FIG_ALL := $(SENS_FIG_PCA) $(SENS_FIG_JL)
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_FIGS)/fig_sensitivity_pca_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_pca_$(m).csv ; \
-	python3 $(SENS_PLOT) --palette gradient --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
+	uv run python $(SENS_PLOT) --palette gradient --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_FIGS)/fig_sensitivity_jl_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_jl_$(m).csv ; \
-	python3 $(SENS_PLOT) --aggregate ribbon --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
+	uv run python $(SENS_PLOT) --aggregate ribbon --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
 
 .PHONY: sensitivity-tables
 sensitivity-tables: $(SENS_CSV_ALL)
@@ -143,13 +143,13 @@ CV_TABLE   := $(DIV_TABLES)/tab_convergence.csv
 CP_FIG     := $(DIV_FIGS)/fig_convergence.png
 
 $(CP_TABLE): $(CP_SCRIPT) $(DIV_CSV_ALL) $(DIV_CFG)
-	python3 $(CP_SCRIPT) --output $@ --input $(DIV_CSV_ALL)
+	uv run python $(CP_SCRIPT) --output $@ --input $(DIV_CSV_ALL)
 
 $(CV_TABLE): $(CV_SCRIPT) $(CP_TABLE)
-	python3 $(CV_SCRIPT) --output $@ --input $(CP_TABLE)
+	uv run python $(CV_SCRIPT) --output $@ --input $(CP_TABLE)
 
 $(CP_FIG): $(CP_PLOT) $(CP_TABLE) $(CV_TABLE)
-	python3 $(CP_PLOT) --output $@ --input $(CP_TABLE) $(CV_TABLE)
+	uv run python $(CP_PLOT) --output $@ --input $(CP_TABLE) $(CV_TABLE)
 
 .PHONY: changepoints-tables
 changepoints-tables: $(CP_TABLE) $(CV_TABLE)
