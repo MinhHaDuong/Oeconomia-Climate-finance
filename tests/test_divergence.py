@@ -30,67 +30,83 @@ from conftest import run_compute as _run_compute
 # Schema tests
 # ---------------------------------------------------------------------------
 
+
 class TestDivergenceSchema:
     """DivergenceSchema validation."""
 
     def test_valid_dataframe_passes(self):
         from schemas import DivergenceSchema
-        df = pd.DataFrame({
-            "year": [2010, 2011],
-            "channel": ["semantic", "semantic"],
-            "window": ["3", "3"],
-            "hyperparams": ["default", "default"],
-            "value": [0.5, 0.6],
-        })
+
+        df = pd.DataFrame(
+            {
+                "year": [2010, 2011],
+                "channel": ["semantic", "semantic"],
+                "window": ["3", "3"],
+                "hyperparams": ["default", "default"],
+                "value": [0.5, 0.6],
+            }
+        )
         DivergenceSchema.validate(df)
 
     def test_extra_column_rejected(self):
         from schemas import DivergenceSchema
-        df = pd.DataFrame({
-            "year": [2010],
-            "channel": ["semantic"],
-            "window": ["3"],
-            "hyperparams": ["default"],
-            "value": [0.5],
-            "extra": ["oops"],
-        })
+
+        df = pd.DataFrame(
+            {
+                "year": [2010],
+                "channel": ["semantic"],
+                "window": ["3"],
+                "hyperparams": ["default"],
+                "value": [0.5],
+                "extra": ["oops"],
+            }
+        )
         with pytest.raises(Exception):
             DivergenceSchema.validate(df)
 
     def test_bad_channel_rejected(self):
         from schemas import DivergenceSchema
-        df = pd.DataFrame({
-            "year": [2010],
-            "channel": ["unknown"],
-            "window": ["3"],
-            "hyperparams": ["default"],
-            "value": [0.5],
-        })
+
+        df = pd.DataFrame(
+            {
+                "year": [2010],
+                "channel": ["unknown"],
+                "window": ["3"],
+                "hyperparams": ["default"],
+                "value": [0.5],
+            }
+        )
         with pytest.raises(Exception):
             DivergenceSchema.validate(df)
 
     def test_nullable_value_accepted(self):
         import numpy as np
         from schemas import DivergenceSchema
-        df = pd.DataFrame({
-            "year": [2010],
-            "channel": ["citation"],
-            "window": ["cumulative"],
-            "hyperparams": [""],
-            "value": [np.nan],
-        })
+
+        df = pd.DataFrame(
+            {
+                "year": [2010],
+                "channel": ["citation"],
+                "window": ["cumulative"],
+                "hyperparams": [""],
+                "value": [np.nan],
+            }
+        )
         DivergenceSchema.validate(df)
 
     def test_coercion_works(self):
         """String year and float value should be coerced."""
         from schemas import DivergenceSchema
-        df = pd.DataFrame({
-            "year": ["2010"],
-            "channel": ["lexical"],
-            "window": ["3"],
-            "hyperparams": ["w=3"],
-            "value": ["0.5"],
-        })
+
+        df = pd.DataFrame(
+            {
+                "year": ["2010"],
+                "channel": ["lexical"],
+                "window": ["3"],
+                "hyperparams": ["w=3"],
+                "value": ["0.5"],
+            }
+        )
         validated = DivergenceSchema.validate(df)
         assert validated["year"].dtype in (int, "int64")
 
@@ -99,36 +115,57 @@ class TestDivergenceSchema:
 # Module function availability
 # ---------------------------------------------------------------------------
 
+
 class TestModuleFunctions:
     """Verify each private module exposes the expected functions."""
 
     def test_semantic_module_has_all_functions(self):
         import _divergence_semantic as mod
-        for fn in ["compute_s1_mmd", "compute_s2_energy",
-                    "compute_s3_wasserstein", "compute_s4_frechet",
-                    "load_semantic_data"]:
+
+        for fn in [
+            "compute_s1_mmd",
+            "compute_s2_energy",
+            "compute_s3_wasserstein",
+            "compute_s4_frechet",
+            "load_semantic_data",
+        ]:
             assert hasattr(mod, fn), f"Missing: {fn}"
             assert callable(getattr(mod, fn)), f"Not callable: {fn}"
 
     def test_lexical_module_has_all_functions(self):
         import _divergence_lexical as mod
-        for fn in ["compute_l1_js", "compute_l2_novelty",
-                    "compute_l3_bursts", "load_lexical_data"]:
+
+        for fn in [
+            "compute_l1_js",
+            "compute_l2_novelty",
+            "compute_l3_bursts",
+            "load_lexical_data",
+        ]:
             assert hasattr(mod, fn), f"Missing: {fn}"
             assert callable(getattr(mod, fn)), f"Not callable: {fn}"
 
     def test_citation_module_has_all_functions(self):
-        import _divergence_citation as mod
-        for fn in ["compute_g1_pagerank", "compute_g2_spectral",
-                    "compute_g3_age_shift", "compute_g4_cross_trad",
-                    "compute_g5_pa_exponent", "compute_g6_entropy",
-                    "compute_g7_disruption", "compute_g8_betweenness",
-                    "load_citation_data"]:
-            assert hasattr(mod, fn), f"Missing: {fn}"
-            assert callable(getattr(mod, fn)), f"Not callable: {fn}"
+        import _citation_methods as methods
+        import _divergence_citation as infra
+
+        for fn in [
+            "compute_g1_pagerank",
+            "compute_g2_spectral",
+            "compute_g3_age_shift",
+            "compute_g4_cross_trad",
+            "compute_g5_pa_exponent",
+            "compute_g6_entropy",
+            "compute_g7_disruption",
+            "compute_g8_betweenness",
+        ]:
+            assert hasattr(methods, fn), f"Missing: {fn}"
+            assert callable(getattr(methods, fn)), f"Not callable: {fn}"
+        assert hasattr(infra, "load_citation_data")
+        assert callable(infra.load_citation_data)
 
     def test_dispatcher_registry_complete(self):
         from compute_divergence import METHODS
+
         assert len(METHODS) == 15
         # Verify all three channels present
         channels = {v[2] for v in METHODS.values()}
@@ -139,14 +176,21 @@ class TestModuleFunctions:
 # Smoke tests: run dispatcher on fixture data
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 @pytest.mark.integration
 class TestSmokeSemantic:
     """Semantic methods on 100-row fixture."""
 
-    @pytest.mark.parametrize("method", [
-        "S1_MMD", "S2_energy", "S3_sliced_wasserstein", "S4_frechet",
-    ])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "S1_MMD",
+            "S2_energy",
+            "S3_sliced_wasserstein",
+            "S4_frechet",
+        ],
+    )
     def test_compute_method(self, method, tmp_path):
         out = tmp_path / f"tab_div_{method}.csv"
         result = _run_compute(method, out)
@@ -184,10 +228,19 @@ class TestSmokeLexical:
 class TestSmokeCitation:
     """Citation methods on 100-row fixture."""
 
-    @pytest.mark.parametrize("method", [
-        "G1_pagerank", "G2_spectral", "G3_coupling_age", "G4_cross_tradition",
-        "G5_pref_attachment", "G6_entropy", "G7_disruption", "G8_betweenness",
-    ])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "G1_pagerank",
+            "G2_spectral",
+            "G3_coupling_age",
+            "G4_cross_tradition",
+            "G5_pref_attachment",
+            "G6_entropy",
+            "G7_disruption",
+            "G8_betweenness",
+        ],
+    )
     def test_compute_method(self, method, tmp_path):
         out = tmp_path / f"tab_div_{method}.csv"
         result = _run_compute(method, out)
@@ -213,6 +266,7 @@ class TestSmokeCitation:
 # Schema validation on smoke output
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 @pytest.mark.integration
 class TestSchemaValidationOnOutput:
@@ -224,6 +278,7 @@ class TestSchemaValidationOnOutput:
         assert result.returncode == 0, result.stderr
 
         from schemas import DivergenceSchema
+
         df = pd.read_csv(out)
         DivergenceSchema.validate(df)
 
@@ -233,6 +288,7 @@ class TestSchemaValidationOnOutput:
         assert result.returncode == 0, result.stderr
 
         from schemas import DivergenceSchema
+
         df = pd.read_csv(out)
         DivergenceSchema.validate(df)
 
@@ -242,6 +298,7 @@ class TestSchemaValidationOnOutput:
         assert result.returncode == 0, result.stderr
 
         from schemas import DivergenceSchema
+
         df = pd.read_csv(out)
         DivergenceSchema.validate(df)
 
@@ -250,9 +307,11 @@ class TestSchemaValidationOnOutput:
 # Seed reproducibility
 # ---------------------------------------------------------------------------
 
+
 def _smoke_cfg(seed=42):
     """Load analysis config and override random_seed."""
     from pipeline_loaders import load_analysis_config
+
     cfg = copy.deepcopy(load_analysis_config())
     cfg["divergence"]["random_seed"] = seed
     return cfg
@@ -261,6 +320,7 @@ def _smoke_cfg(seed=42):
 def _load_smoke_semantic():
     """Load smoke semantic data (works + embeddings)."""
     from _divergence_semantic import load_semantic_data
+
     catalogs = os.path.join(FIXTURES_DIR, "catalogs")
     input_paths = [
         os.path.join(catalogs, "refined_works.csv"),
@@ -276,6 +336,7 @@ class TestSeedReproducibility:
     def test_same_seed_same_output(self):
         """Running S1_MMD twice with the same seed gives identical results."""
         from _divergence_semantic import compute_s1_mmd
+
         df, emb = _load_smoke_semantic()
         cfg = _smoke_cfg(seed=42)
         result_a = compute_s1_mmd(df, emb, cfg)
@@ -291,6 +352,7 @@ class TestSeedReproducibility:
         different seeds, skip rather than silently pass.
         """
         from _divergence_semantic import compute_s1_mmd
+
         df, emb = _load_smoke_semantic()
         cfg_a = _smoke_cfg(seed=42)
         cfg_b = _smoke_cfg(seed=99)
@@ -325,22 +387,26 @@ class TestMetricProperties:
 
         # S1: MMD
         from _divergence_semantic import _median_heuristic, compute_mmd_rbf
+
         med = _median_heuristic(X, X)
         mmd = compute_mmd_rbf(X, X, med)
         assert mmd < 0.05, f"MMD self-distance too large: {mmd}"
 
         # S2: Energy distance
         import dcor
+
         e = dcor.energy_distance(X, X)
         assert e < 1e-10, f"Energy self-distance too large: {e}"
 
         # S3: Sliced Wasserstein
         import ot
+
         sw = ot.sliced_wasserstein_distance(X, X, n_projections=100, seed=42)
         assert sw < 1e-10, f"Sliced Wasserstein self-distance too large: {sw}"
 
         # S4: Frechet
         from _divergence_semantic import compute_frechet_distance
+
         fd = compute_frechet_distance(X, X)
         assert fd < 0.01, f"Frechet self-distance too large: {fd}"
 
@@ -350,20 +416,24 @@ class TestMetricProperties:
 
         # S1: MMD
         from _divergence_semantic import _median_heuristic, compute_mmd_rbf
+
         med = _median_heuristic(X, Y)
         assert compute_mmd_rbf(X, Y, med) >= 0, "MMD returned negative"
 
         # S2: Energy distance
         import dcor
+
         assert dcor.energy_distance(X, Y) >= 0, "Energy distance returned negative"
 
         # S3: Sliced Wasserstein
         import ot
+
         sw = ot.sliced_wasserstein_distance(X, Y, n_projections=100, seed=42)
         assert sw >= 0, "Sliced Wasserstein returned negative"
 
         # S4: Frechet
         from _divergence_semantic import compute_frechet_distance
+
         assert compute_frechet_distance(X, Y) >= 0, "Frechet distance returned negative"
 
 
@@ -379,12 +449,14 @@ class TestGetBreakYears:
         """_get_break_years finds breaks with detector_params='pen=3'."""
         from plot_divergence import _get_break_years
 
-        breaks_df = pd.DataFrame({
-            "method": ["S1_MMD", "S1_MMD", "L1"],
-            "detector": ["pelt", "pelt", "pelt"],
-            "detector_params": ["pen=3", "pen=5", "pen=3"],
-            "break_years": ["2007;2013", "2007", "2010"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["S1_MMD", "S1_MMD", "L1"],
+                "detector": ["pelt", "pelt", "pelt"],
+                "detector_params": ["pen=3", "pen=5", "pen=3"],
+                "break_years": ["2007;2013", "2007", "2010"],
+            }
+        )
         years = _get_break_years(breaks_df, "S1_MMD", penalty=3)
         assert years == {2007, 2013}
 
@@ -392,11 +464,13 @@ class TestGetBreakYears:
         """_get_break_years finds breaks with penalty=3 integer column."""
         from plot_divergence import _get_break_years
 
-        breaks_df = pd.DataFrame({
-            "method": ["S1_MMD", "S1_MMD"],
-            "penalty": [3, 5],
-            "break_years": ["2007;2013", "2007"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["S1_MMD", "S1_MMD"],
+                "penalty": [3, 5],
+                "break_years": ["2007;2013", "2007"],
+            }
+        )
         years = _get_break_years(breaks_df, "S1_MMD", penalty=3)
         assert years == {2007, 2013}
 
@@ -412,11 +486,13 @@ class TestGetBreakYears:
         """_get_break_years returns empty set when method not found."""
         from plot_divergence import _get_break_years
 
-        breaks_df = pd.DataFrame({
-            "method": ["L1"],
-            "detector": ["pelt"],
-            "detector_params": ["pen=3"],
-            "break_years": ["2007"],
-        })
+        breaks_df = pd.DataFrame(
+            {
+                "method": ["L1"],
+                "detector": ["pelt"],
+                "detector_params": ["pen=3"],
+                "break_years": ["2007"],
+            }
+        )
         years = _get_break_years(breaks_df, "S1_MMD", penalty=3)
         assert years == set()

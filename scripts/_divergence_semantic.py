@@ -11,7 +11,6 @@ Methods:
 """
 
 import os
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -19,8 +18,6 @@ from pipeline_loaders import load_analysis_corpus
 from utils import get_logger
 
 log = get_logger("_divergence_semantic")
-
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 # ── Data loading ───────────────────────────────────────────────────────────
