@@ -1,0 +1,43 @@
+%erg v1
+Title: Citation methods: cumulative → sliding windows (G1, G2, G5, G6, G8)
+Status: open
+Created: 2026-04-15
+Author: user
+
+--- log ---
+2026-04-16T00:30Z claude created — split from 0045, too large for overnight run
+
+--- body ---
+## Context
+G1 (PageRank), G2 (spectral gap), G5 (pref attachment), G6 (entropy),
+G8 (betweenness) use cumulative graphs that grow monotonically.
+This produces a mechanical declining trend unrelated to structural
+breaks. Fix: sliding windows matching the semantic methods.
+
+Split from ticket 0045 because the refactor touches _divergence_citation.py,
+_citation_methods.py, and 50+ tests. Too large to bundle with
+the S/L equal-n correction.
+
+## Actions
+1. Add `_sliding_window_graph(works, internal_edges, year, window)`
+   to `_divergence_citation.py`. Builds graph from papers in
+   [year-window, year+window].
+2. Add `_sliding_window_pair(works, internal_edges, year, window)`
+   that returns (G_before, G_after) for [year-window, year] and
+   [year+1, year+1+window].
+3. Refactor G1, G2, G5, G6, G8 to accept a `graph_mode` parameter:
+   "cumulative" (legacy) or "sliding" (new default).
+4. Keep cumulative as legacy option for comparison.
+5. Update tests — sliding window graphs are smaller, some tests
+   may need adjusted thresholds.
+6. Update divergence.mk if needed.
+
+## Test
+```python
+def test_sliding_window_graph_size_bounded():
+    """Sliding window graph should not grow monotonically with year."""
+```
+
+## Exit criteria
+G1, G2, G5, G6, G8 produce non-monotone divergence series with
+sliding windows. Cumulative mode preserved for comparison.

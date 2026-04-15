@@ -28,14 +28,9 @@ involving papers published in the last 5 years of each window).
 Rerun G1-G8. If breaks shift toward the present, truncation is
 driving them.
 
-## R2: Embedding model bias
-BGE-M3 was trained on modern text. It may encode 1990s papers
-less faithfully, inflating early-year distributional distances.
-
-**Check**: Re-embed a sample (e.g. 5000 papers, stratified by
-decade) with a second model (SPECTER2 or all-MiniLM-L6-v2).
-Rerun S1-S4 on both embedding sets. If break dates are
-model-dependent, they reflect encoding quality, not content.
+## R2: Embedding model bias → ticket 0049
+Separated: requires re-embedding (~16 min GPU) + model choice.
+See ticket 0049.
 
 ## R3: Retrospective curation bias
 Early corpus = curated canonical works. Late corpus = comprehensive.

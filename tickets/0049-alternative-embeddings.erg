@@ -1,0 +1,41 @@
+%erg v1
+Title: Robustness R2: re-embed with alternative model, compare breaks
+Status: open
+Created: 2026-04-15
+Author: user
+Blocked-by: 0045
+
+--- log ---
+2026-04-16T00:45Z claude created — split from 0046 R2, heavy compute
+
+--- body ---
+## Context
+BGE-M3 may encode 1990s text less faithfully than 2020s text,
+inflating early-year distributional distances. If break dates
+change with a different embedding model, they reflect encoding
+quality, not field structure.
+
+## Actions
+1. Choose second model. Candidates:
+   - SPECTER2 (scientific papers, trained on citation graph)
+   - all-MiniLM-L6-v2 (general, 384d, very different from BGE-M3)
+   - Prefer one that's architecturally different from BGE-M3.
+2. Embed a stratified sample (~5000 papers, ~250/decade) with
+   both BGE-M3 and the alternative. Or embed full corpus if
+   compute allows (full re-embed ~16 min on A4000).
+3. Run corrected S1-S4 (ticket 0045) on both embedding sets.
+4. Compare break dates. If same years survive → model-independent.
+   If different → the breaks depend on embedding fine structure.
+
+## Test
+```python
+def test_alternative_embeddings_same_shape():
+    """Both models produce same number of rows, aligned with works."""
+```
+
+## Exit criteria
+Comparison table: break year × model. Paper states whether
+periodization is embedding-model-dependent or not.
+
+## Compute estimate
+Full re-embed: ~16 min GPU. S1-S4 run: ~3.5 min. Total: ~20 min.
