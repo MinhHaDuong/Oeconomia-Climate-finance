@@ -512,21 +512,21 @@ def compute_s4_frechet(df, emb, cfg):
             log.info("S4 Frechet window=%d done", last_w)
         last_w = w
 
-        # Frechet needs n > d for full-rank covariance.
-        # With smoke data, n << 1024, so we PCA-reduce first.
-        d = X.shape[1]
-        n_eff = min(len(X), len(Y))
-        if n_eff < d:
-            from sklearn.decomposition import PCA
+        # Always PCA-reduce for Fréchet: (1) covariance needs n >> d,
+        # (2) sqrtm is O(d³), and (3) sensitivity analysis shows breaks
+        # are stable from d=32 to d=1024.
+        from sklearn.decomposition import PCA
 
-            n_components = max(2, n_eff - 1)
-            pca = PCA(n_components=n_components, random_state=seed)
-            combined = np.vstack([X, Y])
-            combined_r = pca.fit_transform(combined)
-            X_r = combined_r[: len(X)]
-            Y_r = combined_r[len(X) :]
-        else:
-            X_r, Y_r = X, Y
+        frechet_max_dim = cfg["divergence"]["semantic"]["S4_frechet"].get(
+            "max_dim", 256
+        )
+        max_d = min(frechet_max_dim, min(len(X), len(Y)) - 1, X.shape[1])
+        n_components = max(2, max_d)
+        pca = PCA(n_components=n_components, random_state=seed)
+        combined = np.vstack([X, Y])
+        combined_r = pca.fit_transform(combined)
+        X_r = combined_r[: len(X)]
+        Y_r = combined_r[len(X) :]
 
         val = frechet_fn(X_r, Y_r)
         results.append(

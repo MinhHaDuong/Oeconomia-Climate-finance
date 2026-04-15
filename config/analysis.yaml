@@ -37,7 +37,8 @@ divergence:
     S2_energy: {}                                # no hyperparams
     S3_sliced_wasserstein:
       n_projections: [100, 500, 1000]
-    S4_frechet: {}                               # Gaussian assumption
+    S4_frechet:
+      max_dim: 256                               # PCA reduce before Fréchet (covariance stability + speed)
 
   lexical:
     tfidf_max_features: 5000
