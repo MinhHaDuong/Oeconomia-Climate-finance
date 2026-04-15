@@ -1,8 +1,8 @@
 # State
 
-Last updated: 2026-04-14
+Last updated: 2026-04-15
 
-## Status: TWO PAPERS SUBMITTED + RESTRUCTURING COMPLETE
+## Status: TWO PAPERS SUBMITTED + DIVERGENCE PIPELINE MERGED
 
 ### Oeconomia (Varia) — submitted 2026-03-18
 Under double-blind review. ~8,860 words, 61 bib entries, 2 figures, 2 tables.
@@ -38,12 +38,20 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 None.
 
+### Divergence pipeline — merged 2026-04-15 (PR #650)
+- 15 divergence methods (S1-S4 semantic, L1-L3 lexical, G1-G8 citation graph)
+- 3 change point detectors (PELT, DynP, KernelCPD), convergence analysis
+- Embedding sensitivity analysis (PCA sweep, JL random projections)
+- Architecture: dispatcher pattern, modular Makefile (`divergence.mk`), Pandera schema, config-driven
+- `pipeline_loaders.py`: new `load_refined_works()` layer; all divergence modules use `load_analysis_corpus()`
+
 ## Next actions
 
-- **0024**: merge companion paper content into analysis report (lit review, discussion, limitations, section 5.1 fix)
+- **0024**: merge companion paper content into analysis report
 - **0025**: connective prose for corpus report
 - **0028**: modular analysis report (one include per script)
-- ESHET-HES conference slides (Nice, May 26–29) — fix oversell in slide notes
+- Re-land arch rule 9 (corpus access through loaders only) on own branch — tickets 0043/0044 already on main
+- Run divergence pipeline on real corpus (padme, ticket 0042)
+- ESHET-HES conference slides (Nice, May 26–29)
 - Charles Gide conference paper (Vannes, July 2–4; paper due June 15)
-- Multilingual paper: ticket 0003 (assess affiliation coverage)
 - Waiting for corpus 1.1.2 to finish building
