@@ -113,11 +113,11 @@ SENS_FIG_ALL := $(SENS_FIG_PCA) $(SENS_FIG_JL)
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_FIGS)/fig_sensitivity_pca_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_pca_$(m).csv ; \
-	python3 $(SENS_PLOT) --style gradient --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
+	python3 $(SENS_PLOT) --palette gradient --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_FIGS)/fig_sensitivity_jl_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_jl_$(m).csv ; \
-	python3 $(SENS_PLOT) --style ribbon --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
+	python3 $(SENS_PLOT) --aggregate ribbon --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
 
 .PHONY: sensitivity-tables
 sensitivity-tables: $(SENS_CSV_ALL)

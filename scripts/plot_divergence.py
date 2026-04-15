@@ -7,10 +7,11 @@ The method name is derived from the filename (tab_div_{method}.csv or
 tab_sens_{pca,jl}_{method}.csv).
 
 Styles:
-  --style lines     One curve per (window, hyperparams) group (default)
-  --style gradient  Curves ordered by a continuous variable (e.g. PCA dim),
-                    color gradient from light to dark, black baseline
-  --style ribbon    Aggregate over replicate runs: median +/- IQR ribbon
+  --aggregate none    One curve per (window, hyperparams) group (default)
+  --aggregate ribbon  Median +/- IQR over replicate runs
+
+  --palette auto      Discrete colors per group (default)
+  --palette gradient  Light-to-dark gradient ordered by dimension, black baseline
 
 Produces one PNG: --output path.
 
@@ -212,7 +213,8 @@ def _get_break_years(breaks_df, method, penalty=BREAK_PENALTY):
     return years
 
 
-def _plot_one_method(div_df, breaks_df, method, out_stem):
+def _plot_one_method(div_df, breaks_df, method, out_stem,
+                     aggregate="none", palette="auto"):
     """Plot one figure for a single method."""
     mdf = div_df[div_df["method"] == method].dropna(subset=["value"]).copy()
     if mdf.empty:
@@ -222,7 +224,7 @@ def _plot_one_method(div_df, breaks_df, method, out_stem):
     title, ylabel = METHOD_LABELS.get(method, (method, "value"))
 
     # L2 has sub-metrics (novelty, transience, resonance) encoded in hyperparams
-    is_l2 = method == "L2"
+    is_l2 = method == "L2" and aggregate == "none" and palette == "auto"
     if is_l2:
         metrics = [hp for hp in mdf["hyperparams"].unique()
                    if any(m in str(hp) for m in ["novelty", "transience", "resonance"])]
@@ -239,7 +241,7 @@ def _plot_one_method(div_df, breaks_df, method, out_stem):
             ))
             for ax, metric_name in zip(axes, metric_names):
                 sub = mdf[mdf["hyperparams"].str.contains(metric_name, na=False)]
-                _draw_curves(ax, sub, breaks_df, method)
+                _draw_curves(ax, sub, breaks_df, method, aggregate, palette)
                 ax.set_ylabel(metric_name.capitalize())
                 ax.set_title("")
             axes[0].set_title(title)
@@ -251,7 +253,7 @@ def _plot_one_method(div_df, breaks_df, method, out_stem):
             return
 
     fig, ax = plt.subplots(figsize=(FIGWIDTH, FIGHEIGHT))
-    _draw_curves(ax, mdf, breaks_df, method)
+    _draw_curves(ax, mdf, breaks_df, method, aggregate, palette)
     ax.set_xlabel("Year")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -261,9 +263,39 @@ def _plot_one_method(div_df, breaks_df, method, out_stem):
     log.info("Saved %s_%s.png", out_stem, method)
 
 
-def _draw_curves(ax, mdf, breaks_df, method):
-    """Draw temporal curves and break lines on a single axes."""
-    # Group by (window, hyperparams) → one curve each
+def _draw_curves(ax, mdf, breaks_df, method, aggregate="none", palette="auto"):
+    """Draw temporal curves on a single axes.
+
+    Parameters
+    ----------
+    aggregate : "none" | "ribbon"
+        "none": one curve per (window, hyperparams) group.
+        "ribbon": median +/- IQR across replicate runs, grouped by dimension.
+    palette : "auto" | "gradient"
+        "auto": discrete colors per group.
+        "gradient": light-to-dark by projection dimension, black baseline.
+    """
+    if aggregate == "ribbon":
+        _draw_ribbon(ax, mdf)
+    elif palette == "gradient":
+        _draw_gradient(ax, mdf)
+    else:
+        _draw_lines(ax, mdf)
+
+    # Break lines (only for standard plots where breaks are meaningful)
+    if aggregate == "none" and palette == "auto":
+        break_years = _get_break_years(breaks_df, method, BREAK_PENALTY)
+        for by in sorted(break_years):
+            ax.axvline(by, color="red", linewidth=0.7, linestyle="--", alpha=0.7)
+
+    handles, labels = ax.get_legend_handles_labels()
+    if handles:
+        ncol = 2 if len(handles) <= 12 else 3
+        ax.legend(loc="best", frameon=False, fontsize=5.5, ncol=ncol)
+
+
+def _draw_lines(ax, mdf):
+    """One curve per (window, hyperparams) group, discrete colors."""
     groups = mdf.groupby(["window", "hyperparams"])
     color_idx = 0
     for (window, hp), grp in sorted(groups):
@@ -276,30 +308,11 @@ def _draw_curves(ax, mdf, breaks_df, method):
                 linewidth=0.9, label=label)
         color_idx += 1
 
-    # Break lines
-    break_years = _get_break_years(breaks_df, method, BREAK_PENALTY)
-    for by in sorted(break_years):
-        ax.axvline(by, color="red", linewidth=0.7, linestyle="--", alpha=0.7)
 
-    # Legend
-    handles, labels = ax.get_legend_handles_labels()
-    if handles:
-        ncol = 2 if len(handles) <= 12 else 3
-        ax.legend(loc="best", frameon=False, fontsize=5.5, ncol=ncol)
-
-
-# ── Gradient style (e.g. PCA dimensionality sweep) ──────────────────────
-
-def _plot_gradient(div_df, method, output_path):
-    """Curves ordered by projection dimension, color gradient, black baseline."""
-    mdf = div_df[div_df["method"] == method].dropna(subset=["value"]).copy()
-    if mdf.empty:
-        log.warning("No data for %s; skipping", method)
-        return
-
-    fig, ax = plt.subplots(figsize=(FIGWIDTH, FIGHEIGHT))
-
+def _draw_gradient(ax, mdf):
+    """Curves ordered by projection dimension, light-to-dark + black baseline."""
     parsed = mdf["hyperparams"].apply(_parse_projection_tag)
+    mdf = mdf.copy()
     mdf["proj_type"] = [p[0] for p in parsed]
     mdf["proj_dim"] = [p[1] for p in parsed]
     mdf["base_hp"] = mdf["hyperparams"].apply(_strip_projection_from_hp)
@@ -318,31 +331,11 @@ def _plot_gradient(div_df, method, output_path):
             ax.plot(pca_d["year"], pca_d["value"],
                     color=PCA_COLORS[d], linewidth=0.9, label=f"d={d}")
 
-    title, ylabel = METHOD_LABELS.get(method, (method, "value"))
-    if isinstance(title, tuple):
-        title = title[0]
-    ax.set_title(f"{title} — dimensionality sensitivity")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Divergence value")
-    ax.legend(loc="best", frameon=False, fontsize=6)
-    fig.tight_layout()
-    fig.savefig(output_path, dpi=DPI)
-    plt.close(fig)
-    log.info("Saved %s", output_path)
 
-
-# ── Ribbon style (e.g. JL random projections) ──────────────────────────
-
-def _plot_ribbon(div_df, method, output_path):
-    """Fan/ribbon: median +/- IQR across replicate runs, per dimension."""
-    mdf = div_df[div_df["method"] == method].dropna(subset=["value"]).copy()
-    if mdf.empty:
-        log.warning("No data for %s; skipping", method)
-        return
-
-    fig, ax = plt.subplots(figsize=(FIGWIDTH, FIGHEIGHT))
-
+def _draw_ribbon(ax, mdf):
+    """Median +/- IQR across replicate runs, one ribbon per dimension."""
     parsed = mdf["hyperparams"].apply(_parse_projection_tag)
+    mdf = mdf.copy()
     mdf["proj_type"] = [p[0] for p in parsed]
     mdf["proj_dim"] = [p[1] for p in parsed]
     mdf["run"] = [p[2] for p in parsed]
@@ -367,18 +360,6 @@ def _plot_ribbon(div_df, method, output_path):
         ax.plot(stats["year"], stats["median"], color=color, linewidth=1.0,
                 label=f"d={d} (median ± IQR)")
 
-    title, ylabel = METHOD_LABELS.get(method, (method, "value"))
-    if isinstance(title, tuple):
-        title = title[0]
-    ax.set_title(f"{title} — random projection stability")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Divergence value")
-    ax.legend(loc="best", frameon=False, fontsize=6)
-    fig.tight_layout()
-    fig.savefig(output_path, dpi=DPI)
-    plt.close(fig)
-    log.info("Saved %s", output_path)
-
 
 # ── Main ────────────────────────────────────────────────────────────────
 
@@ -387,9 +368,10 @@ def main():
     validate_io(output=io_args.output)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--style", default="lines",
-                        choices=["lines", "gradient", "ribbon"],
-                        help="Plot style: lines (default), gradient, ribbon")
+    parser.add_argument("--aggregate", default="none",
+                        choices=["none", "ribbon"])
+    parser.add_argument("--palette", default="auto",
+                        choices=["auto", "gradient"])
     args = parser.parse_args(extra)
 
     if not io_args.input:
@@ -405,16 +387,13 @@ def main():
         return
 
     methods = sorted(div_df["method"].unique())
-    log.info("Plotting %d methods (style=%s): %s", len(methods), args.style, methods)
+    log.info("Plotting %d methods (aggregate=%s, palette=%s): %s",
+             len(methods), args.aggregate, args.palette, methods)
 
     for method in methods:
-        if args.style == "gradient":
-            _plot_gradient(div_df, method, io_args.output)
-        elif args.style == "ribbon":
-            _plot_ribbon(div_df, method, io_args.output)
-        else:
-            out_stem = os.path.splitext(io_args.output)[0]
-            _plot_one_method(div_df, breaks_df, method, out_stem)
+        _plot_one_method(div_df, breaks_df, method,
+                         os.path.splitext(io_args.output)[0],
+                         aggregate=args.aggregate, palette=args.palette)
 
     log.info("Done.")
 
