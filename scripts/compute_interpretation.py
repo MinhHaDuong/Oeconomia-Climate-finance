@@ -29,20 +29,16 @@ log = get_logger("compute_interpretation")
 
 # Default number of top terms to report
 DEFAULT_TOP_N = 50
+_MIN_TOKEN_LEN = 2  # tokens shorter than this are dropped
 
 
 # ---------------------------------------------------------------------------
 # Core: log-odds ratio with Dirichlet prior (Monroe et al. 2008)
 # ---------------------------------------------------------------------------
 
-
-def _tokenize(texts):
-    """Simple whitespace + lowercase tokenization with stopword removal.
-
-    Returns a list of token lists.
-    """
-    # Minimal English stopwords (sklearn's list is large; keep it simple)
-    stopwords = {
+# Minimal English stopwords (avoids sklearn dependency)
+_STOPWORDS = frozenset(
+    {
         "a",
         "an",
         "the",
@@ -145,10 +141,19 @@ def _tokenize(texts):
         "her",
         "his",
     }
+)
+
+
+def _tokenize(texts):
+    """Simple whitespace + lowercase tokenization with stopword removal.
+
+    Returns a list of token lists.  Uses the module-level ``_STOPWORDS``
+    frozenset and ``_MIN_TOKEN_LEN`` constant.
+    """
     result = []
     for text in texts:
         tokens = re.findall(r"[a-z]+", text.lower())
-        tokens = [t for t in tokens if t not in stopwords and len(t) > 2]
+        tokens = [t for t in tokens if t not in _STOPWORDS and len(t) > _MIN_TOKEN_LEN]
         result.append(tokens)
     return result
 
