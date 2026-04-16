@@ -320,7 +320,7 @@ class TestSummaryTable:
                 "null_mean": [0.35],
                 "null_std": [0.10],
                 "z_score": [-1.5],  # observed below null mean
-                "p_value": [0.85],
+                "p_value": [0.134],  # two-sided p for |z|=1.5
             }
         )
         boot_df = _make_synthetic_boot_df(k=10)
