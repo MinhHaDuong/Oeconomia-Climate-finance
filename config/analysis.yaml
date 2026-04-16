@@ -62,6 +62,7 @@ divergence:
   citation:
     G1_pagerank:
       damping: 0.85
+      n_bins: 20                                   # histogram bins for JS divergence on PR distributions
     G2_spectral: {}
     G3_coupling_age: {}
     G4_cross_tradition:

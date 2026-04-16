@@ -24,7 +24,8 @@ from _divergence_citation import (
 )
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
-from scipy.stats import entropy, kendalltau
+from scipy.spatial.distance import jensenshannon
+from scipy.stats import entropy
 from utils import get_logger
 
 log = get_logger("_citation_methods")
@@ -41,6 +42,47 @@ def _pagerank_vector(G, damping):
     nodes = sorted(pr.keys())
     vals = np.array([pr[n] for n in nodes])
     return nodes, vals
+
+
+def _compare_pagerank_distributions(pr_before, pr_after, n_bins=20):
+    """Compare two PageRank distributions via Jensen-Shannon divergence.
+
+    Unlike per-node comparison (which requires shared nodes), this compares
+    the *shape* of the PageRank value distributions — whether concentration
+    or spread changed between windows. Works correctly on disjoint node sets.
+
+    Parameters
+    ----------
+    pr_before, pr_after : tuple (nodes, values)
+        Output of _pagerank_vector().
+    n_bins : int
+        Number of histogram bins for discretizing the distributions.
+
+    Returns
+    -------
+    float
+        JS divergence squared, in [0, 1]. 0 = identical distributions.
+
+    """
+    _nodes_b, vals_b = pr_before
+    _nodes_a, vals_a = pr_after
+
+    # Bin into histograms over a shared range (handles different-sized distributions).
+    # PageRank values already sum to 1.0; jensenshannon normalizes internally.
+    actual_bins = min(n_bins, min(len(vals_b), len(vals_a)))
+    if actual_bins < 2:
+        return np.nan
+    bin_max = max(vals_b.max(), vals_a.max())
+    bins = np.linspace(0, bin_max, actual_bins + 1)
+    hist_b, _ = np.histogram(vals_b, bins=bins)
+    hist_a, _ = np.histogram(vals_a, bins=bins)
+
+    # Add epsilon to avoid zero bins before jensenshannon (which uses log internally).
+    eps = 1e-10
+    hist_b = hist_b + eps
+    hist_a = hist_a + eps
+
+    return float(jensenshannon(hist_b, hist_a) ** 2)
 
 
 def _spectral_gap(G_dir):
@@ -142,17 +184,21 @@ def _mean_betweenness(G_dir, max_nodes):
 
 
 def compute_g1_pagerank(works, citations, internal_edges, cfg):
-    """PageRank divergence between before/after sliding windows.
+    """PageRank distribution divergence between before/after sliding windows.
 
-    Computes Kendall tau distance between PageRank rankings of the
-    before and after windows. Common nodes are used for comparison.
+    Compares the *shape* of PageRank value distributions using
+    Jensen-Shannon divergence (ticket 0059). This works correctly on
+    disjoint node sets — sliding windows rarely share nodes, so per-node
+    comparison (the old Kendall-tau approach) was dominated by zero-padding.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     cit_cfg = cfg["divergence"]["citation"]
-    damping = cit_cfg["G1_pagerank"]["damping"]
+    g1_cfg = cit_cfg["G1_pagerank"]
+    damping = g1_cfg["damping"]
+    n_bins = g1_cfg.get("n_bins", 20)
 
-    log.info("G1: PageRank divergence (sliding)")
+    log.info("G1: PageRank distribution divergence (sliding, JS)")
     results = []
 
     for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
@@ -161,31 +207,23 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
 
         if pr_before is None or pr_after is None:
             results.append(
-                {"year": year, "window": str(w), "hyperparams": "", "value": np.nan}
+                {
+                    "year": year,
+                    "window": str(w),
+                    "hyperparams": f"n_bins={n_bins}",
+                    "value": np.nan,
+                }
             )
             continue
 
-        nodes_b, vals_b = pr_before
-        nodes_a, vals_a = pr_after
-
-        # Use all nodes from both windows (union) for comparison.
-        # Nodes absent from one window get PageRank = 0.
-        all_nodes = sorted(set(nodes_b) | set(nodes_a))
-        if len(all_nodes) < 3:
-            results.append(
-                {"year": year, "window": str(w), "hyperparams": "", "value": np.nan}
-            )
-            continue
-
-        pr_b_map = dict(zip(nodes_b, vals_b))
-        pr_a_map = dict(zip(nodes_a, vals_a))
-        vec_b = np.array([pr_b_map.get(n, 0.0) for n in all_nodes])
-        vec_a = np.array([pr_a_map.get(n, 0.0) for n in all_nodes])
-
-        tau, _ = kendalltau(vec_b, vec_a)
-        value = 1.0 - tau if not np.isnan(tau) else np.nan
+        value = _compare_pagerank_distributions(pr_before, pr_after, n_bins)
         results.append(
-            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+            {
+                "year": year,
+                "window": str(w),
+                "hyperparams": f"n_bins={n_bins}",
+                "value": value,
+            }
         )
 
     return pd.DataFrame(results)
