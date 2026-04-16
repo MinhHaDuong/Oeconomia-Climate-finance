@@ -8,6 +8,7 @@ Blocked-by: 0048
 --- log ---
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 1 of epic 0026; lead method for graph layer
+2026-04-16T12:30Z claude reimagine — 0048 blocker resolved (merged). Drop membership sidecar (violates 1-output rule); 0056 will re-run Louvain on transition zones. python-louvain already in deps. Small complexity.
 
 --- body ---
 ## Context
