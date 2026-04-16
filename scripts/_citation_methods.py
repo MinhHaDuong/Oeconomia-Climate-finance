@@ -91,11 +91,7 @@ def _spectral_gap(G_dir):
     if G.number_of_nodes() < 3:
         return np.nan
 
-    components = list(nx.connected_components(G))
-    if not components:
-        raise ValueError("Graph with >= 3 nodes must have at least one component")
-
-    lcc = max(components, key=len)
+    lcc = max(nx.connected_components(G), key=len)
     if len(lcc) < 3:
         return np.nan
 
