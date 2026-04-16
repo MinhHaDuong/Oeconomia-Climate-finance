@@ -17,7 +17,6 @@ Usage:
 """
 
 import argparse
-import os
 
 import numpy as np
 import pandas as pd
@@ -332,6 +331,9 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", required=True, choices=METHODS.keys())
+    # --div-csv is separate from --input because --input refers to the corpus
+    # contract files (via CATALOGS_DIR), while --div-csv is a specific observed
+    # divergence table this script compares against.
     parser.add_argument(
         "--div-csv",
         required=True,
@@ -362,11 +364,6 @@ def main():
 
     # Validate contract
     NullModelSchema.validate(result)
-
-    # Ensure output directory exists
-    out_dir = os.path.dirname(io_args.output)
-    if out_dir:
-        os.makedirs(out_dir, exist_ok=True)
 
     result.to_csv(io_args.output, index=False)
     log.info("Saved %s (%d rows) -> %s", method_name, len(result), io_args.output)
