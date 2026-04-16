@@ -174,19 +174,6 @@ def _make_lexical_statistic(vectorizer):
 # ---------------------------------------------------------------------------
 
 
-def _nan_row(year, window):
-    """Return a row dict with NaN values for skipped (year, window) pairs."""
-    return {
-        "year": year,
-        "window": str(window),
-        "observed": np.nan,
-        "null_mean": np.nan,
-        "null_std": np.nan,
-        "z_score": np.nan,
-        "p_value": np.nan,
-    }
-
-
 def _result_row(year, window, observed, null_mean, null_std, z, p):
     """Return a row dict with computed permutation test results."""
     return {
@@ -204,141 +191,45 @@ def _result_row(year, window, observed, null_mean, null_std, z, p):
 # Per-channel permutation drivers
 # ---------------------------------------------------------------------------
 
+# Re-export for backward compatibility (moved to _divergence_io in simplify review).
+from _divergence_io import _make_window_rngs  # noqa: F401
 
-def _make_window_rngs(seed, y, w):
-    """Return independent (subsample_rng, perm_rng) for a (year, window) pair.
 
-    Each pair gets deterministic seeds derived from (seed, y, w) so results
-    are identical regardless of which other pairs are processed (ticket 0061).
-    The +50000 offset ensures no overlap: subsample seeds span roughly
-    [seed+199044, seed+202547], perm seeds [seed+249044, seed+252547].
+def _collect_permutation_rows(window_iter, statistic_fn, n_perm):
+    """Run permutation test over window iterator, collecting result rows.
+
+    Shared logic for both semantic and lexical channels.
     """
-    window_seed = seed + y * 100 + w
-    return np.random.RandomState(window_seed), np.random.RandomState(
-        window_seed + 50000
-    )
-
-
-def _run_semantic_permutations(method_name, div_df, cfg):
-    """Permutation test for semantic methods (S1-S4)."""
-    from _divergence_io import subsample_equal_n
-    from _divergence_semantic import (
-        _get_window_embeddings,
-        _get_years_and_params,
-        load_semantic_data,
-    )
-
-    df, emb = load_semantic_data(None)
-    div_cfg = cfg["divergence"]
-    perm_cfg = div_cfg["permutation"]
-    n_perm = perm_cfg["n_perm"]
-    seed = div_cfg["random_seed"]
-
-    _, min_papers, max_subsample, _, equal_n = _get_years_and_params(df, emb, cfg)
-
-    statistic_fn = _make_semantic_statistic(method_name, cfg)
-
-    # Get unique (year, window) from divergence CSV
-    year_windows = div_df[["year", "window"]].drop_duplicates()
-
     rows = []
-    for _, row in year_windows.iterrows():
-        y = int(row["year"])
-        w = int(row["window"])
-
-        subsample_rng, perm_rng = _make_window_rngs(seed, y, w)
-
-        X = _get_window_embeddings(
-            df, emb, y, w, "before", min_papers, max_subsample, rng=subsample_rng
-        )
-        Y = _get_window_embeddings(
-            df, emb, y, w, "after", min_papers, max_subsample, rng=subsample_rng
-        )
-        if X is None or Y is None:
-            rows.append(_nan_row(y, w))
-            continue
-
-        if equal_n and len(X) != len(Y):
-            eq_result = subsample_equal_n(X, Y, min_papers, subsample_rng)
-            if eq_result is None:
-                rows.append(_nan_row(y, w))
-                continue
-            X, Y = eq_result
-
+    for y, w, X, Y, perm_rng in window_iter:
         observed, null_mean, null_std, z, p = permutation_test(
             X, Y, statistic_fn, n_perm, perm_rng
         )
         rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
         log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
-
     return pd.DataFrame(rows)
+
+
+def _run_semantic_permutations(method_name, div_df, cfg):
+    """Permutation test for semantic methods (S1-S4)."""
+    from _divergence_io import iter_semantic_windows
+
+    statistic_fn = _make_semantic_statistic(method_name, cfg)
+    n_perm = cfg["divergence"]["permutation"]["n_perm"]
+    return _collect_permutation_rows(
+        iter_semantic_windows(div_df, cfg), statistic_fn, n_perm
+    )
 
 
 def _run_lexical_permutations(method_name, div_df, cfg):
     """Permutation test for lexical methods (L1)."""
-    from _divergence_io import get_min_papers, subsample_equal_n
-    from _divergence_lexical import load_lexical_data
-    from sklearn.feature_extraction.text import TfidfVectorizer
+    from _divergence_io import fit_lexical_vectorizer, iter_lexical_windows
 
-    df = load_lexical_data(None)
-    div_cfg = cfg["divergence"]
-    lex_cfg = div_cfg["lexical"]
-    perm_cfg = div_cfg["permutation"]
-    n_perm = perm_cfg["n_perm"]
-    seed = div_cfg["random_seed"]
-
-    min_papers = get_min_papers(len(df), cfg)
-    equal_n = div_cfg.get("equal_n", False)
-
-    tfidf_max_features = lex_cfg["tfidf_max_features"]
-    tfidf_min_df = lex_cfg["tfidf_min_df"]
-
-    all_texts = df["abstract"].tolist()
-    vec = TfidfVectorizer(
-        stop_words="english",
-        max_features=tfidf_max_features,
-        min_df=min(tfidf_min_df, max(1, len(all_texts) - 1)),
-        sublinear_tf=True,
+    statistic_fn = _make_lexical_statistic(fit_lexical_vectorizer(cfg))
+    n_perm = cfg["divergence"]["permutation"]["n_perm"]
+    return _collect_permutation_rows(
+        iter_lexical_windows(div_df, cfg), statistic_fn, n_perm
     )
-    vec.fit(all_texts)
-
-    statistic_fn = _make_lexical_statistic(vec)
-
-    year_windows = div_df[["year", "window"]].drop_duplicates()
-
-    rows = []
-    for _, row in year_windows.iterrows():
-        y = int(row["year"])
-        w = int(row["window"])
-
-        subsample_rng, perm_rng = _make_window_rngs(seed, y, w)
-
-        mask_before = (df["year"] >= y - w) & (df["year"] <= y)
-        mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
-
-        texts_before = df.loc[mask_before, "abstract"].tolist()
-        texts_after = df.loc[mask_after, "abstract"].tolist()
-
-        if len(texts_before) < min_papers or len(texts_after) < min_papers:
-            rows.append(_nan_row(y, w))
-            continue
-
-        if equal_n and len(texts_before) != len(texts_after):
-            eq_result = subsample_equal_n(
-                texts_before, texts_after, min_papers, subsample_rng
-            )
-            if eq_result is None:
-                rows.append(_nan_row(y, w))
-                continue
-            texts_before, texts_after = eq_result
-
-        observed, null_mean, null_std, z, p = permutation_test(
-            texts_before, texts_after, statistic_fn, n_perm, perm_rng
-        )
-        rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
-        log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
-
-    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------

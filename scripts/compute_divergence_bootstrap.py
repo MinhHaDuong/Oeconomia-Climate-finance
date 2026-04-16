@@ -25,7 +25,6 @@ from compute_null_model import (
     SUPPORTED_CHANNELS,
     _make_lexical_statistic,
     _make_semantic_statistic,
-    _make_window_rngs,
 )
 from pipeline_loaders import load_analysis_config
 from schemas import BootstrapSchema
@@ -87,48 +86,13 @@ def bootstrap_one_window(X_before, Y_after, statistic_fn, k, seed):
 # ---------------------------------------------------------------------------
 
 
-def _run_semantic_bootstrap(method_name, div_df, cfg, k):
-    """Bootstrap for semantic methods (S1-S4)."""
-    from _divergence_io import subsample_equal_n
-    from _divergence_semantic import (
-        _get_window_embeddings,
-        _get_years_and_params,
-        load_semantic_data,
-    )
+def _collect_bootstrap_rows(window_iter, method_name, statistic_fn, k, seed, log):
+    """Run bootstrap over window iterator, collecting replicate rows.
 
-    df, emb = load_semantic_data(None)
-    div_cfg = cfg["divergence"]
-    seed = div_cfg["random_seed"]
-
-    _, min_papers, max_subsample, _, equal_n = _get_years_and_params(df, emb, cfg)
-
-    statistic_fn = _make_semantic_statistic(method_name, cfg)
-
-    year_windows = div_df[["year", "window"]].drop_duplicates()
-
+    Shared logic for both semantic and lexical channels.
+    """
     rows = []
-    for _, row in year_windows.iterrows():
-        y = int(row["year"])
-        w = int(row["window"])
-
-        subsample_rng, _ = _make_window_rngs(seed, y, w)
-
-        X = _get_window_embeddings(
-            df, emb, y, w, "before", min_papers, max_subsample, rng=subsample_rng
-        )
-        Y = _get_window_embeddings(
-            df, emb, y, w, "after", min_papers, max_subsample, rng=subsample_rng
-        )
-        if X is None or Y is None:
-            continue
-
-        if equal_n and len(X) != len(Y):
-            eq_result = subsample_equal_n(X, Y, min_papers, subsample_rng)
-            if eq_result is None:
-                continue
-            X, Y = eq_result
-
-        # Per-window deterministic seed for bootstrap
+    for y, w, X, Y, _rng in window_iter:
         # Wider spacing than null model seeds to avoid collisions:
         # null model uses seed + y*100 + w (subsample) and +50000 (perm).
         # Bootstrap uses seed + y*100000 + w*1000 + offset per replicate.
@@ -147,86 +111,29 @@ def _run_semantic_bootstrap(method_name, div_df, cfg, k):
                 }
             )
         log.info("  year=%d window=%d k=%d", y, w, k)
-
     return pd.DataFrame(rows)
+
+
+def _run_semantic_bootstrap(method_name, div_df, cfg, k):
+    """Bootstrap for semantic methods (S1-S4)."""
+    from _divergence_io import iter_semantic_windows
+
+    statistic_fn = _make_semantic_statistic(method_name, cfg)
+    seed = cfg["divergence"]["random_seed"]
+    return _collect_bootstrap_rows(
+        iter_semantic_windows(div_df, cfg), method_name, statistic_fn, k, seed, log
+    )
 
 
 def _run_lexical_bootstrap(method_name, div_df, cfg, k):
     """Bootstrap for lexical methods (L1)."""
-    from _divergence_io import get_min_papers, subsample_equal_n
-    from _divergence_lexical import load_lexical_data
-    from sklearn.feature_extraction.text import TfidfVectorizer
+    from _divergence_io import fit_lexical_vectorizer, iter_lexical_windows
 
-    df = load_lexical_data(None)
-    div_cfg = cfg["divergence"]
-    lex_cfg = div_cfg["lexical"]
-    seed = div_cfg["random_seed"]
-
-    min_papers = get_min_papers(len(df), cfg)
-    equal_n = div_cfg.get("equal_n", False)
-
-    tfidf_max_features = lex_cfg["tfidf_max_features"]
-    tfidf_min_df = lex_cfg["tfidf_min_df"]
-
-    all_texts = df["abstract"].tolist()
-    vec = TfidfVectorizer(
-        stop_words="english",
-        max_features=tfidf_max_features,
-        min_df=min(tfidf_min_df, max(1, len(all_texts) - 1)),
-        sublinear_tf=True,
+    statistic_fn = _make_lexical_statistic(fit_lexical_vectorizer(cfg))
+    seed = cfg["divergence"]["random_seed"]
+    return _collect_bootstrap_rows(
+        iter_lexical_windows(div_df, cfg), method_name, statistic_fn, k, seed, log
     )
-    vec.fit(all_texts)
-
-    statistic_fn = _make_lexical_statistic(vec)
-
-    year_windows = div_df[["year", "window"]].drop_duplicates()
-
-    rows = []
-    for _, row in year_windows.iterrows():
-        y = int(row["year"])
-        w = int(row["window"])
-
-        subsample_rng, _ = _make_window_rngs(seed, y, w)
-
-        mask_before = (df["year"] >= y - w) & (df["year"] <= y)
-        mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
-
-        texts_before = df.loc[mask_before, "abstract"].tolist()
-        texts_after = df.loc[mask_after, "abstract"].tolist()
-
-        if len(texts_before) < min_papers or len(texts_after) < min_papers:
-            continue
-
-        if equal_n and len(texts_before) != len(texts_after):
-            eq_result = subsample_equal_n(
-                texts_before, texts_after, min_papers, subsample_rng
-            )
-            if eq_result is None:
-                continue
-            texts_before, texts_after = eq_result
-
-        # Wider spacing than null model seeds to avoid collisions:
-        # null model uses seed + y*100 + w (subsample) and +50000 (perm).
-        # Bootstrap uses seed + y*100000 + w*1000 + offset per replicate.
-        boot_seed = seed + y * 100_000 + w * 1000
-        values = bootstrap_one_window(
-            texts_before, texts_after, statistic_fn, k, boot_seed
-        )
-
-        for rep, val in enumerate(values):
-            rows.append(
-                {
-                    "method": method_name,
-                    "year": y,
-                    "window": str(w),
-                    "hyperparams": "",
-                    "replicate": rep,
-                    "value": val,
-                }
-            )
-        log.info("  year=%d window=%d k=%d", y, w, k)
-
-    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
