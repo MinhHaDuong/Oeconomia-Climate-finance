@@ -341,6 +341,56 @@ def _run_lexical_permutations(method_name, div_df, cfg):
     return pd.DataFrame(rows)
 
 
+def _community_node_comm_map(partition):
+    """Build sorted community list and node->community-index lookup.
+
+    Returns (n_communities, comm_to_idx, node_comm) or None if < 2 communities.
+    """
+    all_communities = sorted(set(partition.values()))
+    n_communities = len(all_communities)
+    if n_communities < 2:
+        return None
+    comm_to_idx = {c: i for i, c in enumerate(all_communities)}
+    return n_communities, comm_to_idx
+
+
+def _community_null_distribution(
+    all_nodes, n_before, node_comm, n_communities, n_perm, perm_rng
+):
+    """Shuffle node-to-window assignments and compute JS^2 for each permutation.
+
+    Returns null_stats array (NaN entries removed).
+    """
+    from scipy.spatial.distance import jensenshannon
+
+    null_stats = np.empty(n_perm)
+    for i in range(n_perm):
+        perm_indices = perm_rng.permutation(len(all_nodes))
+        p_bef = np.zeros(n_communities)
+        p_aft = np.zeros(n_communities)
+
+        for j in perm_indices[:n_before]:
+            node = all_nodes[j]
+            if node in node_comm:
+                p_bef[node_comm[node]] += 1
+
+        for j in perm_indices[n_before:]:
+            node = all_nodes[j]
+            if node in node_comm:
+                p_aft[node_comm[node]] += 1
+
+        if p_bef.sum() == 0 or p_aft.sum() == 0:
+            null_stats[i] = np.nan
+            continue
+
+        p_bef = p_bef / p_bef.sum()
+        p_aft = p_aft / p_aft.sum()
+        js = jensenshannon(p_bef, p_aft)
+        null_stats[i] = float(js**2)
+
+    return null_stats[~np.isnan(null_stats)]
+
+
 def _run_citation_permutations(method_name, div_df, cfg):
     """Permutation test for citation community methods (G9).
 
@@ -360,7 +410,6 @@ def _run_citation_permutations(method_name, div_df, cfg):
         load_citation_data,
     )
     from _divergence_community import _build_union_graph, _community_js_for_pair
-    from scipy.spatial.distance import jensenshannon
 
     works, _, internal_edges = load_citation_data(None)
     div_cfg = cfg["divergence"]
@@ -410,51 +459,28 @@ def _run_citation_permutations(method_name, div_df, cfg):
             G_union, resolution=resolution, random_state=seed
         )
 
-        all_communities = sorted(set(partition.values()))
-        n_communities = len(all_communities)
-        if n_communities < 2:
+        comm_info = _community_node_comm_map(partition)
+        if comm_info is None:
             rows.append(_result_row(y, w, observed, 0.0, 0.0, 0.0, 1.0))
             continue
 
-        comm_to_idx = {c: i for i, c in enumerate(all_communities)}
+        n_communities, comm_to_idx = comm_info
 
         # Pool all nodes for permutation
         all_nodes = before_nodes + after_nodes
         n_before = len(before_nodes)
 
-        # Build node->community-index lookup (only nodes in partition)
-        node_comm = {}
-        for node in all_nodes:
-            if node in partition:
-                node_comm[node] = comm_to_idx[partition[node]]
+        # Build node->community-index lookup
+        node_comm = {
+            node: comm_to_idx[partition[node]]
+            for node in all_nodes
+            if node in partition
+        }
 
-        null_stats = np.empty(n_perm)
-        for i in range(n_perm):
-            perm_indices = perm_rng.permutation(len(all_nodes))
-            perm_before = [all_nodes[j] for j in perm_indices[:n_before]]
-            perm_after = [all_nodes[j] for j in perm_indices[n_before:]]
+        null_stats = _community_null_distribution(
+            all_nodes, n_before, node_comm, n_communities, n_perm, perm_rng
+        )
 
-            p_bef = np.zeros(n_communities)
-            for node in perm_before:
-                if node in node_comm:
-                    p_bef[node_comm[node]] += 1
-
-            p_aft = np.zeros(n_communities)
-            for node in perm_after:
-                if node in node_comm:
-                    p_aft[node_comm[node]] += 1
-
-            if p_bef.sum() == 0 or p_aft.sum() == 0:
-                null_stats[i] = np.nan
-                continue
-
-            p_bef = p_bef / p_bef.sum()
-            p_aft = p_aft / p_aft.sum()
-            js = jensenshannon(p_bef, p_aft)
-            null_stats[i] = float(js**2)
-
-        # Remove NaN permutations
-        null_stats = null_stats[~np.isnan(null_stats)]
         if len(null_stats) == 0:
             rows.append(_nan_row(y, w))
             continue
