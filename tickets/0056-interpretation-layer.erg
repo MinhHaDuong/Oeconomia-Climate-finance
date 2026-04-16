@@ -3,11 +3,12 @@ Title: Implement interpretation layer for validated transition zones
 Status: open
 Created: 2026-04-15
 Author: claude
-Blocked-by: 0053
+Blocked-by: 0054
 
 --- log ---
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 2 of epic 0026; answers "what changed?"
+2026-04-16T13:00Z claude reimagine — 0053 done (C2ST merged). Now blocked by 0054 (community membership needed). C2ST exports AUC only, no sidecar coefficients — interpretation will re-run classifier to extract coefficients and document probabilities. Transition zone detection added here (not in 0055). Dependencies: 0054 for community, 0053 for C2ST (done), 0055 for Z-scores (done).
 
 --- body ---
 ## Context
