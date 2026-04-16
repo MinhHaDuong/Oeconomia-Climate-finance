@@ -7,6 +7,7 @@ Tests:
 4. Seed reproducibility (same seed -> same output, different seed -> different)
 5. Property tests for S1-S4 metric axioms
 6. _get_break_years helper tests
+7. G1 PageRank on disjoint sliding windows (ticket 0059)
 """
 
 import copy
@@ -664,3 +665,180 @@ class TestEqualN:
         # Both should produce results; equal_n should not crash
         assert len(result_eq) > 0, "equal_n L1 JS produced no results"
         assert len(result_raw) > 0, "raw L1 JS produced no results"
+
+
+# ---------------------------------------------------------------------------
+# G1 PageRank on disjoint sliding windows (ticket 0059)
+# ---------------------------------------------------------------------------
+
+
+def _make_star_graph(center, n_leaves, prefix):
+    """Create a star graph: center node with n_leaves spokes.
+
+    Returns (works_df, internal_edges_df).
+    Star topology produces concentrated PageRank on the center.
+    """
+    nodes = [center] + [f"{prefix}_{i}" for i in range(n_leaves)]
+    works = pd.DataFrame({"doi": nodes, "year": [2010] * len(nodes)})
+    # Edges: every leaf cites the center
+    edges = pd.DataFrame(
+        {
+            "source_doi": [f"{prefix}_{i}" for i in range(n_leaves)],
+            "ref_doi": [center] * n_leaves,
+            "source_year": [2010] * n_leaves,
+        }
+    )
+    return works, edges
+
+
+def _make_uniform_ring(n_nodes, prefix, year=2015):
+    """Create a ring graph: each node cites the next.
+
+    Returns (works_df, internal_edges_df).
+    Ring topology produces nearly uniform PageRank.
+    """
+    nodes = [f"{prefix}_{i}" for i in range(n_nodes)]
+    works = pd.DataFrame({"doi": nodes, "year": [year] * n_nodes})
+    edges = pd.DataFrame(
+        {
+            "source_doi": [nodes[i] for i in range(n_nodes)],
+            "ref_doi": [nodes[(i + 1) % n_nodes] for i in range(n_nodes)],
+            "source_year": [year] * n_nodes,
+        }
+    )
+    return works, edges
+
+
+class TestG1DisjointWindows:
+    """G1 PageRank should distinguish similar vs different distributions
+    even on disjoint sliding windows (ticket 0059).
+
+    The old implementation compared per-node PageRank with union+zero-padding,
+    which is meaningless on disjoint node sets. The fix uses distributional
+    comparison (Jensen-Shannon divergence on PageRank value histograms).
+    """
+
+    def _g1_cfg(self):
+        """Minimal config for G1 tests."""
+        cfg = _smoke_cfg(seed=42)
+        cfg["divergence"]["windows"] = [2]
+        cfg["divergence"]["min_papers"] = 3
+        cfg["divergence"]["min_papers_smoke"] = 3
+        return cfg
+
+    def test_g1_disjoint_windows_not_degenerate(self):
+        """G1 must produce different values for similar vs different distributions.
+
+        Pair A: two star graphs (both have concentrated PageRank) → low divergence.
+        Pair B: star graph vs ring graph (concentrated vs uniform PageRank) → high divergence.
+        """
+        import networkx as nx
+        from _citation_methods import _pagerank_vector
+
+        # Build two star graphs (similar concentrated distributions)
+        G_star1 = nx.DiGraph()
+        G_star1.add_nodes_from([f"s1_{i}" for i in range(20)])
+        for i in range(1, 20):
+            G_star1.add_edge(f"s1_{i}", "s1_0")
+        pr_star1 = _pagerank_vector(G_star1, damping=0.85)
+
+        G_star2 = nx.DiGraph()
+        G_star2.add_nodes_from([f"s2_{i}" for i in range(20)])
+        for i in range(1, 20):
+            G_star2.add_edge(f"s2_{i}", "s2_0")
+        pr_star2 = _pagerank_vector(G_star2, damping=0.85)
+
+        # Build a ring graph (uniform distribution)
+        G_ring = nx.DiGraph()
+        ring_nodes = [f"r_{i}" for i in range(20)]
+        G_ring.add_nodes_from(ring_nodes)
+        for i in range(20):
+            G_ring.add_edge(ring_nodes[i], ring_nodes[(i + 1) % 20])
+        pr_ring = _pagerank_vector(G_ring, damping=0.85)
+
+        assert pr_star1 is not None
+        assert pr_star2 is not None
+        assert pr_ring is not None
+
+        # Node sets are completely disjoint in all cases
+        assert set(pr_star1[0]).isdisjoint(set(pr_star2[0]))
+        assert set(pr_star1[0]).isdisjoint(set(pr_ring[0]))
+
+        # Now use the actual comparison method from G1
+        from _citation_methods import _compare_pagerank_distributions
+
+        # Similar distributions (star vs star) → low divergence
+        val_similar = _compare_pagerank_distributions(pr_star1, pr_star2)
+        # Different distributions (star vs ring) → high divergence
+        val_different = _compare_pagerank_distributions(pr_star1, pr_ring)
+
+        assert not np.isnan(val_similar), "Similar pair should not be NaN"
+        assert not np.isnan(val_different), "Different pair should not be NaN"
+        assert val_different > val_similar, (
+            f"Star-vs-ring ({val_different:.4f}) should exceed "
+            f"star-vs-star ({val_similar:.4f})"
+        )
+
+    def test_g1_output_matches_schema(self):
+        """G1 output should match DivergenceSchema regardless of implementation."""
+        from _citation_methods import compute_g1_pagerank
+        from schemas import DivergenceSchema
+
+        # Create a synthetic corpus spanning years 2005-2015 so that
+        # _iter_sliding_pairs (window=2) produces valid pairs.
+        # Each year gets 5 papers with star-topology edges.
+        rows = []
+        edge_rows = []
+        for y in range(2005, 2016):
+            prefix = f"y{y}"
+            center = f"{prefix}_0"
+            nodes = [center] + [f"{prefix}_{i}" for i in range(1, 5)]
+            for n in nodes:
+                rows.append({"doi": n, "year": y, "cited_by_count": 10})
+            for i in range(1, 5):
+                edge_rows.append(
+                    {
+                        "source_doi": f"{prefix}_{i}",
+                        "ref_doi": center,
+                        "source_year": y,
+                    }
+                )
+
+        works = pd.DataFrame(rows)
+        internal_edges = pd.DataFrame(edge_rows)
+        citations = internal_edges.copy()
+        citations["ref_year"] = citations["source_year"]
+
+        cfg = self._g1_cfg()
+        result = compute_g1_pagerank(works, citations, internal_edges, cfg)
+
+        assert len(result) > 0, "G1 should produce at least one row"
+        assert set(result.columns) == {"year", "window", "hyperparams", "value"}
+
+        # Add channel column for schema validation
+        result["channel"] = "citation"
+        DivergenceSchema.validate(result)
+
+    def test_g1_value_bounded_0_1(self):
+        """Jensen-Shannon divergence squared is bounded in [0, 1]."""
+        import networkx as nx
+        from _citation_methods import _compare_pagerank_distributions, _pagerank_vector
+
+        # Star graph
+        G1 = nx.DiGraph()
+        G1.add_nodes_from(range(20))
+        for i in range(1, 20):
+            G1.add_edge(i, 0)
+
+        # Chain graph
+        G2 = nx.DiGraph()
+        G2.add_nodes_from(range(100, 120))
+        for i in range(100, 119):
+            G2.add_edge(i, i + 1)
+
+        pr1 = _pagerank_vector(G1, 0.85)
+        pr2 = _pagerank_vector(G2, 0.85)
+        assert pr1 is not None and pr2 is not None
+
+        val = _compare_pagerank_distributions(pr1, pr2)
+        assert 0.0 <= val <= 1.0, f"Value {val} out of [0, 1] bounds"
