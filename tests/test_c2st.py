@@ -89,7 +89,6 @@ class TestC2STCore:
     def test_uses_shuffled_stratified_kfold(self):
         """Verify that _c2st_auc uses StratifiedKFold with shuffle=True.
 
-        Patches StratifiedKFold to record whether shuffle=True was passed.
         This is the direct regression test for the contiguous-labels bug.
         """
         from unittest.mock import patch
@@ -101,19 +100,14 @@ class TestC2STCore:
         X = rng.randn(100, 10)
         Y = rng.randn(100, 10)
 
-        calls = []
-        original_init = StratifiedKFold.__init__
-
-        def recording_init(self, *args, **kwargs):
-            calls.append(kwargs)
-            return original_init(self, *args, **kwargs)
-
-        with patch.object(StratifiedKFold, "__init__", recording_init):
+        with patch(
+            "_divergence_c2st.StratifiedKFold", wraps=StratifiedKFold
+        ) as mock_skf:
             _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
 
-        assert len(calls) > 0, "_c2st_auc did not instantiate StratifiedKFold"
-        assert calls[0].get("shuffle") is True, (
-            f"StratifiedKFold not called with shuffle=True: {calls[0]}"
+        mock_skf.assert_called_once()
+        assert mock_skf.call_args.kwargs.get("shuffle") is True, (
+            f"StratifiedKFold not called with shuffle=True: {mock_skf.call_args.kwargs}"
         )
 
 
