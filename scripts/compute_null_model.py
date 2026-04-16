@@ -199,6 +199,20 @@ def _result_row(year, window, observed, null_mean, null_std, z, p):
 # ---------------------------------------------------------------------------
 
 
+def _make_window_rngs(seed, y, w):
+    """Return independent (subsample_rng, perm_rng) for a (year, window) pair.
+
+    Each pair gets deterministic seeds derived from (seed, y, w) so results
+    are identical regardless of which other pairs are processed (ticket 0061).
+    The +50000 offset ensures no overlap: subsample seeds span roughly
+    [seed+199044, seed+202547], perm seeds [seed+249044, seed+252547].
+    """
+    window_seed = seed + y * 100 + w
+    return np.random.RandomState(window_seed), np.random.RandomState(
+        window_seed + 50000
+    )
+
+
 def _run_semantic_permutations(method_name, div_df, cfg):
     """Permutation test for semantic methods (S1-S4)."""
     from _divergence_io import subsample_equal_n
@@ -226,14 +240,7 @@ def _run_semantic_permutations(method_name, div_df, cfg):
         y = int(row["year"])
         w = int(row["window"])
 
-        # Per-window deterministic seeds — isolate rng streams so each
-        # (year, window) produces identical results regardless of which
-        # other pairs are processed (ticket 0061).
-        window_seed = seed + y * 100 + w
-        subsample_rng = np.random.RandomState(window_seed)
-        # +50000 offset guarantees no overlap: subsample seeds span
-        # [seed+199044, seed+202547], perm seeds [seed+249044, seed+252547]
-        perm_rng = np.random.RandomState(window_seed + 50000)
+        subsample_rng, perm_rng = _make_window_rngs(seed, y, w)
 
         X = _get_window_embeddings(
             df, emb, y, w, "before", min_papers, max_subsample, rng=subsample_rng
@@ -298,12 +305,7 @@ def _run_lexical_permutations(method_name, div_df, cfg):
         y = int(row["year"])
         w = int(row["window"])
 
-        # Per-window deterministic seeds (ticket 0061)
-        window_seed = seed + y * 100 + w
-        subsample_rng = np.random.RandomState(window_seed)
-        # +50000 offset guarantees no overlap: subsample seeds span
-        # [seed+199044, seed+202547], perm seeds [seed+249044, seed+252547]
-        perm_rng = np.random.RandomState(window_seed + 50000)
+        subsample_rng, perm_rng = _make_window_rngs(seed, y, w)
 
         mask_before = (df["year"] >= y - w) & (df["year"] <= y)
         mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
