@@ -1,0 +1,66 @@
+%erg v1
+Title: export_divergence_summary should validate tab_null_*.csv on read
+Status: open
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T18:05Z claude created — follow-up from PR #683 review
+2026-04-16T20:40Z claude rewritten — items 1-3 already in tree, only item 4 remains
+
+--- body ---
+## Context
+
+The divergence pipeline produces four CSV contract files per method:
+
+| File                     | Producer                         | Pandera schema           |
+|--------------------------|----------------------------------|--------------------------|
+| `tab_div_{method}.csv`   | `compute_divergence.py`          | `DivergenceSchema` ✓     |
+| `tab_boot_{method}.csv`  | `compute_divergence_bootstrap.py`| `BootstrapSchema` ✓      |
+| `tab_null_{method}.csv`  | `compute_null_model.py`          | `NullModelSchema` ✓      |
+| `tab_summary_{method}.csv`| `export_divergence_summary.py`  | `DivergenceSummarySchema`✓|
+
+All four files are schema-covered at write time:
+- `NullModelSchema` lives in [scripts/schemas.py:105](scripts/schemas.py#L105).
+- `compute_null_model.py` validates before writing at [scripts/compute_null_model.py:442](scripts/compute_null_model.py#L442).
+- `TestNullModelSchema` in [tests/test_null_model.py:163](tests/test_null_model.py#L163) covers
+  `test_valid_dataframe_passes`, `test_extra_column_rejected`, `test_coercion_works`,
+  plus a production-output validation test.
+
+The remaining gap is on the **read** side: `export_divergence_summary.py` joins
+the null CSV on `["year", "window", "z_score", "p_value"]` without schema
+validation, so any upstream drift (renamed column, type flip) would surface as
+an opaque join error rather than a Pandera message pointing at the column.
+
+## Action
+
+Make `export_divergence_summary.py` validate the null CSV on load:
+
+```python
+from schemas import NullModelSchema
+null_df = pd.read_csv(args.null_csv)
+NullModelSchema.validate(null_df)
+```
+
+Or, equivalently, add a thin loader in `pipeline_loaders.py` (`load_null_model(path)`)
+that validates on read — consistent with the contract-reader pattern used for
+`refined_works` etc.
+
+## Test
+
+```python
+def test_summary_export_rejects_bad_null_csv(tmp_path):
+    """Missing column in null CSV must raise at load, not at join."""
+    bad = pd.DataFrame({"year": [2010], "window": ["cumulative"]})  # no z_score
+    path = tmp_path / "tab_null_bad.csv"
+    bad.to_csv(path, index=False)
+    with pytest.raises(pa.errors.SchemaError):
+        load_null_model(path)  # or direct NullModelSchema.validate
+```
+
+## Exit criteria
+
+- `export_divergence_summary.py` validates the null CSV against `NullModelSchema`
+  before the join (directly or via a `pipeline_loaders` helper).
+- A regression test asserts that a malformed null CSV raises a Pandera error,
+  not a pandas merge/join error.
