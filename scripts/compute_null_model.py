@@ -231,6 +231,8 @@ def _run_semantic_permutations(method_name, div_df, cfg):
         # other pairs are processed (ticket 0061).
         window_seed = seed + y * 100 + w
         subsample_rng = np.random.RandomState(window_seed)
+        # +50000 offset guarantees no overlap: subsample seeds span
+        # [seed+199044, seed+202547], perm seeds [seed+249044, seed+252547]
         perm_rng = np.random.RandomState(window_seed + 50000)
 
         X = _get_window_embeddings(
@@ -299,6 +301,8 @@ def _run_lexical_permutations(method_name, div_df, cfg):
         # Per-window deterministic seeds (ticket 0061)
         window_seed = seed + y * 100 + w
         subsample_rng = np.random.RandomState(window_seed)
+        # +50000 offset guarantees no overlap: subsample seeds span
+        # [seed+199044, seed+202547], perm seeds [seed+249044, seed+252547]
         perm_rng = np.random.RandomState(window_seed + 50000)
 
         mask_before = (df["year"] >= y - w) & (df["year"] <= y)
