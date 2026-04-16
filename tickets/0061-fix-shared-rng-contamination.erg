@@ -1,6 +1,6 @@
 %erg v1
 Title: Fix shared rng contamination in permutation and subsampling
-Status: open
+Status: closed
 Created: 2026-04-16
 Author: claude
 

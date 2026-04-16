@@ -1,6 +1,6 @@
 %erg v1
 Title: Fix C2ST cross-validation to shuffle folds
-Status: open
+Status: closed
 Created: 2026-04-16
 Author: claude
 
