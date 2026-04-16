@@ -22,8 +22,8 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ### Technical reports — restructured 2026-04-14 (PR #649)
 - `corpus-report.qmd`: corpus construction, data quality, corpus contents, software environment
-- `technical-report.qmd`: analysis methods and results (structural breaks, thematic structure, polarization, citations)
-- `companion-paper.qmd`: retired — useful content merging into analysis report (ticket 0024)
+- `technical-report.qmd`: analysis methods and results (structural breaks, thematic structure, polarization, citations); 15-method divergence zoo lives here as includes (ticket 0028)
+- `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 
 ## Corpus (v1.1.1)
@@ -47,9 +47,9 @@ None.
 
 ## Next actions
 
-- **0024**: merge companion paper content into analysis report
 - **0025**: connective prose for corpus report
-- **0028**: modular analysis report (one include per script)
+- **0028**: modular analysis report (one include per script) — home for the 15-method divergence zoo
+- **0026 Wave C**: companion paper rewrite — 0057 (methods prose), 0058 (4 figures), 0064 (fill §5 Results)
 - Re-land arch rule 9 (corpus access through loaders only) on own branch — tickets 0043/0044 already on main
 - Run divergence pipeline on real corpus (padme, ticket 0042)
 - ESHET-HES conference slides (Nice, May 26–29)
