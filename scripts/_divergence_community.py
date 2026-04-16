@@ -51,15 +51,20 @@ def compute_community_divergence(works, citations, internal_edges, cfg):
 
 
 def _build_union_graph(G_before, G_after, internal_edges):
-    """Build undirected union graph with cross-window edges."""
+    """Build undirected union graph with cross-window edges.
+
+    Uses vectorized pandas .isin() filtering (same pattern as
+    _divergence_citation._build_internal_edges) instead of iterrows().
+    """
     union_nodes = set(G_before.nodes()) | set(G_after.nodes())
     G_union = nx.Graph()
     G_union.add_nodes_from(union_nodes)
 
-    for _, row in internal_edges.iterrows():
-        src, ref = row["source_doi"], row["ref_doi"]
-        if src in union_nodes and ref in union_nodes:
-            G_union.add_edge(src, ref)
+    mask = internal_edges["source_doi"].isin(union_nodes) & internal_edges[
+        "ref_doi"
+    ].isin(union_nodes)
+    edges = internal_edges.loc[mask, ["source_doi", "ref_doi"]].values
+    G_union.add_edges_from(edges)
 
     return G_union
 
