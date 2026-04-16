@@ -1,0 +1,40 @@
+%erg v1
+Title: Fix C2ST cross-validation to shuffle folds
+Status: open
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T12:30Z claude created
+2026-04-16T12:30Z claude note post-merge review of PR #665
+
+--- body ---
+## Context
+
+PR #665 added C2ST classifier two-sample test. `cross_val_score` in
+`_divergence_c2st.py:68` uses the default `StratifiedKFold(shuffle=False)`.
+
+Labels are contiguous `[0,0,...,1,1,...]` (X stacked before Y). Without shuffle,
+fold boundaries fall at predictable positions relative to the class boundary,
+which may inflate or deflate AUC non-randomly depending on fold count and sample size.
+
+## Actions
+
+1. Replace default CV with explicit `StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=seed)`.
+2. Apply to both `compute_c2st_embedding` and `compute_c2st_lexical`.
+3. Verify test AUC values remain in expected ranges.
+
+## Test
+
+```python
+def test_c2st_shuffled_cv_reproducible():
+    """Same seed produces same AUC with shuffled CV."""
+    auc1 = compute_c2st_embedding(X, Y, seed=42)
+    auc2 = compute_c2st_embedding(X, Y, seed=42)
+    assert auc1 == auc2
+```
+
+## Exit criteria
+
+- CV folds are shuffled with config-driven seed.
+- Existing tests still pass within tolerance.

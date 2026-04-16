@@ -1,0 +1,45 @@
+%erg v1
+Title: Cleanup divergence wave 1 test gaps
+Status: open
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T12:30Z claude created
+2026-04-16T12:30Z claude note grouped from post-merge reviews of PRs #659, #663, #664, #665
+
+--- body ---
+## Context
+
+Post-merge review found test gaps across the four divergence significance PRs.
+None indicate known bugs, but they leave edge cases uncovered. Grouped to
+avoid ticket sprawl.
+
+## Actions
+
+### Missing coverage
+- C2ST PCA n_components floor path — no test for tiny dataset where clamp to 2 fires
+  (`_divergence_c2st.py:115-116`).
+- Null model `null_std == 0` edge case — code returns `z=0.0` but no test pins this
+  (`compute_null_model.py:86-89`).
+- L1 equal-n test checks non-empty output but doesn't verify windows are equal-sized
+  (`test_divergence.py`, `test_l1_js_equal_n_produces_equal_sized_inputs`).
+
+### Weak assertions
+- `test_sliding_pair_before_after_disjoint` asserts something trivially true by construction.
+  Replace with a test that verifies year boundaries are correct.
+- Correlation test escape hatch `or corr_eq < 0.5` can mask regressions
+  (`test_divergence.py:649`). Tighten or remove the disjunction.
+- C2ST null-AUC tolerance `0.35-0.65` is very loose. Add comment explaining rationale
+  or tighten to `0.40-0.60` (`test_c2st.py:36`).
+
+### Dead test code
+- `years_sorted` computed but never referenced (`test_divergence.py:632`).
+- Dead guard in `_spectral_gap` — empty components check after node-count enforcement
+  (`_citation_methods.py:51-53`). Remove or convert to assertion.
+
+## Exit criteria
+
+- All listed gaps covered by new or improved tests.
+- `make check-fast` passes.
+- No vacuously-true assertions remain in divergence test files.

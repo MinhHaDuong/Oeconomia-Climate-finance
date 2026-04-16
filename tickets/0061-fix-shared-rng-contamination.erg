@@ -1,0 +1,48 @@
+%erg v1
+Title: Fix shared rng contamination in permutation and subsampling
+Status: open
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T12:30Z claude created
+2026-04-16T12:30Z claude note post-merge review of PRs #659, #663, #665
+
+--- body ---
+## Context
+
+Multiple divergence scripts share a single `np.random.RandomState` across both
+subsampling (equal-n) and computation (permutation shuffles, C2ST splits).
+The number of rng draws consumed by subsampling depends on corpus size and
+window ordering, so the permutation/classifier results for later windows depend
+on earlier windows' subsampling draws.
+
+Affected files:
+- `compute_null_model.py:215-248` — rng shared between `_get_window_embeddings` and `permutation_test`
+- `_divergence_c2st.py:91` — rng passed through `_iter_window_pairs` then to classifier
+- `_divergence_semantic.py:135` — rng advanced by equal-n then used for PCA
+
+This breaks reproducibility when: (a) corpus size changes, (b) only a subset of
+windows is processed, (c) method ordering changes.
+
+## Actions
+
+1. Derive per-window seeds deterministically: `window_seed = seed + year * 100 + window`.
+2. Create separate `RandomState` instances for subsampling vs computation within each window.
+3. Apply consistently across null model, C2ST, and semantic divergence paths.
+4. Verify reproducibility tests still pass.
+
+## Test
+
+```python
+def test_single_window_reproducible_regardless_of_prior_windows():
+    """Window (2010, 3) gives same result whether run alone or after (2005, 3)."""
+    result_alone = run_method(years=[2010], window=3, seed=42)
+    result_after = run_method(years=[2005, 2010], window=3, seed=42)
+    assert result_alone[2010] == result_after[2010]
+```
+
+## Exit criteria
+
+- Each (year, window) pair produces identical results regardless of which other pairs were processed.
+- rng streams for subsampling and computation are independent.
