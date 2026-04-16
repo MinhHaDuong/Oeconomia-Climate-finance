@@ -58,14 +58,6 @@ DOC_VARS = {
         "bim_n_post2015",
         "bim_n_pre2007",
         "bim_var_pct",
-        "cite_coverage_pct",
-        "cite_crossref_rows",
-        "cite_doi_ref_pct",
-        "cite_doi_ref_rows",
-        "cite_fetched_dois",
-        "cite_never_fetched",
-        "cite_total_dois",
-        "cite_total_rows",
         "cite_refined_rows",
         "cite_refined_sources",
         "corpus_core",
@@ -74,7 +66,7 @@ DOC_VARS = {
         "corpus_total",
         "corpus_with_embeddings",
         "analysis_corpus_n",
-        "lang_english_pct",
+        "emb_dimensions",
         "pca_emb_pc2_cosine",
         "pca_emb_pc2_dbic",
         "pca_emb_pc2_var_pct",
@@ -157,6 +149,7 @@ MISSING = "[MISSING]"
 
 # ── Helpers ──────────────────────────────────────────────────
 
+
 def _int(value):
     """Format integer with comma thousands separator."""
     return f"{int(round(value)):,}"
@@ -195,6 +188,7 @@ def _read_json(filename, directory=TABLES_DIR):
 
 
 # ── Collectors ───────────────────────────────────────────────
+
 
 def corpus_stats(v):
     """Corpus size, language, multi-source from refined_works.csv."""
@@ -277,6 +271,7 @@ def filter_stats(v):
 def embedding_stats(v):
     """Embedding count and dimensions from embeddings.npz."""
     from utils import EMBEDDINGS_PATH, REFINED_EMBEDDINGS_PATH
+
     if not os.path.isfile(EMBEDDINGS_PATH):
         warnings.warn(f"Missing: {EMBEDDINGS_PATH}")
         return
@@ -422,6 +417,7 @@ def citation_stats(v):
 
     # Refined (corpus-internal) citations from refined_citations.csv
     from utils import REFINED_CITATIONS_PATH, REFINED_WORKS_PATH, normalize_doi
+
     if os.path.isfile(REFINED_CITATIONS_PATH):
         ref_cite_df = pd.read_csv(REFINED_CITATIONS_PATH)[["source_doi"]]
         v["cite_refined_rows"] = _int(len(ref_cite_df))
@@ -429,21 +425,30 @@ def citation_stats(v):
 
         # Coverage: % of refined DOIs that appear as citation sources
         if os.path.isfile(REFINED_WORKS_PATH):
-            refined_df = pd.read_csv(REFINED_WORKS_PATH, usecols=["doi", "cited_by_count"])
+            refined_df = pd.read_csv(
+                REFINED_WORKS_PATH, usecols=["doi", "cited_by_count"]
+            )
             refined_dois = {normalize_doi(d) for d in refined_df["doi"].dropna()} - {""}
             source_dois = {normalize_doi(d) for d in ref_cite_df["source_doi"].dropna()}
             covered = len(source_dois & refined_dois)
             if refined_dois:
-                v["cite_refined_coverage_pct"] = str(round(100 * covered / len(refined_dois)))
+                v["cite_refined_coverage_pct"] = str(
+                    round(100 * covered / len(refined_dois))
+                )
             # Core coverage (cited >= 50)
             core_mask = refined_df["cited_by_count"].fillna(0).astype(int) >= 50
-            core_dois = {normalize_doi(d) for d in refined_df.loc[core_mask, "doi"].dropna()} - {""}
+            core_dois = {
+                normalize_doi(d) for d in refined_df.loc[core_mask, "doi"].dropna()
+            } - {""}
             if core_dois:
                 core_covered = len(source_dois & core_dois)
-                v["cite_coverage_core_pct"] = str(round(100 * core_covered / len(core_dois)))
+                v["cite_coverage_core_pct"] = str(
+                    round(100 * core_covered / len(core_dois))
+                )
 
 
 # ── Write YAML ───────────────────────────────────────────────
+
 
 def write_yaml(v, path):
     """Write variables dict as a YAML file with all values quoted."""
@@ -459,6 +464,7 @@ def write_yaml(v, path):
 
 
 # ── Main ─────────────────────────────────────────────────────
+
 
 def main(output_dir):
     v = {}
@@ -481,8 +487,11 @@ def main(output_dir):
         write_yaml(doc_v, path)
 
     if all_missing:
-        log.error("Aborting: %d variables could not be computed. "
-                  "Rendering would produce ?meta:X placeholders.", len(all_missing))
+        log.error(
+            "Aborting: %d variables could not be computed. "
+            "Rendering would produce ?meta:X placeholders.",
+            len(all_missing),
+        )
         sys.exit(1)
 
 

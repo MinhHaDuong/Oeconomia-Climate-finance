@@ -26,19 +26,22 @@ sys.path.insert(0, SCRIPTS_DIR)
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_works(n=20):
     """Create a small synthetic refined_works DataFrame."""
     rng = np.random.RandomState(42)
     years = rng.choice(range(1985, 2030), size=n)
     cited = rng.choice([0, 10, 30, 60, 100], size=n)
     titles = [f"Paper {i}" if i % 10 != 0 else "" for i in range(n)]
-    return pd.DataFrame({
-        "title": titles,
-        "year": years,
-        "cited_by_count": cited,
-        "doi": [f"10.1000/test.{i}" for i in range(n)],
-        "abstract": [f"Abstract {i}" for i in range(n)],
-    })
+    return pd.DataFrame(
+        {
+            "title": titles,
+            "year": years,
+            "cited_by_count": cited,
+            "doi": [f"10.1000/test.{i}" for i in range(n)],
+            "abstract": [f"Abstract {i}" for i in range(n)],
+        }
+    )
 
 
 def _make_embeddings(n=20, dim=1024):
@@ -50,6 +53,7 @@ def _make_embeddings(n=20, dim=1024):
 # load_analysis_corpus()
 # ---------------------------------------------------------------------------
 
+
 class TestLoadAnalysisCorpus:
     """Test filtering logic in load_analysis_corpus()."""
 
@@ -59,10 +63,15 @@ class TestLoadAnalysisCorpus:
 
         with_emb = kwargs.pop("with_embeddings", embeddings is not None)
 
-        with patch("pipeline_loaders.pd.read_csv", return_value=works_df), \
-             patch("pipeline_loaders.REFINED_WORKS_FEATHER", "/nonexistent"), \
-             patch("pipeline_loaders.load_refined_embeddings",
-                   return_value=embeddings):
+        with (
+            patch("pipeline_loaders.pd.read_csv", return_value=works_df),
+            patch("pipeline_loaders.REFINED_WORKS_FEATHER", "/nonexistent"),
+            patch(
+                "pipeline_loaders.os.path.exists",
+                side_effect=lambda p: p != "/nonexistent",
+            ),
+            patch("pipeline_loaders.load_refined_embeddings", return_value=embeddings),
+        ):
             return load_analysis_corpus(with_embeddings=with_emb, **kwargs)
 
     def test_filters_missing_titles(self):
@@ -93,8 +102,9 @@ class TestLoadAnalysisCorpus:
     def test_core_only_filters_by_threshold(self):
         works = _make_works()
         df_all, _ = self._call(works, with_embeddings=False)
-        df_core, _ = self._call(works, with_embeddings=False,
-                                core_only=True, cite_threshold=50)
+        df_core, _ = self._call(
+            works, with_embeddings=False, core_only=True, cite_threshold=50
+        )
         assert len(df_core) < len(df_all)
         assert (df_core["cited_by_count"] >= 50).all()
 
@@ -107,8 +117,9 @@ class TestLoadAnalysisCorpus:
     def test_embeddings_aligned_after_core_filtering(self):
         works = _make_works(20)
         emb = _make_embeddings(20)
-        df, result_emb = self._call(works, embeddings=emb,
-                                    core_only=True, cite_threshold=50)
+        df, result_emb = self._call(
+            works, embeddings=emb, core_only=True, cite_threshold=50
+        )
         assert len(df) == len(result_emb)
 
     def test_embedding_mismatch_raises(self):
@@ -133,12 +144,14 @@ class TestLoadAnalysisCorpus:
 # is_clean_term()
 # ---------------------------------------------------------------------------
 
+
 class TestIsCleanTerm:
     """Test lexical denoising in is_clean_term()."""
 
     @pytest.fixture(autouse=True)
     def _import(self):
         from compute_lexical import is_clean_term
+
         self.is_clean_term = is_clean_term
 
     def test_rejects_short_single_token(self):
@@ -179,6 +192,7 @@ class TestIsCleanTerm:
 # load_analysis_config()
 # ---------------------------------------------------------------------------
 
+
 class TestLoadAnalysisConfig:
     """Test YAML config loading."""
 
@@ -195,6 +209,7 @@ class TestLoadAnalysisConfig:
 
         with patch("pipeline_loaders.CONFIG_DIR", str(tmp_path)):
             from utils import load_analysis_config
+
             cfg = load_analysis_config()
 
         assert cfg["periodization"]["breaks"] == [2007, 2015]
@@ -204,6 +219,7 @@ class TestLoadAnalysisConfig:
     def test_missing_file_raises(self, tmp_path):
         with patch("pipeline_loaders.CONFIG_DIR", str(tmp_path)):
             from utils import load_analysis_config
+
             with pytest.raises(FileNotFoundError, match="analysis.yaml"):
                 load_analysis_config()
 
@@ -211,6 +227,7 @@ class TestLoadAnalysisConfig:
 # ---------------------------------------------------------------------------
 # _build_argv() selective flag forwarding
 # ---------------------------------------------------------------------------
+
 
 class TestBuildArgv:
     """Test the shim's selective flag-forwarding logic."""
@@ -220,10 +237,14 @@ class TestBuildArgv:
 
     SCRIPT_FLAGS = {
         "scripts/compute_breakpoints.py": {
-            "--core-only", "--censor-gap", "--robustness", "--k-sensitivity",
+            "--core-only",
+            "--censor-gap",
+            "--robustness",
+            "--k-sensitivity",
         },
         "scripts/compute_clusters.py": {
-            "--core-only", "--breaks",
+            "--core-only",
+            "--breaks",
         },
         "scripts/compute_lexical.py": set(),
     }
@@ -244,77 +265,77 @@ class TestBuildArgv:
         return argv
 
     def test_core_only_forwarded_to_breakpoints(self):
-        args = Namespace(core_only=True, censor_gap=0, robustness=False,
-                         breaks=None)
-        argv = self._build_argv("scripts/compute_breakpoints.py",
-                                args, self.SCRIPT_FLAGS)
+        args = Namespace(core_only=True, censor_gap=0, robustness=False, breaks=None)
+        argv = self._build_argv(
+            "scripts/compute_breakpoints.py", args, self.SCRIPT_FLAGS
+        )
         assert "--core-only" in argv
 
     def test_core_only_forwarded_to_clusters(self):
-        args = Namespace(core_only=True, censor_gap=0, robustness=False,
-                         breaks=None)
-        argv = self._build_argv("scripts/compute_clusters.py",
-                                args, self.SCRIPT_FLAGS)
+        args = Namespace(core_only=True, censor_gap=0, robustness=False, breaks=None)
+        argv = self._build_argv("scripts/compute_clusters.py", args, self.SCRIPT_FLAGS)
         assert "--core-only" in argv
 
     def test_core_only_not_forwarded_to_lexical(self):
-        args = Namespace(core_only=True, censor_gap=0, robustness=False,
-                         breaks=None)
-        argv = self._build_argv("scripts/compute_lexical.py",
-                                args, self.SCRIPT_FLAGS)
+        args = Namespace(core_only=True, censor_gap=0, robustness=False, breaks=None)
+        argv = self._build_argv("scripts/compute_lexical.py", args, self.SCRIPT_FLAGS)
         assert "--core-only" not in argv
 
     def test_censor_gap_only_to_breakpoints(self):
-        args = Namespace(core_only=False, censor_gap=2, robustness=False,
-                         breaks=None)
-        bp_argv = self._build_argv("scripts/compute_breakpoints.py",
-                                   args, self.SCRIPT_FLAGS)
-        cl_argv = self._build_argv("scripts/compute_clusters.py",
-                                   args, self.SCRIPT_FLAGS)
+        args = Namespace(core_only=False, censor_gap=2, robustness=False, breaks=None)
+        bp_argv = self._build_argv(
+            "scripts/compute_breakpoints.py", args, self.SCRIPT_FLAGS
+        )
+        cl_argv = self._build_argv(
+            "scripts/compute_clusters.py", args, self.SCRIPT_FLAGS
+        )
         assert ["--censor-gap", "2"] == bp_argv
         assert cl_argv == []
 
     def test_robustness_only_to_breakpoints(self):
-        args = Namespace(core_only=False, censor_gap=0, robustness=True,
-                         breaks=None)
-        bp_argv = self._build_argv("scripts/compute_breakpoints.py",
-                                   args, self.SCRIPT_FLAGS)
-        cl_argv = self._build_argv("scripts/compute_clusters.py",
-                                   args, self.SCRIPT_FLAGS)
-        lx_argv = self._build_argv("scripts/compute_lexical.py",
-                                   args, self.SCRIPT_FLAGS)
+        args = Namespace(core_only=False, censor_gap=0, robustness=True, breaks=None)
+        bp_argv = self._build_argv(
+            "scripts/compute_breakpoints.py", args, self.SCRIPT_FLAGS
+        )
+        cl_argv = self._build_argv(
+            "scripts/compute_clusters.py", args, self.SCRIPT_FLAGS
+        )
+        lx_argv = self._build_argv(
+            "scripts/compute_lexical.py", args, self.SCRIPT_FLAGS
+        )
         assert "--robustness" in bp_argv
         assert "--robustness" not in cl_argv
         assert "--robustness" not in lx_argv
 
     def test_breaks_forwarded_to_clusters_only(self):
-        args = Namespace(core_only=False, censor_gap=0, robustness=False,
-                         breaks="2007,2013")
-        bp_argv = self._build_argv("scripts/compute_breakpoints.py",
-                                   args, self.SCRIPT_FLAGS)
-        cl_argv = self._build_argv("scripts/compute_clusters.py",
-                                   args, self.SCRIPT_FLAGS)
-        lx_argv = self._build_argv("scripts/compute_lexical.py",
-                                   args, self.SCRIPT_FLAGS)
+        args = Namespace(
+            core_only=False, censor_gap=0, robustness=False, breaks="2007,2013"
+        )
+        bp_argv = self._build_argv(
+            "scripts/compute_breakpoints.py", args, self.SCRIPT_FLAGS
+        )
+        cl_argv = self._build_argv(
+            "scripts/compute_clusters.py", args, self.SCRIPT_FLAGS
+        )
+        lx_argv = self._build_argv(
+            "scripts/compute_lexical.py", args, self.SCRIPT_FLAGS
+        )
         assert "--breaks" not in bp_argv
         assert ["--breaks", "2007,2013"] == cl_argv[-2:]
         assert "--breaks" not in lx_argv
 
     def test_no_flags_gives_empty(self):
-        args = Namespace(core_only=False, censor_gap=0, robustness=False,
-                         breaks=None)
+        args = Namespace(core_only=False, censor_gap=0, robustness=False, breaks=None)
         for script in self.SCRIPT_FLAGS:
             assert self._build_argv(script, args, self.SCRIPT_FLAGS) == []
 
     def test_all_flags_combined(self):
-        args = Namespace(core_only=True, censor_gap=3, robustness=True,
-                         breaks="2007,2015")
-        bp = self._build_argv("scripts/compute_breakpoints.py",
-                              args, self.SCRIPT_FLAGS)
-        cl = self._build_argv("scripts/compute_clusters.py",
-                              args, self.SCRIPT_FLAGS)
-        lx = self._build_argv("scripts/compute_lexical.py",
-                              args, self.SCRIPT_FLAGS)
+        args = Namespace(
+            core_only=True, censor_gap=3, robustness=True, breaks="2007,2015"
+        )
+        bp = self._build_argv("scripts/compute_breakpoints.py", args, self.SCRIPT_FLAGS)
+        cl = self._build_argv("scripts/compute_clusters.py", args, self.SCRIPT_FLAGS)
+        lx = self._build_argv("scripts/compute_lexical.py", args, self.SCRIPT_FLAGS)
         # breakpoints gets: --core-only, --censor-gap 3, --robustness
         assert "--core-only" in bp
         assert "--censor-gap" in bp
