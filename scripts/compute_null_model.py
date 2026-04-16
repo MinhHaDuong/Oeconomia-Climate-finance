@@ -201,6 +201,7 @@ def _result_row(year, window, observed, null_mean, null_std, z, p):
 
 def _run_semantic_permutations(method_name, div_df, cfg):
     """Permutation test for semantic methods (S1-S4)."""
+    from _divergence_io import subsample_equal_n
     from _divergence_semantic import (
         _get_window_embeddings,
         _get_years_and_params,
@@ -237,8 +238,6 @@ def _run_semantic_permutations(method_name, div_df, cfg):
             continue
 
         if equal_n and len(X) != len(Y):
-            from _divergence_io import subsample_equal_n
-
             eq_result = subsample_equal_n(X, Y, min_papers, rng)
             if eq_result is None:
                 rows.append(_nan_row(y, w))
@@ -256,7 +255,7 @@ def _run_semantic_permutations(method_name, div_df, cfg):
 
 def _run_lexical_permutations(method_name, div_df, cfg):
     """Permutation test for lexical methods (L1)."""
-    from _divergence_io import get_min_papers
+    from _divergence_io import get_min_papers, subsample_equal_n
     from _divergence_lexical import load_lexical_data
     from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -303,8 +302,6 @@ def _run_lexical_permutations(method_name, div_df, cfg):
             continue
 
         if equal_n and len(texts_before) != len(texts_after):
-            from _divergence_io import subsample_equal_n
-
             eq_result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
             if eq_result is None:
                 rows.append(_nan_row(y, w))
