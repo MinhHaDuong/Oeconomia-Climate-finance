@@ -14,6 +14,8 @@ Author: user
 2026-04-15T15:00Z claude note reimagined as companion to Oeconomia manuscript
 2026-04-15T15:00Z claude note lean method panel (6 methods, 3 layers), not 16-method zoo
 2026-04-15T15:00Z claude note ChatGPT note as scaffolding for methods section
+2026-04-16T19:55Z claude cut §7 Supplementary; 15-method zoo moves to technical-report include (lean over comprehensive)
+2026-04-16T19:55Z claude add 0042 and 0064 to Wave 3; 0047 closed (PR #675)
 
 --- body ---
 ## Context
@@ -57,10 +59,12 @@ normalize all methods against sample-size variation.
 - Discriminative terms: both log-odds (Monroe et al. 2008) and C2ST
   coefficients — decide which to foreground after seeing results
 
-**Supplementary (available from existing pipeline):**
-- MMD, Wasserstein, Fréchet, L2/L3, G1/G3-G8 (15-method robustness)
-- PELT/DynP/KernelCPD changepoint detection
-- MC size-bias characterization, bootstrap CIs
+**Not in the companion paper:**
+The 15-method divergence zoo (MMD, Wasserstein, Fréchet, L2/L3,
+G1/G3-G8), PELT/DynP/KernelCPD changepoint detection, and MC size-bias
+characterization are internal engineering artifacts. They live in
+`content/technical-report.qmd` as includes (ticket 0028), not as a
+supplement to this paper. Lean over comprehensive.
 
 ## Paper structure (companion-paper.qmd)
 
@@ -79,7 +83,7 @@ normalize all methods against sample-size variation.
    - 4.9 Interpretation (terms, documents, communities)
 5. Results — applied to climate finance corpus
 6. Discussion — generalizability, limitations, growth-bias honesty
-7. Supplementary — full 15-method results, MC characterization
+7. Conclusion
 
 ## Sub-tickets
 
@@ -112,14 +116,16 @@ normalize all methods against sample-size variation.
 ### Wave 3 — Paper
 | Ticket | Description | Blocked by |
 |--------|-------------|------------|
+| 0042 | Run divergence pipeline on real corpus | — (dep for all Wave C) |
 | 0057 | Inject scaffolding + rewrite companion | 0050, 0056 |
 | 0058 | Companion figures (4 canonical) | 0050, 0056 |
+| 0064 | Fill §5 Results with pipeline outputs | 0042, 0057 |
 
-### Wave 4 — Supplementary
-| Ticket | Description | Blocked by |
-|--------|-------------|------------|
-| 0051 | MC size-bias characterization | 0045 |
-| 0047 | Bootstrap CIs | 0050 |
+### Wave 4 — Robustness (not a companion supplement)
+| Ticket | Description | Blocked by | Home |
+|--------|-------------|------------|------|
+| 0047 | Bootstrap CIs | 0050 | closed (PR #675) |
+| 0051 | MC size-bias characterization | 0045 | technical-report include |
 
 ### Killed
 | Ticket | Reason |

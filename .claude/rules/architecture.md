@@ -13,7 +13,7 @@ Quarto multi-document project (`_quarto.yml`). Outputs share reusable fragments 
 - `content/corpus-report.qmd` — corpus construction, data quality, corpus contents
 - `content/technical-report.qmd` — analysis methods and results (composed of includes)
 - `content/data-paper.qmd` — corpus data paper (RDJ4HSS submission)
-- `content/companion-paper.qmd` — retired (merged into technical-report)
+- `content/companion-paper.qmd` — method paper (QSS submission, epic 0026)
 
 ## Pipeline phases
 
