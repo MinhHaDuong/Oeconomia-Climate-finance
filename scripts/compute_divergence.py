@@ -101,6 +101,20 @@ METHODS = {
         False,
         True,
     ),
+    "C2ST_embedding": (
+        "_divergence_c2st",
+        "compute_c2st_embedding",
+        "semantic",
+        True,
+        False,
+    ),
+    "C2ST_lexical": (
+        "_divergence_c2st",
+        "compute_c2st_lexical",
+        "lexical",
+        False,
+        False,
+    ),
 }
 
 
