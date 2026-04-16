@@ -84,8 +84,8 @@ def _compare_pagerank_distributions(pr_before, pr_after, n_bins=20):
         return np.nan
     bin_max = max(pr_b.max(), pr_a.max())
     bins = np.linspace(0, bin_max, actual_bins + 1)
-    hist_b, _ = np.histogram(pr_b, bins=bins, density=True)
-    hist_a, _ = np.histogram(pr_a, bins=bins, density=True)
+    hist_b, _ = np.histogram(pr_b, bins=bins)
+    hist_a, _ = np.histogram(pr_a, bins=bins)
 
     # Add epsilon to avoid zero bins, then re-normalize
     eps = 1e-10
@@ -206,8 +206,9 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     cit_cfg = cfg["divergence"]["citation"]
-    damping = cit_cfg["G1_pagerank"]["damping"]
-    n_bins = 20
+    g1_cfg = cit_cfg["G1_pagerank"]
+    damping = g1_cfg["damping"]
+    n_bins = g1_cfg.get("n_bins", 20)
 
     log.info("G1: PageRank distribution divergence (sliding, JS)")
     results = []
