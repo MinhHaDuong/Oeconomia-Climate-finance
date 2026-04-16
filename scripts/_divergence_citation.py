@@ -8,7 +8,8 @@ This module provides:
   - _build_internal_edges() — filter to corpus-internal citation edges
   - _get_years() — year range from works
   - _cumulative_graph() — build DiGraph up to a year
-  - _incremental_graphs() — yield (year, G) pairs incrementally
+  - _sliding_window_graph() — build DiGraph for a half-window (before/after)
+  - _iter_sliding_pairs() — yield (year, window, G_before, G_after) pairs
   - _dict_to_df() — convert {year: value} to standard DataFrame
 """
 
@@ -102,30 +103,6 @@ def _cumulative_graph(works, internal_edges, up_to_year):
     return G
 
 
-def _incremental_graphs(works, internal_edges, years):
-    """Yield (year, G) pairs, building the graph incrementally.
-
-    Each iteration adds that year's nodes and edges to the running graph.
-    The caller receives the *same* mutable DiGraph object each iteration
-    (so must not store references across iterations without copying).
-    """
-    nodes_by_year = works.groupby("year")["doi"].apply(list).to_dict()
-    edges_by_year = (
-        internal_edges.groupby("source_year")[["source_doi", "ref_doi"]]
-        .apply(lambda g: g.values.tolist())
-        .to_dict()
-    )
-    G = nx.DiGraph()
-    for y in years:
-        new_nodes = nodes_by_year.get(y, [])
-        if new_nodes:
-            G.add_nodes_from(new_nodes)
-        new_edges = edges_by_year.get(y, [])
-        if new_edges:
-            G.add_edges_from(new_edges)
-        yield y, G
-
-
 def _dict_to_df(results, hyperparams=""):
     """Convert {year: value} dict to DataFrame with standard columns."""
     rows = []
@@ -139,3 +116,59 @@ def _dict_to_df(results, hyperparams=""):
             }
         )
     return pd.DataFrame(rows)
+
+
+# ── Sliding window helpers (ticket 0048) ─────────────────────────────────
+
+
+def _sliding_window_graph(works, internal_edges, year, window, side):
+    """Build directed graph for one half-window.
+
+    side='before': papers in [year - window, year]
+    side='after':  papers in [year + 1, year + 1 + window]
+
+    Only edges where both endpoints are in the node set are included.
+    """
+    if side == "before":
+        year_lo, year_hi = year - window, year
+    else:
+        year_lo, year_hi = year + 1, year + 1 + window
+
+    G = nx.DiGraph()
+    mask = (works["year"] >= year_lo) & (works["year"] <= year_hi)
+    nodes = works.loc[mask, "doi"].values
+    G.add_nodes_from(nodes)
+
+    node_set = set(nodes)
+    edge_mask = internal_edges["source_year"].between(year_lo, year_hi)
+    edges = internal_edges.loc[edge_mask, ["source_doi", "ref_doi"]].values
+    valid_edges = [(s, t) for s, t in edges if s in node_set and t in node_set]
+    G.add_edges_from(valid_edges)
+    return G
+
+
+def _iter_sliding_pairs(works, internal_edges, cfg):
+    """Yield (year, window, G_before, G_after) for each valid sliding pair.
+
+    Mirrors the semantic _iter_window_pairs pattern:
+      before = [year - w, year], after = [year + 1, year + 1 + w]
+    Skips pairs where either half has fewer than min_papers nodes.
+    """
+    from _divergence_io import get_min_papers
+
+    div_cfg = cfg["divergence"]
+    windows = div_cfg["windows"]
+    min_papers = get_min_papers(len(works), cfg)
+
+    year_min = int(works["year"].min())
+    year_max = int(works["year"].max())
+
+    for w in windows:
+        for year in range(year_min + w, year_max - w):
+            G_before = _sliding_window_graph(works, internal_edges, year, w, "before")
+            G_after = _sliding_window_graph(works, internal_edges, year, w, "after")
+            if G_before.number_of_nodes() < min_papers:
+                continue
+            if G_after.number_of_nodes() < min_papers:
+                continue
+            yield year, w, G_before, G_after
