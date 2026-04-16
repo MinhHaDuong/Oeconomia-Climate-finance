@@ -1,0 +1,76 @@
+%erg v1
+Title: Add Pandera schema for tab_null_*.csv (null-model output contract)
+Status: open
+Priority: backlog
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T18:05Z claude created — follow-up from PR #683 review
+
+--- body ---
+## Context
+
+The divergence pipeline produces four CSV contract files per method:
+
+| File                     | Producer                         | Pandera schema           |
+|--------------------------|----------------------------------|--------------------------|
+| `tab_div_{method}.csv`   | `compute_divergence.py`          | `DivergenceSchema` ✓     |
+| `tab_boot_{method}.csv`  | `compute_divergence_bootstrap.py`| `BootstrapSchema` ✓      |
+| `tab_null_{method}.csv`  | `compute_null_model.py`          | **none**                 |
+| `tab_summary_{method}.csv`| `export_divergence_summary.py`  | `DivergenceSummarySchema`✓|
+
+Only `tab_null_*.csv` lacks a schema. The downstream summary export (PR #683)
+reads the null CSV projection `["year", "window", "z_score", "p_value"]`
+implicitly; a schema upstream would make that contract explicit and catch
+a missing column at write time, not join time.
+
+## Actions
+
+1. Add `NullModelSchema` to `scripts/schemas.py`. Columns from
+   `tab_null_S2_energy.csv` inspection (2026-04-16 run):
+
+   ```python
+   NullModelSchema = DataFrameSchema(
+       columns={
+           "year": Column(int),
+           "window": Column(str),
+           "observed": Column(float, nullable=True),
+           "null_mean": Column(float, nullable=True),
+           "null_std": Column(float, nullable=True),
+           "z_score": Column(float, nullable=True),
+           "p_value": Column(float, nullable=True),
+       },
+       strict=True,
+       coerce=True,
+   )
+   ```
+
+2. Validate in `compute_null_model.py` before writing:
+   `NullModelSchema.validate(df)`.
+
+3. Add schema tests in `tests/test_bootstrap.py` (or a new
+   `tests/test_null_model.py` if the file gets crowded), mirroring the
+   pattern in `TestDivergenceSummarySchema`: `test_valid_dataframe_passes`,
+   `test_extra_column_rejected`, `test_coercion_works`.
+
+4. Optional: verify `export_divergence_summary.py` reads the null CSV via
+   `pipeline_loaders` or at least calls `NullModelSchema.validate()` on
+   load, so schema violations surface at join time with a useful error.
+
+## Test
+
+```python
+def test_null_model_schema_validates_production_output():
+    """Real tab_null_*.csv files must pass the schema."""
+    for path in Path("content/tables").glob("tab_null_*.csv"):
+        df = pd.read_csv(path)
+        NullModelSchema.validate(df)
+```
+
+## Exit criteria
+
+- `NullModelSchema` declared in `scripts/schemas.py`.
+- `compute_null_model.py` validates before writing.
+- Schema tests added and passing.
+- The four-file divergence contract has full schema coverage.
