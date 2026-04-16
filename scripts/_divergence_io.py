@@ -1,13 +1,16 @@
 """Shared I/O helpers for the divergence pipeline.
 
 Provides extract_method_from_path, infer_channel, load_divergence_tables,
-and get_min_papers — used by compute_changepoints, plot_divergence,
-compute_convergence, and the _divergence_* modules.
+get_min_papers, iter_semantic_windows, iter_lexical_windows — used by
+compute_changepoints, plot_divergence, compute_convergence,
+compute_null_model, compute_divergence_bootstrap, and the _divergence_*
+modules.
 """
 
 import os
 import re
 
+import numpy as np
 import pandas as pd
 from utils import get_logger
 
@@ -125,7 +128,6 @@ def subsample_equal_n(before, after, min_papers, rng):
     Works on both numpy arrays and Python lists.
     Returns (before_sub, after_sub), or None if min(len) < min_papers.
     """
-    import numpy as np
 
     n = min(len(before), len(after))
     if n < min_papers:
@@ -139,3 +141,142 @@ def subsample_equal_n(before, after, min_papers, rng):
         idx = rng.choice(len(after), n, replace=False)
         after = after[idx] if isinstance(after, np.ndarray) else [after[i] for i in idx]
     return before, after
+
+
+# ── Window iterators for null model / bootstrap ───────────────────────
+
+
+def _make_window_rngs(seed, y, w):
+    """Return independent (subsample_rng, extra_rng) for a (year, window) pair.
+
+    Each pair gets deterministic seeds derived from (seed, y, w) so results
+    are identical regardless of which other pairs are processed (ticket 0061).
+    The +50000 offset ensures no overlap: subsample seeds span roughly
+    [seed+199044, seed+202547], extra seeds [seed+249044, seed+252547].
+    """
+    window_seed = seed + y * 100 + w
+    return np.random.RandomState(window_seed), np.random.RandomState(
+        window_seed + 50000
+    )
+
+
+def iter_semantic_windows(div_df, cfg):
+    """Yield (year, window, X, Y, extra_rng) for each valid semantic window.
+
+    Loads semantic data, iterates over (year, window) pairs from div_df,
+    extracts before/after embeddings, and applies equal-n subsampling.
+    Shared by compute_null_model and compute_divergence_bootstrap.
+
+    Yields
+    ------
+    (y, w, X, Y, extra_rng) where X, Y are numpy arrays and extra_rng
+    is a per-window RNG available for downstream use (permutation / bootstrap).
+
+    """
+    from _divergence_semantic import (
+        _get_window_embeddings,
+        _get_years_and_params,
+        load_semantic_data,
+    )
+
+    df, emb = load_semantic_data(None)
+    div_cfg = cfg["divergence"]
+    seed = div_cfg["random_seed"]
+
+    _, min_papers, max_subsample, _, equal_n = _get_years_and_params(df, emb, cfg)
+
+    year_windows = div_df[["year", "window"]].drop_duplicates()
+
+    for _, row in year_windows.iterrows():
+        y = int(row["year"])
+        w = int(row["window"])
+
+        subsample_rng, extra_rng = _make_window_rngs(seed, y, w)
+
+        X = _get_window_embeddings(
+            df, emb, y, w, "before", min_papers, max_subsample, rng=subsample_rng
+        )
+        Y = _get_window_embeddings(
+            df, emb, y, w, "after", min_papers, max_subsample, rng=subsample_rng
+        )
+        if X is None or Y is None:
+            continue
+
+        if equal_n and len(X) != len(Y):
+            eq_result = subsample_equal_n(X, Y, min_papers, subsample_rng)
+            if eq_result is None:
+                continue
+            X, Y = eq_result
+
+        yield y, w, X, Y, extra_rng
+
+
+def iter_lexical_windows(div_df, cfg):
+    """Yield (year, window, texts_before, texts_after, extra_rng) for each valid lexical window.
+
+    Loads lexical data, iterates over (year, window) pairs from div_df,
+    extracts before/after text lists, and applies equal-n subsampling.
+    Shared by compute_null_model and compute_divergence_bootstrap.
+
+    Yields
+    ------
+    (y, w, texts_before, texts_after, extra_rng)
+
+    """
+    from _divergence_lexical import load_lexical_data
+
+    df = load_lexical_data(None)
+    div_cfg = cfg["divergence"]
+    seed = div_cfg["random_seed"]
+
+    min_papers = get_min_papers(len(df), cfg)
+    equal_n = div_cfg.get("equal_n", False)
+
+    year_windows = div_df[["year", "window"]].drop_duplicates()
+
+    for _, row in year_windows.iterrows():
+        y = int(row["year"])
+        w = int(row["window"])
+
+        subsample_rng, extra_rng = _make_window_rngs(seed, y, w)
+
+        mask_before = (df["year"] >= y - w) & (df["year"] <= y)
+        mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
+
+        texts_before = df.loc[mask_before, "abstract"].tolist()
+        texts_after = df.loc[mask_after, "abstract"].tolist()
+
+        if len(texts_before) < min_papers or len(texts_after) < min_papers:
+            continue
+
+        if equal_n and len(texts_before) != len(texts_after):
+            eq_result = subsample_equal_n(
+                texts_before, texts_after, min_papers, subsample_rng
+            )
+            if eq_result is None:
+                continue
+            texts_before, texts_after = eq_result
+
+        yield y, w, texts_before, texts_after, extra_rng
+
+
+def fit_lexical_vectorizer(cfg):
+    """Fit and return a TF-IDF vectorizer on the full lexical corpus.
+
+    Shared by compute_null_model and compute_divergence_bootstrap.
+    """
+    from _divergence_lexical import load_lexical_data
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    df = load_lexical_data(None)
+    lex_cfg = cfg["divergence"]["lexical"]
+
+    all_texts = df["abstract"].tolist()
+    vec = TfidfVectorizer(
+        stop_words="english",
+        max_features=lex_cfg["tfidf_max_features"],
+        min_df=min(lex_cfg["tfidf_min_df"], max(1, len(all_texts) - 1)),
+        sublinear_tf=True,
+    )
+    vec.fit(all_texts)
+    return vec
