@@ -1,0 +1,373 @@
+"""Tests for bootstrap CI computation (ticket 0047).
+
+Tests:
+1. Bootstrap output schema — required columns and types
+2. Bootstrap produces K replicates per (method, year, window)
+3. Bootstrap replicates vary (resampling introduces variation)
+4. Summary table joins all sources correctly
+5. Significant flag logic
+6. Schema validation for BootstrapSchema and DivergenceSummarySchema
+"""
+
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+import pytest
+
+SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
+sys.path.insert(0, SCRIPTS_DIR)
+
+
+# ---------------------------------------------------------------------------
+# Synthetic data helpers
+# ---------------------------------------------------------------------------
+
+
+def _make_synthetic_div_df():
+    """Minimal divergence CSV for testing bootstrap."""
+    return pd.DataFrame(
+        {
+            "year": [2005, 2005, 2006, 2006],
+            "channel": ["semantic", "semantic", "semantic", "semantic"],
+            "window": ["3", "3", "3", "3"],
+            "hyperparams": ["", "", "", ""],
+            "value": [0.5, 0.6, 0.7, 0.8],
+        }
+    )
+
+
+def _make_synthetic_null_df():
+    """Minimal null model CSV for testing summary."""
+    return pd.DataFrame(
+        {
+            "year": [2005, 2006],
+            "window": ["3", "3"],
+            "observed": [0.55, 0.75],
+            "null_mean": [0.30, 0.35],
+            "null_std": [0.10, 0.12],
+            "z_score": [2.5, 3.33],
+            "p_value": [0.01, 0.002],
+        }
+    )
+
+
+def _make_synthetic_boot_df(k=10):
+    """Minimal bootstrap replicates CSV for testing summary."""
+    rows = []
+    rng = np.random.RandomState(42)
+    for year in [2005, 2006]:
+        for rep in range(k):
+            rows.append(
+                {
+                    "method": "S2_energy",
+                    "year": year,
+                    "window": "3",
+                    "hyperparams": "",
+                    "replicate": rep,
+                    "value": rng.uniform(0.4, 0.9),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Bootstrap computation tests
+# ---------------------------------------------------------------------------
+
+
+class TestBootstrapComputation:
+    """Test the bootstrap_one_window function."""
+
+    def test_bootstrap_output_schema(self):
+        """Bootstrap output has required columns."""
+        from compute_divergence_bootstrap import bootstrap_one_window
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(30, 10)
+        Y = rng.randn(30, 10)
+
+        def stat_fn(a, b):
+            return float(np.mean(np.abs(a.mean(axis=0) - b.mean(axis=0))))
+
+        result = bootstrap_one_window(X, Y, stat_fn, k=5, seed=42)
+
+        assert isinstance(result, list)
+        assert len(result) == 5
+        # Each element should be a float
+        for v in result:
+            assert isinstance(v, float)
+
+    def test_bootstrap_produces_k_replicates(self):
+        """bootstrap_one_window should produce exactly K replicates."""
+        from compute_divergence_bootstrap import bootstrap_one_window
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(50, 10)
+        Y = rng.randn(50, 10)
+
+        def stat_fn(a, b):
+            return float(np.linalg.norm(a.mean(axis=0) - b.mean(axis=0)))
+
+        for k in [1, 5, 20]:
+            result = bootstrap_one_window(X, Y, stat_fn, k=k, seed=42)
+            assert len(result) == k, f"Expected {k} replicates, got {len(result)}"
+
+    def test_bootstrap_replicates_vary(self):
+        """Replicates should not all be identical."""
+        from compute_divergence_bootstrap import bootstrap_one_window
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(50, 10)
+        Y = rng.randn(50, 10)
+
+        def stat_fn(a, b):
+            return float(np.linalg.norm(a.mean(axis=0) - b.mean(axis=0)))
+
+        result = bootstrap_one_window(X, Y, stat_fn, k=20, seed=42)
+        # Not all values should be identical
+        assert len(set(result)) > 1, "All bootstrap replicates are identical"
+
+    def test_bootstrap_reproducible(self):
+        """Same seed produces same replicates."""
+        from compute_divergence_bootstrap import bootstrap_one_window
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(30, 10)
+        Y = rng.randn(30, 10)
+
+        def stat_fn(a, b):
+            return float(np.linalg.norm(a.mean(axis=0) - b.mean(axis=0)))
+
+        r1 = bootstrap_one_window(X, Y, stat_fn, k=10, seed=99)
+        r2 = bootstrap_one_window(X, Y, stat_fn, k=10, seed=99)
+        assert r1 == r2, "Bootstrap not reproducible with same seed"
+
+    def test_bootstrap_list_inputs(self):
+        """bootstrap_one_window works with list inputs (for lexical channel)."""
+        from compute_divergence_bootstrap import bootstrap_one_window
+
+        texts_before = [f"word{i} climate finance" for i in range(30)]
+        texts_after = [f"word{i} green bond" for i in range(30)]
+
+        def stat_fn(a, b):
+            return float(len(set(a)) + len(set(b)))
+
+        result = bootstrap_one_window(texts_before, texts_after, stat_fn, k=5, seed=42)
+        assert len(result) == 5
+
+
+# ---------------------------------------------------------------------------
+# Schema tests
+# ---------------------------------------------------------------------------
+
+
+class TestBootstrapSchema:
+    """BootstrapSchema validation."""
+
+    def test_valid_dataframe_passes(self):
+        from schemas import BootstrapSchema
+
+        df = pd.DataFrame(
+            {
+                "method": ["S2_energy", "S2_energy"],
+                "year": [2010, 2010],
+                "window": ["3", "3"],
+                "hyperparams": ["", ""],
+                "replicate": [0, 1],
+                "value": [0.5, 0.6],
+            }
+        )
+        BootstrapSchema.validate(df)
+
+    def test_extra_column_rejected(self):
+        from schemas import BootstrapSchema
+
+        df = pd.DataFrame(
+            {
+                "method": ["S2_energy"],
+                "year": [2010],
+                "window": ["3"],
+                "hyperparams": [""],
+                "replicate": [0],
+                "value": [0.5],
+                "extra": ["oops"],
+            }
+        )
+        with pytest.raises(Exception):
+            BootstrapSchema.validate(df)
+
+    def test_coercion_works(self):
+        from schemas import BootstrapSchema
+
+        df = pd.DataFrame(
+            {
+                "method": ["S2_energy"],
+                "year": ["2010"],
+                "window": ["3"],
+                "hyperparams": [""],
+                "replicate": ["0"],
+                "value": ["0.5"],
+            }
+        )
+        validated = BootstrapSchema.validate(df)
+        assert validated["year"].dtype in (int, "int64")
+
+
+class TestDivergenceSummarySchema:
+    """DivergenceSummarySchema validation."""
+
+    def test_valid_dataframe_passes(self):
+        from schemas import DivergenceSummarySchema
+
+        df = pd.DataFrame(
+            {
+                "method": ["S2_energy"],
+                "year": [2010],
+                "window": ["3"],
+                "hyperparams": [""],
+                "point_estimate": [0.55],
+                "boot_median": [0.54],
+                "boot_q025": [0.40],
+                "boot_q975": [0.70],
+                "p_value": [0.01],
+                "significant": [True],
+            }
+        )
+        DivergenceSummarySchema.validate(df)
+
+    def test_extra_column_rejected(self):
+        from schemas import DivergenceSummarySchema
+
+        df = pd.DataFrame(
+            {
+                "method": ["S2_energy"],
+                "year": [2010],
+                "window": ["3"],
+                "hyperparams": [""],
+                "point_estimate": [0.55],
+                "boot_median": [0.54],
+                "boot_q025": [0.40],
+                "boot_q975": [0.70],
+                "p_value": [0.01],
+                "significant": [True],
+                "extra": ["oops"],
+            }
+        )
+        with pytest.raises(Exception):
+            DivergenceSummarySchema.validate(df)
+
+
+# ---------------------------------------------------------------------------
+# Summary table tests
+# ---------------------------------------------------------------------------
+
+
+class TestSummaryTable:
+    """Test export_divergence_summary logic."""
+
+    def test_summary_joins_all_sources(self):
+        """Summary table has all expected columns from the three sources."""
+        from export_divergence_summary import build_summary
+
+        div_df = pd.DataFrame(
+            {
+                "year": [2005, 2006],
+                "channel": ["semantic", "semantic"],
+                "window": ["3", "3"],
+                "hyperparams": ["", ""],
+                "value": [0.55, 0.75],
+            }
+        )
+        null_df = _make_synthetic_null_df()
+        boot_df = _make_synthetic_boot_df(k=10)
+
+        result = build_summary(div_df, null_df, boot_df, method="S2_energy")
+
+        expected_cols = {
+            "method",
+            "year",
+            "window",
+            "hyperparams",
+            "point_estimate",
+            "boot_median",
+            "boot_q025",
+            "boot_q975",
+            "p_value",
+            "significant",
+        }
+        assert expected_cols == set(result.columns), (
+            f"Columns mismatch: {set(result.columns)}"
+        )
+        assert len(result) == 2  # one row per (year, window)
+
+    def test_summary_significant_flag(self):
+        """significant should be True when p_value < 0.05."""
+        from export_divergence_summary import build_summary
+
+        div_df = pd.DataFrame(
+            {
+                "year": [2005, 2006],
+                "channel": ["semantic", "semantic"],
+                "window": ["3", "3"],
+                "hyperparams": ["", ""],
+                "value": [0.55, 0.75],
+            }
+        )
+        null_df = pd.DataFrame(
+            {
+                "year": [2005, 2006],
+                "window": ["3", "3"],
+                "observed": [0.55, 0.75],
+                "null_mean": [0.30, 0.35],
+                "null_std": [0.10, 0.12],
+                "z_score": [2.5, 0.5],
+                "p_value": [0.01, 0.30],  # first significant, second not
+            }
+        )
+        boot_df = _make_synthetic_boot_df(k=10)
+
+        result = build_summary(div_df, null_df, boot_df, method="S2_energy")
+
+        row_2005 = result[result["year"] == 2005].iloc[0]
+        row_2006 = result[result["year"] == 2006].iloc[0]
+
+        assert row_2005["significant"] is True or row_2005["significant"] == True
+        assert row_2006["significant"] is False or row_2006["significant"] == False
+
+    def test_summary_bootstrap_quantiles(self):
+        """Bootstrap quantiles should bracket the median."""
+        from export_divergence_summary import build_summary
+
+        div_df = pd.DataFrame(
+            {
+                "year": [2005],
+                "channel": ["semantic"],
+                "window": ["3"],
+                "hyperparams": [""],
+                "value": [0.55],
+            }
+        )
+        null_df = pd.DataFrame(
+            {
+                "year": [2005],
+                "window": ["3"],
+                "observed": [0.55],
+                "null_mean": [0.30],
+                "null_std": [0.10],
+                "z_score": [2.5],
+                "p_value": [0.01],
+            }
+        )
+        boot_df = _make_synthetic_boot_df(k=50)
+        # Filter to year 2005 only
+        boot_df = boot_df[boot_df["year"] == 2005].reset_index(drop=True)
+
+        result = build_summary(div_df, null_df, boot_df, method="S2_energy")
+        row = result.iloc[0]
+
+        assert row["boot_q025"] <= row["boot_median"] <= row["boot_q975"], (
+            f"Quantiles out of order: q025={row['boot_q025']}, "
+            f"median={row['boot_median']}, q975={row['boot_q975']}"
+        )
