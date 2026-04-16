@@ -294,6 +294,43 @@ class TestSummaryTable:
         # z_score is forwarded verbatim from the null model
         assert list(result.sort_values("year")["z_score"]) == [2.5, 3.33]
 
+    def test_summary_preserves_negative_z_score(self):
+        """Negative z (divergence below null mean) must survive the join.
+
+        Sign carries directional information (concentration increase vs
+        decrease) that p-value alone discards. The build_summary pipeline
+        must not clip, abs, or otherwise transform z_score.
+        """
+        from export_divergence_summary import build_summary
+
+        div_df = pd.DataFrame(
+            {
+                "year": [2005],
+                "channel": ["semantic"],
+                "window": ["3"],
+                "hyperparams": [""],
+                "value": [0.20],
+            }
+        )
+        null_df = pd.DataFrame(
+            {
+                "year": [2005],
+                "window": ["3"],
+                "observed": [0.20],
+                "null_mean": [0.35],
+                "null_std": [0.10],
+                "z_score": [-1.5],  # observed below null mean
+                "p_value": [0.85],
+            }
+        )
+        boot_df = _make_synthetic_boot_df(k=10)
+        boot_df = boot_df[boot_df["year"] == 2005].copy()
+
+        result = build_summary(div_df, null_df, boot_df, method="S2_energy")
+
+        assert len(result) == 1
+        assert result.iloc[0]["z_score"] == -1.5
+
     def test_summary_significant_flag(self):
         """significant should be True when p_value < 0.05."""
         from export_divergence_summary import build_summary
