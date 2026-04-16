@@ -160,6 +160,30 @@ changepoints-figure: $(CP_FIG)
 .PHONY: changepoints
 changepoints: changepoints-tables changepoints-figure
 
+# ── Null model (permutation Z-scores, ticket 0055) ─────────────────────
+#
+# For each method, permute before/after labels and recompute the statistic
+# to build a null distribution.  Output: tab_null_{method}.csv
+
+NULL_DISPATCH := scripts/compute_null_model.py
+NULL_METHODS_SEM := S2_energy
+NULL_METHODS_LEX := L1
+NULL_METHODS := $(NULL_METHODS_SEM) $(NULL_METHODS_LEX)
+NULL_CSV := $(foreach m,$(NULL_METHODS),$(DIV_TABLES)/tab_null_$(m).csv)
+
+# Semantic null models (depend on embeddings + divergence CSV)
+$(foreach m,$(NULL_METHODS_SEM),$(eval \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	uv run python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+# Lexical null models (depend on REFINED + divergence CSV)
+$(foreach m,$(NULL_METHODS_LEX),$(eval \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
+	uv run python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+.PHONY: null-model
+null-model: $(NULL_CSV)
+
 # ── Top-level ────────────────────────────────────────────────────────────
 
 .PHONY: divergence

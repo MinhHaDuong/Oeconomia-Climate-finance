@@ -80,18 +80,39 @@ RefinedCitationsSchema = DataFrameSchema(
 DivergenceSchema = DataFrameSchema(
     columns={
         "year": Column(int),
-        "channel": Column(str, checks=pa.Check.isin(["semantic", "lexical", "citation"])),
-        "window": Column(str),          # "2", "3", "cumulative", etc.
+        "channel": Column(
+            str, checks=pa.Check.isin(["semantic", "lexical", "citation"])
+        ),
+        "window": Column(str),  # "2", "3", "cumulative", etc.
         "hyperparams": Column(str, nullable=True),
         "value": Column(float, nullable=True),
     },
-    strict=True,   # no extra columns allowed
-    coerce=True,   # coerce types on validation
+    strict=True,  # no extra columns allowed
+    coerce=True,  # coerce types on validation
+)
+
+# ---------------------------------------------------------------------------
+# Null model CSV (permutation Z-scores, ticket 0055)
+# ---------------------------------------------------------------------------
+
+NullModelSchema = DataFrameSchema(
+    columns={
+        "year": Column(int),
+        "window": Column(str),
+        "observed": Column(float, nullable=True),
+        "null_mean": Column(float, nullable=True),
+        "null_std": Column(float, nullable=True),
+        "z_score": Column(float, nullable=True),
+        "p_value": Column(float, nullable=True),
+    },
+    strict=True,
+    coerce=True,
 )
 
 # ---------------------------------------------------------------------------
 # refined_embeddings.npz
 # ---------------------------------------------------------------------------
+
 
 def validate_refined_embeddings(vectors, n_works):
     """Validate embedding vectors are aligned with refined_works.csv.
@@ -110,11 +131,8 @@ def validate_refined_embeddings(vectors, n_works):
 
     """
     if vectors.ndim != 2:
-        raise ValueError(
-            f"Embeddings must be 2D, got {vectors.ndim}D"
-        )
+        raise ValueError(f"Embeddings must be 2D, got {vectors.ndim}D")
     if vectors.shape[0] != n_works:
         raise ValueError(
-            f"Embedding row mismatch: {vectors.shape[0]} vectors "
-            f"vs {n_works} works"
+            f"Embedding row mismatch: {vectors.shape[0]} vectors vs {n_works} works"
         )

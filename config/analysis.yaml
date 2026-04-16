@@ -31,6 +31,10 @@ divergence:
   pelt_model: rbf
   pelt_min_size: 2
 
+  permutation:
+    n_perm: 500
+    z_threshold: 2.0    # consumed by compute_transition_zones.py (ticket 0055b)
+
   semantic:
     S1_MMD:
       bandwidth_multipliers: [0.5, 1.0, 2.0]   # × median heuristic
