@@ -14,6 +14,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from _divergence_io import get_min_papers, subsample_equal_n
 from pipeline_loaders import load_analysis_corpus
 from sklearn.decomposition import PCA
 from utils import get_logger
@@ -67,8 +68,6 @@ def _get_years_and_params(df, emb, cfg):
     windows = div_cfg["windows"]
     max_subsample = div_cfg["max_subsample"]
     equal_n = div_cfg.get("equal_n", False)
-
-    from _divergence_io import get_min_papers
 
     min_papers = get_min_papers(len(df), cfg)
 
@@ -132,8 +131,6 @@ def _iter_window_pairs(
             if equal_n and len(X) != len(Y):
                 if rng is None:
                     raise ValueError("rng required for equal_n subsampling")
-                from _divergence_io import subsample_equal_n
-
                 result = subsample_equal_n(X, Y, min_papers, rng)
                 if result is None:
                     continue
@@ -216,7 +213,7 @@ def compute_s1_mmd(df, emb, cfg):
     backend = get_backend(cfg)
     mmd_fn = _mmd_rbf_torch if backend == "torch" else compute_mmd_rbf
 
-    seed = cfg["divergence"].get("random_seed", 42)
+    seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
     years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
@@ -296,7 +293,7 @@ def compute_s2_energy(df, emb, cfg):
     if backend == "numpy":
         import dcor
 
-    seed = cfg["divergence"].get("random_seed", 42)
+    seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
     years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
@@ -353,7 +350,7 @@ def compute_s3_wasserstein(df, emb, cfg):
 
     backend = get_backend(cfg)
 
-    seed = cfg["divergence"].get("random_seed", 42)
+    seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
     years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
@@ -489,7 +486,7 @@ def compute_s4_frechet(df, emb, cfg):
     backend = get_backend(cfg)
     frechet_fn = _frechet_torch if backend == "torch" else compute_frechet_distance
 
-    seed = cfg["divergence"].get("random_seed", 42)
+    seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
     years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(

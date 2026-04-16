@@ -83,7 +83,10 @@ DivergenceSchema = DataFrameSchema(
         "channel": Column(
             str, checks=pa.Check.isin(["semantic", "lexical", "citation"])
         ),
-        "window": Column(str),  # "2", "3", "cumulative", etc.
+        # window is always str: sliding methods store "2", "3", etc.;
+        # cumulative citation methods store "cumulative".
+        # Writers must use str(w) to avoid mixed int/str in the same CSV.
+        "window": Column(str),
         "hyperparams": Column(str, nullable=True),
         "value": Column(float, nullable=True),
     },

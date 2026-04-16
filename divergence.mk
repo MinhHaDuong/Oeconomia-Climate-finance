@@ -5,10 +5,10 @@
 # Architecture: one CSV per method via scripts/compute_divergence.py --method X
 #
 # Targets:
-#   divergence-semantic  Compute semantic methods (S1-S4)
-#   divergence-lexical   Compute lexical methods (L1-L3)
+#   divergence-semantic  Compute semantic methods (S1-S4, C2ST_embedding)
+#   divergence-lexical   Compute lexical methods (L1-L3, C2ST_lexical)
 #   divergence-citation  Compute citation methods (G1-G8)
-#   divergence-tables    All 17 divergence CSVs
+#   divergence-tables    All divergence CSVs
 #   divergence-figures   Plot one figure per method
 #   divergence           Both tables and figures
 #

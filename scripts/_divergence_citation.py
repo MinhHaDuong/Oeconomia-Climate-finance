@@ -153,6 +153,10 @@ def _iter_sliding_pairs(works, internal_edges, cfg):
     Mirrors the semantic _iter_window_pairs pattern:
       before = [year - w, year], after = [year + 1, year + 1 + w]
     Skips pairs where either half has fewer than min_papers nodes.
+
+    TODO: G1/G2/G5/G6/G8 each call this independently, rebuilding graphs
+    for the same (year, window) pairs. A cache dict keyed by (year, w) could
+    avoid redundant graph construction when multiple methods run sequentially.
     """
     from _divergence_io import get_min_papers
 

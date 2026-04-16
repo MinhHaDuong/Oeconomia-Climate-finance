@@ -88,7 +88,7 @@ def compute_c2st_embedding(df, emb, cfg):
     pca_dim = c2st_cfg.get("pca_dim", 32)
     cv_folds = c2st_cfg.get("cv_folds", 5)
     class_weight = c2st_cfg.get("class_weight", "balanced")
-    seed = div_cfg.get("random_seed", 42)
+    seed = div_cfg["random_seed"]
     rng = np.random.RandomState(seed)
 
     years, min_papers, max_subsample, windows, equal_n = _get_years_and_params(
@@ -152,8 +152,9 @@ def compute_c2st_lexical(df, cfg):
     c2st_cfg = div_cfg.get("c2st", {})
     cv_folds = c2st_cfg.get("cv_folds", 5)
     class_weight = c2st_cfg.get("class_weight", "balanced")
-    seed = div_cfg.get("random_seed", 42)
-    tfidf_max_features = div_cfg.get("lexical", {}).get("tfidf_max_features", 5000)
+    seed = div_cfg["random_seed"]
+    lex_cfg = div_cfg.get("lexical", {})
+    tfidf_max_features = lex_cfg.get("tfidf_max_features", 5000)
 
     log.info("=== C2ST_lexical ===")
     results = []
