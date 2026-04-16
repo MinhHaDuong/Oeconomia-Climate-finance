@@ -155,6 +155,21 @@ DivergenceSummarySchema = DataFrameSchema(
 )
 
 # ---------------------------------------------------------------------------
+# Interpretation CSV (discriminative terms, ticket 0056)
+# ---------------------------------------------------------------------------
+
+InterpretationSchema = DataFrameSchema(
+    columns={
+        "term": Column(str),
+        "log_odds": Column(float),
+        "freq_before": Column(int),
+        "freq_after": Column(int),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
 # refined_embeddings.npz
 # ---------------------------------------------------------------------------
 

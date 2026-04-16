@@ -219,11 +219,14 @@ class TestSmokeInterpretation:
 
     def test_different_zones_produce_different_results(self, tmp_path):
         """Different zones should produce different discriminative terms."""
-        out1 = tmp_path / "interp_2005_2009.csv"
-        out2 = tmp_path / "interp_2010_2015.csv"
+        # Smoke fixture has ~100 works spanning 2005-2025, with most data
+        # after 2010. Choose zones that split the corpus with enough docs
+        # on each side.
+        out1 = tmp_path / "interp_2013_2015.csv"
+        out2 = tmp_path / "interp_2018_2020.csv"
 
-        r1 = _run_interpretation("2005-2009", out1)
-        r2 = _run_interpretation("2010-2015", out2)
+        r1 = _run_interpretation("2013-2015", out1)
+        r2 = _run_interpretation("2018-2020", out2)
 
         assert r1.returncode == 0, r1.stderr
         assert r2.returncode == 0, r2.stderr
@@ -231,7 +234,6 @@ class TestSmokeInterpretation:
         df1 = pd.read_csv(out1)
         df2 = pd.read_csv(out2)
 
-        # The top terms or their log-odds should differ
-        # (unless the corpus is too small, in which case both are valid)
+        # Both zones should produce non-empty results given the fixture
         assert len(df1) > 0
         assert len(df2) > 0
