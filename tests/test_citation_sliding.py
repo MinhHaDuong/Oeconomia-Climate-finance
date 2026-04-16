@@ -111,7 +111,11 @@ class TestSlidingWindowGraph:
         )
 
     def test_sliding_pair_before_after_disjoint(self):
-        """Before and after graphs should contain disjoint year ranges."""
+        """Before/after graphs have disjoint nodes and correct year boundaries.
+
+        Before-window years must be <= pivot year, after-window years must
+        be > pivot year. Node disjointness follows from year disjointness.
+        """
         from _divergence_citation import _sliding_window_graph
 
         works, _, internal_edges, _ = _make_citation_data()
@@ -122,7 +126,20 @@ class TestSlidingWindowGraph:
         G_before = _sliding_window_graph(works, internal_edges, year, window, "before")
         G_after = _sliding_window_graph(works, internal_edges, year, window, "after")
 
-        # No node should appear in both graphs
+        doi_to_year = dict(zip(works["doi"], works["year"]))
+
+        # Verify year boundaries: before <= pivot, after > pivot
+        before_years = {doi_to_year[n] for n in G_before.nodes() if n in doi_to_year}
+        after_years = {doi_to_year[n] for n in G_after.nodes() if n in doi_to_year}
+
+        assert all(y <= year for y in before_years), (
+            f"Before-window contains years > pivot {year}: {before_years}"
+        )
+        assert all(y > year for y in after_years), (
+            f"After-window contains years <= pivot {year}: {after_years}"
+        )
+
+        # Node disjointness (follows from year disjointness, but verify directly)
         common_nodes = set(G_before.nodes()) & set(G_after.nodes())
         assert len(common_nodes) == 0, (
             f"Before/after graphs share {len(common_nodes)} nodes: "

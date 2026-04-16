@@ -630,7 +630,6 @@ class TestEqualN:
             pytest.skip("Not enough data points for correlation test")
 
         # Compute min(n_before, n_after) for each year
-        years_sorted = sorted(df["year"].unique())
         year_counts = df["year"].value_counts().to_dict()
         w = 2  # single window
 
@@ -646,23 +645,42 @@ class TestEqualN:
         corr_eq = abs(result_eq["value"].corr(result_eq["min_n"]))
         corr_raw = abs(result_raw["value"].corr(result_raw["min_n"]))
 
-        # The corrected version should have lower correlation with size
-        assert corr_eq < corr_raw or corr_eq < 0.5, (
+        # The corrected version should have lower correlation with size.
+        # Fallback: if both correlations are low (< 0.3), the correction is
+        # not needed but isn't harmful -- accept that as a pass.  The previous
+        # threshold of 0.5 was loose enough to mask regressions.
+        assert corr_eq < corr_raw or corr_eq < 0.3, (
             f"equal_n correlation ({corr_eq:.3f}) not lower than raw ({corr_raw:.3f})"
         )
 
     def test_l1_js_equal_n_produces_equal_sized_inputs(self):
-        """L1 JS subsampling path should equalise before/after text counts."""
-        from _divergence_lexical import compute_l1_js
+        """L1 JS subsampling path should equalise before/after text counts.
+
+        Verifies at the iterator level that TF-IDF matrices have equal
+        row counts when equal_n is True, not just that results are non-empty.
+        """
+        from _divergence_lexical import _iter_lexical_window_pairs, compute_l1_js
 
         df = _make_growth_text_data()
         cfg_eq = _equal_n_cfg(equal_n=True)
         cfg_raw = _equal_n_cfg(equal_n=False)
 
+        # Verify that equal_n produces equal-sized TF-IDF windows
+        for y, w, X_before, X_after, _vec in _iter_lexical_window_pairs(df, cfg_eq):
+            assert X_before.shape[0] == X_after.shape[0], (
+                f"year={y}, w={w}: before={X_before.shape[0]} != after={X_after.shape[0]}"
+            )
+
+        # Verify that raw (equal_n=False) produces at least some unequal windows
+        sizes = []
+        for y, w, X_before, X_after, _vec in _iter_lexical_window_pairs(df, cfg_raw):
+            sizes.append((X_before.shape[0], X_after.shape[0]))
+        unequal = [s for s in sizes if s[0] != s[1]]
+        assert len(unequal) > 0, "Expected some unequal window sizes in growth data"
+
+        # Both should still produce non-empty results via compute_l1_js
         result_eq = compute_l1_js(df, cfg_eq)
         result_raw = compute_l1_js(df, cfg_raw)
-
-        # Both should produce results; equal_n should not crash
         assert len(result_eq) > 0, "equal_n L1 JS produced no results"
         assert len(result_raw) > 0, "raw L1 JS produced no results"
 
