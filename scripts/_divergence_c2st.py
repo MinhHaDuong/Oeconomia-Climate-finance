@@ -15,8 +15,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 from sklearn.decomposition import PCA
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from utils import get_logger
 
@@ -34,6 +33,8 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
     AUC near 1.0 means they are clearly different.
 
     Accepts both dense arrays and sparse matrices (e.g. TF-IDF output).
+    Uses fixed-C logistic regression per Lopez-Paz & Oquab (2017):
+    the test measures separability, not optimizes it.
 
     Parameters
     ----------
@@ -42,7 +43,7 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
     cv_folds : int
         Number of cross-validation folds.
     class_weight : str
-        Class weight strategy for LogisticRegressionCV.
+        Class weight strategy for LogisticRegression.
     seed : int
         Random state for classifier reproducibility (required, from config).
 
@@ -58,10 +59,9 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
         features = np.vstack([X, Y])
     labels = np.concatenate([np.zeros(X.shape[0]), np.ones(Y.shape[0])])
 
-    clf = LogisticRegressionCV(
+    clf = LogisticRegression(
+        C=1.0,
         class_weight=class_weight,
-        cv=cv_folds,
-        scoring="roc_auc",
         max_iter=1000,
         random_state=seed,
     )
@@ -112,7 +112,6 @@ def compute_c2st_embedding(df, emb, cfg):
             log.info("C2ST_embedding window=%d done", last_w)
         last_w = w
 
-        # PCA reduce
         n_components = min(pca_dim, min(len(X), len(Y)) - 1, X.shape[1])
         n_components = max(2, n_components)
         pca = PCA(n_components=n_components, random_state=seed)
@@ -142,81 +141,42 @@ def compute_c2st_embedding(df, emb, cfg):
 
 
 def compute_c2st_lexical(df, cfg):
-    """C2ST on TF-IDF features.
-
-    For each (year, window): extract before/after abstracts, vectorize
-    with TF-IDF, then classify.
+    """C2ST on TF-IDF features via shared lexical window iterator.
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    from _divergence_io import get_min_papers
+    from _divergence_lexical import _iter_lexical_window_pairs
 
     div_cfg = cfg["divergence"]
-    lex_cfg = div_cfg.get("lexical", {})
     c2st_cfg = div_cfg.get("c2st", {})
     cv_folds = c2st_cfg.get("cv_folds", 5)
     class_weight = c2st_cfg.get("class_weight", "balanced")
-
-    windows = div_cfg["windows"]
-    min_papers = get_min_papers(len(df), cfg)
-    tfidf_max_features = lex_cfg.get("tfidf_max_features", 5000)
-    tfidf_min_df = lex_cfg.get("tfidf_min_df", 3)
-    equal_n = div_cfg.get("equal_n", False)
     seed = div_cfg.get("random_seed", 42)
-    rng = np.random.RandomState(seed) if equal_n else None
+    tfidf_max_features = div_cfg.get("lexical", {}).get("tfidf_max_features", 5000)
 
     log.info("=== C2ST_lexical ===")
-    years = sorted(df["year"].unique())
-    all_texts = df["abstract"].tolist()
-
-    # Fit one global vectorizer for consistent vocabulary
-    vec = TfidfVectorizer(
-        stop_words="english",
-        max_features=tfidf_max_features,
-        min_df=min(tfidf_min_df, max(1, len(all_texts) - 1)),
-        sublinear_tf=True,
-    )
-    vec.fit(all_texts)
-
     results = []
-    for w in windows:
-        log.info("  C2ST_lexical window=%d", w)
-        for y in years:
-            mask_before = (df["year"] >= y - w) & (df["year"] <= y)
-            mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
+    last_w = None
+    for y, w, X_before, X_after, _vec in _iter_lexical_window_pairs(df, cfg):
+        if last_w is not None and w != last_w:
+            log.info("  C2ST_lexical window=%d done", last_w)
+        last_w = w
 
-            texts_before = df.loc[mask_before, "abstract"].tolist()
-            texts_after = df.loc[mask_after, "abstract"].tolist()
-
-            if len(texts_before) < min_papers or len(texts_after) < min_papers:
-                continue
-
-            if equal_n and len(texts_before) != len(texts_after):
-                from _divergence_io import subsample_equal_n
-
-                result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
-                if result is None:
-                    continue
-                texts_before, texts_after = result
-
-            X_before = vec.transform(texts_before)
-            X_after = vec.transform(texts_after)
-
-            auc = _c2st_auc(
-                X_before,
-                X_after,
-                cv_folds=cv_folds,
-                class_weight=class_weight,
-                seed=seed,
-            )
-            results.append(
-                {
-                    "year": int(y),
-                    "window": str(w),
-                    "hyperparams": f"tfidf_features={tfidf_max_features}",
-                    "value": auc,
-                }
-            )
+        auc = _c2st_auc(
+            X_before,
+            X_after,
+            cv_folds=cv_folds,
+            class_weight=class_weight,
+            seed=seed,
+        )
+        results.append(
+            {
+                "year": int(y),
+                "window": str(w),
+                "hyperparams": f"tfidf_features={tfidf_max_features}",
+                "value": auc,
+            }
+        )
 
     log.info("  C2ST_lexical: %d data points", len(results))
     return pd.DataFrame(results)

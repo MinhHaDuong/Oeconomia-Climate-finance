@@ -67,28 +67,29 @@ def _smooth_distribution(v, eps=1e-10):
 
 
 from _divergence_io import get_min_papers as _get_min_papers
+from _divergence_io import subsample_equal_n
 
-# ── L1: JS divergence on TF-IDF distributions ────────────────────────────
 
+def _iter_lexical_window_pairs(df, cfg):
+    """Yield (year, window, X_before, X_after, vec) for each valid window pair.
 
-def compute_l1_js(df, cfg):
-    """JS divergence between TF-IDF of before/after windows per year.
-
-    Returns DataFrame with columns: year, window, hyperparams, value
+    Fits a global TF-IDF vectorizer, then iterates over (window, year),
+    yielding sparse TF-IDF matrices for before/after windows.
+    Shared by L1 and C2ST_lexical.
     """
     div_cfg = cfg["divergence"]
-    lex_cfg = div_cfg["lexical"]
-
+    lex_cfg = div_cfg.get("lexical", {})
     windows = div_cfg["windows"]
     min_papers = _get_min_papers(len(df), cfg)
-    tfidf_max_features = lex_cfg["tfidf_max_features"]
-    tfidf_min_df = lex_cfg["tfidf_min_df"]
+    tfidf_max_features = lex_cfg.get("tfidf_max_features", 5000)
+    tfidf_min_df = lex_cfg.get("tfidf_min_df", 3)
+    equal_n = div_cfg.get("equal_n", False)
+    seed = div_cfg.get("random_seed", 42)
+    rng = np.random.RandomState(seed) if equal_n else None
 
-    log.info("=== L1: JS divergence on TF-IDF ===")
     years = sorted(df["year"].unique())
     all_texts = df["abstract"].tolist()
 
-    # Fit one global vectorizer to get consistent vocabulary
     vec = TfidfVectorizer(
         stop_words="english",
         max_features=tfidf_max_features,
@@ -97,13 +98,7 @@ def compute_l1_js(df, cfg):
     )
     vec.fit(all_texts)
 
-    equal_n = div_cfg.get("equal_n", False)
-    seed = div_cfg.get("random_seed", 42)
-    rng = np.random.RandomState(seed) if equal_n else None
-
-    rows = []
     for w in windows:
-        log.info("  L1 window=%d", w)
         for y in years:
             mask_before = (df["year"] >= y - w) & (df["year"] <= y)
             mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
@@ -115,8 +110,6 @@ def compute_l1_js(df, cfg):
                 continue
 
             if equal_n and len(texts_before) != len(texts_after):
-                from _divergence_io import subsample_equal_n
-
                 result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
                 if result is None:
                     continue
@@ -124,24 +117,40 @@ def compute_l1_js(df, cfg):
 
             X_before = vec.transform(texts_before)
             X_after = vec.transform(texts_after)
+            yield y, w, X_before, X_after, vec
 
-            # Aggregate: mean TF-IDF per window
-            agg_before = np.asarray(X_before.mean(axis=0)).flatten()
-            agg_after = np.asarray(X_after.mean(axis=0)).flatten()
 
-            # Smooth to valid probability distributions
-            p = _smooth_distribution(agg_before)
-            q = _smooth_distribution(agg_after)
+# ── L1: JS divergence on TF-IDF distributions ────────────────────────────
 
-            js = float(jensenshannon(p, q))
-            rows.append(
-                {
-                    "year": y,
-                    "window": str(w),
-                    "hyperparams": f"w={w}",
-                    "value": js,
-                }
-            )
+
+def compute_l1_js(df, cfg):
+    """JS divergence between TF-IDF of before/after windows per year.
+
+    Returns DataFrame with columns: year, window, hyperparams, value
+    """
+    log.info("=== L1: JS divergence on TF-IDF ===")
+    rows = []
+    last_w = None
+    for y, w, X_before, X_after, _vec in _iter_lexical_window_pairs(df, cfg):
+        if last_w is not None and w != last_w:
+            log.info("  L1 window=%d done", last_w)
+        last_w = w
+
+        agg_before = np.asarray(X_before.mean(axis=0)).flatten()
+        agg_after = np.asarray(X_after.mean(axis=0)).flatten()
+
+        p = _smooth_distribution(agg_before)
+        q = _smooth_distribution(agg_after)
+
+        js = float(jensenshannon(p, q))
+        rows.append(
+            {
+                "year": y,
+                "window": str(w),
+                "hyperparams": f"w={w}",
+                "value": js,
+            }
+        )
 
     log.info("  L1: %d data points", len(rows))
     return pd.DataFrame(rows)
