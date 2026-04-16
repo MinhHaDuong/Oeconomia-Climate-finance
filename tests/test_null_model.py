@@ -1,10 +1,11 @@
-"""Tests for the permutation Z-score null model (ticket 0055).
+"""Tests for the permutation Z-score null model (tickets 0055, 0061).
 
 Tests:
 1. permutation_test core function — null distribution and planted breaks
 2. NullModelSchema validation
 3. Smoke test: run compute_null_model.py on fixture data
 4. Output reuses year/window combos from existing tab_div_{method}.csv
+5. Shared-rng contamination regression (ticket 0061)
 """
 
 import os
@@ -306,4 +307,148 @@ class TestNullModelReusesYearWindow:
         # And the null model should cover most pairs
         assert len(null_pairs) >= len(div_pairs) * 0.5, (
             f"Null model covers too few pairs: {len(null_pairs)} / {len(div_pairs)}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Shared-rng contamination regression tests (ticket 0061)
+# ---------------------------------------------------------------------------
+
+
+def _make_synthetic_data(n_years=20, papers_per_year=60, emb_dim=10, seed=99):
+    """Build a synthetic (df, emb) for testing null-model rng isolation.
+
+    Returns a DataFrame with 'year' and 'cited_by_count' columns, plus an
+    embedding matrix aligned to df.index.  Years span [2000, 2000+n_years).
+    """
+    rng = np.random.RandomState(seed)
+    years = np.repeat(np.arange(2000, 2000 + n_years), papers_per_year)
+    df = pd.DataFrame({"year": years, "cited_by_count": 10})
+    emb = rng.randn(len(df), emb_dim).astype(np.float32)
+    return df, emb
+
+
+class TestSharedRngContamination:
+    """Ticket 0061 — per-window rng isolation.
+
+    The bug: _run_semantic_permutations and _run_lexical_permutations used a
+    single rng for both subsampling and permutation across all (year, window)
+    iterations.  Adding or removing earlier windows changed the rng state
+    entering later windows, making results non-reproducible.
+
+    The fix: derive per-window seeds so each (year, window) gets independent
+    rng instances for subsampling and permutation.
+    """
+
+    def test_single_window_reproducible_regardless_of_prior_windows_semantic(self):
+        """Semantic: z-score for (year=2005, w=3) must be identical whether
+        we process it alone or after (year=2003, w=3).
+        """
+        from unittest.mock import patch
+
+        from compute_null_model import _run_semantic_permutations
+
+        df, emb = _make_synthetic_data(n_years=20, papers_per_year=60)
+
+        # Minimal config matching what _run_semantic_permutations reads
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "max_subsample": 40,  # Force subsampling (60 > 40)
+                "equal_n": False,
+                "random_seed": 42,
+                "permutation": {"n_perm": 50},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+            }
+        }
+
+        # Run 1: only year=2005
+        div_df_single = pd.DataFrame({"year": [2005], "window": [3]})
+
+        with patch("_divergence_semantic.load_semantic_data", return_value=(df, emb)):
+            result_single = _run_semantic_permutations("S4_frechet", div_df_single, cfg)
+
+        z_single = result_single.loc[result_single["year"] == 2005, "z_score"].iloc[0]
+
+        # Run 2: year=2003 first, then year=2005
+        div_df_double = pd.DataFrame({"year": [2003, 2005], "window": [3, 3]})
+
+        with patch("_divergence_semantic.load_semantic_data", return_value=(df, emb)):
+            result_double = _run_semantic_permutations("S4_frechet", div_df_double, cfg)
+
+        z_double = result_double.loc[result_double["year"] == 2005, "z_score"].iloc[0]
+
+        assert z_single == z_double, (
+            f"Shared-rng contamination: z(2005) alone={z_single:.6f} "
+            f"vs after 2003={z_double:.6f}"
+        )
+
+    def test_single_window_reproducible_regardless_of_prior_windows_lexical(self):
+        """Lexical: z-score for (year=2005, w=3) must be identical whether
+        we process it alone or after (year=2003, w=3).
+        """
+        from unittest.mock import patch
+
+        from compute_null_model import _run_lexical_permutations
+
+        # Build synthetic text data
+        rng = np.random.RandomState(77)
+        n_years = 20
+        papers_per_year = 60
+        vocab = [
+            "climate",
+            "finance",
+            "carbon",
+            "energy",
+            "policy",
+            "market",
+            "green",
+            "bond",
+            "risk",
+            "fund",
+            "investment",
+            "emissions",
+            "trading",
+            "bank",
+            "tax",
+        ]
+        years = np.repeat(np.arange(2000, 2000 + n_years), papers_per_year)
+        abstracts = []
+        for _ in range(len(years)):
+            n_words = rng.randint(10, 30)
+            words = rng.choice(vocab, n_words, replace=True)
+            abstracts.append(" ".join(words))
+        df = pd.DataFrame({"year": years, "abstract": abstracts})
+
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "equal_n": True,  # Force subsample_equal_n
+                "random_seed": 42,
+                "permutation": {"n_perm": 50},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+                "lexical": {
+                    "tfidf_max_features": 100,
+                    "tfidf_min_df": 2,
+                },
+            }
+        }
+
+        div_df_single = pd.DataFrame({"year": [2005], "window": [3]})
+        div_df_double = pd.DataFrame({"year": [2003, 2005], "window": [3, 3]})
+
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result_single = _run_lexical_permutations("L1", div_df_single, cfg)
+
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result_double = _run_lexical_permutations("L1", div_df_double, cfg)
+
+        z_single = result_single.loc[result_single["year"] == 2005, "z_score"].iloc[0]
+        z_double = result_double.loc[result_double["year"] == 2005, "z_score"].iloc[0]
+
+        assert z_single == z_double, (
+            f"Shared-rng contamination (lexical): z(2005) alone={z_single:.6f} "
+            f"vs after 2003={z_double:.6f}"
         )
