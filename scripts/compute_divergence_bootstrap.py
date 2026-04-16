@@ -67,15 +67,13 @@ def bootstrap_one_window(X_before, Y_after, statistic_fn, k, seed):
     replicates = []
     for i in range(k):
         rng = np.random.RandomState(seed + i * 1000)
+        idx_b = rng.choice(n_before, n_before, replace=True)
+        idx_a = rng.choice(n_after, n_after, replace=True)
 
         if is_array:
-            idx_b = rng.choice(n_before, n_before, replace=True)
-            idx_a = rng.choice(n_after, n_after, replace=True)
             boot_before = X_before[idx_b]
             boot_after = Y_after[idx_a]
         else:
-            idx_b = rng.choice(n_before, n_before, replace=True)
-            idx_a = rng.choice(n_after, n_after, replace=True)
             boot_before = [X_before[j] for j in idx_b]
             boot_after = [Y_after[j] for j in idx_a]
 
