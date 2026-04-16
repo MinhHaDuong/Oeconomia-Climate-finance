@@ -59,8 +59,9 @@ def build_summary(div_df, null_df, boot_df, method):
         boot_q975=lambda x: float(np.nanquantile(x, 0.975)),
     )
 
-    # Select p_value from null model
-    null_cols = null_df[["year", "window", "p_value"]].copy()
+    # Forward z_score and p_value from null model (Z > 2 is the paper's
+    # primary threshold; p-value alone loses the direction/magnitude)
+    null_cols = null_df[["year", "window", "z_score", "p_value"]].copy()
 
     # Ensure consistent types for joining
     div_agg["year"] = div_agg["year"].astype(int)
@@ -89,6 +90,7 @@ def build_summary(div_df, null_df, boot_df, method):
             "boot_median",
             "boot_q025",
             "boot_q975",
+            "z_score",
             "p_value",
             "significant",
         ]
