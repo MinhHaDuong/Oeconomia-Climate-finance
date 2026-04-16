@@ -28,8 +28,8 @@ from utils import get_logger
 
 log = get_logger("compute_null_model")
 
-# Methods supported for permutation testing (semantic + lexical only)
-SUPPORTED_CHANNELS = {"semantic", "lexical"}
+# Methods supported for permutation testing
+SUPPORTED_CHANNELS = {"semantic", "lexical", "citation"}
 
 
 # ---------------------------------------------------------------------------
@@ -341,6 +341,140 @@ def _run_lexical_permutations(method_name, div_df, cfg):
     return pd.DataFrame(rows)
 
 
+def _run_citation_permutations(method_name, div_df, cfg):
+    """Permutation test for citation community methods (G9).
+
+    For each (year, window):
+      1. Build before/after sliding-window graphs
+      2. Build union graph, run Louvain once (fixed partition)
+      3. Permute which nodes are 'before' vs 'after' (keeping sizes fixed)
+      4. Recompute community-share JS divergence under each permutation
+      5. Compare observed JS against the null distribution
+
+    This is computationally efficient: Louvain runs once per (year, window),
+    and only the node-label shuffle is repeated B times.
+    """
+    import community as community_louvain
+    from _divergence_citation import (
+        _sliding_window_graph,
+        load_citation_data,
+    )
+    from _divergence_community import _build_union_graph, _community_js_for_pair
+    from scipy.spatial.distance import jensenshannon
+
+    works, _, internal_edges = load_citation_data(None)
+    div_cfg = cfg["divergence"]
+    perm_cfg = div_cfg["permutation"]
+    n_perm = perm_cfg["n_perm"]
+    seed = div_cfg["random_seed"]
+
+    cit_cfg = div_cfg.get("citation", {})
+    comm_cfg = cit_cfg.get("G9_community", {})
+    resolution = comm_cfg.get("resolution", 1.0)
+
+    year_windows = div_df[["year", "window"]].drop_duplicates()
+
+    rows = []
+    for _, row in year_windows.iterrows():
+        y = int(row["year"])
+        w = int(row["window"])
+
+        _, perm_rng = _make_window_rngs(seed, y, w)
+
+        # Build sliding window graphs
+        G_before = _sliding_window_graph(works, internal_edges, y, w, "before")
+        G_after = _sliding_window_graph(works, internal_edges, y, w, "after")
+
+        before_nodes = list(G_before.nodes())
+        after_nodes = list(G_after.nodes())
+
+        if len(before_nodes) < 3 or len(after_nodes) < 3:
+            rows.append(_nan_row(y, w))
+            continue
+
+        # Observed value: use the same function as compute_divergence
+        observed = _community_js_for_pair(
+            G_before, G_after, internal_edges, resolution, seed
+        )
+        if np.isnan(observed):
+            rows.append(_nan_row(y, w))
+            continue
+
+        # Build union graph and run Louvain once (shared partition)
+        G_union = _build_union_graph(G_before, G_after, internal_edges)
+        if G_union.number_of_nodes() < 3 or G_union.number_of_edges() < 1:
+            rows.append(_nan_row(y, w))
+            continue
+
+        partition = community_louvain.best_partition(
+            G_union, resolution=resolution, random_state=seed
+        )
+
+        all_communities = sorted(set(partition.values()))
+        n_communities = len(all_communities)
+        if n_communities < 2:
+            rows.append(_result_row(y, w, observed, 0.0, 0.0, 0.0, 1.0))
+            continue
+
+        comm_to_idx = {c: i for i, c in enumerate(all_communities)}
+
+        # Pool all nodes for permutation
+        all_nodes = before_nodes + after_nodes
+        n_before = len(before_nodes)
+
+        # Build node->community-index lookup (only nodes in partition)
+        node_comm = {}
+        for node in all_nodes:
+            if node in partition:
+                node_comm[node] = comm_to_idx[partition[node]]
+
+        null_stats = np.empty(n_perm)
+        for i in range(n_perm):
+            perm_indices = perm_rng.permutation(len(all_nodes))
+            perm_before = [all_nodes[j] for j in perm_indices[:n_before]]
+            perm_after = [all_nodes[j] for j in perm_indices[n_before:]]
+
+            p_bef = np.zeros(n_communities)
+            for node in perm_before:
+                if node in node_comm:
+                    p_bef[node_comm[node]] += 1
+
+            p_aft = np.zeros(n_communities)
+            for node in perm_after:
+                if node in node_comm:
+                    p_aft[node_comm[node]] += 1
+
+            if p_bef.sum() == 0 or p_aft.sum() == 0:
+                null_stats[i] = np.nan
+                continue
+
+            p_bef = p_bef / p_bef.sum()
+            p_aft = p_aft / p_aft.sum()
+            js = jensenshannon(p_bef, p_aft)
+            null_stats[i] = float(js**2)
+
+        # Remove NaN permutations
+        null_stats = null_stats[~np.isnan(null_stats)]
+        if len(null_stats) == 0:
+            rows.append(_nan_row(y, w))
+            continue
+
+        null_mean = float(np.mean(null_stats))
+        null_std = float(np.std(null_stats))
+
+        if null_std > 0:
+            z = (observed - null_mean) / null_std
+        else:
+            z = 0.0
+
+        p_value = float(np.mean(null_stats >= observed))
+
+        rows.append(_result_row(y, w, observed, null_mean, null_std, z, p_value))
+        log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p_value)
+
+    return pd.DataFrame(rows)
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -382,6 +516,8 @@ def main():
         result = _run_semantic_permutations(method_name, div_df, cfg)
     elif channel == "lexical":
         result = _run_lexical_permutations(method_name, div_df, cfg)
+    elif channel == "citation":
+        result = _run_citation_permutations(method_name, div_df, cfg)
     else:
         raise ValueError(f"Unsupported channel: {channel}")
 
