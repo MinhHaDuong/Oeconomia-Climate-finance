@@ -242,8 +242,8 @@ def main():
     parser.add_argument(
         "--k",
         type=int,
-        default=200,
-        help="Number of bootstrap replicates (default 200)",
+        default=None,
+        help="Number of bootstrap replicates (default: from config bootstrap.k)",
     )
     args = parser.parse_args(extra)
 
@@ -257,15 +257,16 @@ def main():
         )
 
     cfg = load_analysis_config()
-    log.info("=== Bootstrap: %s (channel=%s, k=%d) ===", method_name, channel, args.k)
+    k = args.k if args.k is not None else cfg["divergence"]["bootstrap"]["k"]
+    log.info("=== Bootstrap: %s (channel=%s, k=%d) ===", method_name, channel, k)
 
     div_df = pd.read_csv(args.div_csv)
     log.info("Loaded %d rows from %s", len(div_df), args.div_csv)
 
     if channel == "semantic":
-        result = _run_semantic_bootstrap(method_name, div_df, cfg, args.k)
+        result = _run_semantic_bootstrap(method_name, div_df, cfg, k)
     elif channel == "lexical":
-        result = _run_lexical_bootstrap(method_name, div_df, cfg, args.k)
+        result = _run_lexical_bootstrap(method_name, div_df, cfg, k)
     else:
         raise ValueError(f"Unsupported channel: {channel}")
 
