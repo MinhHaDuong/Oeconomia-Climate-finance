@@ -1,0 +1,102 @@
+%erg v1
+Title: Fill companion paper §5 Results with real-corpus pipeline outputs
+Status: open
+Created: 2026-04-16
+Author: user
+Blocked-by: 0042
+Blocked-by: 0057
+
+--- log ---
+2026-04-16T19:45Z claude created
+2026-04-16T19:45Z claude note wave C.2 of epic 0026 — numerical fill after structure is in
+
+--- body ---
+## Context
+
+Ticket 0057 rewrites `content/companion-paper.qmd` with the new methods
+scaffolding (ChatGPT note), abstract, intro, and discussion in project
+voice. §5 Results is stubbed with `{{< meta ... >}}` placeholders that
+name the quantities but cannot yet resolve them.
+
+Ticket 0042 runs the 15-method divergence pipeline on the real corpus
+(27,336 works) and produces:
+
+- `content/tables/tab_div_{method}.csv` — raw divergence per year/window
+- `content/tables/tab_null_{method}.csv` — permutation null quantiles
+- `content/tables/tab_boot_{method}.csv` — bootstrap CIs
+- `content/tables/tab_summary_{method}.csv` — joined observed + null + CI + Z
+- `content/tables/tab_changepoints.csv`, `tab_convergence.csv`
+- `content/tables/tab_sensitivity_*.csv`
+
+This ticket fills §5 with concrete numbers and interpretation once
+0057 has landed the scaffolding and 0042 has produced the tables.
+
+## Scope
+
+Six lead methods per the Wave C design (one per layer, plus robustness):
+
+| Layer     | Lead            | Robustness        |
+|-----------|-----------------|-------------------|
+| Embedding | S2 energy       | C2ST on PCA-32    |
+| Lexical   | L1 JS divergence| C2ST on TF-IDF    |
+| Graph     | G9 community    | G2 spectral gap   |
+
+All reported with permutation Z-scores and bootstrap 95% CIs.
+
+## Actions
+
+1. **Read tab_summary_*.csv** for the six lead methods. Compute:
+   - transition zones (contiguous runs where Z > 2)
+   - peak Z per zone and per method
+   - zone agreement (≥ 2 layers above threshold = validated)
+
+2. **Draft §5 subsections**:
+   - §5.1 Z-score time series — summarise what the multi-panel figure shows
+   - §5.2 Transition zones — year ranges, peak Z, which methods agree
+   - §5.3 Censored-gap confirmation — which zones survive two-pass test
+   - §5.4 Interpretation — discriminative terms, documents, communities
+     per validated zone (from `compute_interpretation.py` outputs)
+
+3. **Update `content/companion-paper-vars.yml`** (create if missing):
+   concrete values for every placeholder in the current §5 draft.
+
+4. **Reference Figures 1–4** (from 0058) at the correct paragraphs:
+   Figure 1 → §5.1; Figure 2 → §5.2; Figure 3 → §5.4 (terms);
+   Figure 4 → §5.4 (communities).
+
+5. **Rewrite abstract** with concrete findings replacing placeholders.
+
+6. **Run `/review-pr-prose`** — AI-tells auditor must pass on the
+   rewritten §5 and abstract.
+
+## Test
+
+```python
+def test_results_section_has_concrete_numbers():
+    text = Path("content/companion-paper.qmd").read_text()
+    # Every `{{< meta X >}}` in §5 must resolve via vars file
+    vars = yaml.safe_load(Path("content/companion-paper-vars.yml").read_text())
+    for match in re.findall(r"{{<\s*meta\s+(\w+)\s*>}}", text):
+        assert match in vars, f"Unresolved placeholder: {match}"
+    # All 4 figures referenced
+    for fig in ["fig-zseries", "fig-heatmap", "fig-terms", "fig-community"]:
+        assert f"@{fig}" in text
+```
+
+## Exit criteria
+
+- §5 Results uses real corpus numbers with no unresolved `{{< meta >}}`
+- Each validated transition zone has a terms + documents + communities paragraph
+- Figures 1–4 cross-referenced at their correct sections
+- `/review-pr-prose` AI-tells auditor passes
+- `quarto render content/companion-paper.qmd` succeeds without warnings
+- `make check-fast` passes
+
+## Notes for the executor
+
+- Epistemic honesty (writing rule): report what the corrected data shows.
+  If a zone disappears under censored-gap, say so. If bootstrap CIs are
+  wide, say so. Growth-bias honesty per ticket 0045.
+- Use the Oeconomia manuscript's 2009/2013 findings as a reference point,
+  but do not tailor the numbers to match — the companion is allowed to
+  disagree (different methods, different corpus cut).
