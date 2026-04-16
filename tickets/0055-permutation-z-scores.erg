@@ -1,12 +1,13 @@
 %erg v1
 Title: Implement permutation Z-score inference layer
-Status: open
+Status: closed
 Created: 2026-04-15
 Author: claude
 
 --- log ---
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 1 of epic 0026; core inference for all methods
+2026-04-16T12:00Z claude status closed — code merged to main (PR #666), permutation Z-scores + transition zones
 
 --- body ---
 ## Context
