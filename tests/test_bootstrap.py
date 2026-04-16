@@ -218,6 +218,7 @@ class TestDivergenceSummarySchema:
                 "boot_median": [0.54],
                 "boot_q025": [0.40],
                 "boot_q975": [0.70],
+                "z_score": [2.5],
                 "p_value": [0.01],
                 "significant": [True],
             }
@@ -237,6 +238,7 @@ class TestDivergenceSummarySchema:
                 "boot_median": [0.54],
                 "boot_q025": [0.40],
                 "boot_q975": [0.70],
+                "z_score": [2.5],
                 "p_value": [0.01],
                 "significant": [True],
                 "extra": ["oops"],
@@ -281,6 +283,7 @@ class TestSummaryTable:
             "boot_median",
             "boot_q025",
             "boot_q975",
+            "z_score",
             "p_value",
             "significant",
         }
@@ -288,6 +291,8 @@ class TestSummaryTable:
             f"Columns mismatch: {set(result.columns)}"
         )
         assert len(result) == 2  # one row per (year, window)
+        # z_score is forwarded verbatim from the null model
+        assert list(result.sort_values("year")["z_score"]) == [2.5, 3.33]
 
     def test_summary_significant_flag(self):
         """significant should be True when p_value < 0.05."""

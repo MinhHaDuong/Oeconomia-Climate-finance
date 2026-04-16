@@ -147,6 +147,7 @@ DivergenceSummarySchema = DataFrameSchema(
         "boot_median": Column(float, nullable=True),
         "boot_q025": Column(float, nullable=True),
         "boot_q975": Column(float, nullable=True),
+        "z_score": Column(float, nullable=True),
         "p_value": Column(float, nullable=True),
         "significant": Column(bool),
     },
