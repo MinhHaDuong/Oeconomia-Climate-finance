@@ -101,6 +101,13 @@ METHODS = {
         False,
         True,
     ),
+    "G9_community": (
+        "_divergence_community",
+        "compute_community_divergence",
+        "citation",
+        False,
+        True,
+    ),
     "C2ST_embedding": (
         "_divergence_c2st",
         "compute_c2st_embedding",

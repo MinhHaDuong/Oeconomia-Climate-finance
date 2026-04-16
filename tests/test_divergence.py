@@ -167,7 +167,7 @@ class TestModuleFunctions:
     def test_dispatcher_registry_complete(self):
         from compute_divergence import METHODS
 
-        assert len(METHODS) == 17
+        assert len(METHODS) == 18
         # Verify all three channels present
         channels = {v[2] for v in METHODS.values()}
         assert channels == {"semantic", "lexical", "citation"}
@@ -240,6 +240,7 @@ class TestSmokeCitation:
             "G6_entropy",
             "G7_disruption",
             "G8_betweenness",
+            "G9_community",
         ],
     )
     def test_compute_method(self, method, tmp_path):
@@ -823,3 +824,112 @@ class TestG1DisjointWindows:
 
         val = _compare_pagerank_distributions(pr1, pr2)
         assert 0.0 <= val <= 1.0, f"Value {val} out of [0, 1] bounds"
+
+
+# ---------------------------------------------------------------------------
+# G9 Community divergence (ticket 0054)
+# ---------------------------------------------------------------------------
+
+
+class TestCommunityDivergence:
+    """G9 community divergence: Louvain partition + Jensen-Shannon."""
+
+    def test_community_divergence_schema(self, tmp_path):
+        """Smoke test: G9 output conforms to DivergenceSchema."""
+        from schemas import DivergenceSchema
+
+        out = tmp_path / "tab_div_G9_community.csv"
+        result = _run_compute("G9_community", out)
+        assert result.returncode == 0, (
+            f"G9 failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+        assert out.exists(), "Output CSV not created for G9_community"
+        df = pd.read_csv(out)
+        assert {"year", "channel", "window", "hyperparams", "value"} == set(df.columns)
+        assert (df["channel"] == "citation").all()
+        DivergenceSchema.validate(df)
+
+    def test_community_js_overlapping_same_distribution(self):
+        """Overlapping before/after with equal community representation give low JS.
+
+        Two cliques (A, B) form the union graph. Before and after each
+        contain equal numbers of nodes from both cliques, so community
+        share vectors are identical → JS = 0.
+        """
+        import networkx as nx
+        from _divergence_community import _community_js_for_pair
+
+        # Two cliques of 6 nodes each, well separated (no cross-clique edges)
+        clique_a = [f"A{i}" for i in range(6)]
+        clique_b = [f"B{i}" for i in range(6)]
+
+        # Before window: first 3 from each clique
+        G_before = nx.DiGraph()
+        G_before.add_nodes_from(clique_a[:3] + clique_b[:3])
+
+        # After window: last 3 from each clique
+        G_after = nx.DiGraph()
+        G_after.add_nodes_from(clique_a[3:] + clique_b[3:])
+
+        # Internal edges: dense within each clique
+        edge_rows = []
+        for nodes in [clique_a, clique_b]:
+            for i, n1 in enumerate(nodes):
+                for n2 in nodes[i + 1 :]:
+                    edge_rows.append({"source_doi": n1, "ref_doi": n2})
+        internal_edges = pd.DataFrame(edge_rows)
+
+        # Both windows have 50/50 A/B nodes → same shares → JS near 0
+        val = _community_js_for_pair(G_before, G_after, internal_edges, 1.0, 42)
+        assert val is not None
+        assert not np.isnan(val), "Expected a numeric result, not NaN"
+        assert val < 0.05, (
+            f"Equal community representation should give near-zero JS, got {val}"
+        )
+
+    def test_community_single_community_returns_zero(self):
+        """If Louvain finds only 1 community, return 0.0.
+
+        A complete graph (K5) will have all nodes in a single community.
+        """
+        import networkx as nx
+        from _divergence_community import _community_js_for_pair
+
+        # Complete graph K5 — Louvain on a K5 typically finds 1 community
+        nodes_before = [f"b_{i}" for i in range(5)]
+        nodes_after = [f"a_{i}" for i in range(5)]
+
+        G_before = nx.DiGraph()
+        G_before.add_nodes_from(nodes_before)
+
+        G_after = nx.DiGraph()
+        G_after.add_nodes_from(nodes_after)
+
+        all_nodes = nodes_before + nodes_after
+        edge_rows = []
+        for i, n1 in enumerate(all_nodes):
+            for n2 in all_nodes[i + 1 :]:
+                edge_rows.append({"source_doi": n1, "ref_doi": n2})
+        internal_edges = pd.DataFrame(edge_rows)
+
+        val = _community_js_for_pair(G_before, G_after, internal_edges, 1.0, 42)
+        assert val == 0.0, f"Single community should give exactly 0.0, got {val}"
+
+    def test_community_module_has_function(self):
+        """Verify _divergence_community module exposes expected function."""
+        import _divergence_community as mod
+
+        assert hasattr(mod, "compute_community_divergence")
+        assert callable(mod.compute_community_divergence)
+
+    def test_dispatcher_includes_g9(self):
+        """G9_community must be registered in the METHODS dispatcher."""
+        from compute_divergence import METHODS
+
+        assert "G9_community" in METHODS
+        module, func, channel, needs_emb, needs_cit = METHODS["G9_community"]
+        assert module == "_divergence_community"
+        assert func == "compute_community_divergence"
+        assert channel == "citation"
+        assert needs_emb is False
+        assert needs_cit is True

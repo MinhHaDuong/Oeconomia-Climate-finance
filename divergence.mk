@@ -29,7 +29,8 @@ DIV_METHODS_LEX := L1 L2 L3
 DIV_METHODS_C2ST_SEM := C2ST_embedding
 DIV_METHODS_C2ST_LEX := C2ST_lexical
 DIV_METHODS_CIT := G1_pagerank G2_spectral G3_coupling_age G4_cross_tradition \
-                   G5_pref_attachment G6_entropy G7_disruption G8_betweenness
+                   G5_pref_attachment G6_entropy G7_disruption G8_betweenness \
+                   G9_community
 
 # ── Derived file lists ───────────────────────────────────────────────────
 
