@@ -167,7 +167,7 @@ class TestModuleFunctions:
     def test_dispatcher_registry_complete(self):
         from compute_divergence import METHODS
 
-        assert len(METHODS) == 17
+        assert len(METHODS) == 18
         # Verify all three channels present
         channels = {v[2] for v in METHODS.values()}
         assert channels == {"semantic", "lexical", "citation"}
@@ -848,43 +848,43 @@ class TestCommunityDivergence:
         assert (df["channel"] == "citation").all()
         DivergenceSchema.validate(df)
 
-    def test_community_js_identical_graphs_near_zero(self):
-        """Identical before/after graphs should yield JS divergence near 0.
+    def test_community_js_overlapping_same_distribution(self):
+        """Overlapping before/after with equal community representation give low JS.
 
-        When G_before and G_after have the same structure, the community
-        share vectors should be identical, giving JS = 0.
+        Two cliques (A, B) form the union graph. Before and after each
+        contain equal numbers of nodes from both cliques, so community
+        share vectors are identical → JS = 0.
         """
         import networkx as nx
         from _divergence_community import _community_js_for_pair
 
-        # Build two identical star graphs with disjoint node names
-        # but identical structure (same community shares)
+        # Two cliques of 6 nodes each, well separated (no cross-clique edges)
+        clique_a = [f"A{i}" for i in range(6)]
+        clique_b = [f"B{i}" for i in range(6)]
+
+        # Before window: first 3 from each clique
         G_before = nx.DiGraph()
-        before_nodes = [f"b_{i}" for i in range(10)]
-        G_before.add_nodes_from(before_nodes)
-        for i in range(1, 10):
-            G_before.add_edge(before_nodes[i], before_nodes[0])
+        G_before.add_nodes_from(clique_a[:3] + clique_b[:3])
 
+        # After window: last 3 from each clique
         G_after = nx.DiGraph()
-        after_nodes = [f"a_{i}" for i in range(10)]
-        G_after.add_nodes_from(after_nodes)
-        for i in range(1, 10):
-            G_after.add_edge(after_nodes[i], after_nodes[0])
+        G_after.add_nodes_from(clique_a[3:] + clique_b[3:])
 
-        # Internal edges: all edges from both graphs (undirected)
+        # Internal edges: dense within each clique
         edge_rows = []
-        for i in range(1, 10):
-            edge_rows.append(
-                {"source_doi": before_nodes[i], "ref_doi": before_nodes[0]}
-            )
-            edge_rows.append({"source_doi": after_nodes[i], "ref_doi": after_nodes[0]})
+        for nodes in [clique_a, clique_b]:
+            for i, n1 in enumerate(nodes):
+                for n2 in nodes[i + 1 :]:
+                    edge_rows.append({"source_doi": n1, "ref_doi": n2})
         internal_edges = pd.DataFrame(edge_rows)
 
-        # Two identical star structures → near-zero divergence
+        # Both windows have 50/50 A/B nodes → same shares → JS near 0
         val = _community_js_for_pair(G_before, G_after, internal_edges, 1.0, 42)
         assert val is not None
         assert not np.isnan(val), "Expected a numeric result, not NaN"
-        assert val < 0.1, f"Identical structures should give near-zero JS, got {val}"
+        assert val < 0.05, (
+            f"Equal community representation should give near-zero JS, got {val}"
+        )
 
     def test_community_single_community_returns_zero(self):
         """If Louvain finds only 1 community, return 0.0.

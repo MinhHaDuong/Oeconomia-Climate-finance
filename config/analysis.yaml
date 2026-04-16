@@ -72,3 +72,5 @@ divergence:
     G7_disruption: {}
     G8_betweenness:
       max_nodes: 500                             # subsample for tractability
+    G9_community:
+      resolution: 1.0
