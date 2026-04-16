@@ -9,6 +9,7 @@ Blocked-by: 0056
 --- log ---
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 3 of epic 0026; paper writing
+2026-04-16T13:00Z claude reimagine — 0050 dependency should be 0055 (Z-scores come from compute_null_model.py, already merged). Blocked by 0056 (interpretation outputs) is correct.
 
 --- body ---
 ## Context

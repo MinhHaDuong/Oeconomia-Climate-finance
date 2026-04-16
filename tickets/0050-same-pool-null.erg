@@ -3,12 +3,12 @@ Title: Same-pool null model for divergence significance (S1-S4, L1-L3)
 Status: open
 Created: 2026-04-15
 Author: user
-Blocked-by: 0045
-Blocked-by: 0055
+Blocked-by: 0054
 
 --- log ---
 2026-04-16T01:00Z claude created — split from 0045 layer 2
 2026-04-15T15:30Z claude note rescoped: use 0055 Z-score infrastructure, apply to 6 lead methods only
+2026-04-16T13:00Z claude reimagine — 0045 and 0055 both done. Core permutation stats handled by compute_null_model.py (semantic+lexical). Rescope to: (a) extend null model to citation channel (G9_community), (b) null envelope ribbon plot, (c) significance heatmap plot. Drop compute_null_divergence.py and compute_significance.py (superseded by 0055).
 
 --- body ---
 ## Context

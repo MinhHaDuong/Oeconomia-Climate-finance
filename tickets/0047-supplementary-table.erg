@@ -3,11 +3,12 @@ Title: Supplementary table: bootstrap CIs on corrected divergence
 Status: open
 Created: 2026-04-15
 Author: user
-Blocked-by: 0050
+Blocked-by: 0055
 
 --- log ---
 2026-04-15T23:45Z claude created — keep figures clean, put estimation detail in table
 2026-04-16T00:15Z claude updated — owns the bootstrap K=200 computation, not computed by default
+2026-04-16T13:00Z claude reimagine — dependency corrected: null p-values come from 0055 (compute_null_model.py), not 0050. Bootstrap CIs are independent of permutation Z-scores.
 
 --- body ---
 ## Context
