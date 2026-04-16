@@ -191,6 +191,35 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
     return pd.DataFrame(results)
 
 
+# ── Shared sliding-window scaffold ──────────────────────────────────────
+
+
+def _sliding_abs_diff(works, internal_edges, cfg, metric_fn, label):
+    """Compute abs-difference of a graph metric across sliding windows.
+
+    Parameters
+    ----------
+    metric_fn : callable(G) -> float
+        Graph metric to compare. Should return np.nan on failure.
+    label : str
+        Human-readable label for logging.
+
+    """
+    log.info("%s (sliding)", label)
+    results = []
+    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
+        val_before = metric_fn(G_before)
+        val_after = metric_fn(G_after)
+        if np.isnan(val_before) or np.isnan(val_after):
+            value = np.nan
+        else:
+            value = abs(val_after - val_before)
+        results.append(
+            {"year": year, "window": str(w), "hyperparams": "", "value": value}
+        )
+    return pd.DataFrame(results)
+
+
 # ── G2: Spectral gap divergence (sliding) ────────────────────────────────
 
 
@@ -202,23 +231,9 @@ def compute_g2_spectral(works, citations, internal_edges, cfg):
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    log.info("G2: Spectral gap divergence (sliding)")
-    results = []
-
-    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
-        gap_before = _spectral_gap(G_before)
-        gap_after = _spectral_gap(G_after)
-
-        if np.isnan(gap_before) or np.isnan(gap_after):
-            value = np.nan
-        else:
-            value = abs(gap_after - gap_before)
-
-        results.append(
-            {"year": year, "window": str(w), "hyperparams": "", "value": value}
-        )
-
-    return pd.DataFrame(results)
+    return _sliding_abs_diff(
+        works, internal_edges, cfg, _spectral_gap, "G2: Spectral gap divergence"
+    )
 
 
 # ── G3: Bibliographic coupling age shift ──────────────────────────────────
@@ -271,7 +286,7 @@ def _bisect_communities(G_und):
 
         c1, c2 = spectral_bisection(G_und)
         return {n: 0 for n in c1} | {n: 1 for n in c2}
-    except Exception:
+    except (ImportError, nx.NetworkXError, np.linalg.LinAlgError, ValueError):
         pass
 
     try:
@@ -286,7 +301,7 @@ def _bisect_communities(G_und):
             for n in c:
                 community[n] = i % 2
         return community
-    except Exception as exc:
+    except (nx.NetworkXError, ValueError) as exc:
         log.debug("G4 community detection failed: %s", exc)
         return None
 
@@ -353,23 +368,13 @@ def compute_g5_pa_exponent(works, citations, internal_edges, cfg):
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    log.info("G5: Preferential attachment exponent divergence (sliding)")
-    results = []
-
-    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
-        alpha_before = _pa_exponent(G_before)
-        alpha_after = _pa_exponent(G_after)
-
-        if np.isnan(alpha_before) or np.isnan(alpha_after):
-            value = np.nan
-        else:
-            value = abs(alpha_after - alpha_before)
-
-        results.append(
-            {"year": year, "window": str(w), "hyperparams": "", "value": value}
-        )
-
-    return pd.DataFrame(results)
+    return _sliding_abs_diff(
+        works,
+        internal_edges,
+        cfg,
+        _pa_exponent,
+        "G5: Preferential attachment exponent divergence",
+    )
 
 
 # ── G6: Citation entropy divergence (sliding) ────────────────────────────
@@ -383,23 +388,13 @@ def compute_g6_entropy(works, citations, internal_edges, cfg):
 
     Returns DataFrame with columns: year, window, hyperparams, value
     """
-    log.info("G6: Citation entropy divergence (sliding)")
-    results = []
-
-    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
-        ent_before = _citation_entropy(G_before)
-        ent_after = _citation_entropy(G_after)
-
-        if np.isnan(ent_before) or np.isnan(ent_after):
-            value = np.nan
-        else:
-            value = abs(ent_after - ent_before)
-
-        results.append(
-            {"year": year, "window": str(w), "hyperparams": "", "value": value}
-        )
-
-    return pd.DataFrame(results)
+    return _sliding_abs_diff(
+        works,
+        internal_edges,
+        cfg,
+        _citation_entropy,
+        "G6: Citation entropy divergence",
+    )
 
 
 # ── G7: Disruption index CD ──────────────────────────────────────────────
@@ -502,20 +497,13 @@ def compute_g8_betweenness(works, citations, internal_edges, cfg):
     cit_cfg = cfg["divergence"]["citation"]
     max_nodes = cit_cfg["G8_betweenness"]["max_nodes"]
 
-    log.info("G8: Betweenness centrality divergence (sliding)")
-    results = []
+    def _betweenness(G):
+        return _mean_betweenness(G, max_nodes)
 
-    for year, w, G_before, G_after in _iter_sliding_pairs(works, internal_edges, cfg):
-        bc_before = _mean_betweenness(G_before, max_nodes)
-        bc_after = _mean_betweenness(G_after, max_nodes)
-
-        if np.isnan(bc_before) or np.isnan(bc_after):
-            value = np.nan
-        else:
-            value = abs(bc_after - bc_before)
-
-        results.append(
-            {"year": year, "window": str(w), "hyperparams": "", "value": value}
-        )
-
-    return pd.DataFrame(results)
+    return _sliding_abs_diff(
+        works,
+        internal_edges,
+        cfg,
+        _betweenness,
+        "G8: Betweenness centrality divergence",
+    )
