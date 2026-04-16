@@ -128,11 +128,17 @@ def _make_semantic_statistic(method_name, cfg):
     elif method_name == "S3_sliced_wasserstein":
         import ot
 
-        seed = cfg["divergence"].get("random_seed", 42)
+        seed = cfg["divergence"]["random_seed"]
+        # Use middle value from config's n_projections list for null model.
+        # The main divergence pipeline sweeps all values; the null model
+        # uses a single representative projection count for tractability.
+        n_proj = cfg["divergence"]["semantic"]["S3_sliced_wasserstein"][
+            "n_projections"
+        ][1]
 
         def sw_fn(X, Y):
             return float(
-                ot.sliced_wasserstein_distance(X, Y, n_projections=500, seed=seed)
+                ot.sliced_wasserstein_distance(X, Y, n_projections=n_proj, seed=seed)
             )
 
         return sw_fn
@@ -226,7 +232,7 @@ def _run_semantic_permutations(method_name, div_df, cfg):
     div_cfg = cfg["divergence"]
     perm_cfg = div_cfg["permutation"]
     n_perm = perm_cfg["n_perm"]
-    seed = div_cfg.get("random_seed", 42)
+    seed = div_cfg["random_seed"]
 
     _, min_papers, max_subsample, _, equal_n = _get_years_and_params(df, emb, cfg)
 
@@ -279,7 +285,7 @@ def _run_lexical_permutations(method_name, div_df, cfg):
     lex_cfg = div_cfg["lexical"]
     perm_cfg = div_cfg["permutation"]
     n_perm = perm_cfg["n_perm"]
-    seed = div_cfg.get("random_seed", 42)
+    seed = div_cfg["random_seed"]
 
     min_papers = get_min_papers(len(df), cfg)
     equal_n = div_cfg.get("equal_n", False)
@@ -376,6 +382,8 @@ def main():
         result = _run_semantic_permutations(method_name, div_df, cfg)
     elif channel == "lexical":
         result = _run_lexical_permutations(method_name, div_df, cfg)
+    else:
+        raise ValueError(f"Unsupported channel: {channel}")
 
     # Validate contract
     NullModelSchema.validate(result)

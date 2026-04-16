@@ -81,11 +81,12 @@ def _iter_lexical_window_pairs(df, cfg):
     lex_cfg = div_cfg.get("lexical", {})
     windows = div_cfg["windows"]
     min_papers = _get_min_papers(len(df), cfg)
+    max_subsample = div_cfg["max_subsample"]
     tfidf_max_features = lex_cfg.get("tfidf_max_features", 5000)
     tfidf_min_df = lex_cfg.get("tfidf_min_df", 3)
     equal_n = div_cfg.get("equal_n", False)
-    seed = div_cfg.get("random_seed", 42)
-    rng = np.random.RandomState(seed) if equal_n else None
+    seed = div_cfg["random_seed"]
+    rng = np.random.RandomState(seed)
 
     years = sorted(df["year"].unique())
     all_texts = df["abstract"].tolist()
@@ -108,6 +109,14 @@ def _iter_lexical_window_pairs(df, cfg):
 
             if len(texts_before) < min_papers or len(texts_after) < min_papers:
                 continue
+
+            # Cap window size before equal-n (matches semantic path)
+            if len(texts_before) > max_subsample:
+                idx = rng.choice(len(texts_before), max_subsample, replace=False)
+                texts_before = [texts_before[i] for i in idx]
+            if len(texts_after) > max_subsample:
+                idx = rng.choice(len(texts_after), max_subsample, replace=False)
+                texts_after = [texts_after[i] for i in idx]
 
             if equal_n and len(texts_before) != len(texts_after):
                 result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
