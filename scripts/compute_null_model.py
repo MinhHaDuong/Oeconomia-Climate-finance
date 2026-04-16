@@ -213,7 +213,6 @@ def _run_semantic_permutations(method_name, div_df, cfg):
     perm_cfg = div_cfg["permutation"]
     n_perm = perm_cfg["n_perm"]
     seed = div_cfg.get("random_seed", 42)
-    rng = np.random.RandomState(seed)
 
     _, min_papers, max_subsample, _, equal_n = _get_years_and_params(df, emb, cfg)
 
@@ -227,25 +226,32 @@ def _run_semantic_permutations(method_name, div_df, cfg):
         y = int(row["year"])
         w = int(row["window"])
 
+        # Per-window deterministic seeds — isolate rng streams so each
+        # (year, window) produces identical results regardless of which
+        # other pairs are processed (ticket 0061).
+        window_seed = seed + y * 100 + w
+        subsample_rng = np.random.RandomState(window_seed)
+        perm_rng = np.random.RandomState(window_seed + 50000)
+
         X = _get_window_embeddings(
-            df, emb, y, w, "before", min_papers, max_subsample, rng=rng
+            df, emb, y, w, "before", min_papers, max_subsample, rng=subsample_rng
         )
         Y = _get_window_embeddings(
-            df, emb, y, w, "after", min_papers, max_subsample, rng=rng
+            df, emb, y, w, "after", min_papers, max_subsample, rng=subsample_rng
         )
         if X is None or Y is None:
             rows.append(_nan_row(y, w))
             continue
 
         if equal_n and len(X) != len(Y):
-            eq_result = subsample_equal_n(X, Y, min_papers, rng)
+            eq_result = subsample_equal_n(X, Y, min_papers, subsample_rng)
             if eq_result is None:
                 rows.append(_nan_row(y, w))
                 continue
             X, Y = eq_result
 
         observed, null_mean, null_std, z, p = permutation_test(
-            X, Y, statistic_fn, n_perm, rng
+            X, Y, statistic_fn, n_perm, perm_rng
         )
         rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
         log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
@@ -265,7 +271,6 @@ def _run_lexical_permutations(method_name, div_df, cfg):
     perm_cfg = div_cfg["permutation"]
     n_perm = perm_cfg["n_perm"]
     seed = div_cfg.get("random_seed", 42)
-    rng = np.random.RandomState(seed)
 
     min_papers = get_min_papers(len(df), cfg)
     equal_n = div_cfg.get("equal_n", False)
@@ -291,6 +296,11 @@ def _run_lexical_permutations(method_name, div_df, cfg):
         y = int(row["year"])
         w = int(row["window"])
 
+        # Per-window deterministic seeds (ticket 0061)
+        window_seed = seed + y * 100 + w
+        subsample_rng = np.random.RandomState(window_seed)
+        perm_rng = np.random.RandomState(window_seed + 50000)
+
         mask_before = (df["year"] >= y - w) & (df["year"] <= y)
         mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
 
@@ -302,14 +312,16 @@ def _run_lexical_permutations(method_name, div_df, cfg):
             continue
 
         if equal_n and len(texts_before) != len(texts_after):
-            eq_result = subsample_equal_n(texts_before, texts_after, min_papers, rng)
+            eq_result = subsample_equal_n(
+                texts_before, texts_after, min_papers, subsample_rng
+            )
             if eq_result is None:
                 rows.append(_nan_row(y, w))
                 continue
             texts_before, texts_after = eq_result
 
         observed, null_mean, null_std, z, p = permutation_test(
-            texts_before, texts_after, statistic_fn, n_perm, rng
+            texts_before, texts_after, statistic_fn, n_perm, perm_rng
         )
         rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
         log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
