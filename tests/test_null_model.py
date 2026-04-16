@@ -111,6 +111,31 @@ class TestPermutationTest:
         assert z > 2.0, f"Expected Z > 2 for planted break, got Z={z:.2f}"
         assert p < 0.05, f"Expected p < 0.05, got p={p:.3f}"
 
+    def test_null_std_zero_returns_z_zero(self):
+        """When null_std == 0 (constant statistic), z_score should be 0.0.
+
+        This triggers when all permutations produce the same statistic,
+        e.g., identical distributions with a symmetric statistic.
+        """
+        from compute_null_model import permutation_test
+
+        rng = np.random.RandomState(42)
+
+        # Use a constant statistic function that always returns the same value
+        # regardless of input -- this guarantees null_std == 0.
+        def constant_statistic(a, b):
+            return 1.0
+
+        X = rng.randn(20, 5)
+        Y = rng.randn(20, 5)
+
+        observed, null_mean, null_std, z, p = permutation_test(
+            X, Y, constant_statistic, n_perm=50, rng=rng
+        )
+        assert null_std == 0.0, f"Expected null_std=0, got {null_std}"
+        assert z == 0.0, f"Expected z=0.0 when null_std=0, got {z}"
+        assert observed == 1.0
+
     def test_permutation_test_reproducible(self):
         """Same seed gives same Z-score."""
         from compute_null_model import permutation_test
