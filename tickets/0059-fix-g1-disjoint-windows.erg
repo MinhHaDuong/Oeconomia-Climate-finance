@@ -1,0 +1,47 @@
+%erg v1
+Title: Fix G1 PageRank comparison on disjoint sliding windows
+Status: open
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T12:30Z claude created
+2026-04-16T12:30Z claude note post-merge review of PR #664
+
+--- body ---
+## Context
+
+PR #664 refactored G1/G2/G5/G6/G8 citation methods from cumulative to sliding windows.
+The sliding windows produce **disjoint node sets** — before-window covers `[year-w, year]`,
+after-window covers `[year+1, year+1+w]`. Different DOIs, zero overlap by construction.
+
+G1 PageRank uses union + zero-padding: nodes absent from one window get `pr=0`. Kendall tau
+then compares real PageRank values against zeros — the statistic is dominated by arbitrary
+tie-breaking among zero-padded entries, not genuine rank shifts.
+
+G2 (betweenness), G5/G6 (spectral gap, PA exponent), G8 may have similar issues depending
+on whether their metrics are meaningful for disjoint populations.
+
+## Actions
+
+1. Audit all 5 sliding-window G methods for disjoint-node semantics.
+2. For G1: replace Kendall tau on union with a distributional comparison
+   (e.g., JS divergence of PageRank distributions, or cosine similarity).
+3. For G2/G5/G6/G8: verify each metric is well-defined for disjoint windows,
+   fix or document those that aren't.
+4. Update tests to assert the statistic measures something meaningful.
+
+## Test
+
+```python
+def test_g1_disjoint_windows_not_degenerate():
+    """G1 should produce different values for similar vs dissimilar graphs."""
+    similar = compute_g1(graph_a, graph_a_permuted)   # same structure
+    different = compute_g1(graph_a, graph_b_random)    # different structure
+    assert similar != different  # not just noise from zero-padding
+```
+
+## Exit criteria
+
+- G1-G8 sliding-window methods produce meaningful statistics for disjoint node sets.
+- No method silently compares real values against zero-padding artifacts.

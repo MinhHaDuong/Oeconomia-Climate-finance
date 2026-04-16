@@ -1,0 +1,56 @@
+%erg v1
+Title: Cleanup divergence wave 1 design issues
+Status: open
+Created: 2026-04-16
+Author: claude
+
+--- log ---
+2026-04-16T12:30Z claude created
+2026-04-16T12:30Z claude note grouped from post-merge reviews of PRs #659, #663, #664, #665
+
+--- body ---
+## Context
+
+Post-merge review of the four divergence significance PRs surfaced design and
+maintainability issues. None are correctness-critical but all make the code
+harder to extend. Grouped here to avoid ticket sprawl.
+
+## Actions
+
+### Imports inside hot loops
+- `_divergence_semantic.py:135` — `from _divergence_io import subsample_equal_n` inside loop
+- `compute_null_model.py:204,258` — same pattern
+- Fix: hoist to module-level imports.
+
+### Dead fallback seeds (architecture rule 7)
+- `_divergence_c2st.py:90,154` — `.get("random_seed", 42)` fallback is dead code
+- Fix: use `div_cfg["random_seed"]` to fail explicitly if key missing.
+
+### S3 null model hardcodes n_projections=500
+- `compute_null_model.py:135` — main pipeline sweeps `[100, 500, 1000]`
+- Fix: read from config, or document which value the null model uses.
+
+### Redundant graph builds in citation methods
+- `_divergence_citation.py` — each of 5 methods calls `_iter_sliding_pairs` independently
+- Fix: pre-build `(year, w) -> (G_before, G_after)` dict, share across methods.
+
+### Lexical path missing max_subsample
+- `_divergence_lexical.py:109-116` — no cap on window size before equal-n
+- Fix: add `max_subsample` config option for lexical, matching semantic path.
+
+### Unbound result variable
+- `compute_null_model.py:357` — no `else` after `if channel == "semantic" / elif "lexical"`
+- Fix: add `else: raise AssertionError(f"Unhandled channel: {channel}")`.
+
+### Mixed window column types
+- Sliding methods store `window` as `str(w)`, cumulative as `"cumulative"`
+- Fix: document the contract in schemas.py, or normalize to int + sentinel.
+
+### Makefile comment drift
+- `divergence.mk` headers still say "S1-S4" / "L1-L3" after C2ST additions
+- Fix: update comments to reflect actual target contents.
+
+## Exit criteria
+
+- All items addressed or explicitly deferred with justification.
+- `make check-fast` passes.
