@@ -672,43 +672,6 @@ class TestEqualN:
 # ---------------------------------------------------------------------------
 
 
-def _make_star_graph(center, n_leaves, prefix):
-    """Create a star graph: center node with n_leaves spokes.
-
-    Returns (works_df, internal_edges_df).
-    Star topology produces concentrated PageRank on the center.
-    """
-    nodes = [center] + [f"{prefix}_{i}" for i in range(n_leaves)]
-    works = pd.DataFrame({"doi": nodes, "year": [2010] * len(nodes)})
-    # Edges: every leaf cites the center
-    edges = pd.DataFrame(
-        {
-            "source_doi": [f"{prefix}_{i}" for i in range(n_leaves)],
-            "ref_doi": [center] * n_leaves,
-            "source_year": [2010] * n_leaves,
-        }
-    )
-    return works, edges
-
-
-def _make_uniform_ring(n_nodes, prefix, year=2015):
-    """Create a ring graph: each node cites the next.
-
-    Returns (works_df, internal_edges_df).
-    Ring topology produces nearly uniform PageRank.
-    """
-    nodes = [f"{prefix}_{i}" for i in range(n_nodes)]
-    works = pd.DataFrame({"doi": nodes, "year": [year] * n_nodes})
-    edges = pd.DataFrame(
-        {
-            "source_doi": [nodes[i] for i in range(n_nodes)],
-            "ref_doi": [nodes[(i + 1) % n_nodes] for i in range(n_nodes)],
-            "source_year": [year] * n_nodes,
-        }
-    )
-    return works, edges
-
-
 class TestG1DisjointWindows:
     """G1 PageRank should distinguish similar vs different distributions
     even on disjoint sliding windows (ticket 0059).

@@ -67,32 +67,20 @@ def _compare_pagerank_distributions(pr_before, pr_after, n_bins=20):
     _nodes_b, vals_b = pr_before
     _nodes_a, vals_a = pr_after
 
-    # Sort descending (distribution shape, not per-node identity)
-    pr_b = np.sort(vals_b)[::-1]
-    pr_a = np.sort(vals_a)[::-1]
-
-    # Normalize to probability distributions
-    sum_b, sum_a = pr_b.sum(), pr_a.sum()
-    if sum_b == 0 or sum_a == 0:
-        return np.nan
-    pr_b = pr_b / sum_b
-    pr_a = pr_a / sum_a
-
-    # Bin into histograms (handles different-sized distributions)
-    actual_bins = min(n_bins, min(len(pr_b), len(pr_a)))
+    # Bin into histograms over a shared range (handles different-sized distributions).
+    # PageRank values already sum to 1.0; jensenshannon normalizes internally.
+    actual_bins = min(n_bins, min(len(vals_b), len(vals_a)))
     if actual_bins < 2:
         return np.nan
-    bin_max = max(pr_b.max(), pr_a.max())
+    bin_max = max(vals_b.max(), vals_a.max())
     bins = np.linspace(0, bin_max, actual_bins + 1)
-    hist_b, _ = np.histogram(pr_b, bins=bins)
-    hist_a, _ = np.histogram(pr_a, bins=bins)
+    hist_b, _ = np.histogram(vals_b, bins=bins)
+    hist_a, _ = np.histogram(vals_a, bins=bins)
 
-    # Add epsilon to avoid zero bins, then re-normalize
+    # Add epsilon to avoid zero bins before jensenshannon (which uses log internally).
     eps = 1e-10
     hist_b = hist_b + eps
     hist_a = hist_a + eps
-    hist_b = hist_b / hist_b.sum()
-    hist_a = hist_a / hist_a.sum()
 
     return float(jensenshannon(hist_b, hist_a) ** 2)
 
