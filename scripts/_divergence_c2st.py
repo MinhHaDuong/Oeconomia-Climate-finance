@@ -16,7 +16,7 @@ import pandas as pd
 import scipy.sparse as sp
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 from utils import get_logger
 
 log = get_logger("_divergence_c2st")
@@ -65,7 +65,8 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
         max_iter=1000,
         random_state=seed,
     )
-    scores = cross_val_score(clf, features, labels, cv=cv_folds, scoring="roc_auc")
+    cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=seed)
+    scores = cross_val_score(clf, features, labels, cv=cv, scoring="roc_auc")
     return float(np.mean(scores))
 
 

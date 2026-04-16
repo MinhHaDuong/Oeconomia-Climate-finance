@@ -55,6 +55,61 @@ class TestC2STCore:
         auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
         assert 0.0 <= auc <= 1.0, f"AUC out of bounds: {auc}"
 
+    def test_shuffled_cv_reproducible(self):
+        """Same seed must produce identical AUC (shuffled CV is deterministic)."""
+        from _divergence_c2st import _c2st_auc
+
+        rng = np.random.RandomState(7)
+        X = rng.randn(150, 20)
+        Y = rng.randn(150, 20) + 0.3
+        auc1 = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=123)
+        auc2 = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=123)
+        assert auc1 == auc2, f"Same seed gave different AUC: {auc1} vs {auc2}"
+
+    def test_contiguous_labels_not_degenerate(self):
+        """With contiguous labels (all 0s then all 1s), AUC must not be degenerate.
+
+        This is the bug scenario: unshuffled StratifiedKFold on contiguous labels
+        can produce extreme fold compositions. A properly shuffled CV should yield
+        AUC in a reasonable range for a mild shift.
+        """
+        from _divergence_c2st import _c2st_auc
+
+        # Contiguous labels: all X first, then all Y — exactly what _c2st_auc builds
+        rng = np.random.RandomState(42)
+        X = rng.randn(100, 10)
+        Y = rng.randn(100, 10) + 0.5  # mild shift
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+        # A reasonable classifier should find a mild shift; AUC should be clearly
+        # between 0.5 and 1.0 (not degenerate 0.0 or 1.0)
+        assert 0.5 < auc < 0.95, (
+            f"AUC on contiguous-label mild shift should be moderate, got {auc}"
+        )
+
+    def test_uses_shuffled_stratified_kfold(self):
+        """Verify that _c2st_auc uses StratifiedKFold with shuffle=True.
+
+        This is the direct regression test for the contiguous-labels bug.
+        """
+        from unittest.mock import patch
+
+        from _divergence_c2st import _c2st_auc
+        from sklearn.model_selection import StratifiedKFold
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(100, 10)
+        Y = rng.randn(100, 10)
+
+        with patch(
+            "_divergence_c2st.StratifiedKFold", wraps=StratifiedKFold
+        ) as mock_skf:
+            _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+
+        mock_skf.assert_called_once()
+        assert mock_skf.call_args.kwargs.get("shuffle") is True, (
+            f"StratifiedKFold not called with shuffle=True: {mock_skf.call_args.kwargs}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Schema validation
