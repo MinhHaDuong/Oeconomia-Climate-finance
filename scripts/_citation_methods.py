@@ -72,7 +72,7 @@ def _spectral_gap(G_dir):
         if len(eigenvalues) >= 2:
             return float(eigenvalues[1] - eigenvalues[0])
         return np.nan
-    except Exception as exc:
+    except (np.linalg.LinAlgError, ArithmeticError, ValueError) as exc:
         log.debug("Spectral gap computation failed: %s", exc)
         return np.nan
 
@@ -100,7 +100,7 @@ def _pa_exponent(G):
                 maxfev=5000,
             )
         return float(popt[0])
-    except (RuntimeError, ValueError, TypeError):
+    except (RuntimeError, ValueError):
         return np.nan
 
 
