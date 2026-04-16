@@ -240,6 +240,7 @@ class TestSmokeCitation:
             "G6_entropy",
             "G7_disruption",
             "G8_betweenness",
+            "G9_community",
         ],
     )
     def test_compute_method(self, method, tmp_path):
