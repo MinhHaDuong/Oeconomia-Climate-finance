@@ -1,6 +1,6 @@
 %erg v1
 Title: Equal-n growth-bias correction for S1-S4 and L1-L3
-Status: open
+Status: closed
 Created: 2026-04-15
 Author: user
 
@@ -8,6 +8,7 @@ Author: user
 2026-04-15T23:00Z claude created from workplan review — growth-rate confound identified on first real data run
 2026-04-16T00:00Z claude reimagined — method-specific corrections
 2026-04-16T01:00Z claude split — null model moved to ticket 0050
+2026-04-16T12:00Z claude status closed — equal-n subsampling already implemented in _divergence_semantic.py, _divergence_lexical.py, _divergence_io.py with tests passing
 
 --- body ---
 ## Context
