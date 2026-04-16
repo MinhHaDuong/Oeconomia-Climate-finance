@@ -1,3 +1,14 @@
+## Pipeline overview
+
+Corpus construction follows four stages, each producing an intermediate artifact:
+
+1. **Discover** — merge sources into a deduplicated pool → `unified_works.csv`
+2. **Enrich** — fetch metadata, abstracts, and citations → `enriched_works.csv`
+3. **Extend** — compute derived flags (language, relevance, duplicates) without removing rows → `extended_works.csv`
+4. **Filter** — apply inclusion policy, audit removals → `refined_works.csv`
+
+The discover stage is described below; enrichment and filtering are documented in their own sections.
+
 ## Discovery Sources
 
 ### Sources
