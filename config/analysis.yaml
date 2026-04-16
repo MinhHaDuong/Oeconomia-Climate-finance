@@ -33,7 +33,7 @@ divergence:
 
   permutation:
     n_perm: 500
-    z_threshold: 2.0
+    z_threshold: 2.0    # consumed by compute_transition_zones.py (ticket 0055b)
 
   semantic:
     S1_MMD:
