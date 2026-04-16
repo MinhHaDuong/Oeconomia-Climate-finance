@@ -200,6 +200,48 @@ $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv
 .PHONY: null-model
 null-model: $(NULL_CSV)
 
+# ── Bootstrap CIs (ticket 0047) ──────────────────────────────────────────
+#
+# NOT part of default divergence — run explicitly:
+#   make bootstrap-tables
+#   make divergence-summary
+#
+# For each method, resample with replacement K times and recompute
+# the statistic.  Output: tab_boot_{method}.csv
+
+BOOT_DISPATCH := scripts/compute_divergence_bootstrap.py
+BOOT_METHODS_SEM := S2_energy
+BOOT_METHODS_LEX := L1
+BOOT_METHODS := $(BOOT_METHODS_SEM) $(BOOT_METHODS_LEX)
+BOOT_CSV := $(foreach m,$(BOOT_METHODS),$(DIV_TABLES)/tab_boot_$(m).csv)
+
+# Semantic bootstrap (depends on embeddings + divergence CSV)
+$(foreach m,$(BOOT_METHODS_SEM),$(eval \
+$(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+# Lexical bootstrap (depends on REFINED + divergence CSV)
+$(foreach m,$(BOOT_METHODS_LEX),$(eval \
+$(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
+	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+.PHONY: bootstrap-tables
+bootstrap-tables: $(BOOT_CSV)
+
+# ── Divergence summary (ticket 0047) ────────────────────────────────────
+#
+# Joins point estimates + bootstrap CIs + null model into one table per method.
+
+SUMM_DISPATCH := scripts/export_divergence_summary.py
+SUMM_CSV := $(foreach m,$(BOOT_METHODS),$(DIV_TABLES)/tab_summary_$(m).csv)
+
+$(foreach m,$(BOOT_METHODS),$(eval \
+$(DIV_TABLES)/tab_summary_$(m).csv: $(SUMM_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv $(DIV_TABLES)/tab_boot_$(m).csv $(DIV_TABLES)/tab_null_$(m).csv ; \
+	uv run python $(SUMM_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --boot-csv $(DIV_TABLES)/tab_boot_$(m).csv --null-csv $(DIV_TABLES)/tab_null_$(m).csv --output $$@))
+
+.PHONY: divergence-summary
+divergence-summary: $(SUMM_CSV)
+
 # ── Top-level ────────────────────────────────────────────────────────────
 
 .PHONY: divergence

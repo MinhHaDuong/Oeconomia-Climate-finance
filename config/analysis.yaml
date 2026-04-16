@@ -35,6 +35,9 @@ divergence:
     n_perm: 500
     z_threshold: 2.0    # consumed by compute_transition_zones.py (ticket 0055b)
 
+  bootstrap:
+    k: 200               # replicates for estimation CIs (ticket 0047, opt-in)
+
   c2st:
     pca_dim: 32
     cv_folds: 5
