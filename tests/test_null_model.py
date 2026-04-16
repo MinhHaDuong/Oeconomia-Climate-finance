@@ -236,11 +236,172 @@ class TestNullModelSchema:
 # ---------------------------------------------------------------------------
 
 
+class TestCitationNullModel:
+    """Tests for citation channel null model (ticket 0050)."""
+
+    def test_citation_channel_supported(self):
+        """compute_null_model should accept citation channel."""
+        from compute_null_model import SUPPORTED_CHANNELS
+
+        assert "citation" in SUPPORTED_CHANNELS
+
+    def test_run_citation_permutations_exists(self):
+        """_run_citation_permutations should be importable."""
+        from compute_null_model import _run_citation_permutations
+
+        assert callable(_run_citation_permutations)
+
+    def test_citation_null_z_score_schema(self):
+        """Citation null model output matches NullModelSchema."""
+        from unittest.mock import patch
+
+        from compute_null_model import _run_citation_permutations
+        from schemas import NullModelSchema
+
+        # Build minimal synthetic data
+        rng = np.random.RandomState(42)
+        n_years = 15
+        papers_per_year = 20
+        years = np.repeat(np.arange(2000, 2000 + n_years), papers_per_year)
+        dois = [f"10.1000/test.{i}" for i in range(len(years))]
+        works = pd.DataFrame({"doi": dois, "year": years, "cited_by_count": 10})
+
+        # Build some citation edges
+        edges = []
+        doi_list = list(works["doi"])
+        doi_years = dict(zip(works["doi"], works["year"]))
+        for _ in range(len(doi_list) * 2):
+            src = rng.choice(doi_list)
+            ref = rng.choice(doi_list)
+            if src != ref:
+                edges.append(
+                    {
+                        "source_doi": src,
+                        "ref_doi": ref,
+                        "source_year": doi_years[src],
+                    }
+                )
+        internal_edges = pd.DataFrame(edges).drop_duplicates(
+            subset=["source_doi", "ref_doi"]
+        )
+
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "random_seed": 42,
+                "permutation": {"n_perm": 20},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+                "citation": {
+                    "G9_community": {"resolution": 1.0},
+                },
+            }
+        }
+
+        div_df = pd.DataFrame({"year": [2005, 2007], "window": [3, 3]})
+
+        with patch(
+            "_divergence_citation.load_citation_data",
+            return_value=(works, None, internal_edges),
+        ):
+            result = _run_citation_permutations("G9_community", div_df, cfg)
+
+        # Schema validation
+        NullModelSchema.validate(result)
+
+        # Check expected columns
+        expected_cols = {
+            "year",
+            "window",
+            "observed",
+            "null_mean",
+            "null_std",
+            "z_score",
+            "p_value",
+        }
+        assert set(result.columns) == expected_cols
+        assert len(result) == 2  # one row per (year, window) pair
+
+    def test_citation_null_detects_planted_break(self):
+        """Community null model should detect a planted structural break.
+
+        We create two disconnected clusters that map cleanly to before/after,
+        so the observed JS should be high and z-score should be significant.
+        """
+        from unittest.mock import patch
+
+        from compute_null_model import _run_citation_permutations
+
+        # Cluster A: years 2000-2004, Cluster B: years 2005-2009
+        # Edges only within clusters => community structure aligns with time
+        rng = np.random.RandomState(123)
+        dois_a = [f"10.1000/a.{i}" for i in range(60)]
+        dois_b = [f"10.1000/b.{i}" for i in range(60)]
+        years_a = rng.choice(range(2000, 2005), size=60)
+        years_b = rng.choice(range(2005, 2010), size=60)
+
+        works = pd.DataFrame(
+            {
+                "doi": dois_a + dois_b,
+                "year": list(years_a) + list(years_b),
+                "cited_by_count": 10,
+            }
+        )
+
+        # Edges only within each cluster (strong community structure)
+        edges = []
+        for _ in range(300):
+            src = rng.choice(dois_a)
+            ref = rng.choice(dois_a)
+            if src != ref:
+                edges.append({"source_doi": src, "ref_doi": ref})
+        for _ in range(300):
+            src = rng.choice(dois_b)
+            ref = rng.choice(dois_b)
+            if src != ref:
+                edges.append({"source_doi": src, "ref_doi": ref})
+
+        doi_years = dict(zip(works["doi"], works["year"]))
+        for e in edges:
+            e["source_year"] = doi_years[e["source_doi"]]
+        internal_edges = pd.DataFrame(edges).drop_duplicates(
+            subset=["source_doi", "ref_doi"]
+        )
+
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "random_seed": 42,
+                "permutation": {"n_perm": 99},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 3,
+                "citation": {
+                    "G9_community": {"resolution": 1.0},
+                },
+            }
+        }
+
+        # Test at the boundary year (2004) where before=2001-2004, after=2005-2008
+        div_df = pd.DataFrame({"year": [2004], "window": [3]})
+
+        with patch(
+            "_divergence_citation.load_citation_data",
+            return_value=(works, None, internal_edges),
+        ):
+            result = _run_citation_permutations("G9_community", div_df, cfg)
+
+        z = result["z_score"].iloc[0]
+        p = result["p_value"].iloc[0]
+        # With two disconnected clusters, the break should be highly significant
+        assert z > 1.5, f"Expected significant z-score for planted break, got z={z:.2f}"
+        assert p < 0.1, f"Expected small p-value, got p={p:.3f}"
+
+
 @pytest.mark.integration
 class TestSmokeNullModel:
     """Smoke tests for compute_null_model.py on fixture data."""
 
-    @pytest.mark.parametrize("method", ["S2_energy", "L1"])
+    @pytest.mark.parametrize("method", ["S2_energy", "L1", "G9_community"])
     def test_compute_produces_output(self, method, tmp_path):
         """Script runs and produces a valid CSV."""
         # First, generate the divergence CSV that the null model reads
@@ -275,7 +436,7 @@ class TestSmokeNullModel:
         assert expected_cols == set(df.columns), f"Columns mismatch: {set(df.columns)}"
         assert len(df) > 0
 
-    @pytest.mark.parametrize("method", ["S2_energy", "L1"])
+    @pytest.mark.parametrize("method", ["S2_energy", "L1", "G9_community"])
     def test_output_passes_schema(self, method, tmp_path):
         """Output validates against NullModelSchema."""
         from conftest import run_compute
@@ -406,6 +567,81 @@ class TestSharedRngContamination:
 
         assert z_single == z_double, (
             f"Shared-rng contamination: z(2005) alone={z_single:.6f} "
+            f"vs after 2003={z_double:.6f}"
+        )
+
+    def test_single_window_reproducible_regardless_of_prior_windows_citation(self):
+        """Citation: z-score for (year=2005, w=3) must be identical whether
+        we process it alone or after (year=2003, w=3).
+        """
+        from unittest.mock import patch
+
+        from compute_null_model import _run_citation_permutations
+
+        # Build synthetic citation graph data
+        rng = np.random.RandomState(77)
+        n_years = 20
+        papers_per_year = 30
+        years = np.repeat(np.arange(2000, 2000 + n_years), papers_per_year)
+        dois = [f"10.1000/test.{i}" for i in range(len(years))]
+        works = pd.DataFrame({"doi": dois, "year": years, "cited_by_count": 10})
+
+        # Build random internal edges (citation graph)
+        edges = []
+        doi_list = list(works["doi"])
+        doi_years = dict(zip(works["doi"], works["year"]))
+        for _ in range(len(doi_list) * 3):
+            src = rng.choice(doi_list)
+            ref = rng.choice(doi_list)
+            if src != ref:
+                edges.append(
+                    {
+                        "source_doi": src,
+                        "ref_doi": ref,
+                        "source_year": doi_years[src],
+                    }
+                )
+        internal_edges = pd.DataFrame(edges).drop_duplicates(
+            subset=["source_doi", "ref_doi"]
+        )
+
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "random_seed": 42,
+                "permutation": {"n_perm": 50},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+                "citation": {
+                    "G9_community": {"resolution": 1.0},
+                },
+            }
+        }
+
+        div_df_single = pd.DataFrame({"year": [2005], "window": [3]})
+        div_df_double = pd.DataFrame({"year": [2003, 2005], "window": [3, 3]})
+
+        with patch(
+            "_divergence_citation.load_citation_data",
+            return_value=(works, None, internal_edges),
+        ):
+            result_single = _run_citation_permutations(
+                "G9_community", div_df_single, cfg
+            )
+
+        with patch(
+            "_divergence_citation.load_citation_data",
+            return_value=(works, None, internal_edges),
+        ):
+            result_double = _run_citation_permutations(
+                "G9_community", div_df_double, cfg
+            )
+
+        z_single = result_single.loc[result_single["year"] == 2005, "z_score"].iloc[0]
+        z_double = result_double.loc[result_double["year"] == 2005, "z_score"].iloc[0]
+
+        assert z_single == z_double, (
+            f"Shared-rng contamination (citation): z(2005) alone={z_single:.6f} "
             f"vs after 2003={z_double:.6f}"
         )
 
