@@ -5,12 +5,16 @@ Declares the expected shape of:
 - refined_citations.csv — citation edges (Phase 1→2 contract)
 - refined_embeddings.npz — embedding vectors (validated via function)
 - DivergenceSchema — per-method divergence CSV (Phase 2 internal contract)
+- BootstrapSchema — bootstrap replicates CSV (ticket 0047)
+- DivergenceSummarySchema — summary table joining point/boot/null (ticket 0047)
 
 Used by:
 - corpus_align.py (writer side): validate before writing
 - pipeline_loaders.py (reader side): validate on load
 - compute_divergence.py: validate divergence output
-- tests/test_schema_contracts.py, tests/test_divergence.py
+- compute_divergence_bootstrap.py: validate bootstrap output
+- export_divergence_summary.py: validate summary output
+- tests/test_schema_contracts.py, tests/test_divergence.py, tests/test_bootstrap.py
 """
 
 import pandera.pandas as pa
@@ -107,6 +111,44 @@ NullModelSchema = DataFrameSchema(
         "null_std": Column(float, nullable=True),
         "z_score": Column(float, nullable=True),
         "p_value": Column(float, nullable=True),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
+# Bootstrap replicates CSV (ticket 0047)
+# ---------------------------------------------------------------------------
+
+BootstrapSchema = DataFrameSchema(
+    columns={
+        "method": Column(str),
+        "year": Column(int),
+        "window": Column(str),
+        "hyperparams": Column(str, nullable=True),
+        "replicate": Column(int),
+        "value": Column(float, nullable=True),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
+# Divergence summary CSV (ticket 0047)
+# ---------------------------------------------------------------------------
+
+DivergenceSummarySchema = DataFrameSchema(
+    columns={
+        "method": Column(str),
+        "year": Column(int),
+        "window": Column(str),
+        "hyperparams": Column(str, nullable=True),
+        "point_estimate": Column(float, nullable=True),
+        "boot_median": Column(float, nullable=True),
+        "boot_q025": Column(float, nullable=True),
+        "boot_q975": Column(float, nullable=True),
+        "p_value": Column(float, nullable=True),
+        "significant": Column(bool),
     },
     strict=True,
     coerce=True,
