@@ -32,7 +32,7 @@ class TestC2STCore:
         rng = np.random.RandomState(42)
         X = rng.randn(200, 32)
         Y = rng.randn(200, 32)
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced")
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
         assert 0.35 < auc < 0.65, f"Null AUC should be near 0.5, got {auc}"
 
     def test_shift_auc_high(self):
@@ -42,7 +42,7 @@ class TestC2STCore:
         rng = np.random.RandomState(42)
         X = rng.randn(200, 32)
         Y = rng.randn(200, 32) + 1.0  # shifted
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced")
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
         assert auc > 0.7, f"Shifted AUC should be > 0.7, got {auc}"
 
     def test_auc_bounded_zero_one(self):
@@ -52,7 +52,7 @@ class TestC2STCore:
         rng = np.random.RandomState(99)
         X = rng.randn(100, 16)
         Y = rng.randn(100, 16) + 0.5
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced")
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
         assert 0.0 <= auc <= 1.0, f"AUC out of bounds: {auc}"
 
 

@@ -37,7 +37,6 @@ divergence:
 
   c2st:
     pca_dim: 32
-    classifier: logistic
     cv_folds: 5
     class_weight: balanced
 

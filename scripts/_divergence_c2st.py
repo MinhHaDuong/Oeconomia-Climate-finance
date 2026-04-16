@@ -13,6 +13,7 @@ Reference:
 
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegressionCV
@@ -25,23 +26,25 @@ log = get_logger("_divergence_c2st")
 # ── Core classifier ──────────────────────────────────────────────────────
 
 
-def _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=0):
+def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
     """Compute C2ST AUC: train a classifier to distinguish X from Y.
 
     Labels X as 0, Y as 1.  Returns mean cross-validated ROC AUC.
     AUC near 0.5 means the distributions are indistinguishable;
     AUC near 1.0 means they are clearly different.
 
+    Accepts both dense arrays and sparse matrices (e.g. TF-IDF output).
+
     Parameters
     ----------
-    X, Y : np.ndarray
-        Feature matrices (n_samples, n_features).
+    X, Y : array-like
+        Feature matrices (n_samples, n_features). Dense or sparse.
     cv_folds : int
         Number of cross-validation folds.
     class_weight : str
         Class weight strategy for LogisticRegressionCV.
     seed : int
-        Random state for classifier reproducibility.
+        Random state for classifier reproducibility (required, from config).
 
     Returns
     -------
@@ -49,8 +52,11 @@ def _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=0):
         Mean cross-validated ROC AUC.
 
     """
-    features = np.vstack([X, Y])
-    labels = np.concatenate([np.zeros(len(X)), np.ones(len(Y))])
+    if sp.issparse(X) or sp.issparse(Y):
+        features = sp.vstack([X, Y])
+    else:
+        features = np.vstack([X, Y])
+    labels = np.concatenate([np.zeros(X.shape[0]), np.ones(Y.shape[0])])
 
     clf = LogisticRegressionCV(
         class_weight=class_weight,
@@ -193,8 +199,8 @@ def compute_c2st_lexical(df, cfg):
                     continue
                 texts_before, texts_after = result
 
-            X_before = vec.transform(texts_before).toarray()
-            X_after = vec.transform(texts_after).toarray()
+            X_before = vec.transform(texts_before)
+            X_after = vec.transform(texts_after)
 
             auc = _c2st_auc(
                 X_before,
