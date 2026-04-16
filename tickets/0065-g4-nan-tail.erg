@@ -1,0 +1,81 @@
+%erg v1
+Title: G4_cross_tradition NaN tail (2010–2024) — investigate and fix or document
+Status: open
+Priority: backlog
+Created: 2026-04-16
+Author: user
+
+--- log ---
+2026-04-16T20:00Z claude created from t0042 pipeline sanity check
+
+--- body ---
+## Context
+
+The first full-corpus divergence pipeline run (ticket 0042, 2026-04-16)
+produced `content/tables/tab_div_G4_cross_tradition.csv` with 23 of 35
+rows NaN. The NaNs form a contiguous tail covering 2010–2024 (plus a
+cold-start gap in 1990–1997). Only 12 valid years remain (1998–2009).
+
+This is a structural gap, not scattered numerical noise. Either:
+- the metric is undefined in that year range (e.g., requires citation
+  maturation and recent years don't yet have enough accumulated
+  cross-tradition edges), or
+- the implementation silently returns NaN under a condition that
+  applies to the recent tail.
+
+## Why backlog (not blocker)
+
+G4 is **not** in the companion paper's six-method lead panel. The
+paper uses S2 energy, L1 JS, G9 community, plus C2ST_emb, C2ST_lex,
+G2 spectral as robustness.
+
+The 15-method zoo (including G4) lives in the technical-report
+include (ticket 0028), not in the companion paper. So the NaN tail
+does not block Wave C (0057/0058/0064) or the QSS submission.
+
+It should still be fixed or documented before the tech-report include
+lands, so readers of `technical-report.qmd` see a clean G4 series.
+
+## Actions
+
+1. Open `scripts/_divergence_citation.py` — find the G4_cross_tradition
+   implementation. Trace the NaN path: which intermediate quantity goes
+   undefined in 2010+?
+
+2. Determine the cause:
+   - **If expected** (e.g., cumulative cross-tradition edges require N
+     years of citation maturation): document it in the G4 docstring and
+     in the technical-report include. State the valid year range
+     explicitly. No code change.
+   - **If a bug** (e.g., zero division, empty groupby, silent log(0)):
+     fix it. Write a test that catches the regression.
+
+3. Re-run `make content/tables/tab_div_G4_cross_tradition.csv` on the
+   full corpus. Confirm valid year range matches the documented window.
+
+4. If G4 stays gap-prone by design, consider whether it should be
+   demoted in the zoo (replaced by a more-stable alternative) or if
+   the technical-report include should present it with the gap
+   visualized honestly.
+
+## Test
+
+```python
+def test_g4_cross_tradition_nan_policy():
+    """G4 either fills the expected year range or documents the gap."""
+    df = pd.read_csv("content/tables/tab_div_G4_cross_tradition.csv")
+    nan_years = df[df["value"].isna()]["year"].unique()
+    # If any NaNs, they must be contiguous (cold-start or tail), not
+    # scattered mid-series noise
+    if len(nan_years):
+        assert nan_years.max() - nan_years.min() == len(nan_years) - 1, \
+            f"Non-contiguous NaN years: {sorted(nan_years)}"
+```
+
+## Exit criteria
+
+- Root cause of the 2010–2024 NaN tail documented in a commit message
+  or G4 docstring.
+- Either the NaNs are resolved or the valid year range is stated
+  explicitly in the technical-report G4 include.
+- No other 15-method zoo entries have surprise NaN tails.
