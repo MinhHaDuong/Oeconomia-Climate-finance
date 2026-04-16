@@ -25,19 +25,6 @@ sys.path.insert(0, SCRIPTS_DIR)
 # ---------------------------------------------------------------------------
 
 
-def _make_synthetic_div_df():
-    """Minimal divergence CSV for testing bootstrap."""
-    return pd.DataFrame(
-        {
-            "year": [2005, 2005, 2006, 2006],
-            "channel": ["semantic", "semantic", "semantic", "semantic"],
-            "window": ["3", "3", "3", "3"],
-            "hyperparams": ["", "", "", ""],
-            "value": [0.5, 0.6, 0.7, 0.8],
-        }
-    )
-
-
 def _make_synthetic_null_df():
     """Minimal null model CSV for testing summary."""
     return pd.DataFrame(

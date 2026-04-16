@@ -66,7 +66,7 @@ def bootstrap_one_window(X_before, Y_after, statistic_fn, k, seed):
 
     replicates = []
     for i in range(k):
-        rng = np.random.RandomState(seed + i * 1000)
+        rng = np.random.RandomState(seed + i)
         idx_b = rng.choice(n_before, n_before, replace=True)
         idx_a = rng.choice(n_after, n_after, replace=True)
 
@@ -129,7 +129,10 @@ def _run_semantic_bootstrap(method_name, div_df, cfg, k):
             X, Y = eq_result
 
         # Per-window deterministic seed for bootstrap
-        boot_seed = seed + y * 100 + w
+        # Wider spacing than null model seeds to avoid collisions:
+        # null model uses seed + y*100 + w (subsample) and +50000 (perm).
+        # Bootstrap uses seed + y*100000 + w*1000 + offset per replicate.
+        boot_seed = seed + y * 100_000 + w * 1000
         values = bootstrap_one_window(X, Y, statistic_fn, k, boot_seed)
 
         for rep, val in enumerate(values):
@@ -202,7 +205,10 @@ def _run_lexical_bootstrap(method_name, div_df, cfg, k):
                 continue
             texts_before, texts_after = eq_result
 
-        boot_seed = seed + y * 100 + w
+        # Wider spacing than null model seeds to avoid collisions:
+        # null model uses seed + y*100 + w (subsample) and +50000 (perm).
+        # Bootstrap uses seed + y*100000 + w*1000 + offset per replicate.
+        boot_seed = seed + y * 100_000 + w * 1000
         values = bootstrap_one_window(
             texts_before, texts_after, statistic_fn, k, boot_seed
         )
