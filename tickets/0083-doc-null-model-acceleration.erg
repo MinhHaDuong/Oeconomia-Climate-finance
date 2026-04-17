@@ -1,0 +1,35 @@
+%erg v1
+Title: Document null model acceleration in architecture and technical report
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T19:15Z claude created
+
+--- body ---
+## Context
+PRs #702 and #705 added GPU-vectorized and CPU-parallel null model
+permutation testing.  The code is merged and validated on real data
+(3h → 7min), but the documentation doesn't reflect the new pipeline
+capabilities: architecture.md, technical-report.qmd, and handoff docs
+are silent on GPU/parallel null models.
+
+## Actions
+1. Update `.claude/rules/architecture.md` Phase 2 rules to mention
+   null model acceleration (GPU for S2/S1, precomputed TF-IDF for L1,
+   joblib for citation methods).
+2. Add `--n-jobs` / `NJOBS` to the Makefile documentation in architecture.md.
+3. Update `docs/handoff-padme-divergence.md` to include null model
+   parallelism alongside divergence GPU notes.
+4. Add a paragraph to the technical report methods section explaining
+   the permutation test implementation (precomputed distance matrix,
+   parallel across windows).
+
+## Test
+`grep -c 'n.jobs\|NJOBS\|GPU.*null\|parallel.*permut' .claude/rules/architecture.md` returns ≥ 1.
+
+## Exit criteria
+Architecture.md mentions null model acceleration strategy.
+Technical report methods section describes permutation test implementation.
+Handoff doc covers null model parallelism.
