@@ -1,0 +1,42 @@
+%erg v1
+Title: bootstrap CI — pytest on PR/push to main
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T15:36Z claude created — unblocks 0079 and gives /verify mechanical evidence
+
+--- body ---
+## Context
+
+PR 691 was bounced partly because /verify had no CI signal to read
+and mis-read the PR body. Ticket 0079 further depends on a cached
+baseline failure set produced by CI on main. Both need CI to exist
+first.
+
+## Actions
+
+1. Add `.github/workflows/CI.yml` on `pull_request` and `push: main`.
+2. Jobs (minimum):
+   - `lint`: ruff check (or project-standard linter).
+   - `tests`: `uv sync --group dev && uv run pytest tests/ -q`.
+3. Stabilise test suite first — identify and quarantine known
+   flakes before turning on required checks; flaky tests red = trust
+   erosion.
+4. Stable job names: `lint` and `tests` — 0079's baseline artifact
+   will key off `tests`.
+
+## Test
+
+- Open a PR with a deliberate failing test; expect `tests` red,
+  visible on the PR.
+- Open a clean PR; expect both jobs green.
+
+## Exit criteria
+
+- CI runs on every PR and push to main.
+- `main` is green or a documented flake-quarantine list exists.
+- Job name `tests` stable (0079 will consume it).
+- /verify's setup-phase `verify: CI gap` comment no longer fires for
+  this repo.
