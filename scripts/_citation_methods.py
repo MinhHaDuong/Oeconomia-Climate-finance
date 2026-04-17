@@ -343,6 +343,18 @@ def _bisect_communities(G_und):
 def compute_g4_cross_trad(works, citations, internal_edges, cfg):
     """Fraction of new internal citations crossing a 2-community boundary.
 
+    The 2-community bisection is computed once on the full cumulative graph
+    (all years), so every paper has a community assignment and per-year
+    cross-tradition rates are defined across the whole year range. Treating
+    the tradition split as a corpus-level identity rather than a mid-corpus
+    snapshot is what makes the tail (ticket 0065) defined at all.
+
+    Caveat: this projects the late-era community structure backward onto
+    early years (e.g., 1998–2009). "Cross-tradition" in 1999 therefore
+    means "crossing a 2024-visible tradition split," not "crossing a
+    tradition that existed in 1999." The technical-report G4 include
+    (ticket 0028) should state this explicitly.
+
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     years = _get_years(works)
@@ -353,7 +365,7 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
         log.info("G4: Too few internal edges (%d), skipping", len(internal_edges))
         return _dict_to_df({y: np.nan for y in years})
 
-    ref_year = int(np.median(years))
+    ref_year = max(years)
     G_full = _cumulative_graph(works, internal_edges, ref_year)
     G_und = G_full.to_undirected()
 

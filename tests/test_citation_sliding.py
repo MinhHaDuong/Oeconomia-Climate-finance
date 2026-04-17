@@ -314,8 +314,13 @@ class TestUnchangedMethods:
             f"G3 windows: {df['window'].unique()}"
         )
 
-    def test_g4_still_uses_cumulative(self, data):
-        """G4 should still output window='cumulative'."""
+    def test_g4_output_window_label_is_cumulative(self, data):
+        """G4 output rows must carry window='cumulative' (schema stability).
+
+        This only checks the output label in the CSV. It does NOT assert
+        the computation is cumulative — the bisection runs once on the
+        full graph, and per-year new-edge rates are counted year-by-year.
+        """
         from _citation_methods import compute_g4_cross_trad
 
         works, citations, internal_edges, cfg = data
@@ -323,6 +328,41 @@ class TestUnchangedMethods:
         assert len(df) > 0
         assert (df["window"] == "cumulative").all(), (
             f"G4 windows: {df['window'].unique()}"
+        )
+
+    def test_g4_cross_trad_covers_year_max(self, data):
+        """G4 must produce a valid value at year_max.
+
+        Regression for ticket 0065: community detection used to snapshot at
+        the median year, so every source with year > median fell out of the
+        community dict and yielded NaN. With community detection on the full
+        cumulative graph, the last year carries a value.
+        """
+        from _citation_methods import compute_g4_cross_trad
+
+        works, citations, internal_edges, cfg = data
+        df = compute_g4_cross_trad(works, citations, internal_edges, cfg)
+
+        year_max = int(works["year"].max())
+        last = df.loc[df["year"] == year_max, "value"]
+        assert len(last) == 1
+        assert last.notna().all(), (
+            f"G4 NaN at year_max={year_max}; "
+            f"valid years: {sorted(df.loc[df['value'].notna(), 'year'].tolist())}"
+        )
+
+    def test_g4_cross_trad_nans_contiguous(self, data):
+        """G4 NaNs must form a contiguous block (cold-start only, not a tail)."""
+        from _citation_methods import compute_g4_cross_trad
+
+        works, citations, internal_edges, cfg = data
+        df = compute_g4_cross_trad(works, citations, internal_edges, cfg)
+
+        nan_years = sorted(df.loc[df["value"].isna(), "year"].tolist())
+        if not nan_years:
+            return
+        assert max(nan_years) - min(nan_years) == len(nan_years) - 1, (
+            f"Non-contiguous NaN years: {nan_years}"
         )
 
     def test_g7_still_uses_cumulative(self, data):
