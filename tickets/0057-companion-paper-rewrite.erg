@@ -1,6 +1,6 @@
 %erg v1
 Title: Inject ChatGPT scaffolding and rewrite companion paper methods
-Status: open
+Status: doing
 Created: 2026-04-15
 Author: claude
 Blocked-by: 0050
@@ -11,6 +11,8 @@ Blocked-by: 0042
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 3 of epic 0026; paper writing
 2026-04-16T13:00Z claude reimagine — 0050 dependency should be 0055 (Z-scores come from compute_null_model.py, already merged). Blocked by 0056 (interpretation outputs) is correct.
+2026-04-17T18:31Z HDMX-coding-agent claimed
+2026-04-17T18:31Z HDMX-coding-agent status doing
 
 --- body ---
 ## Context
