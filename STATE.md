@@ -1,8 +1,8 @@
 # State
 
-Last updated: 2026-04-15
+Last updated: 2026-04-17
 
-## Status: TWO PAPERS SUBMITTED + DIVERGENCE PIPELINE MERGED
+## Status: TWO PAPERS SUBMITTED + DIVERGENCE PIPELINE MERGED, FIRST REAL-CORPUS RUN DONE
 
 ### Oeconomia (Varia) — submitted 2026-03-18
 Under double-blind review. ~8,860 words, 61 bib entries, 2 figures, 2 tables.
@@ -36,7 +36,7 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ## Blockers
 
-None.
+Wave C (0057/0058/0064) is waiting on ticket 0042 rerun. All three ticket-level blockers of 0042 (0067 year bounds, 0068 C2ST CV variance, 0069 G2 null + graph boot) are closed on main. Next compute step is: rerun `make divergence null-model bootstrap-tables divergence-summary changepoints sensitivity` on padme with the updated code + corpus 1.1.2.
 
 ### Divergence pipeline — merged 2026-04-15 (PR #650)
 - 15 divergence methods (S1-S4 semantic, L1-L3 lexical, G1-G8 citation graph)
@@ -49,9 +49,8 @@ None.
 
 - **0025**: connective prose for corpus report
 - **0028**: modular analysis report (one include per script) — home for the 15-method divergence zoo
-- **0026 Wave C**: companion paper rewrite — 0057 (methods prose), 0058 (4 figures), 0064 (fill §5 Results)
+- **0042**: rerun divergence pipeline on padme with updated code (post-0067/0068/0069 fixes) — unblocks Wave C
+- **0026 Wave C**: companion paper rewrite — 0057 (methods prose), 0058 (4 figures), 0064 (fill §5 Results) — blocked on 0042
+- **0070 bias audit** + child tickets 0071-0078: pre-submission defence-in-depth for the companion paper's §4.8 and §6.4
 - Re-land arch rule 9 (corpus access through loaders only) on own branch — tickets 0043/0044 already on main
-- Run divergence pipeline on real corpus (padme, ticket 0042)
-- Econom'IA conference slides (Cergy, May 27–28; present aedist results)
-- Charles Gide conference paper (Vannes, July 2–4; paper due June 15)
 - Waiting for corpus 1.1.2 to finish building

@@ -10,7 +10,7 @@ Submitted to Oeconomia (Varia) on 2026-03-18. Waiting for referee reports (~3 mo
 
 - [ ] Wait for reviewers feedback
 - [ ] Revise and Resubmit
-- [ ] Prepare ESHET-HES conference slides (Nice, May 26–29, 2026)
+- [ ] Prepare Econom'IA conference slides (Cergy, May 27–28, 2026; present aedist results)
 - [ ] Continue Tier 1 reading plan (defence against reviewer questions)
 
 ## Data paper manuscript next steps
@@ -31,8 +31,9 @@ Submitted data paper to RDJ4HSS (diamond OA).
 
 ## Next articles
 
-- [ ] **Multilingual epistemic blind spots** — Lexical bibliometrics cannot compare across languages; multilingual embeddings are a minimum requirement for mapping fields that span the North-South divide. Contribution: two-axis (language × geography) isolation scores + citation directionality on ~31K works. Research note: `docs/research-note-multilingual.md`. Journals: Scientometrics, QSS.
-- [ ] **Companion methods paper** — How can embedding-based clustering reveal intellectual structure in a heterogeneous, policy-entangled scholarly field? Contribution: a replicable pipeline for mapping fields where bibliometric boundaries are contested. Journals: Quantitative Science Studies, Scientometrics.
+- [ ] **Paper 4 — Multilingual: "Whose evidence shapes climate policy?"** (ticket 0014) — Empirical finding paper. The $300B NCQG was constructed from English-indexed scholarship alone; Chinese (South-South, Belt-and-Road) and Brazilian (deforestation finance) traditions were invisible. Two-axis design (language × geography) disentangles linguistic from epistemic barriers. Blocked on Paper 5 (corpus v2.0). Journals: Global Environmental Change, World Development, Nature Climate Change Analysis. Supersedes the older "epistemic blind spots" framing (multilingual-paper epic on hold per ticket 0001).
+- [ ] **Paper 5 — Corpus v2.0** (ticket 0013) — Add CNKI (Chinese) and SciELO (Portuguese/Spanish) to raise non-English share from 7% to 20-30%. Enables Paper 4. Journal TBD; methods-heavy, Scientometrics or QSS if submitted standalone.
+- [ ] **Paper 3 — Companion methods paper** (epic 0026) — Multi-layer detection and validation of structural change in text corpora. Lean 6-method panel across 3 layers (embedding / lexical / graph) with permutation Z-scores and transition zones. Wave C in flight, blocked on 0042 pipeline rerun. Journal: Quantitative Science Studies (QSS, chosen).
 - [ ] **OECD vs. Oxfam** — How do competing accounting frameworks produce divergent truths from the same financial flows? Contribution: a sociology-of-quantification case study showing how measurement conventions perform political positions on North-South climate debt. Requires document-to-evidence extraction capabilities (cf. [AEDIST](https://github.com/MinhHaDuong/aedist) stage 2). Journals: Accounting, Organizations and Society; Social Studies of Science.
 - [ ] **MDB greening pivot** — How did multilateral development banks reframe existing portfolios as "climate finance" without changing what they fund? Contribution: an economization analysis of institutional relabeling as performative category work. Requires document-to-evidence extraction capabilities (cf. AEDIST stage 2). Journals: Review of International Political Economy, New Political Economy.
 - [ ] **Carbon markets as failed performativity** — Why did the CDM fail to produce the efficient abatement market it modeled, and is Article 6 repeating the same design flaws? Contribution: a MacKenzie-style analysis of how market devices for North-South carbon transfers failed to perform the world they assumed. Journals: Economy and Society, Journal of Cultural Economy.
