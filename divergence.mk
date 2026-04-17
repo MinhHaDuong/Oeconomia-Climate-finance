@@ -184,7 +184,7 @@ changepoints: changepoints-tables changepoints-figure
 NULL_DISPATCH := scripts/compute_null_model.py
 NULL_METHODS_SEM := S2_energy
 NULL_METHODS_LEX := L1
-NULL_METHODS_CIT := G9_community
+NULL_METHODS_CIT := G9_community G2_spectral
 NULL_METHODS := $(NULL_METHODS_SEM) $(NULL_METHODS_LEX) $(NULL_METHODS_CIT)
 NULL_CSV := $(foreach m,$(NULL_METHODS),$(DIV_TABLES)/tab_null_$(m).csv)
 
@@ -200,7 +200,7 @@ $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv
 
 # Citation null models (depend on REFINED + REFINED_CIT + divergence CSV)
 $(foreach m,$(NULL_METHODS_CIT),$(eval \
-$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
 	uv run python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 .PHONY: null-model
@@ -218,7 +218,8 @@ null-model: $(NULL_CSV)
 BOOT_DISPATCH := scripts/compute_divergence_bootstrap.py
 BOOT_METHODS_SEM := S2_energy
 BOOT_METHODS_LEX := L1
-BOOT_METHODS := $(BOOT_METHODS_SEM) $(BOOT_METHODS_LEX)
+BOOT_METHODS_CIT := G9_community G2_spectral
+BOOT_METHODS := $(BOOT_METHODS_SEM) $(BOOT_METHODS_LEX) $(BOOT_METHODS_CIT)
 BOOT_CSV := $(foreach m,$(BOOT_METHODS),$(DIV_TABLES)/tab_boot_$(m).csv)
 
 # Semantic bootstrap (depends on embeddings + divergence CSV)
@@ -229,6 +230,11 @@ $(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv
 # Lexical bootstrap (depends on REFINED + divergence CSV)
 $(foreach m,$(BOOT_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
+	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+# Citation bootstrap (depends on REFINED + REFINED_CIT + divergence CSV)
+$(foreach m,$(BOOT_METHODS_CIT),$(eval \
+$(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
 	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 .PHONY: bootstrap-tables
