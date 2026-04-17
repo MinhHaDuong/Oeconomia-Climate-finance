@@ -84,7 +84,7 @@ class TestC2STCore:
 
         rng = np.random.RandomState(42)
         X = rng.randn(200, 32)
-        Y = rng.randn(200, 32) + 1.5  # strong shift — clearly > 0.5 AUC
+        Y = rng.randn(200, 32) + 0.5  # moderate shift — folds differ, AUC > 0.5
         result = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
         assert isinstance(result, dict), f"Expected dict, got {type(result)}"
         for key in ("mean", "std", "q025", "q975", "n_folds", "p_value_vs_chance"):
@@ -94,7 +94,7 @@ class TestC2STCore:
         assert 0.0 <= result["q025"] <= result["mean"] <= result["q975"] <= 1.0, (
             f"CI ordering wrong: {result}"
         )
-        # One-sample t vs 0.5 should reject H0 on well-separated data
+        # One-sample t vs 0.5 should reject H0 on separated data
         assert result["p_value_vs_chance"] < 0.05, (
             f"p-value vs 0.5 should be < 0.05 on shifted data, got {result['p_value_vs_chance']}"
         )

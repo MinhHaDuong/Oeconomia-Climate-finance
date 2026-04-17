@@ -99,6 +99,33 @@ DivergenceSchema = DataFrameSchema(
 )
 
 # ---------------------------------------------------------------------------
+# C2ST divergence CSV (ticket 0068)
+# ---------------------------------------------------------------------------
+#
+# C2ST methods (C2ST_embedding, C2ST_lexical) report AUC with per-fold CV
+# variance as their inference primitive, NOT a permutation null. The extra
+# columns carry the K fold scores summarised as std, Student-t CI bounds,
+# and a one-sample t-test p-value against chance (0.5). Downstream plots /
+# summaries read these columns directly instead of joining a tab_null_*.csv.
+
+C2STDivergenceSchema = DataFrameSchema(
+    columns={
+        "year": Column(int),
+        "channel": Column(str, checks=pa.Check.isin(["semantic", "lexical"])),
+        "window": Column(str),
+        "hyperparams": Column(str, nullable=True),
+        "value": Column(float, nullable=True),  # AUC mean over folds
+        "auc_std": Column(float, nullable=True),
+        "auc_q025": Column(float, nullable=True),
+        "auc_q975": Column(float, nullable=True),
+        "n_folds": Column(int, nullable=True),
+        "p_value_vs_chance": Column(float, nullable=True),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
 # Null model CSV (permutation Z-scores, ticket 0055)
 # ---------------------------------------------------------------------------
 

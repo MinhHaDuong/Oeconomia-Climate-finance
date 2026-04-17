@@ -14,6 +14,7 @@ Reference:
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_val_score
@@ -26,15 +27,17 @@ log = get_logger("_divergence_c2st")
 
 
 def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
-    """Compute C2ST AUC: train a classifier to distinguish X from Y.
+    """Compute C2ST AUC with per-fold variance and significance vs chance.
 
-    Labels X as 0, Y as 1.  Returns mean cross-validated ROC AUC.
-    AUC near 0.5 means the distributions are indistinguishable;
-    AUC near 1.0 means they are clearly different.
+    Labels X as 0, Y as 1. Trains a fixed-C logistic regression per
+    Lopez-Paz & Oquab (2017) — the test measures separability, not
+    optimizes it. Uses shuffled StratifiedKFold on the concatenated data.
 
-    Accepts both dense arrays and sparse matrices (e.g. TF-IDF output).
-    Uses fixed-C logistic regression per Lopez-Paz & Oquab (2017):
-    the test measures separability, not optimizes it.
+    The per-fold AUCs are the data-derived measure of uncertainty
+    (ticket 0068): the K scores are used to report mean ± CI and a
+    one-sample t-test against the chance baseline 0.5. C2ST does NOT
+    use the shared permutation null model, because its statistic is
+    already a hypothesis test.
 
     Parameters
     ----------
@@ -49,8 +52,10 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
 
     Returns
     -------
-    float
-        Mean cross-validated ROC AUC.
+    dict
+        {"mean", "std", "q025", "q975", "n_folds", "p_value_vs_chance"}
+        where q025/q975 are a Student-t CI over the K fold scores and
+        p_value_vs_chance is one-sample t-test vs 0.5 (two-sided).
 
     """
     if sp.issparse(X) or sp.issparse(Y):
@@ -66,8 +71,33 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
         random_state=seed,
     )
     cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=seed)
-    scores = cross_val_score(clf, features, labels, cv=cv, scoring="roc_auc")
-    return float(np.mean(scores))
+    scores = np.asarray(
+        cross_val_score(clf, features, labels, cv=cv, scoring="roc_auc"),
+        dtype=float,
+    )
+    n = int(scores.size)
+    mean = float(scores.mean())
+    std = float(scores.std(ddof=1)) if n > 1 else 0.0
+
+    if n > 1 and std > 0.0:
+        t_crit = float(stats.t.ppf(0.975, df=n - 1))
+        se = std / np.sqrt(n)
+        q025 = max(0.0, mean - t_crit * se)
+        q975 = min(1.0, mean + t_crit * se)
+        p_value = float(stats.ttest_1samp(scores, 0.5).pvalue)
+    else:
+        q025 = mean
+        q975 = mean
+        p_value = float("nan")
+
+    return {
+        "mean": mean,
+        "std": std,
+        "q025": q025,
+        "q975": q975,
+        "n_folds": n,
+        "p_value_vs_chance": p_value,
+    }
 
 
 # ── C2ST on PCA-reduced embeddings ──────────────────────────────────────
@@ -79,7 +109,9 @@ def compute_c2st_embedding(df, emb, cfg):
     For each (year, window): extract before/after embeddings via
     _iter_window_pairs, PCA-reduce, then classify.
 
-    Returns DataFrame with columns: year, window, hyperparams, value
+    Returns DataFrame with columns matching C2STDivergenceSchema:
+    year, window, hyperparams, value, auc_std, auc_q025, auc_q975,
+    n_folds, p_value_vs_chance.
     """
     from _divergence_semantic import _get_years_and_params, _iter_window_pairs
 
@@ -95,7 +127,19 @@ def compute_c2st_embedding(df, emb, cfg):
         df, emb, cfg
     )
     if not any(years_by_window.values()):
-        return empty_divergence_df()
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "hyperparams",
+                "value",
+                "auc_std",
+                "auc_q025",
+                "auc_q975",
+                "n_folds",
+                "p_value_vs_chance",
+            ]
+        )
 
     results = []
     last_w = None
@@ -120,15 +164,18 @@ def compute_c2st_embedding(df, emb, cfg):
         X_r = combined_r[: len(X)]
         Y_r = combined_r[len(X) :]
 
-        auc = _c2st_auc(
-            X_r, Y_r, cv_folds=cv_folds, class_weight=class_weight, seed=seed
-        )
+        r = _c2st_auc(X_r, Y_r, cv_folds=cv_folds, class_weight=class_weight, seed=seed)
         results.append(
             {
                 "year": int(y),
                 "window": str(w),
                 "hyperparams": f"pca={n_components}",
-                "value": auc,
+                "value": r["mean"],
+                "auc_std": r["std"],
+                "auc_q025": r["q025"],
+                "auc_q975": r["q975"],
+                "n_folds": r["n_folds"],
+                "p_value_vs_chance": r["p_value_vs_chance"],
             }
         )
 
@@ -143,7 +190,9 @@ def compute_c2st_embedding(df, emb, cfg):
 def compute_c2st_lexical(df, cfg):
     """C2ST on TF-IDF features via shared lexical window iterator.
 
-    Returns DataFrame with columns: year, window, hyperparams, value
+    Returns DataFrame with columns matching C2STDivergenceSchema:
+    year, window, hyperparams, value, auc_std, auc_q025, auc_q975,
+    n_folds, p_value_vs_chance.
     """
     from _divergence_lexical import _iter_lexical_window_pairs
 
@@ -163,7 +212,7 @@ def compute_c2st_lexical(df, cfg):
             log.info("  C2ST_lexical window=%d done", last_w)
         last_w = w
 
-        auc = _c2st_auc(
+        r = _c2st_auc(
             X_before,
             X_after,
             cv_folds=cv_folds,
@@ -175,7 +224,12 @@ def compute_c2st_lexical(df, cfg):
                 "year": int(y),
                 "window": str(w),
                 "hyperparams": f"tfidf_features={tfidf_max_features}",
-                "value": auc,
+                "value": r["mean"],
+                "auc_std": r["std"],
+                "auc_q025": r["q025"],
+                "auc_q975": r["q975"],
+                "n_folds": r["n_folds"],
+                "p_value_vs_chance": r["p_value_vs_chance"],
             }
         )
 
