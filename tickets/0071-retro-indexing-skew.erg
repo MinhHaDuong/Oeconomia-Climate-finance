@@ -1,0 +1,48 @@
+%erg v1
+Title: Characterize retro-indexing skew (indexed vs publication year)
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B2
+
+--- body ---
+## Context
+
+Audit 0070 identified bias **B2** (retro-indexing of the pre-DOI era) as
+a ❌ gap: OpenAlex and similar sources add pre-2000 records post-hoc as
+third-party metadata improves. A 1995 slice of the corpus queried in 2026
+is structurally different from a 1995 slice queried in 1995 or 2010. Our
+periodization places Act I at 1990-2006 — that's the window most exposed
+to retro-indexing artifacts.
+
+## Actions
+
+1. For each record in `refined_works`, extract the first-indexed date
+   from OpenAlex (field `created_date` or equivalent) vs `publication_year`.
+2. Compute the per-year distribution of record-age at first indexing
+   (indexed_year − publication_year). Plot it.
+3. Report the share of pre-2005 records first indexed after 2010 (proxy
+   for "found via later metadata enrichment"). If the share is > 10% per
+   year, the pre-2005 slice is materially skewed.
+4. If material, prototype a filter: `include only records first indexed
+   before publication_year + N years`. Re-run the divergence pipeline on
+   the filtered corpus. Report whether the 2007 transition zone shifts.
+5. Deliverable: one supplementary figure + a paragraph for §6.4.
+
+## Test
+
+Start with:
+`tests/test_retro_indexing.py::test_indexed_date_field_present` — asserts
+the enriched_works schema exposes an indexed/created timestamp per
+record. Red until the enrichment step surfaces it.
+
+## Exit criteria
+
+- A supplementary figure of record-age-at-indexing distribution by
+  publication year.
+- A §6.4 paragraph (≤ 80 words) quantifying the bias magnitude and
+  stating whether it changes the Act I narrative.
+- If magnitude is material, a merged PR that exposes an optional filter.

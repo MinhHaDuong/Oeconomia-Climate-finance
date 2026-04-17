@@ -1,0 +1,55 @@
+%erg v1
+Title: Joint Type I error for validated transition zones (meta-null)
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B8
+
+--- body ---
+## Context
+
+Audit 0070 flagged bias **B8** (multiple comparisons) as ⚠. With 6
+methods × ~22 years × 4 windows we run ≈ 528 pointwise tests. Under
+pointwise α = 0.05 the global null expectation is ≈ 26 false positives.
+The "≥ 2 channels above Z > 2 within a 2-year window" rule is a
+correction-by-design but not a formal Type-I-error statement.
+
+We need a single number — the joint Type I error for a validated
+transition zone — so a reviewer can't push back on the multiple-
+comparisons question without arithmetic.
+
+## Actions
+
+1. Add `scripts/compute_meta_null.py`: permute publication-year labels
+   across the entire corpus (`n_perm = 500` or the existing config
+   value), and for each realization run all six divergence channels with
+   their default settings.
+2. For each realization, record whether ≥ 2 channels exceed Z > 2 at
+   the same year (within ±2 years). The empirical frequency over
+   realizations is the joint Type I error.
+3. Output: `content/tables/tab_meta_null_joint_alpha.csv` with
+   `n_perm, joint_alpha_05, joint_alpha_01`.
+4. One sentence for §4.8: "The probability that ≥ 2 channels jointly
+   exceed Z > 2 at the same year under the global null is p = X.XX
+   (500 permutations)."
+
+## Test
+
+`tests/test_meta_null.py::test_single_perm_end_to_end` — asserts one
+meta-null permutation runs end-to-end for all six channels and returns a
+boolean "jointly validated" flag. Red until the script exists.
+
+## Exit criteria
+
+- Meta-null Makefile target (`divergence.mk` or `null.mk`).
+- Joint-alpha number cited in §4.8.
+- Child of 0070 closed.
+
+## Note on compute cost
+
+This is 6 × n_perm full-pipeline runs. At ~30 s per channel per
+permutation this is a few compute-hours; schedule on padme or in a
+nightly job, not in `make check`.

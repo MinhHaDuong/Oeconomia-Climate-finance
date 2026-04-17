@@ -1,0 +1,43 @@
+%erg v1
+Title: Citation-graph edge density per year
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B10
+
+--- body ---
+## Context
+
+Audit 0070 identified bias **B10** (DOI resolution rate varies by era)
+as a ❌ gap. Citation-graph edges require both source and target DOIs to
+resolve to corpus works. Pre-2000 DOI coverage is incomplete; 2000-2010
+better; 2010+ nearly complete. Graph density per year therefore varies
+in a way orthogonal to field structure, and a G2/G9 break might reflect
+a density step-change rather than a real discontinuity.
+
+## Actions
+
+1. Add `scripts/compute_graph_density.py`: from `refined_citations`,
+   compute per publication-year (a) node count, (b) internal edge count,
+   (c) density = edges / n² (or edges / (n × (n-1)) if we prefer).
+2. Output: `content/tables/tab_graph_density.csv` with schema.
+3. Plot: `scripts/plot_graph_density.py` overlaying the detected G2 and
+   G9 transition zones.
+4. Report any year whose density is > 2 SD above the local 5-year mean.
+   If a transition zone coincides with a density step, add a caveat to
+   §6.4 for G2/G9 claims.
+
+## Test
+
+`tests/test_graph_density.py::test_density_monotone_increasing_smoke`
+— asserts pre-2000 density < post-2010 density in a small smoke
+corpus. Red until the compute script exists.
+
+## Exit criteria
+
+- Compute + plot scripts follow Phase 2 rules.
+- Supplementary figure.
+- §6.4 caveat if warranted.
