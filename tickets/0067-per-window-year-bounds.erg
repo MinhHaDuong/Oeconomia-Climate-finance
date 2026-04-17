@@ -1,0 +1,104 @@
+%erg v1
+Title: Align divergence year bounds to per-window convention (semantic + lexical)
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: none
+
+--- log ---
+2026-04-17T01:30Z claude created from t0042 post-run audit
+
+--- body ---
+## Context
+
+The three channels use three different year-range conventions. This
+produces systematic miscalibration on the upper bound and narrows
+multi-signal overlap in the companion paper.
+
+Observed on the 2026-04-16 t0042 run (corpus 1990-2024, windows {2,3,4,5}):
+
+| Method | w=2 | w=3 | w=4 | w=5 |
+|--------|-----|-----|-----|-----|
+| S2_energy (embedding) | 1998-**2018** | 1998-2018 | 1998-2018 | 1998-2018 |
+| L1 (lexical) | 1998-**2023** | 1998-2023 | 1998-2023 | 1998-2023 |
+| G9_community (graph) | 1999-**2021** | 1999-2020 | 1999-2019 | 1999-2018 |
+
+Only the graph methods iterate *per window*. Semantic and lexical use
+a single buffer for all widths.
+
+## Root cause
+
+### Semantic — over-conservative
+
+`scripts/_divergence_semantic.py:74-75`:
+```python
+start_year = int(df["year"].min()) + max(windows)     # 1990 + 5 = 1995
+end_year   = int(df["year"].max()) - max(windows) - 1 # 2024 - 5 - 1 = 2018
+```
+All four window widths share `end_year=2018`. S2/S1/S3/S4/C2ST_embedding
+silently drop 2019, 2020, 2021 data at w=2 — three years of post-Paris
+/ "established field" evidence that should be testable on embeddings.
+
+### Lexical — under-conservative
+
+L1/L2/L3/C2ST_lexical reach 2023 for all window widths. At w=5, year=2023
+means the "after" window is [2024, 2028), so only 2024 is in-corpus.
+Computation is defined (JS works on any pair of distributions) but
+epistemically weak: 5 years of pre-2024 vs 1 year of 2024.
+
+### Graph — correct
+
+`scripts/_divergence_citation.py:171`:
+```python
+for year in range(year_min + w, year_max - w):  # per-window
+```
+Narrower windows naturally reach later years. This is the right rule.
+
+## Actions
+
+1. Rewrite `_get_years_and_params` in `_divergence_semantic.py` to yield
+   per-window year ranges, or refactor so each method iterates its own
+   window boundaries. Mirror the `_iter_sliding_pairs` pattern from
+   `_divergence_citation.py`.
+
+2. Apply the same per-window bound to the lexical iterator (wherever
+   L1/L2/L3/C2ST_lexical decide their upper year).
+
+3. Update `compute_divergence.py` if year-range logic lives there too.
+
+4. After the fix, semantic at w=3 reaches 2020 (was 2018); lexical at
+   w=3 reaches 2020 (was 2023). Multi-signal overlap at w=3 becomes
+   **1999-2020 (22 years)** — a clean, consistent range across all
+   six lead methods.
+
+5. Regenerate S2, L1, C2ST_embedding, C2ST_lexical `tab_div_*.csv`.
+   Then regen null + bootstrap + summary for the ones in scope.
+
+## Test
+
+```python
+def test_semantic_upper_bound_is_per_window():
+    """Semantic iterator must produce different end_years per window width."""
+    # Given a corpus ending at 2024:
+    # w=2 should reach 2022 (inclusive last year 2021)
+    # w=5 should reach 2019 (inclusive last year 2018)
+    years_by_w = {w: max(ys) for w, ys in semantic_year_ranges(cfg).items()}
+    assert years_by_w[2] > years_by_w[5]
+    assert years_by_w[2] == years_by_w[5] + 3
+
+def test_lexical_upper_bound_is_per_window():
+    """Lexical iterator must not produce asymmetric windows."""
+    # At year=2023 w=5, after-window would have ≤1 year of data — reject.
+    ys = lexical_year_ranges(cfg)
+    assert 2023 not in ys[5]
+```
+
+## Exit criteria
+
+- All three channels use the same per-window year-range rule.
+- Existing semantic tables gain ~3 years at w=2.
+- Existing lexical tables lose the 2021-2023 tail at w=5 (or intermediate
+  widths as appropriate).
+- Unit tests enforce the rule.
+- Downstream consumers (null model, bootstrap, summary) rebuild cleanly.
+- Wave C multi-signal overlap is a single uniform 1999-2020 range at w=3.

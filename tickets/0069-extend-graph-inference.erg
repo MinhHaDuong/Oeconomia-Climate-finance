@@ -1,0 +1,97 @@
+%erg v1
+Title: Extend graph-channel inference — G2 null + graph bootstrap
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: none
+
+--- log ---
+2026-04-17T01:30Z claude created from t0042 scope gap
+
+--- body ---
+## Context
+
+The companion paper (epic 0026) uses these graph methods:
+
+| Role | Method | Current inference | Needed |
+|------|--------|-------------------|--------|
+| Lead | G9_community | ✓ null model | + bootstrap CI |
+| Robustness | G2_spectral | raw value only | + null model, + bootstrap CI |
+
+The t0042 pipeline run (2026-04-16) computed divergence for all 18
+methods but the Makefile scopes null/bootstrap to a narrow set:
+
+```makefile
+NULL_METHODS_CIT := G9_community         # missing G2
+BOOT_METHODS     := S2_energy L1         # missing G9, G2
+```
+
+Wave C figures (Z-score time series, transition heatmap) and prose
+(§5 Results) need Z-scores for G2_spectral and bootstrap CIs for the
+two graph methods.
+
+## Actions
+
+1. Edit `divergence.mk`:
+   ```makefile
+   NULL_METHODS_CIT := G9_community G2_spectral
+   BOOT_METHODS_CIT := G9_community G2_spectral    # new bucket
+   BOOT_METHODS := $(BOOT_METHODS_SEM) $(BOOT_METHODS_LEX) $(BOOT_METHODS_CIT)
+   ```
+   Add citation-channel bootstrap target rule mirroring the semantic
+   and lexical ones (depends on REFINED + REFINED_CIT + divergence CSV).
+
+2. Verify `compute_null_model.py` handles G2_spectral via the existing
+   citation-channel dispatcher (line 285+). G2's `_spectral_gap` is in
+   `_citation_methods.py`; the null iteration permutes document labels
+   within the window and recomputes the gap. Should slot in with
+   minor wiring.
+
+3. Verify `compute_divergence_bootstrap.py` handles citation-channel
+   methods. If not, add a citation branch mirroring the semantic
+   branch (resample rows with replacement, rebuild subgraph, recompute
+   metric).
+
+4. Make target dependency updates:
+   - `make null-model` now produces tab_null_G2_spectral.csv
+   - `make bootstrap-tables` now produces tab_boot_G9.csv, tab_boot_G2.csv
+   - `make divergence-summary` naturally expands to include these
+
+5. Tests:
+   - `tests/test_null_model.py`: add G2_spectral to citation-channel
+     parametrize list (if `TestSmokeCitation` exists).
+   - `tests/test_bootstrap.py`: similar.
+
+## Compute cost
+
+On padme GPU: G2 null ~10-15 min (spectral gap is fast); graph
+bootstrap ~5-10 min per method. Total additional: ~25-35 min after
+the Makefile + code changes.
+
+## Test
+
+```python
+def test_g2_spectral_has_null_model():
+    """G2_spectral must produce a null CSV with z_score column."""
+    path = Path("content/tables/tab_null_G2_spectral.csv")
+    assert path.exists()
+    df = pd.read_csv(path)
+    assert "z_score" in df.columns
+    assert df["z_score"].notna().any()
+
+def test_graph_methods_have_bootstrap():
+    """G9 and G2 must produce bootstrap CIs."""
+    for m in ["G9_community", "G2_spectral"]:
+        path = Path(f"content/tables/tab_boot_{m}.csv")
+        assert path.exists()
+        df = pd.read_csv(path)
+        assert len(df) > 0
+```
+
+## Exit criteria
+
+- `tab_null_G2_spectral.csv` landed (z_score + p_value populated).
+- `tab_boot_G9_community.csv` and `tab_boot_G2_spectral.csv` landed.
+- `tab_summary_G9_community.csv` and `tab_summary_G2_spectral.csv`
+  landed (joined from div + null + boot).
+- Null/bootstrap tests cover citation-channel parametrization.
