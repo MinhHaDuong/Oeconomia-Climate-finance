@@ -1,0 +1,201 @@
+%erg v1
+Title: Statistical bias audit — defend companion paper against reviewer-raised biases
+Status: open
+Created: 2026-04-17
+Author: user
+
+--- log ---
+2026-04-17T09:00Z claude created from pre-submission due diligence discussion
+
+--- body ---
+## Context
+
+Before the companion paper is submitted to QSS, we need a systematic
+audit of the biases a reviewer (or competent adversary) will raise,
+mapping each to the specific methods it corrupts, and classifying the
+defense as: **fixed in pipeline**, **mitigated**, **acknowledged as
+limitation**, or **must-address-before-submission**.
+
+This is a **review ticket**, not an implementation ticket. Its
+deliverable is a markdown document that:
+
+1. Inventories the biases.
+2. Maps each to the methods / inferences it affects.
+3. Classifies current defense status with evidence (script lines,
+   config knobs, ticket IDs).
+4. Enumerates any must-fix gaps as new child tickets.
+5. Feeds the paper's §6.4 Limitations and §4.8 Robustness sections.
+
+## Biases in scope
+
+### Data-generating biases
+
+**B1. Organic corpus size growth.** Papers per year grows roughly
+exponentially over 1998-2024. Any distributional statistic computed
+on a bigger sample has smaller variance → apparent "divergence" is
+partly a sample-size artifact. Relevant to every channel.
+
+- Current defense: ticket 0045 (equal-n growth-bias correction) +
+  permutation null which normalizes to sample-size variation.
+- Audit: verify both the equal-n subsampling AND the permutation null
+  are actually applied in the on-corpus run — read config and log.
+
+**B2. Retro-indexing of pre-DOI era.** OpenAlex and similar sources
+retro-add 1990s/2000s papers as metadata improves. A 1995 slice of
+the corpus TODAY differs from what a 1995 slice would have looked
+like if queried in 1995. "Growth" is partly indexing artifact.
+
+- Current defense: none explicit.
+- Action: characterize the retro-indexing rate (e.g., compare
+  OpenAlex snapshots over time, or check the `created_at` timestamp
+  of each record against `publication_year`). If indexing is
+  skewed toward recent updates of old papers, the pre-2005 window
+  is especially suspect. Might require a "include only records
+  indexed before year t + N" policy.
+
+**B3. English-language dominance.** Corpus is multilingual but the
+distribution skews English. BGE-M3 embeds all languages into a
+shared space, but the shared space is trained on predominantly
+English and Chinese web text — representation quality is uneven.
+TF-IDF lexical methods are more sensitive: stopwords, tokenization,
+and term frequencies differ structurally across languages.
+
+- Current defense: multilingual embedding model (BGE-M3). No
+  explicit language-stratified tests.
+- Action: stratified sensitivity analysis — recompute S2 and L1
+  on the English-only subset vs the full corpus. If structural
+  breaks shift substantially, the multilingual claim needs
+  qualification.
+
+**B4. Editorial cartel bias / venue concentration.** A small number
+of journals publish a large fraction of climate-finance papers
+(Climate Policy, Climatic Change, Nature Climate Change, etc.).
+Editors, reviewers, and author networks concentrate within venues.
+Structural breaks might reflect editorial taste shifts or special
+issues, not field-level change.
+
+- Current defense: none explicit.
+- Action: compute venue concentration (Herfindahl or entropy) per
+  year. Report which transition zones coincide with venue-
+  concentration shocks. Consider a venue-stratified robustness
+  check.
+
+### Method-specific biases
+
+**B5. Citation threshold for core subset (cited_by_count ≥ 50).**
+Core is systematically older (recent papers haven't accumulated
+citations). The "no break in core" finding is at least partly a
+recency-floor artifact.
+
+- Current defense: §6.4 already notes this limitation.
+- Audit: quantify the overlap decay — how many 2020+ papers are in
+  the core vs how many have had time to accumulate 50 cites?
+
+**B6. Louvain community stochasticity.** G9 community divergence
+depends on Louvain partition, which is seed-dependent. A different
+seed can assign nodes to different communities → different JS.
+
+- Current defense: seed from config (ticket 0061 merged). Union-graph
+  trick gives a single partition per window.
+- Audit: vary the seed across e.g. 10 realizations, report
+  across-seed variance as a robustness check. If Z-score magnitude
+  is stable across seeds, Louvain is non-issue.
+
+**B7. Window size arbitrariness (w ∈ {2,3,4,5}).** Paper reports
+one lead w=3 with w ∈ {2,3,4,5} sensitivity. Is w=3 the right
+temporal resolution?
+
+- Current defense: multi-window reporting + Z > 2 threshold.
+- Audit: verify transition zones are stable across windows. Already
+  partially done — need explicit statement.
+
+**B8. Multiple comparisons.** 6 methods × ~22 years × 4 windows ≈
+528 tests. At α = 0.05 pointwise, ~26 false positives expected.
+
+- Current defense: multi-signal validation (≥ 2 signals above
+  threshold). This is a correction-by-design.
+- Audit: formalize — what is the joint Type I error for a validated
+  transition zone under the null? Report (e.g., via a meta-null
+  where all 6 methods are run on permuted data).
+
+**B9. Permutation test exchangeability assumption.** Permuting
+before/after labels within a local pool assumes the two halves are
+exchangeable under the null — i.e., from the same distribution. But
+if B1 (growth) or B2 (retro-indexing) make the before/after
+distributions structurally asymmetric even under H0, the
+permutation null is biased downward → inflated Type I error.
+
+- Current defense: equal-n subsampling (0045). Under equal-n, the
+  exchangeability assumption is closer to satisfied.
+- Audit: verify equal-n subsampling is on by default in the
+  production null model. Check the config flag.
+
+**B10. DOI resolution rate varies by era.** Citation graph edges
+require both source and target DOIs to match corpus works. Pre-2000
+DOI coverage is incomplete; 2000-2010 better; 2010+ mostly
+complete. The citation graph density therefore varies by era in a
+way that's not related to field structure.
+
+- Current defense: G2/G9 both use sliding windows, so within-window
+  density variation is partly normalized.
+- Audit: report edge-density per year of the internal citation
+  graph. Transition zones that coincide with density step-changes
+  are suspect.
+
+**B11. Embedding model choice (BAAI/bge-m3).** Multilingual, 1024-d,
+trained on web text. Domain-specific models (SciBERT, ClimateBERT)
+might give different cluster structures.
+
+- Current defense: §6.4 limitations already notes this.
+- Audit: no new action beyond what 0036 (embedding sensitivity)
+  already provides.
+
+### Meta
+
+**B12. Data cutoff / update bias.** The corpus snapshot was taken at
+some date. Papers published after that date but with publication_year
+≤ 2024 are excluded. Recent years are systematically incomplete.
+
+- Current defense: restrict year range (ticket 0067 fixes this).
+- Audit: document the snapshot date explicitly.
+
+## Actions
+
+1. Produce `docs/bias-audit-companion-paper.md` following the schema
+   above. One section per B-code, with:
+   - Description (1-2 paragraphs).
+   - Which methods / inferences are affected.
+   - Current defense (script references, config knobs, ticket IDs).
+   - Evidence status: ✅ fixed / ⚠ mitigated / ℹ limitation / ❌ gap.
+   - Recommended action if not already fixed.
+
+2. For each ❌ gap, open a child ticket.
+
+3. Feed the document into ticket 0057's rewrite of §4.8 Robustness
+   and §6.4 Limitations.
+
+4. Before submission, re-audit and update the document. Attach as a
+   supplementary file in the submission package (QSS may not accept
+   this; decide later).
+
+## Exit criteria
+
+- `docs/bias-audit-companion-paper.md` covers all 12 biases above +
+  any others surfaced during the audit.
+- Every bias has a classified defense status with citable evidence.
+- Every ❌ gap has a child ticket.
+- §4.8 and §6.4 of the companion paper incorporate the audit's
+  findings.
+- Can answer a hypothetical reviewer on any bias with a one-sentence
+  honest defense.
+
+## Notes
+
+This is the right time to do this: before 0057 rewrites the paper's
+method and limitations sections. Running the audit after 0057 lands
+would force a second rewrite.
+
+Not all 12 biases need fixing. Most will be acknowledged as
+limitations — that's fine, reviewers respect clearly-stated
+limitations more than concealed ones. The goal is to be **ahead of
+the critique**, not exhaustive about defense.
