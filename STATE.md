@@ -52,6 +52,6 @@ None.
 - **0026 Wave C**: companion paper rewrite — 0057 (methods prose), 0058 (4 figures), 0064 (fill §5 Results)
 - Re-land arch rule 9 (corpus access through loaders only) on own branch — tickets 0043/0044 already on main
 - Run divergence pipeline on real corpus (padme, ticket 0042)
-- ESHET-HES conference slides (Nice, May 26–29)
+- Econom'IA conference slides (Cergy, May 27–28; present aedist results)
 - Charles Gide conference paper (Vannes, July 2–4; paper due June 15)
 - Waiting for corpus 1.1.2 to finish building
