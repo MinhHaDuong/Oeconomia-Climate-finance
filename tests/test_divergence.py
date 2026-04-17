@@ -566,7 +566,7 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=True)
-        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
+        years_by_window, min_papers, max_subsample, _equal_n = _get_years_and_params(
             df, emb, cfg
         )
         rng = np.random.RandomState(42)
@@ -574,8 +574,7 @@ class TestEqualN:
         for y, w, X, Y in _iter_window_pairs(
             df,
             emb,
-            years,
-            windows,
+            years_by_window,
             min_papers,
             max_subsample,
             rng=rng,
@@ -591,7 +590,7 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=False)
-        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
+        years_by_window, min_papers, max_subsample, _equal_n = _get_years_and_params(
             df, emb, cfg
         )
         rng = np.random.RandomState(42)
@@ -600,8 +599,7 @@ class TestEqualN:
         for y, w, X, Y in _iter_window_pairs(
             df,
             emb,
-            years,
-            windows,
+            years_by_window,
             min_papers,
             max_subsample,
             rng=rng,
@@ -684,6 +682,72 @@ class TestEqualN:
         result_raw = compute_l1_js(df, cfg_raw)
         assert len(result_eq) > 0, "equal_n L1 JS produced no results"
         assert len(result_raw) > 0, "raw L1 JS produced no results"
+
+
+# ---------------------------------------------------------------------------
+# Per-window year bounds (ticket 0067)
+# ---------------------------------------------------------------------------
+
+
+class TestPerWindowYearBounds:
+    """All three channels must use the same per-window year-range rule.
+
+    For window width w on a corpus spanning [year_min, year_max], valid
+    anchor years are range(year_min + w, year_max - w) — mirrors
+    _iter_sliding_pairs in _divergence_citation.py. Narrower windows
+    reach later years; wider windows must stop earlier so the after-window
+    fits inside the data.
+    """
+
+    def _bounds_cfg(self, windows):
+        cfg = _smoke_cfg(seed=42)
+        cfg["divergence"]["windows"] = windows
+        cfg["divergence"]["max_subsample"] = 5000
+        cfg["divergence"]["equal_n"] = False
+        return cfg
+
+    def test_per_window_year_ranges_helper(self):
+        """Helper returns range(year_min+w, year_max-w) per window."""
+        from _divergence_io import per_window_year_ranges
+
+        df = pd.DataFrame({"year": list(range(1990, 2025))})
+        ranges = per_window_year_ranges(df, [2, 3, 4, 5])
+        assert max(ranges[2]) == 2021
+        assert max(ranges[3]) == 2020
+        assert max(ranges[4]) == 2019
+        assert max(ranges[5]) == 2018
+        assert min(ranges[2]) == 1992
+        assert min(ranges[5]) == 1995
+
+    def test_semantic_upper_bound_is_per_window(self):
+        """Semantic iterator must reach later years for narrower windows."""
+        from _divergence_semantic import _get_years_and_params
+
+        df, emb = _make_growth_data(n_years=20, start_year=2000)  # years 2000..2019
+        cfg = self._bounds_cfg(windows=[2, 5])
+        years_by_window, _, _, _ = _get_years_and_params(df, emb, cfg)
+
+        # For year_max=2019: w=2 last year is 2016; w=5 last year is 2013.
+        assert max(years_by_window[2]) == 2016
+        assert max(years_by_window[5]) == 2013
+        assert max(years_by_window[2]) - max(years_by_window[5]) == 3
+
+    def test_lexical_upper_bound_is_per_window(self):
+        """Lexical iterator must not produce asymmetric upper-bound windows."""
+        from _divergence_lexical import _iter_lexical_window_pairs
+
+        df = _make_growth_text_data(n_years=20, start_year=2000)  # years 2000..2019
+        cfg = self._bounds_cfg(windows=[2, 5])
+
+        years_by_w = {}
+        for y, w, _xb, _xa, _vec in _iter_lexical_window_pairs(df, cfg):
+            years_by_w.setdefault(w, []).append(y)
+
+        # year_max=2019: at w=5 anchor year 2017 would give a 2-year after-
+        # window (2018, 2019) — must be rejected. Last valid anchor is 2013.
+        assert 2017 not in years_by_w.get(5, [])
+        assert max(years_by_w[5]) == 2013
+        assert max(years_by_w[2]) == 2016
 
 
 # ---------------------------------------------------------------------------

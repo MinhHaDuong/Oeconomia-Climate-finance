@@ -67,7 +67,7 @@ def _smooth_distribution(v, eps=1e-10):
 
 
 from _divergence_io import get_min_papers as _get_min_papers
-from _divergence_io import subsample_equal_n
+from _divergence_io import per_window_year_ranges, subsample_equal_n
 
 
 def _iter_lexical_window_pairs(df, cfg):
@@ -76,6 +76,9 @@ def _iter_lexical_window_pairs(df, cfg):
     Fits a global TF-IDF vectorizer, then iterates over (window, year),
     yielding sparse TF-IDF matrices for before/after windows.
     Shared by L1 and C2ST_lexical.
+
+    Uses per-window year ranges so the after-window always fits inside
+    the corpus — narrower windows reach later years.
     """
     div_cfg = cfg["divergence"]
     lex_cfg = div_cfg.get("lexical", {})
@@ -88,7 +91,7 @@ def _iter_lexical_window_pairs(df, cfg):
     seed = div_cfg["random_seed"]
     rng = np.random.RandomState(seed)
 
-    years = sorted(df["year"].unique())
+    years_by_window = per_window_year_ranges(df, windows)
     all_texts = df["abstract"].tolist()
 
     vec = TfidfVectorizer(
@@ -99,7 +102,7 @@ def _iter_lexical_window_pairs(df, cfg):
     )
     vec.fit(all_texts)
 
-    for w in windows:
+    for w, years in years_by_window.items():
         for y in years:
             mask_before = (df["year"] >= y - w) & (df["year"] <= y)
             mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)

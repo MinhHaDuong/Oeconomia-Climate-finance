@@ -1,12 +1,14 @@
 %erg v1
 Title: Align divergence year bounds to per-window convention (semantic + lexical)
-Status: open
+Status: doing
 Created: 2026-04-17
 Author: claude
 Blocked-by: none
 
 --- log ---
 2026-04-17T01:30Z claude created from t0042 post-run audit
+2026-04-17T07:12Z claude claimed
+2026-04-17T07:12Z claude status doing
 
 --- body ---
 ## Context
