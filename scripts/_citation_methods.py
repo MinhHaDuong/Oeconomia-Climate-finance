@@ -349,6 +349,12 @@ def compute_g4_cross_trad(works, citations, internal_edges, cfg):
     the tradition split as a corpus-level identity rather than a mid-corpus
     snapshot is what makes the tail (ticket 0065) defined at all.
 
+    Caveat: this projects the late-era community structure backward onto
+    early years (e.g., 1998–2009). "Cross-tradition" in 1999 therefore
+    means "crossing a 2024-visible tradition split," not "crossing a
+    tradition that existed in 1999." The technical-report G4 include
+    (ticket 0028) should state this explicitly.
+
     Returns DataFrame with columns: year, window, hyperparams, value
     """
     years = _get_years(works)

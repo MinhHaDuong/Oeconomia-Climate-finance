@@ -314,8 +314,13 @@ class TestUnchangedMethods:
             f"G3 windows: {df['window'].unique()}"
         )
 
-    def test_g4_still_uses_cumulative(self, data):
-        """G4 should still output window='cumulative'."""
+    def test_g4_output_window_label_is_cumulative(self, data):
+        """G4 output rows must carry window='cumulative' (schema stability).
+
+        This only checks the output label in the CSV. It does NOT assert
+        the computation is cumulative — the bisection runs once on the
+        full graph, and per-year new-edge rates are counted year-by-year.
+        """
         from _citation_methods import compute_g4_cross_trad
 
         works, citations, internal_edges, cfg = data
