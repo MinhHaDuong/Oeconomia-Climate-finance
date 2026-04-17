@@ -23,8 +23,6 @@ Vectorize TF-IDF once per window, permute row indices instead of
 re-transforming texts 2 × n_perm times.
 """
 
-from __future__ import annotations
-
 import numpy as np
 from utils import get_logger
 
@@ -212,7 +210,7 @@ def _summarize_gpu(
 ) -> tuple[float, float, float, float, float]:
     """Compute z-score and p-value from GPU null distribution."""
     null_mean = float(null_stats.mean().item())
-    null_std = float(null_stats.std().item())
+    null_std = float(null_stats.std(correction=0).item())
     z = (observed - null_mean) / null_std if null_std > 0 else 0.0
     p = float((null_stats >= observed).float().mean().item())
     return observed, null_mean, null_std, z, p

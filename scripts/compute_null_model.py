@@ -302,7 +302,7 @@ def _run_semantic_permutations(method_name, div_df, cfg, n_jobs=1):
     )
 
 
-def _run_lexical_permutations(method_name, div_df, cfg, n_jobs=1):
+def _run_lexical_permutations(method_name, div_df, cfg):
     """Permutation test for lexical methods (L1).
 
     Precomputes TF-IDF for each (year, window) pool once, then permutes
@@ -635,7 +635,7 @@ def main():
             method_name, div_df, cfg, n_jobs=args.n_jobs
         )
     elif channel == "lexical":
-        result = _run_lexical_permutations(method_name, div_df, cfg, n_jobs=args.n_jobs)
+        result = _run_lexical_permutations(method_name, div_df, cfg)
     elif channel == "citation":
         result = _run_citation_permutations(method_name, div_df, cfg)
     else:
