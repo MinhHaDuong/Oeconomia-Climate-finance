@@ -8,21 +8,26 @@ abstract: |
   We present a framework for detecting endogenous structural change in
   scientific literatures across multiple document representations, and apply
   it to a corpus of {{< meta corpus_total >}} works on climate finance
-  (1998--2021). The framework combines three independent detectors ---
-  Energy distance on sentence-transformer embeddings, Jensen--Shannon
-  divergence on lexical distributions, and Louvain community divergence on a
-  temporally consistent co-citation graph --- with a classifier two-sample
-  test as a robustness reference. Statistical inference uses permutation Z-scores for
+  (1998--2021). The framework combines three independent detectors (Energy
+  distance on sentence-transformer embeddings, Jensen--Shannon divergence on
+  lexical distributions, and Louvain community divergence on a temporally
+  consistent co-citation graph) with a classifier two-sample test as a
+  robustness reference. Statistical inference uses permutation Z-scores for
   the distance statistics and cross-validation fold variance for the
-  classifier AUC --- two distinct primitives chosen to match each method's
-  source of variation. We detect candidate years where Z exceeds a fixed
-  threshold, group contiguous supra-threshold years into *transition zones*,
-  and validate a zone only when at least two independent layers agree.
-  A two-pass censored-gap analysis confirms that validated zones survive
-  the removal of transitional years. The framework does not claim to
-  uniquely determine the field's true periodization; it provides
-  reproducible, multi-representation evidence of where the distribution of
-  scholarship shifts.
+  classifier AUC, two primitives chosen to match each method's source of
+  variation. Candidate years with Z above threshold are grouped into
+  contiguous *transition zones* and validated only when at least two layers
+  agree. Applied at the three-year lead window, the community-divergence
+  layer (G9) flags three distinct sub-zones
+  ({{< meta g9_zones_listing >}}) with peak Z = {{< meta g9_peak_z_w3 >}} at
+  {{< meta g9_peak_year_w3 >}}. The embedding and lexical layers saturate
+  above threshold at every admissible year, a signature of residual growth
+  bias in the permutation null that the multi-layer rule alone cannot correct
+  (bias audits B2, B9). The case study thus demonstrates the framework's
+  diagnostic value: multi-signal validation exposes when a layer's magnitude
+  reflects sampling artifact rather than structural change, and it localises
+  the discriminative signal to the representation that is robust to the
+  artifact.
 format:
   pdf:
     pdf-engine: xelatex
@@ -169,33 +174,33 @@ For each confirmed zone, the framework extracts three interpretive outputs.
 
 ## 5. Results
 
-The results below are stubbed: the companion compute pipeline (ticket 0064) will populate the numeric placeholders. This section fixes the reporting shape so downstream tickets can fill values mechanically.
+Numbers in this section resolve from `content/companion-paper-vars.yml`, which `scripts/compute_companion_vars.py` regenerates from the divergence pipeline's summary tables (ticket 0042 run). @fig-zseries and @fig-heatmap visualise the same material.
 
 ### 5.1 Z-score time series
 
-@fig-zseries shows the three detection layers (S2 Energy, L1 JS, G9 community divergence) with permutation Z-scores, plus the C2ST AUC reference layer (G2) with CV fold standard deviation bands. At the default half-width $w = 3$, S2 peaks at {{< meta s2_peak_year_w3 >}} ($Z = ${{< meta s2_peak_z_w3 >}}), L1 peaks at {{< meta l1_peak_year_w3 >}} ($Z = ${{< meta l1_peak_z_w3 >}}), and G9 peaks at {{< meta g9_peak_year_w3 >}} ($Z = ${{< meta g9_peak_z_w3 >}}). The C2ST AUC trace reaches its maximum at {{< meta g2_peak_year_w3 >}} with AUC {{< meta g2_peak_auc_w3 >}} ($\sigma_{\text{CV}} = ${{< meta g2_peak_auc_sd_w3 >}}). Peaks agree within three years across the three distance layers.
+@fig-zseries shows the three detection layers (S2 Energy, L1 JS, G9 community divergence) with permutation Z-scores and the C2ST AUC reference panel (embedding and lexical channels) with their CV fold standard-deviation bands. At the lead half-width $w = 3$, S2 peaks at {{< meta s2_peak_year_w3 >}} ($Z = ${{< meta s2_peak_z_w3 >}}) and L1 peaks at {{< meta l1_peak_year_w3 >}} ($Z = ${{< meta l1_peak_z_w3 >}}); both distance layers stay above the $Z = 2$ threshold at every admissible year of the analysis window. G9 peaks at {{< meta g9_peak_year_w3 >}} ($Z = ${{< meta g9_peak_z_w3 >}}) and crosses threshold only in isolated year runs --- the layer that actually discriminates. G2 spectral-gap divergence peaks at {{< meta g2_peak_year_w3 >}} with Z = {{< meta g2_peak_auc_w3 >}} and {{< meta g2_peak_auc_sd_w3 >}}; we keep it as a robustness reference rather than a detector. The C2ST reference layers track the distance picture: embedding AUC peaks at {{< meta c2st_embed_peak_year_w3 >}} ({{< meta c2st_embed_peak_auc_w3 >}}), lexical AUC at {{< meta c2st_lex_peak_year_w3 >}} ({{< meta c2st_lex_peak_auc_w3 >}}).
 
-Sensitivity checks at $w = 2$ and $w = 4$ move the peak locations by at most one year (see appendix table), consistent with the window half-width setting the effective temporal resolution.
+The S2 and L1 magnitudes are, on their face, implausibly large. The bias audits B2 and B9 (acknowledged in §6.4) document that rapid corpus growth inside the window inflates the permutation null --- exactly the regime the climate-finance corpus occupies after the late-1990s expansion. We report the peaks as computed but interpret the absolute Z magnitudes cautiously; the saturation pattern at $w = 3$ is the smoking gun.
+
+Window sensitivity is uneven across layers. S2 peaks at 2013 for every $w \in \{2, 3, 4\}$; L1 peak drifts by one year per step (2021/2020/2019 for $w = 2, 3, 4$); G9 flips sign between $w = 3$ and $w = 4$ (peak Z = 8.2 at 2015 for $w = 3$; peak Z = $-9.9$ at 2019 for $w = 4$), reflecting the Louvain stochasticity and community-alignment noise flagged in §4.8 and §6.4 rather than a stable break location. The lead window $w = 3$ is therefore the honest primary report, and single-$w$ results should not be read as the last word on any specific year.
 
 ### 5.2 Transition zones and multi-signal validation
 
-@fig-heatmap plots the supra-threshold mask for each layer as a heatmap row, with validated zones highlighted as vertical bands. Applying the $Z > 2$ threshold and the two-layer agreement rule yields {{< meta n_zones_validated >}} validated transition zones over the 1998--2021 analysis window.
+@fig-heatmap plots the supra-threshold mask for each layer as a heatmap row. Applying the $Z > 2$ threshold year-by-year and the two-of-three agreement rule over the distance layers yields {{< meta n_zones_validated >}} validated transition zone at $w = 3$, running from {{< meta zone_1_start >}} to {{< meta zone_1_end >}} with {{< meta zone_1_methods_agreeing >}} contributing at least one supra-threshold year inside it. A naive reading would claim a field-wide discontinuity over the full analysis span; the honest reading is that S2 and L1 are uninformative as discriminators under residual growth bias, and the single "zone" reflects that saturation rather than a structural break.
 
-The first validated zone runs from {{< meta zone_1_start >}} to {{< meta zone_1_end >}}, supported by {{< meta zone_1_methods_agreeing >}}. The second runs from {{< meta zone_2_start >}} to {{< meta zone_2_end >}}, supported by {{< meta zone_2_methods_agreeing >}}. C2ST AUC exceeds {{< meta g2_reference_threshold >}} in both zones, consistent with the distance-based signals.
+The meaningful layer is G9. Its supra-threshold years at $w = 3$ cluster into {{< meta g9_n_zones >}} contiguous runs ({{< meta g9_zones_listing >}}), each a candidate locus of community-structure reorganisation in the co-citation graph. C2ST AUC rises monotonically across the analysis window on both channels, consistent with accumulating distributional drift but not with point discontinuities.
 
 ### 5.3 Censored-gap confirmation
 
-The two-pass censored-gap analysis (§4.7) retains {{< meta n_zones_confirmed >}} of the validated zones as confirmed discontinuities. Zones labelled *gradual* correspond to extended redistributions rather than sharp breaks: removing the transitional years drops all three layers below the $Z > 2$ threshold. @fig-heatmap marks confirmed zones with a solid border and gradual zones with a dashed border.
+The two-pass censored-gap analysis (§4.7) was not executed in the ticket-0042 rerun: the sensitivity tables shipped cover JL projection and PCA dimension, not transitional-year excision. Status of each candidate zone is {{< meta n_zones_confirmed >}}. This is a known gap; the censored-gap pass is tracked as a direct follow-up to this ticket. The framework's confirmation/gradual distinction is therefore reported as a design feature of §4.7 rather than as an applied result in §5.
 
 ### 5.4 Interpretation at validated zones
 
-For each confirmed zone, @fig-terms shows the top discriminative terms from the log-odds ratio and logistic classifier (intersection ranking), and @fig-community shows the Louvain community transitions as a flow diagram.
+The discriminative-terms and community-shift interpretation outputs (§4.9) require `compute_interpretation.py` to run per zone; its CSVs are absent from the ticket-0042 rerun and are scheduled under ticket 0056. The placeholders below remain unresolved pending that output. When the follow-up lands, @fig-terms and @fig-community will show the concrete shifts.
 
-At zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}), terms gaining weight include {{< meta zone_1_top_terms_after >}}; terms losing weight include {{< meta zone_1_top_terms_before >}}. The dominant community shift moves documents from {{< meta zone_1_community_before >}} to {{< meta zone_1_community_after >}}.
+For zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}): terms gaining weight, {{< meta zone_1_top_terms_after >}}; terms losing weight, {{< meta zone_1_top_terms_before >}}. Community shift: {{< meta zone_1_community_before >}} to {{< meta zone_1_community_after >}}. For the G9 sub-zones the same procedure will run per run listed in §5.2.
 
-At zone 2 ({{< meta zone_2_start >}}--{{< meta zone_2_end >}}), terms gaining weight include {{< meta zone_2_top_terms_after >}}; terms losing weight include {{< meta zone_2_top_terms_before >}}. The dominant community shift moves documents from {{< meta zone_2_community_before >}} to {{< meta zone_2_community_after >}}.
-
-Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates these shifts in the field's institutional history. The companion paper's claim is methodological: the framework identifies the zones reproducibly across independent representations.
+Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates scholarship shifts in the field's institutional history. The companion paper's claim is methodological: the framework's transition-zone ledger is reproducible across independent representations even when any single representation is dominated by a known artifact. The present run shows the flipside of that robustness --- when two of the three distance layers share a bias, the cross-layer validation rule cannot rescue them; G9 carries the discriminative weight on its own, and confirmation rests on the community-layer signal until the growth-bias correction is implemented.
 
 ![Permutation Z-scores at the lead window ($w = 3$) for the four distance-based detectors (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
 

@@ -63,34 +63,48 @@ class TestRelatedWork:
 
 
 class TestResults51:
-    """§5.1 Structural breaks in the full corpus."""
+    """§5.1 Z-score time series (ticket 0064 rewrite of old 5.1 design)."""
 
     def test_no_placeholder(self):
-        s = section_h3(read(COMPANION), "5.1 Structural breaks in the full corpus")
+        s = section_h3(read(COMPANION), "5.1 Z-score time series")
         assert s, "§5.1 heading not found"
         assert "[TO WRITE" not in s
 
-    def test_mentions_2007_or_2009(self):
-        s = section_h3(read(COMPANION), "5.1 Structural breaks in the full corpus")
-        assert "2007" in s or "2009" in s, "§5.1 must mention key break years"
-
-    def test_mentions_censored(self):
-        s = section_h3(read(COMPANION), "5.1 Structural breaks in the full corpus")
-        assert "censor" in s.lower() or "gap" in s.lower(), \
-            "§5.1 must discuss censored-gap refinement"
+    def test_mentions_peak_z(self):
+        s = section_h3(read(COMPANION), "5.1 Z-score time series")
+        assert "peak" in s.lower() and ("z = " in s.lower() or "$z" in s.lower()), (
+            "§5.1 must report per-method peak Z"
+        )
 
 
 class TestResults52:
-    """§5.2 No break in the core subset."""
+    """§5.2 Transition zones and multi-signal validation (ticket 0064)."""
 
     def test_no_placeholder(self):
-        s = section_h3(read(COMPANION), "5.2 No break in the core subset")
+        s = section_h3(
+            read(COMPANION), "5.2 Transition zones and multi-signal validation"
+        )
         assert s, "§5.2 heading not found"
         assert "[TO WRITE" not in s
 
-    def test_mentions_core(self):
-        s = section_h3(read(COMPANION), "5.2 No break in the core subset")
-        assert "core" in s.lower(), "§5.2 must discuss the core subset"
+    def test_mentions_validation(self):
+        s = section_h3(
+            read(COMPANION), "5.2 Transition zones and multi-signal validation"
+        )
+        assert "validat" in s.lower() and "zone" in s.lower(), (
+            "§5.2 must discuss validated transition zones"
+        )
+
+
+class TestResults53:
+    """§5.3 Censored-gap confirmation (ticket 0064)."""
+
+    def test_mentions_censored(self):
+        s = section_h3(read(COMPANION), "5.3 Censored-gap confirmation")
+        assert s, "§5.3 heading not found"
+        assert "censor" in s.lower() or "gap" in s.lower(), (
+            "§5.3 must discuss censored-gap pass"
+        )
 
 
 class TestDiscussion:
@@ -100,29 +114,31 @@ class TestDiscussion:
         """§6.1 must compare with topic models."""
         t = read(COMPANION)
         # Accept either old or new numbering
-        s = section_h3(t, "6.1 Comparison with topic model approaches") or \
-            section_h3(t, "6.3 Comparison with topic model approaches")
+        s = section_h3(t, "6.1 Comparison with topic model approaches") or section_h3(
+            t, "6.3 Comparison with topic model approaches"
+        )
         assert s, "§6 comparison section not found"
         assert "[TO WRITE" not in s
 
     def test_limitations_no_placeholder(self):
         t = read(COMPANION)
-        s = section_h3(t, "6.4 Limitations") or \
-            section_h3(t, "6.3 Limitations")
+        s = section_h3(t, "6.4 Limitations") or section_h3(t, "6.3 Limitations")
         assert s, "§6 limitations section not found"
         assert "[TO WRITE" not in s
 
     def test_contribution_no_placeholder(self):
         t = read(COMPANION)
-        s = section_h3(t, "6.5 Methodological contribution") or \
-            section_h3(t, "6.2 Methodological contributions")
+        s = section_h3(t, "6.5 Methodological contribution") or section_h3(
+            t, "6.2 Methodological contributions"
+        )
         assert s, "§6 contribution section not found"
         assert "[TO WRITE" not in s
 
     def test_generalizability_no_placeholder(self):
         t = read(COMPANION)
-        s = section_h3(t, "6.2 Generalizability") or \
-            section_h3(t, "6.3 Generalizability")
+        s = section_h3(t, "6.2 Generalizability") or section_h3(
+            t, "6.3 Generalizability"
+        )
         assert s, "§6 generalizability section not found"
         assert "[TO WRITE" not in s
 

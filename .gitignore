@@ -27,6 +27,7 @@ content/figures/
 content/tables/
 content/*-vars.yml
 !content/manuscript-vars.yml
+!content/companion-paper-vars.yml
 
 # Python / uv
 .venv/
