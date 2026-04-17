@@ -46,11 +46,16 @@ Autonomous execution using test-driven development. The inner cycle is:
 Use `make check-fast` during development, `make check` before opening a PR. Makefile truth: prerequisites and targets must match each script's actual file reads and writes.
 
 ### Verify
-Review each PR before merging:
+Gate each PR before merging via `/verify <pr-number>`. The skill runs the full loop:
 
-1. **Review**: `/review-pr` or `/review-pr-prose`.
-2. **Fix**: Fix all issues. Nits: fix them. Code smells: ultrathink architectural improvements.
-3. **Iterate**: Up to three review/fix cycles.
+1. `/verify-adherence` — mechanical-first rule check (hygiene tests + grep ratchet, LLM fallback only for semantic residue).
+2. `/review` (built-in) + `/review-pr` or `/review-pr-prose` (skill) — read-only review fan-out.
+3. `/simplify` — reuse / quality / efficiency, applies fixes.
+4. `/verify-gate` — anti-rubber-stamp gate. Every ticket exit criterion requires concrete evidence (commit SHA + file:line OR test_id). "CI passes" / "simplify ran" are NOT evidence.
+
+Verdict: APPROVED / REROLL / ESCALATE. Two rounds max — round 3 is forbidden. `/verify` never merges; merge is the author's call (interactive) or `/celebrate`'s call (autonomous).
+
+`--force-approve` is a loud human override, logged on the PR. Use it sparingly.
 
 ### Celebrate (autonomous)
 Runs via `/celebrate`. Celebrating is not a formality — it closes the energy cycle. Reflect on what was accomplished and learned, consolidate memory, dream forward.
@@ -71,8 +76,11 @@ The agent must always know and declare its current phase.
 | `/celebrate` | After completing a ticket | Reflect, update STATE/ROADMAP, clean up |
 | `/end-session` | User ends a work session | Push branches, run tests, refresh STATE |
 | `/new-ticket` | Creating a GitHub issue | Write handoff document with test spec |
-| `/review-pr N` | Reviewing a pull request (code) | Multi-perspective agent review |
-| `/review-pr-prose N` | Reviewing a pull request (prose) | Simulated peer review panel |
+| `/verify N` | Gating a PR before merge | Full loop: adherence + review + review-pr + simplify + gate; bounces PR for at most one retry |
+| `/verify-adherence N` | Rule-check a branch | Mechanical-first (tests + grep ratchet); LLM fallback emits suggested_test entries |
+| `/verify-gate N` | Standalone merge gate | Anti-rubber-stamp; per-exit-criterion evidence required |
+| `/review-pr N` | Lightweight code review | Multi-perspective agents; posts comments only, no fixes, no gate |
+| `/review-pr-prose N` | Lightweight prose review | Simulated peer review panel |
 | `/memory` | Writing or sweeping persistent memory | Enforce caps, TTLs, staleness |
 | `/autonomous` | Unsupervised autonomous session | Imperial Dragon cycles with 60/40 balance |
 | `/submission-branch` | Creating a submission branch | Sprout, freeze, revision lifecycle |
@@ -87,7 +95,7 @@ When issue exploration leads to multiple action items, open one ticket for each 
 
 1. **Select** — pick ripe tickets (dependencies met, blockers cleared).
 2. **Launch** — each ticket in its own worktree, independent tickets in parallel.
-3. **Verify** — review each PR in a fresh-context worktree (`/review-pr`).
+3. **Verify** — gate each PR via `/verify` (in its own worktree).
 4. **Learn** — for each result:
    - **Success**: `/celebrate`, save what worked as feedback memory.
    - **Failure**: diagnose root cause, save lesson, re-ticket with diagnosis.
