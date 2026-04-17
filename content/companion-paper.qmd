@@ -8,11 +8,11 @@ abstract: |
   We present a framework for detecting endogenous structural change in
   scientific literatures across multiple document representations, and apply
   it to a corpus of {{< meta corpus_total >}} works on climate finance
-  (1998--2021). The framework compares four layers of evidence: Energy
-  distance on sentence-transformer embeddings, Jensen--Shannon divergence on
-  lexical distributions, Louvain community divergence on a temporally
-  consistent co-citation graph, and a classifier two-sample test as a
-  robustness reference. Statistical inference uses permutation Z-scores for
+  (1998--2021). The framework combines three independent detectors ---
+  Energy distance on sentence-transformer embeddings, Jensen--Shannon
+  divergence on lexical distributions, and Louvain community divergence on a
+  temporally consistent co-citation graph --- with a classifier two-sample
+  test as a robustness reference. Statistical inference uses permutation Z-scores for
   the distance statistics and cross-validation fold variance for the
   classifier AUC --- two distinct primitives chosen to match each method's
   source of variation. We detect candidate years where Z exceeds a fixed
