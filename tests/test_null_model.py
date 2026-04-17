@@ -397,11 +397,104 @@ class TestCitationNullModel:
         assert p < 0.1, f"Expected small p-value, got p={p:.3f}"
 
 
+class TestG2SpectralNullModel:
+    """Tests for G2_spectral citation channel null model (ticket 0069)."""
+
+    def test_citation_dispatcher_handles_g2(self):
+        """_run_citation_permutations should accept G2_spectral, not just G9."""
+        from unittest.mock import patch
+
+        from compute_null_model import _run_citation_permutations
+        from schemas import NullModelSchema
+
+        rng = np.random.RandomState(42)
+        n_years = 15
+        papers_per_year = 20
+        years = np.repeat(np.arange(2000, 2000 + n_years), papers_per_year)
+        dois = [f"10.1000/test.{i}" for i in range(len(years))]
+        works = pd.DataFrame({"doi": dois, "year": years, "cited_by_count": 10})
+
+        edges = []
+        doi_list = list(works["doi"])
+        doi_years = dict(zip(works["doi"], works["year"]))
+        for _ in range(len(doi_list) * 3):
+            src = rng.choice(doi_list)
+            ref = rng.choice(doi_list)
+            if src != ref:
+                edges.append(
+                    {
+                        "source_doi": src,
+                        "ref_doi": ref,
+                        "source_year": doi_years[src],
+                    }
+                )
+        internal_edges = pd.DataFrame(edges).drop_duplicates(
+            subset=["source_doi", "ref_doi"]
+        )
+
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "random_seed": 42,
+                "permutation": {"n_perm": 20},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+                "citation": {},
+            }
+        }
+
+        div_df = pd.DataFrame({"year": [2005, 2007], "window": [3, 3]})
+
+        with patch(
+            "_divergence_citation.load_citation_data",
+            return_value=(works, None, internal_edges),
+        ):
+            result = _run_citation_permutations("G2_spectral", div_df, cfg)
+
+        NullModelSchema.validate(result)
+        expected_cols = {
+            "year",
+            "window",
+            "observed",
+            "null_mean",
+            "null_std",
+            "z_score",
+            "p_value",
+        }
+        assert set(result.columns) == expected_cols
+        assert len(result) == 2
+
+        # Observed must match the G2_spectral statistic (not the G9 JS).
+        from _citation_methods import _spectral_gap
+        from _divergence_citation import _sliding_window_graph
+
+        for _, row in result.iterrows():
+            y = int(row["year"])
+            w = int(row["window"])
+            G_before = _sliding_window_graph(works, internal_edges, y, w, "before")
+            G_after = _sliding_window_graph(works, internal_edges, y, w, "after")
+            gap_b = _spectral_gap(G_before)
+            gap_a = _spectral_gap(G_after)
+            if np.isnan(gap_b) or np.isnan(gap_a):
+                expected = np.nan
+            else:
+                expected = abs(gap_a - gap_b)
+            obs = row["observed"]
+            if np.isnan(expected):
+                assert np.isnan(obs), f"year={y} expected NaN, got {obs}"
+            else:
+                assert abs(obs - expected) < 1e-9, (
+                    f"year={y} G2 observed={obs} but spectral diff={expected}"
+                )
+
+
 @pytest.mark.integration
 class TestSmokeNullModel:
     """Smoke tests for compute_null_model.py on fixture data."""
 
-    @pytest.mark.parametrize("method", ["S2_energy", "L1", "G9_community"])
+    @pytest.mark.parametrize(
+        "method", ["S2_energy", "L1", "G9_community", "G2_spectral"]
+    )
     def test_compute_produces_output(self, method, tmp_path):
         """Script runs and produces a valid CSV."""
         # First, generate the divergence CSV that the null model reads
@@ -436,7 +529,9 @@ class TestSmokeNullModel:
         assert expected_cols == set(df.columns), f"Columns mismatch: {set(df.columns)}"
         assert len(df) > 0
 
-    @pytest.mark.parametrize("method", ["S2_energy", "L1", "G9_community"])
+    @pytest.mark.parametrize(
+        "method", ["S2_energy", "L1", "G9_community", "G2_spectral"]
+    )
     def test_output_passes_schema(self, method, tmp_path):
         """Output validates against NullModelSchema."""
         from conftest import run_compute
