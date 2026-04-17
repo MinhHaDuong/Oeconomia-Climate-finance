@@ -279,6 +279,44 @@ class TestC2STDispatcherIntegration:
         assert "C2ST_embedding" in METHODS, "C2ST_embedding not in METHODS"
         assert "C2ST_lexical" in METHODS, "C2ST_lexical not in METHODS"
 
+    def test_dispatcher_schema_symbols_resolve(self):
+        """compute_divergence imports both schemas — guards against formatter
+        stripping an unused import.
+
+        Regression test for ticket 0068: auto-formatter removed
+        C2STDivergenceSchema when the import was added before the usage
+        edit, leaving a latent NameError on any C2ST_* invocation.
+        """
+        import compute_divergence
+
+        assert hasattr(compute_divergence, "C2STDivergenceSchema"), (
+            "compute_divergence.C2STDivergenceSchema missing — import was stripped"
+        )
+        assert hasattr(compute_divergence, "DivergenceSchema")
+
+    def test_end_to_end_c2st_lexical_on_smoke_fixture(self, tmp_path):
+        """Run compute_divergence.py --method C2ST_lexical against the smoke
+        fixture; output must pass C2STDivergenceSchema.
+
+        This is the end-to-end path a user / Make runs — unit tests on the
+        compute_c2st_* functions do not exercise the dispatcher's schema
+        validation. Without this, a missing C2STDivergenceSchema import is
+        only caught at production runtime.
+        """
+        from conftest import run_compute
+        from schemas import C2STDivergenceSchema
+
+        out = tmp_path / "tab_div_C2ST_lexical.csv"
+        result = run_compute("C2ST_lexical", out)
+        assert result.returncode == 0, (
+            f"Dispatcher failed: stdout={result.stdout}\nstderr={result.stderr}"
+        )
+        assert out.exists(), f"Dispatcher did not write {out}"
+        df = pd.read_csv(out)
+        C2STDivergenceSchema.validate(df)
+        for col in ("auc_std", "auc_q025", "auc_q975", "n_folds", "p_value_vs_chance"):
+            assert col in df.columns, f"{col} missing from dispatcher output"
+
     def test_c2st_embedding_entry(self):
         from compute_divergence import METHODS
 

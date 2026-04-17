@@ -18,7 +18,7 @@ import importlib
 import os
 
 from pipeline_loaders import load_analysis_config
-from schemas import DivergenceSchema
+from schemas import C2STDivergenceSchema, DivergenceSchema
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 

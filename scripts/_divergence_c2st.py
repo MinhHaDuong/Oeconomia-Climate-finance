@@ -84,7 +84,10 @@ def _c2st_auc(X, Y, *, cv_folds=5, class_weight="balanced", seed):
         se = std / np.sqrt(n)
         q025 = max(0.0, mean - t_crit * se)
         q975 = min(1.0, mean + t_crit * se)
-        p_value = float(stats.ttest_1samp(scores, 0.5).pvalue)
+        # C2ST's alternative is directional: a distinguishable pair gives
+        # AUC > 0.5. Use one-sided test so that a pathological cluster below
+        # 0.5 does not register as "significant" signal.
+        p_value = float(stats.ttest_1samp(scores, 0.5, alternative="greater").pvalue)
     else:
         q025 = mean
         q975 = mean
