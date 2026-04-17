@@ -31,17 +31,18 @@ over silent hope.
 | ID  | Bias                                  | Affects                | Status | Child ticket |
 |-----|---------------------------------------|------------------------|--------|--------------|
 | B1  | Organic corpus size growth            | all channels           | ✅     | —            |
-| B2  | Retro-indexing of pre-DOI era         | all channels (pre-2005)| ❌     | see below    |
-| B3  | English-language dominance            | S2, L1                 | ⚠      | see below    |
-| B4  | Editorial cartel / venue concentration| L1, G2, G9             | ❌     | see below    |
+| B2  | Retro-indexing of pre-DOI era         | all channels (pre-2005)| ❌     | 0071         |
+| B3  | English-language dominance            | S2, L1                 | ⚠      | 0072         |
+| B4  | Editorial cartel / venue concentration| L1, G2, G9             | ❌     | 0073         |
 | B5  | Citation threshold ≥ 50 (core subset) | core-subset claims     | ℹ      | —            |
-| B6  | Louvain partition stochasticity       | G9                     | ⚠      | see below    |
-| B7  | Window size arbitrariness (w)         | all channels           | ⚠      | see below    |
-| B8  | Multiple comparisons                  | transition-zone claims | ⚠      | see below    |
+| B6  | Louvain partition stochasticity       | G9                     | ⚠      | 0074         |
+| B7  | Window size arbitrariness (w)         | all channels           | ⚠      | 0075         |
+| B8  | Multiple comparisons                  | transition-zone claims | ⚠      | 0076         |
 | B9  | Permutation exchangeability           | null p-values          | ✅     | —            |
-| B10 | DOI resolution rate varies by era     | G2, G9                 | ❌     | see below    |
+| B10 | DOI resolution rate varies by era     | G2, G9                 | ❌     | 0077         |
 | B11 | Embedding model choice (BGE-M3)       | S2 and all embedding   | ℹ      | 0036 (open)  |
 | B12 | Data snapshot cutoff                  | post-2023 slice        | ⚠      | 0067 (open)  |
+| B13 | Config/paper window mismatch          | paper §6.4 prose       | ⚠      | 0075 (w/ B7) |
 
 ## Data-generating biases
 
@@ -151,7 +152,7 @@ detected breakpoints.
 ### B5. Citation threshold for core subset (cited_by_count ≥ 50) ℹ
 
 **Description.** Core subset is defined by `cited_by_count ≥ 50`
-(`config/analysis.yaml:12`, `scripts/build_het_core.py:14`). Recent papers
+(`config/analysis.yaml:12`). Recent papers
 haven't had time to accumulate citations, so the core is systematically
 older than the full corpus. The "no break in core" finding is partly a
 recency-floor artifact: 2022–2024 papers are under-represented.
@@ -264,7 +265,7 @@ variance and inflates Type I error.
 **Current defense.** Equal-n subsampling
 (`config/analysis.yaml:29 equal_n: true`) removes the sample-size asymmetry
 that is the main exchangeability violator. The permutation shuffles the
-equal-sized pooled sample (`scripts/compute_null_model.py:205`), so under
+equal-sized pooled sample (`scripts/compute_null_model.py:70`), so under
 equal-n the exchangeability assumption is close to satisfied. B1 is thus
 handled for the null as well as for the point estimate.
 
@@ -339,12 +340,12 @@ down.
 
 ## Biases surfaced during the audit
 
-### B13. Config/paper window mismatch (documentation bias)
+### B13. Config/paper window mismatch (documentation bias) ⚠
 
 Not a statistical bias in the data, but a defensible-paper bias. The
 config declares `windows: [2, 3, 4, 5]` but §6.4 reports results "tested
 with half-widths w = 2, 3, 4". A reviewer will ask what happened to
-w = 5. See recommended action under B7.
+w = 5. Folded into ticket 0075 (B7); no separate child ticket.
 
 ## Child tickets to open
 
