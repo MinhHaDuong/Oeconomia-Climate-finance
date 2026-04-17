@@ -76,7 +76,7 @@ def build_vars(tables_dir: Path) -> dict:
     peaks = {}  # method -> (year, z, p)
     for method in DISTANCE_METHODS:
         df = _load_summary(tables_dir, method)
-        sig = sorted(df[df["z_score"] > Z_THRESHOLD]["year"].astype(int).tolist())
+        sig = sorted(df[df["z_score"].abs() > Z_THRESHOLD]["year"].astype(int).tolist())
         distance_sigyears[method] = sig
         peak = _peak_row(df, "z_score")
         peaks[method] = (
