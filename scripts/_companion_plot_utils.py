@@ -12,8 +12,6 @@ scripts while staying well inside Phase 2 rules 4 (compute/plot/include
 separate) and 5 (save_figure mandatory).
 """
 
-from __future__ import annotations
-
 import os
 from typing import Any
 

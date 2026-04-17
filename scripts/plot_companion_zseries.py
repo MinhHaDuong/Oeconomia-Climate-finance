@@ -23,8 +23,6 @@ corresponding curve; the figure is still produced so the Make target
 succeeds on partial data.
 """
 
-from __future__ import annotations
-
 import argparse
 import sys
 
