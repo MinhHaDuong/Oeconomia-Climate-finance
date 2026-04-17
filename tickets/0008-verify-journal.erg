@@ -1,6 +1,6 @@
 %erg v1
 Title: Verify target journal for multilingual paper
-Status: pending
+Status: closed
 Created: 2026-04-13
 Author: claude
 
@@ -8,6 +8,8 @@ Author: claude
 2026-04-13T15:45Z claude created
 2026-04-13T18:30Z claude status pending — awaiting Couperin eligibility response
 2026-04-13T18:30Z claude note research complete, all three original candidates eliminated (none diamond OA), email sent to F. Bordignon (ENPC library)
+2026-04-17T10:00Z claude status closed — superseded by new publication strategy
+2026-04-17T10:00Z claude note parent epic 0001 is on hold (log 2026-04-13T19:30Z); strategy moved to epic 0026 (QSS chosen for companion method paper) + tickets 0013/0014 (venues for corpus v2.0 + finding paper — three candidates: Global Environmental Change / World Development / Nature Climate Change, narrow when data matures)
 
 --- body ---
 ## Context
