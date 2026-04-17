@@ -988,13 +988,14 @@ class TestBackendComparison:
         assert obs_cpu == pytest.approx(obs_gpu, rel=1e-3), (
             f"Observed: CPU={obs_cpu:.6f}, GPU={obs_gpu:.6f}"
         )
-        # Z-scores should agree on significance direction
-        assert (z_cpu > 0) == (z_gpu > 0), (
-            f"Sign mismatch: z_cpu={z_cpu:.2f}, z_gpu={z_gpu:.2f}"
+        # Both should agree on significance (different RNG → different null
+        # distribution, but same conclusion).  With a +1.5 shift on 30 points,
+        # z-scores are typically 20-40, so we use relative tolerance.
+        assert (z_cpu > 2) == (z_gpu > 2), (
+            f"Significance disagreement: z_cpu={z_cpu:.2f}, z_gpu={z_gpu:.2f}"
         )
-        # Allow tolerance for different RNG sequences
-        assert abs(z_cpu - z_gpu) < 2.0, (
-            f"Z-scores too far apart: CPU={z_cpu:.2f}, GPU={z_gpu:.2f}"
+        assert z_gpu == pytest.approx(z_cpu, rel=0.5), (
+            f"Z-scores differ by >50%%: CPU={z_cpu:.2f}, GPU={z_gpu:.2f}"
         )
 
     def test_gpu_mmd_formula_correct(self):
@@ -1030,9 +1031,9 @@ class TestBackendComparison:
         assert obs_cpu == pytest.approx(obs_gpu, rel=1e-2), (
             f"Observed MMD: CPU={obs_cpu:.6f}, GPU={obs_gpu:.6f}"
         )
-        assert (z_cpu > 0) == (z_gpu > 0), (
-            f"Sign mismatch: z_cpu={z_cpu:.2f}, z_gpu={z_gpu:.2f}"
+        assert (z_cpu > 2) == (z_gpu > 2), (
+            f"Significance disagreement: z_cpu={z_cpu:.2f}, z_gpu={z_gpu:.2f}"
         )
-        assert abs(z_cpu - z_gpu) < 2.0, (
-            f"Z-scores too far apart: CPU={z_cpu:.2f}, GPU={z_gpu:.2f}"
+        assert z_gpu == pytest.approx(z_cpu, rel=0.5), (
+            f"Z-scores differ by >50%%: CPU={z_cpu:.2f}, GPU={z_gpu:.2f}"
         )
