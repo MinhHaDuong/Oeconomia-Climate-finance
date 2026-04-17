@@ -1,0 +1,47 @@
+%erg v1
+Title: Venue concentration (Herfindahl/entropy) per year
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B4
+
+--- body ---
+## Context
+
+Audit 0070 identified bias **B4** (editorial cartel / venue concentration)
+as a ❌ gap. A small number of journals publish a large share of
+climate-finance papers. Structural breaks in L1/G2/G9 may reflect
+editorial taste shifts or special-issue pulses, not field-level change.
+No per-year concentration index exists today.
+`scripts/summarize_core_venues.py` is a post-hoc report only, not part
+of the analysis pipeline.
+
+## Actions
+
+1. Add `scripts/compute_venue_concentration.py` (Phase 2 rules: one
+   script, one output, schema-validated). Read `refined_works`, group by
+   `publication_year`, compute Herfindahl-Hirschman index and Shannon
+   entropy over `venue` share.
+2. Output: `content/tables/tab_venue_concentration.csv`, schema in
+   `scripts/schemas.py`.
+3. Add plot: `scripts/plot_venue_concentration.py` producing
+   `content/figures/fig_venue_concentration.png` with the detected
+   transition zones overlaid.
+4. Paragraph for §4.8: whether 2007 and 2013 coincide with concentration
+   shocks. If they do, qualify L1/G9 claims in §6.4.
+
+## Test
+
+`tests/test_venue_concentration.py::test_hhi_columns` — asserts the
+output CSV has columns `year, hhi, shannon_entropy, n_venues, n_papers`
+and that `hhi ∈ [0, 1]`. Red until the compute script exists.
+
+## Exit criteria
+
+- Compute script + plot script follow Phase 2 rules (one output, schema,
+  Makefile target in `divergence.mk` or a new `venues.mk`).
+- Supplementary figure + §4.8 paragraph.
+- Child of 0070 closed.

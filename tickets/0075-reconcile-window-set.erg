@@ -1,0 +1,48 @@
+%erg v1
+Title: Reconcile window set and state lead-window rationale
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B7
+
+--- body ---
+## Context
+
+Audit 0070 surfaced bias **B7** (window size arbitrariness) as ⚠ and
+identified a concrete inconsistency: `config/analysis.yaml:25` declares
+`windows: [2, 3, 4, 5]`, but `content/companion-paper.qmd:211` reports
+"Results are tested with half-widths w = 2, 3, 4". A reviewer will ask
+what happened to w = 5.
+
+Separately, the paper does not state why w = 3 is the lead window.
+
+## Actions
+
+1. Decide: run w = 5 or drop it from config.
+   - If running: update `scripts/compute_breakpoints.py` aggregation and
+     re-render the sensitivity table to include w = 5.
+   - If dropping: change `config/analysis.yaml` to `[2, 3, 4]`. Simpler,
+     and matches the paper as written.
+2. Add one sentence to §4.8 stating the lead-window rationale (e.g.,
+   "w = 3 is the smallest window for which the ≥ 2-of-3 robustness rule
+   is well-defined and where year-to-year sampling noise is attenuated
+   without smearing the detected breakpoints beyond the annual COP
+   cadence").
+3. Recommendation before implementation: prefer option 1a (include w = 5)
+   only if it's cheap; otherwise 1b.
+
+## Test
+
+`tests/test_window_config_paper_consistency.py::test_windows_match`
+— asserts the windows declared in `config/analysis.yaml` match the set
+named in the companion paper's §6.4 (parse the qmd for the sentence).
+Red until reconciled.
+
+## Exit criteria
+
+- Config and paper agree on the window set.
+- §4.8 paragraph states the lead-window choice rationale.
+- Sensitivity table in the technical report covers the declared windows.

@@ -1,0 +1,45 @@
+%erg v1
+Title: Across-seed Louvain variance for G9 Z-scores
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B6
+
+--- body ---
+## Context
+
+Audit 0070 flagged bias **B6** (Louvain stochasticity) as ⚠ mitigated.
+The seed is honored (ticket 0061 fixed RNG contamination) and the
+union-graph trick gives a single partition per window-pair, but we do
+not report how much the G9 Z-score moves when the seed changes.
+
+If across-seed SD is small relative to the Z > 2 threshold, G9 is a
+reliable signal. If SD is comparable to the point estimate, §6.4 needs a
+caveat.
+
+## Actions
+
+1. Add a `--seed-sweep N` mode to `scripts/compute_divergence.py` (or a
+   thin wrapper script `scripts/compute_g9_seed_variance.py`) that
+   re-runs the G9 Louvain step for N seeds (default 10), keeping the
+   rest of the pipeline deterministic.
+2. Output: `content/tables/tab_g9_seed_variance.csv` with columns
+   `year, seed, z_score`, schema-validated.
+3. Aggregate: `tab_g9_seed_variance_summary.csv` with
+   `year, mean_z, sd_z, min_z, max_z`.
+4. One sentence for §4.8 reporting the median across-seed SD of G9
+   Z-scores at detected breakpoints.
+
+## Test
+
+`tests/test_g9_seed_variance.py::test_sweep_produces_n_rows` — asserts
+the sweep produces N × n_years rows. Red until the wrapper exists.
+
+## Exit criteria
+
+- Makefile target `divergence.mk::tab_g9_seed_variance_summary.csv`.
+- Summary CSV + one-sentence prose in §4.8.
+- If SD is material, a caveat in §6.4.

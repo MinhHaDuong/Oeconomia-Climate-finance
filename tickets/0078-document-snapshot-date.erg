@@ -1,0 +1,47 @@
+%erg v1
+Title: Document snapshot date in §3.1 and data-availability statement
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B12
+
+--- body ---
+## Context
+
+Audit 0070 flagged bias **B12** (data cutoff / snapshot bias) as ⚠. The
+corpus snapshot was taken on a specific date (inferred ~2026-03-26 from
+the Zenodo release directory). Records with `publication_year ≤ 2024`
+but first indexed after that date are excluded, biasing the recent tail
+down. The snapshot date is not documented explicitly in the companion
+paper.
+
+This is trivial to fix and belongs in the pre-submission sweep.
+
+## Actions
+
+1. Identify the exact snapshot date from the corpus build metadata
+   (Zenodo release README or DVC metadata).
+2. Add one sentence in `content/companion-paper.qmd` §3.1 Data:
+   "The corpus snapshot used in this paper was taken on YYYY-MM-DD.
+   Records with publication_year ≤ 2024 but first indexed after this
+   date are excluded."
+3. Add the same date to the data-availability statement at the end of
+   the paper (or in `content/companion-paper.qmd` §6 tail as appropriate).
+4. Cross-reference: corpus-report.qmd and data-paper.qmd should also
+   reference the same snapshot date consistently.
+
+## Test
+
+`tests/test_snapshot_date_documented.py::test_date_in_companion_paper`
+— greps `content/companion-paper.qmd` for an ISO date matching the
+snapshot metadata and fails if missing. Red until the paragraph is
+added.
+
+## Exit criteria
+
+- Snapshot date present in §3.1 and the data statement.
+- Same date cited in the other Quarto outputs.
+- Child of 0070 closed.

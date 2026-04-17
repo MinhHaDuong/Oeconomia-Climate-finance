@@ -1,0 +1,48 @@
+%erg v1
+Title: Language-stratified S2/L1 sensitivity (English-only subset)
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: 0070
+
+--- log ---
+2026-04-17T07:40Z claude created as child of 0070 for bias B3
+
+--- body ---
+## Context
+
+Audit 0070 flagged bias **B3** (English-language dominance) as ⚠
+mitigated: BGE-M3 places multiple languages in a shared space, but the
+shared space is trained on predominantly English + Chinese web text.
+Representation quality is uneven, which can bias the semantic (S2) and
+lexical (L1) channels toward language-similarity rather than
+structural similarity. §6.4 acknowledges the model choice but does not
+report a language-stratified test.
+
+The pipeline already produces per-record language labels
+(`scripts/enrich_language.py`), so the data is available.
+
+## Actions
+
+1. Build an English-only subset of `refined_works` using the `language`
+   field (keep records where language = 'en' with confidence above
+   threshold). Count the share kept per year.
+2. Re-run S2 cosine and L1 JS divergence on the English-only subset.
+   Use the same windows and seed as the main analysis.
+3. Compare transition zones: do the 2007 and 2013 breakpoints survive
+   the English-only restriction? Produce an overlay plot.
+4. If zones shift by more than ±1 year, qualify the multilingual claim
+   in §6.4 with one sentence.
+
+## Test
+
+`tests/test_language_stratified.py::test_english_subset_has_breakpoints`
+— asserts that S2 on the English subset produces a breakpoints CSV with
+the same schema as the full run. Red until the stratified runner exists.
+
+## Exit criteria
+
+- A stratified run config that reproducibly regenerates the English-only
+  divergence outputs.
+- An overlay figure in the supplementary material.
+- A paragraph in §4.8 or §6.4 summarizing the result.
