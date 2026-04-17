@@ -122,6 +122,22 @@ def get_min_papers(n_works, cfg):
     return div_cfg.get("min_papers", 30)
 
 
+def per_window_year_ranges(df, windows):
+    """Per-window valid anchor years for sliding-pair iteration.
+
+    For each window width w, the anchor year y must satisfy
+    year_min <= y - w and y + 1 + w <= year_max so both windows fit
+    inside the corpus. That gives y in range(year_min + w, year_max - w),
+    matching `_iter_sliding_pairs` in `_divergence_citation.py`.
+
+    Returns a dict mapping each w to its sorted list of valid years.
+    Narrower windows reach later years; wider windows stop earlier.
+    """
+    year_min = int(df["year"].min())
+    year_max = int(df["year"].max())
+    return {w: list(range(year_min + w, year_max - w)) for w in windows}
+
+
 def subsample_equal_n(before, after, min_papers, rng):
     """Subsample the larger collection to match the smaller.
 

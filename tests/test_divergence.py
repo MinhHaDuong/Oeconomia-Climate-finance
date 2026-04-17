@@ -566,16 +566,15 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=True)
-        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
-            df, emb, cfg
+        years_by_window, min_papers, max_subsample, _windows, _equal_n = (
+            _get_years_and_params(df, emb, cfg)
         )
         rng = np.random.RandomState(42)
 
         for y, w, X, Y in _iter_window_pairs(
             df,
             emb,
-            years,
-            windows,
+            years_by_window,
             min_papers,
             max_subsample,
             rng=rng,
@@ -591,8 +590,8 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=False)
-        years, min_papers, max_subsample, windows, _equal_n = _get_years_and_params(
-            df, emb, cfg
+        years_by_window, min_papers, max_subsample, _windows, _equal_n = (
+            _get_years_and_params(df, emb, cfg)
         )
         rng = np.random.RandomState(42)
 
@@ -600,8 +599,7 @@ class TestEqualN:
         for y, w, X, Y in _iter_window_pairs(
             df,
             emb,
-            years,
-            windows,
+            years_by_window,
             min_papers,
             max_subsample,
             rng=rng,
