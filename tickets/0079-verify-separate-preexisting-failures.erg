@@ -1,0 +1,57 @@
+%erg v1
+Title: verify separates pre-existing main failures from those introduced by the PR
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T15:16Z claude created — carved out of IDH ticket 0006 as project-specific work
+
+--- body ---
+## Context
+
+PR 691 was partly bounced for `test_golden_values` failures that
+pre-dated the PR (introduced earlier by 0067). The reviewer could not
+distinguish "this PR broke X" from "X was already broken on main."
+
+Originally IDH 0006 action 2. The harness-level design (run the full
+test suite on the merge-base in an isolated worktree, every /verify
+run) was rejected as too expensive: double test time forever, plus
+non-determinism from flaky tests reclassifying failures. The work is
+also per-project — it needs this repo's runner (`uv run pytest`) and
+layout — so it lives here, not in IDH.
+
+The cheaper design uses a cached baseline instead of recomputing.
+
+## Actions
+
+1. Add a CI step on `main` that runs
+   `uv run pytest tests/ -q --tb=no` and publishes the failure set
+   (JSON list of `nodeids`) as a workflow artifact keyed by commit
+   SHA.
+2. Add a project-level `/verify` wrapper (or hook) that, for a PR,
+   downloads the baseline artifact for the merge-base SHA rather than
+   re-running pytest. Diff that baseline against the PR branch's
+   failure set.
+3. Report *introduced*, *pre-existing*, and *fixed* failures
+   separately in the verify comment. Pre-existing failures never
+   bounce the PR.
+4. If the baseline artifact is missing for the merge-base SHA, fall
+   back to reporting all failures together with a `baseline unknown`
+   note — do not recompute.
+
+## Test
+
+1. On a PR over a main SHA with known pre-existing failures, expect
+   them listed under "pre-existing on main, not introduced."
+2. On a PR that incidentally fixes a pre-existing failure, expect it
+   listed under "fixed."
+3. With no baseline artifact available, expect the `baseline unknown`
+   fallback rather than a re-run.
+
+## Exit criteria
+
+- Baseline failure set retrieved from CI artifact, not recomputed per PR.
+- Verify comment separates introduced / pre-existing / fixed failures.
+- Pre-existing failures never bounce the PR.
+- Missing baseline degrades gracefully with a `baseline unknown` note.
