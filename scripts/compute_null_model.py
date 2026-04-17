@@ -200,41 +200,134 @@ def _nan_row(year, window):
 from _divergence_io import _make_window_rngs
 
 
-def _collect_permutation_rows(window_iter, statistic_fn, n_perm):
+def _collect_permutation_rows(window_iter, statistic_fn, n_perm, n_jobs=1):
     """Run permutation test over window iterator, collecting result rows.
 
     Shared logic for both semantic and lexical channels.
+
+    Parameters
+    ----------
+    n_jobs : int
+        Number of parallel workers.  1 = sequential (original path),
+        -1 = all available cores.
+
     """
-    rows = []
-    for y, w, X, Y, perm_rng in window_iter:
-        observed, null_mean, null_std, z, p = permutation_test(
-            X, Y, statistic_fn, n_perm, perm_rng
+    if n_jobs == 1:
+        rows = []
+        for y, w, X, Y, perm_rng in window_iter:
+            observed, null_mean, null_std, z, p = permutation_test(
+                X, Y, statistic_fn, n_perm, perm_rng
+            )
+            rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
+            log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
+        return pd.DataFrame(rows)
+
+    from joblib import Parallel, delayed
+
+    pairs = list(window_iter)
+    log.info("Parallel: %d (year, window) pairs on %d jobs", len(pairs), n_jobs)
+
+    def _process(y, w, X, Y, perm_rng):
+        obs, nm, ns, z, p = permutation_test(X, Y, statistic_fn, n_perm, perm_rng)
+        return _result_row(y, w, obs, nm, ns, z, p)
+
+    results = Parallel(n_jobs=n_jobs)(
+        delayed(_process)(y, w, X, Y, rng) for y, w, X, Y, rng in pairs
+    )
+    for row in results:
+        log.info(
+            "  year=%d window=%s z=%.2f p=%.3f",
+            row["year"],
+            row["window"],
+            row["z_score"],
+            row["p_value"],
         )
-        rows.append(_result_row(y, w, observed, null_mean, null_std, z, p))
-        log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
+    return pd.DataFrame(results)
+
+
+# GPU-accelerated semantic permutations
+_GPU_METHODS = {"S2_energy", "S1_MMD"}
+
+
+def _run_semantic_gpu(method_name, div_df, cfg):
+    """GPU-vectorized permutation test for S2_energy and S1_MMD.
+
+    Precomputes the distance/kernel matrix once on GPU, then batches all
+    n_perm statistics in a single matmul pass per (year, window).
+    """
+    from _divergence_io import iter_semantic_windows
+    from _permutation_accel import gpu_energy_permutations, gpu_mmd_permutations
+
+    n_perm = cfg["divergence"]["permutation"]["n_perm"]
+    seed = cfg["divergence"]["random_seed"]
+
+    rows = []
+    for y, w, X, Y, _perm_rng in iter_semantic_windows(div_df, cfg):
+        perm_seed = seed + y * 100 + w + 50000
+
+        if method_name == "S2_energy":
+            obs, nm, ns, z, p = gpu_energy_permutations(X, Y, n_perm, perm_seed)
+        elif method_name == "S1_MMD":
+            from _divergence_semantic import _median_heuristic
+
+            med = _median_heuristic(X, Y)
+            obs, nm, ns, z, p = gpu_mmd_permutations(X, Y, med, n_perm, perm_seed)
+        else:
+            raise ValueError(f"No GPU path for {method_name}")
+
+        rows.append(_result_row(y, w, obs, nm, ns, z, p))
+        log.info("  year=%d window=%d z=%.2f p=%.3f [GPU]", y, w, z, p)
+
     return pd.DataFrame(rows)
 
 
-def _run_semantic_permutations(method_name, div_df, cfg):
-    """Permutation test for semantic methods (S1-S4)."""
+def _run_semantic_permutations(method_name, div_df, cfg, n_jobs=1):
+    """Permutation test for semantic methods (S1-S4).
+
+    Auto-selects GPU-vectorized path for S2_energy and S1_MMD when CUDA
+    is available; falls back to CPU (optionally parallel).
+    """
+    from _divergence_backend import get_backend
     from _divergence_io import iter_semantic_windows
+
+    backend = get_backend(cfg)
+    if backend == "torch" and method_name in _GPU_METHODS:
+        log.info("Using GPU-vectorized permutation for %s", method_name)
+        return _run_semantic_gpu(method_name, div_df, cfg)
 
     statistic_fn = _make_semantic_statistic(method_name, cfg)
     n_perm = cfg["divergence"]["permutation"]["n_perm"]
     return _collect_permutation_rows(
-        iter_semantic_windows(div_df, cfg), statistic_fn, n_perm
+        iter_semantic_windows(div_df, cfg), statistic_fn, n_perm, n_jobs=n_jobs
     )
 
 
-def _run_lexical_permutations(method_name, div_df, cfg):
-    """Permutation test for lexical methods (L1)."""
+def _run_lexical_permutations(method_name, div_df, cfg, n_jobs=1):
+    """Permutation test for lexical methods (L1).
+
+    Precomputes TF-IDF for each (year, window) pool once, then permutes
+    row indices into the sparse matrix — avoids 2 × n_perm redundant
+    vectorizer.transform() calls per window.
+    """
     from _divergence_io import fit_lexical_vectorizer, iter_lexical_windows
+    from _permutation_accel import precomputed_lexical_permutation
 
-    statistic_fn = _make_lexical_statistic(fit_lexical_vectorizer(cfg))
+    vectorizer = fit_lexical_vectorizer(cfg)
     n_perm = cfg["divergence"]["permutation"]["n_perm"]
-    return _collect_permutation_rows(
-        iter_lexical_windows(div_df, cfg), statistic_fn, n_perm
-    )
+
+    rows = []
+    for y, w, texts_before, texts_after, perm_rng in iter_lexical_windows(div_df, cfg):
+        all_texts = texts_before + texts_after
+        X_all = vectorizer.transform(all_texts)
+        n_before = len(texts_before)
+
+        obs, nm, ns, z, p = precomputed_lexical_permutation(
+            X_all, n_before, n_perm, perm_rng
+        )
+        rows.append(_result_row(y, w, obs, nm, ns, z, p))
+        log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
+
+    return pd.DataFrame(rows)
 
 
 def _community_node_comm_map(partition):
@@ -509,6 +602,12 @@ def main():
         required=True,
         help="Path to the existing tab_div_{method}.csv",
     )
+    parser.add_argument(
+        "--n-jobs",
+        type=int,
+        default=-1,
+        help="Parallel workers for CPU path (-1 = all cores, 1 = sequential)",
+    )
     args = parser.parse_args(extra)
 
     method_name = args.method
@@ -527,14 +626,23 @@ def main():
     div_df = pd.read_csv(args.div_csv)
     log.info("Loaded %d rows from %s", len(div_df), args.div_csv)
 
+    import time
+
+    t0 = time.perf_counter()
+
     if channel == "semantic":
-        result = _run_semantic_permutations(method_name, div_df, cfg)
+        result = _run_semantic_permutations(
+            method_name, div_df, cfg, n_jobs=args.n_jobs
+        )
     elif channel == "lexical":
-        result = _run_lexical_permutations(method_name, div_df, cfg)
+        result = _run_lexical_permutations(method_name, div_df, cfg, n_jobs=args.n_jobs)
     elif channel == "citation":
         result = _run_citation_permutations(method_name, div_df, cfg)
     else:
         raise ValueError(f"Unsupported channel: {channel}")
+
+    elapsed = time.perf_counter() - t0
+    log.info("Permutation testing completed in %.1fs", elapsed)
 
     # Validate contract
     NullModelSchema.validate(result)

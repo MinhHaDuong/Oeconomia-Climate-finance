@@ -808,3 +808,231 @@ class TestSharedRngContamination:
             f"Shared-rng contamination (lexical): z(2005) alone={z_single:.6f} "
             f"vs after 2003={z_double:.6f}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Backend comparison tests (ticket 0042)
+# ---------------------------------------------------------------------------
+
+
+class TestBackendComparison:
+    """Compare sequential, parallel-CPU, and GPU permutation backends.
+
+    Each pair of backends should produce statistically consistent z-scores
+    on the same synthetic data.  Sequential ↔ parallel-CPU should agree
+    exactly (same algorithm, same RNG).  GPU uses different RNG sequences
+    so we accept a tolerance on z-scores.
+    """
+
+    @staticmethod
+    def _make_data(n_papers=60, n_years=15, emb_dim=10, seed=42):
+        rng = np.random.RandomState(seed)
+        years = np.repeat(np.arange(2000, 2000 + n_years), n_papers)
+        df = pd.DataFrame({"year": years, "cited_by_count": 10})
+        emb = rng.randn(len(df), emb_dim).astype(np.float32)
+        return df, emb
+
+    @staticmethod
+    def _base_cfg(n_perm=50):
+        return {
+            "divergence": {
+                "windows": [3],
+                "max_subsample": 40,
+                "equal_n": False,
+                "random_seed": 42,
+                "permutation": {"n_perm": n_perm},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+                "backend": "cpu",
+            }
+        }
+
+    def test_sequential_vs_parallel_cpu_energy(self):
+        """Parallel CPU must reproduce sequential results exactly."""
+        from unittest.mock import patch
+
+        from compute_null_model import _run_semantic_permutations
+
+        df, emb = self._make_data()
+        cfg = self._base_cfg()
+        div_df = pd.DataFrame({"year": [2005, 2007], "window": [3, 3]})
+
+        with patch("_divergence_semantic.load_semantic_data", return_value=(df, emb)):
+            seq = _run_semantic_permutations("S2_energy", div_df, cfg, n_jobs=1)
+
+        with patch("_divergence_semantic.load_semantic_data", return_value=(df, emb)):
+            par = _run_semantic_permutations("S2_energy", div_df, cfg, n_jobs=2)
+
+        for _, row_s in seq.iterrows():
+            y = row_s["year"]
+            row_p = par.loc[par["year"] == y].iloc[0]
+            assert row_s["z_score"] == pytest.approx(row_p["z_score"], abs=1e-10), (
+                f"year={y}: sequential z={row_s['z_score']:.6f} "
+                f"!= parallel z={row_p['z_score']:.6f}"
+            )
+
+    def test_precomputed_lexical_vs_original(self):
+        """Precomputed TF-IDF path must match the original sequential path.
+
+        The precomputed path permutes row indices into a sparse matrix
+        instead of re-transforming texts.  Since vectorizer.transform is
+        deterministic and the RNG state is consumed identically (both use
+        rng.permutation(N)), results should be very close.
+        """
+        from unittest.mock import patch
+
+        from compute_null_model import (
+            _make_lexical_statistic,
+            _run_lexical_permutations,
+            permutation_test,
+        )
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
+        # Build synthetic text data
+        rng = np.random.RandomState(77)
+        vocab = [
+            "climate",
+            "finance",
+            "carbon",
+            "energy",
+            "policy",
+            "market",
+            "green",
+            "bond",
+            "risk",
+            "fund",
+        ]
+        n_years, ppyr = 15, 40
+        years = np.repeat(np.arange(2000, 2000 + n_years), ppyr)
+        abstracts = [
+            " ".join(rng.choice(vocab, rng.randint(10, 30), replace=True))
+            for _ in range(len(years))
+        ]
+        df = pd.DataFrame({"year": years, "abstract": abstracts})
+
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "equal_n": False,
+                "random_seed": 42,
+                "permutation": {"n_perm": 50},
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 5,
+                "lexical": {"tfidf_max_features": 100, "tfidf_min_df": 2},
+            }
+        }
+        div_df = pd.DataFrame({"year": [2005], "window": [3]})
+
+        # Run precomputed path (new default)
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result_new = _run_lexical_permutations("L1", div_df, cfg)
+
+        # Run original path manually for comparison
+        vec = TfidfVectorizer(
+            stop_words="english", max_features=100, min_df=2, sublinear_tf=True
+        )
+        vec.fit(df["abstract"].tolist())
+        stat_fn = _make_lexical_statistic(vec)
+
+        mask_b = (df["year"] >= 2005 - 3) & (df["year"] <= 2005)
+        mask_a = (df["year"] >= 2006) & (df["year"] <= 2006 + 3)
+        texts_b = df.loc[mask_b, "abstract"].tolist()
+        texts_a = df.loc[mask_a, "abstract"].tolist()
+
+        from _divergence_io import _make_window_rngs
+
+        _, perm_rng = _make_window_rngs(42, 2005, 3)
+        obs_orig, nm, ns, z_orig, p_orig = permutation_test(
+            texts_b, texts_a, stat_fn, 50, perm_rng
+        )
+
+        z_new = result_new["z_score"].iloc[0]
+        assert z_orig == pytest.approx(z_new, abs=0.5), (
+            f"Precomputed vs original: z_orig={z_orig:.4f}, z_new={z_new:.4f}"
+        )
+
+    def test_gpu_energy_formula_correct(self):
+        """GPU vectorized energy distance formula matches CPU reference.
+
+        Uses a small synthetic example where we can verify against the
+        sequential permutation_test() with exact same data.
+        """
+        try:
+            import torch
+
+            if not torch.cuda.is_available():
+                pytest.skip("CUDA not available")
+        except ImportError:
+            pytest.skip("torch not installed")
+
+        from _permutation_accel import gpu_energy_permutations
+        from compute_null_model import permutation_test
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(30, 10).astype(np.float32)
+        Y = rng.randn(30, 10).astype(np.float32) + 1.5
+
+        def energy_fn(a, b):
+            from scipy.spatial.distance import cdist
+
+            return 2.0 * cdist(a, b).mean() - cdist(a, a).mean() - cdist(b, b).mean()
+
+        # CPU reference
+        cpu_rng = np.random.RandomState(99)
+        obs_cpu, _, _, z_cpu, _ = permutation_test(X, Y, energy_fn, 200, cpu_rng)
+
+        # GPU path (different RNG, but same data)
+        obs_gpu, _, _, z_gpu, _ = gpu_energy_permutations(X, Y, 200, seed=99)
+
+        # Observed statistic should match closely (same formula, f32 vs f64)
+        assert obs_cpu == pytest.approx(obs_gpu, rel=1e-3), (
+            f"Observed: CPU={obs_cpu:.6f}, GPU={obs_gpu:.6f}"
+        )
+        # Z-scores should agree on significance direction
+        assert (z_cpu > 0) == (z_gpu > 0), (
+            f"Sign mismatch: z_cpu={z_cpu:.2f}, z_gpu={z_gpu:.2f}"
+        )
+        # Allow tolerance for different RNG sequences
+        assert abs(z_cpu - z_gpu) < 2.0, (
+            f"Z-scores too far apart: CPU={z_cpu:.2f}, GPU={z_gpu:.2f}"
+        )
+
+    def test_gpu_mmd_formula_correct(self):
+        """GPU vectorized MMD formula matches CPU reference."""
+        try:
+            import torch
+
+            if not torch.cuda.is_available():
+                pytest.skip("CUDA not available")
+        except ImportError:
+            pytest.skip("torch not installed")
+
+        from _divergence_semantic import _median_heuristic, compute_mmd_rbf
+        from _permutation_accel import gpu_mmd_permutations
+        from compute_null_model import permutation_test
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(30, 10).astype(np.float32)
+        Y = rng.randn(30, 10).astype(np.float32) + 1.0
+
+        med = _median_heuristic(X, Y)
+
+        def mmd_fn(a, b):
+            return compute_mmd_rbf(a, b, med)
+
+        # CPU reference
+        cpu_rng = np.random.RandomState(99)
+        obs_cpu, _, _, z_cpu, _ = permutation_test(X, Y, mmd_fn, 200, cpu_rng)
+
+        # GPU path
+        obs_gpu, _, _, z_gpu, _ = gpu_mmd_permutations(X, Y, med, 200, seed=99)
+
+        assert obs_cpu == pytest.approx(obs_gpu, rel=1e-2), (
+            f"Observed MMD: CPU={obs_cpu:.6f}, GPU={obs_gpu:.6f}"
+        )
+        assert (z_cpu > 0) == (z_gpu > 0), (
+            f"Sign mismatch: z_cpu={z_cpu:.2f}, z_gpu={z_gpu:.2f}"
+        )
+        assert abs(z_cpu - z_gpu) < 2.0, (
+            f"Z-scores too far apart: CPU={z_cpu:.2f}, GPU={z_gpu:.2f}"
+        )
