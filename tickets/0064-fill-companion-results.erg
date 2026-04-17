@@ -9,6 +9,8 @@ Blocked-by: 0057
 --- log ---
 2026-04-16T19:45Z claude created
 2026-04-16T19:45Z claude note wave C.2 of epic 0026 — numerical fill after structure is in
+2026-04-16T22:05Z claude note /verify round 1 minor-revision: fix 1-6
+2026-04-16T22:05Z claude fix round 2 commits: 74b466d 78b028a 249d9bd 436363e 400119e 6d7d021
 
 --- body ---
 ## Context
