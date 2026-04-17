@@ -40,3 +40,14 @@ first.
 - Job name `tests` stable (0079 will consume it).
 - /verify's setup-phase `verify: CI gap` comment no longer fires for
   this repo.
+
+## Follow-on (after this ticket closes)
+
+1. Stabilise the test suite — close or quarantine known flakes.
+2. Enable branch protection on `main` requiring `tests`.
+3. Implement 0079 (cached baseline failure set): CI step publishes
+   the `tests` failure set as an artifact keyed by commit SHA;
+   project-level /verify wrapper reads it to separate introduced
+   from pre-existing failures.
+4. /verify starts keying off the CI signal directly instead of
+   re-running checks — harness-side change tracked in IDH.

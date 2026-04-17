@@ -54,3 +54,4 @@ Wave C (0057/0058/0064) is waiting on ticket 0042 rerun. All three ticket-level 
 - **0070 bias audit** + child tickets 0071-0078: pre-submission defence-in-depth for the companion paper's §4.8 and §6.4
 - Re-land arch rule 9 (corpus access through loaders only) on own branch — tickets 0043/0044 already on main
 - Waiting for corpus 1.1.2 to finish building
+- **0081 bootstrap CI** (pytest on PR/push) — prerequisite for 0079 (cached baseline failure set) and for /verify to have mechanical evidence; part of the cross-repo CI batch with IDH 0015, git-erg 0003, AEDIST 0111. Stabilise flakes first; then branch protection requiring `tests`.
