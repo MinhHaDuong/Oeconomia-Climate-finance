@@ -137,6 +137,125 @@ def _run_lexical_bootstrap(method_name, div_df, cfg, k):
 
 
 # ---------------------------------------------------------------------------
+# Citation-channel bootstrap (ticket 0069)
+# ---------------------------------------------------------------------------
+
+
+def _make_citation_statistic(method_name, cfg, internal_edges):
+    """Return a statistic_fn(G_before, G_after) -> float for a citation method."""
+    if method_name == "G2_spectral":
+        from _citation_methods import _spectral_gap
+
+        def g2_fn(G_b, G_a):
+            gap_b = _spectral_gap(G_b)
+            gap_a = _spectral_gap(G_a)
+            if np.isnan(gap_b) or np.isnan(gap_a):
+                return float("nan")
+            return float(abs(gap_a - gap_b))
+
+        return g2_fn
+
+    if method_name == "G9_community":
+        from _divergence_community import _community_js_for_pair
+
+        div_cfg = cfg["divergence"]
+        seed = div_cfg["random_seed"]
+        resolution = (
+            div_cfg.get("citation", {}).get("G9_community", {}).get("resolution", 1.0)
+        )
+
+        def g9_fn(G_b, G_a):
+            return _community_js_for_pair(G_b, G_a, internal_edges, resolution, seed)
+
+        return g9_fn
+
+    raise ValueError(f"No citation bootstrap statistic for method '{method_name}'")
+
+
+def _run_citation_bootstrap(method_name, div_df, cfg, k):
+    """Variance-estimation replicates for citation-channel methods (G2, G9).
+
+    Uses node subsampling *without* replacement at a configured fraction
+    (`bootstrap.citation_subsample_fraction`, Politis & Romano 1994), not
+    nonparametric bootstrap. Duplicating nodes is ill-defined for spectral
+    gap (linearly-dependent rows give spurious zero eigenvalues) and for
+    Louvain community structure. Subsampling is the honest fallback —
+    each replicate is a true subgraph and CIs are conservative.
+
+    The function name and output schema match the semantic / lexical
+    bootstrap drivers so the dispatcher and `export_divergence_summary`
+    treat all channels uniformly.
+
+    For each (year, window):
+      1. Build before/after sliding-window graphs.
+      2. K times: subsample n*fraction nodes from each side without
+         replacement, take the induced subgraph, compute the statistic.
+    """
+    from _divergence_citation import _sliding_window_graph, load_citation_data
+
+    works, _, internal_edges = load_citation_data(None)
+    div_cfg = cfg["divergence"]
+    seed = div_cfg["random_seed"]
+    fraction = div_cfg.get("bootstrap", {}).get("citation_subsample_fraction", 0.8)
+    if not 0.0 < fraction <= 1.0:
+        raise ValueError(
+            f"citation_subsample_fraction must be in (0, 1], got {fraction}"
+        )
+    statistic_fn = _make_citation_statistic(method_name, cfg, internal_edges)
+
+    year_windows = div_df[["year", "window"]].drop_duplicates()
+
+    rows = []
+    for _, row in year_windows.iterrows():
+        y = int(row["year"])
+        w = int(row["window"])
+
+        G_before = _sliding_window_graph(works, internal_edges, y, w, "before")
+        G_after = _sliding_window_graph(works, internal_edges, y, w, "after")
+
+        before_nodes = list(G_before.nodes())
+        after_nodes = list(G_after.nodes())
+
+        if len(before_nodes) < 3 or len(after_nodes) < 3:
+            continue
+
+        n_b = max(2, int(round(len(before_nodes) * fraction)))
+        n_a = max(2, int(round(len(after_nodes) * fraction)))
+
+        boot_seed = seed + y * 100_000 + w * 1000
+        for rep in range(k):
+            rng = np.random.RandomState(boot_seed + rep)
+            idx_b = rng.choice(len(before_nodes), n_b, replace=False)
+            idx_a = rng.choice(len(after_nodes), n_a, replace=False)
+            sampled_before = [before_nodes[j] for j in idx_b]
+            sampled_after = [after_nodes[j] for j in idx_a]
+            G_b_boot = G_before.subgraph(sampled_before)
+            G_a_boot = G_after.subgraph(sampled_after)
+            value = statistic_fn(G_b_boot, G_a_boot)
+            rows.append(
+                {
+                    "method": method_name,
+                    "year": y,
+                    "window": str(w),
+                    "hyperparams": f"subsample={fraction}",
+                    "replicate": rep,
+                    "value": float(value),
+                }
+            )
+        log.info(
+            "  year=%d window=%d k=%d subsample=%.2f n_b=%d n_a=%d",
+            y,
+            w,
+            k,
+            fraction,
+            n_b,
+            n_a,
+        )
+
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -180,6 +299,8 @@ def main():
         result = _run_semantic_bootstrap(method_name, div_df, cfg, k)
     elif channel == "lexical":
         result = _run_lexical_bootstrap(method_name, div_df, cfg, k)
+    elif channel == "citation":
+        result = _run_citation_bootstrap(method_name, div_df, cfg, k)
     else:
         raise ValueError(f"Unsupported channel: {channel}")
 
