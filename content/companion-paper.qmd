@@ -17,7 +17,7 @@ abstract: |
   classifier AUC, two primitives chosen to match each method's source of
   variation. Candidate years with Z above threshold are grouped into
   contiguous *transition zones* and validated only when at least two layers
-  agree. Applied at the three-year lead window, the community-divergence
+  agree. Applied at the six-year lead window ($w = 3$ half-width), the community-divergence
   layer (G9) flags three distinct sub-zones
   ({{< meta g9_zones_listing >}}) with peak Z = {{< meta g9_peak_z_w3 >}} at
   {{< meta g9_peak_year_w3 >}}. The embedding and lexical layers saturate
@@ -182,7 +182,7 @@ Numbers in this section resolve from `content/companion-paper-vars.yml`, which `
 
 The S2 and L1 magnitudes are, on their face, implausibly large. The bias audits B2 and B9 (acknowledged in §6.4) document that rapid corpus growth inside the window inflates the permutation null --- exactly the regime the climate-finance corpus occupies after the late-1990s expansion. We report the peaks as computed but interpret the absolute Z magnitudes cautiously; the saturation pattern at $w = 3$ is the smoking gun.
 
-Window sensitivity is uneven across layers. S2 peaks at 2013 for every $w \in \{2, 3, 4\}$; L1 peak drifts by one year per step (2021/2020/2019 for $w = 2, 3, 4$); G9 flips sign between $w = 3$ and $w = 4$ (peak Z = 8.2 at 2015 for $w = 3$; peak Z = $-9.9$ at 2019 for $w = 4$), reflecting the Louvain stochasticity and community-alignment noise flagged in §4.8 and §6.4 rather than a stable break location. The lead window $w = 3$ is therefore the honest primary report, and single-$w$ results should not be read as the last word on any specific year.
+Window sensitivity is uneven across layers. S2 peaks at 2013 for every $w \in \{2, 3, 4\}$; L1 peak drifts by one year per step (2021/2020/2019 for $w = 2, 3, 4$); G9 flips sign between $w = 3$ and $w = 4$ (peak Z = 8.2 at 2015 for $w = 3$; peak Z = $-9.9$ at 2019 for $w = 4$), reflecting the Louvain stochasticity and community-alignment noise flagged in §4.8 and §6.4 rather than a stable break location. The lead half-width $w = 3$ (six-year span) is therefore the honest primary report, and single-$w$ results should not be read as the last word on any specific year.
 
 ### 5.2 Transition zones and multi-signal validation
 
@@ -202,7 +202,7 @@ For zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}): terms gaining w
 
 Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates scholarship shifts in the field's institutional history. The companion paper's claim is methodological: the framework's transition-zone ledger is reproducible across independent representations even when any single representation is dominated by a known artifact. The present run shows the flipside of that robustness --- when two of the three distance layers share a bias, the cross-layer validation rule cannot rescue them; G9 carries the discriminative weight on its own, and confirmation rests on the community-layer signal until the growth-bias correction is implemented.
 
-![Permutation Z-scores at the lead window ($w = 3$) for the four distance-based detectors (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
+![Permutation Z-scores at the lead half-width ($w = 3$, six-year span) for the four distance-based detectors (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
 
 ![Transition-zone validation heatmap. Rows are the six lead methods; columns are years from 1998 to 2021. Cell colour encodes the signed signal — Z-score for the four distance detectors, and $(\mathrm{AUC} - 0.5) \times 20$ for the two C2ST rows so that all rows share a comparable scale. Vertical rectangles mark years where at least two rows exceed the threshold simultaneously (validated zones).](figures/fig_companion_heatmap.png){#fig-heatmap}
 
