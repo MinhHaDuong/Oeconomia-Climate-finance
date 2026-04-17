@@ -1,0 +1,118 @@
+%erg v1
+Title: C2ST — emit CV fold variance, not permutation null
+Status: open
+Created: 2026-04-17
+Author: claude
+Blocked-by: none
+
+--- log ---
+2026-04-17T01:30Z claude created from Wave C inference design review
+
+--- body ---
+## Context
+
+The companion paper (epic 0026) uses C2ST (classifier two-sample test)
+as the **robustness** method for both embedding and lexical channels:
+
+| Layer | Lead | Robustness |
+|-------|------|------------|
+| Embedding | Energy distance (S2) | C2ST on PCA-32 |
+| Lexical | JS divergence (L1) | C2ST on TF-IDF |
+
+Initial instinct was to add C2ST_embedding and C2ST_lexical to
+NULL_METHODS_* and run the standard permutation framework. Analysis
+showed this is **epistemically the wrong primitive for C2ST**.
+
+## Why permutation null is wrong for C2ST
+
+The pipeline's null model permutes the before/after labels of documents
+and recomputes the test statistic. Under H0 (same distribution), the
+statistic should be near zero / near chance.
+
+For distance statistics (S2 energy, L1 JS, G9 community JS, G2 spectral
+gap) this is the right framework: under H0, the distance *is* small, and
+the permutation gives its sampling distribution.
+
+For C2ST, the test statistic is **already a hypothesis test**: AUC from a
+cross-validated classifier. Its null is theoretically centered at 0.5.
+Wrapping it in a permutation test asks: *"does a classifier trained on
+real labels outperform one trained on random labels?"* — answer is
+trivially yes when there is signal. The permutation Z-score then just
+measures "how much above 0.5 are we", which you already know from the
+mean AUC. Tautological, computationally expensive.
+
+## The right inference primitive for C2ST
+
+`scripts/_divergence_c2st.py:68-70` already runs 5-fold CV via sklearn's
+`cross_val_score`, producing K per-fold AUCs:
+
+```python
+cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=seed)
+scores = cross_val_score(clf, features, labels, cv=cv, scoring="roc_auc")
+return float(np.mean(scores))  # throws away per-fold variance!
+```
+
+The per-fold variance is the data-derived measure of uncertainty. The
+paper should report **AUC ± SE** from the CV folds, or a bootstrap CI
+over predicted probabilities. The null-vs-chance test is a one-sample
+t-test of the K scores against 0.5 (equivalent to binomial normal
+approximation on correct predictions).
+
+## Actions
+
+1. Patch `_divergence_c2st.py` to return `(mean, std, q025, q975)` or
+   at minimum `(mean, std)`. Do not throw away the per-fold scores.
+
+2. Extend the C2ST output schema (likely in `scripts/schemas.py`; may
+   need a `C2STDivergenceSchema` variant or extra columns in the shared
+   `DivergenceSchema`). New columns: `auc_std`, maybe `auc_q025`,
+   `auc_q975`, and `n_folds`.
+
+3. Remove any plan to include C2ST_embedding or C2ST_lexical in
+   `NULL_METHODS_SEM` / `NULL_METHODS_LEX`. They will NOT get a null
+   model and do not need one.
+
+4. Update consumers:
+   - `plot_divergence.py`: for C2ST methods, plot mean ± 1.96·std / CI
+     instead of looking for a null envelope.
+   - `export_divergence_summary.py`: decide whether C2ST methods get
+     their own summary table or use a separate `tab_c2st_summary_*.csv`
+     schema. Summary should report AUC + CI + significance-vs-0.5.
+
+5. Tests:
+   - `tests/test_c2st.py`: assert per-fold variance is computed and
+     exported.
+   - schema test: reject C2ST rows without the new variance columns.
+
+## Test
+
+```python
+def test_c2st_returns_fold_variance():
+    """compute_c2st_embedding returns per-fold variance."""
+    from _divergence_c2st import compute_c2st_embedding
+    df, emb = synthetic_binary_data(n=100, d=32)
+    row = compute_c2st_embedding(df, emb, cfg)
+    assert "auc_std" in row
+    assert row["auc_std"] > 0
+    # One-sample t vs 0.5 should give p < 0.05 on well-separated data
+    assert row["p_value_vs_chance"] < 0.05
+```
+
+## Why this matters for Wave C
+
+- Figure 1 (Z-score time series): the C2ST panels will plot AUC with CI
+  envelope, not Z-score. Document this in the figure caption.
+- Figure 2 (transition heatmap): mixed inference primitives across rows
+  (Z for distance methods, AUC for C2ST). Normalize both to a common
+  "significance at threshold" bit and color by that.
+- §4.5 of the paper (Statistical inference): add a paragraph explaining
+  why C2ST uses CV variance and the distance methods use permutation.
+  This is a legitimate methodological point, not a limitation.
+
+## Exit criteria
+
+- `_divergence_c2st.py` returns per-fold variance structure.
+- C2ST schema updated and validated at write time.
+- Null model makefile targets do NOT include C2ST methods.
+- Downstream plots / summaries handle the C2ST inference primitive.
+- Tests enforce the new schema.
