@@ -201,8 +201,11 @@ def build_vars(tables_dir: Path) -> tuple[dict, dict]:
     # vars are emitted here.
 
     # Expose the G9-specific zone list for §5.2 prose (raw layer, not validated).
+    # Singletons render as "YYYY" rather than "YYYY--YYYY" for readability.
     g9_zones = method_zones["G9_community"]
-    vars_["g9_zones_listing"] = "; ".join(f"{s}--{e}" for s, e in g9_zones) or "none"
+    vars_["g9_zones_listing"] = (
+        "; ".join(f"{s}" if s == e else f"{s}--{e}" for s, e in g9_zones) or "none"
+    )
     vars_["g9_n_zones"] = str(len(g9_zones))
 
     method_zone_counts = {m: len(method_zones[m]) for m in DISTANCE_METHODS}
