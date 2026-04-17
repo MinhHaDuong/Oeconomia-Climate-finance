@@ -1,12 +1,14 @@
 %erg v1
 Title: G4_cross_tradition NaN tail (2010–2024) — investigate and fix or document
-Status: open
-Priority: backlog
+Status: closed
 Created: 2026-04-16
 Author: user
 
 --- log ---
 2026-04-16T20:00Z claude created from t0042 pipeline sanity check
+2026-04-17T07:30Z claude note PR #686 merged (bisection on full cumulative graph; tail now populated; cold-start 1990-1997 NaN only, per design)
+2026-04-17T10:30Z claude status closed
+2026-04-17T10:30Z claude note drop invalid `Priority` header (not in %erg v1 schema)
 
 --- body ---
 ## Context

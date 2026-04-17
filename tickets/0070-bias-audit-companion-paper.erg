@@ -1,6 +1,6 @@
 %erg v1
 Title: Statistical bias audit — defend companion paper against reviewer-raised biases
-Status: doing
+Status: closed
 Created: 2026-04-17
 Author: user
 
@@ -10,6 +10,8 @@ Author: user
 2026-04-17T07:26Z claude status doing starting audit
 2026-04-17T07:45Z claude note docs/bias-audit-companion-paper.md drafted, all 12 biases classified
 2026-04-17T07:45Z claude note child tickets 0071-0078 opened for each gap
+2026-04-17T08:17Z claude note PR #690 merged (audit doc + 8 child tickets)
+2026-04-17T10:30Z claude status closed
 
 --- body ---
 ## Context
