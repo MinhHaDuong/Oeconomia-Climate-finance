@@ -196,9 +196,7 @@ The two-pass censored-gap analysis (§4.7) was not executed in the ticket-0042 r
 
 ### 5.4 Interpretation at validated zones
 
-The discriminative-terms and community-shift interpretation outputs (§4.9) require `compute_interpretation.py` to run per zone; its CSVs are absent from the ticket-0042 rerun and are scheduled under ticket 0056. The placeholders below remain unresolved pending that output. When the follow-up lands, @fig-terms and @fig-community will show the concrete shifts.
-
-For zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}): terms gaining weight, {{< meta zone_1_top_terms_after >}}; terms losing weight, {{< meta zone_1_top_terms_before >}}. Community shift: {{< meta zone_1_community_before >}} to {{< meta zone_1_community_after >}}. For the G9 sub-zones the same procedure will run per run listed in §5.2.
+The discriminative-terms and community-shift interpretation outputs (§4.9) require `compute_interpretation.py` to run per zone; its CSVs are absent from the ticket-0042 rerun and are scheduled under ticket 0056. Per-zone term lists and Louvain community shifts are therefore deferred: for zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}) and each of the G9 sub-zones listed in §5.2, the procedure will run once ticket 0056 lands, and @fig-terms and @fig-community will then carry the concrete shifts.
 
 Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates scholarship shifts in the field's institutional history. The companion paper's claim is methodological: the framework's transition-zone ledger is reproducible across independent representations even when any single representation is dominated by a known artifact. The present run shows the flipside of that robustness --- when two of the three distance layers share a bias, the cross-layer validation rule cannot rescue them; G9 carries the discriminative weight on its own, and confirmation rests on the community-layer signal until the growth-bias correction is implemented.
 

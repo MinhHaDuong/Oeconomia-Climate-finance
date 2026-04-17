@@ -160,38 +160,31 @@ def build_vars(tables_dir: Path) -> dict:
         "n_zones_confirmed": "TBD (censored-gap pass pending, ticket 0056/follow-up)",
     }
 
-    # Populate zone_1 / zone_2 slots — the paper's §5 prose references exactly two.
-    for idx in (1, 2):
-        key = f"zone_{idx}"
-        if idx <= len(zone_summaries):
-            z = zone_summaries[idx - 1]
-            vars_[f"{key}_start"] = str(z["start"])
-            vars_[f"{key}_end"] = str(z["end"])
-            methods_pretty = ", ".join(
-                {
-                    "S2_energy": "S2 Energy",
-                    "L1": "L1 JS",
-                    "G9_community": "G9 community",
-                }[m]
-                for m in z["methods"]
-            )
-            vars_[f"{key}_methods_agreeing"] = methods_pretty
-        else:
-            vars_[f"{key}_start"] = "n/a"
-            vars_[f"{key}_end"] = "n/a"
-            vars_[f"{key}_methods_agreeing"] = "no second validated zone at w=3"
+    # Populate zone_1 slot — the paper's §5 prose references exactly one
+    # validated zone at w=3. If a second zone ever appears, extend §5 + this
+    # block together.
+    if zone_summaries:
+        z = zone_summaries[0]
+        vars_["zone_1_start"] = str(z["start"])
+        vars_["zone_1_end"] = str(z["end"])
+        methods_pretty = ", ".join(
+            {
+                "S2_energy": "S2 Energy",
+                "L1": "L1 JS",
+                "G9_community": "G9 community",
+            }[m]
+            for m in z["methods"]
+        )
+        vars_["zone_1_methods_agreeing"] = methods_pretty
+    else:
+        vars_["zone_1_start"] = "n/a"
+        vars_["zone_1_end"] = "n/a"
+        vars_["zone_1_methods_agreeing"] = "no validated zone at w=3"
 
-    # Interpretation placeholders — follow-up (ticket 0056 CSVs absent on disk).
-    interp_placeholder = "pending ticket 0056 interpretation outputs"
-    for idx in (1, 2):
-        key = f"zone_{idx}"
-        for field in (
-            "top_terms_before",
-            "top_terms_after",
-            "community_before",
-            "community_after",
-        ):
-            vars_[f"{key}_{field}"] = interp_placeholder
+    # Per-zone interpretation fields (top terms, Louvain community shifts) are
+    # deferred to ticket 0056. §5.4 now carries a single honest sentence
+    # referencing the upcoming @fig-terms / @fig-community, so no placeholder
+    # vars are emitted here.
 
     # Expose the G9-specific zone list for §5.2 prose (raw layer, not validated).
     g9_zones = method_zones["G9_community"]
