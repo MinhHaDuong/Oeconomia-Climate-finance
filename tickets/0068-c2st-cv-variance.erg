@@ -1,6 +1,6 @@
 %erg v1
 Title: C2ST — emit CV fold variance, not permutation null
-Status: doing
+Status: closed
 Created: 2026-04-17
 Author: claude
 Blocked-by: none
@@ -9,6 +9,7 @@ Blocked-by: none
 2026-04-17T01:30Z claude created from Wave C inference design review
 2026-04-17T08:24Z claude claimed
 2026-04-17T08:24Z claude status doing
+2026-04-17T09:20Z claude status closed — merged as PR #692 (squash 7ddf0b9)
 
 --- body ---
 ## Context
