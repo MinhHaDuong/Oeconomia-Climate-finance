@@ -37,6 +37,10 @@ divergence:
 
   bootstrap:
     k: 200               # replicates for estimation CIs (ticket 0047, opt-in)
+    citation_subsample_fraction: 0.8   # graph methods use subsampling-without-replacement
+                                       # at this fraction (Politis & Romano), not nonparametric
+                                       # bootstrap — duplicating nodes is ill-defined for
+                                       # spectral / community statistics. Ticket 0069.
 
   c2st:
     pca_dim: 32

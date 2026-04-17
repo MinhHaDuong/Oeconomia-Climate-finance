@@ -218,6 +218,88 @@ class TestCitationBootstrap:
         assert (result["method"] == method).all()
         assert set(result["replicate"].unique()).issubset(set(range(5)))
 
+    def test_citation_bootstrap_is_proper_subsampling(self):
+        """Replicates must be true subsamples — each draws fraction*n distinct
+        nodes without replacement. Regression for the original bug where
+        rng.choice(replace=True) was collapsed into a set, yielding a random
+        ~63%-of-unique-nodes subset (subsampling at a noisy fraction).
+        """
+        from unittest.mock import patch
+
+        from compute_divergence_bootstrap import _run_citation_bootstrap
+
+        rng = np.random.RandomState(0)
+        years = np.repeat(np.arange(2000, 2015), 25)
+        dois = [f"10.1000/x.{i}" for i in range(len(years))]
+        works = pd.DataFrame({"doi": dois, "year": years, "cited_by_count": 10})
+
+        edges = []
+        doi_years = dict(zip(works["doi"], works["year"]))
+        for _ in range(len(dois) * 3):
+            src = rng.choice(dois)
+            ref = rng.choice(dois)
+            if src != ref:
+                edges.append(
+                    {
+                        "source_doi": src,
+                        "ref_doi": ref,
+                        "source_year": doi_years[src],
+                    }
+                )
+        internal_edges = pd.DataFrame(edges).drop_duplicates(
+            subset=["source_doi", "ref_doi"]
+        )
+
+        fraction = 0.8
+        cfg = {
+            "divergence": {
+                "windows": [3],
+                "random_seed": 42,
+                "min_papers_fraction": 0.001,
+                "min_papers_floor": 3,
+                "bootstrap": {"citation_subsample_fraction": fraction},
+                "citation": {},
+            }
+        }
+        div_df = pd.DataFrame({"year": [2007], "window": [3]})
+
+        from _divergence_citation import _sliding_window_graph
+
+        captured_b: list[int] = []
+        captured_a: list[int] = []
+
+        def fake_stat(G_b, G_a):
+            captured_b.append(G_b.number_of_nodes())
+            captured_a.append(G_a.number_of_nodes())
+            return 0.0
+
+        with (
+            patch(
+                "_divergence_citation.load_citation_data",
+                return_value=(works, None, internal_edges),
+            ),
+            patch(
+                "compute_divergence_bootstrap._make_citation_statistic",
+                return_value=fake_stat,
+            ),
+        ):
+            _run_citation_bootstrap("G2_spectral", div_df, cfg, k=10)
+
+        G_before = _sliding_window_graph(works, internal_edges, 2007, 3, "before")
+        G_after = _sliding_window_graph(works, internal_edges, 2007, 3, "after")
+        expected_b = max(2, round(G_before.number_of_nodes() * fraction))
+        expected_a = max(2, round(G_after.number_of_nodes() * fraction))
+
+        # Every replicate must hit exactly the configured fraction (without-
+        # replacement subsampling). With-replacement + set() would give
+        # variable counts averaging ~63% of n.
+        assert all(n == expected_b for n in captured_b), (
+            f"Bootstrap collapsed multiplicities: subgraph sizes {captured_b} "
+            f"vs expected {expected_b}."
+        )
+        assert all(n == expected_a for n in captured_a), captured_a
+        assert len(captured_b) == 10
+
 
 # ---------------------------------------------------------------------------
 # Schema tests

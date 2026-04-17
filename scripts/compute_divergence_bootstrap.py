@@ -173,18 +173,34 @@ def _make_citation_statistic(method_name, cfg, internal_edges):
 
 
 def _run_citation_bootstrap(method_name, div_df, cfg, k):
-    """Bootstrap for citation-channel methods (G2, G9).
+    """Variance-estimation replicates for citation-channel methods (G2, G9).
+
+    Uses node subsampling *without* replacement at a configured fraction
+    (`bootstrap.citation_subsample_fraction`, Politis & Romano 1994), not
+    nonparametric bootstrap. Duplicating nodes is ill-defined for spectral
+    gap (linearly-dependent rows give spurious zero eigenvalues) and for
+    Louvain community structure. Subsampling is the honest fallback —
+    each replicate is a true subgraph and CIs are conservative.
+
+    The function name and output schema match the semantic / lexical
+    bootstrap drivers so the dispatcher and `export_divergence_summary`
+    treat all channels uniformly.
 
     For each (year, window):
-      1. Build before/after sliding-window graphs
-      2. Resample nodes with replacement within each window K times
-      3. Compute the method's statistic on the induced subgraphs
+      1. Build before/after sliding-window graphs.
+      2. K times: subsample n*fraction nodes from each side without
+         replacement, take the induced subgraph, compute the statistic.
     """
     from _divergence_citation import _sliding_window_graph, load_citation_data
 
     works, _, internal_edges = load_citation_data(None)
     div_cfg = cfg["divergence"]
     seed = div_cfg["random_seed"]
+    fraction = div_cfg.get("bootstrap", {}).get("citation_subsample_fraction", 0.8)
+    if not 0.0 < fraction <= 1.0:
+        raise ValueError(
+            f"citation_subsample_fraction must be in (0, 1], got {fraction}"
+        )
     statistic_fn = _make_citation_statistic(method_name, cfg, internal_edges)
 
     year_windows = div_df[["year", "window"]].drop_duplicates()
@@ -203,13 +219,16 @@ def _run_citation_bootstrap(method_name, div_df, cfg, k):
         if len(before_nodes) < 3 or len(after_nodes) < 3:
             continue
 
+        n_b = max(2, int(round(len(before_nodes) * fraction)))
+        n_a = max(2, int(round(len(after_nodes) * fraction)))
+
         boot_seed = seed + y * 100_000 + w * 1000
         for rep in range(k):
             rng = np.random.RandomState(boot_seed + rep)
-            idx_b = rng.choice(len(before_nodes), len(before_nodes), replace=True)
-            idx_a = rng.choice(len(after_nodes), len(after_nodes), replace=True)
-            sampled_before = {before_nodes[j] for j in idx_b}
-            sampled_after = {after_nodes[j] for j in idx_a}
+            idx_b = rng.choice(len(before_nodes), n_b, replace=False)
+            idx_a = rng.choice(len(after_nodes), n_a, replace=False)
+            sampled_before = [before_nodes[j] for j in idx_b]
+            sampled_after = [after_nodes[j] for j in idx_a]
             G_b_boot = G_before.subgraph(sampled_before)
             G_a_boot = G_after.subgraph(sampled_after)
             value = statistic_fn(G_b_boot, G_a_boot)
@@ -218,12 +237,20 @@ def _run_citation_bootstrap(method_name, div_df, cfg, k):
                     "method": method_name,
                     "year": y,
                     "window": str(w),
-                    "hyperparams": "",
+                    "hyperparams": f"subsample={fraction}",
                     "replicate": rep,
                     "value": float(value),
                 }
             )
-        log.info("  year=%d window=%d k=%d", y, w, k)
+        log.info(
+            "  year=%d window=%d k=%d subsample=%.2f n_b=%d n_a=%d",
+            y,
+            w,
+            k,
+            fraction,
+            n_b,
+            n_a,
+        )
 
     return pd.DataFrame(rows)
 
