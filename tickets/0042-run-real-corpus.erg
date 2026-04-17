@@ -1,11 +1,8 @@
 %erg v1
 Title: Run divergence pipeline on real corpus (padme)
-Status: open
+Status: closed
 Created: 2026-04-15
 Author: user
-Blocked-by: 0067
-Blocked-by: 0068
-Blocked-by: 0069
 
 --- log ---
 2026-04-15T20:00Z claude created
@@ -14,6 +11,12 @@ Blocked-by: 0069
 2026-04-16T19:27Z claude first run started on padme (GPU, cu130)
 2026-04-17T01:15Z claude first run completed cleanly: 18/18 div, 3 null (S2/L1/G9), 2 boot + summary (S2/L1), 1 changepoints, 1 convergence, 4 sensitivity, 23 figures
 2026-04-17T01:30Z claude post-run audit surfaced three blocking issues for Wave C: tickets 0067 (year bounds), 0068 (C2ST inference), 0069 (graph inference scope); ticket stays open until they land + rerun
+2026-04-17T10:30Z claude note 0067/0068/0069 all closed on main; ready for rerun
+2026-04-17T12:30Z claude rerun started autonomously (overnight mode)
+2026-04-17T16:30Z claude rerun completed cleanly: 18 div, 4 null (S2/L1/G9/G2), 4 boot + summary (same), 1 changepoints, 1 convergence, 4 sensitivity, 23 figures, 0 errors; ~4h GPU time
+2026-04-17T16:30Z claude note schemas verified: summary tables carry z_score (PR#683); C2ST div carries auc_std/q025/q975 (ticket 0068); year ranges 1998-2021 semantic/lexical + 1999-2021 graph (ticket 0067 per-window convention)
+2026-04-17T16:30Z claude note statistical pattern: S2/L1 huge Z-scores (medians 32/16, growth-bias consistent with bias audit B2/B9); G9 moderate (median 1.85); G2 near-null (median -0.55, only 2/86 significant); C2ST AUC median 0.649
+2026-04-17T16:30Z claude status closed — Wave C unblocked
 
 --- body ---
 ## Context
