@@ -1,0 +1,137 @@
+%erg v1
+Title: Adopt @pytest.mark.adherence + port grep rules from harness
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T18:30Z claude created — follow-up to Imperial Dragon Harness PR #47 which replaced /verify-adherence's hardcoded pytest file list and Climate_finance-specific grep bank with a @pytest.mark.adherence marker contract.
+
+--- body ---
+## Context
+
+The harness skill `/verify-adherence` previously hardcoded a list of
+filenames to run (`tests/test_script_hygiene.py`,
+`tests/test_io_discipline.py`, `tests/test_schema_contracts.py`, plus
+glob `test_hygiene_*` / `test_discipline_*`) AND a table of six grep
+rules — four of which were Climate_finance-specific (`refined_works`
+direct reads, `data/catalogs/` paths, `fig.savefig(` direct use, bare
+print in `scripts/_`).
+
+Imperial Dragon Harness PR #47 replaced both with a single mechanism:
+adherence tests are pytest tests marked `@pytest.mark.adherence`. The
+harness runs `pytest -m adherence -q`. Projects own their rules as
+tests.
+
+This ticket is Climate_finance's adoption of the marker and migration
+of the harness's former grep bank to local tests.
+
+## Why the marker is the right mechanism
+
+- No new format, schema, or reader. Pytest's built-in marker system.
+- The interface contract is one word: `adherence`. Minimum possible.
+- Any test in any file can contribute. Filename convention becomes
+  optional.
+- Tests are code — they can scope their grep (diff-only vs whole-repo),
+  attach fixtures, and carry rich assertion messages, unlike a flat
+  YAML bank.
+- Local rules stay local. The harness stays domain-neutral.
+
+## Actions
+
+1. **Register the marker.** Add to `pyproject.toml`:
+
+   ```toml
+   [tool.pytest.ini_options]
+   markers = [
+       "adherence: project rule enforcement (hygiene/discipline/contracts)",
+   ]
+   ```
+
+   Preserve any existing marker entries already in this section.
+
+2. **Mark existing adherence tests.** Add
+   `pytestmark = pytest.mark.adherence` at module level in each of:
+   - `tests/test_script_hygiene.py` (1,217 lines — module-level marker
+     keeps it one line)
+   - `tests/test_io_discipline.py`
+   - `tests/test_schema_contracts.py`
+   - Any other `tests/test_hygiene_*.py` or `tests/test_discipline_*.py`
+     files that exist.
+
+   Module-level marker is the right granularity — every test in these
+   files is adherence by design. If any test is truly not adherence
+   (e.g., a shared helper marked as `@pytest.fixture` only), leave it.
+
+3. **Port the three harness-bank rules that have no local coverage
+   yet.** Verify which of the former bank rules are already enforced by
+   existing tests before adding duplicates:
+
+   | Former harness bank rule | Likely local coverage |
+   |--|--|
+   | `fig.savefig(` forbidden | Check — `save_figure` helper pattern but no explicit test? |
+   | Direct `refined_(works\|embeddings\|citations)` reads | Not covered in test_script_hygiene.py as of IDH PR #47 review |
+   | `"data/catalogs/"` hardcoded paths | Not covered |
+   | Hardcoded `seed=42` / `RandomState(42)` | Check — may be generic-enough to leave un-enforced |
+   | `print(` in pipeline scripts | Already enforced by `TestNoBarePrint` (test_script_hygiene.py line 679) |
+   | Bare `logging.getLogger` | Probably not enforced; may be acceptable as a coding convention without a test |
+
+   For each rule **not** already covered, add a new `@adherence` test.
+   Decide per rule whether to scan whole-repo (matches existing
+   `test_script_hygiene.py` style) or diff-only (faster, matches the
+   "ratchet" philosophy of only flagging new violations).
+
+4. **Port the sampling rule from ticket 0080.** Ticket 0080 proposed
+   `tests/test_hygiene_sampling.py` for the PR #691 with-replacement +
+   dedup bug. That test should also carry the `@adherence` marker.
+   Either close 0080 and fold its scope into this ticket, or keep 0080
+   and list this ticket as `Blocked-by: 0082`. Author's call — both
+   are valid.
+
+5. **Verify migration.** Run `uv run pytest -m adherence -q`. The set
+   of tests it picks up should equal the set the harness's old Phase 1
+   would have run (the three files plus any `test_hygiene_*` /
+   `test_discipline_*`). If `pytest -m adherence` is strictly larger
+   or strictly smaller than that set, fix the marker placement.
+
+## Test
+
+- `pytest -m adherence -q` runs the expected suite (verify by comparing
+  against the pre-migration count).
+- `pytest -m "not adherence" -q` runs everything else (unit,
+  integration, slow).
+- New tests for the ported grep rules fail on a synthetic branch that
+  introduces the forbidden pattern and pass on current `main`.
+
+## Exit criteria
+
+- `pyproject.toml` registers the `adherence` marker.
+- Every existing adherence test (hygiene, discipline, contracts) is
+  marked, either module-level or per-test.
+- The three harness-bank rules with no local coverage are added as
+  `@adherence` tests in an appropriate file.
+- `/verify-adherence` run on a branch over Climate_finance produces
+  the same (or improved) adherence verdict as before the harness
+  change.
+- Relationship to ticket 0080 resolved explicitly (folded in, or
+  blocking).
+
+## Not in scope
+
+- Full migration of the existing 1,217-line `test_script_hygiene.py`
+  to a different structure. The module-level marker is the whole
+  migration; keep the existing test structure.
+- Changing the diff-vs-whole-repo enforcement style of existing tests.
+  They currently scan the whole repo; leave that alone. Only new tests
+  for the ported rules need a style decision.
+- Removing the harness's transitional filename-based fallback. The
+  harness PR keeps that fallback so this migration is not a rush.
+
+## Relationship
+
+- Follows from Imperial Dragon Harness PR #47
+  (`verify-adherence: select tests by @pytest.mark.adherence marker`).
+- Partially subsumes ticket 0080 (sampling rule), which can either
+  fold into this one or remain as a specific follow-up.
+- The harness fallback stays in place until this ticket closes, so
+  there is no time pressure — the fallback is the safety net.
