@@ -1,0 +1,179 @@
+%erg v1
+Title: /verify concurrency — three-layer coordination (file + label + counter)
+Status: open
+Created: 2026-04-17
+Author: user
+
+--- log ---
+2026-04-17T09:00Z claude created from /verify first-use review
+2026-04-17T09:10Z claude reflected on alternatives; layered design adopted
+
+--- body ---
+## Context
+
+The `/verify` skill family (`~/.claude/skills/verify/`,
+`verify-adherence/`, `verify-gate/`, shipped 2026-04-17 as
+ImperialDragonHarness commit `e7e56b5`) has no concurrency control.
+Two parallel `/verify <same-pr>` invocations across chats or machines
+would double-comment, race on fix-agent commits, and defeat the
+two-round cap.
+
+Surfaced on day one: tickets 0067/0068/0069/0070 were each verified
+in a separate chat, with a real risk of overlap on any shared PR.
+
+## Threat model
+
+| Failure mode | Consequence |
+|-------------|-------------|
+| Double comment posts | PR conversation cluttered, reviewers confused |
+| Double fix-agent commits on same branch | force-push collision or merge conflict; lost work |
+| Double gate verdicts | round counter defeated; two APPROVED races; ambiguous state |
+| Idempotency break | re-running a "stuck" round re-executes fix logic, not a no-op |
+
+## Design: three-layer coordination
+
+No single mechanism covers all cases. Alternatives considered are in
+"Rejected / alternatives" below. Recommended layers:
+
+### L1 — Local file lock (`.git/verify-wip/<pr>.wip`)
+
+Cheapest check. Matches the existing `.git/ticket-wip/<ID>.wip`
+pattern — authors already recognise the convention.
+
+- On `/verify` start: atomic file create with `O_EXCL`. If file
+  exists, check its timestamp. < 30 min → abort with the path. ≥ 30 min
+  → warn, force-take.
+- On `/verify` end: remove the file.
+- Contents: JSON `{pr, round, session_id, started_at, skill_sha}`.
+
+Prevents the **same-machine same-user** race — the most likely case
+when a user has two chats open.
+
+### L2 — GitHub label + claim comment
+
+The cross-machine authority. Survives machine boundaries.
+
+- On `/verify` start (after L1 acquired):
+  1. Check PR labels for `verify:round-*`.
+  2. If present, read last `/verify: round=<n> started` comment
+     timestamp. < 30 min → abort with comment URL. ≥ 30 min → warn
+     + force-take + post a recovery notice.
+  3. Add label `verify:round-<n>`.
+  4. Post claim comment:
+     ```
+     /verify: round=<n> started by <session_id>
+     skill sha: <~/.claude HEAD>
+     host: <hostname>
+     expected completion: <+30 min>
+     ```
+- On `/verify` end:
+  1. Remove the `verify:round-*` label.
+  2. Post verdict comment (already spec'd in the skill).
+
+Prevents **cross-machine** races (two collaborators each running
+`/verify` on the same PR).
+
+### L3 — Monotonic round counter in `/verify-gate`
+
+Before emitting a verdict for round N, scan PR comments for the
+highest `round=<k>` seen in prior `/verify:` starts. If N ≤ k,
+escalate — another runner already did round N or later.
+
+Prevents **timing-window leaks** where L1 and L2 both briefly
+disagreed (clock skew, network partition, race before label post).
+
+### Idempotency (design goal, not a layer)
+
+Damage containment if L1+L2+L3 all failed:
+
+- Fix-agent commits should be **content-addressed**: same unresolved
+  list + same branch state → same diff (or near-empty diff). Not
+  strictly achievable with LLMs, but fix-agents should re-read state
+  and no-op if already fixed.
+- Gate verdicts should be **commutative**: two APPROVED verdicts with
+  identical evidence should reconcile (collapse to one).
+
+## Edge cases
+
+- **`--force-approve`**: clear L1 file, remove L2 label, post loud
+  `/verify: force-approved — reason: <text>`.
+- **`/verify-gate` standalone (no wrapper)**: uses label
+  `verify:gate-only`. Never collides with `/verify`'s labels.
+- **Round 2 re-entry**: transition label `verify:round-1` →
+  `verify:round-2`; update L1 file's `round` field; new claim
+  comment.
+- **Crashed runner**: L1 file stale for ≥ 30 min → force-take with
+  warning. L2 label stale for ≥ 30 min → same. Both paths log
+  recovery to the PR so audit trail is intact.
+- **Clock skew**: "30 min" is evaluated against the comment's server
+  timestamp (from `gh api`), not local clock. Removes skew risk from
+  L2.
+
+## Actions
+
+1. Patch `~/.claude/skills/verify/SKILL.md`:
+   - Add phase 0.5 (L1 file lock) before setup.
+   - Add phase 0.6 (L2 label + comment) after setup.
+   - Add phase 6.5 (release both) before the verdict comment.
+2. Patch `~/.claude/skills/verify-gate/SKILL.md`:
+   - L3 monotonic counter check before emitting verdict.
+   - Standalone mode uses `verify:gate-only` label, no L1 (no
+     commits) but still L2.
+3. Update `~/.claude/skills/orchestrator/SKILL.md` Phase 6 to
+   surface the claim-URL when `/verify` aborts due to an active
+   lock (so the orchestrator can report cleanly).
+4. Add `verify:round-1`, `verify:round-2`, `verify:gate-only` to
+   the project's label set (via `gh label create` or equivalent).
+
+## Rejected / alternatives considered
+
+| Alt | Why not |
+|-----|---------|
+| Comment-only lock ("first to post wins") | No clean release; race-window on post |
+| GitHub PR draft toggling | Overloads semantic meaning; confuses reviewers |
+| `gh pr review` state as mutex | Misuses review state; creates review-tab noise |
+| PR body append-only log | Races on body edit itself |
+| `git notes` on PR head | Invisible to humans; rarely fetched |
+| Redis / sqlite coord server | Infrastructure overhead, no win over L2 |
+| Orchestrator-only enforcement (forbid direct `/verify`) | Kills the common case — author manually invoking on a single PR |
+| Honor-system documentation only | Unreliable; defeats the point |
+
+## Test
+
+Not unit-testable at skill level. Manual verification plan:
+
+1. **L1 smoke**: In chat A, invoke `/verify <pr>`; it creates
+   `.git/verify-wip/<pr>.wip`. In chat B on same machine, invoke
+   `/verify <pr>`; should abort with "L1 lock held by session X".
+2. **L2 smoke**: Delete the L1 file manually (simulate crash). In
+   chat B, retry; L1 succeeds but L2 should abort because the label
+   is still set. (Use two branches / two machines if L1 can't be
+   bypassed.)
+3. **Stale recovery**: Set the L1 file's mtime 35 min in the past;
+   `/verify` should force-take with a warning in the claim comment.
+4. **L3 race**: Manually post two `/verify: round=1 started`
+   comments 5 seconds apart. The second runner's `/verify-gate` on
+   finish should detect the competing round=1 and escalate.
+5. **`--force-approve` cleanup**: with active lock, run
+   `/verify <pr> --force-approve "reason"`. Both L1 file and L2
+   label must be cleared.
+6. **Round transition**: REROLL from round 1 should transition L2
+   label `round-1` → `round-2` without race.
+
+## Exit criteria
+
+- Two parallel `/verify` invocations on the same PR cannot both
+  proceed; second aborts with a URL or file path reference.
+- Round 2 re-entry works (label + L1 file transition cleanly).
+- `--force-approve` clears all locks.
+- Stale lock (≥ 30 min on either L1 or L2) is force-taken with audit
+  trail.
+- L3 counter prevents round-3 even if L1+L2 both race.
+- Behavior documented in the three skill files.
+- Project labels registered.
+
+## Priority
+
+Not blocking Wave C or epic 0026. Should land before the next
+multi-chat `/verify` batch — i.e., this session or next, before any
+further parallel PR work.
