@@ -94,7 +94,7 @@ Analysis runs over the years 1998--2021. Earlier years carry too few documents t
 
 ### 4.1 Objective and epistemic stance
 
-The framework detects *candidate* structural changes in a text corpus and validates them across independent representations. It is not a discovery procedure for a unique "true" periodization. What it produces is a ranked ledger of candidate years, each accompanied by the signals that support it and the signals that do not. This distinction matters: any single-layer periodization risks mistaking representational artifacts for substantive change, and the literature shows that embedding, lexical, and graph views of the same corpus can disagree [@puccetti2021; @constantino2025]. Treating the layers as three witnesses rather than three estimators of one truth lets us read agreement and disagreement on their own terms.
+The framework detects *candidate* structural changes in a text corpus and validates them across independent representations. It is not a discovery procedure for a unique "true" periodization. It produces a list of candidate years, each paired with the signals that support it and the signals that do not. This distinction matters: any single-layer periodization risks mistaking representational artifacts for substantive change, and embedding, lexical, and graph views of the same corpus can disagree [@puccetti2021; @constantino2025]. We treat the layers as three witnesses, not as three estimators of one truth.
 
 A second commitment follows from this stance. Rather than point breakpoints with exact years, we report *transition zones*: contiguous runs of supra-threshold evidence, each with a start year, an end year, and the set of layers that agree on it. A zone with two layers agreeing over three adjacent years is a stronger claim than a single-layer spike in one year, and the zone representation makes this directly visible.
 
@@ -142,7 +142,7 @@ The four statistics have different sources of variation, and we handle them with
 
 *Cross-validation fold variance for G2.* The C2ST AUC already has a built-in variance estimator: the standard deviation of AUC across the five CV folds. Permuting labels for C2ST is expensive (each permutation retrains the classifier $k$ times) and yields less information than the fold variance, which directly reflects sampling variability in the classifier's decision boundary. We therefore report AUC with its CV standard deviation rather than a permutation Z.
 
-Mixing two inference primitives is a conscious choice. Each primitive is the natural fit for its statistic; forcing all four into one framework would waste computation on the classifier and obscure the fact that S2, L1, and G9 share a null while G2 stands apart.
+Mixing two inference primitives is a deliberate choice. Each fits its statistic. Forcing all four into one framework would waste computation on the classifier and blur the fact that S2, L1, and G9 share a null while G2 stands apart.
 
 ### 4.6 Transition zone detection and multi-signal validation
 
@@ -170,7 +170,7 @@ Three robustness checks accompany every reported result.
 
 *Bootstrap confidence intervals.* For each validated zone we draw $K$ bootstrap resamples of the underlying corpus, rerun the detection pipeline, and report the fraction of resamples that retain the zone. Bootstrap $K$ is read from the analysis configuration (ticket 0047).
 
-Epistemic honesty obliges a caveat here. The bias audit tickets B2 and B9 documented a residual growth bias in the permutation null at small window widths: when the corpus grows sharply across the window, the null distribution is inflated and Z-scores are conservatively biased upward in years of rapid publication growth. We flag but do not correct this bias. A principled correction (stratified permutation conditioning on year-specific sample sizes) is deferred to future work; the equal-$n$ subsampling check partly compensates.
+One caveat deserves explicit mention. The bias audit tickets B2 and B9 documented a residual growth bias in the permutation null at small window widths: when the corpus grows sharply across the window, the null distribution is inflated and Z-scores are biased upward in years of rapid publication growth. We flag the bias rather than correct it. A stratified permutation that conditions on year-specific sample sizes is the principled fix, and we defer it to future work. The equal-$n$ subsampling check partly compensates.
 
 ### 4.9 Interpretation
 
@@ -234,13 +234,13 @@ Topic models retain advantages in labeled interpretability: a topic defined by i
 
 ### 6.2 Methodological contributions
 
-Three elements of the framework are novel, to our knowledge.
+Three elements of the framework are new.
 
-*Multi-signal validation across three independent representations.* Treating embedding, lexical, and graph layers as three witnesses and requiring two-of-three agreement is stronger than the single-layer validation common in bibliometric change-point work. The rule accepts structural changes that any single representation would miss on its own and rejects single-layer artifacts that would otherwise pass.
+*Multi-signal validation across three independent representations.* Treating embedding, lexical, and graph layers as three witnesses and requiring two-of-three agreement is stronger than the single-layer validation common in bibliometric change-point work. The rule accepts structural changes that any single representation would miss and rejects single-layer artifacts that would otherwise pass.
 
-*Transition zones rather than point breakpoints.* Reporting zones (contiguous supra-threshold runs) instead of single years preserves the duration information that distance-based methods naturally produce. A three-year zone with two-layer agreement is a different empirical object from a one-year spike, and point-breakpoint reporting erases the distinction.
+*Transition zones rather than point breakpoints.* Reporting zones (contiguous supra-threshold runs) instead of single years preserves the duration information that distance-based methods naturally produce. A three-year zone with two-layer agreement is a different empirical object from a one-year spike; point-breakpoint reporting erases the distinction.
 
-*Mixing permutation Z for distance statistics with CV fold variance for classifier AUC.* Each inference primitive is the natural fit for its statistic. Permutation gives a data-driven null for the distance statistics where no closed-form null exists. CV fold variance gives the classifier's natural uncertainty without the cost of retraining under permuted labels. Reporting both together makes the reasoning explicit rather than papering over the mismatch.
+*Mixing permutation Z for distance statistics with CV fold variance for classifier AUC.* Each inference primitive fits its statistic. Permutation gives a data-driven null for distances where no closed-form null exists. CV fold variance gives the classifier's natural uncertainty without the cost of retraining under permuted labels. Reporting both makes the reasoning explicit rather than forcing one scheme onto four statistics.
 
 ### 6.3 Generalizability
 
