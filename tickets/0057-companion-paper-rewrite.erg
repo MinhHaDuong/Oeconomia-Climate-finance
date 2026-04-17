@@ -13,6 +13,9 @@ Blocked-by: 0042
 2026-04-16T13:00Z claude reimagine — 0050 dependency should be 0055 (Z-scores come from compute_null_model.py, already merged). Blocked by 0056 (interpretation outputs) is correct.
 2026-04-17T18:31Z HDMX-coding-agent claimed
 2026-04-17T18:31Z HDMX-coding-agent status doing
+2026-04-17T18:40Z HDMX-coding-agent red — add tests/test_companion_paper_sections.py; 6/7 fail against current paper
+2026-04-17T18:50Z HDMX-coding-agent green — rewrite content/companion-paper.qmd §4 (nine subsections inline) and §5 (stubbed with meta placeholders for ticket 0064); tests 7/7 pass
+2026-04-17T18:55Z HDMX-coding-agent refactor — tighten prose in §4.1 §4.5 §4.8 §6.2; AI-tell wordlist clean
 
 --- body ---
 ## Context
