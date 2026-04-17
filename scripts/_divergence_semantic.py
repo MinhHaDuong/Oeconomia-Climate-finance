@@ -66,11 +66,11 @@ def load_semantic_data(input_paths):
 def _get_years_and_params(df, emb, cfg):
     """Derive per-window year ranges and smoke-safe parameters from config.
 
-    Returns (years_by_window, min_papers, max_subsample, windows, equal_n).
+    Returns (years_by_window, min_papers, max_subsample, equal_n).
 
     years_by_window maps each window width w to the list of valid anchor
     years range(year_min + w, year_max - w) — narrower windows reach
-    later years (ticket 0067, mirrors `_iter_sliding_pairs`).
+    later years.
     """
     div_cfg = cfg["divergence"]
     windows = div_cfg["windows"]
@@ -79,7 +79,7 @@ def _get_years_and_params(df, emb, cfg):
 
     min_papers = get_min_papers(len(df), cfg)
     years_by_window = per_window_year_ranges(df, windows)
-    return years_by_window, min_papers, max_subsample, windows, equal_n
+    return years_by_window, min_papers, max_subsample, equal_n
 
 
 def _get_window_embeddings(
@@ -217,11 +217,11 @@ def compute_s1_mmd(df, emb, cfg):
     seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
-    years_by_window, min_papers, max_subsample, _windows, equal_n = (
-        _get_years_and_params(df, emb, cfg)
+    years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
+        df, emb, cfg
     )
     if not any(years_by_window.values()):
-        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+        return empty_divergence_df()
 
     sem_cfg = cfg["divergence"]["semantic"]
     bandwidth_multipliers = sem_cfg["S1_MMD"]["bandwidth_multipliers"]
@@ -296,11 +296,11 @@ def compute_s2_energy(df, emb, cfg):
     seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
-    years_by_window, min_papers, max_subsample, _windows, equal_n = (
-        _get_years_and_params(df, emb, cfg)
+    years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
+        df, emb, cfg
     )
     if not any(years_by_window.values()):
-        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+        return empty_divergence_df()
 
     results = []
     last_w = None
@@ -352,11 +352,11 @@ def compute_s3_wasserstein(df, emb, cfg):
     seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
-    years_by_window, min_papers, max_subsample, _windows, equal_n = (
-        _get_years_and_params(df, emb, cfg)
+    years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
+        df, emb, cfg
     )
     if not any(years_by_window.values()):
-        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+        return empty_divergence_df()
 
     sem_cfg = cfg["divergence"]["semantic"]
     n_projections_list = sem_cfg["S3_sliced_wasserstein"]["n_projections"]
@@ -487,11 +487,11 @@ def compute_s4_frechet(df, emb, cfg):
     seed = cfg["divergence"]["random_seed"]
     rng = np.random.RandomState(seed)
 
-    years_by_window, min_papers, max_subsample, _windows, equal_n = (
-        _get_years_and_params(df, emb, cfg)
+    years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
+        df, emb, cfg
     )
     if not any(years_by_window.values()):
-        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+        return empty_divergence_df()
 
     # Always PCA-reduce for Fréchet: (1) covariance needs n >> d,
     # (2) sqrtm is O(d³), and (3) sensitivity analysis shows breaks

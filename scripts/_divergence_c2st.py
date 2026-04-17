@@ -91,11 +91,11 @@ def compute_c2st_embedding(df, emb, cfg):
     seed = div_cfg["random_seed"]
     rng = np.random.RandomState(seed)
 
-    years_by_window, min_papers, max_subsample, _windows, equal_n = (
-        _get_years_and_params(df, emb, cfg)
+    years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
+        df, emb, cfg
     )
     if not any(years_by_window.values()):
-        return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
+        return empty_divergence_df()
 
     results = []
     last_w = None

@@ -566,8 +566,8 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=True)
-        years_by_window, min_papers, max_subsample, _windows, _equal_n = (
-            _get_years_and_params(df, emb, cfg)
+        years_by_window, min_papers, max_subsample, _equal_n = _get_years_and_params(
+            df, emb, cfg
         )
         rng = np.random.RandomState(42)
 
@@ -590,8 +590,8 @@ class TestEqualN:
 
         df, emb = _make_growth_data()
         cfg = _equal_n_cfg(equal_n=False)
-        years_by_window, min_papers, max_subsample, _windows, _equal_n = (
-            _get_years_and_params(df, emb, cfg)
+        years_by_window, min_papers, max_subsample, _equal_n = _get_years_and_params(
+            df, emb, cfg
         )
         rng = np.random.RandomState(42)
 
@@ -725,7 +725,7 @@ class TestPerWindowYearBounds:
 
         df, emb = _make_growth_data(n_years=20, start_year=2000)  # years 2000..2019
         cfg = self._bounds_cfg(windows=[2, 5])
-        years_by_window, _, _, _, _ = _get_years_and_params(df, emb, cfg)
+        years_by_window, _, _, _ = _get_years_and_params(df, emb, cfg)
 
         # For year_max=2019: w=2 last year is 2016; w=5 last year is 2013.
         assert max(years_by_window[2]) == 2016

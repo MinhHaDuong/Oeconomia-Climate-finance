@@ -158,17 +158,14 @@ def _iter_sliding_pairs(works, internal_edges, cfg):
     for the same (year, window) pairs. A cache dict keyed by (year, w) could
     avoid redundant graph construction when multiple methods run sequentially.
     """
-    from _divergence_io import get_min_papers
+    from _divergence_io import get_min_papers, per_window_year_ranges
 
     div_cfg = cfg["divergence"]
     windows = div_cfg["windows"]
     min_papers = get_min_papers(len(works), cfg)
 
-    year_min = int(works["year"].min())
-    year_max = int(works["year"].max())
-
-    for w in windows:
-        for year in range(year_min + w, year_max - w):
+    for w, years in per_window_year_ranges(works, windows).items():
+        for year in years:
             G_before = _sliding_window_graph(works, internal_edges, year, w, "before")
             G_after = _sliding_window_graph(works, internal_edges, year, w, "after")
             if G_before.number_of_nodes() < min_papers:

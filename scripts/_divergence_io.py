@@ -127,8 +127,7 @@ def per_window_year_ranges(df, windows):
 
     For each window width w, the anchor year y must satisfy
     year_min <= y - w and y + 1 + w <= year_max so both windows fit
-    inside the corpus. That gives y in range(year_min + w, year_max - w),
-    matching `_iter_sliding_pairs` in `_divergence_citation.py`.
+    inside the corpus. That gives y in range(year_min + w, year_max - w).
 
     Returns a dict mapping each w to its sorted list of valid years.
     Narrower windows reach later years; wider windows stop earlier.
@@ -136,6 +135,15 @@ def per_window_year_ranges(df, windows):
     year_min = int(df["year"].min())
     year_max = int(df["year"].max())
     return {w: list(range(year_min + w, year_max - w)) for w in windows}
+
+
+def empty_divergence_df():
+    """Empty DataFrame with the divergence-output column schema.
+
+    Used by compute_* functions as a short-circuit return when the
+    corpus has no valid (year, window) anchors.
+    """
+    return pd.DataFrame(columns=["year", "window", "hyperparams", "value"])
 
 
 def subsample_equal_n(before, after, min_papers, rng):
@@ -199,7 +207,7 @@ def iter_semantic_windows(div_df, cfg):
     div_cfg = cfg["divergence"]
     seed = div_cfg["random_seed"]
 
-    _, min_papers, max_subsample, _, equal_n = _get_years_and_params(df, emb, cfg)
+    _, min_papers, max_subsample, equal_n = _get_years_and_params(df, emb, cfg)
 
     year_windows = div_df[["year", "window"]].drop_duplicates()
 

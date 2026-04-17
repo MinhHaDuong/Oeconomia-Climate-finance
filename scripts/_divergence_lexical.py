@@ -77,8 +77,8 @@ def _iter_lexical_window_pairs(df, cfg):
     yielding sparse TF-IDF matrices for before/after windows.
     Shared by L1 and C2ST_lexical.
 
-    Uses per-window year ranges (ticket 0067) so the after-window always
-    fits inside the corpus — narrower windows reach later years.
+    Uses per-window year ranges so the after-window always fits inside
+    the corpus — narrower windows reach later years.
     """
     div_cfg = cfg["divergence"]
     lex_cfg = div_cfg.get("lexical", {})
