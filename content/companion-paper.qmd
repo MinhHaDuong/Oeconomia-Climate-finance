@@ -90,8 +90,6 @@ Analysis runs over the years 1998--2021. Although the global corpus spans 1990--
 
 ## 4. Method
 
-<!-- Scaffolding — see docs/ChatGPT-20260415-MethodForAutoPeriodization-v1.md §1 -->
-
 ### 4.1 Objective and epistemic stance
 
 The framework detects *candidate* structural changes in a text corpus and validates them across independent representations. It is not a discovery procedure for a unique "true" periodization. It produces a list of candidate years, each paired with the signals that support it and the signals that do not. This distinction matters: any single-layer periodization risks mistaking representational artifacts for substantive change, and embedding, lexical, and graph views of the same corpus can disagree [@puccetti2021; @constantino2025]. We treat the layers as three witnesses, not as three estimators of one truth.
@@ -99,8 +97,6 @@ The framework detects *candidate* structural changes in a text corpus and valida
 A second commitment follows from this stance. Rather than point breakpoints with exact years, we report *transition zones*: contiguous runs of supra-threshold evidence, each with a start year, an end year, and the set of layers that agree on it. A zone with two layers agreeing over three adjacent years is a stronger claim than a single-layer spike in one year, and the zone representation makes this directly visible.
 
 ### 4.2 Representations
-
-<!-- Scaffolding — ChatGPT §2 -->
 
 Each document is represented in three spaces that expose different aspects of the corpus.
 
@@ -112,15 +108,11 @@ Each document is represented in three spaces that expose different aspects of th
 
 ### 4.3 Temporal segmentation
 
-<!-- Scaffolding — ChatGPT §3 -->
-
 For each candidate year $t$ and each half-width $w$, we form a before-window $\mathcal{D}_t^- = \{d : t - w \le \text{year}(d) \le t\}$ and an after-window $\mathcal{D}_t^+ = \{d : t < \text{year}(d) \le t + w\}$. Windows that fail a minimum-size filter are skipped. In practice, $w = 3$ is the default and $w \in \{2, 4\}$ are reported as sensitivity checks. Year bounds are stored per window rather than recomputed from the year index, following the ticket 0067 convention that separates segmentation logic from timestamp arithmetic.
 
 Because the corpus grows over time, the after-window is typically larger than the before-window. All statistics are either sample-size invariant by construction or paired with an equal-$n$ subsampling robustness check (§4.8).
 
 ### 4.4 Distributional comparison
-
-<!-- Scaffolding — ChatGPT §4 -->
 
 For each $(t, w)$ we compute four statistics across the two windows.
 
@@ -134,8 +126,6 @@ For each $(t, w)$ we compute four statistics across the two windows.
 
 ### 4.5 Statistical inference
 
-<!-- Scaffolding — ChatGPT §5 -->
-
 The four statistics have different sources of variation, and we handle them with two inference primitives.
 
 *Permutation Z-scores for S2, L1, G9.* For each $(t, w)$, we pool the two windows, relabel them at random $B = 500$ times while preserving sample sizes, and recompute the statistic. The standardised effect size $Z(t) = (S_{\text{obs}} - \bar{S}_{\text{perm}}) / \mathrm{sd}(S_{\text{perm}})$ is directly comparable across years despite changing corpus size. A permutation scheme is appropriate here because the observed statistic has no closed-form null under general distributional alternatives.
@@ -146,21 +136,15 @@ Mixing two inference primitives is a deliberate choice. Each fits its statistic.
 
 ### 4.6 Transition zone detection and multi-signal validation
 
-<!-- Scaffolding — ChatGPT §6-§8 -->
-
 We treat each $Z_m(t)$ series as an evidence stream for layer $m \in \{S2, L1, G9\}$. Candidate supra-threshold years are those with $Z_m(t) > 2$. A *transition zone* for layer $m$ is a maximal contiguous run of supra-threshold years. A zone is *validated* when at least two layers (counting C2ST AUC above a calibrated reference only as confirmation) contain overlapping zones.
 
 This rule trades two kinds of error against each other. Requiring only one layer accepts single-layer artifacts --- a lexical spike from a terminology reform, an embedding-model update, a Louvain stochasticity event. Requiring all three rejects genuine changes that leave one layer undisturbed, which is known to happen when a field's vocabulary stabilises before its relational structure does. Two-of-three agreement sits between these extremes and matches the convention in multi-layer change-point studies.
 
 ### 4.7 Censored-gap confirmation
 
-<!-- Scaffolding — ChatGPT §6 (robustness variant) -->
-
 A validated zone could still reflect gradual redistribution rather than a genuine discontinuity. The censored-gap variant tests for this. For each validated zone, we rerun the Energy, JS, and community statistics with the transitional years excluded from both windows: a single-year excision (one-pass) and a widened excision covering the full zone plus one buffer year on each side (two-pass). A zone that survives the two-pass censoring at $Z > 2$ on at least one layer is labelled *confirmed*. A zone that disappears under censoring is labelled *gradual*.
 
 ### 4.8 Robustness
-
-<!-- Scaffolding — ChatGPT §9 -->
 
 Three robustness checks accompany every reported result.
 
@@ -173,8 +157,6 @@ Three robustness checks accompany every reported result.
 One caveat deserves explicit mention. The bias audit tickets B2 and B9 documented a residual growth bias in the permutation null at small window widths: when the corpus grows sharply across the window, the null distribution is inflated and Z-scores are biased upward in years of rapid publication growth. We flag the bias rather than correct it. A stratified permutation that conditions on year-specific sample sizes is the principled fix, and we defer it to future work. The equal-$n$ subsampling check partly compensates.
 
 ### 4.9 Interpretation
-
-<!-- Scaffolding — ChatGPT §10 -->
 
 For each confirmed zone, the framework extracts three interpretive outputs.
 
