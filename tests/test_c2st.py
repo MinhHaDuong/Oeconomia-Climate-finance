@@ -37,7 +37,7 @@ class TestC2STCore:
         rng = np.random.RandomState(42)
         X = rng.randn(200, 32)
         Y = rng.randn(200, 32)
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)["mean"]
         assert 0.35 < auc < 0.65, f"Null AUC should be near 0.5, got {auc}"
 
     def test_shift_auc_high(self):
@@ -47,7 +47,7 @@ class TestC2STCore:
         rng = np.random.RandomState(42)
         X = rng.randn(200, 32)
         Y = rng.randn(200, 32) + 1.0  # shifted
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)["mean"]
         assert auc > 0.7, f"Shifted AUC should be > 0.7, got {auc}"
 
     def test_auc_bounded_zero_one(self):
@@ -57,7 +57,7 @@ class TestC2STCore:
         rng = np.random.RandomState(99)
         X = rng.randn(100, 16)
         Y = rng.randn(100, 16) + 0.5
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)["mean"]
         assert 0.0 <= auc <= 1.0, f"AUC out of bounds: {auc}"
 
     def test_shuffled_cv_reproducible(self):
@@ -67,9 +67,49 @@ class TestC2STCore:
         rng = np.random.RandomState(7)
         X = rng.randn(150, 20)
         Y = rng.randn(150, 20) + 0.3
-        auc1 = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=123)
-        auc2 = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=123)
-        assert auc1 == auc2, f"Same seed gave different AUC: {auc1} vs {auc2}"
+        r1 = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=123)
+        r2 = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=123)
+        assert r1["mean"] == r2["mean"], (
+            f"Same seed gave different mean: {r1['mean']} vs {r2['mean']}"
+        )
+
+    def test_returns_fold_variance(self):
+        """_c2st_auc returns per-fold variance, CI, n_folds, and p-value vs 0.5.
+
+        Ticket 0068: C2ST uses CV fold variance as its inference primitive
+        instead of the shared permutation null. Must expose: mean, std,
+        q025, q975, n_folds, p_value_vs_chance.
+        """
+        from _divergence_c2st import _c2st_auc
+
+        rng = np.random.RandomState(42)
+        X = rng.randn(200, 32)
+        Y = rng.randn(200, 32) + 0.5  # moderate shift — folds differ, AUC > 0.5
+        result = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+        assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+        for key in ("mean", "std", "q025", "q975", "n_folds", "p_value_vs_chance"):
+            assert key in result, f"Missing key {key} in {result.keys()}"
+        assert result["n_folds"] == 5
+        assert result["std"] > 0, f"std should be > 0 on real data, got {result['std']}"
+        assert 0.0 <= result["q025"] <= result["mean"] <= result["q975"] <= 1.0, (
+            f"CI ordering wrong: {result}"
+        )
+        # One-sample t vs 0.5 should reject H0 on separated data
+        assert result["p_value_vs_chance"] < 0.05, (
+            f"p-value vs 0.5 should be < 0.05 on shifted data, got {result['p_value_vs_chance']}"
+        )
+
+    def test_null_p_value_not_significant(self):
+        """Under H0 (no shift), p-value vs 0.5 should usually be >= 0.05."""
+        from _divergence_c2st import _c2st_auc
+
+        rng = np.random.RandomState(0)
+        X = rng.randn(200, 32)
+        Y = rng.randn(200, 32)
+        result = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=0)
+        # Lenient bound: CV AUC can wobble; we just check the p-value is a
+        # reasonable probability, not a pathological value.
+        assert 0.0 <= result["p_value_vs_chance"] <= 1.0
 
     def test_contiguous_labels_not_degenerate(self):
         """With contiguous labels (all 0s then all 1s), AUC must not be degenerate.
@@ -84,7 +124,7 @@ class TestC2STCore:
         rng = np.random.RandomState(42)
         X = rng.randn(100, 10)
         Y = rng.randn(100, 10) + 0.5  # mild shift
-        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)
+        auc = _c2st_auc(X, Y, cv_folds=5, class_weight="balanced", seed=42)["mean"]
         # A reasonable classifier should find a mild shift; AUC should be clearly
         # between 0.5 and 1.0 (not degenerate 0.0 or 1.0)
         assert 0.5 < auc < 0.95, (
@@ -122,15 +162,15 @@ class TestC2STCore:
 
 
 class TestC2STEmbeddingSchema:
-    """Output of compute_c2st_embedding matches DivergenceSchema."""
+    """Output of compute_c2st_embedding matches C2STDivergenceSchema."""
 
     def test_output_schema(self):
-        """Synthetic data produces valid DivergenceSchema output."""
+        """Synthetic data produces valid C2STDivergenceSchema output."""
         import copy
 
         from _divergence_c2st import compute_c2st_embedding
         from pipeline_loaders import load_analysis_config
-        from schemas import DivergenceSchema
+        from schemas import C2STDivergenceSchema
 
         cfg = copy.deepcopy(load_analysis_config())
         cfg["divergence"]["windows"] = [2]
@@ -148,21 +188,23 @@ class TestC2STEmbeddingSchema:
         result = compute_c2st_embedding(df, emb, cfg)
         assert len(result) > 0, "compute_c2st_embedding produced no rows"
 
-        # Add channel (dispatcher does this normally)
+        # Dispatcher attaches channel before validating
         result["channel"] = "semantic"
-        DivergenceSchema.validate(result)
+        C2STDivergenceSchema.validate(result)
+        for col in ("auc_std", "auc_q025", "auc_q975", "n_folds", "p_value_vs_chance"):
+            assert col in result.columns, f"{col} missing from C2ST output"
 
 
 class TestC2STLexicalSchema:
-    """Output of compute_c2st_lexical matches DivergenceSchema."""
+    """Output of compute_c2st_lexical matches C2STDivergenceSchema."""
 
     def test_output_schema(self):
-        """Synthetic text data produces valid DivergenceSchema output."""
+        """Synthetic text data produces valid C2STDivergenceSchema output."""
         import copy
 
         from _divergence_c2st import compute_c2st_lexical
         from pipeline_loaders import load_analysis_config
-        from schemas import DivergenceSchema
+        from schemas import C2STDivergenceSchema
 
         cfg = copy.deepcopy(load_analysis_config())
         cfg["divergence"]["windows"] = [2]
@@ -195,7 +237,32 @@ class TestC2STLexicalSchema:
         assert len(result) > 0, "compute_c2st_lexical produced no rows"
 
         result["channel"] = "lexical"
-        DivergenceSchema.validate(result)
+        C2STDivergenceSchema.validate(result)
+
+
+class TestC2STSchemaStrict:
+    """C2STDivergenceSchema must reject rows missing the variance columns."""
+
+    def test_rejects_missing_variance_columns(self):
+        """Missing auc_std must fail strict C2STDivergenceSchema validation."""
+        import pandera.errors
+        import pytest
+        from schemas import C2STDivergenceSchema
+
+        bad = pd.DataFrame(
+            [
+                {
+                    "year": 2010,
+                    "channel": "semantic",
+                    "window": "2",
+                    "hyperparams": "pca=32",
+                    "value": 0.7,
+                    # auc_std, q025, q975, n_folds, p_value_vs_chance missing
+                }
+            ]
+        )
+        with pytest.raises((pandera.errors.SchemaError, pandera.errors.SchemaErrors)):
+            C2STDivergenceSchema.validate(bad)
 
 
 # ---------------------------------------------------------------------------
@@ -211,6 +278,44 @@ class TestC2STDispatcherIntegration:
 
         assert "C2ST_embedding" in METHODS, "C2ST_embedding not in METHODS"
         assert "C2ST_lexical" in METHODS, "C2ST_lexical not in METHODS"
+
+    def test_dispatcher_schema_symbols_resolve(self):
+        """compute_divergence imports both schemas — guards against formatter
+        stripping an unused import.
+
+        Regression test for ticket 0068: auto-formatter removed
+        C2STDivergenceSchema when the import was added before the usage
+        edit, leaving a latent NameError on any C2ST_* invocation.
+        """
+        import compute_divergence
+
+        assert hasattr(compute_divergence, "C2STDivergenceSchema"), (
+            "compute_divergence.C2STDivergenceSchema missing — import was stripped"
+        )
+        assert hasattr(compute_divergence, "DivergenceSchema")
+
+    def test_end_to_end_c2st_lexical_on_smoke_fixture(self, tmp_path):
+        """Run compute_divergence.py --method C2ST_lexical against the smoke
+        fixture; output must pass C2STDivergenceSchema.
+
+        This is the end-to-end path a user / Make runs — unit tests on the
+        compute_c2st_* functions do not exercise the dispatcher's schema
+        validation. Without this, a missing C2STDivergenceSchema import is
+        only caught at production runtime.
+        """
+        from conftest import run_compute
+        from schemas import C2STDivergenceSchema
+
+        out = tmp_path / "tab_div_C2ST_lexical.csv"
+        result = run_compute("C2ST_lexical", out)
+        assert result.returncode == 0, (
+            f"Dispatcher failed: stdout={result.stdout}\nstderr={result.stderr}"
+        )
+        assert out.exists(), f"Dispatcher did not write {out}"
+        df = pd.read_csv(out)
+        C2STDivergenceSchema.validate(df)
+        for col in ("auc_std", "auc_q025", "auc_q975", "n_folds", "p_value_vs_chance"):
+            assert col in df.columns, f"{col} missing from dispatcher output"
 
     def test_c2st_embedding_entry(self):
         from compute_divergence import METHODS

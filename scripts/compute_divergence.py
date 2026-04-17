@@ -18,7 +18,7 @@ import importlib
 import os
 
 from pipeline_loaders import load_analysis_config
-from schemas import DivergenceSchema
+from schemas import C2STDivergenceSchema, DivergenceSchema
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
@@ -161,8 +161,12 @@ def main():
 
     result["channel"] = channel
 
-    # Validate contract
-    DivergenceSchema.validate(result)
+    # Validate contract — C2ST methods carry extra CV-variance columns
+    # (ticket 0068) and use a distinct strict schema.
+    if args.method.startswith("C2ST_"):
+        C2STDivergenceSchema.validate(result)
+    else:
+        DivergenceSchema.validate(result)
 
     # Ensure output directory exists
     out_dir = os.path.dirname(io_args.output)
