@@ -1,0 +1,89 @@
+%erg v1
+Title: Hygiene test — with-replacement sampling collapsed by dedup
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T17:45Z claude created — migrated from IDH ticket 0002 (mis-filed in harness; domain-specific statistical rule belongs with the domain)
+
+--- body ---
+## Context
+
+PR #691 (`scripts/compute_divergence_bootstrap.py:_run_citation_bootstrap`,
+commit before `20b1117`) shipped a textbook with-replacement-then-dedup bug:
+
+```python
+idx = rng.choice(n, k, replace=True)
+sampled = set(corpus[i] for i in idx)  # ← collapses multiplicities
+```
+
+With `replace=True` the sample is designed to contain duplicates. Passing
+it through `set(...)` silently drops them, yielding an effective ~63%
+(1 − 1/e) subsample instead of the intended bootstrap draw. All 122 unit
+and smoke tests were green because they asserted schema, not sampling
+semantics. The bug was only caught during `/verify` review, at LLM cost.
+
+This ticket turns that one-time catch into a permanent mechanical check,
+scoped to this repo where the code that needs it lives.
+
+## Why here and not in the harness
+
+The harness (IDH) already had a ticket (#0002) proposing these rules be
+added to `/verify-adherence`'s hardcoded grep bank. That was mis-filed:
+the rule is domain-specific (numpy, bootstrap, set operations on sampled
+indices), and the correct scaling for domain rules is to live with the
+domain. The harness bank is currently hardcoded with Climate_finance
+rules; the architectural debt of externalizing that bank is tracked
+separately if and when a second project needs project-local adherence
+rules. Until then, Climate_finance's own `tests/test_hygiene_*.py`
+mechanism (already picked up by `/verify-adherence` phase 1) is the
+right home.
+
+## Actions
+
+1. Add `tests/test_hygiene_sampling.py`. Test greps the diff
+   (`git diff main...HEAD`) for touched Python files and fails if any
+   file contains `rng.choice(...replace=True...)` followed within ±5
+   lines by `set(...)`, `.unique()`, or `.drop_duplicates()`.
+2. Test must cite the rule with a clear message pointing at the offending
+   file:line and explaining why (with-replacement + dedup silently drops
+   multiplicities; bootstrap semantics require preserving them).
+3. Test must pass on current `main` (post-fix). Test must fail on the
+   pre-fix commit (commit before `20b1117`) — use that commit as the
+   regression fixture.
+
+## Rejected alternatives
+
+- **Rule 2 from IDH#0002 ("unseeded `np.random.RandomState()`")** —
+  skipped here. Partial overlap with the existing seed rule in the
+  harness grep bank; marginal additional signal for the noise cost.
+  Revisit if an unseeded-RNG bug ships.
+- **Rule 3 from IDH#0002 ("function named `*bootstrap*` without
+  `replace=True`")** — dropped. Naming-convention heuristic, false-
+  positives on any unrelated `bootstrap_*` helper. Would erode author
+  trust in the check.
+
+## Test
+
+Run the new hygiene test against the repo at the pre-fix commit. Expect
+failure with a message naming the offending file:line. Run against
+current `main`. Expect pass.
+
+## Exit criteria
+
+- `tests/test_hygiene_sampling.py` exists and is picked up automatically
+  by `/verify-adherence` phase 1 (its filename matches the
+  `test_hygiene_*` convention).
+- Test fails on the pre-fix PR #691 commit; passes on current `main`.
+- Message names the offending file:line and explains the bug class in
+  one sentence.
+- No changes to the harness repo.
+
+## Not in scope
+
+- Externalizing the harness's hardcoded grep bank (that is an IDH
+  decision to make if and when a second project wants project-local
+  rules).
+- Other statistical antipatterns. One rule, one ticket. Future
+  sampling-semantics bugs get their own hygiene tests.
