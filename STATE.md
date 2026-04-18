@@ -1,8 +1,8 @@
 # State
 
-Last updated: 2026-04-17
+Last updated: 2026-04-18
 
-## Status: TWO PAPERS SUBMITTED + DIVERGENCE PIPELINE MERGED, FIRST REAL-CORPUS RUN DONE
+## Status: TWO PAPERS SUBMITTED + WAVE C MERGED (COMPANION PAPER ASSEMBLED, PRE-SUBMISSION POLISH NEXT)
 
 ### Oeconomia (Varia) — submitted 2026-03-18
 Under double-blind review. ~8,860 words, 61 bib entries, 2 figures, 2 tables.
@@ -36,7 +36,12 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ## Blockers
 
-Wave C (0057/0058/0064) is waiting on ticket 0042 rerun. All three ticket-level blockers of 0042 (0067 year bounds, 0068 C2ST CV variance, 0069 G2 null + graph boot) are closed on main. Next compute step is: rerun `make divergence null-model bootstrap-tables divergence-summary changepoints sensitivity` on padme with the updated code + corpus 1.1.2.
+None for the current goal. Wave C merged 2026-04-18 (PRs #708 / #709 / #710). Companion paper is now assembled on main with method, figures, and §5 numeric fill from the 2026-04-17 corpus-1.1.1 pipeline rerun. Pre-submission polish (0083 sensitivity annex, 0084 subsampling ribbon) is next but not blocking.
+
+### Wave C — merged 2026-04-18
+- #708 (ticket 0057): §4 Method rewrite + §5 stubs + bibliography for two-sample testing literature
+- #709 (ticket 0058): four canonical figures (Z-series, heatmap, terms, community) + shared plot utilities + `companion.mk`
+- #710 (ticket 0064): §5 Results filled from real-corpus vars — four G9 sub-zones at lead $w=3$ (2001-2002, 2006, 2012-2015, 2018-2020, peak Z=8.16 at 2015); S2/L1 saturate under residual growth bias (B2/B9), reframed as diagnostic
 
 ### Divergence pipeline — merged 2026-04-15 (PR #650)
 - 15 divergence methods (S1-S4 semantic, L1-L3 lexical, G1-G8 citation graph)
@@ -47,11 +52,13 @@ Wave C (0057/0058/0064) is waiting on ticket 0042 rerun. All three ticket-level 
 
 ## Next actions
 
+- **Companion paper polish** before submission-branch sprout:
+  - **0083** sensitivity annex (window × gap × embedding dim × model, R=3 median) — ~1.5-2h GPU on padme
+  - **0084** subsampling-variance ribbon on the headline Z-plot (R=20 trim-2) — ~2h GPU
+  - Three small follow-up items remain on #708's merge (abstract "three sub-zones" vs `g9_n_zones: 4`; §5.1 hard-coded cross-w numbers; prose register "smoking gun" → "diagnostic signature") — land as a consolidated pre-sprout polish PR
+- **0070 bias audit** + child tickets 0071-0078: pre-submission defence-in-depth for §4.8 and §6.4 (most are narrative acknowledgements, some warrant child analyses)
 - **0025**: connective prose for corpus report
 - **0028**: modular analysis report (one include per script) — home for the 15-method divergence zoo
-- **0042**: rerun divergence pipeline on padme with updated code (post-0067/0068/0069 fixes) — unblocks Wave C
-- **0026 Wave C**: companion paper rewrite — 0057 (methods prose), 0058 (4 figures), 0064 (fill §5 Results) — blocked on 0042
-- **0070 bias audit** + child tickets 0071-0078: pre-submission defence-in-depth for the companion paper's §4.8 and §6.4
 - Re-land arch rule 9 (corpus access through loaders only) on own branch — tickets 0043/0044 already on main
-- Waiting for corpus 1.1.2 to finish building
+- Waiting for corpus 1.1.2 to finish building (enables a possible rerun before submission)
 - **0081 bootstrap CI** (pytest on PR/push) — prerequisite for 0079 (cached baseline failure set) and for /verify to have mechanical evidence; part of the cross-repo CI batch with IDH 0015, git-erg 0003, AEDIST 0111. Stabilise flakes first; then branch protection requiring `tests`.
