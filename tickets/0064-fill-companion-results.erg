@@ -9,6 +9,13 @@ Blocked-by: 0057
 --- log ---
 2026-04-16T19:45Z claude created
 2026-04-16T19:45Z claude note wave C.2 of epic 0026 — numerical fill after structure is in
+2026-04-16T20:45Z claude claimed t0064-fill-companion-results (branched from t0058-companion-paper-figures)
+2026-04-16T20:55Z claude red test tests/test_companion_vars_resolved.py
+2026-04-16T21:20Z claude green scripts/compute_companion_vars.py + content/companion-paper-vars.yml
+2026-04-16T21:30Z claude note honest finding: naive validation yields 1 zone 1999--2020 because S2/L1 saturate; G9 zones (2001--2002, 2006, 2012--2015) carry the discriminative signal
+2026-04-16T21:35Z claude note §5.4 interpretation placeholders retained — ticket 0056 outputs absent; censored-gap pass not run, §5.3 flags as known gap
+2026-04-16T21:40Z claude refactor drop sys.path hack, tighten abstract em-dashes, correct w-sensitivity claim (G9 flips sign across w)
+2026-04-16T21:45Z claude green 117 passed pytest tests/test_companion_*.py tests/test_script_hygiene.py tests/test_io_discipline.py
 
 --- body ---
 ## Context
