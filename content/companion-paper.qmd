@@ -75,7 +75,7 @@ All three studies periodize the field exogenously, by reference to policy milest
 
 The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance, assembled from {{< meta corpus_sources >}} bibliographic sources and described in the companion data descriptor [cross-ref data-paper]. Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions, `BAAI/bge-m3`) are available for all works with titles and publication years in range. The corpus was designed for breadth and transparency, with full audit trail and LLM-validated quality filtering. The multilingual embedding model places works in English, French, Chinese, Japanese, and German into a shared semantic space.
 
-Analysis runs over the years 1998--2021. Although the global corpus spans 1990--2024 (the research window declared in `config/analysis.yaml`), the companion paper restricts itself to a narrower analytic span because the per-window bounds convention (ticket 0067) requires both halves $[t-w, t]$ and $[t, t+w]$ to lie inside the corpus --- at half-width $w = 5$ this already contracts the admissible range to 1995--2018, and the minimum-papers filter then lifts the lower bound to 1998. Later years are likewise truncated to avoid incomplete citation coverage.
+Analysis runs over the years 1998--2021. Although the global corpus spans 1990--2024 (the research window declared in `config/analysis.yaml`), the companion paper restricts itself to a narrower analytic span because the per-window bounds convention (ticket 0067) requires both halves $[t-w, t]$ and $[t, t+w]$ to lie inside the corpus --- at the lead half-width $w = 3$ this contracts the admissible range to 1993--2020, and the minimum-papers filter then lifts the lower bound to 1998. Later years are likewise truncated to avoid incomplete citation coverage. A full sensitivity sweep over window and gap is planned as a paper annex (ticket 0083).
 
 | Statistic | Value |
 |-----------|-------|
@@ -136,9 +136,9 @@ Mixing two inference primitives is a deliberate choice. Each fits its statistic.
 
 ### 4.6 Transition zone detection and multi-signal validation
 
-We treat each $Z_m(t)$ series as an evidence stream for layer $m \in \{S2, L1, G9\}$. Candidate supra-threshold years are those with $Z_m(t) > 2$. A *transition zone* for layer $m$ is a maximal contiguous run of supra-threshold years. A zone is *validated* when at least two layers (counting C2ST AUC above a calibrated reference only as confirmation) contain overlapping zones.
+We treat each $Z_m(t)$ series as an evidence stream for layer $m \in \{S2, L1, G9\}$. Candidate supra-threshold years are those with $|Z_m(t)| > 2$. A *transition zone* for layer $m$ is a maximal contiguous run of supra-threshold years. A zone is *validated* when at least two of the three voting layers contain overlapping zones. G2 spectral gap and C2ST AUC enter only as reference; they do not vote.
 
-This rule trades two kinds of error against each other. Requiring only one layer accepts single-layer artifacts --- a lexical spike from a terminology reform, an embedding-model update, a Louvain stochasticity event. Requiring all three rejects genuine changes that leave one layer undisturbed, which is known to happen when a field's vocabulary stabilises before its relational structure does. Two-of-three agreement sits between these extremes and matches the convention in multi-layer change-point studies.
+This rule trades two kinds of error against each other. Requiring only one layer accepts single-layer artifacts --- a lexical spike from a terminology reform, an embedding-model update, a Louvain stochasticity event. Requiring all three rejects genuine changes that leave one layer undisturbed, which is known to happen when a field's vocabulary stabilises before its relational structure does. Two-of-three agreement sits between these extremes.
 
 ### 4.7 Censored-gap confirmation
 
