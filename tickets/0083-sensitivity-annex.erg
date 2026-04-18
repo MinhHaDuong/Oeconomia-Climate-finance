@@ -57,6 +57,13 @@ Small multiples layout:
   embedding channel) — L1 / G9 / G2 sensitivities can be added
   later if compute budget allows.
 - **X-axis per cell**: year, 1998–2021.
+- **Per-point estimator**: median of $R = 3$ equal-$n$ subsample
+  replicates. Chosen to reduce subsampling noise by ~42% ($\sqrt{3}$)
+  while keeping compute manageable. Single-draw ($R=1$) is vulnerable
+  to one-unlucky-subsample pathologies; full ribbon ($R=20$ trim-2,
+  as in ticket 0084) is overkill for an annex whose primary purpose
+  is parameter-effect visibility. Center lines only — no within-cell
+  ribbons (visual clutter at subplot size).
 
 That is $4 \times 4 = 16$ cells, each with $5 \times 2 = 10$ curves.
 The grid communicates three things at a glance:
@@ -70,11 +77,11 @@ The grid communicates three things at a glance:
 
 Let $n$ = number of divergence recomputations needed:
 
-- 16 grid cells × 10 model-dim variants × ~24 years × 1 method
-  = **~3,800 S2-energy evaluations per run**.
+- 16 grid cells × 10 model-dim variants × ~24 years × 3 subsample
+  replicates × 1 method = **~11,500 S2-energy evaluations per run**.
 
 Current per-evaluation cost: ~0.5 s on an RTX A4000 with torch
-backend for S2 with embeddings pre-loaded. Total: ~30 min per pass,
+backend for S2 with embeddings pre-loaded. Total: ~1.5 h per pass,
 dominated by model-loading overhead if we do not batch.
 
 Batching strategy: pre-compute all embeddings for each (model, dim)
@@ -82,17 +89,21 @@ pair once, cache to `content/tables/cache/emb_{model}_{dim}.npz`,
 then run the S2 pipeline over the cache. Add PCA fit/transform as a
 script on top of `refined_embeddings.npz`.
 
-Practical total: ~1–2 h GPU time on padme for the full grid.
+Practical total: ~1.5–2 h GPU time on padme for the full grid with
+$R = 3$.
 
 ## Actions
 
 1. Extend `config/analysis.yaml` with a `sensitivity:` block declaring
-   the grid axes (windows, gaps, dim_variants, models). Reviewers can
-   then re-run with different parameters.
+   the grid axes (windows, gaps, dim_variants, models, `equal_n_r: 3`).
+   Reviewers can then re-run with different parameters.
 2. Write `scripts/compute_sensitivity_grid.py` — one output:
    `content/tables/tab_sensitivity_grid.csv` with columns
-   `(model, dim, window, gap, year, method, z_score, p_value,
-   n_before, n_after)`. Script accepts `--output` per script-io rule.
+   `(model, dim, window, gap, year, method, z_score_median, p_value,
+   n_before, n_after, n_subsamples)`. `z_score_median` is the median
+   over R=3 subsample replicates. Script accepts `--output` per
+   script-io rule. Uses independent RNG streams per replicate (same
+   discipline as ticket 0084).
 3. Write `scripts/plot_companion_sensitivity.py` → small multiples
    figure `content/figures/fig_companion_sensitivity.png` via
    `save_figure()`. One cell per (window, gap) pair; ten lines per cell.
@@ -101,6 +112,9 @@ Practical total: ~1–2 h GPU time on padme for the full grid.
 5. Write §A.1 Sensitivity sweep (appendix) in `companion-paper.qmd`:
    - reference `@fig-companion-sensitivity`
    - one paragraph per grid-axis observation
+   - one sentence on the estimator difference: *"Annex center lines
+     are median-of-three equal-$n$ subsamples per cell (compute
+     budget). Main-text Z-ribbons use $R=20$ trim-2 (§4.5)."*
    - honest call-out of any surprise (e.g., unlimited-window column
      collapsing, or one model flipping a zone's sign)
 6. Update §3 footnote to reference the annex instead of illustrating
