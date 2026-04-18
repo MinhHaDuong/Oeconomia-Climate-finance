@@ -1,0 +1,167 @@
+%erg v1
+Title: Report equal-n subsampling variance as a ribbon on Z-score plots
+Status: open
+Created: 2026-04-18
+Author: user
+Blocked-by: 0045
+Blocked-by: 0055
+
+--- log ---
+2026-04-18T09:30Z claude created from author's statistical-correctness idea
+
+--- body ---
+## Context
+
+Ticket 0045 subsamples the larger (after) window to the size of the
+smaller (before) window once per cell, producing a single observed
+divergence value. That single draw hides the subsampling variance: a
+different random subsample would give a different observed value,
+which would give a different $Z$-score.
+
+The current `tab_summary_*.csv` reports a point estimate and the
+null statistics, and the $Z$-score plots draw one line. A single line
+over-states the precision of the observed side.
+
+## Proposal
+
+Report the subsampling variance explicitly as a ribbon on the main
+$Z$-score time series plot (figure `fig-zseries`, produced by
+`scripts/plot_companion_zseries.py`).
+
+### Algorithm
+
+For each cell $(method, year, window)$:
+
+1. Pool = before + after papers.
+2. For $r = 1 \dots R$ (R = 20 by default, config-driven):
+   - Draw an equal-$n$ subsample of the after-window independently.
+   - Compute the statistic on (before, subsample) → $D_r$.
+   - Compute $z_r = (D_r - \mu_{null}) / \sigma_{null}$ using the
+     existing per-cell null statistics.
+3. Drop extremes: trim the top 2 and bottom 2 of the 20 $z_r$ values
+   (or equivalently, use the 10th and 90th percentiles — identical
+   for R=20).
+4. Report `z_trim_lo` and `z_trim_hi` alongside the existing
+   `z_score` (which stays as the median or mean of the 20 draws).
+
+## Null model — *mostly* unaffected
+
+The null's mean and std are computed by the existing permutation
+pipeline (ticket 0055), which shuffles labels within the pooled
+sample. The permutation itself already produces equal-sized splits
+under H0, so $\mu_{null}$ and $\sigma_{null}$ do not need to change.
+
+The $Z$-score ribbon inherits subsampling variance from the numerator
+only; the denominator is fixed. This is the right shape.
+
+### Caveat — RNG independence
+
+The 20 subsampling draws and the $B$ permutation draws must use
+independent RNG streams. If both derive from `config["random_seed"]`
+through shared state, they could be phantom-correlated. Ticket 0061
+(shared RNG contamination) was the same family of bug in a different
+site. Fix: use `_make_window_rngs(seed, y, w, subsample_idx=r)` or a
+similar namespacing device, and add an adherence test asserting that
+subsample stream $r$ and permutation stream $b$ produce uncorrelated
+output on a fixture.
+
+## Actions
+
+1. Extend `scripts/compute_divergence.py` (or add a sibling
+   `compute_divergence_subsampled.py`) to produce R subsampling
+   replicates per cell when `divergence.equal_n_r > 1` is configured.
+   Output: `content/tables/tab_subsample_{method}.csv` with columns
+   `(method, year, window, hyperparams, replicate, value)`. Keeps the
+   existing single-draw path unchanged when `equal_n_r = 1`.
+2. Extend `scripts/export_divergence_summary.py` to derive
+   `z_trim_lo`, `z_trim_hi`, `z_median_subsample`, and
+   `n_subsamples` from the subsample table when available; leave them
+   as `NaN` otherwise. Update `DivergenceSummarySchema` in
+   `scripts/schemas.py`.
+3. Extend `config/analysis.yaml` with `equal_n_r: 20` and
+   `subsample_trim: 2` (keys at the divergence level).
+4. Update `scripts/plot_companion_zseries.py` to draw a ribbon from
+   `z_trim_lo` to `z_trim_hi` whenever those columns are non-null, and
+   a line for the median. Ribbon style: same color as the line,
+   alpha 0.2. Fallback to line-only when columns are null.
+5. Update the companion paper §4.5 Statistical inference to describe
+   the subsampling ribbon: one sentence mentioning R=20, trim-2, and
+   the claim that the null is unaffected.
+6. Update §4.8 Robustness to remove the current equal-$n$ prose (it
+   now *is* the main display rather than a robustness check).
+7. TDD:
+   - Red test: assert that `tab_subsample_S2_energy.csv` has exactly
+     R rows per cell when `equal_n_r = R`.
+   - Red test: assert that `z_trim_lo ≤ z_median ≤ z_trim_hi` for
+     every cell with subsampling enabled.
+   - Red test: RNG independence on a fixture — the observed-side
+     subsampling stream and the permutation null stream must produce
+     statistically uncorrelated output (|corr| < 0.1 on R=20 × B=500
+     replicates of a synthetic Gaussian two-sample).
+8. Regenerate `tab_summary_*.csv` via `make divergence-summary`.
+   Expected runtime impact: equal_n_r=20 multiplies the observed-side
+   cost by 20. On padme GPU this adds roughly 10-15 min per lead
+   method. Total pipeline rerun: ~5h (currently 4h).
+
+## Test (first-red)
+
+```python
+def test_subsample_replicates_present():
+    """With equal_n_r > 1, tab_subsample_*.csv exists and has R rows/cell."""
+    cfg = load_analysis_config()
+    R = cfg["divergence"]["equal_n_r"]
+    df = pd.read_csv("content/tables/tab_subsample_S2_energy.csv")
+    counts = df.groupby(["year", "window"])["replicate"].count()
+    assert (counts == R).all(), counts[counts != R]
+
+def test_z_trim_ribbon_bracket_median():
+    """z_trim_lo ≤ z_median ≤ z_trim_hi for every cell in summary."""
+    df = pd.read_csv("content/tables/tab_summary_S2_energy.csv")
+    with_ribbon = df.dropna(subset=["z_trim_lo", "z_trim_hi"])
+    assert (with_ribbon["z_trim_lo"] <= with_ribbon["z_median_subsample"]).all()
+    assert (with_ribbon["z_median_subsample"] <= with_ribbon["z_trim_hi"]).all()
+
+def test_subsample_and_null_rng_independence():
+    """Subsampling stream and permutation stream are uncorrelated."""
+    # Fixture: 100 points × 10 dims, run both streams, correlate per-replicate
+    # outputs (after pairing by year). |corr| < 0.1 is the threshold.
+    ...
+```
+
+## Exit criteria
+
+- `tab_subsample_*.csv` generated for the lead methods (S2, L1, G9, G2).
+- `tab_summary_*.csv` schema gains `z_trim_lo`, `z_trim_hi`,
+  `z_median_subsample`, `n_subsamples`.
+- Main $Z$-score plot shows ribbons for the lead methods.
+- Companion paper §4.5 + §4.8 updated.
+- RNG independence test passes.
+- Pipeline reruns cleanly; runtime within 1.5× the previous baseline.
+
+## Relationship to other tickets
+
+- **0045** (equal-n correction): this ticket is the visualization +
+  uncertainty-quantification extension of 0045. 0045 did the bias
+  correction once per cell; 0084 does it R times and reports the range.
+- **0047** (bootstrap CI): orthogonal uncertainty source. Bootstrap
+  resamples the observation (with replacement); this ticket
+  re-subsamples the equal-n draw (without replacement). Both ribbons
+  can coexist in principle; propose keeping them separate — the
+  subsampling ribbon becomes the main display, the bootstrap ribbon
+  stays as a supplementary sanity check.
+- **0055** (permutation null): untouched. Null remains the same.
+- **0061** (shared RNG contamination): same family; the RNG
+  independence test in this ticket is the same pattern.
+- **0083** (sensitivity annex): complementary but separate — 0083
+  sweeps parameter grid; 0084 quantifies noise at one grid point.
+
+## Compute cost
+
+- Per-cell cost × R = 20
+- Lead panel (S2, L1, G9, G2), ~80 cells each → 80 × 20 × 4 = 6,400
+  extra divergence evaluations vs baseline.
+- On padme GPU: S2 ~1 s per evaluation → +30 min for S2 alone;
+  L1/G9/G2 similar → total additional ~2 h.
+- Null and bootstrap unchanged.
+
+Reasonable overnight cost.
