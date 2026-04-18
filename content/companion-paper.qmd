@@ -197,6 +197,14 @@ At zone 2 ({{< meta zone_2_start >}}--{{< meta zone_2_end >}}), terms gaining we
 
 Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates these shifts in the field's institutional history. The companion paper's claim is methodological: the framework identifies the zones reproducibly across independent representations.
 
+![Permutation Z-scores at the lead window ($w = 3$) for the four distance-based detectors (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
+
+![Transition-zone validation heatmap. Rows are the six lead methods; columns are years from 1998 to 2021. Cell colour encodes the signed signal — Z-score for the four distance detectors, and $(\mathrm{AUC} - 0.5) \times 20$ for the two C2ST rows so that all rows share a comparable scale. Vertical rectangles mark years where at least two rows exceed the threshold simultaneously (validated zones).](figures/fig_companion_heatmap.png){#fig-heatmap}
+
+![Top ten discriminative terms per validated zone, ranked by log-odds ratio. Bars leaning right correspond to terms gaining weight after the zone; bars leaning left, to terms losing weight. Terms are taken from the intersection of the log-odds ranking and the logistic classifier ranking (§4.9).](figures/fig_companion_terms.png){#fig-terms}
+
+![Louvain community sizes on either side of each validated zone. Bar height gives the number of documents assigned to a community; the *before* bar (light) and *after* bar (dark) are plotted side by side per community identifier. Communities that shrink or swell across the zone are the ones driving the graph-layer signal.](figures/fig_companion_community.png){#fig-community}
+
 
 ## 6. Discussion
 
