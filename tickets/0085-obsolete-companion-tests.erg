@@ -1,0 +1,60 @@
+%erg v1
+Title: Remove obsolete companion-paper tests (pre-0057 fixtures)
+Status: open
+Created: 2026-04-18
+Author: claude
+
+--- log ---
+2026-04-18T16:00Z claude created from end-session test-suite audit
+
+--- body ---
+## Context
+
+After ticket 0057's rewrite of `content/companion-paper.qmd` (merged
+2026-04-18, PR #708), three test files carry fixtures for the OLD
+§4/§5 design (KMeans clusters, seed-axis bimodality, PC2 analysis):
+
+- `tests/test_companion_pca.py` — 13 failures in TestSection53 /
+  TestSection54 testing for deprecated PCA-scatter and bimodality
+  prose
+- `tests/test_companion_prose.py` — some assertions refer to old
+  §5 structure
+- `tests/test_doc_vars_completeness.py::test_doc_vars_complete[companion-paper]`
+  — expects old vars (bim_*, pca_*, seed_axis_*)
+
+These are not regressions; they are fixtures that didn't get updated
+when the paper was rewritten. `make check-fast`: 16 fail / 853 pass.
+
+## Actions
+
+1. **Delete** `tests/test_companion_pca.py` entirely. The PC2 /
+   bimodality analysis is not in the new paper.
+2. **Audit** `tests/test_companion_prose.py`. Some assertions already
+   work (the ticket 0064 executor updated the §5 sections). Remove
+   the obsolete ones (seed-axis, bimodality, PC2 mentions) or rewrite
+   them against the new §5.1-§5.4 structure.
+3. **Update** `tests/test_doc_vars_completeness.py`:
+   `test_doc_vars_complete[companion-paper]` should iterate the
+   keys in `content/companion-paper-vars.yml` as it stands today,
+   not the old `manuscript-vars.yml`-style list. Check the test's
+   fixture source and align.
+4. Re-run `make check-fast`; target 0 failures.
+
+## Test
+
+```python
+def test_no_deprecated_companion_paper_assertions():
+    """No test refers to the old seed-axis / bimodality / PC2 design."""
+    import pathlib, re
+    obsolete = ["seed_axis", "bim_", "pca_emb_pc", "bimodality"]
+    for p in pathlib.Path("tests").glob("test_companion_*.py"):
+        text = p.read_text()
+        for o in obsolete:
+            assert o not in text, f"{p.name} still references {o}"
+```
+
+## Exit criteria
+
+- `make check-fast` on main returns 0 failures.
+- No test file asserts the presence of old §5 content.
+- `test_no_deprecated_companion_paper_assertions` added and passes.
