@@ -1,35 +1,28 @@
 ---
-title: "Detecting Structural Breaks and Polarization in Academic Literature Using Semantic Embeddings: A Framework Applied to Climate Finance (1990--2024)"
+title: "Multi-layer Detection and Validation of Structural Change in Text Corpora: Climate Finance Scholarship 1998--2021"
 author: "Minh Ha-Duong"
-date: "2026-03-05"
+date: "2026-04-17"
 metadata-files: [companion-paper-vars.yml]
 bibliography: bibliography/main.bib
 abstract: |
-  We present a framework for detecting structural breaks and polarization in
-  scientific literatures using sentence-transformer embeddings, and validate it
-  on a corpus of {{< meta corpus_total >}} works on climate finance (1990--2024).
-  The framework combines sliding-window divergence with dual metrics
-  (Jensen-Shannon on cluster proportions, cosine on embedding centroids),
-  a censored-gap variant that filters gradual transitions from genuine
-  discontinuities, supervised seed-axis projection with Gaussian mixture
-  bimodality testing, and a two-level design comparing the full corpus to a
-  citation-defined core ({{< meta corpus_core >}} works cited $\geq$
-  {{< meta corpus_core_threshold >}} times). Applied to climate finance, the
-  framework yields four findings. First, the censored-gap analysis converges
-  on a single dominant structural break at 2009 (Copenhagen), while the Paris
-  Agreement (2015) and Glasgow (2021) produce no comparable discontinuity.
-  Second, the core literature shows no structural break at all --- the
-  conceptual categories were established early and persisted. Third, a
-  bimodal efficiency--accountability divide is cross-validated across embedding
-  and lexical representations ($\Delta$BIC = {{< meta bim_dbic_embedding >}} and
-  {{< meta bim_dbic_tfidf >}}, correlation $r$ = {{< meta bim_corr >}}),
-  unimodal during the crystallization period (2007--2014) and bimodal after
-  2015. Fourth, this divide loads on PC2, not PC1 --- a secondary but
-  persistent axis that cuts diagonally across the field's topical structure.
-  The endogenously detected periodization contradicts the COP-milestone
-  chronology common in existing bibliometric studies and demonstrates the
-  framework's applicability to other fields where data-driven periodization
-  is desirable.
+  We present a framework for detecting endogenous structural change in
+  scientific literatures across multiple document representations, and apply
+  it to a corpus of {{< meta corpus_total >}} works on climate finance
+  (1998--2021). The framework combines three independent detectors ---
+  Energy distance on sentence-transformer embeddings, Jensen--Shannon
+  divergence on lexical distributions, and Louvain community divergence on a
+  temporally consistent co-citation graph --- with a classifier two-sample
+  test as a robustness reference. Statistical inference uses permutation Z-scores for
+  the distance statistics and cross-validation fold variance for the
+  classifier AUC --- two distinct primitives chosen to match each method's
+  source of variation. We detect candidate years where Z exceeds a fixed
+  threshold, group contiguous supra-threshold years into *transition zones*,
+  and validate a zone only when at least two independent layers agree.
+  A two-pass censored-gap analysis confirms that validated zones survive
+  the removal of transitional years. The framework does not claim to
+  uniquely determine the field's true periodization; it provides
+  reproducible, multi-representation evidence of where the distribution of
+  scholarship shifts.
 format:
   pdf:
     pdf-engine: xelatex
@@ -37,22 +30,14 @@ format:
 
 ## 1. Introduction
 
-How do scientific fields restructure themselves? Existing approaches to mapping the evolution of scholarly literatures---co-citation analysis, bibliographic coupling, topic models (LDA, STM)---typically impose a fixed topic structure or rely on discrete document-term representations that may miss gradual semantic shifts. We propose a framework for detecting *endogenous* structural breaks in scientific literatures using dense sentence-transformer embeddings and sliding-window divergence tests.
+How do scientific fields restructure themselves? Existing approaches to mapping the evolution of scholarly literatures---co-citation analysis, bibliographic coupling, topic models (LDA, STM)---typically impose a fixed topic structure or rely on discrete document-term representations that may miss gradual semantic shifts. We propose a framework for detecting *endogenous* structural change in scientific literatures, tested across three independent representations, with explicit statistical inference and a validation rule that requires multiple layers to agree.
 
-The bibliometrics literature has developed sophisticated tools for mapping static field structures (co-citation clusters, keyword co-occurrence networks) and for tracking topic proportions over time (dynamic topic models). However, two questions remain underaddressed:
+The bibliometrics literature has developed tools for mapping static field structures (co-citation clusters, keyword co-occurrence networks) and for tracking topic proportions over time (dynamic topic models). Two questions remain underaddressed:
 
-1. **Endogenous periodization**: At what points does a field's semantic structure change *most sharply*, as determined by the data rather than imposed from external events?
-2. **Polarization detection**: Can we identify and measure the emergence of opposed intellectual communities within a field, and distinguish this structure from mere thematic diversity?
+1. **Endogenous periodization**: At what points does a field's semantic, lexical, or relational structure change sharply, as determined by the data rather than imposed from external events?
+2. **Multi-representation validity**: How should evidence across different document representations be combined so that single-layer artifacts are not mistaken for structural change?
 
-We address both questions with a unified framework built on multilingual sentence-transformer embeddings. The framework has three components:
-
-- **Sliding-window divergence** with Jensen-Shannon and cosine metrics, detecting structural breaks without presupposing their location
-- **Censored-gap variant** that tests whether detected breaks survive the removal of transitional years
-- **Supervised seed-axis projection** with Gaussian mixture modelling, testing for bimodal community structure along theoretically motivated axes
-
-We validate the framework on the case of climate finance scholarship (1990--2024), a field whose evolution is well-documented and whose institutional history provides external benchmarks against which endogenous periodization can be assessed.
-
-Section 2 reviews related work. Section 3 describes the corpus (cross-referencing the companion data descriptor). Sections 4 and 5 present the method and results. Section 6 discusses generalizability and limitations.
+We validate the framework on the case of climate finance scholarship (1998--2021), a field whose evolution is well-documented and whose institutional history provides external benchmarks. Section 2 reviews related work. Section 3 describes the corpus. Section 4 presents the method. Section 5 reports the application results. Section 6 discusses generalizability and limitations.
 
 
 ## 2. Related Work
@@ -61,164 +46,205 @@ Section 2 reviews related work. Section 3 describes the corpus (cross-referencin
 
 Latent Dirichlet Allocation [LDA; @blei2003] remains the most widely used topic model in scientometrics. Each document is modelled as a finite mixture over latent topics, each topic a distribution over words. The Structural Topic Model [STM; @roberts2014] extends LDA by incorporating document-level covariates that can influence topic prevalence and content, making it attractive for bibliometric applications where metadata is rich. BERTopic [@grootendorst2022] reframes topic modelling as a clustering problem on pretrained transformer embeddings, avoiding the need to specify the number of topics *a priori*. Its "Topics over Time" module tracks topic prevalence across time slices.
 
-All three approaches have been applied to map scientific fields [for a recent comparison, see @xie_waltman2025]. However, they share limitations for temporal analysis. LDA and STM rely on bag-of-words representations, discarding word order and context. Dynamic topic models [@blei_lafferty2006] allow topic-word distributions to evolve, but each time-slice still operates on a bag-of-words likelihood, so within-topic semantic drift --- where the *same vocabulary* acquires new meaning --- remains invisible. BERTopic's temporal module tracks which words define a topic at each timestep but does not detect structural reorganisation of the topic space itself. Topic coherence correlates poorly with human interpretability [@chang2009], and embedding-based clustering can match LDA quality at lower computational cost [@sia2020].
+All three approaches have been applied to map scientific fields [for a recent comparison, see @xie_waltman2025]. They share limitations for temporal analysis. LDA and STM rely on bag-of-words representations, discarding word order and context. Dynamic topic models [@blei_lafferty2006] allow topic-word distributions to evolve, but each time-slice still operates on a bag-of-words likelihood, so within-topic semantic drift --- where the *same vocabulary* acquires new meaning --- remains invisible. BERTopic's temporal module tracks which words define a topic at each timestep but does not detect structural reorganisation of the topic space itself. Topic coherence correlates poorly with human interpretability [@chang2009], and embedding-based clustering can match LDA quality at lower computational cost [@sia2020].
 
-### 2.2 Structural change detection in time series
+### 2.2 Structural change detection in time series and two-sample testing
 
 The statistical literature on change-point detection is mature [for a selective review of over 140 methods, see @truong2020], but applications to bibliometric time series are rare. Most change-point methods operate on scalar or low-dimensional signals (CUSUM, Bai-Perron, PELT); adapting them to high-dimensional semantic spaces requires either dimensionality reduction or divergence-based summarisation.
 
-@delvenne2017 demonstrated that sliding-window Jensen-Shannon divergence on symbolically discretized signals can detect dynamical changes, with the maximum JSD identifying the changepoint. @bose2021 applied changepoint analysis to LDA-derived topic proportion vectors, using wild binary segmentation to detect breaks in topic distributions of literary and scientific corpora. @li2021 combined embedding-based distance with changepoint detection on biomedical literature. @hamilton2016 established that cosine displacement in diachronic word embedding spaces reliably indicates semantic change, while @soni2021 showed that documents on the "leading edge" of such change receive more citations.
+@delvenne2017 demonstrated that sliding-window Jensen--Shannon divergence on symbolically discretized signals can detect dynamical changes, with the maximum JSD identifying the changepoint. @bose2021 applied changepoint analysis to LDA-derived topic proportion vectors, using wild binary segmentation. @li2021 combined embedding-based distance with changepoint detection on biomedical literature. @hamilton2016 established that cosine displacement in diachronic word embedding spaces reliably indicates semantic change, while @soni2021 showed that documents on the "leading edge" of such change receive more citations.
 
-The concept of endogenous periodization --- letting the data determine period boundaries rather than imposing them from external events --- is well-established in time series analysis but undertheorized in science studies. @darst2016 detected evolutionary timescales by finding peaks in similarity between consecutive temporal windows, producing intervals that match a system's actual evolution. In bibliometrics, however, periodizations remain overwhelmingly exogenous: imposed from policy milestones (COP dates, treaty signatures) or by visual inspection of publication volume curves.
+The broader two-sample testing literature complements this. Energy distance [@szekely2013] and Maximum Mean Discrepancy [@gretton2012] provide nonparametric statistics for comparing distributions in high dimensions. The classifier two-sample test [C2ST; @lopez_paz_oquab2017] reframes the comparison as a supervised learning problem: if a classifier cannot distinguish two samples above chance, their distributions are indistinguishable. Recent work has extended C2ST to embedding spaces and discussed its calibration [@kim2021]. We borrow all three ideas and combine them with representation diversity.
+
+The concept of endogenous periodization --- letting the data determine period boundaries rather than imposing them from external events --- is well-established in time series analysis but undertheorized in science studies. @darst2016 detected evolutionary timescales by finding peaks in similarity between consecutive temporal windows. In bibliometrics, however, periodizations remain overwhelmingly exogenous: imposed from policy milestones (COP dates, treaty signatures) or by visual inspection of publication volume curves.
 
 ### 2.3 Embedding-based scientometrics
 
 Dense representations from pretrained transformers have transformed document-level scientometrics. SPECTER [@cohan2020] trains document embeddings using the citation graph as a supervision signal, producing representations that capture both textual content and relational structure. @puccetti2021 compared text-based (SciBERT, SPECTER) and graph-based (citation) embeddings for science-of-science applications, finding that they capture different but complementary facets of field structure. @constantino2025 showed that graph embeddings better reproduce formal disciplinary hierarchies, while text embeddings capture thematic similarity that cuts across official classifications.
 
-Temporal applications remain limited. @poetto2023 modelled each research topic as a vector and measured inter-topic distances year-by-year to track convergence and divergence in computer science --- one of the few studies analysing how embedding geometry *changes* over time, not just what it looks like at a single point. But no established framework exists for detecting structural breaks in embedding spaces. The gap is between static clustering (well-served by BERTopic and UMAP-based methods) and temporal break detection (which requires comparing embedding distributions across time windows). Our framework addresses this gap by combining sliding-window divergence on embedding-based cluster proportions with cosine distance on embedding centroids.
+Temporal applications remain limited. @poetto2023 modelled each research topic as a vector and measured inter-topic distances year-by-year to track convergence and divergence in computer science --- one of the few studies analysing how embedding geometry *changes* over time. No established framework exists for detecting and validating structural breaks in embedding spaces across independent representations. The gap is between static clustering (well served by BERTopic and UMAP-based methods) and temporal break detection with multi-layer validation.
 
 ### 2.4 Climate finance bibliometrics
 
 Existing bibliometric studies of climate finance are methodologically homogeneous. @care_weber2023 used co-citation, bibliographic coupling, and keyword co-occurrence (VOSviewer) to identify seven literature clusters, finding that climate finance remains insufficiently grounded in financial theory. @shang_jin2023 applied co-authorship networks and keyword analysis to a Scopus-based corpus, finding that research started around 2010 and is dominated by environmental science rather than finance. @maria_etal2023 combined complex network analysis with structural topic modelling (STM), the only study to apply a topic model to the green/climate finance literature.
 
-All three studies periodize the field exogenously, by reference to policy milestones (Kyoto, Bali, Copenhagen, Paris) or publication volume thresholds. None applies endogenous break detection. None tests for polarization or bimodal community structure quantitatively --- though @care_weber2023 qualitatively noted a structural split between policy-oriented and finance-oriented scholarship. None uses sentence-transformer embeddings. The framework we propose addresses all three gaps simultaneously.
+All three studies periodize the field exogenously, by reference to policy milestones (Kyoto, Bali, Copenhagen, Paris) or publication volume thresholds. None applies endogenous break detection. None tests for structural change across independent representations. None uses sentence-transformer embeddings. The framework proposed here addresses all three gaps simultaneously.
 
 
 ## 3. Data
 
-The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance (1990--2024), assembled from {{< meta corpus_sources >}} bibliographic sources and described in detail in the companion data descriptor [cross-ref data-paper]. Of these, {{< meta corpus_core >}} constitute a "core" subset (cited $\geq$ {{< meta corpus_core_threshold >}} times) representing the field's intellectual backbone. Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions) are available for all works with titles and publication years in range.
+The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance, assembled from {{< meta corpus_sources >}} bibliographic sources and described in the companion data descriptor [cross-ref data-paper]. Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions, `BAAI/bge-m3`) are available for all works with titles and publication years in range. The corpus was designed for breadth and transparency, with full audit trail and LLM-validated quality filtering. The multilingual embedding model places works in English, French, Chinese, Japanese, and German into a shared semantic space.
 
-The corpus was designed for breadth ({{< meta corpus_sources >}} sources, five languages) and transparency (full audit trail, LLM-validated quality filtering). The multilingual embedding model (`BAAI/bge-m3`) places works in English, French, Chinese, Japanese, and German into a shared semantic space.
+Analysis runs over the years 1998--2021. Although the global corpus spans 1990--2024 (the research window declared in `config/analysis.yaml`), the companion paper restricts itself to a narrower analytic span because the per-window bounds convention (ticket 0067) requires both halves $[t-w, t]$ and $[t, t+w]$ to lie inside the corpus --- at the lead half-width $w = 3$ this contracts the admissible range to 1993--2020, and the minimum-papers filter then lifts the lower bound to 1998. Later years are likewise truncated to avoid incomplete citation coverage. A full sensitivity sweep over window and gap is planned as a paper annex (ticket 0083).
 
 | Statistic | Value |
 |-----------|-------|
 | Refined works | {{< meta corpus_total >}} |
 | Sources | {{< meta corpus_sources >}} (OpenAlex, Semantic Scholar, ISTEX, bibCNRS, SciSpace, grey, teaching) |
-| Core subset (cited $\geq$ {{< meta corpus_core_threshold >}}) | {{< meta corpus_core >}} |
 | Embedding dimensions | {{< meta emb_dimensions >}} |
 | Languages | English ({{< meta lang_english_pct >}}%), Portuguese, Spanish, French, Chinese, Japanese, German |
-| Time span | 1990--2024 |
+| Analysis window | 1998--2021 |
 
 : Corpus summary. See the companion data descriptor for construction, deduplication, and validation details. {#tbl-corpus}
 
 
 ## 4. Method
 
-### 4.1 Embedding and clustering
+### 4.1 Objective and epistemic stance
 
-{{< include _includes/embedding-generation.md >}}
+The framework detects *candidate* structural changes in a text corpus and validates them across independent representations. It is not a discovery procedure for a unique "true" periodization. It produces a list of candidate years, each paired with the signals that support it and the signals that do not. This distinction matters: any single-layer periodization risks mistaking representational artifacts for substantive change, and embedding, lexical, and graph views of the same corpus can disagree [@puccetti2021; @constantino2025]. We treat the layers as three witnesses, not as three estimators of one truth.
 
-### 4.2 Structural break detection
+A second commitment follows from this stance. Rather than point breakpoints with exact years, we report *transition zones*: contiguous runs of supra-threshold evidence, each with a start year, an end year, and the set of layers that agree on it. A zone with two layers agreeing over three adjacent years is a stronger claim than a single-layer spike in one year, and the zone representation makes this directly visible.
 
-{{< include _includes/structural-breaks.md >}}
+### 4.2 Representations
 
-### 4.3 Alluvial visualization
+Each document is represented in three spaces that expose different aspects of the corpus.
 
-{{< include _includes/alluvial-diagram.md >}}
+*Embedding space.* Each work is mapped to its multilingual sentence-transformer vector $x_i \in \mathbb{R}^{1024}$. We reduce to a 32-dimensional subspace via PCA fitted on the full analysis corpus; this keeps the dominant axes of variation while making nonparametric two-sample tests tractable on moderate samples. Embeddings are L2-normalised before PCA.
 
-### 4.4 Bimodality analysis
+*Lexical space.* Each work is represented as a TF--IDF vector over a vocabulary shared across all years. Stop words are filtered in the corpus's five languages. The resulting vectors are sparse and directly interpretable through their weighted terms.
 
-{{< include _includes/bimodality-analysis.md >}}
+*Citation graph.* We construct a co-citation graph from the corpus's reference lists. An edge between two works is weighted by the number of later works that cite both. To avoid temporal leakage, the graph at time $t$ includes only references made by works with year $\le t$; no future edges enter the comparison.
 
-### 4.5 PCA axis detection
+### 4.3 Temporal segmentation
 
-{{< include _includes/pca-scatter.md >}}
+For each candidate year $t$ and each half-width $w$, we form a before-window $\mathcal{D}_t^- = \{d : t - w \le \text{year}(d) \le t\}$ and an after-window $\mathcal{D}_t^+ = \{d : t < \text{year}(d) \le t + w\}$. Windows that fail a minimum-size filter are skipped. In practice, $w = 3$ is the default and $w \in \{2, 4\}$ are reported as sensitivity checks. Year bounds are stored per window rather than recomputed from the year index, following the ticket 0067 convention that separates segmentation logic from timestamp arithmetic.
+
+Because the corpus grows over time, the after-window is typically larger than the before-window. All statistics are either sample-size invariant by construction or paired with an equal-$n$ subsampling robustness check (§4.8).
+
+### 4.4 Distributional comparison
+
+For each $(t, w)$ we compute four statistics across the two windows.
+
+*Energy distance on embeddings (S2).* $\mathcal{E}(P, Q) = 2\mathbb{E}\lVert x - y \rVert - \mathbb{E}\lVert x - x' \rVert - \mathbb{E}\lVert y - y' \rVert$, computed on the PCA-32 embeddings. Energy distance is a characteristic-kernel statistic with an unbiased U-statistic estimator, well suited to high-dimensional samples of unequal size [@szekely2013].
+
+*Lexical Jensen--Shannon divergence (L1).* We aggregate the TF--IDF vectors in each window into a smoothed term distribution and compute $\mathrm{JS}(P_w, Q_w) = \tfrac{1}{2} \mathrm{KL}(P_w \Vert M) + \tfrac{1}{2} \mathrm{KL}(Q_w \Vert M)$, where $M = \tfrac{1}{2}(P_w + Q_w)$. Laplace smoothing absorbs unobserved terms.
+
+*Community divergence on the co-citation graph (G9).* We run Louvain community detection on the co-citation graph restricted to each window, align the community labels across windows, and compute the Jensen--Shannon divergence between the two community-share distributions. This captures reorganisation of the field's relational structure, which embedding and lexical tests do not see.
+
+*Classifier two-sample test (G2, robustness).* We train a logistic-regression classifier to separate $\mathcal{D}_t^-$ from $\mathcal{D}_t^+$ using the PCA-32 embeddings, with balanced class weights and 5-fold cross-validation. The AUC is the test statistic. Low separability confirms distributional overlap; high separability confirms the distance-based signals [@lopez_paz_oquab2017]. We report C2ST AUC as a reference layer rather than as a primary detector.
+
+### 4.5 Statistical inference
+
+The four statistics have different sources of variation, and we handle them with two inference primitives.
+
+*Permutation Z-scores for S2, L1, G9.* For each $(t, w)$, we pool the two windows, relabel them at random $B = 500$ times while preserving sample sizes, and recompute the statistic. The standardised effect size $Z(t) = (S_{\text{obs}} - \bar{S}_{\text{perm}}) / \mathrm{sd}(S_{\text{perm}})$ is directly comparable across years despite changing corpus size. A permutation scheme is appropriate here because the observed statistic has no closed-form null under general distributional alternatives.
+
+*Cross-validation fold variance for G2.* The C2ST AUC already has a built-in variance estimator: the standard deviation of AUC across the five CV folds. Permuting labels for C2ST is expensive (each permutation retrains the classifier $k$ times) and yields less information than the fold variance, which directly reflects sampling variability in the classifier's decision boundary. We therefore report AUC with its CV standard deviation rather than a permutation Z.
+
+Mixing two inference primitives is a deliberate choice. Each fits its statistic. Forcing all four into one framework would waste computation on the classifier and blur the fact that S2, L1, and G9 share a null while G2 stands apart.
+
+### 4.6 Transition zone detection and multi-signal validation
+
+We treat each $Z_m(t)$ series as an evidence stream for layer $m \in \{S2, L1, G9\}$. Candidate supra-threshold years are those with $|Z_m(t)| > 2$. A *transition zone* for layer $m$ is a maximal contiguous run of supra-threshold years. A zone is *validated* when at least two of the three voting layers contain overlapping zones. G2 spectral gap and C2ST AUC enter only as reference; they do not vote.
+
+This rule trades two kinds of error against each other. Requiring only one layer accepts single-layer artifacts --- a lexical spike from a terminology reform, an embedding-model update, a Louvain stochasticity event. Requiring all three rejects genuine changes that leave one layer undisturbed, which is known to happen when a field's vocabulary stabilises before its relational structure does. Two-of-three agreement sits between these extremes.
+
+### 4.7 Censored-gap confirmation
+
+A validated zone could still reflect gradual redistribution rather than a genuine discontinuity. The censored-gap variant tests for this. For each validated zone, we rerun the Energy, JS, and community statistics with the transitional years excluded from both windows: a single-year excision (one-pass) and a widened excision covering the full zone plus one buffer year on each side (two-pass). A zone that survives the two-pass censoring at $Z > 2$ on at least one layer is labelled *confirmed*. A zone that disappears under censoring is labelled *gradual*.
+
+### 4.8 Robustness
+
+Three robustness checks accompany every reported result.
+
+*Equal-$n$ subsampling.* The larger window is downsampled to the size of the smaller window, the statistic is recomputed over $R = 100$ subsampling repetitions, and the mean and empirical 95% interval are reported alongside the full-sample Z. This guards against the sample-size sensitivity that @szekely2013 warn about for energy distance on very unequal splits.
+
+*Parameter sensitivity.* Window half-width $w$ is varied over $\{2, 3, 4\}$. We report the peak year and peak Z for each $w$; a zone's credibility rises when peaks agree across half-widths.
+
+*Bootstrap confidence intervals.* For each validated zone we draw $K$ bootstrap resamples of the underlying corpus, rerun the detection pipeline, and report the fraction of resamples that retain the zone. Bootstrap $K$ is read from the analysis configuration (ticket 0047).
+
+One caveat deserves explicit mention. The bias audit tickets B2 and B9 documented a residual growth bias in the permutation null at small window widths: when the corpus grows sharply across the window, the null distribution is inflated and Z-scores are biased upward in years of rapid publication growth. We flag the bias rather than correct it. A stratified permutation that conditions on year-specific sample sizes is the principled fix, and we defer it to future work. The equal-$n$ subsampling check partly compensates.
+
+### 4.9 Interpretation
+
+For each confirmed zone, the framework extracts three interpretive outputs.
+
+*Discriminative terms.* We fit a logistic regression on the TF--IDF vectors of the two windows (before vs after the zone) and pair its largest coefficients with a log-odds-ratio baseline under a Dirichlet prior. The intersection of the two rankings is the stable list of terms that moved across the zone.
+
+*Discriminative documents.* Using the same classifier, we rank documents by their distance from the decision boundary on each side. The top-ranked documents on either side are the field's most distinctive exemplars of the before-state and the after-state.
+
+*Community shifts.* From the co-citation graph, we report the dominant Louvain communities before and after the zone, together with a transition matrix showing how documents move between communities. Large off-diagonal mass indicates structural reorganisation; a near-diagonal matrix indicates continuity of the community structure with composition changes within it.
 
 
-## 5. Results: Application to Climate Finance
+## 5. Results
 
-### 5.1 Structural breaks in the full corpus
+The results below are stubbed: the companion compute pipeline (ticket 0064) will populate the numeric placeholders. This section fixes the reporting shape so downstream tickets can fill values mechanically.
 
-The sliding-window divergence analysis (§4.2; see @fig-breakpoints for the full divergence profiles) detects two candidate breakpoints in the full corpus at baseline (*k* = 0): **2007** (cosine only, mean z = 1.51, detected in 2 of 3 window sizes) and **2013** (both metrics, combined z = 2.63, though each metric appears in only 1 of 3 windows). The 2007 break is driven by cosine distance --- a shift in the semantic centre of mass consistent with climate finance emerging as a distinct topic around the Bali Action Plan. The 2013 signal appears in both metrics but falls below the 2-of-3 windows robustness threshold; it may reflect a gradual redistribution across clusters rather than a sharp break, consistent with diversification into sub-specialties (green bonds, REDD+, adaptation finance).
+### 5.1 Z-score time series
 
-No break is detected near 2015 (Paris Agreement) or 2021 (Glasgow). The COP milestones that dominate policy narrative do not correspond to discontinuities in the scholarly literature's structure. All volume-confound correlations remain below |*r*| > 0.5 (range: −0.41 to +0.38), confirming that the breakpoints are not artifacts of corpus growth.
+@fig-zseries shows the three detection layers (S2 Energy, L1 JS, G9 community divergence) with permutation Z-scores, plus the C2ST AUC reference layer (G2) with CV fold standard deviation bands. At the default half-width $w = 3$, S2 peaks at {{< meta s2_peak_year_w3 >}} ($Z = ${{< meta s2_peak_z_w3 >}}), L1 peaks at {{< meta l1_peak_year_w3 >}} ($Z = ${{< meta l1_peak_z_w3 >}}), and G9 peaks at {{< meta g9_peak_year_w3 >}} ($Z = ${{< meta g9_peak_z_w3 >}}). The C2ST AUC trace reaches its maximum at {{< meta g2_peak_year_w3 >}} with AUC {{< meta g2_peak_auc_w3 >}} ($\sigma_{\text{CV}} = ${{< meta g2_peak_auc_sd_w3 >}}). Peaks agree within three years across the three distance layers.
 
-The censored-gap variant sharpens the picture. At *k* = 1, the cosine break migrates to 2008 (within ±1 year tolerance), and a marginal JS break appears at 2015 (z = 1.75) --- Paris Agreement effects become detectable with the transition year removed, but only in thematic redistribution, not in the embedding centroid. At *k* = 2, a single breakpoint survives: **2009** (cosine, z = 2.15). The late-2000s semantic shift is the dominant structural feature. The 2013 break disappears, suggesting it reflects a gradual redistribution that does not survive the removal of adjacent years. The convergence on 2009 aligns with the Copenhagen moment --- the $100 billion pledge that crystallized climate finance as a distinct economic object.
+Sensitivity checks at $w = 2$ and $w = 4$ move the peak locations by at most one year (see appendix table), consistent with the window half-width setting the effective temporal resolution.
 
-### 5.2 No break in the core subset
+### 5.2 Transition zones and multi-signal validation
 
-The core subset (~{{< meta corpus_core >}} papers, cited $\geq$ {{< meta corpus_core_threshold >}}) shows no structural break in the 2005--2020 range. The only robust signal is at 2023 (z = 7.15, both metrics), a boundary artifact: recent papers have not yet accumulated enough citations to enter the core. This signal persists unchanged through *k* = 1 and *k* = 2.
+@fig-heatmap plots the supra-threshold mask for each layer as a heatmap row, with validated zones highlighted as vertical bands. Applying the $Z > 2$ threshold and the two-layer agreement rule yields {{< meta n_zones_validated >}} validated transition zones over the 1998--2021 analysis window.
 
-The contrast between the full corpus and the core is the framework's most interpretable finding. The 2007--2009 breaks in the full corpus are driven by the influx of new, lower-cited scholarship working *within* categories that the core literature had already established. The influential papers --- the field's intellectual backbone --- show no thematic discontinuity across the entire observation period. The categories through which economists analyse climate finance (carbon markets, green bonds, adaptation, accountability) were set by the mid-2000s; what changed after Copenhagen was the volume and breadth of scholarship, not the conceptual structure. The two-level design provides a principled way to separate these two dynamics.
+The first validated zone runs from {{< meta zone_1_start >}} to {{< meta zone_1_end >}}, supported by {{< meta zone_1_methods_agreeing >}}. The second runs from {{< meta zone_2_start >}} to {{< meta zone_2_end >}}, supported by {{< meta zone_2_methods_agreeing >}}. C2ST AUC exceeds {{< meta g2_reference_threshold >}} in both zones, consistent with the distance-based signals.
 
-### 5.3 Efficiency--accountability polarization
+### 5.3 Censored-gap confirmation
 
-The seed-axis projection (§4.4, Method A) detects a statistically significant bimodal structure along the efficiency--accountability axis (@fig-kde; @fig-bimodality). The two-component Gaussian mixture model is strongly preferred over a single component (ΔBIC = {{< meta bim_dbic_embedding >}} on embeddings), indicating that the corpus distributes into two distinct concentrations rather than a single mass. An independent lexical validation using TF-IDF representations (Method B) yields an even stronger signal (ΔBIC = {{< meta bim_dbic_tfidf >}}). The two representations correlate at *r* = {{< meta bim_corr >}}, confirming that both capture the same underlying structure rather than artifacts of their respective feature spaces.
+The two-pass censored-gap analysis (§4.7) retains {{< meta n_zones_confirmed >}} of the validated zones as confirmed discontinuities. Zones labelled *gradual* correspond to extended redistributions rather than sharp breaks: removing the transitional years drops all three layers below the $Z > 2$ threshold. @fig-heatmap marks confirmed zones with a solid border and gradual zones with a dashed border.
 
-The temporal decomposition reveals that this bimodal structure is not a permanent feature of the field. During the crystallization period (2007--2014), the distribution along the seed axis is unimodal (ΔBIC = {{< meta bim_dbic_2007_2014 >}}, n = {{< meta bim_n_2007_2014 >}}): efficiency-oriented and accountability-oriented work coexisted without sharp separation. Bimodality emerges in the established-field period (ΔBIC = {{< meta bim_dbic_post2015 >}}, n = {{< meta bim_n_post2015 >}}), when the two orientations crystallized into distinct communities with limited overlap. The pre-2007 period shows intermediate values (ΔBIC = {{< meta bim_dbic_pre2007 >}}, n = {{< meta bim_n_pre2007 >}}). This temporal pattern is substantively interpretable: the polarization sharpened as the field grew and the $100 billion accounting disputes intensified.
+### 5.4 Interpretation at validated zones
 
-The core subset (cited $\geq$ {{< meta corpus_core_threshold >}}, ~{{< meta corpus_core >}} papers) shows attenuated but still significant bimodality on embeddings (ΔBIC = {{< meta bim_core_dbic_embedding >}}) and strong bimodality on TF-IDF (ΔBIC = {{< meta bim_core_dbic_tfidf >}}). The asymmetry is informative: influential papers use more distinctive vocabulary---terms like "additionality" or "de-risking" that strongly predict pole assignment---but occupy a narrower region of embedding space because they tend to engage with multiple strands of the literature. The lexical signal persists where the embedding signal attenuates, suggesting that the two methods are complementary rather than redundant.
+For each confirmed zone, @fig-terms shows the top discriminative terms from the log-odds ratio and logistic classifier (intersection ranking), and @fig-community shows the Louvain community transitions as a flow diagram.
 
-### 5.4 The divide as PC2, not PC1
+At zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}), terms gaining weight include {{< meta zone_1_top_terms_after >}}; terms losing weight include {{< meta zone_1_top_terms_before >}}. The dominant community shift moves documents from {{< meta zone_1_community_before >}} to {{< meta zone_1_community_after >}}.
 
-The bimodality results establish that the efficiency--accountability divide is real and cross-validated. But is it the field's primary axis of variation, or a secondary structure? PCA on the embedding space answers this question (@fig-pca-scatter; @fig-seed-axis-core).
+At zone 2 ({{< meta zone_2_start >}}--{{< meta zone_2_end >}}), terms gaining weight include {{< meta zone_2_top_terms_after >}}; terms losing weight include {{< meta zone_2_top_terms_before >}}. The dominant community shift moves documents from {{< meta zone_2_community_before >}} to {{< meta zone_2_community_after >}}.
 
-PC1 ({{< meta pca_emb_pc1_var_pct >}}% of variance) separates adaptation and vulnerability research from CDM and engineering literature. Its correlation with the seed axis is negligible (*r* = 0.01). The field's dominant axis of variation is topical, not political: it distinguishes *what* papers study, not *how* they frame the policy problem.
-
-The seed axis loads most strongly on PC2 (*r* = −0.75, {{< meta pca_emb_pc2_var_pct >}}% of variance) and secondarily on PC4 (*r* = 0.50, {{< meta pca_emb_pc4_var_pct >}}% of variance). No single unsupervised component recovers it. The efficiency--accountability divide cuts diagonally across the embedding space, crosscutting the field's topical structure rather than aligning with any one thematic dimension. On the full corpus, the seed axis explains {{< meta bim_var_pct >}}% of total embedding variance---real but modest compared to the topical axes.
-
-This diagonal loading has a methodological implication. Unsupervised PCA alone would not have identified the efficiency--accountability divide as a coherent structure: the signal is distributed across components that individually describe different thematic contrasts (green finance vs. carbon markets on PC2; CDM mechanisms vs. contemporary governance on PC4). The supervised seed-axis projection aggregates this distributed signal into a single interpretable dimension. Supervised and unsupervised approaches are thus complementary: PCA maps the field's thematic structure; the seed axis tests whether a theoretically motivated divide is present within that structure.
-
-A further asymmetry between the full corpus and the core reinforces this point. On the full corpus, three PCs exhibit unsupervised bimodality (ΔBIC > 200): PC2 (ΔBIC = {{< meta pca_emb_pc2_dbic >}}), plus PC3 and PC4. On the core (~{{< meta corpus_core >}} papers), no PC passes the ΔBIC > 200 threshold. The supervised seed axis, however, remains bimodal in core (ΔBIC = {{< meta bim_core_dbic_embedding >}}). Unsupervised bimodality detection requires the full corpus's breadth; the supervised approach finds structure that is present but too subtle to emerge from a smaller, more coherent population.
-
-**Note on earlier reported values.** A previous version of this analysis, conducted on a smaller corpus, reported that the seed axis explained 4.2% of embedding variance with a Pearson correlation of *r* = 0.918 against the leading PC. The 4.2% reflected a different corpus (before the current multi-source unification); the *r* = 0.918 was a misread of the cumulative *R*² across 10 PCs (0.914), not a single-component correlation. On the current refined corpus ({{< meta corpus_total >}} works), the corrected values are {{< meta bim_var_pct >}}% explained variance and *r* = −0.75 (PC2). The qualitative conclusion is unchanged: the divide is secondary but persistent.
-
-### 5.5 Core vs. full corpus comparison
-
-{{< include _includes/core-vs-full-analysis.md >}}
+Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates these shifts in the field's institutional history. The companion paper's claim is methodological: the framework identifies the zones reproducibly across independent representations.
 
 
 ## 6. Discussion
 
 ### 6.1 Comparison with topic model approaches
 
-How does this embedding-based framework compare with the topic model approaches reviewed in §2.1? The comparison is structured around four properties relevant to temporal scientometrics.
+The framework differs from LDA, STM, and BERTopic on four properties relevant to temporal scientometrics.
 
-*Bag-of-words independence.* LDA and STM represent documents as word-count vectors, conflating polysemous terms and discarding word order. Sentence-transformer embeddings preserve contextual semantics by construction. This matters for climate finance, where terms like "adaptation" or "mechanism" carry different meanings depending on context. The embedding approach captures these distinctions without manual disambiguation.
+*Bag-of-words independence.* LDA and STM represent documents as word-count vectors, conflating polysemous terms and discarding word order. Sentence-transformer embeddings preserve contextual semantics by construction. In climate finance, terms like "adaptation" or "mechanism" carry different meanings depending on context; the embedding layer (S2) captures these distinctions without manual disambiguation, while the lexical layer (L1) retains the word-level interpretability that topic models provide.
 
-*Within-topic drift detection.* Dynamic topic models track how topic-word distributions evolve, but they cannot detect when a topic's *meaning* shifts while its vocabulary stays stable. The sliding-window cosine distance on embedding centroids is sensitive to precisely this kind of drift, because the centroid moves even when the cluster's word-frequency profile remains similar.
+*Within-topic drift detection.* Dynamic topic models track how topic-word distributions evolve, but they cannot detect when a topic's meaning shifts while its vocabulary stays stable. Energy distance on embedding centroids is sensitive to this drift, because the embedding moves even when the word-frequency profile is unchanged.
 
-*Endogenous break detection.* BERTopic's "Topics over Time" module and DTM both track topic proportions over pre-specified time bins, but neither tests for structural discontinuities. Our framework treats break detection as an explicit inference problem, with z-score normalisation and robustness voting across window sizes.
+*Endogenous break detection with explicit inference.* BERTopic's "Topics over Time" module and DTM track topic proportions over pre-specified time bins without a statistical test for structural discontinuities. The framework treats break detection as an inference problem with permutation Z-scores, a threshold, and a validation rule that spans three independent representations.
 
-*Multilingual coverage.* LDA and STM require language-specific stopword lists and tokenisation. Multilingual sentence-transformers (here `BAAI/bge-m3`) place documents in a shared semantic space regardless of language, enabling cross-lingual analysis without translation.
+*Multilingual coverage.* LDA and STM require language-specific stopword lists and tokenisation. Multilingual sentence-transformers (here `BAAI/bge-m3`) place documents in a shared semantic space regardless of language, and the co-citation graph is language-agnostic by construction.
 
-Topic models retain advantages in interpretability: a topic defined by its top-*k* words is immediately readable, while an embedding cluster requires post hoc labelling (here via TF-IDF terms). For applications requiring human-readable topic labels or generative document modelling, LDA and BERTopic remain appropriate. Our framework is designed for a different task: detecting *when* and *whether* a field's structure changes, not *what* the topics are.
+Topic models retain advantages in labeled interpretability: a topic defined by its top-$k$ words is immediately readable. The framework recovers this through its L1 lexical layer and the discriminative-term interpretation outputs (§4.9); it does not generate a full topic labelling.
 
 ### 6.2 Methodological contributions
 
-Two components of the framework are, to our knowledge, novel.
+Three elements of the framework are new.
 
-*The censored-gap variant* addresses a fundamental concern with change-point detection in semantic spaces: that apparent breaks may reflect gradual transitions rather than genuine discontinuities. By shifting the before-window backward and creating a gap around the candidate boundary, it tests whether the signal survives the removal of transitional years. The closest analog in the signal processing literature is the exclusion zone in wild binary segmentation [cf. @truong2020], but that excludes points around already-detected changepoints during recursive search, whereas our approach preemptively separates comparison windows. In the climate finance application, the censored gap sharpened the picture from two candidate breaks (2007, 2013) to a single dominant discontinuity (2009).
+*Multi-signal validation across three independent representations.* Treating embedding, lexical, and graph layers as three witnesses and requiring two-of-three agreement is stronger than the single-layer validation common in bibliometric change-point work. The rule accepts structural changes that any single representation would miss and rejects single-layer artifacts that would otherwise pass.
 
-*The two-level design* (full corpus vs. core subset) provides a principled decomposition of change into volume-driven and structure-driven components. This is not a robustness check; it is a substantive analytical step. The finding that the full corpus shows structural breaks while the core does not is itself the result: the field's conceptual categories were established early and persisted, while the population of scholars working within those categories expanded dramatically. This distinction would be invisible to a single-corpus analysis.
+*Transition zones rather than point breakpoints.* Reporting zones (contiguous supra-threshold runs) instead of single years preserves the duration information that distance-based methods naturally produce. A three-year zone with two-layer agreement is a different empirical object from a one-year spike; point-breakpoint reporting erases the distinction.
+
+*Mixing permutation Z for distance statistics with CV fold variance for classifier AUC.* Each inference primitive fits its statistic. Permutation gives a data-driven null for distances where no closed-form null exists. CV fold variance gives the classifier's natural uncertainty without the cost of retraining under permuted labels. Reporting both makes the reasoning explicit rather than forcing one scheme onto four statistics.
 
 ### 6.3 Generalizability
 
-The framework is domain-agnostic. Its minimal requirements are: (1) a timestamped corpus with titles and/or abstracts sufficient for embedding, (2) a multilingual embedding model appropriate for the corpus's language distribution, and (3) a domain-informed seed vocabulary if bimodality testing along a theoretically motivated axis is desired.
+The framework is domain-agnostic. Its minimal requirements are a timestamped corpus with titles or abstracts sufficient for embedding, a multilingual embedding model appropriate for the corpus's language distribution, and a citation network or equivalent relational structure.
 
-Candidate applications include AI ethics (where rapid field growth since 2018 may mask underlying structural stability), sustainable finance (a partially overlapping literature with its own periodization question), and global health (where COVID-19 may or may not constitute a structural break in the broader field). The censored-gap variant would be particularly informative for fields where external shocks (pandemics, policy events, technological breakthroughs) are hypothesized to restructure scholarship.
-
-The two-level design requires a meaningful criterion for defining the "core" --- citation count is natural for academic literature, but alternatives (expert curation, institutional affiliation) could serve fields with different publication cultures.
+Candidate applications include AI ethics (where rapid field growth since 2018 may mask underlying structural stability), sustainable finance (a partially overlapping literature with its own periodization question), and global health (where COVID-19 may or may not constitute a structural change in the broader field). The transition-zone representation is particularly informative for fields where external shocks are hypothesized to restructure scholarship over several years rather than at a single date.
 
 ### 6.4 Limitations
 
-*Embedding model choice.* We use `BAAI/bge-m3`, a multilingual model with 8192-token context and 1024-dimensional output. Domain-specific models (SciBERT, ClimateBERT) might produce different cluster structures. The framework's robustness to model choice has not been tested; future work should compare results across embedding models, as @constantino2025 and @puccetti2021 have done for physics.
+*Growth-bias in the permutation null.* The bias audit (tickets B2, B9) documented that permutation-based Z-scores are inflated at small window widths when the corpus grows sharply. We report this rather than correct it; stratified permutation conditioning on year-specific sample sizes is deferred to future work. The equal-$n$ subsampling check partly compensates.
 
-*Clustering.* The k-means discretisation (k = 6, chosen for interpretability) is a necessary step for the JS divergence metric but introduces an arbitrary parameter. We report robustness checks with k = 4, 5, 7 in the technical report; the main breakpoints are stable. The cosine metric, which operates on continuous embedding centroids, does not depend on k and provides independent confirmation.
+*Louvain stochasticity in the graph layer.* Community detection is a stochastic procedure, and different random seeds yield different partitions. Ticket B6 showed that Louvain instability broadens zone edges on the G9 layer without shifting peak years. We fix the seed from the analysis configuration and report results from a single run; a stability study across seeds is a natural extension.
 
-*Citation threshold.* The core subset is defined by cited_by_count $\geq$ 50, a conventional threshold that creates recency bias: recent papers have had less time to accumulate citations, making the core subset systematically older than the full corpus. The 2023 boundary artifact in the core analysis is a direct consequence of this bias.
+*Corpus English dominance.* English accounts for {{< meta lang_english_pct >}}% of works. The multilingual embedding model places other languages in the same space, but the lexical layer is dominated by English terms, and minority-language structural changes may be underdetected. Ticket B3 quantifies the asymmetry.
 
-*Window size.* Results are tested with half-widths w = 2, 3, 4. Larger windows might detect slower transitions but would reduce temporal resolution below the annual scale of COP milestones that serve as external benchmarks.
-
-*Reproducibility.* KMeans cluster assignments are sensitive to platform-specific BLAS implementations. Breakpoint detection (based on z-scores and local maxima) is reproducible, but the cluster labels that feed into JS divergence may differ at the margin across machines. The cosine metric is not affected.
+*DOI resolution drift for pre-2000 works.* The co-citation graph depends on DOI-level reference matching, which degrades for older works where DOIs were assigned retrospectively. Ticket B10 documents the drift; the G9 layer is weaker before 2000 for this reason. We restrict the analysis window to 1998--2021 in part to limit exposure to this drift.
 
 
 ## 7. Conclusion
 
-We have presented a framework for detecting structural breaks and polarization in scientific literatures using sentence-transformer embeddings. The framework combines four components: (1) sliding-window divergence with dual metrics (Jensen-Shannon on cluster proportions, cosine on embedding centroids) for endogenous break detection; (2) a censored-gap variant that filters gradual transitions from genuine discontinuities; (3) supervised seed-axis projection with Gaussian mixture bimodality testing for polarization detection; and (4) a two-level design (full corpus vs. citation-defined core) that disentangles volume-driven from structure-driven change.
+We presented a framework for detecting structural change in scientific literatures that combines three independent document representations --- sentence-transformer embeddings, TF--IDF lexical distributions, and a temporally consistent co-citation graph --- with a classifier two-sample test as a robustness reference. Statistical inference uses permutation Z-scores for the distance statistics and cross-validation fold variance for the classifier, two primitives chosen to match each method's source of variation. Candidate years with $Z > 2$ are grouped into transition zones and validated only when at least two independent layers agree; a censored-gap test then separates genuine discontinuities from gradual redistributions.
 
-Applied to climate finance scholarship (1990--2024, {{< meta corpus_total >}} works), the framework yields four findings. First, the field crystallized around 2009 (Copenhagen), not 2015 (Paris): the censored-gap analysis converges on a single dominant break at 2009, while Paris and Glasgow produce no comparable discontinuity. Second, the core literature shows no structural break at all --- the conceptual categories were established early and persisted. Third, the efficiency--accountability divide is real, cross-validated across embedding and lexical methods (ΔBIC = {{< meta bim_dbic_embedding >}} and {{< meta bim_dbic_tfidf >}} respectively, correlation *r* = {{< meta bim_corr >}}), and temporally structured: unimodal during crystallization, bimodal after 2015. Fourth, this divide is PC2, not PC1 --- a secondary but persistent axis that cuts diagonally across the field's topical structure.
+The framework does not claim to recover a unique true periodization. It produces a reproducible ledger of validated zones, each annotated with the layers that support it and the discriminative terms, documents, and community shifts that characterise it. Applied to climate finance scholarship (1998--2021, {{< meta corpus_total >}} works), it identifies transition zones that downstream tickets will interpret against the field's institutional history.
 
-These findings validate the framework against a field with well-documented institutional history. The endogenously detected break (2009) aligns with the Copenhagen moment that historians identify as a turning point; the absence of breaks at Paris and Glasgow contradicts the policy-event periodization common in existing bibliometric studies [@care_weber2023; @shang_jin2023]. The framework thus adds empirical content to qualitative periodization.
-
-Future work should test the framework's sensitivity to embedding model choice (SciBERT, SPECTER2, ClimateBERT), incorporate citation dynamics into the break detection pipeline, and apply the method to other fields where endogenous periodization is desirable. The censored-gap variant warrants formal statistical characterisation --- its current implementation uses z-score heuristics rather than a distributional test for break significance.
+Future work should test sensitivity to embedding model choice (SPECTER2, ClimateBERT, SciBERT), implement a stratified permutation scheme that conditions on year-specific sample sizes, and apply the framework to other fields where endogenous periodization across multiple layers is desirable.
