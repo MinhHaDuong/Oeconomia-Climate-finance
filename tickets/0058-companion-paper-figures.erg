@@ -1,6 +1,6 @@
 %erg v1
 Title: Create companion paper figures (4 canonical outputs)
-Status: open
+Status: doing
 Created: 2026-04-15
 Author: claude
 Blocked-by: 0050
@@ -11,6 +11,13 @@ Blocked-by: 0042
 2026-04-15T15:30Z claude created
 2026-04-15T15:30Z claude note wave 3 of epic 0026; 4 canonical figures
 2026-04-16T13:00Z claude reimagine — add Blocked-by 0056 (Figures 3+4 need interpretation outputs). Null band (Fig 1) derivable from 0055 outputs directly, no 0050 needed for that.
+2026-04-17T19:04Z claude claimed
+2026-04-17T19:04Z claude status doing
+2026-04-17T19:10Z claude red — tests/test_companion_figures.py (12 smoke asserts: existence + --output contract + non-empty PNG on synthetic fixtures)
+2026-04-17T19:25Z claude green — scripts/plot_companion_{zseries,heatmap,terms,community}.py + scripts/_companion_plot_utils.py; companion: block added to config/analysis.yaml
+2026-04-17T19:40Z claude build — companion.mk with four targets, wired into Makefile COMPANION_FIGS; four @fig-* blocks added to content/companion-paper.qmd §5
+2026-04-17T19:45Z claude refactor — drop 'from __future__ import annotations' to satisfy TestRuffModernPython
+2026-04-17T19:50Z claude verify — 12/12 companion tests pass; make check-fast residue matches t0057 pre-existing failures (no new regressions)
 
 --- body ---
 ## Context

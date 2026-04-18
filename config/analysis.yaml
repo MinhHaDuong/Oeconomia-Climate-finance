@@ -81,3 +81,36 @@ divergence:
       max_nodes: 500                             # subsample for tractability
     G9_community:
       resolution: 1.0
+
+# ── Companion paper figures (ticket 0058) ────────────────────────────────
+# Figure geometry, colours, and thresholds for the four canonical figures
+# rendered by scripts/plot_companion_*.py.  Isolated here so plotting
+# choices can evolve without touching the compute layer.
+companion:
+  random_seed: 42
+  lead_window: 3              # preferred half-width for Figure 1 / Figure 2
+  year_min: 1998
+  year_max: 2021
+  z_threshold: 2.0            # significance threshold for Z-score layers
+  auc_chance: 0.5             # chance level for C2ST AUC reference
+  auc_scale: 20.0             # (AUC - 0.5) * auc_scale yields comparable signal
+  validated_zone_min_methods: 2
+  methods:                    # method_id: display label (used in heatmap rows)
+    S2_energy: "S2 Energy"
+    L1: "L1 JS"
+    G9_community: "G9 Community"
+    G2_spectral: "G2 Spectral"
+    C2ST_embedding: "C2ST emb"
+    C2ST_lexical: "C2ST lex"
+  colors:
+    z_cmap: "RdBu_r"          # diverging colormap for Z-score heatmap
+    zone_edge: "#222222"
+    series:
+      S2_energy: "#1f77b4"
+      L1: "#ff7f0e"
+      G9_community: "#2ca02c"
+      G2_spectral: "#9467bd"
+      C2ST_embedding: "#d62728"
+      C2ST_lexical: "#8c564b"
+  top_terms: 10               # Figure 3: bars per zone
+  stub_figure_todo: "t0064"   # ticket id annotated on stub fallbacks
