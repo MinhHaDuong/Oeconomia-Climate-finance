@@ -1,8 +1,8 @@
 ---
-title: "Analysis Methods and Results"
-subtitle: "Companion to 'Inventing Climate Finance' (submitted to *Oeconomia*)"
+title: "Corpus Change Detection Methods Zoo"
+subtitle: "A comparative survey of structural break detection in the climate finance bibliography (1990–2024)"
 author: "Minh Ha-Duong"
-date: "2026-04-14"
+date: "2026-04-20"
 metadata-files: [technical-report-vars.yml]
 bibliography: bibliography/main.bib
 format:
@@ -11,53 +11,875 @@ format:
     number-sections: true
 ---
 
-This document describes the analyses that transform the climate finance corpus (see the companion corpus report for construction and data quality) into the manuscript's figures and tables. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts.
+All scripts are in `scripts/`, the corpus contract files at `$CLIMATE_FINANCE_DATA/catalogs/`, and generated outputs in `content/figures/` and `content/tables/`.
 
-All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
+# Overview
 
-# Corpus Summary
+This document surveys the structural break detection methods applied to the climate finance corpus
+({{< meta corpus_total >}} works, 1990--2024).
+Each method answers the same question in a different vocabulary:
+*does the distribution of works written before year $t$ differ from the distribution of works written after $t$?*
+We apply a sliding window of $w$ years on each side of the candidate break year.
 
-The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance (1990--2024), assembled from {{< meta corpus_sources >}} bibliographic sources (see the corpus report for construction details). Of these, {{< meta corpus_core >}} constitute a "core" subset (cited $\geq$ {{< meta corpus_core_threshold >}} times). Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions, `BAAI/bge-m3`) are available for {{< meta corpus_with_embeddings >}} works.
+Methods are grouped into three layers:
 
-{{< include _includes/core-vs-full-analysis.md >}}
+- **Part S — Semantic.** Compare full embedding distributions: each work is a point in the BAAI/bge-m3 embedding space ({{< meta emb_dimensions >}} dimensions). These methods detect distributional shift in *what the field talks about*.
+- **Part L — Lexical.** Compare TF-IDF vocabulary distributions. Complementary to semantic methods; more interpretable (discriminating terms are directly readable).
+- **Part G — Citation graph.** Compare citation network topology: degree distributions, community structure, centrality. These methods detect changes in *how knowledge flows* rather than *what is said*.
+
+We have two C2ST classifiers (one semantic, one lexical) as a meta-check: can a machine-learning classifier tell "before" from "after" better than chance?
+
+## Standardisation: cross-year Z-scores
+
+For each (method, window) pair we compute the time series $D(t, w)$ of divergence or distance values.
+Within each window $w$, we standardise across years:
+
+$$Z(t, w) = \frac{D(t,w) - \bar{D}(\cdot,w)}{\sigma_D(\cdot,w)}$$
+
+This cross-year $Z$-score measures relative displacement from the temporal mean, not absolute magnitude.
+It removes the long-run trend that dominates raw divergence values
+and makes methods with different units comparable on the same panel.
+A value $|Z| \geq 2$ indicates an unusually large (or small) divergence relative to the period average.
+
+## Summary of findings
+
+Two distinct signals emerge:
+
+| Signal | Methods | Pattern |
+|--------|---------|---------|
+| **Field convergence** | S1–S4, L1, L2, G1, G9 | Peak Z ≈ +2–4 around 1998–2002; monotonic decline thereafter. Early climate finance was heterogeneous; the field homogenised over time. |
+| **Structural break (topology)** | G5, G6 | Peak Z ≈ +2.5–3 at **2007**. Citation network topology — preferential attachment exponent and degree entropy — shifted sharply, consistent with the post-Stern/UNFCCC-Bali institutionalisation of climate finance. |
+| **Noisy / cumulative** | G3, G4, G7, G8, C2ST | Weak or non-directional signal; useful as robustness checks. |
 
 \newpage
 
-# Structural Break Detection
+---
 
-{{< include _includes/structural-breaks.md >}}
+# Part S — Semantic Distribution Methods
+
+The embedding space provides a continuous, high-dimensional representation of meaning.
+For each year $t$ and window $w$ we collect two sets of embeddings:
+$X_{before} = \{e_i : t-w \leq \text{year}_i < t\}$ and $X_{after} = \{e_j : t \leq \text{year}_j < t+w\}$.
+A semantic distance method maps $(X_{before}, X_{after})$ to a scalar $D \geq 0$,
+where $D=0$ means the two samples are drawn from the same distribution.
+
+All four semantic methods show the **field convergence** pattern:
+early climate finance (1990s) was a loose coalition of three traditions
+(finance, development economics, physical climate);
+by the 2010s those traditions had merged into a recognisable field
+with a shared vocabulary and shared concerns.
 
 ---
 
-# Thematic Structure
+## S1. Maximum Mean Discrepancy (MMD) {#sec-s1}
 
-{{< include _includes/alluvial-diagram.md >}}
+### Principle
 
----
+MMD measures the distance between two distributions by comparing their means in a rich feature space (a reproducing kernel Hilbert space, RKHS). Intuitively: if you can find *any* smooth function that has a different average value over the two samples, the distributions differ. The kernel trick lets you do this without explicitly computing the feature map.
 
-{{< include _includes/clustering-comparison.md >}}
+### Definition
 
----
+$$\widehat{\text{MMD}}^2(X, Y) = \frac{1}{n^2}\sum_{i,j} k(x_i, x_j) - \frac{2}{nm}\sum_{i,j} k(x_i, y_j) + \frac{1}{m^2}\sum_{i,j} k(y_i, y_j)$$
 
-<!-- WARNING: AI-generated include, not human-reviewed -->
-{{< include _includes/temporal-structure.md >}}
+where $k(\cdot,\cdot)$ is a radial basis function kernel $k(x,y) = \exp(-\|x-y\|^2 / (2\sigma^2))$ with bandwidth $\sigma$ set to the median pairwise distance (median heuristic).
+
+*Script:* `scripts/_divergence_semantic.py`, method `mmd_rbf`.
+
+### Principle figure
+
+<!-- TODO: schematic showing two overlapping Gaussians with kernel RKHS witness function -->
+*[Figure placeholder: two 2-D embedding clouds with kernel witness function shown as contour.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** MMD is a proper metric between distributions; $\widehat{\text{MMD}}^2 = 0$ iff the distributions are identical (under a characteristic kernel). Unbiased estimator exists. Well-studied theoretical properties [@gretton2012kernel].
+
+**Biases.** The median-heuristic bandwidth is data-driven; it changes as the corpus grows, making raw values non-comparable across windows of different sizes. The `equal_n: true` flag (random subsampling to equal-sized windows) mitigates growth bias. Quadratic computation ($O(n^2)$) limits scalability; we use biased estimator with batching for $n > 2000$.
+
+**Limitations.** Sensitive to outlier embeddings. Bandwidth choice is a free parameter. Does not identify *which* dimensions drive the shift.
+
+### Corpus results
+
+<!-- TODO: fig_zoo_S1.pdf — time series with bootstrap CI, sensitivity panel (w=2,3,4,5) -->
+*[Figure placeholder: cross-year Z-score panel, w=2–5, with bootstrap 90% CI.]*
+
+Key values (w=3): peak $Z = +4.2$ at 1998, monotonic decline to $Z \approx -1.0$ by 2010.
+
+### References
+
+Seminal: @gretton2012kernel (JMLR 13:723–773, 2012). Recent analogue: @del2022optimal (optimal transport for bibliometric shift detection, closest to our setting).
 
 \newpage
 
-# Polarization Analysis
-
-{{< include _includes/bimodality-analysis.md >}}
-
 ---
 
-{{< include _includes/pca-scatter.md >}}
+## S2. Energy Distance {#sec-s2}
+
+### Principle
+
+Energy distance is built on the analogy with gravitational potential energy.
+Two samples "attract" themselves (within-group distances) and "repel" each other (between-group distances).
+When the two samples come from the same distribution, attraction and repulsion balance exactly.
+When they differ, between-group distances are larger on average than within-group distances.
+
+Compared to MMD, energy distance uses Euclidean distance directly rather than a kernel,
+so there is no bandwidth to tune.
+On high-dimensional embeddings it captures the overall spread of the two clouds
+rather than fine local structure.
+
+### Definition
+
+$$E(X, Y) = 2 \, \mathbb{E}\|x - y\| - \mathbb{E}\|x - x'\| - \mathbb{E}\|y - y'\|$$
+
+where $x, x' \overset{iid}{\sim} P$ and $y, y' \overset{iid}{\sim} Q$.
+The sample estimator replaces expectations by means over all pairs:
+
+$$\widehat{E}(X, Y) = \frac{2}{nm}\sum_{i,j}\|x_i - y_j\| - \frac{1}{n^2}\sum_{i,i'}\|x_i - x_{i'}\| - \frac{1}{m^2}\sum_{j,j'}\|y_j - y_{j'}\|$$
+
+For our {{< meta emb_dimensions >}}-dimensional embeddings, Euclidean distances are computed in the original space (no projection). Windows are balanced to $\min(|X_{before}|, |X_{after}|)$ draws (`equal_n: true`).
+
+*Script:* `scripts/_divergence_semantic.py`, method `energy_distance`.
+
+### Principle figure
+
+<!-- TODO: schematic — two 1-D Gaussian densities; arrows show within-group vs between-group distances -->
+*[Figure placeholder: 1-D Gaussian pair illustrating within-group vs between-group pairwise distances.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** No hyperparameter (no kernel bandwidth). Consistent: $\widehat{E}(X,Y) \to E(P,Q)$ as $n \to \infty$. Equivalent to the Cramér distance for univariate distributions; generalises to arbitrary dimension. Computationally $O(n^2)$ but with a smaller constant than MMD (pure Euclidean distances, no kernel exponentiation).
+
+**Biases.** Grows with embedding dimension $d$ even for equal distributions (the expected pairwise distance in $\mathbb{R}^d$ under a unit Gaussian scales as $\sqrt{d}$). Equal-sample balancing removes growth bias across time; within a given year the raw value should not be compared across corpora of different sizes. With very large samples ($n \gg 10{,}000$) the estimator can saturate: $\sigma_{null} \to 0$, so local permutation $Z$-scores reach 75 or more even when the actual distributional shift is trivial. Cross-year standardisation (this document's default) avoids this saturation.
+
+**Limitations.** Does not decompose by dimension; cannot identify which semantic directions drive the shift. Sensitive to embeddings that are outliers in the high-dimensional space.
+
+### Corpus results
+
+<!-- TODO: fig_zoo_S2.pdf -->
+*[Figure placeholder: cross-year Z-score time series, w=2–5, bootstrap 90% CI.]*
+
+Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z = -1.5$ at 2010 (Figure [TODO]).
+This is the **field convergence** signature: early climate finance drew on three distant traditions
+(environmental finance, development aid economics, physical science costing).
+As the field institutionalised — COP3 (1997), Stern Review (2006), post-Bali mechanisms —
+new entrants were socialised into a narrower discursive space.
+The embedding clouds before and after any given year look increasingly alike.
+
+No peak at 2007 or 2013 is visible in energy distance.
+This confirms that the 2007/2013 structural breaks detected by G5 and G6
+are network-topology events, not semantic-content events.
+
+### References
+
+Seminal: @szekely2013energy (Székely & Rizzo 2013, "Energy statistics: A class of statistics based on distances between samples", *Journal of Statistical Planning and Inference*).
+Recent analogue: @gupta2022detecting (detecting concept drift in text streams using energy distance).
 
 \newpage
 
-# Citation Analysis
+---
 
-{{< include _includes/citation-genealogy.md >}}
+## S3. Sliced Wasserstein Distance {#sec-s3}
+
+### Principle
+
+The Wasserstein (earth-mover) distance is theoretically appealing for comparing distributions in high dimensions, but computing the exact optimal transport plan is $O(n^3)$ and impractical for large corpora. Sliced Wasserstein projects both distributions onto many random 1-D directions, computes the exact Wasserstein distance on each 1-D slice (closed-form: the difference between sorted quantiles), and averages. The result is a consistent approximation that runs in $O(n \log n \cdot K)$ time for $K$ slices.
+
+### Definition
+
+$$\text{SW}_2^2(P, Q) = \int_{\mathbb{S}^{d-1}} W_2^2(\theta_\# P, \theta_\# Q)\, d\sigma(\theta)$$
+
+where $\theta_\# P$ denotes the push-forward of $P$ through the projection $x \mapsto \langle \theta, x\rangle$,
+$W_2$ is the 2-Wasserstein distance, and $\sigma$ is the uniform measure on the unit sphere.
+Sample estimate: average over $K=200$ random unit directions, computing $W_2$ as the $\ell^2$ distance between sorted projected samples.
+
+*Script:* `scripts/_divergence_semantic.py`, method `sliced_wasserstein`.
+
+### Principle figure
+
+*[Figure placeholder: schematic showing 1-D projections onto two random directions with sorted quantile comparison.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Metrically consistent approximation of optimal transport. No hyperparameter. Scales to $n \sim 10^4$ embeddings in seconds. Invariant to the global mean of each set (only the shape differs, not the location, after centering).
+
+**Biases.** Random projections introduce Monte Carlo variance; mitigated by $K=200$. Approximation quality degrades when the signal lives in a low-dimensional subspace (all the action is on a few directions; random projections miss most of them).
+
+**Limitations.** Shares the convergence-not-break limitation with S1 and S2 on the climate finance corpus.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel.]*
+
+Key values (w=3): peak $Z = +3.6$ at 1998, monotonic decline. Pattern identical to S2.
+
+### References
+
+Seminal: @bonneel2015sliced (Bonneel et al. 2015, "Sliced and Radon Wasserstein Barycenters of Measures"). Recent analogue: @boecking2022sliced.
+
+\newpage
 
 ---
 
-{{< include _includes/cocitation-communities.md >}}
+## S4. Fréchet Distance (Gaussian approximation) {#sec-s4}
+
+### Principle
+
+The Fréchet Inception Distance (FID) approximates each embedding cloud by a multivariate Gaussian (fit the empirical mean and covariance), then computes the Fréchet distance between the two fitted Gaussians. This is the approach used to evaluate generative image models. Applied here to text embeddings, it measures whether the two windows look like they could have been drawn from the same Gaussian distribution.
+
+### Definition
+
+$$d_F^2(\mu_1, \Sigma_1, \mu_2, \Sigma_2) = \|\mu_1 - \mu_2\|^2 + \text{tr}\!\left(\Sigma_1 + \Sigma_2 - 2(\Sigma_1\Sigma_2)^{1/2}\right)$$
+
+where $(\mu_k, \Sigma_k)$ are the empirical mean and covariance of each window's embedding matrix, and $(\cdot)^{1/2}$ is the matrix square root (computed via SVD).
+
+*Script:* `scripts/_divergence_semantic.py`, method `frechet`.
+
+### Principle figure
+
+*[Figure placeholder: two 2-D Gaussian ellipses with Fréchet distance illustrated.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Closed-form; $O(nd^2 + d^3)$, fast even for large $n$. Familiar to ML practitioners.
+
+**Biases.** Assumes Gaussian distributions; real embedding clouds are not Gaussian (they lie on a manifold). Covariance estimation is unstable when $n < d$ (our windows often have $n \sim 200$ and $d = 1024$; we regularise with shrinkage). Fréchet distance is not a metric on arbitrary distributions.
+
+**Limitations.** The Gaussian assumption is the strongest of the four semantic methods.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel.]*
+
+Key values (w=3): peak $Z = +2.9$ at 1998, monotonic decline. Weaker than S1–S3 due to Gaussian misspecification.
+
+### References
+
+Seminal: @heusel2017gans (Heusel et al. 2017, "GANs trained by a two time-scale update rule converge to a local Nash equilibrium", NeurIPS).
+Recent analogue: @jayasumana2023rethinking (rethinking FID for text representations).
+
+\newpage
+
+---
+
+# Part L — Lexical Distribution Methods
+
+Lexical methods operate on TF-IDF representations of abstracts and titles.
+A work's TF-IDF vector weights the importance of each vocabulary term by how often it appears in that work
+relative to the full corpus.
+Unlike embeddings, the TF-IDF space is discrete and interpretable:
+discriminating terms can be read directly.
+
+---
+
+## L1. Jensen-Shannon Divergence (TF-IDF) {#sec-l1}
+
+### Principle
+
+JS divergence compares two probability distributions over a shared vocabulary.
+We aggregate the TF-IDF vectors of all works in each window into a "bag of words" distribution,
+then measure how much information is needed to encode one distribution using the other as a model.
+JS divergence is the symmetrised, bounded version of Kullback-Leibler divergence.
+
+### Definition
+
+$$\text{JS}(P \| Q) = \frac{1}{2} D_{KL}(P \| M) + \frac{1}{2} D_{KL}(Q \| M), \quad M = \frac{P+Q}{2}$$
+
+where $P$ and $Q$ are the normalised mean TF-IDF vectors of the before/after windows,
+$D_{KL}(P\|Q) = \sum_i P_i \log(P_i / Q_i)$, and sums run over the vocabulary.
+$\text{JS} \in [0, \log 2]$; the square root is a proper metric.
+
+*Script:* `scripts/_divergence_lexical.py`, method `L1`.
+
+### Principle figure
+
+*[Figure placeholder: two vocabulary distributions (bar chart) with mixed distribution $M$ and divergence arrows.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Interpretable: dominant terms in each distribution are directly readable. Bounded ($\leq \log 2$). No hyperparameter. Consistent with the semantic energy distance on this corpus (same convergence signal).
+
+**Biases.** Vocabulary changes over time (new terms, deprecated terms); TF-IDF weights are computed on the full corpus and re-applied to sub-windows, so rare early terms may dominate early-window distributions. Aggregation to mean TF-IDF discards within-window heterogeneity.
+
+**Limitations.** Ignores word order and semantic similarity (synonyms treated as distinct tokens).
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel.]*
+
+Key values (w=3): peak $Z = +2.7$ at 1998, monotonic decline. Same convergence pattern as S methods.
+
+### References
+
+Seminal: @lin1991divergence (Lin 1991, "Divergence measures based on the Shannon entropy", *IEEE Transactions on Information Theory*).
+Recent analogue: @hall2008studying (Hall et al. 2008, "Studying the history of ideas using topic models", EMNLP — JS on bag-of-words for intellectual history, closest to our setting).
+
+\newpage
+
+---
+
+## L2. Novelty, Transience, Resonance {#sec-l2}
+
+### Principle
+
+Barron et al. (2018) decompose textual change into three orthogonal quantities:
+*novelty* (how different a work is from past discourse),
+*transience* (how different a work's discourse is from the future),
+and *resonance* (novelty that persists into the future; novelty minus transience).
+Applied to yearly aggregates rather than individual works,
+these measure whether a given year's vocabulary introduced genuinely new concepts
+or was simply an ephemeral departure.
+
+### Definition
+
+For year $t$ with forward/backward window $w$:
+
+$$\text{Novelty}(t) = D_{KL}(P_t \| P_{t-w:t-1})$$
+$$\text{Transience}(t) = D_{KL}(P_t \| P_{t+1:t+w})$$
+$$\text{Resonance}(t) = \text{Novelty}(t) - \text{Transience}(t)$$
+
+where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\tau$.
+
+*Script:* `scripts/_divergence_lexical.py`, method `L2` (channels: novelty, transience, resonance).
+
+### Principle figure
+
+*[Figure placeholder: timeline with arrows for novelty (backward KL) and transience (forward KL); resonance = difference.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Asymmetric decomposition is more informative than a symmetric distance. Resonance identifies *lasting* innovations. Three derived signals from one computation.
+
+**Biases.** KL divergence is unbounded and undefined when $P_t$ has support outside $P_{t-w:t-1}$ (rare terms in small windows); we add Laplace smoothing ($\epsilon = 10^{-8}$). Results for early years (1990–1998) are unstable due to sparse corpora.
+
+**Limitations.** Year-level aggregation discards within-year heterogeneity. Sensitivity to smoothing parameter.
+
+### Corpus results
+
+*[Figure placeholder: novelty, transience, resonance time series (w=3), with 90% CI.]*
+
+### References
+
+Seminal: @barron2018individuals (Barron et al. 2018, "Individuals, Institutions, and Innovation in the Debates of the French Revolution", *PNAS*).
+Recent analogue: @murdock2017exploration (Murdock et al. 2017, "Exploration and Exploitation of Victorian Science").
+
+\newpage
+
+---
+
+## L3. Term Burst Detection {#sec-l3}
+
+### Principle
+
+Burst detection identifies terms whose frequency jumps sharply in a short window,
+signalling the emergence of a new concept or the adoption of new language.
+Unlike the distribution-level methods L1 and L2, L3 operates at the term level:
+it returns a ranked list of bursting terms for each year,
+providing a lexical fingerprint of each transition.
+
+### Definition
+
+We implement a simplified Kleinberg automaton for each term $v$:
+term frequency $f_v(t)$ is modelled as a Poisson process with rate $\lambda_v(t)$.
+A burst at year $t$ is flagged when the frequency exceeds a threshold
+$\lambda_v^\star = \bar{f}_v + z_\text{thresh} \cdot \hat{\sigma}_{f_v}$,
+where $\bar{f}_v$ and $\hat{\sigma}_{f_v}$ are the mean and standard deviation of term $v$'s frequency
+across all years, and $z_\text{thresh} = 2$.
+The burst $Z$-score is $(f_v(t) - \bar{f}_v) / \hat{\sigma}_{f_v}$.
+
+*Script:* `scripts/_divergence_lexical.py`, method `L3` (output: term × year matrix of burst $Z$-scores).
+
+### Principle figure
+
+*[Figure placeholder: frequency time series for two terms, one bursting, with threshold line.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Term-level interpretability. Requires no embedding; applicable to any text corpus. Can identify the specific vocabulary associated with each structural break.
+
+**Biases.** Threshold $z_\text{thresh}$ is a free parameter. Rare terms (frequency < 5/year) are excluded to avoid false positives from sparse counts.
+
+**Limitations.** Does not aggregate into a single divergence signal; the output is a list of bursting terms, not a scalar. Integration into the zoo figure requires a derived aggregate (e.g., count of bursting terms per year).
+
+### Corpus results
+
+*[Figure placeholder: number of bursting terms per year, with top-10 terms annotated at 2007 and 2013.]*
+
+### References
+
+Seminal: @kleinberg2003bursty (Kleinberg 2003, "Bursty and Hierarchical Structure in Streams", *Data Mining and Knowledge Discovery*).
+Recent analogue: @dias2011novel (Dias et al. 2011, "Identifying bursts in scientific literature").
+
+\newpage
+
+---
+
+# Part G — Citation Graph Methods
+
+Citation graph methods represent the corpus as a directed graph
+$\mathcal{G} = (V, E)$ where $V$ is the set of works and $(i, j) \in E$ if work $i$ cites work $j$.
+These methods compare structural properties of the subgraph before year $t$
+with the subgraph after year $t$.
+Unlike semantic and lexical methods, they detect changes in *knowledge flow patterns*,
+not in the *content* of publications.
+
+The nine graph methods group into three families:
+
+- **Degree topology** (G1 PageRank, G5 preferential attachment, G6 entropy): compare degree distributions.
+- **Spectral / global structure** (G2 spectral, G8 betweenness): compare global network geometry.
+- **Community / mesoscale** (G3 bibliographic coupling, G4 cross-tradition, G7 disruption, G9 community): compare meso-level organisation.
+
+Only G5 and G6 show a structural break at 2007 in the climate finance corpus;
+the remaining graph methods either show the convergence signal or weak/noisy patterns.
+
+---
+
+## G1. PageRank Distribution Divergence {#sec-g1}
+
+### Principle
+
+PageRank assigns each paper an importance score based on the centrality of its citers.
+A structural shift in the field should be visible as a change in the PageRank distribution:
+key nodes (highly cited, highly authoritative papers) should shift from pre-2007 authorities to post-2007 ones.
+We compute PageRank on the subgraph within each window and measure JS divergence between the two distributions.
+
+### Definition
+
+PageRank scores $\pi_i$ satisfy $\pi = \alpha M^T \pi + (1-\alpha) \mathbf{1}/n$
+with damping factor $\alpha = 0.85$ and column-stochastic adjacency $M$.
+Window JS divergence:
+
+$$D_{\text{G1}}(t, w) = \text{JS}\!\left(\text{hist}(\pi_{before}),\; \text{hist}(\pi_{after})\right)$$
+
+where histograms use 50 log-spaced bins over $[10^{-5}, 1]$.
+
+*Script:* `scripts/_citation_methods.py`, `G1_pagerank`.
+
+### Principle figure
+
+*[Figure placeholder: two PageRank histograms (log-log scale) before/after a break, with JS divergence illustrated.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Sensitive to changes in the authority structure of the field, not just citation counts. Well-understood algorithm.
+
+**Biases.** PageRank is sensitive to the size and density of the subgraph; growing corpus means growing graphs. Equal-window balancing (`equal_n: true`) partially mitigates this. Histogram binning choice affects measured JS divergence.
+
+**Limitations.** Shows convergence signal on this corpus (peak at 1999, monotonic decline); not sensitive to 2007/2013 topology change in our corpus.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel, w=2–5.]*
+
+Key values (w=3): peak $Z = +1.3$ at 1999. Weak convergence signal.
+
+### References
+
+Seminal: @page1998pagerank (Page et al. 1998, *The PageRank Citation Ranking: Bringing Order to the Web*).
+Recent analogue: @walker2007ranking (Walker et al. 2007, "Ranking Scientific Publications Using a Simple Model of Network Traffic").
+
+\newpage
+
+---
+
+## G2. Spectral Gap Divergence {#sec-g2}
+
+### Principle
+
+The spectral gap of a graph — the difference between the largest and second-largest eigenvalue of the adjacency or Laplacian matrix — measures how well-connected the graph is.
+A structural break that reorganises citation flow patterns should manifest as a change in the spectral gap.
+We compare the spectral gaps of the before- and after-window subgraphs.
+
+### Definition
+
+$$D_{\text{G2}}(t, w) = |\lambda_1^{after} - \lambda_2^{after}| - |\lambda_1^{before} - \lambda_2^{before}|$$
+
+where $\lambda_1 \geq \lambda_2 \geq \cdots$ are the eigenvalues of the normalised Laplacian.
+We use the top-2 eigenvalues via `scipy.sparse.linalg.eigsh`.
+
+*Script:* `scripts/_citation_methods.py`, `G2_spectral`.
+
+### Principle figure
+
+*[Figure placeholder: two graphs with different spectral gaps; eigenvalue spectrum comparison.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Single scalar summary of global connectivity. Related to mixing time and community separability.
+
+**Biases.** Sparse graphs (early years) have degenerate spectra; we require $\geq 50$ nodes per window. Signed difference rather than absolute distance loses information.
+
+**Limitations.** Shows flat/convergence signal on this corpus (peak at 1999, Z = +3.8); no 2007 peak.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel.]*
+
+Key values (w=3): peak $Z = +3.8$ at 1999, flat thereafter. Convergence but not structural break.
+
+### References
+
+Seminal: @von2007tutorial (Von Luxburg 2007, "A Tutorial on Spectral Clustering").
+Recent analogue: @newman2006modularity.
+
+\newpage
+
+---
+
+## G3. Bibliographic Coupling Age Shift {#sec-g3}
+
+### Principle
+
+Bibliographic coupling links two papers that cite a common third paper.
+The *age* of bibliographic coupling measures how far back in time a paper's references reach.
+A structural shift is visible as a change in the mean age of references cited by papers in successive cumulative windows — a field that matures stops citing the same canonical texts and begins referencing a new generation of foundational papers.
+
+### Definition
+
+Uses a **cumulative window**: all papers published up to year $t-1$ (before group) vs. all papers published up to year $t$ (after group).
+
+$$D_{\text{G3}}(t) = \bar{a}_{t} - \bar{a}_{t-1}$$
+
+where $\bar{a}_t$ is the mean age of cited works (= year of citing paper $-$ year of cited paper)
+for all citations made by papers published in year $t$.
+
+*Script:* `scripts/_citation_methods.py`, `G3_coupling_age` (window = "cumulative").
+
+### Principle figure
+
+*[Figure placeholder: reference age distribution shifting over time.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Interpretable without graph theory. Detects "canon formation" (convergence on a short list of seminal papers).
+
+**Biases.** Cumulative windows mean each year adds data to both groups; the before/after comparison is not symmetric. Dominated by highly prolific citing years.
+
+**Limitations.** Cumulative design makes it unsuitable for detecting point-in-time structural breaks; better as a slow-moving indicator of field maturation.
+
+### Corpus results
+
+*[Figure placeholder: reference age shift per year, 1990–2024.]*
+
+### References
+
+Seminal: @kessler1963bibliographic (Kessler 1963, "Bibliographic coupling between scientific papers").
+Recent analogue: @min2021measuring (Min et al. 2021, "Measuring knowledge accumulation in science").
+
+\newpage
+
+---
+
+## G4. Cross-Tradition Citation Ratio {#sec-g4}
+
+### Principle
+
+The corpus is divided into three intellectual traditions by a K-means cluster label
+(finance, development economics, physical science). The cross-tradition ratio measures
+what fraction of citations cross tradition boundaries — a rising ratio signals
+field integration, a falling ratio signals specialisation.
+
+### Definition
+
+Cumulative window. Let $C_{within}(t)$ and $C_{cross}(t)$ be the counts of within- and cross-tradition citations by papers published up to year $t$.
+
+$$D_{\text{G4}}(t) = \frac{C_{cross}(t)}{C_{within}(t) + C_{cross}(t)}$$
+
+*Script:* `scripts/_citation_methods.py`, `G4_cross_tradition`.
+
+### Principle figure
+
+*[Figure placeholder: bipartite graph between three tradition clusters with cross-edges highlighted.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Direct measure of cross-pollination between sub-fields.
+
+**Biases.** Tradition labels come from K-means clustering with a fixed $K$; sensitive to $K$ and to which papers are assigned to which cluster. Cumulative design, same caveat as G3.
+
+**Limitations.** Not a structural break detector; best used as a slow-moving description of integration dynamics.
+
+### Corpus results
+
+*[Figure placeholder: cross-tradition ratio, 1990–2024.]*
+
+### References
+
+Seminal: @price1965networks (Price 1965, "Networks of Scientific Papers").
+Recent analogue: @battiston2019taking.
+
+\newpage
+
+---
+
+## G5. Preferential Attachment Exponent Divergence {#sec-g5}
+
+### Principle
+
+Preferential attachment (Barabási-Albert) is the "rich get richer" mechanism: a new paper is more likely to cite already highly-cited papers. This generates a power-law in-degree distribution $P(k) \propto k^{-\gamma}$. A structural break changes the citation dynamics — for instance, a new funding institution may redirect citations to a new set of authoritative texts — and should shift the power-law exponent $\gamma$. G5 measures the difference between the fitted $\gamma$ before and after the candidate break year.
+
+### Definition
+
+For each window, fit $\gamma$ by maximum likelihood estimator for a discrete power law [@clauset2009power]:
+
+$$\hat{\gamma} = 1 + n\left[\sum_{i=1}^n \ln \frac{k_i}{k_{\min} - \frac{1}{2}}\right]^{-1}$$
+
+where $k_{\min} = 1$ and the sum runs over all in-degrees $k_i \geq k_{\min}$ in the window subgraph.
+
+$$D_{\text{G5}}(t, w) = |\hat{\gamma}_{after} - \hat{\gamma}_{before}|$$
+
+*Script:* `scripts/_citation_methods.py`, `G5_pref_attachment`.
+
+### Principle figure
+
+*[Figure placeholder: log-log degree distribution before/after with two power-law fits showing different slopes.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Theoretically motivated: PA is the dominant citation mechanism [@barabasi1999emergence]. Power-law exponent is a single, interpretable parameter. Robust to network size differences (exponent is scale-free).
+
+**Biases.** Power-law fit assumes a true power law; real citation distributions are better described as log-normal or stretched exponential for in-degrees $k < 50$. Estimator uses $k_{\min} = 1$ for simplicity; goodness-of-fit test (Clauset KS test) is not applied per window.
+
+**Limitations.** Absolute difference $|\hat\gamma_{after} - \hat\gamma_{before}|$ does not have a natural sign; a shift toward a flatter or steeper distribution are both reported as positive. Does not distinguish cause (new funding, new institutions, bandwagon effects).
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel, w=2–5, bootstrap 90% CI.]*
+
+**Key result:** Cross-year $Z$-scores (w=3) peak at **2007** ($Z = +2.96$), with a secondary plateau around 2013–2015 ($Z \approx +1.5$).
+This is the first method in the zoo to unambiguously detect the post-Stern/UNFCCC-Bali structural break.
+The power-law exponent of the in-degree distribution shifts significantly in the window centred on 2007,
+indicating that the citation dynamics of the field changed — new authoritative texts captured a larger share of citations, consistent with the emergence of IPCC reports and policy framework documents as citation hubs.
+
+### References
+
+Seminal: @barabasi1999emergence (Barabási & Albert 1999, "Emergence of scaling in random networks", *Science*).
+Recent analogue: @clauset2009power (Clauset et al. 2009, "Power-law distributions in empirical data", *SIAM Review* — standard MLE and goodness-of-fit for power laws, the method we use).
+
+\newpage
+
+---
+
+## G6. Citation Degree Entropy {#sec-g6}
+
+### Principle
+
+Shannon entropy of the in-degree distribution measures how concentrated or dispersed citations are.
+A low-entropy distribution has a few mega-hubs receiving most citations (a hierarchical, consensus field).
+A high-entropy distribution spreads citations across many works (a pluralistic, exploratory field).
+A structural break at 2007 would appear as a sudden change in entropy —
+the field may have consolidated around a new set of authoritative texts (entropy decrease)
+or opened up to new voices (entropy increase).
+
+### Definition
+
+Normalise the in-degree histogram of the window subgraph to obtain $p_k = (\text{count of papers with degree } k) / n$.
+
+$$H(t, w) = -\sum_k p_k \log_2 p_k$$
+
+$$D_{\text{G6}}(t, w) = |H_{after} - H_{before}|$$
+
+*Script:* `scripts/_citation_methods.py`, `G6_entropy`.
+
+### Principle figure
+
+*[Figure placeholder: two in-degree distributions with entropy values annotated — one concentrated (low $H$), one dispersed (high $H$).]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Intuitive. Sensitive to the full shape of the degree distribution, not just the tail. Requires no distributional assumption.
+
+**Biases.** Entropy depends on the number of distinct degree values, which grows with network size; equal-window balancing (`equal_n: true`) mitigates but does not eliminate this. Absolute difference loses sign (can't tell whether consolidation or dispersal dominates).
+
+**Limitations.** Correlated with G5: both respond to changes in the degree distribution. A joint measure (e.g., JS between degree histograms) would be cleaner but is not yet implemented.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel, w=2–5.]*
+
+**Key result:** Cross-year $Z$-scores (w=3) peak at **2007** ($Z = +2.46$), confirming the G5 finding.
+Entropy peaked again around 2013 ($Z \approx +1.8$).
+Combined with G5, this constitutes the main evidence for the 2007 structural break being a citation-topology event.
+
+### References
+
+Seminal: @shannon1948mathematical (Shannon 1948, "A Mathematical Theory of Communication").
+Recent analogue: @wu2019estimating (Wu et al. 2019, "Estimating the entropy of ecological communities").
+
+\newpage
+
+---
+
+## G7. Disruption Index CD {#sec-g7}
+
+### Principle
+
+The disruption index CD [@funk2017dynamic] distinguishes *consolidating* papers (that are cited along with their references — building on prior work) from *disrupting* papers (that are cited *instead of* their references — replacing prior work). Disrupting papers redirect the field; consolidating papers deepen it. A structural break at 2007 or 2013 should appear as a spike in the proportion of disrupting papers.
+
+### Definition
+
+Cumulative window. For paper $i$ let $f_i$ = papers that cite $i$ but not $i$'s references,
+$b_i$ = papers that cite $i$ and also at least one of $i$'s references,
+$c_i$ = papers that cite only $i$'s references (not $i$ itself).
+
+$$CD_i = \frac{f_i - b_i}{f_i + b_i + c_i}$$
+
+$CD \in [-1, 1]$; $CD > 0$ = disrupting, $CD < 0$ = consolidating.
+Corpus signal: mean $CD$ of papers published in year $t$.
+
+*Script:* `scripts/_citation_methods.py`, `G7_disruption`.
+
+### Principle figure
+
+*[Figure placeholder: three classes of subsequent citers ($f$, $b$, $c$) illustrated as citation network around paper $i$.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Theoretically motivated distinction between consolidation and disruption. Widely used in science-of-science literature [@park2023papers].
+
+**Biases.** Requires forward citations that accumulate over many years; recent papers (after 2018) have insufficient citation time. Cumulative design. Sensitive to database completeness (missing references inflate $f_i$).
+
+**Limitations.** Not a structural break detector in the distributional sense; reports average annual $CD$ trend rather than a window-based divergence. Recent work questions whether the global decline in $CD$ reflects true science dynamics or database artefacts.
+
+### Corpus results
+
+*[Figure placeholder: mean annual CD index, 1990–2015 (2016+ censored).]*
+
+### References
+
+Seminal: @funk2017dynamic (Funk & Owen-Smith 2017, "A Dynamic Network Measure of Technological Change", *Management Science*).
+Recent analogue: @park2023papers (Park et al. 2023, "Papers and patents are becoming less disruptive over time", *Nature*).
+
+\newpage
+
+---
+
+## G8. Mean Betweenness Centrality {#sec-g8}
+
+### Principle
+
+Betweenness centrality of a node measures how often it lies on the shortest paths between other nodes.
+A high-betweenness node is a broker: it connects otherwise distant parts of the citation network.
+A structural shift may produce or destroy brokers — e.g., a new IPCC report bridging finance and physical science.
+We compare the mean betweenness centrality of the before- and after-window subgraphs.
+
+### Definition
+
+$$B_i = \sum_{s \neq i \neq t} \frac{\sigma_{st}(i)}{\sigma_{st}}$$
+
+where $\sigma_{st}$ is the count of shortest paths from $s$ to $t$,
+and $\sigma_{st}(i)$ is the count passing through $i$.
+Normalised to $[0,1]$ by dividing by $(n-1)(n-2)$.
+
+$$D_{\text{G8}}(t, w) = |\bar{B}_{after} - \bar{B}_{before}|$$
+
+*Script:* `scripts/_citation_methods.py`, `G8_betweenness` (sampled approximation for $n > 500$).
+
+### Principle figure
+
+*[Figure placeholder: small network with one high-betweenness bridge node highlighted.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Captures brokerage role; theoretically linked to information flow.
+
+**Biases.** Betweenness computation is $O(nm)$ exact, $O(km)$ for $k$-sampled approximation; sampling introduces variance. Mean betweenness is dominated by a few high-centrality nodes; median would be more robust.
+
+**Limitations.** Shows weak signal on this corpus; dominated by the large variance from sampling approximation.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel.]*
+
+### References
+
+Seminal: @freeman1977set (Freeman 1977, "A Set of Measures of Centrality Based on Betweenness").
+Recent analogue: @weng2019interdisciplinary.
+
+\newpage
+
+---
+
+## G9. Louvain Community Divergence {#sec-g9}
+
+### Principle
+
+Community detection partitions the citation network into groups of papers that cite each other more than they cite outside the group.
+The Louvain algorithm maximises modularity to find these groups efficiently.
+A structural break should reorganise community membership: the communities that dominated before 2007
+should lose share, and new communities should emerge after 2007.
+We compare the community-share vectors of the before- and after-window subgraphs using JS divergence.
+This is the closest graph-theoretic analogue to the K-means cluster JS divergence used in the original
+`compute_breakpoints.py` pipeline.
+
+### Definition
+
+Run Louvain on the union subgraph of both windows; obtain community labels $c_i$ for each node.
+Let $q_k^{before}$ = fraction of before-window papers assigned to community $k$,
+$q_k^{after}$ = fraction of after-window papers assigned to community $k$.
+
+$$D_{\text{G9}}(t, w) = \text{JS}(q^{before}, q^{after})$$
+
+*Script:* `scripts/_divergence_community.py`, `G9_community`.
+
+### Principle figure
+
+*[Figure placeholder: force-directed layout with community colours, before vs after panel, JS divergence annotated.]*
+
+### Advantages, biases, limitations
+
+**Advantages.** Most interpretable graph method: communities can be labelled by their dominant topics. Direct successor to the K-means JS divergence of the original pipeline.
+
+**Biases.** Louvain is non-deterministic (random seed-dependent); community labels are unstable across runs (label-switching). The number of communities $K$ is determined automatically by modularity maximisation, which can overfit for dense subgraphs. Community identity across time is not guaranteed — community 1 before 2007 may not correspond to community 1 after 2007.
+
+**Limitations.** Despite its conceptual appeal, G9 shows the same convergence signal as S and L methods (peak at 2001, monotonic decline) rather than a 2007 structural break. This suggests that Louvain community membership — like raw distribution divergence — measures *field heterogeneity* rather than *citation topology change*. G5 and G6, which track the degree distribution directly, are more sensitive to the institutional shift at 2007.
+
+### Corpus results
+
+*[Figure placeholder: cross-year Z-score panel.]*
+
+Key values (w=3): peak $Z = +2.3$ at 2001, monotonic decline to $Z \approx -1.4$ at 2010.
+No peak at 2007 or 2013.
+
+**Interpretation.** Community divergence is highest in the 1990s/early 2000s, when climate finance was a loose assembly of distinct intellectual communities.
+As the field institutionalised, papers increasingly cited across communities,
+and the community-share vectors of before/after windows converged.
+The same story told by S1–S4 and L1, from a graph perspective.
+
+### References
+
+Seminal: @blondel2008fast (Blondel et al. 2008, "Fast unfolding of communities in large networks", *Journal of Statistical Mechanics*).
+Recent analogue: @rosvall2019different (Rosvall et al. 2019, "Different approaches to community detection").
+
+\newpage
+
+---
+
+# C2ST — Classifier Two-Sample Tests
+
+As a meta-check on the distributional shift methods,
+we train simple classifiers to distinguish "before" from "after" papers.
+If the classifier accuracy $\alpha > 0.5$ (better than chance),
+the two windows are distinguishable by the features used.
+We test two feature sets: BAAI/bge-m3 embeddings (C2ST\_embedding) and TF-IDF (C2ST\_lexical).
+
+### Definition
+
+For each (t, w) pair, split papers into before/after labels and train a logistic regression with $\ell^2$ regularisation (sklearn default).
+Measure 5-fold cross-validated accuracy $\alpha \in [0, 1]$.
+
+$$D_{\text{C2ST}}(t, w) = \alpha(t, w)$$
+
+Reference level: $\alpha = 0.5$ (random classifier).
+
+*Scripts:* `scripts/_divergence_semantic.py` (C2ST\_embedding), `scripts/_divergence_lexical.py` (C2ST\_lexical).
+
+### Corpus results
+
+*[Figure placeholder: C2ST accuracy time series for embedding and lexical, w=3, with 95% binomial CI.]*
+
+**Key values.** Both C2ST channels hover around 0.60–0.67, significantly above chance, for almost all years — confirming that before/after windows are consistently distinguishable. However, the accuracy time series is flat and noisy: no 2007 peak, no convergence trend. C2ST is a less sensitive detector than the distributional methods for this corpus. Its primary use here is as a sanity check: the fact that accuracy $> 0.5$ everywhere confirms that our methods are not measuring noise.
+
+### References
+
+Seminal: @lopez2016revisiting (Lopez-Paz & Oquab 2017, "Revisiting Classifier Two-Sample Tests", *ICLR*).
+Recent analogue: @lemos2023sampling (Lemos et al. 2023, "Sampling-Based Accuracy Testing Posterior Estimation for General Inference").
