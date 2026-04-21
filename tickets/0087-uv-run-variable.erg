@@ -1,0 +1,45 @@
+%erg v1
+Title: Introduce $(UV) / $(UV_RUN) Makefile variables + PATH fallback
+Status: closed
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21T11:00Z claude created
+2026-04-21T12:08Z claude status closed PR #719 merged (47b79da); ssh padme probe confirmed uv resolution
+
+--- body ---
+## Context
+Non-interactive SSH sessions (e.g. `ssh padme 'make ...'`) don't source
+the user's `.bashrc`/`.profile`, so `uv` — installed at
+`~/.local/bin/uv` — isn't on PATH.  All 99 `uv run ...` recipes across
+`Makefile` (79) and `divergence.mk` (20) fail with
+`uv : commande introuvable`.  This has bitten us repeatedly; fix it in
+the repo so any `make` invocation is hermetic regardless of shell.
+
+## Design
+
+Follow the autoconf / Kbuild idiom — name the tool, don't rely on PATH:
+
+```make
+UV      ?= uv
+UV_RUN  ?= $(UV) run
+export PATH := $(HOME)/.local/bin:$(PATH)
+```
+
+`UV` and `UV_RUN` are overridable on the command line
+(`make UV=/opt/uv/bin/uv ...`) and the PATH export ensures the default
+`uv` resolves under non-interactive SSH, cron, systemd — anywhere
+`.bashrc` doesn't run.
+
+## Actions
+1. Add the three lines to `Makefile` (near the reproducibility exports).
+2. Grep-replace `uv run` → `$(UV_RUN)` across `Makefile` and `divergence.mk`.
+3. Verify `make -pn | grep 'uv run'` finds 0 lines; `make -pn | grep '^[^#]*uv run'` finds 0; `make -pn | grep -c '$(UV_RUN)'` > 0 is not meaningful because make expands — instead verify recipes still render `uv run python ...` expanded via `make -pn`.
+4. `make check-fast` must remain green.
+
+## Exit criteria
+- No raw `uv run ` in `Makefile` or `*.mk` (grep-ratchet: 0 hits).
+- `make -pn <any-target>` expands recipes to `uv run python ...`.
+- Override works: `make UV=/tmp/fake-uv -pn null-model` shows `/tmp/fake-uv run python ...`.
+- `make check-fast` green.

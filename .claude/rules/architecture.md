@@ -44,6 +44,16 @@ The pipeline has four phases. Each phase's scripts follow a naming convention an
 8. **Dispatcher pattern.** When multiple methods share data loading and output contract, use a single dispatch script with `--method X` (e.g., `compute_divergence.py`). Method implementations live in private modules (`_divergence_semantic.py`, etc.). Shared I/O helpers in `_divergence_io.py`.
 9. **Corpus access through loaders only.** Never call `pd.read_csv()` / `np.load()` / `pd.read_feather()` on contract files (`refined_works`, `refined_embeddings`, `refined_citations`) directly. Use `pipeline_loaders`: `load_refined_works()` (thin read + type coercion), `load_analysis_corpus()` (filtered + optional embeddings), `load_refined_embeddings()`, `load_refined_citations()`. Direct reads bypass Feather acceleration, type coercion, and error hints — and create coupling points that break when the corpus format changes. (Legacy scripts are migrated as touched.)
 
+### Null model acceleration
+
+The permutation null models in `scripts/compute_null_model.py` use three complementary acceleration strategies, all in `scripts/_permutation_accel.py`:
+
+- **GPU-vectorized permutations** for `S2_energy` and `S1_MMD`: the pairwise distance / kernel matrix is computed once on GPU, then all permutation statistics are batched in a single matmul (`stats = -((C @ D) * C).sum(dim=1)`). Auto-detected when CUDA is available.
+- **Precomputed TF-IDF** for `L1`: the vectorizer runs once per window; permutations only reshuffle row indices into the sparse matrix — eliminating redundant `vectorizer.transform()` calls per (year, window).
+- **CPU parallel via joblib** across (year, window) pairs for `G2_spectral` and `G9_community`. Default `n_jobs=1` at the API boundary preserves test determinism; the CLI exposes `--n-jobs` (`-1` = all cores) for production runs.
+
+The Makefile knob is `NJOBS` (in `divergence.mk`). Default `-1` uses all cores — fine for a single method, oversubscribes under `make -jN`. When composing with `-j`, pass `NJOBS ≈ cores/N` (e.g. on 24 cores: `make -j4 NJOBS=6 null-model`). End-to-end on padme: ~3h → ~7min.
+
 **Phase 3 — Render** (Quarto → PDF/DOCX):
 - Reads Phase 2 outputs. Build artifacts go to `output/` (gitignored).
 

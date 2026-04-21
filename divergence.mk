@@ -46,29 +46,29 @@ DIV_CSV_ALL := $(DIV_CSV_SEM) $(DIV_CSV_LEX) $(DIV_CSV_CIT) $(DIV_CSV_C2ST)
 
 $(foreach m,$(DIV_METHODS_SEM),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+	$(UV_RUN) python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── Lexical methods (depend on REFINED only) ─────────────────────────────
 
 $(foreach m,$(DIV_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
-	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+	$(UV_RUN) python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── Citation methods (depend on REFINED + REFINED_CIT) ───────────────────
 
 $(foreach m,$(DIV_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_citation.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
-	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+	$(UV_RUN) python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── C2ST methods (embedding variant depends on embeddings, lexical on REFINED) ─
 
 $(foreach m,$(DIV_METHODS_C2ST_SEM),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_c2st.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+	$(UV_RUN) python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 $(foreach m,$(DIV_METHODS_C2ST_LEX),$(eval \
 $(DIV_TABLES)/tab_div_$(m).csv: $(DIV_DISPATCH) scripts/_divergence_c2st.py $(REFINED) $(DIV_CFG) ; \
-	uv run python $(DIV_DISPATCH) --method $(m) --output $$@))
+	$(UV_RUN) python $(DIV_DISPATCH) --method $(m) --output $$@))
 
 # ── Convenience targets ──────────────────────────────────────────────────
 
@@ -92,7 +92,7 @@ divergence-tables: $(DIV_CSV_ALL)
 DIV_FIG_STAMP := $(DIV_FIGS)/.divergence_figs.stamp
 
 $(DIV_FIG_STAMP): scripts/plot_divergence.py $(DIV_CSV_ALL)
-	uv run python scripts/plot_divergence.py \
+	$(UV_RUN) python scripts/plot_divergence.py \
 		--output $(DIV_FIGS)/fig_divergence.png \
 		--input $(DIV_CSV_ALL)
 	touch $@
@@ -116,11 +116,11 @@ SENS_CSV_ALL := $(SENS_CSV_PCA) $(SENS_CSV_JL)
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_TABLES)/tab_sens_pca_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	uv run python $(SENS_SCRIPT) --method $(m) --projection pca --output $$@))
+	$(UV_RUN) python $(SENS_SCRIPT) --method $(m) --projection pca --output $$@))
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_TABLES)/tab_sens_jl_$(m).csv: $(SENS_SCRIPT) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	uv run python $(SENS_SCRIPT) --method $(m) --projection jl --output $$@))
+	$(UV_RUN) python $(SENS_SCRIPT) --method $(m) --projection jl --output $$@))
 
 # Figures: one PNG per (method, projection) pair — 1 invocation = 1 figure
 SENS_FIG_PCA := $(foreach m,$(SENS_METHODS),$(DIV_FIGS)/fig_sensitivity_pca_$(m).png)
@@ -129,11 +129,11 @@ SENS_FIG_ALL := $(SENS_FIG_PCA) $(SENS_FIG_JL)
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_FIGS)/fig_sensitivity_pca_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_pca_$(m).csv ; \
-	uv run python $(SENS_PLOT) --palette gradient --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
+	$(UV_RUN) python $(SENS_PLOT) --palette gradient --input $(DIV_TABLES)/tab_sens_pca_$(m).csv --output $$@))
 
 $(foreach m,$(SENS_METHODS),$(eval \
 $(DIV_FIGS)/fig_sensitivity_jl_$(m).png: $(SENS_PLOT) $(DIV_TABLES)/tab_sens_jl_$(m).csv ; \
-	uv run python $(SENS_PLOT) --aggregate ribbon --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
+	$(UV_RUN) python $(SENS_PLOT) --aggregate ribbon --input $(DIV_TABLES)/tab_sens_jl_$(m).csv --output $$@))
 
 .PHONY: sensitivity-tables
 sensitivity-tables: $(SENS_CSV_ALL)
@@ -159,13 +159,13 @@ CV_TABLE   := $(DIV_TABLES)/tab_convergence.csv
 CP_FIG     := $(DIV_FIGS)/fig_convergence.png
 
 $(CP_TABLE): $(CP_SCRIPT) $(DIV_CSV_ALL) $(DIV_CFG)
-	uv run python $(CP_SCRIPT) --output $@ --input $(DIV_CSV_ALL)
+	$(UV_RUN) python $(CP_SCRIPT) --output $@ --input $(DIV_CSV_ALL)
 
 $(CV_TABLE): $(CV_SCRIPT) $(CP_TABLE)
-	uv run python $(CV_SCRIPT) --output $@ --input $(CP_TABLE)
+	$(UV_RUN) python $(CV_SCRIPT) --output $@ --input $(CP_TABLE)
 
 $(CP_FIG): $(CP_PLOT) $(CP_TABLE) $(CV_TABLE)
-	uv run python $(CP_PLOT) --output $@ --input $(CP_TABLE) $(CV_TABLE)
+	$(UV_RUN) python $(CP_PLOT) --output $@ --input $(CP_TABLE) $(CV_TABLE)
 
 .PHONY: changepoints-tables
 changepoints-tables: $(CP_TABLE) $(CV_TABLE)
@@ -180,6 +180,13 @@ changepoints: changepoints-tables changepoints-figure
 #
 # For each method, permute before/after labels and recompute the statistic
 # to build a null distribution.  Output: tab_null_{method}.csv
+#
+# NJOBS caps per-method joblib parallelism across (year, window) pairs.
+# Default -1 uses all cores — fine for a single method, but oversubscribes
+# when composed with `make -j`.  When running `make -jN null-model`, pass
+# NJOBS ≈ cores/N  (e.g. on a 24-core box:  `make -j4 NJOBS=6 null-model`).
+# GPU auto-detected for S2_energy / S1_MMD (precomputed distance matrix).
+NJOBS ?= -1
 
 NULL_DISPATCH := scripts/compute_null_model.py
 NULL_METHODS_SEM := S2_energy
@@ -191,17 +198,17 @@ NULL_CSV := $(foreach m,$(NULL_METHODS),$(DIV_TABLES)/tab_null_$(m).csv)
 # Semantic null models (depend on embeddings + divergence CSV)
 $(foreach m,$(NULL_METHODS_SEM),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py scripts/_permutation_accel.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	uv run python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 # Lexical null models (depend on REFINED + divergence CSV)
 $(foreach m,$(NULL_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py scripts/_permutation_accel.py $(REFINED) $(DIV_CFG) ; \
-	uv run python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 # Citation null models (depend on REFINED + REFINED_CIT + divergence CSV)
 $(foreach m,$(NULL_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
-	uv run python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 .PHONY: null-model
 null-model: $(NULL_CSV)
@@ -225,17 +232,17 @@ BOOT_CSV := $(foreach m,$(BOOT_METHODS),$(DIV_TABLES)/tab_boot_$(m).csv)
 # Semantic bootstrap (depends on embeddings + divergence CSV)
 $(foreach m,$(BOOT_METHODS_SEM),$(eval \
 $(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 # Lexical bootstrap (depends on REFINED + divergence CSV)
 $(foreach m,$(BOOT_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
-	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 # Citation bootstrap (depends on REFINED + REFINED_CIT + divergence CSV)
 $(foreach m,$(BOOT_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
-	uv run python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(BOOT_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 .PHONY: bootstrap-tables
 bootstrap-tables: $(BOOT_CSV)
@@ -249,7 +256,7 @@ SUMM_CSV := $(foreach m,$(BOOT_METHODS),$(DIV_TABLES)/tab_summary_$(m).csv)
 
 $(foreach m,$(BOOT_METHODS),$(eval \
 $(DIV_TABLES)/tab_summary_$(m).csv: $(SUMM_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv $(DIV_TABLES)/tab_boot_$(m).csv $(DIV_TABLES)/tab_null_$(m).csv ; \
-	uv run python $(SUMM_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --boot-csv $(DIV_TABLES)/tab_boot_$(m).csv --null-csv $(DIV_TABLES)/tab_null_$(m).csv --output $$@))
+	$(UV_RUN) python $(SUMM_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --boot-csv $(DIV_TABLES)/tab_boot_$(m).csv --null-csv $(DIV_TABLES)/tab_null_$(m).csv --output $$@))
 
 .PHONY: divergence-summary
 divergence-summary: $(SUMM_CSV)

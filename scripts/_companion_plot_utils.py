@@ -112,18 +112,3 @@ def window_rows(df: pd.DataFrame, window: int) -> pd.DataFrame:
     w_str = str(window)
     mask = df["window"].astype(str).eq(w_str)
     return df.loc[mask]
-
-
-def validated_zone_mask(
-    z_frame: pd.DataFrame,
-    z_threshold: float,
-    min_methods: int,
-) -> pd.Series:
-    """Return a boolean Series (indexed by year) marking validated zones.
-
-    ``z_frame`` is a year-indexed DataFrame whose columns are method IDs
-    and whose values are signed signals.  A year is validated when at
-    least ``min_methods`` columns have ``|signal| >= z_threshold``.
-    """
-    above = z_frame.abs().ge(z_threshold)
-    return above.sum(axis=1) >= min_methods

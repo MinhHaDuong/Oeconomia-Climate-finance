@@ -49,6 +49,14 @@ REFINED_CIT_FTH := $(DATA_DIR)/refined_citations.feather
 export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
+# ── Toolchain ─────────────────────────────────────────────
+# Named tool variables so invocations stay overridable and self-documenting.
+# PATH export covers non-interactive shells (ssh, cron, systemd) where
+# ~/.bashrc isn't sourced — uv lives in ~/.local/bin by default.
+UV      ?= uv
+UV_RUN  ?= $(UV) run
+export PATH := $(HOME)/.local/bin:$(PATH)
+
 # ── Modular Makefile includes ────────────────────────────
 -include divergence.mk
 -include companion.mk
@@ -173,35 +181,35 @@ corpus:
 corpus-sync:
 	@[ "$$(hostname)" != "padme" ] || { echo "error: use 'make corpus' on padme, not corpus-sync."; exit 1; }
 	git pull
-	uv run dvc pull --force
+	$(UV_RUN) dvc pull --force
 
 # Individual stage aliases.
 corpus-discover:
-	uv run dvc repro catalog_merge
+	$(UV_RUN) dvc repro catalog_merge
 
 corpus-enrich:
-	uv run dvc repro enrich_dois enrich_abstracts enrich_language summarize_abstracts join_enrichments enrich_citations qa_citations enrich_embeddings
+	$(UV_RUN) dvc repro enrich_dois enrich_abstracts enrich_language summarize_abstracts join_enrichments enrich_citations qa_citations enrich_embeddings
 
 corpus-extend:
-	uv run dvc repro extend
+	$(UV_RUN) dvc repro extend
 
 corpus-filter:
-	uv run dvc repro filter
+	$(UV_RUN) dvc repro filter
 
 corpus-filter-all:
-	uv run dvc repro extend filter
+	$(UV_RUN) dvc repro extend filter
 
 corpus-align:
-	uv run dvc repro align
+	$(UV_RUN) dvc repro align
 
 # Upload artifacts to the DVC remote (padme).
 deploy-corpus:
-	uv run dvc push
+	$(UV_RUN) dvc push
 
 # ── Corpus diagnostics (Phase 1 — reads enrichment caches) ──
 content/tables/qa_citations_report.json: scripts/qa_citations.py scripts/utils.py \
 		$(DATA_DIR)/citations.csv
-	uv run python $<
+	$(UV_RUN) python $<
 
 # ═══════════════════════════════════════════════════════════
 # PHASE 2 — Analysis & Figures (fast, deterministic, run often)
@@ -216,10 +224,10 @@ content/tables/qa_citations_report.json: scripts/qa_citations.py scripts/utils.p
 # Embeddings stay as .npz (already binary). One conversion pass (~5s) replaces
 # ~48s of repeated CSV parsing across 25 Phase 2 script invocations.
 $(REFINED_FTH): $(REFINED)
-	uv run python -c "import pandas as pd; pd.read_csv('$<').to_feather('$@')"
+	$(UV_RUN) python -c "import pandas as pd; pd.read_csv('$<').to_feather('$@')"
 
 $(REFINED_CIT_FTH): $(REFINED_CIT)
-	uv run python -c "import pandas as pd; pd.read_csv('$<', low_memory=False).to_feather('$@')"
+	$(UV_RUN) python -c "import pandas as pd; pd.read_csv('$<', low_memory=False).to_feather('$@')"
 
 corpus-handoff: check-corpus $(REFINED_FTH) $(REFINED_CIT_FTH)
 
@@ -228,7 +236,7 @@ check-corpus:
 	for f in "$(REFINED)" "$(REFINED_EMB)" "$(REFINED_CIT)"; do \
 		test -f "$$f" || { echo "MISSING: $$f"; ok=false; }; \
 	done; \
-	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
+	$$ok || { echo "Run '$(UV_RUN) dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
 
 # Lighter gate for manuscript-only builds (no citations needed).
 check-manuscript-data:
@@ -236,23 +244,23 @@ check-manuscript-data:
 	for f in "$(REFINED)" "$(REFINED_EMB)"; do \
 		test -f "$$f" || { echo "MISSING: $$f"; ok=false; }; \
 	done; \
-	$$ok || { echo "Run 'uv run dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
+	$$ok || { echo "Run '$(UV_RUN) dvc pull' to sync data, or 'make corpus' to rebuild."; exit 1; }
 
 corpus-validate: $(REFINED)
-	uv run pytest tests/test_corpus_acceptance.py -v -s --tb=long
+	$(UV_RUN) pytest tests/test_corpus_acceptance.py -v -s --tb=long
 
 # ── Corpus reporting (Phase 2 — reads only refined data) ──
 content/tables/tab_citation_coverage.md: scripts/export_citation_coverage.py scripts/utils.py $(REFINED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/tables/tab_venues.md: scripts/export_tab_venues.py scripts/utils.py $(REFINED) content/tables/tab_pole_papers.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md &: scripts/export_corpus_table.py scripts/utils.py $(REFINED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/tables/tab_languages.md: scripts/export_language_table.py scripts/utils.py $(ENRICHED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 corpus-tables: content/tables/tab_corpus_sources.csv content/tables/tab_corpus_sources.md \
                content/tables/tab_citation_coverage.md \
@@ -274,7 +282,7 @@ $(COMPUTED_STATS) &: scripts/compute_vars.py scripts/utils.py $(REFINED) \
 		$(wildcard $(DATA_DIR)/citations.csv) \
 		$(wildcard $(REFINED_CIT)) \
 		$(wildcard content/tables/qa_citations_report.json)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 stats: $(COMPUTED_STATS)
 
@@ -282,57 +290,57 @@ stats: $(COMPUTED_STATS)
 
 # Core subset → venues table
 $(MOSTCITED): scripts/build_het_core.py scripts/utils.py $(REFINED) $(REFINED_CIT)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/tables/tab_core_venues_top10.md: scripts/export_core_venues_markdown.py scripts/summarize_core_venues.py scripts/utils.py $(MOSTCITED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # ── Figures ──────────────────────────────────────────────
 
 # -- Manuscript (Oeconomia article) --
 # Fig 1 (bars): corpus growth per year
 content/figures/fig_bars.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Fig 1 v1 variant: restricted to submission corpus for manuscript stability
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --v1-only
+	$(UV_RUN) python $< --output $@ --v1-only
 
 # Fig 2 (composition): frozen v1 archive data + corrected labels
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
-	uv run python $< --output $@ --input config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
+	$(UV_RUN) python $< --output $@ --input config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 # -- Data paper --
 # Semantic clusters (computation only — no figures)
 SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
 
 $(SEMANTIC_CLUSTERS): scripts/analyze_embeddings.py scripts/utils.py $(CONFIG) $(ENRICHED) $(DATA_DIR)/embeddings.npz
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Semantic UMAP maps (one parameterized plot script, 3 invocations)
 content/figures/fig_semantic.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
-	uv run python $< --color-by cluster --output $@
+	$(UV_RUN) python $< --color-by cluster --output $@
 
 content/figures/fig_semantic_lang.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
-	uv run python $< --color-by language --output $@
+	$(UV_RUN) python $< --color-by language --output $@
 
 content/figures/fig_semantic_period.png: scripts/plot_semantic.py scripts/utils.py $(SEMANTIC_CLUSTERS)
-	uv run python $< --color-by period --output $@
+	$(UV_RUN) python $< --color-by period --output $@
 
 # -- Companion paper (quantitative) --
 # Structural break tables (independent of clustering)
 content/tables/tab_breakpoints.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/tables/tab_breakpoint_robustness.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --robustness
+	$(UV_RUN) python $< --output $@ --robustness
 
 # Clustering + alluvial flow tables — full corpus (companion paper, tech report)
 content/tables/tab_alluvial.csv content/tables/cluster_labels.json \
 content/tables/tab_core_shares.csv &: \
 		scripts/compute_clusters.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output content/tables/tab_alluvial.csv
+	$(UV_RUN) python $< --output content/tables/tab_alluvial.csv
 
 # Clustering — v1 frozen from reproducibility archive (not re-clustered).
 # KMeans is unstable to small corpus perturbations; re-clustering the v1
@@ -345,164 +353,164 @@ content/figures/fig_breakpoints.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv \
 		content/tables/tab_alluvial.csv
-	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv content/tables/tab_alluvial.csv
+	$(UV_RUN) python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoint_robustness.csv content/tables/tab_alluvial.csv
 
 # Alluvial figure (static PNG)
 content/figures/fig_alluvial.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $< --output $@ --input content/tables/tab_alluvial.csv
+	$(UV_RUN) python $< --output $@ --input content/tables/tab_alluvial.csv
 
 # Alluvial figure (interactive HTML)
 content/figures/fig_alluvial.html: \
 		scripts/plot_alluvial_html.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Period divergence curves
 content/figures/fig_breaks.png: scripts/plot_fig2_breaks.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_breakpoints.csv
-	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv
+	$(UV_RUN) python $< --output $@ --input content/tables/tab_breakpoints.csv
 
 # Bimodality tables (computation only — figures are separate targets below)
 content/tables/tab_bimodality.csv content/tables/tab_axis_detection.csv \
 content/tables/tab_pole_papers.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output content/tables/tab_bimodality.csv
+	$(UV_RUN) python $< --output content/tables/tab_bimodality.csv
 
 # Bimodality figures (each reads tab_pole_papers.csv)
 content/figures/fig_bimodality.png: scripts/plot_bimodality.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/figures/fig_bimodality_lexical.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Seed-axis violin (core, manuscript figure)
 content/figures/fig_seed_axis_core.png: scripts/plot_fig_seed_axis.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # PCA scatter (unsupervised)
 content/figures/fig_pca_scatter.png: scripts/plot_fig45_pca_scatter.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Citation genealogy: model (lineage table) then renderers
 content/tables/tab_lineages.csv: scripts/analyze_genealogy.py scripts/utils.py $(CONFIG) \
 		$(REFINED) $(REFINED_CIT) content/tables/tab_pole_papers.csv $(SEMANTIC_CLUSTERS)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/figures/fig_genealogy.png: scripts/plot_genealogy.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 content/figures/fig_genealogy.html: scripts/plot_genealogy_html.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_lineages.csv $(REFINED_CIT)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # -- Technical report (robustness, variants, supplementary) --
 # Core-only: structural break tables
 content/tables/tab_breakpoints_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --core-only
+	$(UV_RUN) python $< --output $@ --core-only
 
 content/tables/tab_breakpoint_robustness_core.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --robustness --core-only
+	$(UV_RUN) python $< --output $@ --robustness --core-only
 
 # Core-only: clustering + alluvial flow tables
 content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json &: \
 		scripts/compute_clusters.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output content/tables/tab_alluvial_core.csv --core-only
+	$(UV_RUN) python $< --output content/tables/tab_alluvial_core.csv --core-only
 
 # Core-only figures
 content/figures/fig_breakpoints_core.png: \
 		scripts/plot_fig_breakpoints.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
 		content/tables/tab_alluvial_core.csv
-	uv run python $< --output $@ --core-only --input content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv content/tables/tab_alluvial_core.csv
+	$(UV_RUN) python $< --output $@ --core-only --input content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv content/tables/tab_alluvial_core.csv
 
 content/figures/fig_alluvial_core.png: \
 		scripts/plot_fig_alluvial.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial_core.csv content/tables/cluster_labels_core.json
-	uv run python $< --output $@ --core-only --input content/tables/tab_alluvial_core.csv
+	$(UV_RUN) python $< --output $@ --core-only --input content/tables/tab_alluvial_core.csv
 
 # Bimodality core variant tables
 content/tables/tab_bimodality_core.csv content/tables/tab_axis_detection_core.csv \
 content/tables/tab_pole_papers_core.csv &: \
 		scripts/analyze_bimodality.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output content/tables/tab_bimodality_core.csv --core-only
+	$(UV_RUN) python $< --output content/tables/tab_bimodality_core.csv --core-only
 
 # Bimodality core variant figures
 content/figures/fig_bimodality_core.png: scripts/plot_bimodality.py scripts/utils.py \
 		content/tables/tab_pole_papers_core.csv
-	uv run python $< --core-only --output $@
+	$(UV_RUN) python $< --core-only --output $@
 
 content/figures/fig_bimodality_lexical_core.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
 		content/tables/tab_pole_papers_core.csv
-	uv run python $< --core-only --output $@
+	$(UV_RUN) python $< --core-only --output $@
 
 content/figures/fig_bimodality_keywords_core.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
 		content/tables/tab_pole_papers_core.csv
-	uv run python $< --core-only --output $@
+	$(UV_RUN) python $< --core-only --output $@
 
 # Pre-2007 co-citation traditions network
 content/figures/fig_traditions.png: scripts/plot_fig_traditions.py scripts/plot_style.py scripts/utils.py $(CONFIG) $(REFINED) $(REFINED_CIT)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Co-citation communities (compute: community assignments + summary table)
 COMMUNITIES := data/catalogs/communities.csv
 $(COMMUNITIES): scripts/analyze_cocitation.py scripts/utils.py $(REFINED_CIT)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Co-citation communities (plot: network figure)
 content/figures/fig_communities.png: scripts/plot_cocitation.py scripts/utils.py $(COMMUNITIES) $(REFINED_CIT)
-	uv run python $< --output $@ --input $(COMMUNITIES)
+	$(UV_RUN) python $< --output $@ --input $(COMMUNITIES)
 
 # KDE supplementary
 content/figures/fig_kde.png: scripts/plot_figS_kde.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_pole_papers.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Lexical TF-IDF table (diagnostic, not in manuscript)
 content/tables/tab_lexical_tfidf.csv: scripts/compute_lexical.py scripts/utils.py $(REFINED) \
 		content/tables/tab_breakpoint_robustness.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Multilingual epistemic structure (exploratory JSON report)
 content/tables/multilingual_report.json: scripts/analyze_multilingual.py scripts/utils.py \
 		scripts/build_het_core.py $(REFINED) $(REFINED_EMB) $(REFINED_CIT) $(SEMANTIC_CLUSTERS)
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # K-sensitivity table
 content/tables/tab_k_sensitivity.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --k-sensitivity
+	$(UV_RUN) python $< --output $@ --k-sensitivity
 
 # K-sensitivity figure
 content/figures/fig_k_sensitivity.png: scripts/plot_fig_k_sensitivity.py $(CONFIG) \
 		content/tables/tab_k_sensitivity.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # Lexical TF-IDF figures (one per detected break year; output filenames are
 # dynamic, so we use a sentinel file to track freshness).
 .lexical_tfidf.stamp: scripts/plot_fig_lexical_tfidf.py scripts/plot_style.py $(CONFIG) \
 		content/tables/tab_lexical_tfidf.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # DVC pipeline DAG (data paper)
 content/figures/fig_dag.png: scripts/plot_fig_dag.py scripts/plot_style.py $(CONFIG) dvc.yaml
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # -- NCC Analysis (Nature Climate Change) --
 
 # Censor-gap k=2 breakpoint tables (intermediate for NCC figure a)
 content/tables/tab_breakpoints_censor2.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --censor-gap 2
+	$(UV_RUN) python $< --output $@ --censor-gap 2
 
 content/tables/tab_breakpoint_robustness_censor2.csv: scripts/compute_breakpoints.py scripts/utils.py $(CONFIG) $(REFINED)
-	uv run python $< --output $@ --robustness --censor-gap 2
+	$(UV_RUN) python $< --output $@ --robustness --censor-gap 2
 
 # NCC Figure (a): Divergence with 2009 peak (baseline vs censor-gap k=2)
 content/figures/fig_ncc_divergence.png: \
@@ -510,7 +518,7 @@ content/figures/fig_ncc_divergence.png: \
 		content/tables/tab_breakpoints.csv \
 		content/tables/tab_breakpoints_censor2.csv \
 		content/tables/tab_breakpoint_robustness_censor2.csv
-	uv run python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoints_censor2.csv content/tables/tab_breakpoint_robustness_censor2.csv
+	$(UV_RUN) python $< --output $@ --input content/tables/tab_breakpoints.csv content/tables/tab_breakpoints_censor2.csv content/tables/tab_breakpoint_robustness_censor2.csv
 
 # NCC Figure (b): Core vs full corpus comparison panel
 content/figures/fig_ncc_core_comparison.png: \
@@ -519,19 +527,19 @@ content/figures/fig_ncc_core_comparison.png: \
 		content/tables/tab_alluvial.csv \
 		content/tables/tab_breakpoints_core.csv content/tables/tab_breakpoint_robustness_core.csv \
 		content/tables/tab_alluvial_core.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # NCC Figure (c): Bimodality KDE with period decomposition
 content/figures/fig_ncc_bimodality.png: \
 		scripts/plot_ncc_bimodality.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_pole_papers.csv
-	uv run python $< --output $@
+	$(UV_RUN) python $< --output $@
 
 # NCC Figure (d): Alluvial diagram (NCC format)
 content/figures/fig_ncc_alluvial.png: \
 		scripts/plot_ncc_alluvial.py scripts/utils.py $(CONFIG) \
 		content/tables/tab_alluvial.csv content/tables/cluster_labels.json
-	uv run python $< --output $@ --input content/tables/tab_alluvial.csv
+	$(UV_RUN) python $< --output $@ --input content/tables/tab_alluvial.csv
 
 figures-manuscript: corpus-handoff $(MANUSCRIPT_FIGS)
 figures-datapaper:  corpus-handoff $(DATAPAPER_FIGS)
@@ -613,31 +621,31 @@ archive-datapaper: check-corpus corpus-tables figures-datapaper
 
 # ── All checks (tests) ───────────────────────────────────
 check:
-	uv run pytest tests/ -v --tb=short -n 4
+	$(UV_RUN) pytest tests/ -v --tb=short -n 4
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 10s).
 check-fast:
-	uv run pytest tests/ -v --tb=short -m "not slow and not integration" -n 4
+	$(UV_RUN) pytest tests/ -v --tb=short -m "not slow and not integration" -n 4
 
 # Smoke pipeline: run Phase 2 on a 100-row fixture (no DVC pull needed, <30s).
 # Exercises: compute_breakpoints, compute_clusters, plot_fig1_bars.
 smoke:
-	uv run pytest tests/test_smoke_pipeline.py -v --tb=short
+	$(UV_RUN) pytest tests/test_smoke_pipeline.py -v --tb=short
 
 # Determinism check: run figure scripts twice on smoke data, diff outputs.
 # Catches unseeded randomness, leaking timestamps, floating-point non-determinism.
 determinism-check:
-	uv run pytest tests/test_determinism.py -v --tb=short
+	$(UV_RUN) pytest tests/test_determinism.py -v --tb=short
 
 # Regression hashes: compare Phase 2 output hashes against golden baseline.
 # Runs as pytest (one test per script, module-scoped fixture = scripts run once).
 #   make regression          — check against golden baseline
 #   make regression-update   — regenerate golden baseline (after intentional change)
 regression:
-	uv run pytest tests/test_regression.py -v --tb=short -m integration -k "test_regression_"
+	$(UV_RUN) pytest tests/test_regression.py -v --tb=short -m integration -k "test_regression_"
 
 regression-update:
-	uv run python scripts/compute_regression_hashes.py --update-golden
+	$(UV_RUN) python scripts/compute_regression_hashes.py --update-golden
 
 # ── Benchmarking ─────────────────────────────────────────
 # Record wall time + peak RSS per Phase 2 target.
@@ -647,10 +655,10 @@ BENCH_OUT := benchmarks/timings.jsonl
 
 benchmark: check-corpus
 	@mkdir -p benchmarks
-	$(BENCH) compute_breakpoints $(BENCH_OUT) uv run python scripts/compute_breakpoints.py --output content/tables/tab_breakpoints.csv
-	$(BENCH) compute_clusters $(BENCH_OUT) uv run python scripts/compute_clusters.py --output content/tables/tab_alluvial.csv
-	$(BENCH) analyze_bimodality $(BENCH_OUT) uv run python scripts/analyze_bimodality.py --output content/tables/tab_bimodality.csv
-	$(BENCH) plot_fig1_bars $(BENCH_OUT) uv run python scripts/plot_fig1_bars.py
+	$(BENCH) compute_breakpoints $(BENCH_OUT) $(UV_RUN) python scripts/compute_breakpoints.py --output content/tables/tab_breakpoints.csv
+	$(BENCH) compute_clusters $(BENCH_OUT) $(UV_RUN) python scripts/compute_clusters.py --output content/tables/tab_alluvial.csv
+	$(BENCH) analyze_bimodality $(BENCH_OUT) $(UV_RUN) python scripts/analyze_bimodality.py --output content/tables/tab_bimodality.csv
+	$(BENCH) plot_fig1_bars $(BENCH_OUT) $(UV_RUN) python scripts/plot_fig1_bars.py
 	@echo "Benchmark results: $(BENCH_OUT)"
 
 # ── Setup (run once after cloning) ───────────────────────
