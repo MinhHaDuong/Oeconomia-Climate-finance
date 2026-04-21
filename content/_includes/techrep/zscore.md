@@ -1,4 +1,4 @@
-## Standardisation: cross-year Z-scores
+## Standardisation: cross-year Z-scores {#sec:zscore}
 
 For each (method, window) pair we compute the time series $D(t, w)$ of divergence or distance values.
 Within each window $w$, we standardise across years:
