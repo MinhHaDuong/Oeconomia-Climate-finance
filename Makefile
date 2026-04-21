@@ -60,6 +60,7 @@ export PATH := $(HOME)/.local/bin:$(PATH)
 # ── Modular Makefile includes ────────────────────────────
 -include divergence.mk
 -include companion.mk
+-include zoo.mk
 
 # ── Quarto ───────────────────────────────────────────────
 # ── Per-document include sets ────────────────────────────
