@@ -948,6 +948,12 @@ Reference level: $\alpha = 0.5$ (random classifier).
 
 *Scripts:* `scripts/_divergence_semantic.py` (C2ST\_embedding), `scripts/_divergence_lexical.py` (C2ST\_lexical).
 
+### Principle figure
+
+![](figures/schematic_C2ST.png){width=100%}
+
+*C2ST principle: a logistic classifier fits a decision boundary in PCA-projected embedding space; cross-validated accuracy above 0.50 confirms the before/after distributions differ. Script: `scripts/plot_schematic_C2ST.py`.*
+
 ### Advantages, biases, limitations
 
 **Advantages.** No kernel or bandwidth to choose, unlike MMD; no projection direction to sample, unlike sliced Wasserstein.
