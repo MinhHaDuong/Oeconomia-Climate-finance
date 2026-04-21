@@ -180,6 +180,13 @@ changepoints: changepoints-tables changepoints-figure
 #
 # For each method, permute before/after labels and recompute the statistic
 # to build a null distribution.  Output: tab_null_{method}.csv
+#
+# NJOBS caps per-method joblib parallelism across (year, window) pairs.
+# Default -1 uses all cores — fine for a single method, but oversubscribes
+# when composed with `make -j`.  When running `make -jN null-model`, pass
+# NJOBS ≈ cores/N  (e.g. on a 24-core box:  `make -j4 NJOBS=6 null-model`).
+# GPU auto-detected for S2_energy / S1_MMD (precomputed distance matrix).
+NJOBS ?= -1
 
 NULL_DISPATCH := scripts/compute_null_model.py
 NULL_METHODS_SEM := S2_energy
@@ -191,17 +198,17 @@ NULL_CSV := $(foreach m,$(NULL_METHODS),$(DIV_TABLES)/tab_null_$(m).csv)
 # Semantic null models (depend on embeddings + divergence CSV)
 $(foreach m,$(NULL_METHODS_SEM),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py scripts/_permutation_accel.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
-	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 # Lexical null models (depend on REFINED + divergence CSV)
 $(foreach m,$(NULL_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py scripts/_permutation_accel.py $(REFINED) $(DIV_CFG) ; \
-	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 # Citation null models (depend on REFINED + REFINED_CIT + divergence CSV)
 $(foreach m,$(NULL_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
-	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 .PHONY: null-model
 null-model: $(NULL_CSV)
