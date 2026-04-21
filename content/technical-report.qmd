@@ -66,7 +66,7 @@ where $D=0$ means the two samples are drawn from the same distribution.
 
 All four semantic methods show the **field convergence** pattern:
 early climate finance (1990s) was a loose coalition of three traditions
-(finance, development economics, physical climate);
+(finance, development economics, and physical science);
 by the 2010s those traditions had merged into a recognisable field
 with a shared vocabulary and shared concerns.
 
@@ -165,7 +165,7 @@ For our {{< meta emb_dimensions >}}-dimensional embeddings, Euclidean distances 
 
 Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z \approx -0.4$ at 2010 (see corpus results figure above).
 This is the **field convergence** signature: early climate finance drew on three distant traditions
-(environmental finance, development aid economics, physical science costing).
+(finance, development economics, and physical science).
 As the field institutionalised — COP3 (1997), Stern Review (2006), post-Bali mechanisms —
 new entrants were socialised into a narrower discursive space.
 The embedding clouds before and after any given year look increasingly alike.
@@ -612,7 +612,7 @@ Recent analogue: @min2021measuring (Min et al. 2021, "Measuring knowledge accumu
 ### Principle
 
 The corpus is divided into three intellectual traditions by a K-means cluster label
-(finance, development economics, physical science). The cross-tradition ratio measures
+(finance, development economics, and physical science). The cross-tradition ratio measures
 what fraction of citations cross tradition boundaries — a rising ratio signals
 field integration, a falling ratio signals specialisation.
 
@@ -628,7 +628,7 @@ $$D_{\text{G4}}(t) = \frac{C_{cross}(t)}{C_{within}(t) + C_{cross}(t)}$$
 
 ![](figures/schematic_G4_cross_tradition.png){width=100%}
 
-*Cross-tradition citation flows between Finance, Development Economics, and Physical Science clusters. Arrow width ∝ citation volume; self-loops = within-tradition. G4=72.5% cross-tradition. After Börner (2010), Klavans & Boyack (2017).*
+*Cross-tradition citation flows between finance, development economics, and physical science clusters. Arrow width ∝ citation volume; self-loops = within-tradition. G4=72.5% cross-tradition. After Börner (2010), Klavans & Boyack (2017).*
 
 ### Advantages, biases, limitations
 
