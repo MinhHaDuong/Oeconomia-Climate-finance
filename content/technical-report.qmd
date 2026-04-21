@@ -13,44 +13,11 @@ format:
 
 All scripts are in `scripts/`, the corpus contract files at `$CLIMATE_FINANCE_DATA/catalogs/`, and generated outputs in `content/figures/` and `content/tables/`.
 
-# Overview
+{{< include _includes/techrep/overview.md >}}
 
-This document surveys the structural break detection methods applied to the climate finance corpus
-({{< meta corpus_total >}} works, 1990--2024).
-Each method answers the same question in a different vocabulary:
-*does the distribution of works written before year $t$ differ from the distribution of works written after $t$?*
-We apply a sliding window of $w$ years on each side of the candidate break year.^[Throughout this report we show $w \in \{2, 3, 4, 5\}$. The companion paper reports $w=3$ as the default lead window, with $w \in \{2, 4\}$ as robustness checks.]
+{{< include _includes/techrep/zscore.md >}}
 
-Methods are grouped into three layers:
-
-- **Part S — Semantic.** Compare full embedding distributions: each work is a point in the BAAI/bge-m3 embedding space ({{< meta emb_dimensions >}} dimensions). These methods detect distributional shift in *what the field talks about*.
-- **Part L — Lexical.** Compare TF-IDF vocabulary distributions. Complementary to semantic methods; more interpretable (discriminating terms are directly readable).
-- **Part G — Citation graph.** Compare citation network topology: degree distributions, community structure, centrality. These methods detect changes in *how knowledge flows* rather than *what is said*.
-
-Classifier Two-Sample Tests (C2ST) appear as one genus in two habitats: C2ST\_embedding lives in Part S, C2ST\_lexical in Part L. Each asks the same meta-check question — can a machine-learning classifier tell "before" from "after" better than chance? — in its respective feature space.
-
-## Standardisation: cross-year Z-scores
-
-For each (method, window) pair we compute the time series $D(t, w)$ of divergence or distance values.
-Within each window $w$, we standardise across years:
-
-$$Z(t, w) = \frac{D(t,w) - \bar{D}(\cdot,w)}{\sigma_D(\cdot,w)}$$
-
-This cross-year $Z$-score measures relative displacement from the temporal mean, not absolute magnitude.
-It removes the long-run trend that dominates raw divergence values
-and makes methods with different units comparable on the same panel.
-A value $|Z| \geq 2$ indicates an unusually large (or small) divergence relative to the period average.
-
-## Summary of findings
-
-The 18 methods partition into four epistemic roles:
-
-| Signal | Methods | Pattern |
-|--------|---------|---------|
-| **Field convergence** | S1–S4, L1, L2, G2, G9 | Peak Z ≈ +2–4 around 1998–2002; monotonic decline thereafter. Early climate finance was heterogeneous; the field homogenised over time. |
-| **Structural break (topology)** | G5, G6 | Peak Z ≈ +2.4–3 at **2007**. Citation network topology — preferential attachment exponent and degree entropy — shifted sharply, consistent with the post-Stern/UNFCCC-Bali institutionalisation of climate finance. |
-| **Reference / sanity check** | C2ST | Classifier AUC sits at 0.60–0.67 throughout — above chance in every year. Confirms that the distance-based methods are not measuring noise; does not vote on zones. |
-| **Noisy / weak / cumulative** | G1, G3, G4, G7, G8, L3 | Weak or non-directional signal (G1 peak Z=1.3); L3 returns a term-level list rather than a scalar divergence. Useful as robustness checks and lexical fingerprints. |
+{{< include _includes/techrep/summary-of-findings.md >}}
 
 \newpage
 
