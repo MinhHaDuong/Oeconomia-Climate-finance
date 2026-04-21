@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-21T14:55Z claude created
+2026-04-21Z orchestrator reimagine: L3 script is `L3_burst` not `L3_term_burst`. Result panels depend on `tab_crossyear_{method}.csv` (not `tab_div_*.csv`). `zoo-only.qmd` not on branch; scope exit criterion to `make zoo-figures` phony only.
 
 --- body ---
 ## Context
