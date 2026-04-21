@@ -1,11 +1,12 @@
 %erg v1
 Title: Modularize technical report framing sections into _includes/techrep/
-Status: open
+Status: closed
 Created: 2026-04-21
 Author: claude
 
 --- log ---
 2026-04-21T00:00Z claude created
+2026-04-21T00:05Z claude status closed PR #727 open
 
 --- body ---
 ## Context
