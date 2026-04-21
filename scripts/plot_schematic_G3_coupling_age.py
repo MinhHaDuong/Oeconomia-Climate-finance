@@ -173,8 +173,8 @@ def main():
         ages_before = _synthetic_ages(mean_age=8.0, seed_offset=0)
         ages_after = _synthetic_ages(mean_age=5.5, seed_offset=1)
 
-    fig, (ax_b, ax_a) = plt.subplots(1, 2, figsize=(FIGWIDTH, 3.0), sharey=False)
-    plt.subplots_adjust(left=0.11, right=0.97, top=0.85, bottom=0.20, wspace=0.38)
+    fig, (ax_b, ax_a) = plt.subplots(1, 2, figsize=(FIGWIDTH, 3.2), sharey=False)
+    plt.subplots_adjust(left=0.11, right=0.97, top=0.78, bottom=0.18, wspace=0.42)
 
     mean_b = _draw_panel(ax_b, ages_before, "#4477AA", WINDOW_BEFORE, "before")
     mean_a = _draw_panel(ax_a, ages_after, "#CC4444", WINDOW_AFTER, "after")
@@ -212,11 +212,11 @@ def main():
         "Bibliographic Coupling Age: how far back do papers cite?",
         fontsize=8,
         color=DARK,
-        y=0.98,
+        y=1.01,
     )
     fig.text(
         0.5,
-        0.93,
+        0.96,
         "Exponential decay fit (Price 1965) — older = deeper canon; younger = faster-moving field.",
         ha="center",
         va="top",

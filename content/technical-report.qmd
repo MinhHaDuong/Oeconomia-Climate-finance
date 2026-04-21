@@ -528,7 +528,9 @@ We use the top-2 eigenvalues via `scipy.sparse.linalg.eigsh`.
 
 ### Principle figure
 
-*[Schematic TODO: two graphs with different spectral gaps; eigenvalue spectrum comparison.]*
+![](figures/schematic_G2_spectral.png){width=100%}
+
+*Spectral gap: 10 smallest Laplacian eigenvalues for 2000–2004 (blue) and 2007–2011 (red) citation subgraphs. The largest gap (shaded) locates the natural cluster count. After Von Luxburg (2007, Fig. 4).*
 
 ### Advantages, biases, limitations
 
@@ -576,7 +578,9 @@ for all citations made by papers published in year $t$.
 
 ### Principle figure
 
-*[Schematic TODO: reference age distribution shifting over time.]*
+![](figures/schematic_G3_coupling_age.png){width=100%}
+
+*Citation age histograms (log scale) with exponential decay fit for 2000–2004 and 2007–2011 citing windows. The shift in mean age (Δ=1.4 yr) is annotated. After Price (1965).*
 
 ### Advantages, biases, limitations
 
@@ -620,7 +624,9 @@ $$D_{\text{G4}}(t) = \frac{C_{cross}(t)}{C_{within}(t) + C_{cross}(t)}$$
 
 ### Principle figure
 
-*[Schematic TODO: bipartite graph between three tradition clusters with cross-edges highlighted.]*
+![](figures/schematic_G4_cross_tradition.png){width=100%}
+
+*Cross-tradition citation flows between Finance, Development Economics, and Physical Science clusters. Arrow width ∝ citation volume; self-loops = within-tradition. G4=72.5% cross-tradition. After Börner (2010), Klavans & Boyack (2017).*
 
 ### Advantages, biases, limitations
 
@@ -772,7 +778,9 @@ Corpus signal: mean $CD$ of papers published in year $t$.
 
 ### Principle figure
 
-*[Schematic TODO: three classes of subsequent citers (f, b, c) illustrated as citation network around paper i.]*
+![](figures/schematic_G7_disruption.png){width=100%}
+
+*Disruption taxonomy: focal paper (gold) + references (grey, inner ring) + citing papers coloured by type. Red f = cite focal only; orange b = cite both; blue c = cite references only. CD = (f−b)/(f+b+c). After Funk & Owen-Smith (2017, Fig. 1).*
 
 ### Advantages, biases, limitations
 
@@ -820,7 +828,9 @@ $$D_{\text{G8}}(t, w) = |\bar{B}_{after} - \bar{B}_{before}|$$
 
 ### Principle figure
 
-*[Schematic TODO: small network with one high-betweenness bridge node highlighted.]*
+![](figures/schematic_G8_betweenness.png){width=100%}
+
+*Star, ring, and chain topologies with node size ∝ betweenness centrality. Star maximises the hub's betweenness; ring distributes it equally; chain concentrates it at the middle. After Freeman (1977, Fig. 2).*
 
 ### Advantages, biases, limitations
 

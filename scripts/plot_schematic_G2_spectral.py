@@ -198,8 +198,8 @@ def main():
         g2,
     )
 
-    fig, (ax_b, ax_a) = plt.subplots(1, 2, figsize=(FIGWIDTH, 3.0), sharey=False)
-    plt.subplots_adjust(left=0.10, right=0.97, top=0.85, bottom=0.18, wspace=0.38)
+    fig, (ax_b, ax_a) = plt.subplots(1, 2, figsize=(FIGWIDTH, 3.2), sharey=False)
+    plt.subplots_adjust(left=0.10, right=0.97, top=0.78, bottom=0.18, wspace=0.42)
 
     _draw_panel(ax_b, eigs_before, "before", "#4477AA", WINDOW_BEFORE)
     _draw_panel(ax_a, eigs_after, "after", "#CC4444", WINDOW_AFTER)
@@ -222,11 +222,11 @@ def main():
         "Spectral Gap: how many clusters does the citation network have?",
         fontsize=8,
         color=DARK,
-        y=0.98,
+        y=1.0,
     )
     fig.text(
         0.5,
-        0.93,
+        0.95,
         "Eigengap at index k → k natural communities (Von Luxburg 2007, Fig. 4)",
         ha="center",
         va="top",
