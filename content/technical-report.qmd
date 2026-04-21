@@ -162,7 +162,7 @@ For our {{< meta emb_dimensions >}}-dimensional embeddings, Euclidean distances 
 
 *Cross-year Z-score for S2 (Energy Distance), w=2–5. Peak at 1998; monotonic decline through 2005.*
 
-Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z = -1.5$ at 2010 (Figure [TODO]).
+Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z = -1.5$ at 2010 (see corpus results figure above).
 This is the **field convergence** signature: early climate finance drew on three distant traditions
 (environmental finance, development aid economics, physical science costing).
 As the field institutionalised — COP3 (1997), Stern Review (2006), post-Bali mechanisms —
