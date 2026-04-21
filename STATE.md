@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-04-18
+Last updated: 2026-04-21
 
 ## Current goal
 
@@ -24,9 +24,11 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - Git tag: v1.1-rdj-submitted
 - Branch: `submission/rdj-data-paper`
 
-### Technical reports — restructured 2026-04-14 (PR #649)
+### Technical reports — modularized 2026-04-21 (PRs #718 / #725 / #727)
 - `corpus-report.qmd`: corpus construction, data quality, corpus contents, software environment
-- `technical-report.qmd`: analysis methods and results (structural breaks, thematic structure, polarization, citations); 18-method divergence zoo lives here as includes (ticket 0028)
+- `technical-report.qmd`: pure composer. Four includes: `_includes/techrep/overview.md`, `_includes/techrep/zscore.md`, `_includes/techrep/summary-of-findings.md`, `_includes/techrep-zoo.md`
+- `_includes/techrep-zoo.md`: composer for the 18-method zoo. One file per method under `_includes/zoo/` (S1–S4, S5=C2ST_embedding, L1–L3, L4=C2ST_lexical, G1–G9). Cherry-pickable by other documents.
+- `zoo-only.qmd`: thin wrapper that renders just the zoo (companion to the TR, or standalone reference)
 - `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 
@@ -48,7 +50,7 @@ None. Wave C merged 2026-04-18 (PRs #708 / #709 / #710). Companion paper is asse
 - #710 (ticket 0064): §5 Results filled from real-corpus vars — four G9 sub-zones at lead $w=3$ (2001-2002, 2006, 2012-2015, 2018-2020, peak Z=8.16 at 2015); S2/L1 saturate under residual growth bias (B2/B9), reframed as diagnostic
 
 ### Divergence pipeline — merged 2026-04-15 (PR #650)
-- 15 divergence methods (S1-S4 semantic, L1-L3 lexical, G1-G8 citation graph)
+- 18 divergence methods: S1-S4 semantic + S5=C2ST_embedding, L1-L3 lexical + L4=C2ST_lexical, G1-G9 citation graph
 - 3 change point detectors (PELT, DynP, KernelCPD), convergence analysis
 - Embedding sensitivity analysis (PCA sweep, JL random projections)
 - Architecture: dispatcher pattern, modular Makefile (`divergence.mk`), Pandera schema, config-driven
@@ -66,6 +68,6 @@ In direct service of the current goal (narrative + results + figures):
 Background work (not on the critical path for the current goal):
 
 - **0025** connective prose for corpus report
-- **0028** modular analysis report (one include per script) — home for the 15-method divergence zoo
+- **0092** wire zoo figure recipes in dedicated `zoo.mk` (17 schematics + 18 result panels) — prerequisite for `make output/content/zoo-only.pdf` end-to-end
 - Re-land arch rule 9 (corpus access through loaders only) — tickets 0043/0044 already on main
 - **0081** bootstrap CI (pytest on PR/push) — prerequisite for 0079 and for /verify to have mechanical evidence; cross-repo batch with IDH 0015, git-erg 0003, AEDIST 0111. Stabilise flakes first; then branch protection.
