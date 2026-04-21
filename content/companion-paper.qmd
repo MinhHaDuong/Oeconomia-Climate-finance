@@ -124,6 +124,8 @@ For each $(t, w)$ we compute four statistics across the two windows.
 
 *Classifier two-sample test (C2ST, robustness).* We train a logistic-regression classifier to separate $\mathcal{D}_t^-$ from $\mathcal{D}_t^+$ using the PCA-32 embeddings, with balanced class weights and 5-fold cross-validation. The AUC is the test statistic. Low separability confirms distributional overlap; high separability confirms the distance-based signals [@lopez_paz_oquab2017]. We report C2ST AUC as a reference layer rather than as a primary detector.
 
+*Spectral gap (G2, reference).* We also compute the spectral gap divergence on the directed citation graph: the change in $|\lambda_1 - \lambda_2|$ of the graph Laplacian between the before- and after-windows. This captures shifts in global connectivity that are invisible to community-level or distribution-level statistics. Like C2ST, G2 enters as a second reference layer, not as a voting statistic (see technical report §G2 for the full definition).
+
 ### 4.5 Statistical inference
 
 The four statistics have different sources of variation, and we handle them with two inference primitives.
