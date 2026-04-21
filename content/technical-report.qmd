@@ -924,6 +924,19 @@ If the classifier accuracy $\alpha > 0.5$ (better than chance),
 the two windows are distinguishable by the features used.
 We test two feature sets: BAAI/bge-m3 embeddings (C2ST\_embedding) and TF-IDF (C2ST\_lexical).
 
+### Principle
+
+C2ST recasts the two-sample problem as a supervised learning task [@lopez_paz_oquab2017]:
+if a simple classifier can predict whether a paper belongs to the before- or after-window
+better than chance, the two distributions must differ.
+The test statistic is the cross-validated classifier accuracy (or AUC); the null is $\alpha = 0.5$.
+
+This differs from the distance-based detectors (S1–S4, L1, G9) in a crucial way.
+MMD, energy distance, sliced Wasserstein, and JS divergence all compare the two empirical distributions *directly* through a chosen geometry (kernel, Euclidean distance, projection, bin counts).
+C2ST instead lets a classifier *fit its own decision boundary* in feature space —
+the geometry of comparison is learned, not prescribed.
+It answers "are they separable?" rather than "how far apart are they?".
+
 ### Definition
 
 For each (t, w) pair, split papers into before/after labels and train a logistic regression with $\ell^2$ regularisation (sklearn default).
@@ -934,6 +947,22 @@ $$D_{\text{C2ST}}(t, w) = \alpha(t, w)$$
 Reference level: $\alpha = 0.5$ (random classifier).
 
 *Scripts:* `scripts/_divergence_semantic.py` (C2ST\_embedding), `scripts/_divergence_lexical.py` (C2ST\_lexical).
+
+### Advantages, biases, limitations
+
+**Advantages.** No kernel or bandwidth to choose, unlike MMD; no projection direction to sample, unlike sliced Wasserstein.
+The classifier's learned coefficients are directly interpretable — they rank features (embedding dimensions, TF-IDF terms) by their contribution to the before/after split, giving a built-in attribution story the distance-based detectors lack.
+Variance is estimated cheaply from the cross-validation folds, with no need for a separate null model.
+
+**Biases.** Accuracy depends on classifier capacity:
+a logistic regression captures linear separability only, so C2ST will underestimate differences that are non-linear in the feature space.
+The reported variance is dominated by fold sampling rather than by distributional uncertainty, so fold-CV standard deviations are narrower than a full permutation null would produce.
+
+**Limitations.** C2ST does not share the permutation null used by S2, L1, and G9;
+its accuracy has a different sampling distribution and cannot be fused into the same Z-score scale without rescaling.
+We therefore reserve it an epistemic role as a *reference layer*, not a voting layer,
+in the companion paper's transition-zone validation:
+accuracy visibly above 0.5 corroborates the distance-based signals but does not by itself validate a zone.
 
 ### Corpus results
 
