@@ -9,13 +9,14 @@ import os
 import subprocess
 from pathlib import Path
 
-import pytest
-
 HOOK_SCRIPT = Path(__file__).parent.parent / ".claude" / "hooks" / "check-reviews.sh"
 
 
-def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None,
-             tmp_path: Path | None = None) -> dict:
+def run_hook(
+    tool_input_json: str,
+    gh_responses: dict[str, str] | None = None,
+    tmp_path: Path | None = None,
+) -> dict:
     """Run check-reviews.sh with mocked stdin and gh CLI.
 
     Parameters
@@ -31,6 +32,7 @@ def run_hook(tool_input_json: str, gh_responses: dict[str, str] | None = None,
     Returns
     -------
     dict with keys: returncode, stdout (parsed JSON), stderr
+
     """
     project_dir = Path(__file__).parent.parent
 
@@ -138,10 +140,12 @@ class TestMergeGate:
 
     def test_two_reviews_allows(self, tmp_path):
         """2 reviews, no trivial label → allow (need 2)."""
-        reviews = json.dumps([
-            {"user": {"login": "HDMX-coding-agent"}},
-            {"user": {"login": "HDMX-coding-agent"}},
-        ])
+        reviews = json.dumps(
+            [
+                {"user": {"login": "HDMX-coding-agent"}},
+                {"user": {"login": "HDMX-coding-agent"}},
+            ]
+        )
         result = run_hook(
             make_bash_input("gh pr merge 42"),
             gh_responses={
@@ -153,6 +157,36 @@ class TestMergeGate:
         decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
         assert decision == "allow"
 
+    def test_minhhaduong_review_counts(self, tmp_path):
+        """Review by MinhHaDuong (web MCP identity) counts toward threshold."""
+        reviews = json.dumps([{"user": {"login": "MinhHaDuong"}}])
+        labels = json.dumps([{"name": "review:trivial"}])
+        result = run_hook(
+            make_bash_input("gh pr merge 42"),
+            gh_responses={
+                "pulls/42/reviews": reviews,
+                "issues/42/labels": labels,
+            },
+            tmp_path=tmp_path,
+        )
+        decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
+        assert decision == "allow"
+
+    def test_unknown_reviewer_ignored(self, tmp_path):
+        """Review by a login not in the allowlist does not count toward threshold."""
+        reviews = json.dumps([{"user": {"login": "random-outsider"}}])
+        labels = json.dumps([{"name": "review:trivial"}])
+        result = run_hook(
+            make_bash_input("gh pr merge 42"),
+            gh_responses={
+                "pulls/42/reviews": reviews,
+                "issues/42/labels": labels,
+            },
+            tmp_path=tmp_path,
+        )
+        decision = result["stdout"]["hookSpecificOutput"]["permissionDecision"]
+        assert decision == "deny"
+
 
 # --- PR number extraction ---
 
@@ -162,10 +196,12 @@ class TestPRNumberExtraction:
 
     def test_bash_gh_pr_merge(self, tmp_path):
         """Extracts from 'gh pr merge 42'."""
-        reviews = json.dumps([
-            {"user": {"login": "HDMX-coding-agent"}},
-            {"user": {"login": "HDMX-coding-agent"}},
-        ])
+        reviews = json.dumps(
+            [
+                {"user": {"login": "HDMX-coding-agent"}},
+                {"user": {"login": "HDMX-coding-agent"}},
+            ]
+        )
         result = run_hook(
             make_bash_input("gh pr merge 42"),
             gh_responses={
@@ -179,10 +215,12 @@ class TestPRNumberExtraction:
 
     def test_mcp_merge_tool(self, tmp_path):
         """Extracts from MCP tool input with pullNumber (camelCase)."""
-        reviews = json.dumps([
-            {"user": {"login": "HDMX-coding-agent"}},
-            {"user": {"login": "HDMX-coding-agent"}},
-        ])
+        reviews = json.dumps(
+            [
+                {"user": {"login": "HDMX-coding-agent"}},
+                {"user": {"login": "HDMX-coding-agent"}},
+            ]
+        )
         result = run_hook(
             make_mcp_input(42),
             gh_responses={
@@ -204,10 +242,12 @@ class TestPRNumberExtraction:
 
     def test_url_format(self, tmp_path):
         """Extracts PR number from URL in command."""
-        reviews = json.dumps([
-            {"user": {"login": "HDMX-coding-agent"}},
-            {"user": {"login": "HDMX-coding-agent"}},
-        ])
+        reviews = json.dumps(
+            [
+                {"user": {"login": "HDMX-coding-agent"}},
+                {"user": {"login": "HDMX-coding-agent"}},
+            ]
+        )
         result = run_hook(
             make_bash_input(
                 "gh pr merge https://github.com/minhhaduong/oeconomia-climate-finance/pull/42"

@@ -64,15 +64,17 @@ if [ -z "$PR_NUMBER" ]; then
     exit 0
 fi
 
-# Count reviews by the agent on this PR.
-# Pipe through python3 instead of --jq for testability with mock gh.
-# Hardcode the machine user login — AGENT_GIT_NAME is a git author name, not a GitHub login.
-AGENT_LOGIN="HDMX-coding-agent"
+# Count reviews by any accepted reviewer on this PR.
+# HDMX-coding-agent: local machine user identity.
+# MinhHaDuong: personal identity used by the web MCP token (same as PR author).
+#   Accepting it enables web-agent merges at the cost of permitting self-review.
+AGENT_LOGINS="HDMX-coding-agent MinhHaDuong"
 REVIEW_COUNT=$(gh api "repos/$OWNER/$REPO/pulls/$PR_NUMBER/reviews" 2>/dev/null \
-    | python3 -c "
-import sys, json
+    | AGENT_LOGINS="$AGENT_LOGINS" python3 -c "
+import os, sys, json
+allowed = set(os.environ['AGENT_LOGINS'].split())
 reviews = json.load(sys.stdin)
-count = sum(1 for r in reviews if r.get('user',{}).get('login') == '$AGENT_LOGIN')
+count = sum(1 for r in reviews if r.get('user',{}).get('login') in allowed)
 print(count)
 " 2>/dev/null) || REVIEW_COUNT=0
 
