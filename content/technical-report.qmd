@@ -87,8 +87,9 @@ where $k(\cdot,\cdot)$ is a radial basis function kernel $k(x,y) = \exp(-\|x-y\|
 
 ### Principle figure
 
-<!-- TODO: schematic showing two overlapping Gaussians with kernel RKHS witness function -->
-*[Figure placeholder: two 2-D embedding clouds with kernel witness function shown as contour.]*
+![](figures/schematic_S1_mmd.png){width=100%}
+
+*MMD principle: two embedding clouds with kernel witness function.*
 
 ### Advantages, biases, limitations
 
@@ -100,8 +101,9 @@ where $k(\cdot,\cdot)$ is a radial basis function kernel $k(x,y) = \exp(-\|x-y\|
 
 ### Corpus results
 
-<!-- TODO: fig_zoo_S1.pdf — time series with bootstrap CI, sensitivity panel (w=2,3,4,5) -->
-*[Figure placeholder: cross-year Z-score panel, w=2–5, with bootstrap 90% CI.]*
+![](figures/fig_zoo_S1_MMD.png){width=100%}
+
+*Cross-year Z-score for S1 (MMD), w=2–5. Peak at 1998 (field heterogeneity); monotonic decline.*
 
 Key values (w=3): peak $Z = +4.2$ at 1998, monotonic decline to $Z \approx -1.0$ by 2010.
 
@@ -142,8 +144,9 @@ For our {{< meta emb_dimensions >}}-dimensional embeddings, Euclidean distances 
 
 ### Principle figure
 
-<!-- TODO: schematic — two 1-D Gaussian densities; arrows show within-group vs between-group distances -->
-*[Figure placeholder: 1-D Gaussian pair illustrating within-group vs between-group pairwise distances.]*
+![](figures/schematic_S2_energy.png){width=100%}
+
+*Energy distance: cross-group pairwise distances (grey) with representative pair highlighted.*
 
 ### Advantages, biases, limitations
 
@@ -155,8 +158,9 @@ For our {{< meta emb_dimensions >}}-dimensional embeddings, Euclidean distances 
 
 ### Corpus results
 
-<!-- TODO: fig_zoo_S2.pdf -->
-*[Figure placeholder: cross-year Z-score time series, w=2–5, bootstrap 90% CI.]*
+![](figures/fig_zoo_S2_energy.png){width=100%}
+
+*Cross-year Z-score for S2 (Energy Distance), w=2–5. Peak at 1998; monotonic decline through 2005.*
 
 Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z = -1.5$ at 2010 (Figure [TODO]).
 This is the **field convergence** signature: early climate finance drew on three distant traditions
@@ -196,7 +200,9 @@ Sample estimate: average over $K=200$ random unit directions, computing $W_2$ as
 
 ### Principle figure
 
-*[Figure placeholder: schematic showing 1-D projections onto two random directions with sorted quantile comparison.]*
+![](figures/schematic_S3_sliced_wasserstein.png){width=100%}
+
+*Sliced Wasserstein: random projection directions with sorted quantile matching.*
 
 ### Advantages, biases, limitations
 
@@ -208,7 +214,9 @@ Sample estimate: average over $K=200$ random unit directions, computing $W_2$ as
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel.]*
+![](figures/fig_zoo_S3_sliced_wasserstein.png){width=100%}
+
+*Cross-year Z-score for S3 (Sliced Wasserstein), w=2–5.*
 
 Key values (w=3): peak $Z = +3.6$ at 1998, monotonic decline. Pattern identical to S2.
 
@@ -236,7 +244,9 @@ where $(\mu_k, \Sigma_k)$ are the empirical mean and covariance of each window's
 
 ### Principle figure
 
-*[Figure placeholder: two 2-D Gaussian ellipses with Fréchet distance illustrated.]*
+![](figures/schematic_S4_frechet.png){width=100%}
+
+*Fréchet distance: fitted Gaussian ellipses (1σ) with means connected by arrow.*
 
 ### Advantages, biases, limitations
 
@@ -248,7 +258,9 @@ where $(\mu_k, \Sigma_k)$ are the empirical mean and covariance of each window's
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel.]*
+![](figures/fig_zoo_S4_frechet.png){width=100%}
+
+*Cross-year Z-score for S4 (Fréchet), w=2–5.*
 
 Key values (w=3): peak $Z = +2.9$ at 1998, monotonic decline. Weaker than S1–S3 due to Gaussian misspecification.
 
@@ -292,7 +304,9 @@ $\text{JS} \in [0, \log 2]$; the square root is a proper metric.
 
 ### Principle figure
 
-*[Figure placeholder: two vocabulary distributions (bar chart) with mixed distribution $M$ and divergence arrows.]*
+![](figures/schematic_L1_js.png){width=100%}
+
+*JS divergence: mean TF-IDF distributions before vs. after; starred terms have largest |P−Q|.*
 
 ### Advantages, biases, limitations
 
@@ -304,7 +318,9 @@ $\text{JS} \in [0, \log 2]$; the square root is a proper metric.
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel.]*
+![](figures/fig_zoo_L1.png){width=100%}
+
+*Cross-year Z-score for L1 (JS-TF-IDF), w=2–5.*
 
 Key values (w=3): peak $Z = +2.7$ at 1998, monotonic decline. Same convergence pattern as S methods.
 
@@ -343,7 +359,9 @@ where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\ta
 
 ### Principle figure
 
-*[Figure placeholder: timeline with arrows for novelty (backward KL) and transience (forward KL); resonance = difference.]*
+![](figures/schematic_L2_ntr.png){width=100%}
+
+*NTR: novelty (backward KL) and transience (forward KL) arrows around focal year t=2005.*
 
 ### Advantages, biases, limitations
 
@@ -355,7 +373,9 @@ where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\ta
 
 ### Corpus results
 
-*[Figure placeholder: novelty, transience, resonance time series (w=3), with 90% CI.]*
+![](figures/fig_zoo_L2.png){width=100%}
+
+*Cross-year Z-score for L2 (NTR), w=2–5.*
 
 ### References
 
@@ -390,7 +410,9 @@ The burst $Z$-score is $(f_v(t) - \bar{f}_v) / \hat{\sigma}_{f_v}$.
 
 ### Principle figure
 
-*[Figure placeholder: frequency time series for two terms, one bursting, with threshold line.]*
+![](figures/schematic_L3_burst.png){width=100%}
+
+*Burst detection: annual frequency for 'green finance', 'climate risk', 'green bond' with burst threshold.*
 
 ### Advantages, biases, limitations
 
@@ -402,7 +424,9 @@ The burst $Z$-score is $(f_v(t) - \bar{f}_v) / \hat{\sigma}_{f_v}$.
 
 ### Corpus results
 
-*[Figure placeholder: number of bursting terms per year, with top-10 terms annotated at 2007 and 2013.]*
+![](figures/fig_zoo_L3.png){width=100%}
+
+*Cross-year Z-score for L3 (burst term count), w=2–5.*
 
 ### References
 
@@ -456,7 +480,9 @@ where histograms use 50 log-spaced bins over $[10^{-5}, 1]$.
 
 ### Principle figure
 
-*[Figure placeholder: two PageRank histograms (log-log scale) before/after a break, with JS divergence illustrated.]*
+![](figures/schematic_G1_pagerank.png){width=100%}
+
+*PageRank divergence: overlapping log-scale histograms before/after with 5-node hub inset.*
 
 ### Advantages, biases, limitations
 
@@ -468,7 +494,9 @@ where histograms use 50 log-spaced bins over $[10^{-5}, 1]$.
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel, w=2–5.]*
+![](figures/fig_zoo_G1_pagerank.png){width=100%}
+
+*Cross-year Z-score for G1 (PageRank JS), w=2–5.*
 
 Key values (w=3): peak $Z = +1.3$ at 1999. Weak convergence signal.
 
@@ -500,7 +528,7 @@ We use the top-2 eigenvalues via `scipy.sparse.linalg.eigsh`.
 
 ### Principle figure
 
-*[Figure placeholder: two graphs with different spectral gaps; eigenvalue spectrum comparison.]*
+*[Schematic TODO: two graphs with different spectral gaps; eigenvalue spectrum comparison.]*
 
 ### Advantages, biases, limitations
 
@@ -512,7 +540,9 @@ We use the top-2 eigenvalues via `scipy.sparse.linalg.eigsh`.
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel.]*
+![](figures/fig_zoo_G2_spectral.png){width=100%}
+
+*Cross-year Z-score for G2 (spectral gap), w=2–5.*
 
 Key values (w=3): peak $Z = +3.8$ at 1999, flat thereafter. Convergence but not structural break.
 
@@ -546,7 +576,7 @@ for all citations made by papers published in year $t$.
 
 ### Principle figure
 
-*[Figure placeholder: reference age distribution shifting over time.]*
+*[Schematic TODO: reference age distribution shifting over time.]*
 
 ### Advantages, biases, limitations
 
@@ -558,7 +588,9 @@ for all citations made by papers published in year $t$.
 
 ### Corpus results
 
-*[Figure placeholder: reference age shift per year, 1990–2024.]*
+![](figures/fig_zoo_G3_coupling_age.png){width=100%}
+
+*Cross-year Z-score for G3 (bibliographic coupling age), cumulative window.*
 
 ### References
 
@@ -588,7 +620,7 @@ $$D_{\text{G4}}(t) = \frac{C_{cross}(t)}{C_{within}(t) + C_{cross}(t)}$$
 
 ### Principle figure
 
-*[Figure placeholder: bipartite graph between three tradition clusters with cross-edges highlighted.]*
+*[Schematic TODO: bipartite graph between three tradition clusters with cross-edges highlighted.]*
 
 ### Advantages, biases, limitations
 
@@ -600,7 +632,9 @@ $$D_{\text{G4}}(t) = \frac{C_{cross}(t)}{C_{within}(t) + C_{cross}(t)}$$
 
 ### Corpus results
 
-*[Figure placeholder: cross-tradition ratio, 1990–2024.]*
+![](figures/fig_zoo_G4_cross_tradition.png){width=100%}
+
+*Cross-year Z-score for G4 (cross-tradition ratio), cumulative window.*
 
 ### References
 
@@ -631,7 +665,9 @@ $$D_{\text{G5}}(t, w) = |\hat{\gamma}_{after} - \hat{\gamma}_{before}|$$
 
 ### Principle figure
 
-*[Figure placeholder: log-log degree distribution before/after with two power-law fits showing different slopes.]*
+![](figures/schematic_G5_pref_attachment.png){width=100%}
+
+*Preferential attachment: log-log in-degree scatter with two power-law fits (γ_before, γ_after).*
 
 ### Advantages, biases, limitations
 
@@ -643,7 +679,9 @@ $$D_{\text{G5}}(t, w) = |\hat{\gamma}_{after} - \hat{\gamma}_{before}|$$
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel, w=2–5, bootstrap 90% CI.]*
+![](figures/fig_zoo_G5_pref_attachment.png){width=100%}
+
+*Cross-year Z-score for G5 (PA exponent), w=2–5. **Peak at 2007** confirms structural break in citation topology.*
 
 **Key result:** Cross-year $Z$-scores (w=3) peak at **2007** ($Z = +2.96$), with a secondary plateau around 2013–2015 ($Z \approx +1.5$).
 This is the first method in the zoo to unambiguously detect the post-Stern/UNFCCC-Bali structural break.
@@ -682,7 +720,9 @@ $$D_{\text{G6}}(t, w) = |H_{after} - H_{before}|$$
 
 ### Principle figure
 
-*[Figure placeholder: two in-degree distributions with entropy values annotated — one concentrated (low $H$), one dispersed (high $H$).]*
+![](figures/schematic_G6_entropy.png){width=100%}
+
+*Entropy divergence: before/after in-degree histograms with H annotated on each panel.*
 
 ### Advantages, biases, limitations
 
@@ -694,7 +734,9 @@ $$D_{\text{G6}}(t, w) = |H_{after} - H_{before}|$$
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel, w=2–5.]*
+![](figures/fig_zoo_G6_entropy.png){width=100%}
+
+*Cross-year Z-score for G6 (degree entropy), w=2–5. **Peak at 2007** confirms G5 finding.*
 
 **Key result:** Cross-year $Z$-scores (w=3) peak at **2007** ($Z = +2.46$), confirming the G5 finding.
 Entropy peaked again around 2013 ($Z \approx +1.8$).
@@ -730,7 +772,7 @@ Corpus signal: mean $CD$ of papers published in year $t$.
 
 ### Principle figure
 
-*[Figure placeholder: three classes of subsequent citers ($f$, $b$, $c$) illustrated as citation network around paper $i$.]*
+*[Schematic TODO: three classes of subsequent citers (f, b, c) illustrated as citation network around paper i.]*
 
 ### Advantages, biases, limitations
 
@@ -742,7 +784,9 @@ Corpus signal: mean $CD$ of papers published in year $t$.
 
 ### Corpus results
 
-*[Figure placeholder: mean annual CD index, 1990–2015 (2016+ censored).]*
+![](figures/fig_zoo_G7_disruption.png){width=100%}
+
+*Cross-year Z-score for G7 (disruption index CD), cumulative window.*
 
 ### References
 
@@ -776,7 +820,7 @@ $$D_{\text{G8}}(t, w) = |\bar{B}_{after} - \bar{B}_{before}|$$
 
 ### Principle figure
 
-*[Figure placeholder: small network with one high-betweenness bridge node highlighted.]*
+*[Schematic TODO: small network with one high-betweenness bridge node highlighted.]*
 
 ### Advantages, biases, limitations
 
@@ -788,7 +832,9 @@ $$D_{\text{G8}}(t, w) = |\bar{B}_{after} - \bar{B}_{before}|$$
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel.]*
+![](figures/fig_zoo_G8_betweenness.png){width=100%}
+
+*Cross-year Z-score for G8 (betweenness), w=2–5.*
 
 ### References
 
@@ -823,7 +869,9 @@ $$D_{\text{G9}}(t, w) = \text{JS}(q^{before}, q^{after})$$
 
 ### Principle figure
 
-*[Figure placeholder: force-directed layout with community colours, before vs after panel, JS divergence annotated.]*
+![](figures/schematic_G9_community.png){width=100%}
+
+*Community divergence: before/after force-directed layouts with community-share stacked bars.*
 
 ### Advantages, biases, limitations
 
@@ -835,7 +883,9 @@ $$D_{\text{G9}}(t, w) = \text{JS}(q^{before}, q^{after})$$
 
 ### Corpus results
 
-*[Figure placeholder: cross-year Z-score panel.]*
+![](figures/fig_zoo_G9_community.png){width=100%}
+
+*Cross-year Z-score for G9 (community JS), w=2–5. Peak at 2001 — field convergence, not 2007 break.*
 
 Key values (w=3): peak $Z = +2.3$ at 2001, monotonic decline to $Z \approx -1.4$ at 2010.
 No peak at 2007 or 2013.
@@ -875,7 +925,9 @@ Reference level: $\alpha = 0.5$ (random classifier).
 
 ### Corpus results
 
-*[Figure placeholder: C2ST accuracy time series for embedding and lexical, w=3, with 95% binomial CI.]*
+![](figures/fig_zoo_G9_community.png){width=100%}
+
+*Cross-year Z-score for G9 (community JS), w=2–5. Peak at 2001 — field convergence, not 2007 break.*
 
 **Key values.** Both C2ST channels hover around 0.60–0.67, significantly above chance, for almost all years — confirming that before/after windows are consistently distinguishable. However, the accuracy time series is flat and noisy: no 2007 peak, no convergence trend. C2ST is a less sensitive detector than the distributional methods for this corpus. Its primary use here is as a sanity check: the fact that accuracy $> 0.5$ everywhere confirms that our methods are not measuring noise.
 
