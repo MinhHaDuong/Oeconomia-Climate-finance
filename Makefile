@@ -59,6 +59,7 @@ export PATH := $(HOME)/.local/bin:$(PATH)
 
 # ── Modular Makefile includes ────────────────────────────
 -include divergence.mk
+-include companion.mk
 
 # ── Quarto ───────────────────────────────────────────────
 # ── Per-document include sets ────────────────────────────
@@ -106,7 +107,11 @@ COMPANION_FIGS  := content/figures/fig_breakpoints.png content/figures/fig_alluv
                    content/figures/fig_breaks.png \
                    content/figures/fig_bimodality.png \
                    content/figures/fig_seed_axis_core.png content/figures/fig_pca_scatter.png \
-                   content/figures/fig_genealogy.png
+                   content/figures/fig_genealogy.png \
+                   content/figures/fig_companion_zseries.png \
+                   content/figures/fig_companion_heatmap.png \
+                   content/figures/fig_companion_terms.png \
+                   content/figures/fig_companion_community.png
 
 TECHREP_FIGS    := content/figures/fig_alluvial_core.png \
                    content/figures/fig_bimodality_core.png \
