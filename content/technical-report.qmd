@@ -47,9 +47,9 @@ Two distinct signals emerge:
 
 | Signal | Methods | Pattern |
 |--------|---------|---------|
-| **Field convergence** | S1–S4, L1, L2, G1, G9 | Peak Z ≈ +2–4 around 1998–2002; monotonic decline thereafter. Early climate finance was heterogeneous; the field homogenised over time. |
+| **Field convergence** | S1–S4, L1, L2, G9 | Peak Z ≈ +2–4 around 1998–2002; monotonic decline thereafter. Early climate finance was heterogeneous; the field homogenised over time. |
 | **Structural break (topology)** | G5, G6 | Peak Z ≈ +2.5–3 at **2007**. Citation network topology — preferential attachment exponent and degree entropy — shifted sharply, consistent with the post-Stern/UNFCCC-Bali institutionalisation of climate finance. |
-| **Noisy / cumulative** | G3, G4, G7, G8, C2ST | Weak or non-directional signal; useful as robustness checks. |
+| **Noisy / weak / cumulative** | G1, G3, G4, G7, G8, C2ST | Weak or non-directional signal (G1 peak Z=1.3); useful as robustness checks. |
 
 \newpage
 
@@ -105,7 +105,7 @@ where $k(\cdot,\cdot)$ is a radial basis function kernel $k(x,y) = \exp(-\|x-y\|
 
 *Cross-year Z-score for S1 (MMD), w=2–5. Peak at 1998 (field heterogeneity); monotonic decline.*
 
-Key values (w=3): peak $Z = +4.2$ at 1998, monotonic decline to $Z \approx -1.0$ by 2010.
+Key values (w=3): peak $Z = +3.2$ at 1998, monotonic decline to $Z \approx -0.4$ by 2010.
 
 ### References
 
@@ -162,7 +162,7 @@ For our {{< meta emb_dimensions >}}-dimensional embeddings, Euclidean distances 
 
 *Cross-year Z-score for S2 (Energy Distance), w=2–5. Peak at 1998; monotonic decline through 2005.*
 
-Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z = -1.5$ at 2010 (see corpus results figure above).
+Cross-year $Z$-scores (w=3) show a monotonic decline from $Z = +3.9$ at 1998 to $Z \approx -0.4$ at 2010 (see corpus results figure above).
 This is the **field convergence** signature: early climate finance drew on three distant traditions
 (environmental finance, development aid economics, physical science costing).
 As the field institutionalised — COP3 (1997), Stern Review (2006), post-Bali mechanisms —
@@ -218,7 +218,7 @@ Sample estimate: average over $K=200$ random unit directions, computing $W_2$ as
 
 *Cross-year Z-score for S3 (Sliced Wasserstein), w=2–5.*
 
-Key values (w=3): peak $Z = +3.6$ at 1998, monotonic decline. Pattern identical to S2.
+Key values (w=3): peak $Z = +3.4$ at 1998, monotonic decline. Pattern identical to S2.
 
 ### References
 
@@ -376,6 +376,8 @@ where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\ta
 ![](figures/fig_zoo_L2.png){width=100%}
 
 *Cross-year Z-score for L2 (NTR), w=2–5.*
+
+Key values (w=3): peak $Z = +3.0$ at 1999, monotonic decline. Same convergence pattern as S methods and L1.
 
 ### References
 
@@ -689,7 +691,7 @@ $$D_{\text{G5}}(t, w) = |\hat{\gamma}_{after} - \hat{\gamma}_{before}|$$
 
 *Cross-year Z-score for G5 (PA exponent), w=2–5. **Peak at 2007** confirms structural break in citation topology.*
 
-**Key result:** Cross-year $Z$-scores (w=3) peak at **2007** ($Z = +2.96$), with a secondary plateau around 2013–2015 ($Z \approx +1.5$).
+**Key result:** Cross-year $Z$-scores (w=3) peak at **2007** ($Z = +2.96$), then decline through 2013–2015.
 This is the first method in the zoo to unambiguously detect the post-Stern/UNFCCC-Bali structural break.
 The power-law exponent of the in-degree distribution shifts significantly in the window centred on 2007,
 indicating that the citation dynamics of the field changed — new authoritative texts captured a larger share of citations, consistent with the emergence of IPCC reports and policy framework documents as citation hubs.
