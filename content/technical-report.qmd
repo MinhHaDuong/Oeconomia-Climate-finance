@@ -43,7 +43,7 @@ A value $|Z| \geq 2$ indicates an unusually large (or small) divergence relative
 
 ## Summary of findings
 
-Two distinct signals emerge:
+The 18 methods partition into four epistemic roles:
 
 | Signal | Methods | Pattern |
 |--------|---------|---------|
