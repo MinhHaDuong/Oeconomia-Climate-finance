@@ -1,11 +1,12 @@
 %erg v1
 Title: Introduce $(UV) / $(UV_RUN) Makefile variables + PATH fallback
-Status: open
+Status: closed
 Created: 2026-04-21
 Author: claude
 
 --- log ---
 2026-04-21T11:00Z claude created
+2026-04-21T12:08Z claude status closed PR #719 merged (47b79da); ssh padme probe confirmed uv resolution
 
 --- body ---
 ## Context
