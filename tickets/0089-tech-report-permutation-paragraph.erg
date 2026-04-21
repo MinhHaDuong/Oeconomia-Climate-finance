@@ -1,0 +1,53 @@
+%erg v1
+Title: Add permutation-test methods paragraph to technical report
+Status: open
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21T14:00Z claude created
+2026-04-21T14:00Z claude note rehomes the deferral from 0086; former tracker 0034 closed without covering this
+
+--- body ---
+## Context
+Ticket 0086 documented the null-model acceleration (GPU-batched matmul,
+precomputed TF-IDF, joblib) in `.claude/rules/architecture.md` and
+`docs/handoff-padme-divergence.md`, but deferred the matching methods
+paragraph in the technical report. At the time, the paragraph was
+parked under ticket 0034 (structural-breaks-v2 include) because
+`content/_includes/structural-breaks.md` still described the obsolete
+KMeans+JS pipeline and a permutation paragraph would have sat beside
+incoherent prose.
+
+Ticket 0034 has since been closed — its target shifted from the
+technical report to the companion paper (see 0034 log,
+2026-04-15). The deferred paragraph therefore has no live tracker.
+Neither `content/_includes/structural-breaks.md` nor
+`content/technical-report.qmd` currently mentions the permutation test
+or the null-model acceleration (grep: 0 hits for
+`permut|null.model|_permutation_accel`).
+
+## Actions
+1. Decide on the right home: a dedicated `content/_includes/null-model-methods.md`
+   include, or an inline paragraph in whichever structural-breaks section
+   survives the rewrite (see 0026/0027 epics).
+2. Write ≤ 1 paragraph covering: what the permutation test computes
+   (null distribution under label exchangeability), the three
+   acceleration strategies (GPU batched permutations, precomputed
+   TF-IDF, joblib across (year, window)), and the rationale for the
+   NJOBS knob.
+3. Wire into `content/technical-report.qmd` (or let an existing include
+   pick it up).
+
+## Test
+`grep -c 'permutation\|null model' content/technical-report.qmd content/_includes/*.md`
+returns ≥ 1 in a file that ends up in the rendered tech report.
+
+## Exit criteria
+- One paragraph on permutation-test methods + acceleration lands in the
+  technical report and renders via `make technical-report`.
+- The paragraph reads coherently alongside the surrounding structural-
+  breaks prose (i.e. it does not sit next to the obsolete KMeans+JS
+  description).
+- Cross-references to the architecture.md and handoff doc are either
+  added or explicitly declined as redundant.
