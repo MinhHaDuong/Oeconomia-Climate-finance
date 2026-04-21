@@ -122,7 +122,7 @@ For each $(t, w)$ we compute four statistics across the two windows.
 
 *Community divergence on the citation graph (G9).* We run Louvain community detection on the undirected projection of the citation graph restricted to each window, align the community labels across windows, and compute the Jensen--Shannon divergence between the two community-share distributions. This captures reorganisation of the field's relational structure, which embedding and lexical tests do not see.
 
-*Classifier two-sample test (G2, robustness).* We train a logistic-regression classifier to separate $\mathcal{D}_t^-$ from $\mathcal{D}_t^+$ using the PCA-32 embeddings, with balanced class weights and 5-fold cross-validation. The AUC is the test statistic. Low separability confirms distributional overlap; high separability confirms the distance-based signals [@lopez_paz_oquab2017]. We report C2ST AUC as a reference layer rather than as a primary detector.
+*Classifier two-sample test (C2ST, robustness).* We train a logistic-regression classifier to separate $\mathcal{D}_t^-$ from $\mathcal{D}_t^+$ using the PCA-32 embeddings, with balanced class weights and 5-fold cross-validation. The AUC is the test statistic. Low separability confirms distributional overlap; high separability confirms the distance-based signals [@lopez_paz_oquab2017]. We report C2ST AUC as a reference layer rather than as a primary detector.
 
 ### 4.5 Statistical inference
 
@@ -130,9 +130,9 @@ The four statistics have different sources of variation, and we handle them with
 
 *Permutation Z-scores for S2, L1, G9.* For each $(t, w)$, we pool the two windows, relabel them at random $B = 500$ times while preserving sample sizes, and recompute the statistic. The standardised effect size $Z(t) = (S_{\text{obs}} - \bar{S}_{\text{perm}}) / \mathrm{sd}(S_{\text{perm}})$ is directly comparable across years despite changing corpus size. A permutation scheme is appropriate here because the observed statistic has no closed-form null under general distributional alternatives.
 
-*Cross-validation fold variance for G2.* The C2ST AUC already has a built-in variance estimator: the standard deviation of AUC across the five CV folds. Permuting labels for C2ST is expensive (each permutation retrains the classifier $k$ times) and yields less information than the fold variance, which directly reflects sampling variability in the classifier's decision boundary. We therefore report AUC with its CV standard deviation rather than a permutation Z.
+*Cross-validation fold variance for C2ST.* The C2ST AUC already has a built-in variance estimator: the standard deviation of AUC across the five CV folds. Permuting labels for C2ST is expensive (each permutation retrains the classifier $k$ times) and yields less information than the fold variance, which directly reflects sampling variability in the classifier's decision boundary. We therefore report AUC with its CV standard deviation rather than a permutation Z.
 
-Mixing two inference primitives is a deliberate choice. Each fits its statistic. Forcing all four into one framework would waste computation on the classifier and blur the fact that S2, L1, and G9 share a null while G2 stands apart.
+Mixing two inference primitives is a deliberate choice. Each fits its statistic. Forcing all four into one framework would waste computation on the classifier and blur the fact that S2, L1, and G9 share a null while C2ST stands apart.
 
 ### 4.6 Transition zone detection and multi-signal validation
 
@@ -181,7 +181,7 @@ Sensitivity checks at $w = 2$ and $w = 4$ move the peak locations by at most one
 
 @fig-heatmap plots the supra-threshold mask for each layer as a heatmap row, with validated zones highlighted as vertical bands. Applying the $Z > 2$ threshold and the two-layer agreement rule yields {{< meta n_zones_validated >}} validated transition zones over the 1998--2021 analysis window.
 
-The first validated zone runs from {{< meta zone_1_start >}} to {{< meta zone_1_end >}}, supported by {{< meta zone_1_methods_agreeing >}}. The second runs from {{< meta zone_2_start >}} to {{< meta zone_2_end >}}, supported by {{< meta zone_2_methods_agreeing >}}. C2ST AUC exceeds {{< meta g2_reference_threshold >}} in both zones, consistent with the distance-based signals.
+The first validated zone runs from {{< meta zone_1_start >}} to {{< meta zone_1_end >}}, supported by {{< meta zone_1_methods_agreeing >}}. The second runs from {{< meta zone_2_start >}} to {{< meta zone_2_end >}}, supported by {{< meta zone_2_methods_agreeing >}}. C2ST AUC exceeds {{< meta c2st_reference_threshold >}} in both zones, consistent with the distance-based signals.
 
 ### 5.3 Censored-gap confirmation
 
