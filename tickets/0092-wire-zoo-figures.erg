@@ -1,0 +1,80 @@
+%erg v1
+Title: Wire zoo figure recipes into Makefile (schematics + result panels)
+Status: open
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21T14:55Z claude created
+
+--- body ---
+## Context
+
+PR #718 merged the 18-method zoo technical report. PR #725 added a
+`content/zoo-only.qmd` render target that depends on 35 zoo figures
+(17 schematics + 18 result panels). The plot scripts exist —
+`scripts/plot_schematic_*.py` for the schematics and
+`scripts/plot_zoo_results.py` for the per-method result panels — but
+none have Makefile recipes. `make output/content/zoo-only.pdf`
+therefore fails on missing figure dependencies.
+
+Architecture rule 3 (`.claude/rules/architecture.md`) mandates one
+`.mk` per analysis concern. Zoo figures are a new rendering concern.
+
+## Actions
+
+1. Create `zoo.mk` at the repo root, included from `Makefile` next to
+   `divergence.mk`.
+
+2. In `zoo.mk`, define recipes for:
+   - **Schematics** (17 targets): `content/figures/schematic_<method>.png`
+     each produced by `scripts/plot_schematic_<method>.py` with
+     `parse_io_args` I/O (`--output $@`). Methods: S1_mmd, S2_energy,
+     S3_sliced_wasserstein, S4_frechet, C2ST (shared schematic for
+     both variants, or two if the script emits two), L1_js, L2_ntr,
+     L3_term_burst, G1_pagerank, G2_spectral, G3_coupling_age,
+     G4_cross_tradition, G5_pref_attachment, G6_entropy, G7_disruption,
+     G8_betweenness, G9_community. Audit the actual
+     `scripts/plot_schematic_*.py` filenames first — they are the
+     ground truth for the recipe list.
+   - **Result panels** (18 targets): `content/figures/fig_zoo_<method>_<slug>.png`
+     each produced by `scripts/plot_zoo_results.py --method <ID>
+     --output $@`. The method IDs come from `divergence.mk`'s 18-method
+     list. Dependencies include the corresponding
+     `content/tables/tab_div_*.csv` (from `divergence.mk`) and the
+     script itself.
+
+3. Move `output/content/zoo-only.pdf` target from `Makefile` to
+   `zoo.mk`. Main `Makefile` keeps only the `include zoo.mk` line.
+
+4. Aggregate targets: add `zoo-figures: $(ZOO_SCHEMATICS)
+   $(ZOO_RESULT_FIGS)` phony so users can pre-build without rendering
+   the PDF.
+
+5. After PR #726 (TR framing modularization) lands, re-check that the
+   `ZOO_INCLUDES` list still reflects `_includes/techrep-zoo.md` +
+   `_includes/zoo/*.md` and nothing more.
+
+## Test
+
+Start with one recipe (e.g. `schematic_S2_energy.png`) to pin the
+pattern; verify it builds; then batch the rest.
+
+```makefile
+# Expected first test target
+content/figures/schematic_S2_energy.png: scripts/plot_schematic_S2_energy.py scripts/script_io_args.py
+	$(PY) $< --output $@
+```
+
+Integration test: `make output/content/zoo-only.pdf` completes
+end-to-end on a clean worktree (no pre-existing figures). The
+resulting PDF must contain all 35 figures (no missing-image boxes).
+
+## Exit criteria
+
+- `zoo.mk` exists, included from `Makefile`.
+- 35 figure recipes defined (17 schematics + 18 result panels).
+- `output/content/zoo-only.pdf` target moved into `zoo.mk`.
+- End-to-end `make output/content/zoo-only.pdf` from clean state
+  produces a PDF with all 35 figures rendered.
+- `make check` still passes.
