@@ -173,7 +173,7 @@ The results below are stubbed: the companion compute pipeline (ticket 0064) will
 
 ### 5.1 Z-score time series
 
-@fig-zseries shows the three detection layers (S2 Energy, L1 JS, G9 community divergence) with permutation Z-scores, plus the C2ST AUC reference layer (G2) with CV fold standard deviation bands. At the default half-width $w = 3$, S2 peaks at {{< meta s2_peak_year_w3 >}} ($Z = ${{< meta s2_peak_z_w3 >}}), L1 peaks at {{< meta l1_peak_year_w3 >}} ($Z = ${{< meta l1_peak_z_w3 >}}), and G9 peaks at {{< meta g9_peak_year_w3 >}} ($Z = ${{< meta g9_peak_z_w3 >}}). The C2ST AUC trace reaches its maximum at {{< meta g2_peak_year_w3 >}} with AUC {{< meta g2_peak_auc_w3 >}} ($\sigma_{\text{CV}} = ${{< meta g2_peak_auc_sd_w3 >}}). Peaks agree within three years across the three distance layers.
+@fig-zseries shows the three detection layers (S2 Energy, L1 JS, G9 community divergence) with permutation Z-scores, plus the C2ST AUC reference layer with CV fold standard deviation bands. At the default half-width $w = 3$, S2 peaks at {{< meta s2_peak_year_w3 >}} ($Z = ${{< meta s2_peak_z_w3 >}}), L1 peaks at {{< meta l1_peak_year_w3 >}} ($Z = ${{< meta l1_peak_z_w3 >}}), and G9 peaks at {{< meta g9_peak_year_w3 >}} ($Z = ${{< meta g9_peak_z_w3 >}}). The C2ST AUC trace reaches its maximum at {{< meta c2st_peak_year_w3 >}} with AUC {{< meta c2st_peak_auc_w3 >}} ($\sigma_{\text{CV}} = ${{< meta c2st_peak_auc_sd_w3 >}}). Peaks agree within three years across the three distance layers.
 
 Sensitivity checks at $w = 2$ and $w = 4$ move the peak locations by at most one year (see appendix table), consistent with the window half-width setting the effective temporal resolution.
 
