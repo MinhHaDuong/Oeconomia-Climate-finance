@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-21T14:55Z claude created
 2026-04-21Z orchestrator reimagine: L3 script is `L3_burst` not `L3_term_burst`. Result panels depend on `tab_crossyear_{method}.csv` (not `tab_div_*.csv`). `zoo-only.qmd` not on branch; scope exit criterion to `make zoo-figures` phony only.
+2026-04-21Z orchestrator verify-gate ESCALATE: implementation correct. Spec was wrong: CROSSYEAR_METHODS has 14 methods → 31 recipes (17+14), not 35. zoo-only.pdf move deferred until PR #725 merges. PR #733 ready to merge as-is. companion.mk has 4 bare `uv run` (follow-up ticket needed).
 
 --- body ---
 ## Context

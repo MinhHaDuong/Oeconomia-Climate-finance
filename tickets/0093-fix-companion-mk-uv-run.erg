@@ -1,0 +1,39 @@
+%erg v1
+Title: Migrate companion.mk bare `uv run` calls to $(UV_RUN)
+Status: open
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21Z claude created from /verify ESCALATE on PR #733 (ticket 0092)
+
+--- body ---
+## Context
+
+Ticket 0087 introduced `$(UV_RUN)` discipline for `Makefile` and `divergence.mk`.
+Ticket 0088 extended it to release templates. But `companion.mk` still has 4 bare
+`uv run` calls — a ratchet violation inherited from Wave C (PR #709) and not caught
+at the time.
+
+The violation was surfaced during `/verify` of PR #733 (ticket 0092). The 4 lines
+are pre-existing in `main`; they were not introduced by PR #733.
+
+## Actions
+
+1. Read `companion.mk` — identify all bare `uv run` occurrences.
+2. Verify the `UV ?= uv` / `UV_RUN ?= $(UV) run` / `export PATH` stanza is already
+   in `companion.mk` or needs to be added.
+3. Replace all bare `uv run` with `$(UV_RUN)`.
+4. Run `grep -c 'uv run' companion.mk` → should return 0.
+
+## Test
+
+```bash
+grep -c 'uv run' companion.mk  # → 0
+make check-fast  # no regressions
+```
+
+## Exit criteria
+
+- No bare `uv run` in `companion.mk`.
+- `make check-fast` passes (no regressions).
