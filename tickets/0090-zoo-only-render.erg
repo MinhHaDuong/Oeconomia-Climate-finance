@@ -1,0 +1,42 @@
+%erg v1
+Title: Add zoo-only render target for standalone method zoo PDF
+Status: open
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21T15:00Z claude created
+
+--- body ---
+## Context
+PR #718 refactored the technical report zoo into per-method includes
+under `content/_includes/zoo/`, composed by `content/_includes/techrep-zoo.md`.
+This small follow-up adds a thin wrapper `content/zoo-only.qmd` so the
+method zoo alone can be rendered (for reviewers or cherry-picking),
+without the surrounding corpus construction / overview framing of
+`content/technical-report.qmd`.
+
+## Actions
+1. Create `content/zoo-only.qmd` — one-line body including
+   `_includes/techrep-zoo.md`, YAML header matching technical-report.qmd
+   (same pdf engine, same vars file, same bibliography).
+2. Add `output/content/zoo-only.pdf` target to the Makefile. Mirror the
+   dependency shape of `output/content/technical-report.pdf`: the zoo
+   include plus the 18 per-method `.md` files plus the figure references
+   each contains (`figures/schematic_*.png` and `figures/fig_zoo_*.png`).
+3. Register `content/zoo-only.qmd` in `_quarto.yml` render list so Quarto
+   resolves includes consistently.
+
+## Test
+`quarto render content/zoo-only.qmd --to pdf` (or `--to html` if
+xelatex is unavailable) succeeds. Rendered document contains every
+method section heading: S1–S4, C2ST (embedding + lexical), L1–L3,
+G1–G9. Count check: 18 method sections.
+
+## Exit criteria
+- `content/zoo-only.qmd` exists and renders.
+- Makefile target for `output/content/zoo-only.pdf` exists and mirrors
+  the TR target's recipe.
+- `_quarto.yml` lists the new wrapper.
+- `content/technical-report.qmd` unchanged (still renders full framing).
+- PR opened and linked here.
