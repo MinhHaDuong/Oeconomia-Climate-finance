@@ -1,0 +1,38 @@
+%erg v1
+Title: Modularize technical report framing sections into _includes/techrep/
+Status: open
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21T00:00Z claude created
+
+--- body ---
+## Context
+
+Follow-on to PR #718. `content/technical-report.qmd` still contains three framing
+sections as inline prose: Overview, Standardisation (Z-scores), and Summary of
+findings. Extracting these into `_includes/techrep/` makes the TR a pure
+composer of includes (YAML header + four include lines), so any future document
+(zoo-only, summary-only, overview+zoo, etc.) can cherry-pick subsets.
+
+## Actions
+
+1. Create `content/_includes/techrep/` directory.
+2. Copy the Overview section verbatim into `overview.md`.
+3. Copy the Standardisation section verbatim into `zscore.md`.
+4. Copy the Summary of findings section verbatim into `summary-of-findings.md`.
+5. Rewrite the TR body to four `{{< include ... >}}` lines.
+
+## Test
+
+Render equivalence: `quarto render content/technical-report.qmd --to html`
+yields the same `##` heading structure as before. Grep for `{{< meta ... >}}`
+vars returns the same set pre/post.
+
+## Exit criteria
+
+- `content/_includes/techrep/{overview,zscore,summary-of-findings}.md` exist.
+- `content/technical-report.qmd` body is the four include lines only.
+- No substantive headings remain in the TR body.
+- Each include file begins with exactly one top-level heading.
