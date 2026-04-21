@@ -93,7 +93,7 @@ where $k(\cdot,\cdot)$ is a radial basis function kernel $k(x,y) = \exp(-\|x-y\|
 
 ### Advantages, biases, limitations
 
-**Advantages.** MMD is a proper metric between distributions; $\widehat{\text{MMD}}^2 = 0$ iff the distributions are identical (under a characteristic kernel). Unbiased estimator exists. Well-studied theoretical properties [@gretton2012kernel].
+**Advantages.** MMD is a proper metric between distributions; $\widehat{\text{MMD}}^2 = 0$ iff the distributions are identical (under a characteristic kernel). Unbiased estimator exists. Well-studied theoretical properties [@gretton2012].
 
 **Biases.** The median-heuristic bandwidth is data-driven; it changes as the corpus grows, making raw values non-comparable across windows of different sizes. The `equal_n: true` flag (random subsampling to equal-sized windows) mitigates growth bias. Quadratic computation ($O(n^2)$) limits scalability; we use biased estimator with batching for $n > 2000$.
 
@@ -109,7 +109,7 @@ Key values (w=3): peak $Z = +3.2$ at 1998, monotonic decline to $Z \approx -0.4$
 
 ### References
 
-Seminal: @gretton2012kernel (JMLR 13:723–773, 2012). Recent analogue: @del2022optimal (optimal transport for bibliometric shift detection, closest to our setting).
+Seminal: @gretton2012 (JMLR 13:723–773, 2012). Recent analogue: @hulkund2022interpretable (optimal transport applied to interpretable distribution-shift detection; the closest machine-learning setting to cross-window corpus comparison).
 
 \newpage
 
@@ -175,8 +175,7 @@ are network-topology events, not semantic-content events.
 
 ### References
 
-Seminal: @szekely2013energy (Székely & Rizzo 2013, "Energy statistics: A class of statistics based on distances between samples", *Journal of Statistical Planning and Inference*).
-Recent analogue: @gupta2022detecting (detecting concept drift in text streams using energy distance).
+Seminal: @szekely2013 (Székely & Rizzo 2013, "Energy statistics: A class of statistics based on distances between samples", *Journal of Statistical Planning and Inference*).
 
 \newpage
 
@@ -222,7 +221,7 @@ Key values (w=3): peak $Z = +3.4$ at 1998, monotonic decline. Pattern identical 
 
 ### References
 
-Seminal: @bonneel2015sliced (Bonneel et al. 2015, "Sliced and Radon Wasserstein Barycenters of Measures"). Recent analogue: @boecking2022sliced.
+Seminal: @bonneel2015sliced (Bonneel et al. 2015, "Sliced and Radon Wasserstein Barycenters of Measures"). Recent analogue: @kolouri2019generalized (Kolouri et al. 2019, "Generalized Sliced Wasserstein Distances", *NeurIPS*).
 
 \newpage
 
@@ -267,7 +266,7 @@ Key values (w=3): peak $Z = +2.9$ at 1998, monotonic decline. Weaker than S1–S
 ### References
 
 Seminal: @heusel2017gans (Heusel et al. 2017, "GANs trained by a two time-scale update rule converge to a local Nash equilibrium", NeurIPS).
-Recent analogue: @jayasumana2023rethinking (rethinking FID for text representations).
+Recent analogue: @jayasumana2024rethinking (Jayasumana et al. 2024, "Rethinking FID", *CVPR*; critiques FID for image generation and proposes a CLIP-MMD alternative, illustrating the method's dependence on the embedding it uses).
 
 \newpage
 
@@ -433,7 +432,7 @@ The burst $Z$-score is $(f_v(t) - \bar{f}_v) / \hat{\sigma}_{f_v}$.
 ### References
 
 Seminal: @kleinberg2003bursty (Kleinberg 2003, "Bursty and Hierarchical Structure in Streams", *Data Mining and Knowledge Discovery*).
-Recent analogue: @dias2011novel (Dias et al. 2011, "Identifying bursts in scientific literature").
+Recent analogue: @tattershall2020detecting (Tattershall, Nenadic & Stevens 2020, "Detecting bursty terms in computer science research", *Scientometrics*).
 
 \newpage
 
@@ -753,7 +752,7 @@ Combined with G5, this constitutes the main evidence for the 2007 structural bre
 ### References
 
 Seminal: @shannon1948mathematical (Shannon 1948, "A Mathematical Theory of Communication").
-Recent analogue: @wu2019estimating (Wu et al. 2019, "Estimating the entropy of ecological communities").
+Recent analogue: @leydesdorff_rafols2011indicators (Leydesdorff & Rafols 2011, "Indicators of the Interdisciplinarity of Journals: Diversity, Centrality, and Citations", *Journal of Informetrics*; uses Shannon entropy on citation vectors to assess interdisciplinarity).
 
 \newpage
 
@@ -851,7 +850,7 @@ $$D_{\text{G8}}(t, w) = |\bar{B}_{after} - \bar{B}_{before}|$$
 ### References
 
 Seminal: @freeman1977set (Freeman 1977, "A Set of Measures of Centrality Based on Betweenness").
-Recent analogue: @weng2019interdisciplinary.
+Recent analogue: @leydesdorff2007betweenness (Leydesdorff 2007, "Betweenness Centrality as an Indicator of the Interdisciplinarity of Scientific Journals", *JASIST*).
 
 \newpage
 
@@ -949,5 +948,5 @@ Reference level: $\alpha = 0.5$ (random classifier).
 
 ### References
 
-Seminal: @lopez2016revisiting (Lopez-Paz & Oquab 2017, "Revisiting Classifier Two-Sample Tests", *ICLR*).
+Seminal: @lopez_paz_oquab2017 (Lopez-Paz & Oquab 2017, "Revisiting Classifier Two-Sample Tests", *ICLR*).
 Recent analogue: @lemos2023sampling (Lemos et al. 2023, "Sampling-Based Accuracy Testing Posterior Estimation for General Inference").
