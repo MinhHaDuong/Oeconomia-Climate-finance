@@ -129,7 +129,7 @@ def companion_tables(tmp_path: Path) -> Path:
     tables.mkdir()
     for m in ("S2_energy", "L1", "G9_community", "G2_spectral"):
         _summary_fixture(m).to_csv(tables / f"tab_summary_{m}.csv", index=False)
-    _c2st_fixture("semantic").to_csv(tables / "tab_div_C2ST_embedding.csv", index=False)
+    _c2st_fixture("embedding").to_csv(tables / "tab_div_C2ST_embedding.csv", index=False)
     _c2st_fixture("lexical").to_csv(tables / "tab_div_C2ST_lexical.csv", index=False)
     _terms_fixture().to_csv(tables / "tab_discrim_terms.csv", index=False)
     _community_fixture().to_csv(tables / "tab_community_shifts.csv", index=False)
@@ -148,11 +148,16 @@ def _run(script: str, args: list[str]) -> subprocess.CompletedProcess:
     )
 
 
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
 def _assert_png(path: Path) -> None:
     assert path.exists(), f"expected PNG at {path}"
-    assert path.stat().st_size > 1000, (
-        f"PNG at {path} is suspiciously small ({path.stat().st_size} bytes)"
-    )
+    size = path.stat().st_size
+    assert size > 1000, f"PNG at {path} is suspiciously small ({size} bytes)"
+    with open(path, "rb") as fh:
+        header = fh.read(len(_PNG_MAGIC))
+    assert header == _PNG_MAGIC, f"file at {path} is not a PNG (header={header!r})"
 
 
 # ─── Existence & CLI contract ────────────────────────────────────────────
@@ -229,6 +234,47 @@ def test_community_runs(tmp_path: Path, companion_tables: Path):
             str(out),
             "--tables-dir",
             str(companion_tables),
+        ],
+    )
+    assert proc.returncode == 0, proc.stderr
+    _assert_png(out)
+
+
+# ─── Stub-fallback smoke (no interpretation CSV → PNG still rendered) ────
+#
+# Figures 3 and 4 promise in companion.mk that the Make target succeeds
+# even when ticket 0056's interpretation layer is absent. Drive the
+# fallback path by pointing --tables-dir at an empty directory.
+
+
+def test_terms_stub_fallback(tmp_path: Path):
+    empty_tables = tmp_path / "empty_tables"
+    empty_tables.mkdir()
+    out = tmp_path / "fig_companion_terms.png"
+    proc = _run(
+        COMPANION_SCRIPTS["terms"],
+        [
+            "--output",
+            str(out),
+            "--tables-dir",
+            str(empty_tables),
+        ],
+    )
+    assert proc.returncode == 0, proc.stderr
+    _assert_png(out)
+
+
+def test_community_stub_fallback(tmp_path: Path):
+    empty_tables = tmp_path / "empty_tables"
+    empty_tables.mkdir()
+    out = tmp_path / "fig_companion_community.png"
+    proc = _run(
+        COMPANION_SCRIPTS["community"],
+        [
+            "--output",
+            str(out),
+            "--tables-dir",
+            str(empty_tables),
         ],
     )
     assert proc.returncode == 0, proc.stderr
