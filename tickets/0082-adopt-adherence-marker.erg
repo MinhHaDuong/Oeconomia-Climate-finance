@@ -1,6 +1,6 @@
 %erg v1
 Title: Adopt @pytest.mark.adherence + port grep rules from harness
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: claude
 
