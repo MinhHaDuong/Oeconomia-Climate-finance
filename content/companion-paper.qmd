@@ -11,7 +11,7 @@ abstract: |
   (1998--2021). The framework combines three independent detectors ---
   Energy distance on sentence-transformer embeddings, Jensen--Shannon
   divergence on lexical distributions, and Louvain community divergence on a
-  temporally consistent co-citation graph --- with a classifier two-sample
+  temporally consistent citation graph --- with a classifier two-sample
   test as a robustness reference. Statistical inference uses permutation Z-scores for
   the distance statistics and cross-validation fold variance for the
   classifier AUC --- two distinct primitives chosen to match each method's
@@ -104,7 +104,7 @@ Each document is represented in three spaces that expose different aspects of th
 
 *Lexical space.* Each work is represented as a TF--IDF vector over a vocabulary shared across all years. Stop words are filtered in the corpus's five languages. The resulting vectors are sparse and directly interpretable through their weighted terms.
 
-*Citation graph.* We construct a co-citation graph from the corpus's reference lists. An edge between two works is weighted by the number of later works that cite both. To avoid temporal leakage, the graph at time $t$ includes only references made by works with year $\le t$; no future edges enter the comparison.
+*Citation graph.* We construct a directed citation graph from the corpus's reference lists. Each edge $i \rightarrow j$ records that work $i$ cites work $j$; edges are restricted to the corpus-internal subset (both endpoints are corpus works). To avoid temporal leakage, the graph at time $t$ includes only edges whose source work has year $\le t$; no future edges enter the comparison. For community detection (G9) the graph is projected to an undirected union graph over the two comparison windows.
 
 ### 4.3 Temporal segmentation
 
@@ -120,7 +120,7 @@ For each $(t, w)$ we compute four statistics across the two windows.
 
 *Lexical Jensen--Shannon divergence (L1).* We aggregate the TF--IDF vectors in each window into a smoothed term distribution and compute $\mathrm{JS}(P_w, Q_w) = \tfrac{1}{2} \mathrm{KL}(P_w \Vert M) + \tfrac{1}{2} \mathrm{KL}(Q_w \Vert M)$, where $M = \tfrac{1}{2}(P_w + Q_w)$. Laplace smoothing absorbs unobserved terms.
 
-*Community divergence on the co-citation graph (G9).* We run Louvain community detection on the co-citation graph restricted to each window, align the community labels across windows, and compute the Jensen--Shannon divergence between the two community-share distributions. This captures reorganisation of the field's relational structure, which embedding and lexical tests do not see.
+*Community divergence on the citation graph (G9).* We run Louvain community detection on the undirected projection of the citation graph restricted to each window, align the community labels across windows, and compute the Jensen--Shannon divergence between the two community-share distributions. This captures reorganisation of the field's relational structure, which embedding and lexical tests do not see.
 
 *Classifier two-sample test (G2, robustness).* We train a logistic-regression classifier to separate $\mathcal{D}_t^-$ from $\mathcal{D}_t^+$ using the PCA-32 embeddings, with balanced class weights and 5-fold cross-validation. The AUC is the test statistic. Low separability confirms distributional overlap; high separability confirms the distance-based signals [@lopez_paz_oquab2017]. We report C2ST AUC as a reference layer rather than as a primary detector.
 
@@ -164,7 +164,7 @@ For each confirmed zone, the framework extracts three interpretive outputs.
 
 *Discriminative documents.* Using the same classifier, we rank documents by their distance from the decision boundary on each side. The top-ranked documents on either side are the field's most distinctive exemplars of the before-state and the after-state.
 
-*Community shifts.* From the co-citation graph, we report the dominant Louvain communities before and after the zone, together with a transition matrix showing how documents move between communities. Large off-diagonal mass indicates structural reorganisation; a near-diagonal matrix indicates continuity of the community structure with composition changes within it.
+*Community shifts.* From the citation graph, we report the dominant Louvain communities before and after the zone, together with a transition matrix showing how documents move between communities. Large off-diagonal mass indicates structural reorganisation; a near-diagonal matrix indicates continuity of the community structure with composition changes within it.
 
 
 ## 5. Results
@@ -218,7 +218,7 @@ The framework differs from LDA, STM, and BERTopic on four properties relevant to
 
 *Endogenous break detection with explicit inference.* BERTopic's "Topics over Time" module and DTM track topic proportions over pre-specified time bins without a statistical test for structural discontinuities. The framework treats break detection as an inference problem with permutation Z-scores, a threshold, and a validation rule that spans three independent representations.
 
-*Multilingual coverage.* LDA and STM require language-specific stopword lists and tokenisation. Multilingual sentence-transformers (here `BAAI/bge-m3`) place documents in a shared semantic space regardless of language, and the co-citation graph is language-agnostic by construction.
+*Multilingual coverage.* LDA and STM require language-specific stopword lists and tokenisation. Multilingual sentence-transformers (here `BAAI/bge-m3`) place documents in a shared semantic space regardless of language, and the citation graph is language-agnostic by construction.
 
 Topic models retain advantages in labeled interpretability: a topic defined by its top-$k$ words is immediately readable. The framework recovers this through its L1 lexical layer and the discriminative-term interpretation outputs (§4.9); it does not generate a full topic labelling.
 
@@ -246,12 +246,12 @@ Candidate applications include AI ethics (where rapid field growth since 2018 ma
 
 *Corpus English dominance.* English accounts for {{< meta lang_english_pct >}}% of works. The multilingual embedding model places other languages in the same space, but the lexical layer is dominated by English terms, and minority-language structural changes may be underdetected. Ticket B3 quantifies the asymmetry.
 
-*DOI resolution drift for pre-2000 works.* The co-citation graph depends on DOI-level reference matching, which degrades for older works where DOIs were assigned retrospectively. Ticket B10 documents the drift; the G9 layer is weaker before 2000 for this reason. We restrict the analysis window to 1998--2021 in part to limit exposure to this drift.
+*DOI resolution drift for pre-2000 works.* The citation graph depends on DOI-level reference matching, which degrades for older works where DOIs were assigned retrospectively. Ticket B10 documents the drift; the G9 layer is weaker before 2000 for this reason. We restrict the analysis window to 1998--2021 in part to limit exposure to this drift.
 
 
 ## 7. Conclusion
 
-We presented a framework for detecting structural change in scientific literatures that combines three independent document representations --- sentence-transformer embeddings, TF--IDF lexical distributions, and a temporally consistent co-citation graph --- with a classifier two-sample test as a robustness reference. Statistical inference uses permutation Z-scores for the distance statistics and cross-validation fold variance for the classifier, two primitives chosen to match each method's source of variation. Candidate years with $Z > 2$ are grouped into transition zones and validated only when at least two independent layers agree; a censored-gap test then separates genuine discontinuities from gradual redistributions.
+We presented a framework for detecting structural change in scientific literatures that combines three independent document representations --- sentence-transformer embeddings, TF--IDF lexical distributions, and a temporally consistent citation graph --- with a classifier two-sample test as a robustness reference. Statistical inference uses permutation Z-scores for the distance statistics and cross-validation fold variance for the classifier, two primitives chosen to match each method's source of variation. Candidate years with $Z > 2$ are grouped into transition zones and validated only when at least two independent layers agree; a censored-gap test then separates genuine discontinuities from gradual redistributions.
 
 The framework does not claim to recover a unique true periodization. It produces a reproducible ledger of validated zones, each annotated with the layers that support it and the discriminative terms, documents, and community shifts that characterise it. Applied to climate finance scholarship (1998--2021, {{< meta corpus_total >}} works), it identifies transition zones that downstream tickets will interpret against the field's institutional history.
 
