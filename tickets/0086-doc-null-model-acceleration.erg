@@ -1,0 +1,37 @@
+%erg v1
+Title: Document null model acceleration in architecture and handoff doc
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T19:15Z claude created
+2026-04-21T09:00Z claude renumbered 0083 → 0086 (collision with merged sensitivity-annex ticket); narrowed scope — architecture.md + handoff doc done in-PR, technical-report deferred to structural-breaks.md rewrite (ticket 0034/0040)
+
+--- body ---
+## Context
+PRs #702 and #705 added GPU-vectorized and CPU-parallel null model
+permutation testing.  The code is merged and validated on real data
+(3h → 7min), but the documentation doesn't reflect the new pipeline
+capabilities.
+
+## Actions
+1. [done, PR #706] Update `.claude/rules/architecture.md` Phase 2 rules to mention
+   null model acceleration (GPU for S2/S1, precomputed TF-IDF for L1,
+   joblib for citation methods, NJOBS knob).
+2. [done, PR #706] Update `docs/handoff-padme-divergence.md` to include null model
+   parallelism and the NJOBS override example for `make -jN`.
+3. [deferred] Add a paragraph to the technical report methods section
+   describing the permutation test implementation. `content/_includes/structural-breaks.md`
+   still describes the obsolete KMeans+JS pipeline — a permutation paragraph
+   there would sit beside incoherent legacy prose. Belongs with the
+   structural-breaks.md rewrite (tracked in 0034/0040).
+
+## Test
+`grep -c 'n.jobs\|NJOBS\|GPU.*null\|parallel.*permut\|_permutation_accel' .claude/rules/architecture.md` returns ≥ 3.
+`grep -c 'NJOBS\|null-model\|_permutation_accel' docs/handoff-padme-divergence.md` returns ≥ 3.
+
+## Exit criteria
+Architecture.md mentions the three acceleration strategies (GPU batched matmul, precomputed TF-IDF, joblib) and the NJOBS / -j interaction.
+Handoff doc covers null-model parallelism with a concrete `make -jN NJOBS=...` example.
+Technical-report paragraph tracked as follow-on under the structural-breaks.md rewrite.

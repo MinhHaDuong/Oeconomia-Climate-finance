@@ -42,6 +42,11 @@ pytest tests/test_divergence.py tests/test_changepoints.py \
 # All 15 divergence methods (parallelizable):
 make -j4 divergence-tables       # ~20 min CPU, ~5 min if GPU ticket done
 
+# Null model (permutation Z-scores) — GPU + joblib accelerated (PR #702, #705):
+make null-model                  # ~7 min on padme (all cores, GPU for S2/S1)
+# Under `make -jN`, cap per-method parallelism to avoid oversubscription:
+make -j4 NJOBS=6 null-model      # 24-core box, 4 methods × 6 workers each
+
 # Change point detection + convergence:
 make changepoints
 
@@ -115,6 +120,8 @@ docs/literature-review-structural-break-detection.md
 
 1. **MMD / energy distance runtime.** Subsampled to 2000 per side, but
    verify wall-clock time. If > 10s per (year, window), consider GPU (0037).
+   Null-model path already uses GPU auto-detection for S2/S1 (PR #702) and
+   joblib parallelism for G2/G9 (PR #705) — see `scripts/_permutation_accel.py`.
 2. **Citation graph methods.** Smoke fixture has 0 internal edges → G1,G2,
    G4-G6,G8 produce NaN. Real corpus should have thousands of internal edges.
    If still sparse, investigate citation coverage.

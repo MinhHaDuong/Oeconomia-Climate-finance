@@ -181,7 +181,10 @@ changepoints: changepoints-tables changepoints-figure
 # For each method, permute before/after labels and recompute the statistic
 # to build a null distribution.  Output: tab_null_{method}.csv
 #
-# NJOBS controls parallelism across (year, window) pairs.
+# NJOBS caps per-method joblib parallelism across (year, window) pairs.
+# Default -1 uses all cores — fine for a single method, but oversubscribes
+# when composed with `make -j`.  When running `make -jN null-model`, pass
+# NJOBS ≈ cores/N  (e.g. on a 24-core box:  `make -j4 NJOBS=6 null-model`).
 # GPU auto-detected for S2_energy / S1_MMD (precomputed distance matrix).
 NJOBS ?= -1
 
