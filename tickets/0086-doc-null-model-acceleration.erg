@@ -1,12 +1,13 @@
 %erg v1
 Title: Document null model acceleration in architecture and handoff doc
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: claude
 
 --- log ---
 2026-04-17T19:15Z claude created
 2026-04-21T09:00Z claude renumbered 0083 → 0086 (collision with merged sensitivity-annex ticket); narrowed scope — architecture.md + handoff doc done in-PR, technical-report deferred to structural-breaks.md rewrite (ticket 0034/0040)
+2026-04-21T12:30Z claude closed — PR #706 merged (5269e0c); exit criteria met (grep counts 3/3); padme end-to-end verified (10:00.72 at NJOBS=6, exit 0); handoff doc timings updated with measured numbers
 
 --- body ---
 ## Context
