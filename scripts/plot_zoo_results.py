@@ -96,7 +96,7 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
             color=MED,
         )
 
-    # One line per sliding window (w=2..5 only).
+    # One line per sliding window (w=2..5).
     plotted = []
     for w_str in ("2", "3", "4", "5"):
         sub = df[df["window"] == w_str].sort_values("year")
@@ -113,8 +113,23 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
         )
         plotted.append(w_str)
 
+    # Fallback: cumulative or single-window methods (G3, G4, G7, L3).
     if not plotted:
-        log.warning("No sliding-window rows (w=2..5) found for method %s", method)
+        non_sliding = df[~df["window"].isin(("2", "3", "4", "5"))].sort_values("year")
+        non_sliding = non_sliding.dropna(subset=["z_score"])
+        if not non_sliding.empty:
+            wlabel = non_sliding["window"].iloc[0]
+            ax.plot(
+                non_sliding["year"],
+                non_sliding["z_score"],
+                color=DARK,
+                linewidth=1.6,
+                label=wlabel,
+                zorder=3,
+            )
+            plotted.append(wlabel)
+        else:
+            log.warning("No plottable rows found for method %s", method)
 
     ax.set_xlabel("Year")
     ax.set_ylabel("Cross-year Z-score Z(t,w)")

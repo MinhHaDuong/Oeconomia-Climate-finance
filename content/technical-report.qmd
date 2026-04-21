@@ -935,9 +935,13 @@ Reference level: $\alpha = 0.5$ (random classifier).
 
 ### Corpus results
 
-![](figures/fig_zoo_G9_community.png){width=100%}
+![](figures/fig_zoo_C2ST_embedding.png){width=100%}
 
-*Cross-year Z-score for G9 (community JS), w=2–5. Peak at 2001 — field convergence, not 2007 break.*
+*Cross-year Z-score for C2ST (embedding), w=2–5.*
+
+![](figures/fig_zoo_C2ST_lexical.png){width=100%}
+
+*Cross-year Z-score for C2ST (lexical), w=2–5.*
 
 **Key values.** Both C2ST channels hover around 0.60–0.67, significantly above chance, for almost all years — confirming that before/after windows are consistently distinguishable. However, the accuracy time series is flat and noisy: no 2007 peak, no convergence trend. C2ST is a less sensitive detector than the distributional methods for this corpus. Its primary use here is as a sanity check: the fact that accuracy $> 0.5$ everywhere confirms that our methods are not measuring noise.
 

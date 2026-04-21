@@ -47,33 +47,39 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
         z_score (float).  z_score is NaN when std == 0 or value is NaN.
 
     """
-    records = []
-    for window, grp in df.groupby("window", sort=False):
+    # Group by (window, hyperparams) so each hyperparameter setting gets its own
+    # Z-score series. Then aggregate across hyperparams per (year, window) by
+    # taking the mean, so the output has exactly one row per (year, window).
+    group_keys = ["window"]
+    if "hyperparams" in df.columns:
+        group_keys.append("hyperparams")
+
+    per_hp: list[pd.DataFrame] = []
+    for keys, grp in df.groupby(group_keys, sort=False):
         grp = grp.sort_values("year").copy()
         vals = grp["value"].astype(float)
         mean_d = vals.mean()
-        std_d = vals.std()  # ddof=1 (pandas default)
+        std_d = vals.std()
         if std_d == 0 or pd.isna(std_d):
             z = pd.Series([float("nan")] * len(grp), index=grp.index)
         else:
             z = (vals - mean_d) / std_d
-        for _, row in grp.iterrows():
-            records.append(
-                {
-                    "method": method,
-                    "year": int(row["year"]),
-                    "window": str(window),
-                    "value": float(row["value"])
-                    if pd.notna(row["value"])
-                    else float("nan"),
-                    "z_score": float(z.loc[row.name])
-                    if pd.notna(z.loc[row.name])
-                    else float("nan"),
-                }
-            )
-    return pd.DataFrame(
-        records, columns=["method", "year", "window", "value", "z_score"]
+        window = keys[0] if isinstance(keys, tuple) else keys
+        grp = grp.copy()
+        grp["z_score"] = z
+        grp["window"] = str(window)
+        per_hp.append(grp[["year", "window", "value", "z_score"]])
+
+    combined = pd.concat(per_hp, ignore_index=True)
+
+    # Average across hyperparameter settings for each (year, window).
+    agg = (
+        combined.groupby(["year", "window"], sort=True)
+        .agg(value=("value", "mean"), z_score=("z_score", "mean"))
+        .reset_index()
     )
+    agg.insert(0, "method", method)
+    return agg[["method", "year", "window", "value", "z_score"]]
 
 
 def main() -> None:
