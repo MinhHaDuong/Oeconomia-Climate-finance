@@ -198,6 +198,22 @@ InterpretationSchema = DataFrameSchema(
 )
 
 # ---------------------------------------------------------------------------
+# Cross-year Z-score CSV (zoo methods, explore-zoo-report)
+# ---------------------------------------------------------------------------
+
+CrossyearZscoreSchema = DataFrameSchema(
+    columns={
+        "method": Column(str),
+        "year": Column(int),
+        "window": Column(str),
+        "value": Column(float, nullable=True),
+        "z_score": Column(float, nullable=True),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
 # refined_embeddings.npz
 # ---------------------------------------------------------------------------
 

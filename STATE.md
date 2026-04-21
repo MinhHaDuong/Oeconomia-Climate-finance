@@ -26,7 +26,7 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ### Technical reports — restructured 2026-04-14 (PR #649)
 - `corpus-report.qmd`: corpus construction, data quality, corpus contents, software environment
-- `technical-report.qmd`: analysis methods and results (structural breaks, thematic structure, polarization, citations); 15-method divergence zoo lives here as includes (ticket 0028)
+- `technical-report.qmd`: analysis methods and results (structural breaks, thematic structure, polarization, citations); 18-method divergence zoo lives here as includes (ticket 0028)
 - `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 

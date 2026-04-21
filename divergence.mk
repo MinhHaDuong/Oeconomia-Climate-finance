@@ -265,3 +265,31 @@ divergence-summary: $(SUMM_CSV)
 
 .PHONY: divergence
 divergence: divergence-tables divergence-figures changepoints
+
+# ── Cross-year Z-score tables (explore-zoo-report) ───────────────────────
+#
+# For each method, standardise D(t,w) across years to get Z(t,w).
+# Output: content/tables/tab_crossyear_{method}.csv
+# Depends only on the corresponding tab_div_{method}.csv.
+
+CROSSYEAR_METHODS := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
+                     L1 L2 G1_pagerank G2_spectral G5_pref_attachment \
+                     G6_entropy G8_betweenness G9_community \
+                     C2ST_embedding C2ST_lexical
+
+content/tables/tab_crossyear_%.csv: content/tables/tab_div_%.csv scripts/compute_crossyear_zscore.py
+	uv run python scripts/compute_crossyear_zscore.py --method $* --output $@
+
+.PHONY: crossyear-tables
+crossyear-tables: $(addprefix content/tables/tab_crossyear_,$(addsuffix .csv,$(CROSSYEAR_METHODS)))
+
+# ── Zoo result figures (explore-zoo-report) ──────────────────────────────
+#
+# One diagnostic figure per method showing Z(t,w) for w=2..5.
+# Output: content/figures/fig_zoo_{method}.png
+
+content/figures/fig_zoo_%.png: content/tables/tab_crossyear_%.csv scripts/plot_zoo_results.py
+	uv run python scripts/plot_zoo_results.py --method $* --output $@
+
+.PHONY: zoo-figures
+zoo-figures: $(addprefix content/figures/fig_zoo_,$(addsuffix .png,$(CROSSYEAR_METHODS)))
