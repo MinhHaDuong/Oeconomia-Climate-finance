@@ -15,3 +15,10 @@ def test_date_in_data_paper():
     assert SNAPSHOT_DATE in text, (
         f"Snapshot date {SNAPSHOT_DATE} not found in data-paper.qmd"
     )
+
+
+def test_date_in_corpus_report():
+    text = Path("content/corpus-report.qmd").read_text()
+    assert SNAPSHOT_DATE in text, (
+        f"Snapshot date {SNAPSHOT_DATE} not found in corpus-report.qmd"
+    )
