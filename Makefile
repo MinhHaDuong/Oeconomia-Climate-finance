@@ -93,10 +93,32 @@ COMPANION_INCLUDES := content/_includes/embedding-generation.md \
 		content/_includes/pca-scatter.md \
 		content/_includes/core-vs-full.md
 
+# Method-zoo include tree: one composer + 18 per-method entries.
+# Used by the zoo-only wrapper and transitively by technical-report.qmd.
+ZOO_INCLUDES := content/_includes/techrep-zoo.md \
+		content/_includes/zoo/S1_mmd.md \
+		content/_includes/zoo/S2_energy.md \
+		content/_includes/zoo/S3_sliced_wasserstein.md \
+		content/_includes/zoo/S4_frechet.md \
+		content/_includes/zoo/C2ST_embedding.md \
+		content/_includes/zoo/L1_js.md \
+		content/_includes/zoo/L2_ntr.md \
+		content/_includes/zoo/L3_term_burst.md \
+		content/_includes/zoo/C2ST_lexical.md \
+		content/_includes/zoo/G1_pagerank.md \
+		content/_includes/zoo/G2_spectral.md \
+		content/_includes/zoo/G3_coupling_age.md \
+		content/_includes/zoo/G4_cross_tradition.md \
+		content/_includes/zoo/G5_pref_attachment.md \
+		content/_includes/zoo/G6_entropy.md \
+		content/_includes/zoo/G7_disruption.md \
+		content/_includes/zoo/G8_betweenness.md \
+		content/_includes/zoo/G9_community.md
+
 # Quarto resolves includes across ALL project files (_quarto.yml render list),
 # even when rendering a single document. Every render target needs the full set.
 PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
-		$(DATAPAPER_INCLUDES) $(COMPANION_INCLUDES)
+		$(DATAPAPER_INCLUDES) $(COMPANION_INCLUDES) $(ZOO_INCLUDES)
 
 # ── Per-document figure sets ─────────────────────────────
 MANUSCRIPT_FIGS := content/figures/fig_bars_v1.png content/figures/fig_composition.png
@@ -130,6 +152,47 @@ NCC_FIGS        := content/figures/fig_ncc_divergence.png \
                    content/figures/fig_ncc_core_comparison.png \
                    content/figures/fig_ncc_bimodality.png \
                    content/figures/fig_ncc_alluvial.png
+
+# Method-zoo figures (17 schematics + 18 zoo result panels).
+# schematic_C2ST.png serves both C2ST_embedding and C2ST_lexical, hence 17 schematics for 18 methods.
+ZOO_SCHEMATICS := content/figures/schematic_S1_mmd.png \
+                  content/figures/schematic_S2_energy.png \
+                  content/figures/schematic_S3_sliced_wasserstein.png \
+                  content/figures/schematic_S4_frechet.png \
+                  content/figures/schematic_C2ST.png \
+                  content/figures/schematic_L1_js.png \
+                  content/figures/schematic_L2_ntr.png \
+                  content/figures/schematic_L3_burst.png \
+                  content/figures/schematic_G1_pagerank.png \
+                  content/figures/schematic_G2_spectral.png \
+                  content/figures/schematic_G3_coupling_age.png \
+                  content/figures/schematic_G4_cross_tradition.png \
+                  content/figures/schematic_G5_pref_attachment.png \
+                  content/figures/schematic_G6_entropy.png \
+                  content/figures/schematic_G7_disruption.png \
+                  content/figures/schematic_G8_betweenness.png \
+                  content/figures/schematic_G9_community.png
+
+ZOO_RESULT_FIGS := content/figures/fig_zoo_S1_MMD.png \
+                   content/figures/fig_zoo_S2_energy.png \
+                   content/figures/fig_zoo_S3_sliced_wasserstein.png \
+                   content/figures/fig_zoo_S4_frechet.png \
+                   content/figures/fig_zoo_C2ST_embedding.png \
+                   content/figures/fig_zoo_C2ST_lexical.png \
+                   content/figures/fig_zoo_L1.png \
+                   content/figures/fig_zoo_L2.png \
+                   content/figures/fig_zoo_L3.png \
+                   content/figures/fig_zoo_G1_pagerank.png \
+                   content/figures/fig_zoo_G2_spectral.png \
+                   content/figures/fig_zoo_G3_coupling_age.png \
+                   content/figures/fig_zoo_G4_cross_tradition.png \
+                   content/figures/fig_zoo_G5_pref_attachment.png \
+                   content/figures/fig_zoo_G6_entropy.png \
+                   content/figures/fig_zoo_G7_disruption.png \
+                   content/figures/fig_zoo_G8_betweenness.png \
+                   content/figures/fig_zoo_G9_community.png
+
+ZOO_FIGS := $(ZOO_SCHEMATICS) $(ZOO_RESULT_FIGS)
 
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS) $(NCC_FIGS)
 
@@ -560,7 +623,7 @@ analysis-stats: stats
 
 manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
-papers: check-corpus output/content/corpus-report.pdf output/content/technical-report.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
+papers: check-corpus output/content/corpus-report.pdf output/content/technical-report.pdf output/content/zoo-only.pdf output/content/data-paper.pdf output/content/companion-paper.pdf
 
 # ── Namespaced aliases (Phase 3) ────────────────────────
 manuscript-render: manuscript
@@ -579,6 +642,11 @@ output/content/corpus-report.pdf: content/corpus-report.qmd $(PROJECT_INCLUDES) 
 	quarto render $< --to pdf
 
 output/content/technical-report.pdf: content/technical-report.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(TECHREP_FIGS) $(COMPANION_FIGS) .lexical_tfidf.stamp
+	quarto render $< --to pdf
+
+# Zoo-only: thin wrapper over $(ZOO_INCLUDES) for reviewers or cherry-picking.
+# Mirrors the TR recipe; same vars file, same bibliography, same engine.
+output/content/zoo-only.pdf: content/zoo-only.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(ZOO_FIGS)
 	quarto render $< --to pdf
 
 output/content/data-paper.pdf: content/data-paper.qmd $(PROJECT_INCLUDES) $(BIB) content/data-paper-vars.yml
