@@ -1,6 +1,6 @@
 %erg v1
 Title: Create companion paper figures (4 canonical outputs)
-Status: done
+Status: doing
 Created: 2026-04-15
 Author: claude
 Blocked-by: 0050
@@ -19,7 +19,6 @@ Blocked-by: 0042
 2026-04-17T19:45Z claude refactor — drop 'from __future__ import annotations' to satisfy TestRuffModernPython
 2026-04-17T19:50Z claude verify — 12/12 companion tests pass; make check-fast residue matches t0057 pre-existing failures (no new regressions)
 2026-04-21T00:00Z claude review-response — drop unused validated_zone_mask helper; fix fixture channel arg; PNG magic-byte check; 2 stub-fallback tests; correct G2/C2ST label in §4.4+4.5+5.1; fix §5.4 flow-diagram→bar-chart; caption wording (permutation-tested, six detection methods, explicit threshold, community-share rationale)
-2026-04-21T00:00Z claude status done
 
 --- body ---
 ## Context
