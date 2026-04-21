@@ -43,9 +43,12 @@ pytest tests/test_divergence.py tests/test_changepoints.py \
 make -j4 divergence-tables       # ~20 min CPU, ~5 min if GPU ticket done
 
 # Null model (permutation Z-scores) — GPU + joblib accelerated (PR #702, #705):
-make null-model                  # ~7 min on padme (all cores, GPU for S2/S1)
+# Wall-clock is dominated by G2_spectral; scales roughly with NJOBS / 24.
+make null-model                  # NJOBS=-1 (all cores), ~2-3 min on padme
+                                 # S2 ~8s (GPU), G9 ~40s, L1 ~90s, G2 ~60s at n_jobs=24
 # Under `make -jN`, cap per-method parallelism to avoid oversubscription:
-make -j4 NJOBS=6 null-model      # 24-core box, 4 methods × 6 workers each
+make -j4 NJOBS=6 null-model      # 24-core box, 4 methods × 6 workers, ~10 min
+                                 # (G2 drops to ~10 min at n_jobs=6, dominates)
 
 # Change point detection + convergence:
 make changepoints
