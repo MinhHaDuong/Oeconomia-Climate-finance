@@ -49,7 +49,7 @@ Two distinct signals emerge:
 |--------|---------|---------|
 | **Field convergence** | S1–S4, L1, L2, G2, G9 | Peak Z ≈ +2–4 around 1998–2002; monotonic decline thereafter. Early climate finance was heterogeneous; the field homogenised over time. |
 | **Structural break (topology)** | G5, G6 | Peak Z ≈ +2.5–3 at **2007**. Citation network topology — preferential attachment exponent and degree entropy — shifted sharply, consistent with the post-Stern/UNFCCC-Bali institutionalisation of climate finance. |
-| **Reference / sanity check** | C2ST | Classifier accuracy sits at 0.60–0.67 throughout — above chance in every year. Confirms that the distance-based methods are not measuring noise; does not vote on zones. |
+| **Reference / sanity check** | C2ST | Classifier AUC sits at 0.60–0.67 throughout — above chance in every year. Confirms that the distance-based methods are not measuring noise; does not vote on zones. |
 | **Noisy / weak / cumulative** | G1, G3, G4, G7, G8, L3 | Weak or non-directional signal (G1 peak Z=1.3); L3 returns a term-level list rather than a scalar divergence. Useful as robustness checks and lexical fingerprints. |
 
 \newpage
@@ -920,7 +920,7 @@ Recent analogue: @rosvall2019different (Rosvall et al. 2019, "Different approach
 
 As a meta-check on the distributional shift methods,
 we train simple classifiers to distinguish "before" from "after" papers.
-If the classifier accuracy $\alpha > 0.5$ (better than chance),
+If the classifier AUC $> 0.5$ (better than chance),
 the two windows are distinguishable by the features used.
 We test two feature sets: BAAI/bge-m3 embeddings (C2ST\_embedding) and TF-IDF (C2ST\_lexical).
 
@@ -929,7 +929,7 @@ We test two feature sets: BAAI/bge-m3 embeddings (C2ST\_embedding) and TF-IDF (C
 C2ST recasts the two-sample problem as a supervised learning task [@lopez_paz_oquab2017]:
 if a simple classifier can predict whether a paper belongs to the before- or after-window
 better than chance, the two distributions must differ.
-The test statistic is the cross-validated classifier accuracy (or AUC); the null is $\alpha = 0.5$.
+The test statistic is the cross-validated classifier AUC; the null is $\mathrm{AUC} = 0.5$.
 
 This differs from the distance-based detectors (S1–S4, L1, G9) in a crucial way.
 MMD, energy distance, sliced Wasserstein, and JS divergence all compare the two empirical distributions *directly* through a chosen geometry (kernel, Euclidean distance, projection, bin counts).
@@ -940,11 +940,11 @@ It answers "are they separable?" rather than "how far apart are they?".
 ### Definition
 
 For each (t, w) pair, split papers into before/after labels and train a logistic regression with $\ell^2$ regularisation (sklearn default).
-Measure 5-fold cross-validated accuracy $\alpha \in [0, 1]$.
+Measure 5-fold cross-validated AUC $\in [0, 1]$.
 
-$$D_{\text{C2ST}}(t, w) = \alpha(t, w)$$
+$$D_{\text{C2ST}}(t, w) = \mathrm{AUC}(t, w)$$
 
-Reference level: $\alpha = 0.5$ (random classifier).
+Reference level: $\mathrm{AUC} = 0.5$ (random classifier).
 
 *Scripts:* `scripts/_divergence_semantic.py` (C2ST\_embedding), `scripts/_divergence_lexical.py` (C2ST\_lexical).
 
@@ -952,7 +952,7 @@ Reference level: $\alpha = 0.5$ (random classifier).
 
 ![](figures/schematic_C2ST.png){width=100%}
 
-*C2ST principle: a logistic classifier fits a decision boundary in PCA-projected embedding space; cross-validated accuracy above 0.50 confirms the before/after distributions differ. Script: `scripts/plot_schematic_C2ST.py`.*
+*C2ST principle: a logistic classifier fits a decision boundary in PCA-projected embedding space; cross-validated AUC above 0.50 confirms the before/after distributions differ. Script: `scripts/plot_schematic_C2ST.py`.*
 
 ### Advantages, biases, limitations
 
@@ -960,15 +960,15 @@ Reference level: $\alpha = 0.5$ (random classifier).
 The classifier's learned coefficients are directly interpretable — they rank features (embedding dimensions, TF-IDF terms) by their contribution to the before/after split, giving a built-in attribution story the distance-based detectors lack.
 Variance is estimated cheaply from the cross-validation folds, with no need for a separate null model.
 
-**Biases.** Accuracy depends on classifier capacity:
+**Biases.** AUC depends on classifier capacity:
 a logistic regression captures linear separability only, so C2ST will underestimate differences that are non-linear in the feature space.
 The reported variance is dominated by fold sampling rather than by distributional uncertainty, so fold-CV standard deviations are narrower than a full permutation null would produce.
 
 **Limitations.** C2ST does not share the permutation null used by S2, L1, and G9;
-its accuracy has a different sampling distribution and cannot be fused into the same Z-score scale without rescaling.
+its AUC has a different sampling distribution and cannot be fused into the same Z-score scale without rescaling.
 We therefore reserve it an epistemic role as a *reference layer*, not a voting layer,
 in the companion paper's transition-zone validation:
-accuracy visibly above 0.5 corroborates the distance-based signals but does not by itself validate a zone.
+AUC visibly above 0.5 corroborates the distance-based signals but does not by itself validate a zone.
 
 ### Corpus results
 
@@ -980,7 +980,7 @@ accuracy visibly above 0.5 corroborates the distance-based signals but does not 
 
 *Cross-year Z-score for C2ST (lexical), w=2–5.*
 
-**Key values.** Both C2ST channels hover around 0.60–0.67, significantly above chance, for almost all years — confirming that before/after windows are consistently distinguishable. However, the accuracy time series is flat and noisy: no 2007 peak, no convergence trend. C2ST is a less sensitive detector than the distributional methods for this corpus. Its primary use here is as a sanity check: the fact that accuracy $> 0.5$ everywhere confirms that our methods are not measuring noise.
+**Key values.** Both C2ST channels hover around 0.60–0.67, significantly above chance, for almost all years — confirming that before/after windows are consistently distinguishable. However, the AUC time series is flat and noisy: no 2007 peak, no convergence trend. C2ST is a less sensitive detector than the distributional methods for this corpus. Its primary use here is as a sanity check: the fact that $\mathrm{AUC} > 0.5$ everywhere confirms that our methods are not measuring noise.
 
 ### References
 
