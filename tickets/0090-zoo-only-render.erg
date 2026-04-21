@@ -1,11 +1,12 @@
 %erg v1
 Title: Add zoo-only render target for standalone method zoo PDF
-Status: open
+Status: closed
 Created: 2026-04-21
 Author: claude
 
 --- log ---
 2026-04-21T15:00Z claude created
+2026-04-21T14:54Z claude status closed PR #725
 
 --- body ---
 ## Context
