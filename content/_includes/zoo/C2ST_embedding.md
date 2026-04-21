@@ -1,12 +1,13 @@
-## C2ST_embedding — Classifier Two-Sample Test (embedding) {#sec-c2st-embedding}
+## S5. C2ST — Classifier Two-Sample Test (embedding) {#sec-c2st-embedding}
 
-As a meta-check on the distributional shift methods,
-we train simple classifiers to distinguish "before" from "after" papers.
+As a meta-check on the distributional-shift methods,
+we train a simple classifier to distinguish "before" from "after" papers in the BAAI/bge-m3 embedding space.
 If the classifier AUC $> 0.5$ (better than chance),
-the two windows are distinguishable by the features used.
-We test two feature sets: BAAI/bge-m3 embeddings (C2ST\_embedding) and TF-IDF (C2ST\_lexical).
+the two windows are distinguishable by their embedding features.
 
 ### Principle
+
+C2ST also has a lexical counterpart (see §L4 C2ST (lexical)); the principle is identical, only the feature space differs.
 
 C2ST recasts the two-sample problem as a supervised learning task [@lopez_paz_oquab2017]:
 if a simple classifier can predict whether a paper belongs to the before- or after-window
@@ -21,14 +22,14 @@ It answers "are they separable?" rather than "how far apart are they?".
 
 ### Definition
 
-For each (t, w) pair, split papers into before/after labels and train a logistic regression with $\ell^2$ regularisation (sklearn default).
+For each $(t, w)$ pair, split papers into before/after labels and train a logistic regression with $\ell^2$ regularisation (sklearn default) on the BAAI/bge-m3 embedding vectors.
 Measure 5-fold cross-validated AUC $\in [0, 1]$.
 
 $$D_{\text{C2ST}}(t, w) = \mathrm{AUC}(t, w)$$
 
 Reference level: $\mathrm{AUC} = 0.5$ (random classifier).
 
-*Scripts:* `scripts/_divergence_semantic.py` (C2ST\_embedding), `scripts/_divergence_lexical.py` (C2ST\_lexical).
+*Script:* `scripts/_divergence_semantic.py`, method `c2st`.
 
 ### Principle figure
 
@@ -39,7 +40,7 @@ Reference level: $\mathrm{AUC} = 0.5$ (random classifier).
 ### Advantages, biases, limitations
 
 **Advantages.** No kernel or bandwidth to choose, unlike MMD; no projection direction to sample, unlike sliced Wasserstein.
-The classifier's learned coefficients are directly interpretable — they rank features (embedding dimensions, TF-IDF terms) by their contribution to the before/after split, giving a built-in attribution story the distance-based detectors lack.
+The classifier's learned coefficients are directly interpretable — they rank embedding dimensions by their contribution to the before/after split, giving a built-in attribution story the distance-based detectors lack.
 Variance is estimated cheaply from the cross-validation folds, with no need for a separate null model.
 
 **Biases.** AUC depends on classifier capacity:

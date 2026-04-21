@@ -6,11 +6,13 @@ $X_{\text{before}} = \{e_i : t-w \leq \text{year}_i < t\}$ and $X_{\text{after}}
 A semantic distance method maps $(X_{\text{before}}, X_{\text{after}})$ to a scalar $D \geq 0$,
 where $D=0$ means the two samples are drawn from the same distribution.
 
-All four semantic methods show the **field convergence** pattern:
+The four distance-based semantic methods (S1–S4) show the **field convergence** pattern:
 early climate finance (1990s) was a loose coalition of three traditions
 (finance, development economics, and physical science);
 by the 2010s those traditions had merged into a recognisable field
 with a shared vocabulary and shared concerns.
+The fifth entry, C2ST (embedding), recasts the same two-sample question as a supervised learning task
+and serves as a reference-layer sanity check rather than a convergence detector.
 
 ---
 
@@ -33,6 +35,12 @@ with a shared vocabulary and shared concerns.
 ---
 
 {{< include _includes/zoo/S4_frechet.md >}}
+
+\newpage
+
+---
+
+{{< include _includes/zoo/C2ST_embedding.md >}}
 
 \newpage
 
@@ -61,6 +69,12 @@ discriminating terms can be read directly.
 ---
 
 {{< include _includes/zoo/L3_term_burst.md >}}
+
+\newpage
+
+---
+
+{{< include _includes/zoo/C2ST_lexical.md >}}
 
 \newpage
 
@@ -135,17 +149,3 @@ the remaining graph methods either show the convergence signal or weak/noisy pat
 ---
 
 {{< include _includes/zoo/G9_community.md >}}
-
-\newpage
-
----
-
-# C2ST — Classifier Two-Sample Tests
-
-{{< include _includes/zoo/C2ST_embedding.md >}}
-
-\newpage
-
----
-
-{{< include _includes/zoo/C2ST_lexical.md >}}

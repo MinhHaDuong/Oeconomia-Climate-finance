@@ -27,7 +27,7 @@ Methods are grouped into three layers:
 - **Part L — Lexical.** Compare TF-IDF vocabulary distributions. Complementary to semantic methods; more interpretable (discriminating terms are directly readable).
 - **Part G — Citation graph.** Compare citation network topology: degree distributions, community structure, centrality. These methods detect changes in *how knowledge flows* rather than *what is said*.
 
-We have two C2ST classifiers (one semantic, one lexical) as a meta-check: can a machine-learning classifier tell "before" from "after" better than chance?
+Classifier Two-Sample Tests (C2ST) appear as one genus in two habitats: C2ST\_embedding lives in Part S, C2ST\_lexical in Part L. Each asks the same meta-check question — can a machine-learning classifier tell "before" from "after" better than chance? — in its respective feature space.
 
 ## Standardisation: cross-year Z-scores
 
