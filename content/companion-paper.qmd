@@ -152,7 +152,7 @@ Three robustness checks accompany every reported result.
 
 *Equal-$n$ subsampling.* The larger window is downsampled to the size of the smaller window, the statistic is recomputed over $R = 100$ subsampling repetitions, and the mean and empirical 95% interval are reported alongside the full-sample Z. This guards against the sample-size sensitivity that @szekely2013 warn about for energy distance on very unequal splits.
 
-*Parameter sensitivity.* Window half-width $w$ is varied over $\{2, 3, 4\}$. We report the peak year and peak Z for each $w$; a zone's credibility rises when peaks agree across half-widths.
+*Parameter sensitivity.* Window half-width $w$ is varied over $\{2, 3, 4\}$. We report the peak year and peak Z for each $w$; a zone's credibility rises when peaks agree across half-widths. $w = 3$ is the lead window: it is the smallest for which the $\ge 2$-of-$3$ cross-window robustness criterion is well-defined, and year-to-year sampling noise is attenuated without smearing breakpoints beyond the annual COP cadence.
 
 *Bootstrap confidence intervals.* For each validated zone we draw $K$ bootstrap resamples of the underlying corpus, rerun the detection pipeline, and report the fraction of resamples that retain the zone. Bootstrap $K$ is read from the analysis configuration (ticket 0047).
 
