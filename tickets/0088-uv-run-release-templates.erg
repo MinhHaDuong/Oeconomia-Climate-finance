@@ -1,0 +1,39 @@
+%erg v1
+Title: Apply $(UV_RUN) + PATH discipline to release templates
+Status: open
+Created: 2026-04-21
+Author: claude
+Blocked-by: 0087
+
+--- log ---
+2026-04-21T12:15Z claude created
+
+--- body ---
+## Context
+PR #719 fixed non-interactive `uv` resolution in the top-level `Makefile`
+and `divergence.mk`. A sweep during /celebrate turned up three siblings
+that still invoke `uv run` without the named-variable / PATH-fallback
+discipline:
+
+- `release/templates/Makefile.analysis-manuscript` (8 recipes)
+- `release/templates/Makefile.datapaper` (1 recipe)
+- `release/scripts/build_datapaper_archive.sh` (1 call; inherits PATH
+  from parent Make when invoked by the fixed Makefile — not a live bug
+  today, but inconsistent)
+
+These ship inside reproducibility archives and are run by external data
+paper / manuscript reviewers. They *may* hit the same non-interactive
+shell failure mode depending on how a reviewer installs uv.
+
+## Actions
+1. Add the `UV ?= uv / UV_RUN ?= $(UV) run / export PATH := $(HOME)/.local/bin:$(PATH)` stanza to both template Makefiles.
+2. Sed-replace `uv run` → `$(UV_RUN)` in both templates.
+3. In `build_datapaper_archive.sh`, add a `command -v uv || export PATH="$HOME/.local/bin:$PATH"` guard at the top (shell scripts don't get the Make fix for free if invoked directly).
+
+## Test
+- `grep -c 'uv run' release/templates/Makefile.analysis-manuscript release/templates/Makefile.datapaper release/scripts/build_datapaper_archive.sh` → `0 0 0`.
+- `make -pn -f release/templates/Makefile.analysis-manuscript | grep -cE '^\s+uv run'` > 0 (recipes expand by default).
+
+## Exit criteria
+- No raw `uv run ` in `release/templates/` or `release/scripts/` (grep-ratchet: 0 hits).
+- Override works: `make UV=/tmp/fake-uv -pn -f release/templates/Makefile.datapaper` shows `/tmp/fake-uv run ...`.
