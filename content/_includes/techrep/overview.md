@@ -4,7 +4,7 @@ This document surveys the structural break detection methods applied to the clim
 ({{< meta corpus_total >}} works, 1990--2024).
 Each method answers the same question in a different vocabulary:
 *does the distribution of works written before year $t$ differ from the distribution of works written after $t$?*
-We apply a sliding window of $w$ years on each side of the candidate break year.^[Throughout this report we show $w \in \{2, 3, 4, 5\}$. The companion paper reports $w=3$ as the default lead window, with $w \in \{2, 4\}$ as robustness checks.]
+We apply a sliding window of $w$ years on each side of the candidate break year.^[Throughout this report we show $w \in \{2, 3, 4\}$. The companion paper reports $w=3$ as the default lead window, with $w \in \{2, 4\}$ as robustness checks.]
 
 Methods are grouped into three layers:
 
