@@ -11,13 +11,22 @@ Usage::
     uv run python scripts/plot_zoo_results.py \\
         --method S2_energy \\
         --output content/figures/fig_zoo_S2_energy.png
+
+    # With null CI band overlay:
+    uv run python scripts/plot_zoo_results.py \\
+        --method S2_energy \\
+        --output content/figures/fig_zoo_S2_energy.png \\
+        --null-ci content/tables/tab_null_S2_energy.csv
 """
 
 import argparse
 import os
 import sys
+from pathlib import Path
 
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from pipeline_io import save_figure
 from plot_style import DARK, FILL, LIGHT, MED, apply_style
@@ -36,6 +45,23 @@ _WINDOW_STYLES = {
 
 _Z_THRESHOLD = 2.0
 _PERIOD_BREAKS = [2007, 2013]
+
+
+def _build_method_parser() -> argparse.ArgumentParser:
+    """Return the method-level argument parser (used by tests and main)."""
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument(
+        "--method",
+        required=True,
+        help="Method name, e.g. S2_energy",
+    )
+    parser.add_argument(
+        "--null-ci",
+        metavar="PATH",
+        default=None,
+        help="Optional: tab_null_{method}.csv for CI band overlay",
+    )
+    return parser
 
 
 def _empty_figure(output_stem: str, method: str) -> None:
@@ -57,7 +83,54 @@ def _empty_figure(output_stem: str, method: str) -> None:
     plt.close(fig)
 
 
-def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
+def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
+    """Load null model CSV if path provided and file exists. Returns None otherwise."""
+    if not null_ci_path:
+        return None
+    if not Path(null_ci_path).exists():
+        log.warning("Null CI file not found: %s — skipping CI band", null_ci_path)
+        return None
+    null_df = pd.read_csv(null_ci_path)
+    null_df["window"] = null_df["window"].astype(str)
+    return null_df
+
+
+def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.DataFrame:
+    """Add z_threshold column to null_df.
+
+    Z_threshold = (null_mean + 1.96 * null_std - mu_w) / sigma_w
+
+    where mu_w and sigma_w are the per-window mean and std of the crossyear
+    Z-scores (from the observed data).
+    """
+    mu_w = (
+        df.groupby("window")["value"].mean()
+        if "value" in df.columns
+        else df.groupby("window")["z_score"].mean()
+    )
+    sigma_w = (
+        df.groupby("window")["value"].std()
+        if "value" in df.columns
+        else df.groupby("window")["z_score"].std()
+    )
+
+    null_df = null_df.copy()
+    null_df["z_threshold"] = null_df.apply(
+        lambda r: (
+            (r["null_mean"] + 1.96 * r["null_std"] - mu_w.get(r["window"], np.nan))
+            / sigma_w.get(r["window"], np.nan)
+        ),
+        axis=1,
+    )
+    return null_df
+
+
+def _plot(
+    df: pd.DataFrame,
+    method: str,
+    output_stem: str,
+    null_df: pd.DataFrame | None = None,
+) -> None:
     """Render the Z-score panel and save to output_stem.png."""
     fig, ax = plt.subplots(figsize=(6, 4))
 
@@ -110,6 +183,22 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
             label=style["label"],
             zorder=3,
         )
+
+        # Null CI band: dashed line at 95th-percentile null threshold.
+        if null_df is not None:
+            ci_sub = null_df[null_df["window"] == w_str].sort_values("year")
+            if not ci_sub.empty:
+                ax.plot(
+                    ci_sub["year"],
+                    ci_sub["z_threshold"],
+                    linestyle="--",
+                    color=style["color"],
+                    linewidth=0.7,
+                    alpha=0.7,
+                    label=None,
+                    zorder=2,
+                )
+
         plotted.append(w_str)
 
     # Fallback: cumulative or single-window methods (G3, G4, G7, L3).
@@ -137,7 +226,24 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
     if not df.empty:
         ax.set_xlim(df["year"].min() - 0.5, df["year"].max() + 0.5)
 
-    ax.legend(loc="upper left", frameon=False, fontsize=7)
+    # Add a single legend entry for the null CI band if present.
+    handles, labels = ax.get_legend_handles_labels()
+    if null_df is not None and plotted:
+        handles.append(
+            mlines.Line2D(
+                [],
+                [],
+                color="0.5",
+                linestyle="--",
+                linewidth=0.7,
+                label="null 95% CI",
+            )
+        )
+        labels.append("null 95% CI")
+
+    ax.legend(
+        handles=handles, labels=labels, loc="upper left", frameon=False, fontsize=7
+    )
     fig.tight_layout()
     save_figure(fig, output_stem, dpi=150)
     plt.close(fig)
@@ -147,12 +253,7 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
 def main() -> None:
     io_args, extra = parse_io_args()
 
-    parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument(
-        "--method",
-        required=True,
-        help="Method name, e.g. S2_energy",
-    )
+    parser = _build_method_parser()
     args = parser.parse_args(extra)
 
     method = args.method
@@ -182,7 +283,11 @@ def main() -> None:
     # window is written as str but pd.read_csv may infer int; normalise.
     df["window"] = df["window"].astype(str)
 
-    _plot(df, method, output_stem)
+    null_df = _load_null_df(args.null_ci)
+    if null_df is not None:
+        null_df = _compute_null_z_threshold(df, null_df)
+
+    _plot(df, method, output_stem, null_df=null_df)
 
 
 if __name__ == "__main__":
