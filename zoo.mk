@@ -74,5 +74,5 @@ $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_re
 # ── Zoo-only PDF render (Phase 3) ────────────────────────────────────────────
 # Zoo-only: thin wrapper over $(ZOO_INCLUDES) for reviewers or cherry-picking.
 # Mirrors the TR recipe; same vars file, same bibliography, same engine.
-output/content/zoo-only.pdf: content/zoo-only.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(ZOO_FIGS)
+output/content/zoo-breakpoint-detection-methods.pdf: content/zoo-breakpoint-detection-methods.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(ZOO_FIGS)
 	quarto render $< --to pdf

@@ -95,7 +95,7 @@ MULTILAYER_INCLUDES := content/_includes/embedding-generation.md \
 		content/_includes/core-vs-full.md
 
 # Method-zoo include tree: one composer + 18 per-method entries.
-# Used by the zoo-only wrapper and transitively by technical-report.qmd.
+# Used by zoo-breakpoint-detection-methods.qmd and transitively by technical-report.qmd.
 ZOO_INCLUDES := content/_includes/techrep/overview.md \
 		content/_includes/techrep/zscore.md \
 		content/_includes/techrep/null-model.md \
@@ -629,7 +629,7 @@ analysis-stats: stats
 
 manuscript: output/content/manuscript.pdf output/content/manuscript.docx
 
-papers: check-corpus output/content/corpus-report.pdf output/content/technical-report.pdf output/content/zoo-only.pdf output/content/data-paper.pdf output/content/multilayer-detection.pdf
+papers: check-corpus output/content/corpus-report.pdf output/content/technical-report.pdf output/content/zoo-breakpoint-detection-methods.pdf output/content/data-paper.pdf output/content/multilayer-detection.pdf
 
 # ── Namespaced aliases (Phase 3) ────────────────────────
 manuscript-render: manuscript
