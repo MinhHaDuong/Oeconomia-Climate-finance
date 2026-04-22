@@ -78,7 +78,7 @@ def test_before_window_with_explicit_gap_param():
         gap=2,
     )
     assert after is not None
-    assert len(after) == 2  # years 2006, 2007... wait: t+gap=2006, t+w=2007 -> 2 years
+    assert len(after) == 2  # t+gap=2006, t+w=2007: years 2006, 2007
 
 
 def test_citation_window_gap_before():

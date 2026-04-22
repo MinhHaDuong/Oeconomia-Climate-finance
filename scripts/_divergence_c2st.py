@@ -144,6 +144,7 @@ def compute_c2st_embedding(df, emb, cfg):
             ]
         )
 
+    gap = div_cfg.get("gap", 1)
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(
@@ -154,6 +155,7 @@ def compute_c2st_embedding(df, emb, cfg):
         max_subsample,
         rng=rng,
         equal_n=equal_n,
+        gap=gap,
     ):
         if last_w is not None and w != last_w:
             log.info("C2ST_embedding window=%d done", last_w)
