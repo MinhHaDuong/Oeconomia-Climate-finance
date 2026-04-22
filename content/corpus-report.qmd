@@ -15,7 +15,7 @@ This document describes how the corpus of {{< meta corpus_total >}} works on cli
 
 All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
 
-The report follows the pipeline in order: Section 1 maps the full pipeline as a DAG; Section 2 traces each construction stage in detail; Section 3 reports quality checks on metadata, embeddings, and citations; Section 4 describes what the finished corpus contains.
+The pipeline produces the corpus (§2), quality checks validate it (§3), and §4 describes what passed — §1 maps all four steps as a DAG.
 
 # Pipeline Overview
 
@@ -43,7 +43,7 @@ The following sections trace each stage in depth: how sources were identified an
 
 # Data Quality
 
-With the corpus assembled, three independent checks verify that the retained records are accurate, semantically coherent, and citation-complete. The table below summarises per-source counts; the sections that follow assess metadata accuracy, embedding quality, and citation graph coverage in turn.
+With the corpus assembled, three quality checks verify that the retained records are accurate, semantically coherent, and citation-complete. The table below summarises per-source counts; the sections that follow assess metadata accuracy, embedding quality, and citation graph coverage in turn.
 
 {{< include tables/tab_corpus_sources.md >}}
 
@@ -63,7 +63,7 @@ With the corpus assembled, three independent checks verify that the retained rec
 
 # Corpus Contents
 
-The {{< meta corpus_total >}} retained works span 1992 to 2024 and cover English, French, Chinese, Japanese, German, Spanish, and Portuguese scholarship. This section describes the corpus composition through four complementary views: annual volume, semantic geography, temporal layering, and language distribution.
+The {{< meta corpus_total >}} retained works span 1992 to 2024 across 47 languages, with English dominant and significant Portuguese, Spanish, German, and French corpora (see Table @tbl-languages for the full distribution). This section describes the corpus composition through four complementary views: annual volume, semantic geography, temporal layering, and language distribution.
 
 Figure @fig-bars shows annual publication counts. The bar chart reflects the field's growth trajectory: sparse output before 2007, accelerating through the 2009--2015 crystallization period, and sustained high volume from 2016 onward.
 
@@ -73,11 +73,11 @@ Figure @fig-semantic maps the corpus in two dimensions using UMAP dimensionality
 
 ![UMAP semantic map of the corpus, colored by cluster.](figures/fig_semantic.png){#fig-semantic width=100%}
 
-Figure @fig-semantic-period repeats the same UMAP projection with points colored by publication period (1990–2008, 2009–2015, 2016–2021, 2022–2024). Early works (grey) concentrate in a few regions of the semantic space; later works (darker tones) spread more broadly, consistent with the field's diversification after the Paris Agreement.
+Figure @fig-semantic-period repeats the same UMAP projection with points colored by publication period (1990–2008, 2009–2015, 2016–2021, 2022–2024). Early works (grey) concentrate in a few regions of the semantic space; later works (darker tones) spread more broadly across the semantic space.
 
 ![UMAP semantic map, colored by publication period.](figures/fig_semantic_period.png){#fig-semantic-period width=100%}
 
-Figure @fig-semantic-lang colors the same map by language. English (light grey) dominates and fills the full semantic space; non-English works appear as colored foreground points. French, Chinese, and Japanese works concentrate in specific regions, suggesting distinct national literatures with their own topical emphases rather than translations of the English mainstream.
+Figure @fig-semantic-lang colors the same map by language. English (light grey) dominates and fills the full semantic space; non-English works appear as colored foreground points. French, Chinese, and Japanese works concentrate in specific regions, suggesting distinct national literatures with their own topical emphases.
 
 ![UMAP semantic map, colored by language.](figures/fig_semantic_lang.png){#fig-semantic-lang width=100%}
 
