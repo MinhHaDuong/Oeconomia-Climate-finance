@@ -28,7 +28,7 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - `corpus-report.qmd`: corpus construction, data quality, corpus contents, software environment
 - `technical-report.qmd`: pure composer. Four includes: `_includes/techrep/overview.md`, `_includes/techrep/zscore.md`, `_includes/techrep/summary-of-findings.md`, `_includes/techrep-zoo.md`
 - `_includes/techrep-zoo.md`: composer for the 18-method zoo. One file per method under `_includes/zoo/` (S1–S4, S5=C2ST_embedding, L1–L3, L4=C2ST_lexical, G1–G9). Cherry-pickable by other documents.
-- `zoo-only.qmd`: thin wrapper that renders just the zoo (companion to the TR, or standalone reference)
+- `zoo-breakpoint-detection-methods.qmd`: thin wrapper that renders just the zoo (companion to the TR, or standalone reference)
 - `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 
@@ -68,6 +68,6 @@ In direct service of the current goal (narrative + results + figures):
 Background work (not on the critical path for the current goal):
 
 - **0025** connective prose for corpus report
-- **0092** wire zoo figure recipes in dedicated `zoo.mk` (17 schematics + 18 result panels) — prerequisite for `make output/content/zoo-only.pdf` end-to-end
+- **0092** wire zoo figure recipes in dedicated `zoo.mk` (17 schematics + 18 result panels) — prerequisite for `make output/content/zoo-breakpoint-detection-methods.pdf` end-to-end
 - Re-land arch rule 9 (corpus access through loaders only) — tickets 0043/0044 already on main
 - **0081** bootstrap CI (pytest on PR/push) — prerequisite for 0079 and for /verify to have mechanical evidence; cross-repo batch with IDH 0015, git-erg 0003, AEDIST 0111. Stabilise flakes first; then branch protection.
