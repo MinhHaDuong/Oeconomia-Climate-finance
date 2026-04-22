@@ -83,17 +83,19 @@ def _get_years_and_params(df, emb, cfg, method=None):
 
 
 def _get_window_embeddings(
-    df, emb, year, window, side, min_papers, max_subsample, rng=None
+    df, emb, year, window, side, min_papers, max_subsample, rng=None, gap=1
 ):
     """Extract embeddings for a time window.
 
-    side='before': [year - window, year]
-    side='after':  [year + 1, year + 1 + window]
+    side='before': [year - window, year - gap]
+    side='after':  [year + gap, year + window]
+
+    gap=1 (default) excludes year t from both windows.
     """
     if side == "before":
-        mask = (df["year"] >= year - window) & (df["year"] <= year)
+        mask = (df["year"] >= year - window) & (df["year"] <= year - gap)
     else:
-        mask = (df["year"] >= year + 1) & (df["year"] <= year + 1 + window)
+        mask = (df["year"] >= year + gap) & (df["year"] <= year + window)
 
     idx = df.index[mask]
     if len(idx) < min_papers:
@@ -111,7 +113,7 @@ def _get_window_embeddings(
 
 
 def _iter_window_pairs(
-    df, emb, years_by_window, min_papers, max_subsample, rng=None, equal_n=False
+    df, emb, years_by_window, min_papers, max_subsample, rng=None, equal_n=False, gap=1
 ):
     """Yield (year, window, X, Y) for each valid before/after window pair.
 
@@ -122,10 +124,10 @@ def _iter_window_pairs(
     for w, years in years_by_window.items():
         for y in years:
             X = _get_window_embeddings(
-                df, emb, y, w, "before", min_papers, max_subsample, rng=rng
+                df, emb, y, w, "before", min_papers, max_subsample, rng=rng, gap=gap
             )
             Y = _get_window_embeddings(
-                df, emb, y, w, "after", min_papers, max_subsample, rng=rng
+                df, emb, y, w, "after", min_papers, max_subsample, rng=rng, gap=gap
             )
             if X is None or Y is None:
                 continue
@@ -223,6 +225,7 @@ def compute_s1_mmd(df, emb, cfg):
     if not any(years_by_window.values()):
         return empty_divergence_df()
 
+    gap = cfg["divergence"].get("gap", 1)
     sem_cfg = cfg["divergence"]["semantic"]
     bandwidth_multipliers = sem_cfg["S1_MMD"]["bandwidth_multipliers"]
 
@@ -236,6 +239,7 @@ def compute_s1_mmd(df, emb, cfg):
         max_subsample,
         rng=rng,
         equal_n=equal_n,
+        gap=gap,
     ):
         if last_w is not None and w != last_w:
             log.info("S1 MMD window=%d done", last_w)
@@ -302,6 +306,7 @@ def compute_s2_energy(df, emb, cfg):
     if not any(years_by_window.values()):
         return empty_divergence_df()
 
+    gap = cfg["divergence"].get("gap", 1)
     results = []
     last_w = None
     for y, w, X, Y in _iter_window_pairs(
@@ -312,6 +317,7 @@ def compute_s2_energy(df, emb, cfg):
         max_subsample,
         rng=rng,
         equal_n=equal_n,
+        gap=gap,
     ):
         if last_w is not None and w != last_w:
             log.info("S2 energy window=%d done", last_w)
@@ -358,6 +364,7 @@ def compute_s3_wasserstein(df, emb, cfg):
     if not any(years_by_window.values()):
         return empty_divergence_df()
 
+    gap = cfg["divergence"].get("gap", 1)
     sem_cfg = cfg["divergence"]["semantic"]
     n_projections_list = sem_cfg["S3_sliced_wasserstein"]["n_projections"]
 
@@ -371,6 +378,7 @@ def compute_s3_wasserstein(df, emb, cfg):
         max_subsample,
         rng=rng,
         equal_n=equal_n,
+        gap=gap,
     ):
         if last_w is not None and w != last_w:
             log.info("S3 sliced Wasserstein window=%d done", last_w)
@@ -493,6 +501,7 @@ def compute_s4_frechet(df, emb, cfg):
     if not any(years_by_window.values()):
         return empty_divergence_df()
 
+    gap = cfg["divergence"].get("gap", 1)
     # Always PCA-reduce for Fréchet: (1) covariance needs n >> d,
     # (2) sqrtm is O(d³), and (3) sensitivity analysis shows breaks
     # are stable from d=32 to d=1024.
@@ -509,6 +518,7 @@ def compute_s4_frechet(df, emb, cfg):
         max_subsample,
         rng=rng,
         equal_n=equal_n,
+        gap=gap,
     ):
         if last_w is not None and w != last_w:
             log.info("S4 Frechet window=%d done", last_w)

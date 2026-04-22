@@ -380,7 +380,7 @@ def _community_null_distribution(
     return null_stats[~np.isnan(null_stats)]
 
 
-def _g9_one_window(y, w, works, internal_edges, n_perm, seed, resolution):
+def _g9_one_window(y, w, works, internal_edges, n_perm, seed, resolution, gap=1):
     """Process one (year, window) for G9 community permutation test."""
     import community as community_louvain
     from _divergence_citation import _sliding_window_graph
@@ -388,8 +388,8 @@ def _g9_one_window(y, w, works, internal_edges, n_perm, seed, resolution):
 
     _, perm_rng = _make_window_rngs(seed, y, w)
 
-    G_before = _sliding_window_graph(works, internal_edges, y, w, "before")
-    G_after = _sliding_window_graph(works, internal_edges, y, w, "after")
+    G_before = _sliding_window_graph(works, internal_edges, y, w, "before", gap=gap)
+    G_after = _sliding_window_graph(works, internal_edges, y, w, "after", gap=gap)
 
     before_nodes = list(G_before.nodes())
     after_nodes = list(G_after.nodes())
@@ -441,6 +441,7 @@ def _run_g9_community_permutations(works, internal_edges, div_df, cfg, n_jobs=1)
     div_cfg = cfg["divergence"]
     n_perm = div_cfg["permutation"]["n_perm"]
     seed = div_cfg["random_seed"]
+    gap = div_cfg.get("gap", 1)
     resolution = (
         div_cfg.get("citation", {}).get("G9_community", {}).get("resolution", 1.0)
     )
@@ -452,7 +453,9 @@ def _run_g9_community_permutations(works, internal_edges, div_df, cfg, n_jobs=1)
 
     log.info("G9 parallel: %d (year, window) pairs, n_jobs=%d", len(pairs), n_jobs)
     rows = Parallel(n_jobs=n_jobs)(
-        delayed(_g9_one_window)(y, w, works, internal_edges, n_perm, seed, resolution)
+        delayed(_g9_one_window)(
+            y, w, works, internal_edges, n_perm, seed, resolution, gap=gap
+        )
         for y, w in pairs
     )
     for row in rows:
@@ -497,7 +500,7 @@ def _spectral_null_distribution(G_union, all_nodes, n_before, n_perm, perm_rng):
     return null_stats[~np.isnan(null_stats)]
 
 
-def _g2_spectral_one_window(y, w, works, internal_edges, n_perm, seed):
+def _g2_spectral_one_window(y, w, works, internal_edges, n_perm, seed, gap=1):
     """Process one (year, window) for G2 spectral permutation test."""
     from _citation_methods import _spectral_gap
     from _divergence_citation import _sliding_window_graph
@@ -505,8 +508,8 @@ def _g2_spectral_one_window(y, w, works, internal_edges, n_perm, seed):
 
     _, perm_rng = _make_window_rngs(seed, y, w)
 
-    G_before = _sliding_window_graph(works, internal_edges, y, w, "before")
-    G_after = _sliding_window_graph(works, internal_edges, y, w, "after")
+    G_before = _sliding_window_graph(works, internal_edges, y, w, "before", gap=gap)
+    G_after = _sliding_window_graph(works, internal_edges, y, w, "after", gap=gap)
 
     before_nodes = list(G_before.nodes())
     after_nodes = list(G_after.nodes())
@@ -541,6 +544,7 @@ def _run_g2_spectral_permutations(works, internal_edges, div_df, cfg, n_jobs=1):
     div_cfg = cfg["divergence"]
     n_perm = div_cfg["permutation"]["n_perm"]
     seed = div_cfg["random_seed"]
+    gap = div_cfg.get("gap", 1)
 
     year_windows = div_df[["year", "window"]].drop_duplicates()
     pairs = [
@@ -549,7 +553,9 @@ def _run_g2_spectral_permutations(works, internal_edges, div_df, cfg, n_jobs=1):
 
     log.info("G2 parallel: %d (year, window) pairs, n_jobs=%d", len(pairs), n_jobs)
     rows = Parallel(n_jobs=n_jobs)(
-        delayed(_g2_spectral_one_window)(y, w, works, internal_edges, n_perm, seed)
+        delayed(_g2_spectral_one_window)(
+            y, w, works, internal_edges, n_perm, seed, gap=gap
+        )
         for y, w in pairs
     )
     for row in rows:

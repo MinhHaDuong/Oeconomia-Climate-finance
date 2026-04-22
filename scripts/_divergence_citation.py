@@ -121,18 +121,19 @@ def _dict_to_df(results, hyperparams=""):
 # ── Sliding window helpers (ticket 0048) ─────────────────────────────────
 
 
-def _sliding_window_graph(works, internal_edges, year, window, side):
+def _sliding_window_graph(works, internal_edges, year, window, side, gap=1):
     """Build directed graph for one half-window.
 
-    side='before': papers in [year - window, year]
-    side='after':  papers in [year + 1, year + 1 + window]
+    side='before': papers in [year - window, year - gap]
+    side='after':  papers in [year + gap, year + window]
 
+    gap=1 (default) excludes year t from both windows.
     Only edges where both endpoints are in the node set are included.
     """
     if side == "before":
-        year_lo, year_hi = year - window, year
+        year_lo, year_hi = year - window, year - gap
     else:
-        year_lo, year_hi = year + 1, year + 1 + window
+        year_lo, year_hi = year + gap, year + window
 
     G = nx.DiGraph()
     mask = (works["year"] >= year_lo) & (works["year"] <= year_hi)
@@ -151,7 +152,7 @@ def _iter_sliding_pairs(works, internal_edges, cfg):
     """Yield (year, window, G_before, G_after) for each valid sliding pair.
 
     Mirrors the semantic _iter_window_pairs pattern:
-      before = [year - w, year], after = [year + 1, year + 1 + w]
+      before = [year - w, year - gap], after = [year + gap, year + w]
     Skips pairs where either half has fewer than min_papers nodes.
 
     TODO: G1/G2/G5/G6/G8 each call this independently, rebuilding graphs
@@ -162,12 +163,17 @@ def _iter_sliding_pairs(works, internal_edges, cfg):
 
     div_cfg = cfg["divergence"]
     windows = div_cfg["windows"]
-    min_papers = get_min_papers(len(works), cfg)
+    gap = div_cfg.get("gap", 1)
+    min_papers = get_min_papers(cfg=cfg, n_works=len(works))
 
     for w, years in per_window_year_ranges(works, windows).items():
         for year in years:
-            G_before = _sliding_window_graph(works, internal_edges, year, w, "before")
-            G_after = _sliding_window_graph(works, internal_edges, year, w, "after")
+            G_before = _sliding_window_graph(
+                works, internal_edges, year, w, "before", gap=gap
+            )
+            G_after = _sliding_window_graph(
+                works, internal_edges, year, w, "after", gap=gap
+            )
             if G_before.number_of_nodes() < min_papers:
                 continue
             if G_after.number_of_nodes() < min_papers:
