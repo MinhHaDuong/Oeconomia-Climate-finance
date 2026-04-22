@@ -1,0 +1,59 @@
+%erg v1
+Title: Create multilayer-detection-techrep.qmd — technical supplement for the QSS paper
+Status: open
+Created: 2026-04-22
+Author: claude
+
+--- log ---
+2026-04-22T00:00Z claude created
+
+--- body ---
+## Context
+
+The multilayer-detection paper (QSS target) needs a focused technical
+supplement assembled from the existing pool (`technical-report.qmd`
+includes). The supplement covers only the 6 methods used in the paper;
+the full 18-method zoo stays in `technical-report.qmd`.
+
+Pool architecture: `technical-report.qmd` is composed of modular
+`_includes/` fragments. The supplement assembles a subset of those
+fragments — no prose duplication.
+
+## Actions
+
+1. Create `content/multilayer-detection-techrep.qmd` with the following
+   include sequence:
+   - `_includes/techrep/overview.md` (framing)
+   - `_includes/techrep/zscore.md` (Z-score standardisation)
+   - `_includes/techrep/null-model.md` (permutation null model)
+   - `_includes/zoo/S2_energy.md` (primary semantic detector)
+   - `_includes/zoo/L1_js.md` (primary lexical detector)
+   - `_includes/zoo/G9_community.md` (primary citation detector)
+   - `_includes/zoo/C2ST_embedding.md` (robustness check — embedding)
+   - `_includes/zoo/C2ST_lexical.md` (robustness check — lexical)
+   - Plus any other methods cited in the paper's §4/§5 (audit
+     `multilayer-detection.qmd` for method references before finalising
+     the list).
+
+2. Add YAML front matter mirroring `technical-report.qmd` style
+   (title, author, date, metadata-files, bibliography, pdf-engine).
+
+3. Create `MULTILAYER_TECHREP_INCLUDES` variable in `multilayer-detection.mk`
+   listing the included fragments as Make prerequisites.
+
+4. Add `output/content/multilayer-detection-techrep.pdf` target to
+   `multilayer-detection.mk`, depending on
+   `content/multilayer-detection-techrep.qmd $(MULTILAYER_TECHREP_INCLUDES)
+   $(BIB) content/technical-report-vars.yml`.
+
+5. Add the target to the `papers:` phony in `Makefile`.
+
+## Test
+
+`grep -c 'include _includes' content/multilayer-detection-techrep.qmd`
+returns ≥ 6. `make output/content/multilayer-detection-techrep.pdf`
+succeeds (or degrades gracefully when figure PNGs are absent).
+
+## Dependencies
+
+- PR #737 (t0095-rename-companion-paper) must be merged first.
