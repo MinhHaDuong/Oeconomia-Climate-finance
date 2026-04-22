@@ -67,6 +67,21 @@ $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_c
 #
 # One diagnostic figure per method showing Z(t,w) for w=2..5.
 # Degrades gracefully: writes a placeholder figure if the CSV is absent.
+#
+# Methods with null model tables get an explicit target that passes --null-ci
+# so the CI band overlay is rendered.  The pattern rule handles all others.
+
+$(ZOO_FIGS)/fig_zoo_S2_energy.png: $(ZOO_TABLES)/tab_crossyear_S2_energy.csv $(ZOO_TABLES)/tab_null_S2_energy.csv scripts/plot_zoo_results.py
+	$(UV_RUN) python scripts/plot_zoo_results.py --method S2_energy --output $@ --null-ci $(ZOO_TABLES)/tab_null_S2_energy.csv
+
+$(ZOO_FIGS)/fig_zoo_L1.png: $(ZOO_TABLES)/tab_crossyear_L1.csv $(ZOO_TABLES)/tab_null_L1.csv scripts/plot_zoo_results.py
+	$(UV_RUN) python scripts/plot_zoo_results.py --method L1 --output $@ --null-ci $(ZOO_TABLES)/tab_null_L1.csv
+
+$(ZOO_FIGS)/fig_zoo_G9_community.png: $(ZOO_TABLES)/tab_crossyear_G9_community.csv $(ZOO_TABLES)/tab_null_G9_community.csv scripts/plot_zoo_results.py
+	$(UV_RUN) python scripts/plot_zoo_results.py --method G9_community --output $@ --null-ci $(ZOO_TABLES)/tab_null_G9_community.csv
+
+$(ZOO_FIGS)/fig_zoo_G2_spectral.png: $(ZOO_TABLES)/tab_crossyear_G2_spectral.csv $(ZOO_TABLES)/tab_null_G2_spectral.csv scripts/plot_zoo_results.py
+	$(UV_RUN) python scripts/plot_zoo_results.py --method G2_spectral --output $@ --null-ci $(ZOO_TABLES)/tab_null_G2_spectral.csv
 
 $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_results.py
 	$(UV_RUN) python scripts/plot_zoo_results.py --method $* --output $@
