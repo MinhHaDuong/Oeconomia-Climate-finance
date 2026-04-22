@@ -1,0 +1,104 @@
+%erg v1
+Title: Zoo deepening G — figure polish: drop w=5 from CSVs, add CI bands, tighten layout
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+After ticket 0100 reruns on padme (new gap, windows=[2,3,4]), and ticket 0097 adds
+null CI bands to plot_zoo_results.py, the zoo result panels need visual polish:
+
+1. **Drop w=5**: Already handled by the padme rerun — the CSVs will not contain w=5.
+   This ticket adds a regression test to catch future regressions.
+
+2. **CI band styling**: The dashed CI lines from ticket 0097 need to be styled
+   consistently — one dashed line per window (matching the window's color), labeled
+   once in the legend.
+
+3. **Legend crowding**: With 3 Z-score curves + 3 CI dashed lines, the legend has
+   6 entries. Condense: use a single "null 95% CI" entry for all windows (since they
+   share the same dashed style but different colors — handle with a custom legend
+   handler).
+
+4. **Axis labels and reference lines**: Ensure every panel has:
+   - x-axis: "Year"
+   - y-axis: "Z-score"
+   - Horizontal reference at Z=0 (thin grey)
+   - Horizontal reference at Z=±2 (thin grey dashed, labeled "±2σ" once)
+
+5. **Title consistency**: Each panel title should be the method short name
+   (e.g., "S2 Energy Distance") matching the zoo section headers.
+
+## Actions
+
+### 1. Regression test: no w=5 in any tab_crossyear CSV
+
+```python
+# tests/test_zoo_mk.py (extend existing)
+def test_no_w5_in_crossyear_tables():
+    """No tab_crossyear CSV should contain window='5' rows."""
+    for path in glob("content/tables/tab_crossyear_*.csv"):
+        df = pd.read_csv(path)
+        df["window"] = df["window"].astype(str)
+        assert "5" not in df["window"].unique(), f"{path} contains w=5 rows"
+```
+
+### 2. Refactor plot_zoo_results.py legend
+
+- Add `WINDOW_STYLE` dict entry for CI lines: `linestyle='--'`, same color as main.
+- Custom legend: Z-score lines labeled "w=2", "w=3 (lead)", "w=4"; single
+  "null 95% CI" entry using a generic dashed line.
+- Suppress per-window CI entries from auto-legend.
+
+### 3. Add reference lines
+
+In the main plot loop, before drawing curves:
+```python
+ax.axhline(0, color='0.7', linewidth=0.5, zorder=0)
+ax.axhline(2, color='0.7', linewidth=0.5, linestyle=':', zorder=0)
+ax.axhline(-2, color='0.7', linewidth=0.5, linestyle=':', zorder=0)
+```
+Label "±2" in a text annotation in the top-right corner (not in legend).
+
+### 4. Axis label discipline
+
+Assert in existing `test_zoo_mk.py` that the plot function sets xlabel and ylabel:
+- This is a visual regression guard (patch matplotlib and check calls).
+
+### 5. Title normalization
+
+Add `METHOD_TITLES` dict in `plot_zoo_results.py` mapping method codes to display
+names (e.g., "S2_energy" → "S2 Energy Distance"). Fall back to method code if not found.
+
+## Test
+
+```python
+# tests/test_zoo_result_figures.py (extend)
+def test_no_w5_rendered(tmp_path, capsys):
+    """plot_zoo_results.py ignores any w=5 rows in input."""
+    df = pd.DataFrame({
+        "method": ["S2_energy"] * 4,
+        "year": [2005, 2005, 2005, 2005],
+        "window": ["2", "3", "4", "5"],
+        "value": [0.1, 0.2, 0.3, 0.4],
+        "z_score": [1.0, 1.5, 1.8, 2.0],
+    })
+    # Call plotting function; assert w=5 does not appear in legend labels.
+    ...
+```
+
+RED: test is new.
+
+## Exit criteria
+
+1. Regression test for no w=5 rows exists and passes after padme rerun (ticket 0100).
+2. Legend condensed: ≤4 entries per panel (3 Z-score + 1 "null 95% CI").
+3. All panels have Z=0 and Z=±2 reference lines.
+4. All panels have x/y axis labels.
+5. `make output/content/breakpoint-detect-method-zoo.pdf` renders cleanly;
+   visual inspection confirms no crowded 4th curve.

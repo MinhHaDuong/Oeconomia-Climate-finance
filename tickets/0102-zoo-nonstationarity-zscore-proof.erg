@@ -1,0 +1,129 @@
+%erg v1
+Title: Zoo deepening F — formal proof: non-stationarity invalidates cross-year Z-score as significance test
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+Ticket 0097 states the problem informally. This ticket develops the formal proof
+and provides the mathematical appendix for the zoo technical reference. The target
+audience is a quantitative reader who wants to verify the claim that cross-year
+Z-score significance thresholds are misleading under non-stationarity.
+
+This is a standalone theory ticket — pure mathematical writing, no code changes.
+
+## Actions
+
+### 1. Formal model
+
+Define the data generating process:
+
+D(t, w) = μ(t) + ε(t, w)
+
+where:
+- μ(t) is a smooth, slowly-varying trend function (the "convergence signal")
+- ε(t, w) ~ i.i.d.(0, σ²_ε) are mean-zero noise terms, independent across t
+
+The cross-year Z-score standardizes:
+Z(t, w) = [D(t, w) − D̄(w)] / S(w)
+
+where D̄(w) = T⁻¹ Σ_t D(t,w) and S²(w) = (T−1)⁻¹ Σ_t [D(t,w) − D̄(w)]².
+
+### 2. Prove: Z ≥ z_α does not imply p ≤ α under non-stationarity
+
+**Proposition**: If μ(t) is non-constant, then under H₀ (no structural break at t₀,
+i.e., D(t,w) = μ(t) + ε(t,w) for all t), we have:
+
+P(Z(t₀, w) ≥ z_α) ≠ α
+
+**Proof sketch**:
+Under H₀, Z(t₀, w) = [μ(t₀) − D̄(w) + ε(t₀,w)] / S(w).
+
+The bias term [μ(t₀) − D̄(w)] / S(w) is non-zero whenever μ(t₀) ≠ D̄(w) — i.e.,
+whenever t₀ is not at the temporal mean of μ. For a monotone decreasing μ (field
+convergence), years early in the series have μ(t₀) > D̄(w) (positive bias, Z
+inflated), and late years have μ(t₀) < D̄(w) (negative bias, Z deflated).
+
+The empirical distribution of Z under H₀ is NOT N(0,1) — it mirrors the shape of μ.
+In particular, P(Z(t₀, w) ≥ z_α) > α for early years (false positive inflation)
+and < α for late years (false negative inflation).
+
+**Corollary**: The Z-score is a valid significance test ONLY IF μ(t) = const, i.e.,
+the series is stationary. For the climate finance corpus, stationarity is rejected
+for most methods (S1–S4, L1, G2, G9 show monotone trends). □
+
+### 3. Quantify the distortion
+
+For a linearly trending series μ(t) = a + bt with b ≠ 0:
+- D̄(w) = a + b·t̄ where t̄ = (t_min + t_max)/2
+- S²(w) = b²·Var_t(t) + σ²_ε ≈ b²·T²/12 + σ²_ε for T years
+
+Bias of Z at t₀:
+Bias(t₀) = b(t₀ − t̄) / √(b²T²/12 + σ²_ε)
+
+At high signal-to-noise ratio (b²T² >> σ²_ε):
+Bias(t₀) ≈ (t₀ − t̄) · √12 / T
+
+For T=30 years, t₀ = t_min (first year): Bias ≈ −√3 ≈ −1.73.
+This means the Z-score for early years is inflated by ~1.73 units above the true
+anomaly. A threshold of |Z| ≥ 2 effectively requires |anomaly| ≥ 0.27 in early
+years but |anomaly| ≥ 3.73 in late years — an asymmetric and misleading test.
+
+### 4. Write up as a boxed proposition in the technical reference
+
+Format the proof as a "Proposition + Proof" box suitable for inclusion in
+`content/_includes/techrep/null-model.md` (or a new `_includes/techrep/zscore-theory.md`
+if the proof is too long for the main flow).
+
+Include:
+- The DGP definition (2–3 lines)
+- The proposition statement (1 sentence)
+- The proof (half page max)
+- The quantified distortion for linear trend (2–3 lines)
+- A concluding sentence directing the reader to use the null CI band (ticket 0097)
+
+### 5. Empirical verification
+
+Using real data (tab_div_S2_energy.csv, which shows a clear trend), compute:
+- The cross-year Z-scores
+- The null model p-values (tab_null_S2_energy.csv)
+- Scatter plot: Z vs −log10(p) to show that the two rankings diverge
+- Report the rank correlation (Spearman) between |Z| and −log10(p) across years
+
+If rank correlation is low (< 0.5), include the scatter as a figure in the prose.
+If high (> 0.8), note that Z and null-p agree in practice despite the theoretical
+mismatch — probably because the trend is weak relative to the noise for this method.
+
+## Test
+
+```python
+# tests/test_zscore_theory.py
+def test_zscore_inflated_at_trend_extremes():
+    """Under linear trend, Z-score is biased at early and late years."""
+    import numpy as np
+    rng = np.random.default_rng(42)
+    T = 30
+    b = 0.1   # linear trend
+    sigma = 0.05
+    D = b * np.arange(T) + rng.normal(0, sigma, T)
+    Z = (D - D.mean()) / D.std()
+    # Early years (t < T/2) should have Z > true anomaly; late years < true anomaly.
+    early_bias = (Z[:5] - (D[:5] - D.mean()) / sigma).mean()
+    assert early_bias > 0.5, "Expected positive bias at early years under trend"
+```
+
+RED: test is new; it should pass once written (it tests mathematical fact,
+not code behavior — purpose is documentation and regression guard).
+
+## Exit criteria
+
+1. Proposition + Proof block in `null-model.md` or `zscore-theory.md`, ≥200 words.
+2. Quantified distortion formula for linear trend included.
+3. Empirical scatter Z vs −log10(p) produced for S2_energy; Spearman ρ reported.
+4. Theory test passes.
+5. PDF renders without LaTeX errors.

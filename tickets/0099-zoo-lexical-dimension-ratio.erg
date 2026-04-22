@@ -1,0 +1,102 @@
+%erg v1
+Title: Zoo deepening C — lexical methods: embedding dimension vs sample size theory
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+The lexical methods (L1 JS divergence, L2 novelty-transience ratio, L3 term bursts,
+C2ST_lexical) all operate on TF-IDF representations with `tfidf_max_features=5000`
+vocabulary dimensions. A typical window contains 100–400 papers, giving a
+dimension-to-sample ratio D/n ≈ 12–50. This is the high-dimensional regime where
+classical distribution estimation breaks down.
+
+The theoretical implications differ by method family:
+- **L1 (JS divergence)**: estimates P(w|before) and P(w|after) as empirical term
+  frequencies. With D=5000 vocabulary entries and n=200 docs, most terms appear 0
+  or 1 times — the empirical distribution is extremely sparse. JS divergence between
+  two sparse histograms reflects sampling noise, not distributional shift.
+- **L2 (NTR)**: novelty-transience measures term overlap across windows. The overlap
+  statistic is more robust to sparsity than JS, but still sensitive to vocabulary
+  coverage at small n.
+- **L3 (term bursts)**: looks for terms whose frequency spikes. Requires sufficient
+  baseline frequency to distinguish signal from noise. min_df=3 is a guard but may
+  be insufficient at small n.
+
+There is no current prose in the zoo explaining these limitations or how the pipeline
+guards against them (min_papers=30, tfidf_min_df=3).
+
+## Actions
+
+### 1. Theoretical section in L1_js.md
+
+Add subsection "Dimension–sample ratio and histogram sparsity" to
+`content/_includes/zoo/L1_js.md`:
+
+a) **Occupancy argument**: In a vocabulary of D terms, with n documents of average
+   length L words, the expected number of distinct terms observed is
+   D · (1 − (1 − 1/D)^(nL)) ≈ D · (1 − e^{−nL/D}).
+   For D=5000, n=150, L=150 words: expected occupancy ≈ 98%. Most terms are seen
+   at least once. But the FREQUENCY estimates are noisy: a term appearing k times
+   has frequency estimate k/N with std ~ sqrt(k)/N (Poisson), so relative std ~ 1/sqrt(k).
+   For rare terms (k=1–3), the estimate is dominated by noise.
+
+b) **JS divergence degrades gracefully**: Unlike KL divergence, JS is bounded [0, log2]
+   and defined even when support differs. The zero-frequency problem is mitigated by
+   Laplace smoothing (add-1). State whether we apply smoothing and what constant.
+
+c) **Effective vocabulary**: Report the effective vocabulary size (terms with df ≥ 3
+   in both windows) used in practice. With min_df=3, D_eff << D_total; the effective
+   D/n ratio is much lower than 5000/n.
+
+d) **Minimum sample guard**: min_papers=30 ensures n_before ≥ 30, n_after ≥ 30.
+   At n=30 and D_eff ≈ 200–500 (typical with min_df=3), the ratio is manageable
+   but on the edge. Note the limitation honestly.
+
+### 2. Theoretical section in L2_ntr.md
+
+Add similar subsection to `content/_includes/zoo/L2_ntr.md`:
+- NTR = (novelty − transience) / (novelty + transience) where novelty measures
+  terms new in [t+1, t+w] absent in [t−w, t−1], etc.
+- This is a set-overlap measure, more robust than JS to frequency estimation noise.
+- But at small n, the "new term" rate is inflated because rare terms appear in
+  only one window by chance. Derive the null expectation: E[novelty | H₀] as a
+  function of n and D. This is a birthday-problem calculation.
+
+### 3. Note in C2ST_lexical.md
+
+Add a note that C2ST_lexical uses TF-IDF features reduced by PCA to pca_dim=32
+before classification — this is precisely the dimension-reduction guard against D/n
+blow-up. Reference the pca_dim=32 config parameter.
+
+### 4. Config robustness check
+
+Add a test that warns when any window has n < 50 for lexical methods (not a hard
+failure, just a logged warning) — update `compute_divergence.py` or
+`_divergence_lexical.py`.
+
+## Test
+
+```python
+# tests/test_lexical_dimension_guard.py
+def test_js_divergence_warns_at_low_n(caplog, tmp_path):
+    """L1 JS divergence logs a warning when window n < 50."""
+    # Build a smoke corpus with only 20 papers per window.
+    # Run compute_divergence.py --method L1.
+    # Assert warning message appears in caplog.
+```
+
+RED: test fails because the warning does not exist yet.
+
+## Exit criteria
+
+1. `L1_js.md` contains occupancy analysis, JS smoothing statement, effective vocabulary note.
+2. `L2_ntr.md` contains birthday-problem null expectation for novelty at small n.
+3. `C2ST_lexical.md` references pca_dim=32 as the D/n guard.
+4. `compute_divergence.py` (or `_divergence_lexical.py`) emits a warning at n < 50 for lexical methods.
+5. Test above passes green.

@@ -1,0 +1,110 @@
+%erg v1
+Title: Zoo deepening A — null model significance framework: theory + CI figures
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+The zoo result panels currently plot cross-year Z-scores Z(t,w) = (D(t,w) − μ_w) / σ_w
+where μ_w and σ_w are the mean and standard deviation of D across years for a given
+window w. The prose in zscore.md and null-model.md implicitly conflates two distinct
+operations: scale normalization and significance testing. This ticket separates them
+rigorously — in theory and in the figures.
+
+The problem: cross-year Z-score assumes stationarity of D(t,w) across t. Climate
+finance is a growing, converging field — D is monotonically trending for most methods
+(S1–S4, L1, G2, G9 all show secular decline). When the series has a trend, μ_w is
+dominated by the long-run level and σ_w by the spread of the trend, not by local
+year-to-year deviations. A Z-score above 2 does NOT imply significance in any
+frequentist sense. It only says "this year's D is 2 standard deviations from the
+long-run mean" — which is trivially true every year on a monotone series.
+
+The permutation null model is the correct significance test. `tab_null_{method}.csv`
+stores `null_mean` and `null_std` per (year, window), giving the null distribution of
+D under exchangeability. Significance threshold in raw units: D* = null_mean + 1.96·null_std.
+Transformed to Z-score units: Z* = (D* − μ_w) / σ_w (year-varying, method-varying).
+
+## Actions
+
+### 1. Theory research and mathematical writeup
+
+Write or substantially expand `content/_includes/techrep/null-model.md` to include:
+
+a) **Stationarity prerequisite for Z-score validity** — formal statement:
+   If D(t,w) = f(t) + ε(t) where f is a monotone trend and ε is i.i.d., then
+   μ_w ≈ f̄ (mean of trend) and σ_w² ≈ Var(f) + Var(ε) ≈ Var(f) when trend
+   dominates. The Z-score then recovers the shape of f, not the local anomaly ε.
+   Consequence: |Z(t,w)| ≥ 2 reflects position on the trend curve, not significance.
+
+b) **Permutation test as the proper significance test** — formal derivation:
+   Under H₀: year labels are exchangeable within [t−w−gap, t+w+gap].
+   Null distribution: D_π ~ P(D | H₀) via B=500 random permutations.
+   p-value: P(D_π ≥ D_obs). Rejection at α=0.05 iff p ≤ 0.05, equivalently
+   iff D_obs ≥ F⁻¹_{D_π}(0.95) = null_mean + z_{0.95}·null_std (under Gaussian
+   approximation, or empirical 95th percentile without the approximation).
+
+c) **Reconciliation** — Z-score serves comparability across methods (different
+   scales, different units). Null CI serves significance. Both are needed.
+   The figures overlay both: Z-score curve (comparability) + year-varying null CI
+   band (significance threshold, expressed in Z-score units).
+
+d) **Non-stationarity caveat** — note that the permutation test assumes local
+   exchangeability. If the field is evolving slowly, this is approximately valid
+   within [t−w−gap, t+w+gap]. For large w or fast-moving periods, the test is
+   conservative (H₀ is harder to reject, biasing toward no change).
+
+Also update `content/_includes/techrep/zscore.md` to state clearly:
+- Z-score = scale normalization for cross-method comparison
+- Z-score ≥ 2 does NOT imply p ≤ 0.05 when the series is non-stationary
+- Use the null CI band (see null-model.md) to assess significance
+
+### 2. Add null model CI bands to zoo result figures
+
+Modify `scripts/plot_zoo_results.py`:
+
+a) Add optional `--null-ci <path>` argument accepting `tab_null_{method}.csv`.
+   When provided, overlay CI bands. When absent, plot as today (graceful fallback).
+
+b) Compute CI threshold in Z-score units:
+   - Join `tab_null_{method}.csv` to the Z-score data on (year, window)
+   - Z_threshold(t,w) = (null_mean(t,w) + 1.96·null_std(t,w) − μ_w) / σ_w
+     where μ_w, σ_w are the same scalars used to compute Z(t,w).
+   - Plot as a dashed line per window (same color family as the Z-score curve).
+   - Add a ±Z_threshold mirror for two-sided tests if relevant.
+
+c) Update `zoo.mk` recipe to pass `--null-ci content/tables/tab_null_{method}.csv`
+   where the null table exists (not all methods have one; graceful skip).
+
+### 3. Update prose to match figures
+
+In `content/_includes/techrep/overview.md`, add one paragraph describing what the
+CI bands in the figures represent and why the null model is the significance arbiter.
+
+## Test
+
+```python
+# tests/test_zoo_result_figures.py (new or extend existing)
+def test_null_ci_column_in_plot(tmp_path):
+    """plot_zoo_results.py with --null-ci produces a figure with a dashed CI line."""
+    # Build minimal tab_crossyear and tab_null CSVs, call the script,
+    # assert the output PNG is non-empty and differs from the no-CI version.
+    ...
+```
+
+RED: test fails because `--null-ci` arg does not exist yet.
+
+## Exit criteria
+
+1. `content/_includes/techrep/null-model.md` contains the stationarity proof,
+   the permutation test derivation, and the reconciliation paragraph — confirmed
+   by grep for "stationarity", "exchangeability", "comparability".
+2. `content/_includes/techrep/zscore.md` no longer implies Z ≥ 2 is significant;
+   explicitly defers to null CI.
+3. `plot_zoo_results.py --null-ci` accepted; zoo result panels show dashed CI band.
+4. Test in (3) passes green.
+5. `make output/content/breakpoint-detect-method-zoo.pdf` renders without error.
