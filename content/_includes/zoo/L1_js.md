@@ -31,6 +31,10 @@ $\text{JS} \in [0, \log 2]$; the square root is a proper metric.
 
 **Limitations.** Ignores word order and semantic similarity (synonyms treated as distinct tokens).
 
+**Smoothing:** Both the before- and after-period term-frequency distributions receive additive epsilon smoothing ($\varepsilon = 10^{-10}$) before computing the Jensen–Shannon divergence, preventing $\log(0)$ errors and bounding the statistic away from its theoretical maximum of $\log 2$.
+
+**Vocabulary dimension and sample size:** The TF-IDF vocabulary has up to $D = 5{,}000$ dimensions (after `min_df = 3` pre-filtering). A typical window contains $n = 150$–$400$ documents. The expected number of distinct vocabulary terms observed in a window of $n$ documents averaging $L \approx 150$ words is $D \cdot (1 - e^{-nL/D})$; at $n=200$ this gives approximately 98% occupancy — most terms appear at least once. Individual frequency estimates are noisier: a term observed $k$ times has relative standard error $\sim 1/\sqrt{k}$, so terms with $k < 4$ (filtered by `min_df = 3` at fit time, but not per-window) contribute mostly noise. When $n < 50$, the per-window effective vocabulary shrinks further, degrading JS divergence estimates; a warning is logged in this case.
+
 ### Corpus results
 
 ![](figures/fig_zoo_L1.png){width=100%}
