@@ -133,9 +133,20 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", required=True, choices=METHODS.keys())
+    parser.add_argument(
+        "--no-equal-n",
+        dest="equal_n",
+        action="store_false",
+        default=None,
+        help="Disable equal-n subsampling (override config equal_n: true)",
+    )
     args = parser.parse_args(extra)
 
     cfg = load_analysis_config()
+
+    # Mutate cfg so private modules pick up the override without API changes.
+    if args.equal_n is not None:
+        cfg["divergence"]["equal_n"] = args.equal_n
     module_name, func_name, channel, needs_emb, needs_cit = METHODS[args.method]
 
     # Lazy import
