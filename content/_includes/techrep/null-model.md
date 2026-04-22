@@ -20,9 +20,9 @@ $$Z(t,w) = \frac{\mu(t) - \bar{\mu} + \varepsilon(t,w)}{S(w)}$$
 
 where $\bar{\mu} = T^{-1}\sum_t \mu(t)$ and $S^2(w) \approx \text{Var}_t(\mu) + \sigma_\varepsilon^2$.
 The bias term $[\mu(t) - \bar{\mu}]/S(w)$ is non-zero whenever $t$ is not at the
-temporal mean of $\mu$. For a monotone increasing trend (convergence), early years have
-$\mu(t) < \bar{\mu}$ (Z deflated, false negatives) and late years have $\mu(t) > \bar{\mu}$
-(Z inflated, false positives). The empirical distribution of $Z$ under $H_0$ mirrors
+temporal mean of $\mu$. For a monotone decreasing trend (convergence: homogenising field), early years have
+$\mu(t) > \bar{\mu}$ (Z inflated, false positives) and late years have $\mu(t) < \bar{\mu}$
+(Z deflated, false negatives). The empirical distribution of $Z$ under $H_0$ mirrors
 the shape of $\mu$, not $N(0,1)$. $\square$
 
 **Quantified distortion for a linear trend** $\mu(t) = a + bt$ with $b \neq 0$:
