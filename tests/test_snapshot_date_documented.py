@@ -4,9 +4,9 @@ SNAPSHOT_DATE = "2026-03-26"
 
 
 def test_date_in_companion_paper():
-    text = Path("content/companion-paper.qmd").read_text()
+    text = Path("content/multilayer-detection.qmd").read_text()
     assert SNAPSHOT_DATE in text, (
-        f"Snapshot date {SNAPSHOT_DATE} not found in companion-paper.qmd"
+        f"Snapshot date {SNAPSHOT_DATE} not found in multilayer-detection.qmd"
     )
 
 

@@ -20,12 +20,14 @@ def _load_config_windows():
 
 
 def _load_paper_windows():
-    paper_text = (ROOT / "content/companion-paper.qmd").read_text()
+    paper_text = (ROOT / "content/multilayer-detection.qmd").read_text()
     # Slice §4.8 section only — between "### 4.8 Robustness" and "### 4.9"
     section_match = re.search(
         r"### 4\.8 Robustness(.*?)### 4\.9", paper_text, re.DOTALL
     )
-    assert section_match, "§4.8 Robustness section not found in companion-paper.qmd"
+    assert section_match, (
+        "§4.8 Robustness section not found in multilayer-detection.qmd"
+    )
     section = section_match.group(1)
 
     # Find LaTeX set notation e.g. \{2, 3, 4\} or {2, 3, 4}
