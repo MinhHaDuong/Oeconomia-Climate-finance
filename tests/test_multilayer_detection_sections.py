@@ -1,4 +1,4 @@
-"""Structural checks for companion-paper.qmd (ticket 0057).
+"""Structural checks for multilayer-detection.qmd (ticket 0057).
 
 The companion paper (QSS submission, epic 0026) presents a lean six-method
 design for endogenous periodization. Its Method section (§4) must cover
@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 REPO = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PAPER = REPO / "content" / "companion-paper.qmd"
+PAPER = REPO / "content" / "multilayer-detection.qmd"
 
 
 def _text() -> str:

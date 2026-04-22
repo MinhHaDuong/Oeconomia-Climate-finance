@@ -102,7 +102,7 @@ DOC_VARS = {
         "lang_english_pct",
         "openalex_pct",
     ],
-    "companion-paper": [
+    "multilayer-detection": [
         # direct + includes: bimodality-analysis, core-vs-full,
         #   embedding-generation, pca-scatter, structural-breaks,
         #   alluvial-diagram
