@@ -119,25 +119,28 @@ def main(argv=None):
     log_p = -np.log10(p_vals[valid].values)
     rho, pvalue = spearmanr(abs_z[valid].values, log_p)
 
-    print(
-        f"\nSpearman ρ(|Z_cross-year|, -log10(p_perm)) = {rho:.3f}  (p={pvalue:.3e}, n={n_valid})"
+    log.info(
+        "Spearman rho(|Z_cross-year|, -log10(p_perm)) = %.3f  (p=%.3e, n=%d)",
+        rho,
+        pvalue,
+        n_valid,
     )
 
     if rho < 0.5:
-        print(
-            "Low rank correlation: cross-year Z and permutation p give DIVERGENT rankings.\n"
-            "The non-stationarity bias is empirically significant for S2_energy.\n"
+        log.info(
+            "Low rank correlation: cross-year Z and permutation p give DIVERGENT rankings. "
+            "The non-stationarity bias is empirically significant for S2_energy. "
             "Consider including the scatter plot in the prose."
         )
     elif rho > 0.8:
-        print(
-            "High rank correlation: Z and null-p broadly agree for S2_energy.\n"
-            "The trend is weak relative to noise for this method/window combination.\n"
+        log.info(
+            "High rank correlation: Z and null-p broadly agree for S2_energy. "
+            "The trend is weak relative to noise for this method/window combination. "
             "Theoretical mismatch is real but practically muted here."
         )
     else:
-        print(
-            "Moderate rank correlation: partial agreement between Z and null-p.\n"
+        log.info(
+            "Moderate rank correlation: partial agreement between Z and null-p. "
             "Non-stationarity creates detectable but not severe distortion."
         )
 
