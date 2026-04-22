@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-04-21
+Last updated: 2026-04-22
 
 ## Current goal
 
@@ -32,6 +32,16 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 
+### Zoo deepening — merged 2026-04-22 (PRs #744–#752)
+- #744 (0099 part 1): L1_js theory — smoothing, vocabulary, low-n warning (LOW_N_LEXICAL_THRESHOLD=50)
+- #745 (0097): null model CI bands in zoo result figures
+- #746 (0099 part 2): L2 null expectation + C2ST_lexical D/n guard
+- #747 (0098 partial): growing-corpus bias theory + --no-equal-n flag
+- #748 (0101): minimum corpus size theory + per-method config overrides
+- #749 (0103): figure polish — config-driven method titles, Z=0 reference line
+- #750 (0100): gap=1 window semantics across all four channels
+- #751/#752: hotfixes — L2 w=5 test exemption, crossyear Z-score all-NaN crash
+
 ## Corpus (v1.1.1)
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS (news/discourse), SciSpace, grey literature, teaching canon
@@ -42,26 +52,23 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ## Blockers
 
-None. Wave C merged 2026-04-18 (PRs #708 / #709 / #710). Companion paper is assembled on main with method, figures, and §5 numeric fill from the 2026-04-17 corpus-1.1.1 pipeline rerun.
+None.
 
-### Wave C — merged 2026-04-18
-- #708 (ticket 0057): §4 Method rewrite + §5 stubs + bibliography for two-sample testing literature
-- #709 (ticket 0058): four canonical figures (Z-series, heatmap, terms, community) + shared plot utilities + `companion.mk`
-- #710 (ticket 0064): §5 Results filled from real-corpus vars — four G9 sub-zones at lead $w=3$ (2001-2002, 2006, 2012-2015, 2018-2020, peak Z=8.16 at 2015); S2/L1 saturate under residual growth bias (B2/B9), reframed as diagnostic
+## Active agents (as of 2026-04-22)
 
-### Divergence pipeline — merged 2026-04-15 (PR #650)
-- 18 divergence methods: S1-S4 semantic + S5=C2ST_embedding, L1-L3 lexical + L4=C2ST_lexical, G1-G9 citation graph
-- 3 change point detectors (PELT, DynP, KernelCPD), convergence analysis
-- Embedding sensitivity analysis (PCA sweep, JL random projections)
-- Architecture: dispatcher pattern, modular Makefile (`divergence.mk`), Pandera schema, config-driven
-- `pipeline_loaders.py`: new `load_refined_works()` layer; all divergence modules use `load_analysis_corpus()`
+Four Claude processes running on padme, each in its own locked worktree:
+- `t0083-sensitivity-annex` (`agent-aa72c17c`): sensitivity annex — 8 commits in, compute_sensitivity_grid.py + plot_companion_sensitivity.py ready, needs GPU run
+- `t0098-bias-comparison-figures` (`agent-a05d098e`): bias comparison figures — plot_zoo_bias_comparison.py done, needs PR
+- `t0099-l2-c2st` (`agent-a6cd5236`): L2/C2ST_lexical zoo prose — 3 commits in, likely ready for PR
+- `orchestrate-98-83-84` (`agent-a952b232`): orchestrator planning branch for 0098/0083/0084
 
 ## Next actions
 
 In direct service of the current goal (narrative + results + figures):
 
-- **0083** sensitivity annex — evidence that the key results (G9 sub-zones, S2/L1 saturation) are robust across window, gap, embedding dim, embedding model. R=3 median per cell, ~1.5-2h GPU on padme.
+- **0083** sensitivity annex — evidence that the key results (G9 sub-zones, S2/L1 saturation) are robust across window, gap, embedding dim, embedding model. R=3 median per cell, ~1.5-2h GPU on padme. Agent in progress.
 - **0084** subsampling-variance ribbon — honest uncertainty on the headline Z-plot. R=20 trim-2, ~2h GPU.
+- **0098** bias comparison figures — agent in progress on `t0098-bias-comparison-figures`.
 - **0070 + 0071-0078** bias audit — narrative backing for §4.8 Robustness and §6.4 Limitations. Most are acknowledgements; some warrant child analyses.
 - Waiting for corpus **1.1.2** to finish building — enables a rerun if the enriched corpus meaningfully changes G9's sub-zone structure.
 
