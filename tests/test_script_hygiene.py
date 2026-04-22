@@ -1086,6 +1086,8 @@ class TestOutputFlag:
         "qa_bibliography.py",
         "qa_missing_references.py",
         "analyze_unfccc_topics.py",
+        # Analysis-only reporters (stdout, no output file)
+        "analyze_zscore_vs_pvalue.py",
     }
 
     def test_all_producing_scripts_accept_output(self):
