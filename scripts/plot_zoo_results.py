@@ -1,7 +1,7 @@
 """Plot cross-year Z-score time series for one zoo method.
 
 Reads tab_crossyear_{method}.csv (produced by compute_crossyear_zscore.py)
-and renders one panel showing Z(t,w) for windows w=2,3,4,5.
+and renders one panel showing Z(t,w) for windows w=2,3,4.
 
 Degrades gracefully: if the input CSV does not exist, writes an empty figure
 with a "Data not yet computed" annotation so Make does not fail.
@@ -27,12 +27,11 @@ from utils import get_logger
 log = get_logger("plot_zoo_results")
 apply_style()
 
-# Four shades from lightest to darkest — w=2 lightest, w=3 prominent.
+# Three shades from lightest to darkest — w=2 lightest, w=3 prominent.
 _WINDOW_STYLES = {
     "2": {"color": LIGHT, "linewidth": 0.9, "label": "w=2"},
     "3": {"color": DARK, "linewidth": 1.6, "label": "w=3 (lead)"},
     "4": {"color": MED, "linewidth": 0.9, "label": "w=4"},
-    "5": {"color": "#555555", "linewidth": 0.9, "label": "w=5"},
 }
 
 _Z_THRESHOLD = 2.0
@@ -96,9 +95,9 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
             color=MED,
         )
 
-    # One line per sliding window (w=2..5).
+    # One line per sliding window (w=2..4).
     plotted = []
-    for w_str in ("2", "3", "4", "5"):
+    for w_str in ("2", "3", "4"):
         sub = df[df["window"] == w_str].sort_values("year")
         if sub.empty:
             continue
@@ -115,7 +114,7 @@ def _plot(df: pd.DataFrame, method: str, output_stem: str) -> None:
 
     # Fallback: cumulative or single-window methods (G3, G4, G7, L3).
     if not plotted:
-        non_sliding = df[~df["window"].isin(("2", "3", "4", "5"))].sort_values("year")
+        non_sliding = df[~df["window"].isin(("2", "3", "4"))].sort_values("year")
         non_sliding = non_sliding.dropna(subset=["z_score"])
         if not non_sliding.empty:
             wlabel = non_sliding["window"].iloc[0]

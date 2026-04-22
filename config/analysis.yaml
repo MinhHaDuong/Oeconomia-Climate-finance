@@ -17,12 +17,12 @@ clustering:
 # Output contract (one CSV per method, validated by DivergenceSchema):
 #   year(int), channel(str), window(str), hyperparams(str?), value(float?)
 # Channel is one of: semantic, lexical, citation.
-# Window is "2","3","4","5" or "cumulative" for citation graph methods.
+# Window is "2","3","4" or "cumulative" for citation graph methods.
 
 divergence:
   random_seed: 42
   backend: auto        # auto (GPU if available), cpu, cuda
-  windows: [2, 3, 4, 5]
+  windows: [2, 3, 4]
   min_papers: 30          # per window minimum (override with 5 for smoke)
   min_papers_smoke: 5     # auto-detected when n_works < 200
   max_subsample: 2000     # cap per side for O(n²) methods
