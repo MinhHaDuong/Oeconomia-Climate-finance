@@ -1,0 +1,94 @@
+%erg v1
+Title: Zoo deepening D — 1-year gap, drop w=5, rerun on padme
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+Two configuration issues require a full pipeline rerun on padme:
+
+1. **Gap year**: Currently "before" = [t−w, t] (year t is included in "before").
+   The split year t is ambiguous — it contributes to the "before" distribution, so
+   "after" means strictly after t, but "before" means "up to and including t".
+   Better semantics: before = [t−w, t−1], after = [t+1, t+w]. Year t is a clear
+   dividing line excluded from both windows.
+
+2. **w=5 in figures**: The main windows config is [2, 3, 4], but the data computed
+   on padme still contains w=5 rows from a previous run. `plot_zoo_results.py`
+   renders anything not in {2,3,4} via a fallback path, producing a crowded 4th
+   curve. Fix: rerun with windows=[2,3,4] so w=5 rows are absent from CSVs.
+
+## Actions
+
+### 1. Change gap in computation scripts
+
+In `scripts/_divergence_semantic.py`, change `_get_window_embeddings`:
+- `side='before'`: `[year − window, year]` → `[year − window, year − 1]`
+- `side='after'`:  `[year + 1, year + 1 + window]` → `[year + 1, year + window]`
+
+Make the analogous change in:
+- `scripts/_divergence_lexical.py` (window slicing for L1, L2, L3)
+- `scripts/_citation_methods.py` (sliding window graphs for citation methods)
+- `scripts/compute_null_model.py` (permutation test uses the same window logic)
+
+Add a `gap` parameter to `config/analysis.yaml` under `divergence:`:
+```yaml
+gap: 1  # years excluded around the split point (before=[t-w, t-gap], after=[t+gap, t+w])
+```
+Read it in all scripts. Default 1. This makes the gap explicit and configurable.
+
+### 2. Confirm windows config
+
+Verify `config/analysis.yaml` has `windows: [2, 3, 4]` (already the case).
+No change needed — the old w=5 data will be absent after rerun.
+
+### 3. Update prose in overview.md and per-method files
+
+Update the window definition in `content/_includes/techrep/overview.md` to state:
+- Before: [t−w, t−1]  After: [t+1, t+w]  Gap: year t excluded from both windows.
+- Windows w ∈ {2, 3, 4}; w=3 is the lead window (darkest curve in figures).
+
+### 4. Rerun on padme
+
+After code changes are merged, run on padme:
+```bash
+make divergence-tables   # all 18 methods, windows=[2,3,4], gap=1, equal_n=true
+make null-model          # S1, S2, L1, G2, G9 — with updated gap
+make zoo-figures         # regenerate all 35 figures
+make output/content/breakpoint-detect-method-zoo.pdf
+```
+
+Document rerun in ticket log with timestamp and any anomalies.
+
+### 5. Smoke test for gap
+
+Add a test asserting that no paper published in year t appears in either window when
+the split year is t (i.e., the gap is enforced).
+
+## Test
+
+```python
+# tests/test_gap_year.py
+def test_split_year_excluded_from_both_windows(tmp_path):
+    """Paper published in year t must not appear in before or after window."""
+    # Synthetic corpus: papers at years t-2..t+2.
+    # Run _get_window_embeddings for side='before' and side='after' with year=t, w=2.
+    # Assert no embedding from year t appears in either set.
+```
+
+RED: test fails because current code includes year t in before.
+
+## Exit criteria
+
+1. `gap: 1` added to `config/analysis.yaml`.
+2. All four scripts updated: `_divergence_semantic.py`, `_divergence_lexical.py`,
+   `_citation_methods.py`, `compute_null_model.py`.
+3. Smoke test (above) passes green.
+4. Full rerun on padme completes: 18 divergence tables, null model for 5 methods,
+   35 figures. No w=5 rows in any output CSV.
+5. Zoo PDF rebuilds and shows 3 curves (w=2,3,4) per panel.

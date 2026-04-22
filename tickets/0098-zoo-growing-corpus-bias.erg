@@ -1,0 +1,97 @@
+%erg v1
+Title: Zoo deepening B — growing-corpus bias: theory, equal_n debiasing, dual figures
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+When comparing window "before" [t−w, t−1] to window "after" [t+1, t+w], the "after"
+window systematically contains more papers in a growing field: climate finance
+publication volume grew roughly 15× from 1995 to 2020. This means n_after >> n_before
+for most t, which biases every divergence statistic that is sample-size-sensitive.
+
+The current pipeline sets `equal_n: true` in `config/analysis.yaml`, which subsamples
+the larger window to min(n_before, n_after). This is a form of debiasing, but:
+(a) it is nowhere explained in the zoo prose, (b) the user cannot see how large the
+bias is, (c) dropping papers to match the smaller window loses statistical power.
+
+This ticket adds: the theoretical treatment of the bias, and side-by-side figures
+showing biased (equal_n=false) vs debiased (equal_n=true) series for a representative
+set of methods so the reader can judge the bias magnitude.
+
+## Actions
+
+### 1. Theoretical writeup in overview.md
+
+Add a subsection "Growing-corpus bias and equal-n debiasing" to
+`content/_includes/techrep/overview.md`:
+
+a) **Bias statement**: For a distance statistic D estimating d(P_before, P_after),
+   the finite-sample estimator has variance O(1/n_before + 1/n_after). When
+   n_after >> n_before, the estimator is dominated by the smaller sample. Moreover,
+   many statistics (energy distance, MMD, JS divergence) have non-zero bias under
+   the null that grows with |1/n_before − 1/n_after|. Cite: Gretton et al. (2012)
+   for MMD bias; Pérez-Cruz (2008) for JS.
+
+b) **Equal-n subsampling**: Subsample the larger window to min(n_before, n_after)
+   before computing D. This equalizes both the variance contribution and eliminates
+   the sample-size-dependent bias component. Cost: power loss proportional to the
+   dropped fraction. R=3 median-of-three subsampling (annex, ticket 0083) reduces
+   variance of the debiased estimator.
+
+c) **When bias matters most**: early years (small n_before) and late years (large
+   n_after, but also indexing lag shrinking n_after). Plot n_before(t) and n_after(t)
+   across the full time range in a supplementary figure.
+
+### 2. Add bias flag to compute_divergence.py
+
+Add `--equal-n / --no-equal-n` CLI flag to `scripts/compute_divergence.py`, defaulting
+to the config value. Propagate to `_iter_window_pairs` in each `_divergence_*.py`.
+
+### 3. Produce biased and debiased output tables
+
+In `zoo.mk`, add recipes for `tab_div_biased_{method}.csv` targets (a subset of
+representative methods: S1_MMD, S2_energy, L1, G9_community) using `--no-equal-n`.
+The debiased tables (`tab_div_{method}.csv`) already exist.
+
+### 4. New dual-panel figure
+
+Write `scripts/plot_zoo_bias_comparison.py`:
+- Input: `tab_div_{method}.csv` (debiased) + `tab_div_biased_{method}.csv` (biased)
+- Output: two-panel figure (or overlaid) for the representative methods
+- Show both series for w=3 (lead window); shade the difference
+- Also show n_before(t) and n_after(t) on a secondary axis or separate panel
+
+Add target `content/figures/fig_zoo_bias_{method}.png` in `zoo.mk`.
+
+### 5. Reference from per-method includes
+
+In `content/_includes/zoo/S1_mmd.md` and `L1_js.md` (as representative of semantic
+and lexical), add a note referencing the bias figure and stating that all zoo results
+use the equal-n debiased estimator.
+
+## Test
+
+```python
+# tests/test_zoo_bias_comparison.py
+def test_bias_flag_produces_different_output(tmp_path):
+    """--no-equal-n and --equal-n produce different divergence values when windows differ in size."""
+    # Build synthetic corpus where n_after >> n_before.
+    # Run compute_divergence.py twice (with/without equal_n).
+    # Assert that the two output CSVs differ in mean(value).
+```
+
+RED: test fails because `--no-equal-n` flag does not exist yet.
+
+## Exit criteria
+
+1. `compute_divergence.py --no-equal-n` accepted and documented.
+2. `tab_div_biased_{method}.csv` produced for ≥4 representative methods.
+3. `fig_zoo_bias_{method}.png` exists and renders for those methods.
+4. `overview.md` contains bias theory with citations to Gretton and Pérez-Cruz.
+5. Test above passes green.

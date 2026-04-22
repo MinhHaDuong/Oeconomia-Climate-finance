@@ -1,0 +1,118 @@
+%erg v1
+Title: Zoo deepening E — minimum corpus size: theory and empirical null-model coverage
+Status: open
+Created: 2026-04-22
+Author: user
+
+--- log ---
+2026-04-22T12:00Z user created
+
+--- body ---
+## Context
+
+The pipeline enforces `min_papers: 30` per window before computing any divergence
+statistic. This threshold is pragmatic (avoids crashes) but lacks theoretical
+justification. Two questions need addressing:
+
+1. **What is the minimum n for each method family to produce reliable statistics?**
+   The answer differs: energy distance needs O(n) for consistent estimation;
+   MMD kernel tests have known power curves; JS divergence has occupancy limits
+   (see ticket 0099); citation graph methods need n large enough for a connected
+   subgraph.
+
+2. **Does the null model partially capture sample-size inadequacy empirically?**
+   When n is small, the null distribution D_π has high variance (wide CI band).
+   A wide band means we cannot reject H₀ even for large D_obs — the test is
+   underpowered. In this sense the null model "knows" about small n implicitly,
+   because fewer permutations give distinct statistics. But it does not flag the
+   issue explicitly. The question is whether this is sufficient or whether we need
+   an explicit n-based guard.
+
+## Actions
+
+### 1. Theoretical derivation per method family
+
+Write a subsection "Minimum sample requirements" in
+`content/_includes/techrep/overview.md`:
+
+**Semantic methods (S1–S4)**:
+- Energy distance: consistent estimator for n ≥ 2 (unbiased U-statistic form).
+  Power analysis: for effect size δ (mean shift in standard deviation units),
+  power ≈ Φ(z_α − δ√(n/2)) for a two-sample test. At δ=0.1 (small shift),
+  n ≈ 800 for 80% power; at δ=0.5 (medium), n ≈ 30. Min_papers=30 is adequate
+  for medium+ shifts.
+- MMD: same sample complexity by Gretton et al. (2012), Theorem 6.
+- Sliced Wasserstein: O(1/√n) consistency per projection; n=30 gives crude estimates.
+- Fréchet: requires n > d (dimension of embedding) for covariance matrix invertibility.
+  With PCA reduction to max_dim=256 and n=30, the covariance is rank-deficient.
+  Flag: S4_frechet results with n < 256 should be interpreted cautiously.
+
+**Lexical methods (L1–L3)**: see ticket 0099. n=30 is marginal; n=50 recommended.
+
+**Citation graph methods (G1–G9)**:
+- PageRank, spectral gap, betweenness: require a connected subgraph. With n=30
+  papers and sparse citation edges, the subgraph may fragment. Check: the mean
+  in-degree of a paper with n=30 and k citations is k/n. If k/n < 1, the graph
+  is subcritical (sparse, fragmented). Report the minimum n that ensures a giant
+  component exists for typical citation densities in this corpus.
+- Community detection (G9): Louvain requires ≥2 communities, each with ≥5 nodes.
+  With n=30, finding 6 communities of 5 nodes each is possible but the modularity
+  landscape is noisy.
+
+**C2ST**: Classification with cv_folds=5 requires n ≥ 5·(minimum class size).
+  At n=30 balanced, minimum class is 15 — 5-fold CV gives 12 training / 3 test
+  per fold. This is too small for reliable AUC estimates. Min recommended: n ≥ 50.
+  Flag: C2ST results with n_min < 50 are unreliable.
+
+### 2. Null model as empirical power gauge
+
+Add to `null-model.md`: the width of the null CI band (null_std) is inversely
+related to n. Show that as n → 30 (minimum), null_std increases, widening the
+band. This means: years near the edges of the time range (small windows, few papers)
+automatically show wide CI bands — a visual indication of underpowered tests. No
+additional guard is needed, but users should note this.
+
+Add a figure or table showing null_std(t, w=3) vs n_min(t) for one representative
+method (e.g., S2_energy) to demonstrate this relationship empirically.
+
+### 3. Raise min_papers for C2ST and S4_frechet
+
+Update `config/analysis.yaml`:
+```yaml
+  c2st:
+    min_papers: 50    # override global min_papers=30
+  semantic:
+    S4_frechet:
+      min_papers: 300  # need n > PCA reduced dim for valid covariance
+```
+
+### 4. Per-method notes
+
+In `content/_includes/zoo/S4_frechet.md` and `content/_includes/zoo/C2ST_embedding.md`,
+add a one-paragraph "Sample size note" referencing the theory above and stating
+the method-specific minimum.
+
+## Test
+
+```python
+# tests/test_min_papers_override.py
+def test_c2st_min_papers_override():
+    """C2ST uses min_papers=50, not the global 30."""
+    cfg = load_analysis_config()
+    assert cfg["divergence"]["c2st"].get("min_papers", cfg["divergence"]["min_papers"]) >= 50
+
+def test_frechet_min_papers_override():
+    """S4_frechet uses min_papers=300."""
+    cfg = load_analysis_config()
+    assert cfg["divergence"]["semantic"]["S4_frechet"].get("min_papers", 0) >= 300
+```
+
+RED: tests fail because the config overrides do not exist yet.
+
+## Exit criteria
+
+1. `overview.md` contains per-family minimum sample derivations with cited sources.
+2. `null-model.md` explains null_std as implicit power gauge.
+3. `config/analysis.yaml` has `min_papers` overrides for C2ST (≥50) and S4_frechet (≥300).
+4. `S4_frechet.md` and `C2ST_embedding.md` contain "Sample size note" paragraphs.
+5. Both config tests pass green.
