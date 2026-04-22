@@ -19,6 +19,8 @@ from utils import get_logger
 
 log = get_logger("_divergence_lexical")
 
+LOW_N_LEXICAL_THRESHOLD = 50
+
 
 # ── Data loading ───────────────────────────────────────────────────────────
 
@@ -129,6 +131,17 @@ def _iter_lexical_window_pairs(df, cfg):
 
             X_before = vec.transform(texts_before)
             X_after = vec.transform(texts_after)
+
+            n_min = min(len(texts_before), len(texts_after))
+            if n_min < LOW_N_LEXICAL_THRESHOLD:
+                log.warning(
+                    "lexical year=%d w=%d: n_min=%d < %d — JS estimates may be unreliable",
+                    y,
+                    w,
+                    n_min,
+                    LOW_N_LEXICAL_THRESHOLD,
+                )
+
             yield y, w, X_before, X_after, vec
 
 
