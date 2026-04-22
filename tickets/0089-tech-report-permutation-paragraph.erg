@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-21T14:00Z claude created
 2026-04-21T14:00Z claude note rehomes the deferral from 0086; former tracker 0034 closed without covering this
+2026-04-21Z orchestrator reimagine: home = new `content/_includes/techrep/null-model.md`, wired after `zscore.md`. Fix test glob: use `content/_includes/**/*.md` not `content/_includes/*.md`.
 
 --- body ---
 ## Context
@@ -40,8 +41,9 @@ or the null-model acceleration (grep: 0 hits for
    pick it up).
 
 ## Test
-`grep -c 'permutation\|null model' content/technical-report.qmd content/_includes/*.md`
-returns ≥ 1 in a file that ends up in the rendered tech report.
+`grep -rn 'permutation\|null model' content/_includes/techrep/`
+returns ≥ 1 hit in `techrep/null-model.md` (note: non-recursive `*.md` glob
+misses `_includes/techrep/` subdirectory; use recursive search).
 
 ## Exit criteria
 - One paragraph on permutation-test methods + acceleration lands in the

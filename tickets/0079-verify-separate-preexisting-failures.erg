@@ -1,6 +1,6 @@
 %erg v1
 Title: verify separates pre-existing main failures from those introduced by the PR
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: claude
 

@@ -3,10 +3,10 @@ Title: Reconcile window set and state lead-window rationale
 Status: open
 Created: 2026-04-17
 Author: claude
-Blocked-by: 0070
 
 --- log ---
 2026-04-17T07:40Z claude created as child of 0070 for bias B7
+2026-04-21Z orchestrator reimagine: no w=5 results anywhere; drop from config (option 1b). Test should reference §4.8 not §6.4.
 
 --- body ---
 ## Context
@@ -38,7 +38,7 @@ Separately, the paper does not state why w = 3 is the lead window.
 
 `tests/test_window_config_paper_consistency.py::test_windows_match`
 — asserts the windows declared in `config/analysis.yaml` match the set
-named in the companion paper's §6.4 (parse the qmd for the sentence).
+named in the companion paper's §4.8 (parse the qmd for the sentence).
 Red until reconciled.
 
 ## Exit criteria
