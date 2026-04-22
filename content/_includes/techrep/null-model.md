@@ -23,7 +23,7 @@ The bias term $[\mu(t) - \bar{\mu}]/S(w)$ is non-zero whenever $t$ is not at the
 temporal mean of $\mu$. For a monotone decreasing trend (convergence: homogenising field), early years have
 $\mu(t) > \bar{\mu}$ (Z inflated, false positives) and late years have $\mu(t) < \bar{\mu}$
 (Z deflated, false negatives). The empirical distribution of $Z$ under $H_0$ mirrors
-the shape of $\mu$, not $N(0,1)$. $\square$
+the shape of $\mu$, not $N(0,1)$.
 
 **Quantified distortion for a linear trend** $\mu(t) = a + bt$ with $b \neq 0$:
 the bias at year $t_0$ is
@@ -31,9 +31,10 @@ the bias at year $t_0$ is
 $$\text{Bias}(t_0) = \frac{b(t_0 - \bar{t})}{\sqrt{b^2 \text{Var}_t(t) + \sigma_\varepsilon^2}}$$
 
 At high signal-to-noise ($b^2 T^2 \gg \sigma_\varepsilon^2$) this simplifies to
-$(t_0 - \bar{t})\sqrt{12}/T$. For $T=30$ years, the first year carries a bias of
-magnitude $\sqrt{3} \approx 1.73$: a threshold $|Z| \geq 2$ then requires an anomaly
-of only $0.27\sigma$ at $t_\text{min}$ but $3.73\sigma$ at $t_\text{max}$ — an
+$(t_0 - \bar{t})\sqrt{12}/T$. For $T=30$ years ($t_0-\bar{t} = 14.5$ at the first year),
+the bias magnitude is $14.5\sqrt{12}/30 \approx 1.67$ (the large-$T$ limit is
+$\sqrt{3} \approx 1.73$): a threshold $|Z| \geq 2$ then requires an anomaly
+of only $0.33\,S$ at $t_\text{min}$ but $3.67\,S$ at $t_\text{max}$ — an
 asymmetric test that is neither conservative nor liberal but *structurally distorted*.
 
 Use the permutation CI band (below) to assess significance; use the cross-year Z only
@@ -43,7 +44,7 @@ for cross-method comparability.
 the Spearman rank correlation between $|Z_\text{cross}|$ and $-\log_{10}(p_\text{perm})$
 is $\rho = -0.25$ ($p = 0.018$) — *negative*, confirming that large cross-year Z-scores
 cluster at early years where trend inflation is highest, not where the permutation test
-finds the strongest evidence. The two rankings diverge by design.
+finds the strongest evidence. The two rankings diverge by design. $\square$
 :::
 
 ## Permutation null model
