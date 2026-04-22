@@ -28,6 +28,7 @@ import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import pandas as pd
 from pipeline_io import save_figure
+from pipeline_loaders import load_analysis_config
 from plot_style import DARK, FILL, LIGHT, MED, apply_style
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -44,6 +45,10 @@ _WINDOW_STYLES = {
 
 _Z_THRESHOLD = 2.0
 _PERIOD_BREAKS = [2007, 2013]
+
+_METHOD_TITLES: dict[str, str] = (
+    load_analysis_config().get("zoo", {}).get("method_titles", {})
+)
 
 
 def _build_method_parser() -> argparse.ArgumentParser:
@@ -76,7 +81,7 @@ def _empty_figure(output_stem: str, method: str) -> None:
         fontsize=12,
         color=MED,
     )
-    ax.set_title(f"Cross-year Z-score: {method}")
+    ax.set_title(_METHOD_TITLES.get(method, method))
     ax.set_axis_off()
     save_figure(fig, output_stem, dpi=150)
     plt.close(fig)
@@ -123,6 +128,7 @@ def _plot(
 ) -> None:
     """Render the Z-score panel and save to output_stem.png."""
     fig, ax = plt.subplots(figsize=(6, 4))
+    ax.axhline(0, color="0.75", linewidth=0.5, zorder=0)
 
     # Null zone band.
     ax.axhspan(
@@ -211,7 +217,7 @@ def _plot(
 
     ax.set_xlabel("Year")
     ax.set_ylabel("Cross-year Z-score Z(t,w)")
-    ax.set_title(f"Cross-year Z-score: {method}")
+    ax.set_title(_METHOD_TITLES.get(method, method))
 
     if not df.empty:
         ax.set_xlim(df["year"].min() - 0.5, df["year"].max() + 0.5)
