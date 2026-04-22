@@ -63,3 +63,5 @@ reshuffle row indices into the sparse matrix, eliminating $B$ redundant transfor
 $G_9$ community JS divergence, with a configurable `--n-jobs` flag (default: all cores).
 End-to-end runtime on an NVIDIA RTX A4000 is approximately 2--3 minutes at default parallelism
 ($\texttt{--n-jobs}=-1$, 24 cores), measured 2026-04-21.
+
+The null CI band width is itself a power gauge. Under the permutation null, the standard deviation of the $B$ permutation statistics scales as $O(1/\sqrt{n})$: fewer papers mean more variable permutation outcomes, and the CI band widens. Years near the temporal edges of the corpus — where windows are thin — therefore show wide null bands automatically, without any explicit flag. A wide band signals an underpowered test; the observed statistic must be large to escape it. This is not a defect of the null model but an honest reflection of the data: the model "knows" the test is underpowered when $n$ is small.
