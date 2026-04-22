@@ -1,7 +1,4 @@
-"""Tests for figure-polish changes in plot_zoo_results.py (ticket 0103).
-
-RED phase: these tests fail before _METHOD_TITLES and Z=0 axhline are added.
-"""
+"""Tests for figure-polish changes in plot_zoo_results.py (ticket 0103)."""
 
 import os
 import sys
