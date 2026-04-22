@@ -9,7 +9,7 @@ Usage:
         --output content/figures/fig_companion_sensitivity.png
 """
 
-import argparse
+import os
 import sys
 
 import matplotlib.pyplot as plt
@@ -42,10 +42,7 @@ DIM_LABELS = {
 
 
 def main():
-    io_args, extra = parse_io_args()
-
-    parser = argparse.ArgumentParser(add_help=True)
-    args = parser.parse_args(extra)
+    io_args, _ = parse_io_args()
 
     validate_io(output=io_args.output, inputs=io_args.input)
 
@@ -128,7 +125,7 @@ def main():
     )
     fig.tight_layout()
 
-    stem = io_args.output.rsplit(".", 1)[0] if "." in io_args.output else io_args.output
+    stem = os.path.splitext(io_args.output)[0]
     save_figure(fig, stem, dpi=150)
     plt.close(fig)
 

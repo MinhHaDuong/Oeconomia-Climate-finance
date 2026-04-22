@@ -15,7 +15,7 @@ import copy
 import sys
 
 import pandas as pd
-from _divergence_io import get_min_papers, per_window_year_ranges
+from _divergence_io import get_min_papers
 from _divergence_semantic import compute_s2_energy, load_semantic_data
 from pipeline_io import save_csv
 from pipeline_loaders import load_analysis_config
@@ -77,12 +77,7 @@ def _median_replicates(rows, window):
     if not rows:
         return pd.DataFrame(columns=["year", "window", "value"])
     df_r = pd.DataFrame(rows)
-    medians = (
-        df_r.groupby(["year", "window"])["value"]
-        .median()
-        .reset_index()
-        .rename(columns={"value": "value"})
-    )
+    medians = df_r.groupby(["year", "window"])["value"].median().reset_index()
     return medians
 
 
@@ -168,16 +163,14 @@ def compute_grid(df, emb, cfg):
                     )
                     continue
 
-                # Compute n_before / n_after for each year
-                years_by_window = per_window_year_ranges(df, [window])
-
+                effective_gap = max(gap, 1)
                 for _, mrow in medians.iterrows():
                     y = int(mrow["year"])
                     n_before = _count_window_papers(
-                        df, y, window, max(gap, 1) if gap == 0 else gap, "before"
+                        df, y, window, effective_gap, "before"
                     )
                     n_after = _count_window_papers(
-                        df, y, window, max(gap, 1) if gap == 0 else gap, "after"
+                        df, y, window, effective_gap, "after"
                     )
                     all_rows.append(
                         {
