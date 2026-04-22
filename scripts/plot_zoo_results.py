@@ -45,6 +45,27 @@ _WINDOW_STYLES = {
 _Z_THRESHOLD = 2.0
 _PERIOD_BREAKS = [2007, 2013]
 
+_METHOD_TITLES = {
+    "S1_MMD": "S1 Maximum Mean Discrepancy",
+    "S2_energy": "S2 Energy Distance",
+    "S3_sliced_wasserstein": "S3 Sliced Wasserstein",
+    "S4_frechet": "S4 Fréchet Distance",
+    "L1": "L1 JS Divergence",
+    "L2": "L2 Novelty-Transience Ratio",
+    "L3": "L3 Term Bursts",
+    "G1_pagerank": "G1 PageRank",
+    "G2_spectral": "G2 Spectral Gap",
+    "G3_coupling_age": "G3 Coupling Age",
+    "G4_cross_tradition": "G4 Cross-Tradition",
+    "G5_pref_attachment": "G5 Preferential Attachment",
+    "G6_entropy": "G6 Entropy",
+    "G7_disruption": "G7 Disruption Index",
+    "G8_betweenness": "G8 Betweenness",
+    "G9_community": "G9 Community JS",
+    "C2ST_embedding": "C2ST Embedding",
+    "C2ST_lexical": "C2ST Lexical",
+}
+
 
 def _build_method_parser() -> argparse.ArgumentParser:
     """Return the method-level argument parser (used by tests and main)."""
@@ -76,7 +97,7 @@ def _empty_figure(output_stem: str, method: str) -> None:
         fontsize=12,
         color=MED,
     )
-    ax.set_title(f"Cross-year Z-score: {method}")
+    ax.set_title(_METHOD_TITLES.get(method, method))
     ax.set_axis_off()
     save_figure(fig, output_stem, dpi=150)
     plt.close(fig)
@@ -123,6 +144,7 @@ def _plot(
 ) -> None:
     """Render the Z-score panel and save to output_stem.png."""
     fig, ax = plt.subplots(figsize=(6, 4))
+    ax.axhline(0, color="0.75", linewidth=0.5, zorder=0)
 
     # Null zone band.
     ax.axhspan(
@@ -211,7 +233,7 @@ def _plot(
 
     ax.set_xlabel("Year")
     ax.set_ylabel("Cross-year Z-score Z(t,w)")
-    ax.set_title(f"Cross-year Z-score: {method}")
+    ax.set_title(_METHOD_TITLES.get(method, method))
 
     if not df.empty:
         ax.set_xlim(df["year"].min() - 0.5, df["year"].max() + 0.5)
