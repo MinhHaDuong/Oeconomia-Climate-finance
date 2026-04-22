@@ -5,9 +5,9 @@ project:
     - content/manuscript.qmd
     - content/corpus-report.qmd
     - content/technical-report.qmd
-    - content/zoo-breakpoint-detection-methods.qmd
     - content/data-paper.qmd
     - content/multilayer-detection.qmd
+    - content/zoo-breakpoint-detection-methods.qmd
 
 bibliography: content/bibliography/main.bib
 
