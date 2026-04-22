@@ -38,17 +38,13 @@ where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\ta
 
 ### Null expectation
 
-Under $H_0$ — both windows drawn i.i.d. from the same vocabulary distribution — a term appearing in the after-window is "novel" by chance whenever it happened to be absent from the before-window.
-If the before-window contains $n_b$ documents and the vocabulary has $D_\text{eff}$ terms (post min\_df filter), and each term $j$ occurs in a fraction $p_j$ of documents, the probability that term $j$ is absent from all $n_b$ before-documents is $(1-p_j)^{n_b}$.
-Averaging over terms, the expected novelty rate under $H_0$ is:
-
-$$E[\text{Novelty} \mid H_0] \approx \frac{1}{D_\text{eff}} \sum_j (1 - p_j)^{n_b}$$
-
-For rare terms ($p_j \ll 1$) this simplifies via $1-p \approx e^{-p}$ to
-$E[\text{Novelty} \mid H_0] \approx e^{-\bar{p} n_b}$,
-where $\bar{p}$ is the mean per-document term probability.
-This is the birthday-problem / coupon-collector argument: with a large vocabulary and few documents, random chance alone produces high apparent novelty.
-The practical implication is that NTR estimates in the cold-start zone (1990–1998, $n_b < 50$) should be compared against this baseline before being interpreted as genuine discourse change.
+Under $H_0$ (both windows drawn from the same distribution), NTR should be near zero.
+In the cold-start zone (1990–1998), before-windows contain as few as 10–20 papers,
+severely under-representing the vocabulary.
+At small $n_\text{before}$, many terms are absent from the before-window by sampling chance alone —
+inflating the novelty component regardless of any true distributional shift.
+This is a small-sample artefact, not a structural break:
+NTR estimates for $t < 1999$ should be interpreted cautiously.
 
 ### Corpus results
 
