@@ -59,6 +59,7 @@ divergence:
   lexical:
     tfidf_max_features: 5000
     tfidf_min_df: 3
+    low_n_threshold: 50      # warn when n_min < this in lexical window pairs
     L1_js: {}                                    # uses shared windows
     L2_novelty:
       windows: [3, 5]                            # past/future window

@@ -89,6 +89,7 @@ def _iter_lexical_window_pairs(df, cfg):
     max_subsample = div_cfg["max_subsample"]
     tfidf_max_features = lex_cfg.get("tfidf_max_features", 5000)
     tfidf_min_df = lex_cfg.get("tfidf_min_df", 3)
+    low_n_threshold = lex_cfg.get("low_n_threshold", LOW_N_LEXICAL_THRESHOLD)
     equal_n = div_cfg.get("equal_n", False)
     seed = div_cfg["random_seed"]
     rng = np.random.RandomState(seed)
@@ -133,13 +134,13 @@ def _iter_lexical_window_pairs(df, cfg):
             X_after = vec.transform(texts_after)
 
             n_min = min(len(texts_before), len(texts_after))
-            if n_min < LOW_N_LEXICAL_THRESHOLD:
+            if n_min < low_n_threshold:
                 log.warning(
                     "lexical year=%d w=%d: n_min=%d < %d — JS estimates may be unreliable",
                     y,
                     w,
                     n_min,
-                    LOW_N_LEXICAL_THRESHOLD,
+                    low_n_threshold,
                 )
 
             yield y, w, X_before, X_after, vec
