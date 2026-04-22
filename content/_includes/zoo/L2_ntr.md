@@ -32,9 +32,23 @@ where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\ta
 
 **Advantages.** Asymmetric decomposition is more informative than a symmetric distance. Resonance identifies *lasting* innovations. Three derived signals from one computation.
 
-**Biases.** KL divergence is unbounded and undefined when $P_t$ has support outside $P_{t-w:t-1}$ (rare terms in small windows); we add Laplace smoothing ($\epsilon = 10^{-8}$). Results for early years (1990–1998) are unstable due to sparse corpora.
+**Biases.** KL divergence is unbounded and undefined when $P_t$ has support outside $P_{t-w:t-1}$ (rare terms in small windows); we add Laplace smoothing ($\epsilon = 10^{-10}$). Results for early years (1990–1998) are unstable due to sparse corpora.
 
 **Limitations.** Year-level aggregation discards within-year heterogeneity. Sensitivity to smoothing parameter.
+
+### Null expectation
+
+Under $H_0$ — both windows drawn i.i.d. from the same vocabulary distribution — a term appearing in the after-window is "novel" by chance whenever it happened to be absent from the before-window.
+If the before-window contains $n_b$ documents and the vocabulary has $D_\text{eff}$ terms (post min\_df filter), and each term $j$ occurs in a fraction $p_j$ of documents, the probability that term $j$ is absent from all $n_b$ before-documents is $(1-p_j)^{n_b}$.
+Averaging over terms, the expected novelty rate under $H_0$ is:
+
+$$E[\text{Novelty} \mid H_0] \approx \frac{1}{D_\text{eff}} \sum_j (1 - p_j)^{n_b}$$
+
+For rare terms ($p_j \ll 1$) this simplifies via $1-p \approx e^{-p}$ to
+$E[\text{Novelty} \mid H_0] \approx e^{-\bar{p} n_b}$,
+where $\bar{p}$ is the mean per-document term probability.
+This is the birthday-problem / coupon-collector argument: with a large vocabulary and few documents, random chance alone produces high apparent novelty.
+The practical implication is that NTR estimates in the cold-start zone (1990–1998, $n_b < 50$) should be compared against this baseline before being interpreted as genuine discourse change.
 
 ### Corpus results
 
