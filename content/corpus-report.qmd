@@ -15,6 +15,8 @@ This document describes how the corpus of {{< meta corpus_total >}} works on cli
 
 All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
 
+The pipeline produces the corpus (§2), quality checks validate it (§3), and §4 describes what passed — §1 maps all four steps as a DAG.
+
 # Pipeline Overview
 
 The corpus building pipeline is managed by DVC (Data Version Control). The five discovery stages run independently; their outputs are merged into a single catalog, then enriched, refined, and aligned in a linear chain. Enrichment runs on the full `unified_works.csv` so that all metadata is available when the flagging rules are evaluated. The extend step computes six quality flags for every work without removing any rows; the filter step applies the retention policy and writes `refined_works.csv` together with `corpus_audit.csv`. The align step produces the Phase 2 canonical inputs (`refined_embeddings.npz`, `refined_citations.csv`) from full enrichment caches.
@@ -24,6 +26,8 @@ The corpus building pipeline is managed by DVC (Data Version Control). The five 
 \newpage
 
 # Corpus Construction
+
+The following sections trace each stage in depth: how sources were identified and merged, how metadata and embeddings were added, and how the filtering policy was applied.
 
 {{< include _includes/corpus-construction.md >}}
 
@@ -38,6 +42,8 @@ The corpus building pipeline is managed by DVC (Data Version Control). The five 
 \newpage
 
 # Data Quality
+
+With the corpus assembled, three quality checks verify that the retained records are accurate, semantically coherent, and citation-complete. The table below summarises per-source counts; the sections that follow assess metadata accuracy, embedding quality, and citation graph coverage in turn.
 
 {{< include tables/tab_corpus_sources.md >}}
 
@@ -57,21 +63,35 @@ The corpus building pipeline is managed by DVC (Data Version Control). The five 
 
 # Corpus Contents
 
+The {{< meta corpus_total >}} retained works span 1992 to 2024 across 47 languages, with English dominant and significant Portuguese, Spanish, German, and French corpora (see Table @tbl-languages for the full distribution). This section describes the corpus composition through four complementary views: annual volume, semantic geography, temporal layering, and language distribution.
+
+Figure @fig-bars shows annual publication counts. The bar chart reflects the field's growth trajectory: sparse output before 2007, accelerating through the 2009--2015 crystallization period, and sustained high volume from 2016 onward.
+
 ![Annual publication volume in the corpus. The search window is 1990--2024; the earliest works date from 1992.](figures/fig_bars.png){#fig-bars width=100%}
+
+Figure @fig-semantic maps the corpus in two dimensions using UMAP dimensionality reduction applied to BGE-M3 embeddings of each work's title, abstract, and keywords. Each point is one work; the six colors correspond to the six KMeans clusters computed by `compute_clusters.py`. Proximity indicates semantic similarity: works that share vocabulary and concepts appear close together regardless of source or language. The clustering is unlabeled here — cluster labels are derived from TF-IDF distinctiveness and reported in the alluvial analysis.
 
 ![UMAP semantic map of the corpus, colored by cluster.](figures/fig_semantic.png){#fig-semantic width=100%}
 
+Figure @fig-semantic-period repeats the same UMAP projection with points colored by publication period (1990–2008, 2009–2015, 2016–2021, 2022–2024). Early works (grey) concentrate in a few regions of the semantic space; later works (darker tones) spread more broadly across the semantic space.
+
 ![UMAP semantic map, colored by publication period.](figures/fig_semantic_period.png){#fig-semantic-period width=100%}
+
+Figure @fig-semantic-lang colors the same map by language. English (light grey) dominates and fills the full semantic space; non-English works appear as colored foreground points. French, Chinese, and Japanese works concentrate in specific regions, suggesting distinct national literatures with their own topical emphases.
 
 ![UMAP semantic map, colored by language.](figures/fig_semantic_lang.png){#fig-semantic-lang width=100%}
 
 {{< include tables/tab_languages.md >}}
+
+The corpus operates at two levels of analysis — a broad field and an influential core — whose definitions govern all downstream figures.
 
 {{< include _includes/core-vs-full-definition.md >}}
 
 \newpage
 
 # Software Environment
+
+Section 4 described what the corpus contains; this section documents how to reproduce it. Runtimes, dependency versions, and cross-machine reproducibility guarantees are given below.
 
 {{< include _includes/reproducibility.md >}}
 
