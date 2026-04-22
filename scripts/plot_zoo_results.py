@@ -28,6 +28,7 @@ import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import pandas as pd
 from pipeline_io import save_figure
+from pipeline_loaders import load_analysis_config
 from plot_style import DARK, FILL, LIGHT, MED, apply_style
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -45,26 +46,9 @@ _WINDOW_STYLES = {
 _Z_THRESHOLD = 2.0
 _PERIOD_BREAKS = [2007, 2013]
 
-_METHOD_TITLES = {
-    "S1_MMD": "S1 Maximum Mean Discrepancy",
-    "S2_energy": "S2 Energy Distance",
-    "S3_sliced_wasserstein": "S3 Sliced Wasserstein",
-    "S4_frechet": "S4 Fréchet Distance",
-    "L1": "L1 JS Divergence",
-    "L2": "L2 Novelty-Transience Ratio",
-    "L3": "L3 Term Bursts",
-    "G1_pagerank": "G1 PageRank",
-    "G2_spectral": "G2 Spectral Gap",
-    "G3_coupling_age": "G3 Coupling Age",
-    "G4_cross_tradition": "G4 Cross-Tradition",
-    "G5_pref_attachment": "G5 Preferential Attachment",
-    "G6_entropy": "G6 Entropy",
-    "G7_disruption": "G7 Disruption Index",
-    "G8_betweenness": "G8 Betweenness",
-    "G9_community": "G9 Community JS",
-    "C2ST_embedding": "C2ST Embedding",
-    "C2ST_lexical": "C2ST Lexical",
-}
+_METHOD_TITLES: dict[str, str] = (
+    load_analysis_config().get("zoo", {}).get("method_titles", {})
+)
 
 
 def _build_method_parser() -> argparse.ArgumentParser:
