@@ -65,3 +65,19 @@ companion-figures: \
     $(COMP_FIGS)/fig_companion_heatmap.png \
     $(COMP_FIGS)/fig_companion_terms.png \
     $(COMP_FIGS)/fig_companion_community.png
+
+# ── Sensitivity grid (ticket 0083) ──────────────────────────────────────
+$(COMP_TABLES)/tab_sensitivity_grid.csv: \
+    scripts/compute_sensitivity_grid.py $(COMP_CFG)
+	$(UV_RUN) python scripts/compute_sensitivity_grid.py --output $@
+
+$(COMP_FIGS)/fig_companion_sensitivity.png: \
+    scripts/plot_companion_sensitivity.py $(COMP_CFG) \
+    $(COMP_TABLES)/tab_sensitivity_grid.csv
+	$(UV_RUN) python scripts/plot_companion_sensitivity.py \
+	    --input $(COMP_TABLES)/tab_sensitivity_grid.csv --output $@
+
+.PHONY: companion-sensitivity
+companion-sensitivity: \
+    $(COMP_TABLES)/tab_sensitivity_grid.csv \
+    $(COMP_FIGS)/fig_companion_sensitivity.png

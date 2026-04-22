@@ -75,7 +75,7 @@ All three studies periodize the field exogenously, by reference to policy milest
 
 The analysis uses a multilingual corpus of {{< meta corpus_total >}} works on climate finance, assembled from {{< meta corpus_sources >}} bibliographic sources and described in the companion data descriptor [cross-ref data-paper]. Sentence-transformer embeddings ({{< meta emb_dimensions >}} dimensions, `BAAI/bge-m3`) are available for all works with titles and publication years in range. The corpus was designed for breadth and transparency, with full audit trail and LLM-validated quality filtering. The multilingual embedding model places works in English, French, Chinese, Japanese, and German into a shared semantic space. The corpus snapshot was taken on 2026-03-26; records first indexed after this date are excluded.
 
-Analysis runs over the years 1998--2021. Although the global corpus spans 1990--2024 (the research window declared in `config/analysis.yaml`), the companion paper restricts itself to a narrower analytic span because the per-window bounds convention (ticket 0067) requires both halves $[t-w, t]$ and $[t, t+w]$ to lie inside the corpus --- at the lead half-width $w = 3$ this contracts the admissible range to 1993--2020, and the minimum-papers filter then lifts the lower bound to 1998. Later years are likewise truncated to avoid incomplete citation coverage. A full sensitivity sweep over window and gap is planned as a paper annex (ticket 0083).
+Analysis runs over the years 1998--2021. Although the global corpus spans 1990--2024 (the research window declared in `config/analysis.yaml`), the companion paper restricts itself to a narrower analytic span because the per-window bounds convention (ticket 0067) requires both halves $[t-w, t]$ and $[t, t+w]$ to lie inside the corpus --- at the lead half-width $w = 3$ this contracts the admissible range to 1993--2020, and the minimum-papers filter then lifts the lower bound to 1998. Later years are likewise truncated to avoid incomplete citation coverage. A full sensitivity sweep over window, gap, and PCA dimensionality is reported in @sec-sensitivity.
 
 | Statistic | Value |
 |-----------|-------|
@@ -258,3 +258,11 @@ We presented a framework for detecting structural change in scientific literatur
 The framework does not claim to recover a unique true periodization. It produces a reproducible ledger of validated zones, each annotated with the layers that support it and the discriminative terms, documents, and community shifts that characterise it. Applied to climate finance scholarship (1998--2021, {{< meta corpus_total >}} works), it identifies transition zones that downstream tickets will interpret against the field's institutional history.
 
 Future work should test sensitivity to embedding model choice (SPECTER2, ClimateBERT, SciBERT), implement a stratified permutation scheme that conditions on year-specific sample sizes, and apply the framework to other fields where endogenous periodization across multiple layers is desirable.
+
+## Sensitivity analysis {#sec-sensitivity}
+
+@fig-companion-sensitivity shows the S2 energy distance Z-score profile under a 4×4 parameter grid of window half-width $w \in \{1, 3, 5, 7\}$ and censored-gap $g \in \{0, 1, 3, 5\}$ years. Each panel shows five curves for PCA dimensionalities (64, 128, 256, 512, full). Centre lines are medians over $R=3$ independent equal-$n$ subsample draws. The model choice (BAAI/bge-m3) is fixed; extending to alternative embeddings is left for future work.
+
+The broad shape of the Z-score profile --- low plateau before 2007, sharp rise through 2007--2013, high plateau after 2013 --- is stable across all 16 parameter combinations. PCA dimensionality affects the magnitude of the Z-score but not its shape. Window width affects the smoothness of the transition; narrower windows ($w=1$) show more year-to-year variability, while wider windows ($w=7$) smooth over short-lived shocks. Gap width has minimal effect on the central finding.
+
+![Sensitivity sweep: 4×4 grid of window × gap, 5 PCA dims per cell.](figures/fig_companion_sensitivity.png){#fig-companion-sensitivity}

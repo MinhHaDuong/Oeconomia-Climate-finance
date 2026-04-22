@@ -214,6 +214,26 @@ CrossyearZscoreSchema = DataFrameSchema(
 )
 
 # ---------------------------------------------------------------------------
+# Sensitivity grid CSV (ticket 0083)
+# ---------------------------------------------------------------------------
+
+SensitivityGridSchema = DataFrameSchema(
+    columns={
+        "model": Column(str),
+        "dim": Column(int),
+        "window": Column(str),
+        "gap": Column(int),
+        "year": Column(int),
+        "method": Column(str),
+        "z_score": Column(float, nullable=True),
+        "n_before": Column(int, nullable=True),
+        "n_after": Column(int, nullable=True),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
 # refined_embeddings.npz
 # ---------------------------------------------------------------------------
 

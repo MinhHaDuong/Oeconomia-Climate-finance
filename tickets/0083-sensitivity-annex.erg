@@ -144,9 +144,10 @@ def test_sensitivity_grid_schema():
 
 ## Exit criteria
 
-- `tab_sensitivity_grid.csv` populated for the full 4×4×5×2 grid on
-  S2 at minimum. Schema test passes.
-- `fig_companion_sensitivity.png` renders — 16 subplots, 10 lines each.
+- `tab_sensitivity_grid.csv` populated for the full 4×4×5×1 grid on
+  S2 at minimum. Schema test passes. (Model axis dropped — only
+  BAAI/bge-m3 available; re-embedding 28k papers is future work.)
+- `fig_companion_sensitivity.png` renders — 16 subplots, 5 lines each.
 - §A.1 appendix in `companion-paper.qmd` interprets the figure in
   ≤ 300 words.
 - §3 footnote references the annex instead of picking one $w$.
