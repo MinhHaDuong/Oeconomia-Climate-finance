@@ -12,11 +12,17 @@ sys.path.insert(0, SCRIPTS_DIR)
 
 
 def test_no_w5_in_crossyear_tables():
-    """No tab_crossyear CSV should contain window='5' rows after padme rerun."""
+    """Sliding-window methods must not have w=5 rows after padme rerun.
+
+    L2 is excluded: it uses its own window config [3, 5] for novelty/transience
+    lookback, which is a different concept from the sliding window w in S1-S4.
+    """
     csvs = glob.glob("content/tables/tab_crossyear_*.csv")
     if not csvs:
         pytest.skip("No crossyear tables found — padme rerun needed (ticket 0100)")
     for path in csvs:
+        if "tab_crossyear_L2" in path:
+            continue  # L2 legitimately uses window=5 (its own config)
         df = pd.read_csv(path)
         df["window"] = df["window"].astype(str)
         assert "5" not in df["window"].unique(), f"{path} contains w=5 rows"
