@@ -6,6 +6,7 @@ Author: user
 
 --- log ---
 2026-04-22T12:00Z user created
+2026-04-22T12:30Z orchestrator reimagine: (1) Smoothing is epsilon-additive eps=1e-10, NOT Laplace add-1 — prose must reflect this. (2) L2_ntr.md has a stale epsilon value (says 1e-8, code uses 1e-10) — fix as part of this ticket. (3) L1_js.md has NO smoothing mention at all — add it. (4) No n<50 warning exists — skip is at min_papers=30, no intermediate warning. (5) C2ST_lexical.md says nothing about pca_dim=32 as D/n guard. All changes are net-new prose plus one warning code addition.
 
 --- body ---
 ## Context
