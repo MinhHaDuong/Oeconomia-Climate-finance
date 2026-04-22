@@ -11,7 +11,7 @@ format:
     number-sections: true
 ---
 
-This document describes how the corpus of {{< meta corpus_total >}} works on climate finance was assembled from {{< meta corpus_sources >}} sources, enriched, filtered, and validated. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files.
+This document describes how the corpus of {{< meta corpus_total >}} works on climate finance was assembled from {{< meta corpus_sources >}} sources, enriched, filtered, and validated. It is a companion to the code repository: the document a reviewer or replicator reads alongside the scripts, data, and configuration files. The corpus snapshot was taken on 2026-03-26; records first indexed after this date are excluded.
 
 All scripts are in `scripts/`, generated data in `$CLIMATE_FINANCE_DATA/catalogs/`, and outputs in `content/figures/` and `content/tables/`.
 
