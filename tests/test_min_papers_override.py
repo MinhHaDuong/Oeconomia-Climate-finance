@@ -1,7 +1,8 @@
 """Tests for per-method min_papers config overrides (ticket 0101).
 
-RED phase: these tests fail until config/analysis.yaml is updated with
-c2st.min_papers and semantic.S4_frechet.min_papers overrides.
+Verifies that config/analysis.yaml carries the per-method overrides:
+- c2st.min_papers >= 50 (5-fold CV needs n>=50 for stable AUC)
+- semantic.S4_frechet.min_papers >= 300 (covariance requires n > PCA dim=256)
 """
 
 from pipeline_loaders import load_analysis_config
