@@ -67,7 +67,7 @@ class TestZooMkStructure:
         ):
             assert expected in methods, f"{expected} missing from CROSSYEAR_METHODS"
 
-    def test_zoo_only_pdf_target_in_zoo_mk(self, zoo_mk_text):
+    def test_zoo_pdf_target_in_zoo_mk(self, zoo_mk_text):
         """zoo-breakpoint-detection-methods.pdf recipe must live in zoo.mk, not only in Makefile."""
         assert re.search(
             r"^output/content/zoo-breakpoint-detection-methods\.pdf\s*:",

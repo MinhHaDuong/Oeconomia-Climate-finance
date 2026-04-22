@@ -71,8 +71,8 @@ $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_c
 $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_results.py
 	$(UV_RUN) python scripts/plot_zoo_results.py --method $* --output $@
 
-# ── Zoo-only PDF render (Phase 3) ────────────────────────────────────────────
-# Zoo-only: thin wrapper over $(ZOO_INCLUDES) for reviewers or cherry-picking.
+# ── Zoo PDF render (Phase 3) ─────────────────────────────────────────────────
+# Thin wrapper over $(ZOO_INCLUDES) for reviewers or cherry-picking.
 # Mirrors the TR recipe; same vars file, same bibliography, same engine.
 output/content/zoo-breakpoint-detection-methods.pdf: content/zoo-breakpoint-detection-methods.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml $(ZOO_FIGS)
 	quarto render $< --to pdf
