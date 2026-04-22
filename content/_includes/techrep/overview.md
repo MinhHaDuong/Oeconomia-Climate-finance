@@ -29,19 +29,20 @@ majority window grows.
 
 **Size-dependent bias.** Many statistics — including energy distance, MMD, and
 JS divergence — have non-zero expected value under the null $d = 0$ when
-$|1/n_\text{before} - 1/n_\text{after}|$ is large. The bias is not an artefact of a
-true shift; it is a finite-sample effect that grows with the size imbalance. Without
-correction, the series would show artificially elevated divergence in early and late
-years simply because the two windows are unequal in size.
+$|1/n_\text{before} - 1/n_\text{after}|$ is large [@gretton2012; @perezcruz2008].
+The bias is not an artefact of a true shift; it is a finite-sample effect that grows
+with the size imbalance. Without correction, the series would show artificially
+elevated divergence in early and late years simply because the two windows are unequal
+in size.
 
 **Equal-$n$ subsampling.** Before computing $D$, we subsample the larger window to
 $\min(n_\text{before}, n_\text{after})$ papers, drawn without replacement. This
 equalises both the variance contribution and eliminates the size-dependent bias
 component. The cost is a power loss proportional to the dropped fraction — largest in
-the middle years of the corpus where one window may be several times larger than the
-other. To reduce the variance introduced by a single random draw, we use R = 3
-median-of-three subsampling (see §Annex): the statistic is the median over three
-independent subsample draws at each anchor year.
+the early and late years of the corpus where imbalance is greatest. To reduce the
+variance introduced by a single random draw, we repeat the subsampling $R = 3$ times
+and take the median: the reported statistic is the median over three independent draws
+at each anchor year.
 
 **Configuration.** Equal-$n$ subsampling is controlled by `divergence.equal_n: true`
 in `config/analysis.yaml` (default). It can be disabled at runtime with
