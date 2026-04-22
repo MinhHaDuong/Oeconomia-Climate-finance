@@ -29,7 +29,7 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - `technical-report.qmd`: pure composer. Four includes: `_includes/techrep/overview.md`, `_includes/techrep/zscore.md`, `_includes/techrep/summary-of-findings.md`, `_includes/techrep-zoo.md`
 - `_includes/techrep-zoo.md`: composer for the 18-method zoo. One file per method under `_includes/zoo/` (S1–S4, S5=C2ST_embedding, L1–L3, L4=C2ST_lexical, G1–G9). Cherry-pickable by other documents.
 - `breakpoint-detect-method-zoo.qmd`: thin wrapper that renders just the zoo (companion to the TR, or standalone reference)
-- `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
+- `multilayer-detection.qmd`: method paper for QSS (renamed from companion-paper, #737); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 
 ### Zoo deepening — merged 2026-04-22 (PRs #744–#754)
@@ -51,6 +51,11 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ## Corpus (upcoming 1.1.2)
 - Being re-generated on padme with: explode Unstructured reference in citation targets (with GROBID), search citation targets DOI, matching parsed refs to corpus works, cleanup string encodings.
+
+## Known test failures (pre-existing RED)
+
+- `test_multilayer_detection_prose.py` (5 tests) + `test_multilayer_detection_pca.py` (9 tests): §5.1–5.4 prose stubs in `multilayer-detection.qmd` not yet written. Ticket 0064 was closed after Wave C; a new ticket is needed for §5 rewrite post-rename.
+- `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4` parallel execution; passes alone. Needs stabilisation (ticket 0081 scope).
 
 ## Blockers
 
