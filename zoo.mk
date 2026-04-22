@@ -57,11 +57,11 @@ $(ZOO_FIGS)/schematic_%.png: scripts/plot_schematic_%.py scripts/script_io_args.
 # Output: content/tables/tab_crossyear_{method}.csv
 # Depends only on the corresponding tab_div_{method}.csv.
 
-$(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_crossyear_zscore.py
-	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $* --output $@
-
 .PHONY: crossyear-tables
 crossyear-tables: $(addprefix $(ZOO_TABLES)/tab_crossyear_,$(addsuffix .csv,$(CROSSYEAR_METHODS)))
+
+$(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_crossyear_zscore.py
+	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $* --output $@
 
 # ── Zoo result panel recipes (pattern rule) ───────────────────────────────
 #
