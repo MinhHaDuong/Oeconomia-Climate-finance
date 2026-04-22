@@ -32,7 +32,7 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - `companion-paper.qmd`: method paper for QSS, reimagined 2026-04-15 (epic 0026); lean 6-method panel
 - NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
 
-### Zoo deepening — merged 2026-04-22 (PRs #744–#752)
+### Zoo deepening — merged 2026-04-22 (PRs #744–#754)
 - #744 (0099 part 1): L1_js theory — smoothing, vocabulary, low-n warning (LOW_N_LEXICAL_THRESHOLD=50)
 - #745 (0097): null model CI bands in zoo result figures
 - #746 (0099 part 2): L2 null expectation + C2ST_lexical D/n guard
@@ -41,6 +41,8 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - #749 (0103): figure polish — config-driven method titles, Z=0 reference line
 - #750 (0100): gap=1 window semantics across all four channels
 - #751/#752: hotfixes — L2 w=5 test exemption, crossyear Z-score all-NaN crash
+- #753 (0098 figures): bias comparison figures — plot_zoo_bias_comparison.py + Make recipes
+- #754 (0083): companion paper sensitivity annex — compute_sensitivity_grid.py + plot_companion_sensitivity.py
 
 ## Corpus (v1.1.1)
 
@@ -54,21 +56,12 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 None.
 
-## Active agents (as of 2026-04-22)
-
-Four Claude processes running on padme, each in its own locked worktree:
-- `t0083-sensitivity-annex` (`agent-aa72c17c`): sensitivity annex — 8 commits in, compute_sensitivity_grid.py + plot_companion_sensitivity.py ready, needs GPU run
-- `t0098-bias-comparison-figures` (`agent-a05d098e`): bias comparison figures — plot_zoo_bias_comparison.py done, needs PR
-- `t0099-l2-c2st` (`agent-a6cd5236`): L2/C2ST_lexical zoo prose — 3 commits in, likely ready for PR
-- `orchestrate-98-83-84` (`agent-a952b232`): orchestrator planning branch for 0098/0083/0084
-
 ## Next actions
 
 In direct service of the current goal (narrative + results + figures):
 
-- **0083** sensitivity annex — evidence that the key results (G9 sub-zones, S2/L1 saturation) are robust across window, gap, embedding dim, embedding model. R=3 median per cell, ~1.5-2h GPU on padme. Agent in progress.
 - **0084** subsampling-variance ribbon — honest uncertainty on the headline Z-plot. R=20 trim-2, ~2h GPU.
-- **0098** bias comparison figures — agent in progress on `t0098-bias-comparison-figures`.
+- **Run 0083** — compute_sensitivity_grid.py is on main; needs actual GPU run on padme to produce tab_sensitivity_grid.csv and the sensitivity figure.
 - **0070 + 0071-0078** bias audit — narrative backing for §4.8 Robustness and §6.4 Limitations. Most are acknowledgements; some warrant child analyses.
 - Waiting for corpus **1.1.2** to finish building — enables a rerun if the enriched corpus meaningfully changes G9's sub-zone structure.
 
