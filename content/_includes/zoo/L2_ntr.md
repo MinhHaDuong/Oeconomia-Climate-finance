@@ -32,9 +32,19 @@ where $P_\tau$ is the aggregated TF-IDF distribution for the year or window $\ta
 
 **Advantages.** Asymmetric decomposition is more informative than a symmetric distance. Resonance identifies *lasting* innovations. Three derived signals from one computation.
 
-**Biases.** KL divergence is unbounded and undefined when $P_t$ has support outside $P_{t-w:t-1}$ (rare terms in small windows); we add Laplace smoothing ($\epsilon = 10^{-8}$). Results for early years (1990–1998) are unstable due to sparse corpora.
+**Biases.** KL divergence is unbounded and undefined when $P_t$ has support outside $P_{t-w:t-1}$ (rare terms in small windows); we add Laplace smoothing ($\epsilon = 10^{-10}$). Results for early years (1990–1998) are unstable due to sparse corpora.
 
 **Limitations.** Year-level aggregation discards within-year heterogeneity. Sensitivity to smoothing parameter.
+
+### Null expectation
+
+Under $H_0$ (both windows drawn from the same distribution), NTR should be near zero.
+In the cold-start zone (1990–1998), before-windows contain as few as 10–20 papers,
+severely under-representing the vocabulary.
+At small $n_\text{before}$, many terms are absent from the before-window by sampling chance alone —
+inflating the novelty component regardless of any true distributional shift.
+This is a small-sample artefact, not a structural break:
+NTR estimates for $t < 1999$ should be interpreted cautiously.
 
 ### Corpus results
 

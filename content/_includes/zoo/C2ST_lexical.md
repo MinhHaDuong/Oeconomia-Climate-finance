@@ -31,6 +31,9 @@ Reference level: $\mathrm{AUC} = 0.5$ (random classifier).
 
 *Script:* `scripts/_divergence_lexical.py`, method `c2st`.
 
+The feature space is capped at `tfidf_max_features=5000` terms (controlled by `divergence.lexical.tfidf_max_features` in `config/analysis.yaml`) with `min_df=3` dropping hapax-like terms; together these bounds prevent D/n blow-up even when window sizes are small — the classifier never sees more features than the vocabulary that clears the minimum-document-frequency filter.
+The `pca_dim=32` parameter (`divergence.c2st.pca_dim` in `config/analysis.yaml`) applies only to the *embedding* channel (`C2ST_embedding`), where raw embedding dimensions require explicit reduction; the lexical channel's effective dimensionality is already controlled by the TF-IDF vocabulary cap.
+
 ### Principle figure
 
 ![](figures/schematic_C2ST.png){width=100%}
