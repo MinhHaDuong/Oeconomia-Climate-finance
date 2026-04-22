@@ -1,8 +1,7 @@
 ## Permutation null model
 
 For each (method, year, window) cell, we assess statistical significance via a permutation test.
-Under the null hypothesis of label exchangeability, before- and after-period papers are pooled and
-randomly permuted $B = 500$ times; the observed divergence statistic is then standardised against this
+Under the null hypothesis of exchangeability (before- and after-period papers are drawn from the same distribution), they are pooled and randomly permuted $B = 500$ times; the observed divergence statistic is then standardised against this
 null distribution to yield a $Z$-score (see §\ref{sec:zscore}).
 Three complementary strategies make the 500-permutation sweep across all cells tractable:
 (i) **GPU-batched permutations** for $S_2$ energy distance and $S_1$ MMD: the pairwise

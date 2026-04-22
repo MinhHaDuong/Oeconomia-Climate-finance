@@ -11,5 +11,4 @@ Methods are grouped into three layers:
 - **Part S — Semantic.** Compare full embedding distributions: each work is a point in the BAAI/bge-m3 embedding space ({{< meta emb_dimensions >}} dimensions). These methods detect distributional shift in *what the field talks about*.
 - **Part L — Lexical.** Compare TF-IDF vocabulary distributions. Complementary to semantic methods; more interpretable (discriminating terms are directly readable).
 - **Part G — Citation graph.** Compare citation network topology: degree distributions, community structure, centrality. These methods detect changes in *how knowledge flows* rather than *what is said*.
-
-Classifier Two-Sample Tests (C2ST) appear as one genus in two habitats: C2ST\_embedding lives in Part S, C2ST\_lexical in Part L. Each asks the same meta-check question — can a machine-learning classifier tell "before" from "after" better than chance? — in its respective feature space.
+- **C2ST (Classifier two-sample tests).** C2ST\_embedding lives in Part S; C2ST\_lexical lives in Part L. Each asks the same meta-check question — can a classifier distinguish "before" from "after" better than chance? — in its respective feature space.

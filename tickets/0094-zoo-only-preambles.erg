@@ -1,0 +1,40 @@
+%erg v1
+Title: Add framing preambles to zoo-only.qmd (overview, Z-score, null model)
+Status: open
+Created: 2026-04-21
+Author: claude
+
+--- log ---
+2026-04-21T00:00Z claude created
+
+--- body ---
+## Context
+
+PR #725 introduced `content/zoo-only.qmd` as a standalone excerpt from
+the technical report. The initial version included only `techrep-zoo.md`
+(the 18-method zoo section), but readers opening the zoo-only PDF without
+the full technical report context lack the framing paragraphs that explain
+what cross-year Z-scores are and how the permutation null model works.
+
+Those preambles already exist as modular includes:
+- `_includes/techrep/overview.md` — zoo section overview
+- `_includes/techrep/zscore.md` — cross-year Z-score standardisation
+- `_includes/techrep/null-model.md` — permutation null model and acceleration
+
+## Actions
+
+1. Prepend the three include directives to `content/zoo-only.qmd`, before
+   `techrep-zoo.md`:
+   ```
+   {{< include _includes/techrep/overview.md >}}
+   {{< include _includes/techrep/zscore.md >}}
+   {{< include _includes/techrep/null-model.md >}}
+   ```
+
+2. Add the three include files to `ZOO_INCLUDES` in the Makefile so that
+   `output/content/zoo-only.pdf` is rebuilt when they change.
+
+## Test
+
+`make output/content/zoo-only.pdf` succeeds; grep of the rendered source
+confirms all three include directives appear in `zoo-only.qmd`.
