@@ -63,7 +63,7 @@ def load_semantic_data(input_paths):
 # ── Shared helpers ─────────────────────────────────────────────────────────
 
 
-def _get_years_and_params(df, emb, cfg):
+def _get_years_and_params(df, emb, cfg, method=None):
     """Derive per-window year ranges and smoke-safe parameters from config.
 
     Returns (years_by_window, min_papers, max_subsample, equal_n).
@@ -77,7 +77,7 @@ def _get_years_and_params(df, emb, cfg):
     max_subsample = div_cfg["max_subsample"]
     equal_n = div_cfg.get("equal_n", False)
 
-    min_papers = get_min_papers(len(df), cfg)
+    min_papers = get_min_papers(method=method, cfg=cfg, n_works=len(df))
     years_by_window = per_window_year_ranges(df, windows)
     return years_by_window, min_papers, max_subsample, equal_n
 
@@ -488,7 +488,7 @@ def compute_s4_frechet(df, emb, cfg):
     rng = np.random.RandomState(seed)
 
     years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
-        df, emb, cfg
+        df, emb, cfg, method="S4_frechet"
     )
     if not any(years_by_window.values()):
         return empty_divergence_df()
