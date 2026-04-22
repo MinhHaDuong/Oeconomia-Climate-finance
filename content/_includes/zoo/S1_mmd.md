@@ -37,3 +37,7 @@ Key values (w=3): peak $Z = +3.2$ at 1998, monotonic decline to $Z \approx -0.4$
 ### References
 
 Seminal: @gretton2012 (JMLR 13:723–773, 2012). Recent analogue: @hulkund2022interpretable (optimal transport applied to interpretable distribution-shift detection; the closest machine-learning setting to cross-window corpus comparison).
+
+::: {.callout-note}
+All zoo results use the equal-n debiased estimator; see the bias comparison figure for the magnitude of the correction.
+:::

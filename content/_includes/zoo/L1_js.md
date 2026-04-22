@@ -47,3 +47,7 @@ Key values (w=3): peak $Z = +2.7$ at 1998, monotonic decline. Same convergence p
 
 Seminal: @lin1991divergence (Lin 1991, "Divergence measures based on the Shannon entropy", *IEEE Transactions on Information Theory*).
 Recent analogue: @hall2008studying (Hall et al. 2008, "Studying the history of ideas using topic models", EMNLP — JS on bag-of-words for intellectual history, closest to our setting).
+
+::: {.callout-note}
+All zoo results use the equal-n debiased estimator; see the bias comparison figure for the magnitude of the correction.
+:::
