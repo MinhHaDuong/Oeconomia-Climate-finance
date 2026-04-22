@@ -139,3 +139,12 @@ zoo:
     G9_community: "G9 Community JS"
     C2ST_embedding: "C2ST Embedding"
     C2ST_lexical: "C2ST Lexical"
+
+# ── Sensitivity grid (ticket 0083) ──────────────────────────────────────
+# compute_sensitivity_grid.py reads this block to run the 4×4×5 sweep.
+sensitivity:
+  windows: [1, 3, 5, 7]
+  gaps: [0, 1, 3, 5]
+  dims: [64, 128, 256, 512, 1024]
+  equal_n_r: 3         # R=3 median-of-three equal-n subsample replicates
+  method: S2_energy
