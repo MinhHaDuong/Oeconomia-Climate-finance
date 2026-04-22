@@ -194,6 +194,8 @@ ZOO_RESULT_FIGS := content/figures/fig_zoo_S1_MMD.png \
 
 ZOO_FIGS := $(ZOO_SCHEMATICS) $(ZOO_RESULT_FIGS)
 
+# ZOO_FIGS deliberately excluded from ALL_FIGS / make figures: plot scripts not yet wired.
+# Add to ALL_FIGS when plot_schematic_*.py and plot_zoo_results.py have Makefile targets.
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(COMPANION_FIGS) $(TECHREP_FIGS) $(NCC_FIGS)
 
 # ── Default target ────────────────────────────────────────
