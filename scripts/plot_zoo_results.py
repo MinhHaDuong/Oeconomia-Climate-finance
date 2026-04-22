@@ -26,7 +26,6 @@ from pathlib import Path
 
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from pipeline_io import save_figure
 from plot_style import DARK, FILL, LIGHT, MED, apply_style
@@ -85,7 +84,7 @@ def _empty_figure(output_stem: str, method: str) -> None:
 
 def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
     """Load null model CSV if path provided and file exists. Returns None otherwise."""
-    if not null_ci_path:
+    if null_ci_path is None:
         return None
     if not Path(null_ci_path).exists():
         log.warning("Null CI file not found: %s — skipping CI band", null_ci_path)
@@ -103,25 +102,16 @@ def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.Dat
     where mu_w and sigma_w are the per-window mean and std of the crossyear
     Z-scores (from the observed data).
     """
-    mu_w = (
-        df.groupby("window")["value"].mean()
-        if "value" in df.columns
-        else df.groupby("window")["z_score"].mean()
-    )
-    sigma_w = (
-        df.groupby("window")["value"].std()
-        if "value" in df.columns
-        else df.groupby("window")["z_score"].std()
-    )
+    # tab_crossyear_*.csv always has both 'value' (raw D) and 'z_score'; use 'value'
+    # to match the original Z-score normalization: Z = (D - mu_w) / sigma_w.
+    col = "value" if "value" in df.columns else "z_score"
+    mu_w = df.groupby("window")[col].mean()
+    sigma_w = df.groupby("window")[col].std()
 
     null_df = null_df.copy()
-    null_df["z_threshold"] = null_df.apply(
-        lambda r: (
-            (r["null_mean"] + 1.96 * r["null_std"] - mu_w.get(r["window"], np.nan))
-            / sigma_w.get(r["window"], np.nan)
-        ),
-        axis=1,
-    )
+    null_df["z_threshold"] = (
+        null_df["null_mean"] + 1.96 * null_df["null_std"] - null_df["window"].map(mu_w)
+    ) / null_df["window"].map(sigma_w)
     return null_df
 
 

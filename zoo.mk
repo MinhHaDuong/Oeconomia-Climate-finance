@@ -71,9 +71,6 @@ $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_c
 # Methods with null model tables get an explicit target that passes --null-ci
 # so the CI band overlay is rendered.  The pattern rule handles all others.
 
-# Methods with null model tables (subset of CROSSYEAR_METHODS).
-NULL_TABLE_METHODS := S2_energy L1 G9_community G2_spectral
-
 $(ZOO_FIGS)/fig_zoo_S2_energy.png: $(ZOO_TABLES)/tab_crossyear_S2_energy.csv $(ZOO_TABLES)/tab_null_S2_energy.csv scripts/plot_zoo_results.py
 	$(UV_RUN) python scripts/plot_zoo_results.py --method S2_energy --output $@ --null-ci $(ZOO_TABLES)/tab_null_S2_energy.csv
 
