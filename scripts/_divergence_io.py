@@ -225,6 +225,7 @@ def iter_semantic_windows(div_df, cfg):
     df, emb = load_semantic_data(None)
     div_cfg = cfg["divergence"]
     seed = div_cfg["random_seed"]
+    gap = div_cfg.get("gap", 1)
 
     _, min_papers, max_subsample, equal_n = _get_years_and_params(df, emb, cfg)
 
@@ -237,10 +238,26 @@ def iter_semantic_windows(div_df, cfg):
         subsample_rng, extra_rng = _make_window_rngs(seed, y, w)
 
         X = _get_window_embeddings(
-            df, emb, y, w, "before", min_papers, max_subsample, rng=subsample_rng
+            df,
+            emb,
+            y,
+            w,
+            "before",
+            min_papers,
+            max_subsample,
+            rng=subsample_rng,
+            gap=gap,
         )
         Y = _get_window_embeddings(
-            df, emb, y, w, "after", min_papers, max_subsample, rng=subsample_rng
+            df,
+            emb,
+            y,
+            w,
+            "after",
+            min_papers,
+            max_subsample,
+            rng=subsample_rng,
+            gap=gap,
         )
         if X is None or Y is None:
             continue
@@ -271,6 +288,7 @@ def iter_lexical_windows(div_df, cfg):
     df = load_lexical_data(None)
     div_cfg = cfg["divergence"]
     seed = div_cfg["random_seed"]
+    gap = div_cfg.get("gap", 1)
 
     min_papers = get_min_papers(cfg=cfg, n_works=len(df))
     equal_n = div_cfg.get("equal_n", False)
@@ -283,8 +301,8 @@ def iter_lexical_windows(div_df, cfg):
 
         subsample_rng, extra_rng = _make_window_rngs(seed, y, w)
 
-        mask_before = (df["year"] >= y - w) & (df["year"] <= y)
-        mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
+        mask_before = (df["year"] >= y - w) & (df["year"] <= y - gap)
+        mask_after = (df["year"] >= y + gap) & (df["year"] <= y + w)
 
         texts_before = df.loc[mask_before, "abstract"].tolist()
         texts_after = df.loc[mask_after, "abstract"].tolist()

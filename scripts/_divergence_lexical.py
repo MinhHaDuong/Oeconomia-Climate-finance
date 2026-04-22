@@ -85,7 +85,8 @@ def _iter_lexical_window_pairs(df, cfg):
     div_cfg = cfg["divergence"]
     lex_cfg = div_cfg.get("lexical", {})
     windows = div_cfg["windows"]
-    min_papers = _get_min_papers(len(df), cfg)
+    gap = div_cfg.get("gap", 1)
+    min_papers = _get_min_papers(cfg=cfg, n_works=len(df))
     max_subsample = div_cfg["max_subsample"]
     tfidf_max_features = lex_cfg.get("tfidf_max_features", 5000)
     tfidf_min_df = lex_cfg.get("tfidf_min_df", 3)
@@ -107,8 +108,8 @@ def _iter_lexical_window_pairs(df, cfg):
 
     for w, years in years_by_window.items():
         for y in years:
-            mask_before = (df["year"] >= y - w) & (df["year"] <= y)
-            mask_after = (df["year"] >= y + 1) & (df["year"] <= y + 1 + w)
+            mask_before = (df["year"] >= y - w) & (df["year"] <= y - gap)
+            mask_after = (df["year"] >= y + gap) & (df["year"] <= y + w)
 
             texts_before = df.loc[mask_before, "abstract"].tolist()
             texts_after = df.loc[mask_after, "abstract"].tolist()
@@ -194,7 +195,7 @@ def compute_l2_novelty(df, cfg):
     lex_cfg = div_cfg["lexical"]
 
     l2_windows = lex_cfg["L2_novelty"]["windows"]
-    min_papers = _get_min_papers(len(df), cfg)
+    min_papers = _get_min_papers(cfg=cfg, n_works=len(df))
     tfidf_max_features = lex_cfg["tfidf_max_features"]
     tfidf_min_df = lex_cfg["tfidf_min_df"]
 

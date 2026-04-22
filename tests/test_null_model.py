@@ -934,8 +934,9 @@ class TestBackendComparison:
         vec.fit(df["abstract"].tolist())
         stat_fn = _make_lexical_statistic(vec)
 
-        mask_b = (df["year"] >= 2005 - 3) & (df["year"] <= 2005)
-        mask_a = (df["year"] >= 2006) & (df["year"] <= 2006 + 3)
+        # gap=1: before=[t-w, t-1], after=[t+1, t+w]
+        mask_b = (df["year"] >= 2005 - 3) & (df["year"] <= 2004)
+        mask_a = (df["year"] >= 2006) & (df["year"] <= 2005 + 3)
         texts_b = df.loc[mask_b, "abstract"].tolist()
         texts_a = df.loc[mask_a, "abstract"].tolist()
 
