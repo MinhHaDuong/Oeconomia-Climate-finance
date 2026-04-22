@@ -144,8 +144,7 @@ def main():
 
     cfg = load_analysis_config()
 
-    # CLI override: --no-equal-n sets cfg["divergence"]["equal_n"] = False,
-    # propagating to all private modules that read div_cfg.get("equal_n").
+    # Mutate cfg so private modules pick up the override without API changes.
     if args.equal_n is not None:
         cfg["divergence"]["equal_n"] = args.equal_n
     module_name, func_name, channel, needs_emb, needs_cit = METHODS[args.method]
