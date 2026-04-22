@@ -17,6 +17,8 @@ All scripts are in `scripts/`, the corpus contract files at `$CLIMATE_FINANCE_DA
 
 {{< include _includes/techrep/zscore.md >}}
 
+{{< include _includes/techrep/null-model.md >}}
+
 {{< include _includes/techrep/summary-of-findings.md >}}
 
 \newpage
