@@ -6,6 +6,7 @@ Author: user
 
 --- log ---
 2026-04-22T12:00Z user created
+2026-04-22T12:30Z orchestrator reimagine: --no-equal-n is a 1-line config override in compute_divergence.py — add CLI flag, set cfg["divergence"]["equal_n"]=False before dispatch, zero changes to private modules. Theory prose (Action 1 in overview.md) is fully independent of figure work — can be written and merged first. On padme: can generate biased tab_div tables and bias-comparison figures. Split allowed: land theory prose PR first, figure PR second.
 
 --- body ---
 ## Context

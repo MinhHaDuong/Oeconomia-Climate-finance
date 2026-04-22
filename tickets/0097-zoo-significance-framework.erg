@@ -6,6 +6,7 @@ Author: user
 
 --- log ---
 2026-04-22T12:00Z user created
+2026-04-22T12:30Z orchestrator reimagine: CI bands feasible. Join on (year, window); recompute mu_w/sigma_w from 'value' column in crossyear CSV — no schema changes needed. Only 4 methods have null tables: S2_energy, L1, G9_community, G2_spectral (defined by NULL_METHODS in divergence.mk). zoo.mk recipe conditionally passes --null-ci for these 4; remaining 14 methods render unchanged. Padme confirmed available — tab_null_*.csv can be built first.
 
 --- body ---
 ## Context
