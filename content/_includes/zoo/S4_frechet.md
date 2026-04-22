@@ -34,6 +34,10 @@ where $(\mu_k, \Sigma_k)$ are the empirical mean and covariance of each window's
 
 Key values (w=3): peak $Z = +2.9$ at 1998, monotonic decline. Weaker than S1–S3 due to Gaussian misspecification.
 
+### Sample size note
+
+S4 fits an empirical covariance matrix of dimension $d$ from $n$ embedding vectors. The covariance is full-rank only when $n > d$. With PCA reduction to `max_dim=256`, a window of $n < 300$ papers yields a rank-deficient or numerically fragile covariance. The pipeline therefore sets `min_papers=300` for S4\_frechet in `config/analysis.yaml`; (year, window) pairs with fewer papers are skipped. This is a stricter guard than the global `min_papers=30`.
+
 ### References
 
 Seminal: @heusel2017gans (Heusel et al. 2017, "GANs trained by a two time-scale update rule converge to a local Nash equilibrium", NeurIPS).
