@@ -19,28 +19,31 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 from pipeline_io import save_figure
+from plot_style import apply_style
 from script_io_args import parse_io_args, validate_io
 
+apply_style()
 
-def _load_series(csv_path: str, window_val: int) -> pd.DataFrame:
-    """Load CSV and return rows for the chosen window, sorted by year."""
+
+def _load_window_df(csv_path: str) -> tuple[pd.DataFrame, int]:
+    """Load CSV, coerce window to int, pick preferred window (w=3 or smallest).
+
+    Returns the full dataframe with numeric window column and the chosen window value.
+    Caller filters to the chosen window so the CSV is read only once.
+    """
     df = pd.read_csv(csv_path)
     # window column may be int or string after CSV roundtrip — coerce to int
-    df["window"] = pd.to_numeric(df["window"], errors="coerce")
-    subset = df[df["window"] == window_val].copy()
-    subset = subset.sort_values("year")
-    return subset
-
-
-def _pick_window(csv_path: str) -> int:
-    """Return the smallest integer window value present in the CSV."""
-    df = pd.read_csv(csv_path)
     df["window"] = pd.to_numeric(df["window"], errors="coerce")
     windows = sorted(df["window"].dropna().unique().astype(int))
     if not windows:
         raise ValueError(f"No numeric window values found in {csv_path}")
-    # Prefer window=3 if available, else fall back to smallest
-    return 3 if 3 in windows else windows[0]
+    window = 3 if 3 in windows else windows[0]
+    return df, window
+
+
+def _filter_series(df: pd.DataFrame, window_val: int) -> pd.DataFrame:
+    """Return rows for the chosen window, sorted by year."""
+    return df[df["window"] == window_val].sort_values("year").copy()
 
 
 def main() -> None:
@@ -56,18 +59,15 @@ def main() -> None:
     )
     args = parser.parse_args(extra)
 
-    # Validate biased CSV exists
-    if not os.path.exists(args.biased_csv):
-        raise FileNotFoundError(f"Biased CSV not found: {args.biased_csv}")
-
     debiased_path = io_args.input[0]
     biased_path = args.biased_csv
 
-    # Pick window (prefer w=3 if available)
-    window = _pick_window(debiased_path)
+    df_deb_full, window = _load_window_df(debiased_path)
+    df_bias_full = pd.read_csv(biased_path)
+    df_bias_full["window"] = pd.to_numeric(df_bias_full["window"], errors="coerce")
 
-    df_deb = _load_series(debiased_path, window)
-    df_bias = _load_series(biased_path, window)
+    df_deb = _filter_series(df_deb_full, window)
+    df_bias = _filter_series(df_bias_full, window)
 
     if df_deb.empty:
         raise ValueError(
@@ -122,8 +122,6 @@ def main() -> None:
         fontsize=10,
     )
     ax.legend(fontsize=8, frameon=False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
 
     fig.tight_layout()
 
