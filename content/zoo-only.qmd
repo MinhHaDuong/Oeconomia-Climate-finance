@@ -11,4 +11,10 @@ format:
     number-sections: true
 ---
 
+{{< include _includes/techrep/overview.md >}}
+
+{{< include _includes/techrep/zscore.md >}}
+
+{{< include _includes/techrep/null-model.md >}}
+
 {{< include _includes/techrep-zoo.md >}}

@@ -96,7 +96,10 @@ COMPANION_INCLUDES := content/_includes/embedding-generation.md \
 
 # Method-zoo include tree: one composer + 18 per-method entries.
 # Used by the zoo-only wrapper and transitively by technical-report.qmd.
-ZOO_INCLUDES := content/_includes/techrep-zoo.md \
+ZOO_INCLUDES := content/_includes/techrep/overview.md \
+		content/_includes/techrep/zscore.md \
+		content/_includes/techrep/null-model.md \
+		content/_includes/techrep-zoo.md \
 		content/_includes/zoo/S1_mmd.md \
 		content/_includes/zoo/S2_energy.md \
 		content/_includes/zoo/S3_sliced_wasserstein.md \
