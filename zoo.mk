@@ -1,13 +1,13 @@
-# zoo.mk — Zoo figures: 17 ELI15 schematics + 14 cross-year result panels
+# zoo.mk — Zoo figures: 17 ELI15 schematics + 18 cross-year result panels
 #
 # Included from the main Makefile:  -include zoo.mk
 #
 # Targets:
-#   zoo-figures      All 31 zoo figures (schematics + result panels)
+#   zoo-figures      All 35 zoo figures (schematics + result panels)
 #   crossyear-tables Cross-year Z-score CSVs (prerequisites for result panels)
 #
 # Schematic stems match the plot_schematic_*.py script suffixes exactly.
-# Result method names match the CROSSYEAR_METHODS list (14 methods).
+# Result method names match the CROSSYEAR_METHODS list (18 methods).
 
 # ── Paths ─────────────────────────────────────────────────────────────────
 
@@ -31,8 +31,9 @@ ZOO_SCHEMATICS := $(addprefix $(ZOO_FIGS)/schematic_,$(addsuffix .png,$(ZOO_SCHE
 # compute_crossyear_zscore.py (depends on tab_div_{method}.csv).
 
 CROSSYEAR_METHODS := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
-                     L1 L2 G1_pagerank G2_spectral G5_pref_attachment \
-                     G6_entropy G8_betweenness G9_community \
+                     L1 L2 L3 G1_pagerank G2_spectral G3_coupling_age \
+                     G4_cross_tradition G5_pref_attachment G6_entropy \
+                     G7_disruption G8_betweenness G9_community \
                      C2ST_embedding C2ST_lexical
 
 ZOO_RESULT_FIGS := $(addprefix $(ZOO_FIGS)/fig_zoo_,$(addsuffix .png,$(CROSSYEAR_METHODS)))
