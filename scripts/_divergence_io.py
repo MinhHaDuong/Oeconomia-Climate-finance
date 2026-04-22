@@ -108,17 +108,36 @@ def load_divergence_tables(input_paths):
 # ── Smoke-mode parameter selection ──────────────────────────────────────
 
 
-def get_min_papers(n_works, cfg):
-    """Return appropriate min_papers based on corpus size.
+def get_min_papers(method=None, *, cfg=None, n_works=None):
+    """Return appropriate min_papers for a given method and corpus size.
 
-    Uses min_papers_smoke (default 5) when n_works < 200,
-    otherwise min_papers (default 30).
+    Lookup order:
+    1. Per-method override from config (S4_frechet=300, c2st/C2ST_*=50).
+    2. Smoke mode: if n_works < 200, use min_papers_smoke (default 5).
+    3. Global min_papers (default 30).
+
+    When cfg is None, loads config/analysis.yaml automatically.
     """
+    if cfg is None:
+        from pipeline_loaders import load_analysis_config
+
+        cfg = load_analysis_config()
     div_cfg = cfg["divergence"]
-    if n_works < 200:
+
+    # Per-method overrides take precedence over smoke mode
+    if method == "S4_frechet":
+        return div_cfg["semantic"]["S4_frechet"].get(
+            "min_papers", div_cfg["min_papers"]
+        )
+    if method in ("c2st", "C2ST_embedding", "C2ST_lexical"):
+        return div_cfg["c2st"].get("min_papers", div_cfg["min_papers"])
+
+    # Smoke mode (small corpus)
+    if n_works is not None and n_works < 200:
         mp = div_cfg.get("min_papers_smoke", 5)
         log.info("Smoke mode: n_works=%d < 200, min_papers=%d", n_works, mp)
         return mp
+
     return div_cfg.get("min_papers", 30)
 
 
@@ -253,7 +272,7 @@ def iter_lexical_windows(div_df, cfg):
     div_cfg = cfg["divergence"]
     seed = div_cfg["random_seed"]
 
-    min_papers = get_min_papers(len(df), cfg)
+    min_papers = get_min_papers(cfg=cfg, n_works=len(df))
     equal_n = div_cfg.get("equal_n", False)
 
     year_windows = div_df[["year", "window"]].drop_duplicates()

@@ -61,6 +61,10 @@ AUC visibly above 0.5 corroborates the distance-based signals but does not by it
 
 **Key values.** The C2ST embedding channel hovers around 0.60–0.67, significantly above chance, for almost all years — confirming that before/after windows are consistently distinguishable. However, the AUC time series is flat and noisy: no 2007 peak, no convergence trend. C2ST is a less sensitive detector than the distributional methods for this corpus. Its primary use here is as a sanity check: the fact that $\mathrm{AUC} > 0.5$ everywhere confirms that our methods are not measuring noise.
 
+### Sample size note
+
+With `cv_folds=5`, each fold holds out one-fifth of each class. At $n=30$ balanced papers, the smallest test fold contains only 3 papers per class — too few for stable AUC estimation. Reliable folds require at least 5 test papers per class, giving $n \geq 50$. The pipeline sets `min_papers=50` for C2ST in `config/analysis.yaml`; (year, window) pairs below this threshold are skipped. AUC estimates near the boundary ($n \approx 50$) carry higher variance than those at typical window sizes ($n \approx 200$).
+
 ### References
 
 Seminal: @lopez_paz_oquab2017 (Lopez-Paz & Oquab 2017, "Revisiting Classifier Two-Sample Tests", *ICLR*).

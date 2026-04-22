@@ -46,6 +46,7 @@ divergence:
     pca_dim: 32
     cv_folds: 5
     class_weight: balanced
+    min_papers: 50    # n >= 5 * cv_folds * min_class_size for reliable AUC
 
   semantic:
     S1_MMD:
@@ -55,6 +56,7 @@ divergence:
       n_projections: [100, 500, 1000]
     S4_frechet:
       max_dim: 256                               # PCA reduce before Fréchet (covariance stability + speed)
+      min_papers: 300  # n > PCA reduced dim (max_dim=256) for valid covariance
 
   lexical:
     tfidf_max_features: 5000

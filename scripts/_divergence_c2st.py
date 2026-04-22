@@ -127,7 +127,7 @@ def compute_c2st_embedding(df, emb, cfg):
     rng = np.random.RandomState(seed)
 
     years_by_window, min_papers, max_subsample, equal_n = _get_years_and_params(
-        df, emb, cfg
+        df, emb, cfg, method="c2st"
     )
     if not any(years_by_window.values()):
         return pd.DataFrame(
