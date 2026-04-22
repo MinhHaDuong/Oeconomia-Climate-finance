@@ -85,11 +85,32 @@ def main() -> None:
         sub = window_rows(df, window).sort_values("year")
         if sub.empty:
             continue
+        color = colors.get(method, None)
+        label = methods_labels.get(method, method)
+
+        # Subsampling ribbon: draw before the line so the line sits on top.
+        has_ribbon = (
+            "z_trim_lo" in sub.columns
+            and "z_trim_hi" in sub.columns
+            and sub["z_trim_lo"].notna().any()
+        )
+        if has_ribbon:
+            ribbon = sub.dropna(subset=["z_trim_lo", "z_trim_hi"])
+            ax.fill_between(
+                ribbon["year"],
+                ribbon["z_trim_lo"],
+                ribbon["z_trim_hi"],
+                color=color,
+                alpha=0.2,
+                linewidth=0,
+                zorder=2,
+            )
+
         ax.plot(
             sub["year"],
             sub["z_score"],
-            label=methods_labels.get(method, method),
-            color=colors.get(method, None),
+            label=label,
+            color=color,
             linewidth=1.2,
             zorder=3,
         )
