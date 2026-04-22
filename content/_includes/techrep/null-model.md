@@ -38,6 +38,12 @@ asymmetric test that is neither conservative nor liberal but *structurally disto
 
 Use the permutation CI band (below) to assess significance; use the cross-year Z only
 for cross-method comparability.
+
+**Empirical check.** For the $S_2$ energy distance series ($n=90$ year–window pairs),
+the Spearman rank correlation between $|Z_\text{cross}|$ and $-\log_{10}(p_\text{perm})$
+is $\rho = -0.25$ ($p = 0.018$) — *negative*, confirming that large cross-year Z-scores
+cluster at early years where trend inflation is highest, not where the permutation test
+finds the strongest evidence. The two rankings diverge by design.
 :::
 
 ## Permutation null model
