@@ -96,11 +96,27 @@ def _crossyear_zscore(values):
     return (vals - mean_v) / std_v
 
 
-def main():
-    io_args, _ = parse_io_args()
-    validate_io(output=io_args.output)
+def compute_grid(df, emb, cfg):
+    """Run the full sensitivity grid computation.
 
-    cfg = load_analysis_config()
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Corpus with at least a ``year`` column.
+    emb : np.ndarray
+        Embedding matrix aligned with ``df``.
+    cfg : dict
+        Full analysis config (must contain ``sensitivity`` and
+        ``divergence`` sub-dicts).
+
+    Returns
+    -------
+    pd.DataFrame
+        Rows with columns ``(model, dim, window, gap, year, method,
+        z_score, n_before, n_after)``.  Empty DataFrame if no valid
+        (window, gap, year) triples are found in the corpus.
+
+    """
     sens = cfg["sensitivity"]
     windows = sens["windows"]
     gaps = sens["gaps"]
@@ -116,7 +132,6 @@ def main():
         r_replicates,
     )
 
-    df, emb = load_semantic_data(None)
     min_papers = get_min_papers(method=None, cfg=cfg, n_works=len(df))
     log.info("min_papers=%d, corpus size=%d", min_papers, len(df))
 
@@ -155,7 +170,6 @@ def main():
 
                 # Compute n_before / n_after for each year
                 years_by_window = per_window_year_ranges(df, [window])
-                valid_years = set(years_by_window.get(window, []))
 
                 for _, mrow in medians.iterrows():
                     y = int(mrow["year"])
@@ -180,8 +194,19 @@ def main():
                     )
 
     if not all_rows:
-        log.error("No rows produced — check corpus and config")
-        sys.exit(1)
+        return pd.DataFrame(
+            columns=[
+                "model",
+                "dim",
+                "window",
+                "gap",
+                "year",
+                "method",
+                "z_score",
+                "n_before",
+                "n_after",
+            ]
+        )
 
     result = pd.DataFrame(all_rows)
 
@@ -192,6 +217,21 @@ def main():
         result.loc[grp.index, "z_score"] = z.values
 
     result = result.drop(columns=["_value"])
+    return result
+
+
+def main():
+    io_args, _ = parse_io_args()
+    validate_io(output=io_args.output)
+
+    cfg = load_analysis_config()
+    df, emb = load_semantic_data(None)
+
+    result = compute_grid(df, emb, cfg)
+
+    if result.empty:
+        log.error("No rows produced — check corpus and config")
+        sys.exit(1)
 
     # Validate schema
     SensitivityGridSchema.validate(result)
