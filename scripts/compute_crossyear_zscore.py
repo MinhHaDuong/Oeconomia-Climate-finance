@@ -55,7 +55,7 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
         group_keys.append("hyperparams")
 
     per_hp: list[pd.DataFrame] = []
-    for keys, grp in df.groupby(group_keys, sort=False):
+    for keys, grp in df.groupby(group_keys, sort=False, dropna=False):
         grp = grp.sort_values("year").copy()
         vals = grp["value"].astype(float)
         mean_d = vals.mean()
