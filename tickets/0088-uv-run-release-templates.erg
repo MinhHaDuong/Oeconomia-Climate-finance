@@ -30,9 +30,11 @@ shell failure mode depending on how a reviewer installs uv.
 3. In `build_datapaper_archive.sh`, add a `command -v uv || export PATH="$HOME/.local/bin:$PATH"` guard at the top (shell scripts don't get the Make fix for free if invoked directly).
 
 ## Test
-- `grep -c 'uv run' release/templates/Makefile.analysis-manuscript release/templates/Makefile.datapaper release/scripts/build_datapaper_archive.sh` → `0 0 0`.
+- `grep -c 'uv run' release/templates/Makefile.analysis-manuscript release/templates/Makefile.datapaper` → `0 0`.
 - `make -pn -f release/templates/Makefile.analysis-manuscript | grep -cE '^\s+uv run'` > 0 (recipes expand by default).
+- `release/scripts/build_datapaper_archive.sh`: PATH guard applied at top (Action #3); 1 bare `uv run` intentionally remains — the guard ensures `uv` is findable before the call.
 
 ## Exit criteria
-- No raw `uv run ` in `release/templates/` or `release/scripts/` (grep-ratchet: 0 hits).
+- No raw `uv run ` in `release/templates/` (grep-ratchet: 0 hits in both Makefiles).
+- Shell script uses PATH-guard pattern instead of variable substitution (by design: shell scripts do not participate in Make variable expansion).
 - Override works: `make UV=/tmp/fake-uv -pn -f release/templates/Makefile.datapaper` shows `/tmp/fake-uv run ...`.

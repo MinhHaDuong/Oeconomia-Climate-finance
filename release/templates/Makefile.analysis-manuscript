@@ -13,6 +13,11 @@
 export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
+# ── Toolchain ─────────────────────────────────────────────
+UV      ?= uv
+UV_RUN  ?= $(UV) run
+export PATH := $(HOME)/.local/bin:$(PATH)
+
 DATA    := data/catalogs
 REFINED := $(DATA)/refined_works.csv
 
@@ -24,37 +29,37 @@ figures: content/figures/fig_bars_v1.png content/figures/fig_composition.png \
 
 content/tables/tab_alluvial.csv content/tables/tab_core_shares.csv content/tables/cluster_labels.json &: \
 		scripts/compute_clusters.py scripts/utils.py $(REFINED) $(DATA)/refined_embeddings.npz
-	uv run python $<
+	$(UV_RUN) python $<
 
 # ── Figures ─────────────────────────────────────────────────
 content/figures/fig_bars_v1.png: scripts/plot_fig1_bars.py scripts/plot_style.py scripts/utils.py $(REFINED)
-	uv run python $< --v1-only
+	$(UV_RUN) python $< --v1-only
 
 content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py \
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
-	uv run python $< --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
+	$(UV_RUN) python $< --alluvial config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
 $(DATA)/het_mostcited_50.csv: scripts/build_het_core.py scripts/utils.py $(REFINED)
-	uv run python $<
+	$(UV_RUN) python $<
 
 content/tables/tab_venues.md: scripts/export_tab_venues.py scripts/utils.py $(REFINED) \
 		content/tables/tab_pole_papers.csv
-	uv run python $<
+	$(UV_RUN) python $<
 
 content/tables/tab_pole_papers.csv &: scripts/analyze_bimodality.py scripts/utils.py $(REFINED)
-	uv run python $<
+	$(UV_RUN) python $<
 
 content/figures/fig_bimodality.png: scripts/plot_bimodality.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $<
+	$(UV_RUN) python $<
 
 content/figures/fig_bimodality_lexical.png: scripts/plot_bimodality_lexical.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $<
+	$(UV_RUN) python $<
 
 content/figures/fig_bimodality_keywords.png: scripts/plot_bimodality_keywords.py scripts/utils.py \
 		content/tables/tab_pole_papers.csv
-	uv run python $<
+	$(UV_RUN) python $<
 
 # ── Verification ──────────────────────────────────────────
 verify: figures

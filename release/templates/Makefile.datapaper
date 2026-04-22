@@ -10,6 +10,11 @@
 # Prerequisites: Python >= 3.10, uv, quarto
 # macOS: brew install coreutils (for md5sum in make verify)
 
+# ── Toolchain ─────────────────────────────────────────────
+UV      ?= uv
+UV_RUN  ?= $(UV) run
+export PATH := $(HOME)/.local/bin:$(PATH)
+
 .DEFAULT_GOAL := help
 .PHONY: help verify papers corpus
 
@@ -36,6 +41,6 @@ output/content/data-paper.pdf: content/data-paper.qmd content/data-paper-vars.ym
 # ── corpus: incremental rebuild via DVC ──────────────────
 corpus:
 	@echo "=== Rebuilding corpus (incremental, uses caches) ==="
-	uv sync --group corpus --extra cpu
-	uv run dvc repro
+	$(UV) sync --group corpus --extra cpu
+	$(UV_RUN) dvc repro
 	@echo "=== Corpus rebuild complete ==="
