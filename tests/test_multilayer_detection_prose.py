@@ -8,7 +8,7 @@ import os
 import re
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
-COMPANION = os.path.join(ROOT, "content", "companion-paper.qmd")
+COMPANION = os.path.join(ROOT, "content", "multilayer-detection.qmd")
 
 
 def read(path):
@@ -76,8 +76,9 @@ class TestResults51:
 
     def test_mentions_censored(self):
         s = section_h3(read(COMPANION), "5.1 Structural breaks in the full corpus")
-        assert "censor" in s.lower() or "gap" in s.lower(), \
+        assert "censor" in s.lower() or "gap" in s.lower(), (
             "§5.1 must discuss censored-gap refinement"
+        )
 
 
 class TestResults52:
@@ -100,29 +101,31 @@ class TestDiscussion:
         """§6.1 must compare with topic models."""
         t = read(COMPANION)
         # Accept either old or new numbering
-        s = section_h3(t, "6.1 Comparison with topic model approaches") or \
-            section_h3(t, "6.3 Comparison with topic model approaches")
+        s = section_h3(t, "6.1 Comparison with topic model approaches") or section_h3(
+            t, "6.3 Comparison with topic model approaches"
+        )
         assert s, "§6 comparison section not found"
         assert "[TO WRITE" not in s
 
     def test_limitations_no_placeholder(self):
         t = read(COMPANION)
-        s = section_h3(t, "6.4 Limitations") or \
-            section_h3(t, "6.3 Limitations")
+        s = section_h3(t, "6.4 Limitations") or section_h3(t, "6.3 Limitations")
         assert s, "§6 limitations section not found"
         assert "[TO WRITE" not in s
 
     def test_contribution_no_placeholder(self):
         t = read(COMPANION)
-        s = section_h3(t, "6.5 Methodological contribution") or \
-            section_h3(t, "6.2 Methodological contributions")
+        s = section_h3(t, "6.5 Methodological contribution") or section_h3(
+            t, "6.2 Methodological contributions"
+        )
         assert s, "§6 contribution section not found"
         assert "[TO WRITE" not in s
 
     def test_generalizability_no_placeholder(self):
         t = read(COMPANION)
-        s = section_h3(t, "6.2 Generalizability") or \
-            section_h3(t, "6.3 Generalizability")
+        s = section_h3(t, "6.2 Generalizability") or section_h3(
+            t, "6.3 Generalizability"
+        )
         assert s, "§6 generalizability section not found"
         assert "[TO WRITE" not in s
 

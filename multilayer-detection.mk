@@ -1,8 +1,8 @@
-# companion.mk — Figures for the companion paper (ticket 0058)
+# multilayer-detection.mk — Figures for the companion paper (ticket 0058)
 #
-# Four canonical PNGs consumed by content/companion-paper.qmd.
+# Four canonical PNGs consumed by content/multilayer-detection.qmd.
 #
-# Include from the main Makefile:  include companion.mk
+# Include from the main Makefile:  include multilayer-detection.mk
 #
 # Targets:
 #   companion-figures  — build all four PNGs

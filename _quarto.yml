@@ -7,7 +7,7 @@ project:
     - content/technical-report.qmd
     - content/zoo-only.qmd
     - content/data-paper.qmd
-    - content/companion-paper.qmd
+    - content/multilayer-detection.qmd
 
 bibliography: content/bibliography/main.bib
 

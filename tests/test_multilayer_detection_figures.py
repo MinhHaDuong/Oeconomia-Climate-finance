@@ -1,4 +1,4 @@
-"""Smoke tests for the four companion-paper figure scripts (ticket 0058).
+"""Smoke tests for the four multilayer-detection figure scripts (ticket 0058).
 
 Each of the four scripts:
 - ``scripts/plot_companion_zseries.py``    — Figure 1 (Z-score time series)
@@ -129,7 +129,9 @@ def companion_tables(tmp_path: Path) -> Path:
     tables.mkdir()
     for m in ("S2_energy", "L1", "G9_community", "G2_spectral"):
         _summary_fixture(m).to_csv(tables / f"tab_summary_{m}.csv", index=False)
-    _c2st_fixture("embedding").to_csv(tables / "tab_div_C2ST_embedding.csv", index=False)
+    _c2st_fixture("embedding").to_csv(
+        tables / "tab_div_C2ST_embedding.csv", index=False
+    )
     _c2st_fixture("lexical").to_csv(tables / "tab_div_C2ST_lexical.csv", index=False)
     _terms_fixture().to_csv(tables / "tab_discrim_terms.csv", index=False)
     _community_fixture().to_csv(tables / "tab_community_shifts.csv", index=False)
@@ -242,7 +244,7 @@ def test_community_runs(tmp_path: Path, companion_tables: Path):
 
 # ─── Stub-fallback smoke (no interpretation CSV → PNG still rendered) ────
 #
-# Figures 3 and 4 promise in companion.mk that the Make target succeeds
+# Figures 3 and 4 promise in multilayer-detection.mk that the Make target succeeds
 # even when ticket 0056's interpretation layer is absent. Drive the
 # fallback path by pointing --tables-dir at an empty directory.
 
