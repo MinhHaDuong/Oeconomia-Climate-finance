@@ -47,7 +47,7 @@ cluster at early years where trend inflation is highest, not where the permutati
 finds the strongest evidence. The two rankings diverge by design. $\square$
 :::
 
-## Permutation null model
+## Permutation null model {#sec:null-model}
 
 For each (method, year, window) cell, we assess statistical significance via a permutation test.
 Under the null hypothesis of exchangeability (before- and after-period papers are drawn from the same distribution), they are pooled and randomly permuted $B = 500$ times; the observed divergence statistic is then standardised against this
