@@ -106,9 +106,16 @@ def main() -> None:
                 zorder=2,
             )
 
+        # Use z_median_subsample as the plotted line when available so
+        # the line is guaranteed to sit inside its own ribbon.
+        if has_ribbon and "z_median_subsample" in sub.columns:
+            y_line = sub["z_median_subsample"].fillna(sub["z_score"])
+        else:
+            y_line = sub["z_score"]
+
         ax.plot(
             sub["year"],
-            sub["z_score"],
+            y_line,
             label=label,
             color=color,
             linewidth=1.2,

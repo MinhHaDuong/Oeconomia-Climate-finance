@@ -167,6 +167,65 @@ def _run_lexical_subsampled(method_name, div_df, cfg, R):
     )
 
 
+def _run_citation_subsampled(method_name, div_df, cfg, R):
+    """R equal-n subsampling replicates for citation methods (G2, G9).
+
+    Subsamples min(n_before, n_after) nodes from each side without
+    replacement — the equal-n analogue of _run_citation_bootstrap, which
+    uses a fixed fraction instead.
+    """
+    from _divergence_citation import _sliding_window_graph, load_citation_data
+    from _divergence_io import _make_subsample_rng
+    from compute_divergence_bootstrap import _make_citation_statistic
+
+    works, _, internal_edges = load_citation_data(None)
+    div_cfg = cfg["divergence"]
+    seed = div_cfg["random_seed"]
+    statistic_fn = _make_citation_statistic(method_name, cfg, internal_edges)
+
+    year_windows = div_df[["year", "window"]].drop_duplicates()
+    rows = []
+
+    for _, row in year_windows.iterrows():
+        y = int(row["year"])
+        w = int(row["window"])
+
+        G_before = _sliding_window_graph(works, internal_edges, y, w, "before")
+        G_after = _sliding_window_graph(works, internal_edges, y, w, "after")
+
+        before_nodes = list(G_before.nodes())
+        after_nodes = list(G_after.nodes())
+        n = min(len(before_nodes), len(after_nodes))
+        if n < 3:
+            continue
+
+        for r in range(R):
+            rng_r = _make_subsample_rng(seed, y, w, r)
+            idx_b = rng_r.choice(len(before_nodes), n, replace=False)
+            idx_a = rng_r.choice(len(after_nodes), n, replace=False)
+            G_b_sub = G_before.subgraph([before_nodes[j] for j in idx_b])
+            G_a_sub = G_after.subgraph([after_nodes[j] for j in idx_a])
+            rows.append(
+                {
+                    "method": method_name,
+                    "year": y,
+                    "window": str(w),
+                    "hyperparams": "",
+                    "replicate": r,
+                    "value": float(statistic_fn(G_b_sub, G_a_sub)),
+                }
+            )
+        log.info("  year=%d window=%d R=%d", y, w, R)
+
+    return (
+        pd.DataFrame(rows)
+        if rows
+        else pd.DataFrame(
+            columns=["method", "year", "window", "hyperparams", "replicate", "value"]
+        )
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -211,6 +270,8 @@ def main():
         result = _run_semantic_subsampled(method_name, div_df, cfg, R)
     elif channel == "lexical":
         result = _run_lexical_subsampled(method_name, div_df, cfg, R)
+    elif channel == "citation":
+        result = _run_citation_subsampled(method_name, div_df, cfg, R)
     else:
         raise ValueError(f"Unsupported channel: {channel}")
 

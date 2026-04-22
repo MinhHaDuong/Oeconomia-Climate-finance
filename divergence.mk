@@ -247,16 +247,46 @@ $(DIV_TABLES)/tab_boot_$(m).csv: $(BOOT_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv
 .PHONY: bootstrap-tables
 bootstrap-tables: $(BOOT_CSV)
 
-# ── Divergence summary (ticket 0047) ────────────────────────────────────
+# ── Divergence subsampling ribbon (ticket 0084) ──────────────────────────
+#
+# Draws R equal-n subsamples per (year, window) cell to estimate variance.
+# Supports semantic, lexical, and the two lead citation methods (G2, G9).
+# Output: tab_subsample_{method}.csv
+
+SUBSAMP_DISPATCH := scripts/compute_divergence_subsampled.py
+SUBSAMP_METHODS_SEM := S2_energy
+SUBSAMP_METHODS_LEX := L1
+SUBSAMP_METHODS_CIT := G9_community G2_spectral
+SUBSAMP_METHODS := $(SUBSAMP_METHODS_SEM) $(SUBSAMP_METHODS_LEX) $(SUBSAMP_METHODS_CIT)
+SUBSAMP_CSV := $(foreach m,$(SUBSAMP_METHODS),$(DIV_TABLES)/tab_subsample_$(m).csv)
+
+$(foreach m,$(SUBSAMP_METHODS_SEM),$(eval \
+$(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	$(UV_RUN) python $(SUBSAMP_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+$(foreach m,$(SUBSAMP_METHODS_LEX),$(eval \
+$(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
+	$(UV_RUN) python $(SUBSAMP_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+$(foreach m,$(SUBSAMP_METHODS_CIT),$(eval \
+$(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
+	$(UV_RUN) python $(SUBSAMP_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+.PHONY: subsample-tables
+subsample-tables: $(SUBSAMP_CSV)
+
+# ── Divergence summary (ticket 0047, ribbon ticket 0084) ─────────────────
 #
 # Joins point estimates + bootstrap CIs + null model into one table per method.
+# For all four lead methods, also joins subsampling ribbon columns.
 
 SUMM_DISPATCH := scripts/export_divergence_summary.py
 SUMM_CSV := $(foreach m,$(BOOT_METHODS),$(DIV_TABLES)/tab_summary_$(m).csv)
 
-$(foreach m,$(BOOT_METHODS),$(eval \
-$(DIV_TABLES)/tab_summary_$(m).csv: $(SUMM_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv $(DIV_TABLES)/tab_boot_$(m).csv $(DIV_TABLES)/tab_null_$(m).csv ; \
-	$(UV_RUN) python $(SUMM_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --boot-csv $(DIV_TABLES)/tab_boot_$(m).csv --null-csv $(DIV_TABLES)/tab_null_$(m).csv --output $$@))
+# Summary with ribbon (all four lead methods — S2, L1, G9, G2)
+$(foreach m,$(SUBSAMP_METHODS),$(eval \
+$(DIV_TABLES)/tab_summary_$(m).csv: $(SUMM_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv $(DIV_TABLES)/tab_boot_$(m).csv $(DIV_TABLES)/tab_null_$(m).csv $(DIV_TABLES)/tab_subsample_$(m).csv ; \
+	$(UV_RUN) python $(SUMM_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --boot-csv $(DIV_TABLES)/tab_boot_$(m).csv --null-csv $(DIV_TABLES)/tab_null_$(m).csv --subsample-csv $(DIV_TABLES)/tab_subsample_$(m).csv --output $$@))
 
 .PHONY: divergence-summary
 divergence-summary: $(SUMM_CSV)
