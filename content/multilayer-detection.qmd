@@ -183,6 +183,12 @@ Restricting the corpus to its {{< meta corpus_core >}} most-cited works (citatio
 
 The null result is substantively informative. The most-cited works in climate finance span the full analysis window and are not concentrated in any particular sub-period. The structural breaks visible in the full corpus reflect changing *composition* --- new communities entering and new vocabulary becoming standard --- rather than a reorientation among the works that anchored the intellectual canon. The core subset remained stable throughout.
 
+### 5.3 Efficiency--accountability polarization
+
+The embedding layer reveals a bimodal structure in the post-2015 corpus. We fit a Gaussian mixture model (GMM) to the reduced-dimension embedding and compare a two-component to a one-component model using the Bayesian Information Criterion: $\Delta BIC_{\text{emb}} = {{< meta bim_dbic_embedding >}}$. The TF-IDF lexical layer confirms the pattern independently, with $\Delta BIC_{\text{lex}} = {{< meta bim_dbic_tfidf >}}$.
+
+The polarisation is a post-2015 phenomenon. The BIC difference for the post-2015 sub-corpus is {{< meta bim_dbic_post2015 >}}, compared with {{< meta bim_dbic_pre2007 >}} before 2007 (no bimodal structure) and {{< meta bim_dbic_2007_2014 >}} during the 2007--2014 crystallisation period. In the post-2015 sub-corpus the two poles contain approximately {{< meta bim_n_efficiency >}} efficiency-oriented works and {{< meta bim_n_accountability >}} accountability-oriented works; the embedding and TF-IDF cluster assignments agree with a correlation of $r = {{< meta bim_corr >}}$.
+
 ![Permutation Z-scores at the lead window ($w = 3$) for the four permutation-tested methods (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
 
 ![Transition-zone validation heatmap. Rows are the six detection methods; columns are years from 1998 to 2021. Cell colour encodes the signed signal — Z-score for the four distance detectors, and $(\mathrm{AUC} - 0.5) \times 20$ for the two C2ST rows so that all rows share a comparable scale. Vertical rectangles mark years where at least two rows exceed the threshold ($|Z| > 2$, or rescaled AUC $> 2$) simultaneously (validated zones).](figures/fig_companion_heatmap.png){#fig-heatmap}
