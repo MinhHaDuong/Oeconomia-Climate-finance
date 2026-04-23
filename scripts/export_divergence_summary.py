@@ -18,6 +18,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
+from pipeline_loaders import load_analysis_config
 from schemas import DivergenceSummarySchema
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -85,8 +86,10 @@ def build_summary(div_df, null_df, boot_df, method, subsample_df=None):
     result["significant"] = result["p_value"] < 0.05
 
     # Subsample ribbon: z_trim_lo / z_trim_hi / z_median_subsample / n_subsamples
+    cfg = load_analysis_config()
+    trim = int(cfg["divergence"].get("subsample_trim", 2))
     if subsample_df is not None and len(subsample_df) > 0:
-        sub_agg = _aggregate_subsample_ribbon(subsample_df, null_df)
+        sub_agg = _aggregate_subsample_ribbon(subsample_df, null_df, trim=trim)
         sub_agg["year"] = sub_agg["year"].astype(int)
         sub_agg["window"] = sub_agg["window"].astype(str)
         result = result.merge(sub_agg, on=["year", "window"], how="left")
@@ -120,44 +123,73 @@ def build_summary(div_df, null_df, boot_df, method, subsample_df=None):
     return result
 
 
-def _aggregate_subsample_ribbon(subsample_df, null_df):
+def _aggregate_subsample_ribbon(subsample_df, null_df, trim: int = 2):
     """Derive z_trim_lo, z_trim_hi, z_median_subsample, n_subsamples per cell.
 
     Converts each subsampling replicate value to a Z-score using the
-    per-cell null_mean / null_std from null_df, then trims the top and
-    bottom 2 replicates (equivalent to 10th/90th percentile for R=20).
+    per-cell null_mean / null_std from null_df, then drops the top and
+    bottom `trim` replicates before computing the ribbon bounds.
+
+    Parameters
+    ----------
+    subsample_df : pd.DataFrame
+        Subsampling replicates with columns (year, window, value, ...).
+    null_df : pd.DataFrame
+        Null model table with columns (year, window, null_mean, null_std).
+    trim : int
+        Number of replicates to drop from each tail (read from
+        config divergence.subsample_trim via the caller).
+
     """
-    null_cols = null_df
-    has_null_stats = (
-        "null_mean" in null_cols.columns and "null_std" in null_cols.columns
-    )
+    has_null_stats = "null_mean" in null_df.columns and "null_std" in null_df.columns
+    if not has_null_stats:
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "z_trim_lo",
+                "z_trim_hi",
+                "z_median_subsample",
+                "n_subsamples",
+            ]
+        )
 
     sub = subsample_df.copy()
     sub["year"] = sub["year"].astype(int)
     sub["window"] = sub["window"].astype(str)
 
+    null = null_df.copy()
+    null["year"] = null["year"].astype(int)
+    null["window"] = null["window"].astype(str)
+
+    merged = sub.merge(
+        null[["year", "window", "null_mean", "null_std"]],
+        on=["year", "window"],
+        how="inner",
+    )
+    merged = merged[(merged["null_std"] != 0) & merged["null_std"].notna()]
+    if merged.empty:
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "z_trim_lo",
+                "z_trim_hi",
+                "z_median_subsample",
+                "n_subsamples",
+            ]
+        )
+
+    merged["z"] = (merged["value"] - merged["null_mean"]) / merged["null_std"]
+
     rows = []
-    for (y, w), grp in sub.groupby(["year", "window"]):
-        null_row = null_cols[
-            (null_cols["year"].astype(int) == y)
-            & (null_cols["window"].astype(str) == str(w))
-        ]
-        if null_row.empty or not has_null_stats:
-            continue
-        null_mean = float(null_row["null_mean"].iloc[0])
-        null_std = float(null_row["null_std"].iloc[0])
-        if null_std == 0 or np.isnan(null_std):
-            continue
-
-        z_replicates = (grp["value"].values - null_mean) / null_std
-        z_sorted = np.sort(z_replicates)
+    for (y, w), grp in merged.groupby(["year", "window"]):
+        z_sorted = np.sort(grp["z"].values)
         n = len(z_sorted)
-        trim = 2
-        if n <= 2 * trim:
-            z_trimmed = z_sorted
-        else:
+        if n > 2 * trim:
             z_trimmed = z_sorted[trim:-trim]
-
+        else:
+            z_trimmed = z_sorted
         rows.append(
             {
                 "year": y,
