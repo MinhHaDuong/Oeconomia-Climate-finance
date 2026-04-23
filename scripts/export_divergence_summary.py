@@ -18,6 +18,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
+from pipeline_loaders import load_analysis_config
 from schemas import DivergenceSummarySchema
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -25,8 +26,8 @@ from utils import get_logger
 log = get_logger("export_divergence_summary")
 
 
-def build_summary(div_df, null_df, boot_df, method):
-    """Build summary table from three sources.
+def build_summary(div_df, null_df, boot_df, method, subsample_df=None):
+    """Build summary table from three (or four) sources.
 
     Parameters
     ----------
@@ -38,6 +39,11 @@ def build_summary(div_df, null_df, boot_df, method):
         Bootstrap replicates (method, year, window, replicate, value).
     method : str
         Method name to label the output.
+    subsample_df : pd.DataFrame, optional
+        Subsampling replicates (method, year, window, replicate, value).
+        When provided, z_trim_lo / z_trim_hi / z_median_subsample /
+        n_subsamples are derived from subsampling Z-scores.  When absent,
+        those four columns are NaN.
 
     Returns
     -------
@@ -79,6 +85,20 @@ def build_summary(div_df, null_df, boot_df, method):
     result["method"] = method
     result["significant"] = result["p_value"] < 0.05
 
+    # Subsample ribbon: z_trim_lo / z_trim_hi / z_median_subsample / n_subsamples
+    cfg = load_analysis_config()
+    trim = int(cfg["divergence"].get("subsample_trim", 2))
+    if subsample_df is not None and len(subsample_df) > 0:
+        sub_agg = _aggregate_subsample_ribbon(subsample_df, null_df, trim=trim)
+        sub_agg["year"] = sub_agg["year"].astype(int)
+        sub_agg["window"] = sub_agg["window"].astype(str)
+        result = result.merge(sub_agg, on=["year", "window"], how="left")
+    else:
+        result["z_trim_lo"] = np.nan
+        result["z_trim_hi"] = np.nan
+        result["z_median_subsample"] = np.nan
+        result["n_subsamples"] = np.nan
+
     # Reorder columns to match schema
     result = result[
         [
@@ -93,10 +113,106 @@ def build_summary(div_df, null_df, boot_df, method):
             "z_score",
             "p_value",
             "significant",
+            "z_trim_lo",
+            "z_trim_hi",
+            "z_median_subsample",
+            "n_subsamples",
         ]
     ]
 
     return result
+
+
+def _aggregate_subsample_ribbon(subsample_df, null_df, trim: int = 2):
+    """Derive z_trim_lo, z_trim_hi, z_median_subsample, n_subsamples per cell.
+
+    Converts each subsampling replicate value to a Z-score using the
+    per-cell null_mean / null_std from null_df, then drops the top and
+    bottom `trim` replicates before computing the ribbon bounds.
+
+    Parameters
+    ----------
+    subsample_df : pd.DataFrame
+        Subsampling replicates with columns (year, window, value, ...).
+    null_df : pd.DataFrame
+        Null model table with columns (year, window, null_mean, null_std).
+    trim : int
+        Number of replicates to drop from each tail (read from
+        config divergence.subsample_trim via the caller).
+
+    """
+    has_null_stats = "null_mean" in null_df.columns and "null_std" in null_df.columns
+    if not has_null_stats:
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "z_trim_lo",
+                "z_trim_hi",
+                "z_median_subsample",
+                "n_subsamples",
+            ]
+        )
+
+    sub = subsample_df.copy()
+    sub["year"] = sub["year"].astype(int)
+    sub["window"] = sub["window"].astype(str)
+
+    null = null_df.copy()
+    null["year"] = null["year"].astype(int)
+    null["window"] = null["window"].astype(str)
+
+    merged = sub.merge(
+        null[["year", "window", "null_mean", "null_std"]],
+        on=["year", "window"],
+        how="inner",
+    )
+    merged = merged[(merged["null_std"] != 0) & merged["null_std"].notna()]
+    if merged.empty:
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "z_trim_lo",
+                "z_trim_hi",
+                "z_median_subsample",
+                "n_subsamples",
+            ]
+        )
+
+    merged["z"] = (merged["value"] - merged["null_mean"]) / merged["null_std"]
+
+    rows = []
+    for (y, w), grp in merged.groupby(["year", "window"]):
+        z_sorted = np.sort(grp["z"].values)
+        n = len(z_sorted)
+        if n > 2 * trim:
+            z_trimmed = z_sorted[trim:-trim]
+        else:
+            z_trimmed = z_sorted
+        rows.append(
+            {
+                "year": y,
+                "window": str(w),
+                "z_trim_lo": float(z_trimmed[0]),
+                "z_trim_hi": float(z_trimmed[-1]),
+                "z_median_subsample": float(np.median(z_trimmed)),
+                "n_subsamples": n,
+            }
+        )
+
+    if not rows:
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "z_trim_lo",
+                "z_trim_hi",
+                "z_median_subsample",
+                "n_subsamples",
+            ]
+        )
+    return pd.DataFrame(rows)
 
 
 def main():
@@ -110,20 +226,29 @@ def main():
     parser.add_argument("--boot-csv", required=True, help="Bootstrap replicates CSV")
     parser.add_argument("--null-csv", required=True, help="Null model CSV")
     parser.add_argument("--method", required=True, help="Method name")
+    parser.add_argument(
+        "--subsample-csv",
+        default=None,
+        help="Optional: subsampling replicates CSV (tab_subsample_{method}.csv) for ribbon",
+    )
     args = parser.parse_args(extra)
 
     div_df = pd.read_csv(args.div_csv)
     boot_df = pd.read_csv(args.boot_csv)
     null_df = pd.read_csv(args.null_csv)
+    subsample_df = pd.read_csv(args.subsample_csv) if args.subsample_csv else None
 
     log.info(
-        "Loaded: div=%d rows, boot=%d rows, null=%d rows",
+        "Loaded: div=%d rows, boot=%d rows, null=%d rows, subsample=%s",
         len(div_df),
         len(boot_df),
         len(null_df),
+        f"{len(subsample_df)} rows" if subsample_df is not None else "not provided",
     )
 
-    result = build_summary(div_df, null_df, boot_df, method=args.method)
+    result = build_summary(
+        div_df, null_df, boot_df, method=args.method, subsample_df=subsample_df
+    )
 
     # Validate contract
     DivergenceSummarySchema.validate(result)

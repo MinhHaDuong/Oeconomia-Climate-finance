@@ -377,6 +377,10 @@ class TestDivergenceSummarySchema:
                 "z_score": [2.5],
                 "p_value": [0.01],
                 "significant": [True],
+                "z_trim_lo": [None],
+                "z_trim_hi": [None],
+                "z_median_subsample": [None],
+                "n_subsamples": [None],
             }
         )
         DivergenceSummarySchema.validate(df)
@@ -442,6 +446,10 @@ class TestSummaryTable:
             "z_score",
             "p_value",
             "significant",
+            "z_trim_lo",
+            "z_trim_hi",
+            "z_median_subsample",
+            "n_subsamples",
         }
         assert expected_cols == set(result.columns), (
             f"Columns mismatch: {set(result.columns)}"

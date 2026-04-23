@@ -203,6 +203,20 @@ def _make_window_rngs(seed, y, w):
     )
 
 
+def _make_subsample_rng(seed, y, w, r):
+    """Return an independent RNG for the r-th equal-n subsample draw at (y, w).
+
+    Seeds are at offset +100000 from the window base, stepped by 53 per
+    replicate.  This places them in [seed+299002, seed+303511] for the
+    supported year/window/replicate range (y∈[1990,2025], w∈[2,4], r∈[0,19])
+    — well above the null-model subsample range (~199044–202546) and
+    permutation range (~249044–252546) used by _make_window_rngs.  The
+    prime step (53) ensures distinct seeds even when (y, w) differ by one.
+    """
+    subsample_seed = seed + y * 100 + w + 100_000 + r * 53
+    return np.random.RandomState(subsample_seed)
+
+
 def iter_semantic_windows(div_df, cfg):
     """Yield (year, window, X, Y, extra_rng) for each valid semantic window.
 
