@@ -11,6 +11,9 @@
 #   divergence-tables    All divergence CSVs
 #   divergence-figures   Plot one figure per method
 #   divergence           Both tables and figures
+#   bootstrap-tables     R=200 bootstrap replicates for CI estimation (S2, L1, G9, G2)
+#   subsample-tables     R=20 equal-n subsampling replicates for Z-ribbon (S2, L1, G9, G2)
+#   divergence-summary   Join point estimates + bootstrap + null + ribbon per method
 #
 # Inputs (Phase 1 contract):
 #   $(REFINED), $(REFINED_EMB), $(REFINED_CIT) — defined in main Makefile

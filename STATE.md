@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-04-22
+Last updated: 2026-04-23
 
 ## Current goal
 
@@ -65,14 +65,13 @@ None.
 
 In direct service of the current goal (narrative + results + figures):
 
-- **0084** subsampling-variance ribbon — honest uncertainty on the headline Z-plot. R=20 trim-2, ~2h GPU.
-- **Run 0083** — compute_sensitivity_grid.py is on main; needs actual GPU run on padme to produce tab_sensitivity_grid.csv and the sensitivity figure.
-- **0070 + 0071-0078** bias audit — narrative backing for §4.8 Robustness and §6.4 Limitations. Most are acknowledgements; some warrant child analyses.
+- **Write §5** (`multilayer-detection.qmd` §5.1–5.4) — 14 prose tests still failing; new ticket needed (0064 closed after Wave C without writing the results narrative).
+- **0071-0078** bias audit — narrative backing for §4.8 Robustness and §6.4 Limitations. 0070 closed; 0071–0078 open.
 - Waiting for corpus **1.1.2** to finish building — enables a rerun if the enriched corpus meaningfully changes G9's sub-zone structure.
 
 Background work (not on the critical path for the current goal):
 
+- **0092** wire zoo figure recipes — `zoo.mk` exists and included, but has 12 of 35 required recipes (17 schematics + 18 result panels); not yet complete.
 - **0025** connective prose for corpus report
-- **0092** wire zoo figure recipes in dedicated `zoo.mk` (17 schematics + 18 result panels) — prerequisite for `make output/content/breakpoint-detect-method-zoo.pdf` end-to-end
 - Re-land arch rule 9 (corpus access through loaders only) — tickets 0043/0044 already on main
 - **0081** bootstrap CI (pytest on PR/push) — prerequisite for 0079 and for /verify to have mechanical evidence; cross-repo batch with IDH 0015, git-erg 0003, AEDIST 0111. Stabilise flakes first; then branch protection.

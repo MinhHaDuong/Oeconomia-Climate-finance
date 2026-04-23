@@ -1,11 +1,13 @@
 %erg v1
 Title: Companion paper sensitivity annex — window × gap × embedding dim × model
-Status: open
+Status: closed
 Created: 2026-04-18
 Author: user
 
 --- log ---
 2026-04-18T09:00Z claude created from /verify round-2 adjudication failure on PR #708
+
+2026-04-23T06:45Z claude closed — all exit criteria met: CSV+figure+prose already on main (PR #754)
 
 --- body ---
 ## Context
