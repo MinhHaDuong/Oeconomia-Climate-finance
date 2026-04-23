@@ -189,6 +189,14 @@ The embedding layer reveals a bimodal structure in the post-2015 corpus. We fit 
 
 The polarisation is a post-2015 phenomenon. The BIC difference for the post-2015 sub-corpus is {{< meta bim_dbic_post2015 >}}, compared with {{< meta bim_dbic_pre2007 >}} before 2007 (no bimodal structure) and {{< meta bim_dbic_2007_2014 >}} during the 2007--2014 crystallisation period. In the post-2015 sub-corpus the two poles contain approximately {{< meta bim_n_efficiency >}} efficiency-oriented works and {{< meta bim_n_accountability >}} accountability-oriented works; the embedding and TF-IDF cluster assignments agree with a correlation of $r = {{< meta bim_corr >}}$.
 
+### 5.4 The divide as PC2, not PC1
+
+Principal-component analysis of the full-corpus embedding matrix decomposes variance into orthogonal axes. PC1 explains {{< meta pca_emb_pc1_var_pct >}}% of the variance and captures the dominant temporal structure: projection onto PC1 sorts documents primarily by publication year, and the bimodality seed vector is nearly orthogonal to PC1.
+
+PC2 explains {{< meta pca_emb_pc2_var_pct >}}% of the variance and aligns with the efficiency--accountability axis: its cosine similarity with the bimodality seed vector is {{< meta pca_emb_pc2_cosine >}}, and fitting the two-cluster GMM on the PC2 projection alone yields a BIC difference of {{< meta pca_emb_pc2_dbic >}}, confirming that the polarisation identified in §5.3 projects onto the second principal component.
+
+An earlier draft of this analysis placed the bimodal structure on PC1; the corrected computation on the full corpus shows that PC1 captures temporal growth and PC2 captures the efficiency--accountability split.
+
 ![Permutation Z-scores at the lead window ($w = 3$) for the four permutation-tested methods (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
 
 ![Transition-zone validation heatmap. Rows are the six detection methods; columns are years from 1998 to 2021. Cell colour encodes the signed signal — Z-score for the four distance detectors, and $(\mathrm{AUC} - 0.5) \times 20$ for the two C2ST rows so that all rows share a comparable scale. Vertical rectangles mark years where at least two rows exceed the threshold ($|Z| > 2$, or rescaled AUC $> 2$) simultaneously (validated zones).](figures/fig_companion_heatmap.png){#fig-heatmap}
