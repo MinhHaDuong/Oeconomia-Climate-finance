@@ -2,7 +2,7 @@
 title: "Multi-layer Detection and Validation of Structural Change in Text Corpora: Climate Finance Scholarship 1998--2021"
 author: "Minh Ha-Duong"
 date: "2026-04-17"
-metadata-files: [multilayer-detection-vars.yml]
+metadata-files: [companion-paper-vars.yml]
 bibliography: bibliography/main.bib
 abstract: |
   We present a framework for detecting endogenous structural change in
