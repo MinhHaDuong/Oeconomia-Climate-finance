@@ -161,6 +161,23 @@ BootstrapSchema = DataFrameSchema(
 )
 
 # ---------------------------------------------------------------------------
+# Subsample replicates CSV (ticket 0084)
+# ---------------------------------------------------------------------------
+
+DivergenceSubsampleSchema = DataFrameSchema(
+    columns={
+        "method": Column(str),
+        "year": Column(int),
+        "window": Column(str),
+        "hyperparams": Column(str, nullable=True),
+        "replicate": Column(int),
+        "value": Column(float, nullable=True),
+    },
+    strict=True,
+    coerce=True,
+)
+
+# ---------------------------------------------------------------------------
 # Divergence summary CSV (ticket 0047)
 # ---------------------------------------------------------------------------
 
@@ -177,6 +194,10 @@ DivergenceSummarySchema = DataFrameSchema(
         "z_score": Column(float, nullable=True),
         "p_value": Column(float, nullable=True),
         "significant": Column(bool),
+        "z_trim_lo": Column(float, nullable=True),
+        "z_trim_hi": Column(float, nullable=True),
+        "z_median_subsample": Column(float, nullable=True),
+        "n_subsamples": Column(float, nullable=True),
     },
     strict=True,
     coerce=True,

@@ -32,6 +32,9 @@ divergence:
   pelt_model: rbf
   pelt_min_size: 2
 
+  equal_n_r: 20          # subsampling replicates for Z-score ribbon (ticket 0084)
+  subsample_trim: 2      # replicates to drop from each tail (10th/90th pctile for R=20)
+
   permutation:
     n_perm: 500
     z_threshold: 2.0    # consumed by compute_transition_zones.py (ticket 0055b)
