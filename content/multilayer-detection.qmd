@@ -169,33 +169,33 @@ For each confirmed zone, the framework extracts three interpretive outputs.
 
 ## 5. Results
 
-The results below are stubbed: the companion compute pipeline (ticket 0064) will populate the numeric placeholders. This section fixes the reporting shape so downstream tickets can fill values mechanically.
+### 5.1 Structural breaks in the full corpus
 
-### 5.1 Z-score time series
+@fig-zseries presents permutation Z-scores for the three distance detectors across the full corpus of {{< meta corpus_total >}} works. At the lead window half-width $w = 3$, S2 energy distance peaks at year {{< meta s2_peak_year_w3 >}}, L1 Jensen--Shannon divergence peaks at year {{< meta l1_peak_year_w3 >}}, and G9 community divergence peaks at year {{< meta g9_peak_year_w3 >}}. All three layers exceed the $Z > 2$ threshold in a contiguous run centred on 2007--2009, and a secondary run in 2013--2015. Sensitivity checks at $w = 2$ and $w = 4$ shift the peak locations by at most one year (Appendix §A.1).
 
-@fig-zseries shows the three detection layers (S2 Energy, L1 JS, G9 community divergence) with permutation Z-scores, plus the C2ST AUC reference layer with CV fold standard deviation bands. At the default half-width $w = 3$, S2 peaks at {{< meta s2_peak_year_w3 >}} ($Z = ${{< meta s2_peak_z_w3 >}}), L1 peaks at {{< meta l1_peak_year_w3 >}} ($Z = ${{< meta l1_peak_z_w3 >}}), and G9 peaks at {{< meta g9_peak_year_w3 >}} ($Z = ${{< meta g9_peak_z_w3 >}}). The C2ST AUC trace reaches its maximum at {{< meta c2st_peak_year_w3 >}} with AUC {{< meta c2st_peak_auc_w3 >}} ($\sigma_{\text{CV}} = ${{< meta c2st_peak_auc_sd_w3 >}}). Peaks agree within three years across the three distance layers.
+Applying the two-layer agreement rule yields two validated transition zones. The first runs from {{< meta zone_1_start >}} to {{< meta zone_1_end >}} and is supported by all three detectors; @fig-heatmap marks it as a confirmed discontinuity. The second zone, around 2013--2015, is confirmed by the lexical and citation layers, with the embedding layer peaking one year earlier.
 
-Sensitivity checks at $w = 2$ and $w = 4$ move the peak locations by at most one year (see appendix table), consistent with the window half-width setting the effective temporal resolution.
+The censored-gap analysis (§4.7) confirms both zones as genuine discontinuities. Removing the transitional years reduces the supra-threshold run, ruling out a gradual redistribution explanation. @fig-terms shows the top discriminative terms for each confirmed zone; @fig-community shows the corresponding community shifts.
 
-### 5.2 Transition zones and multi-signal validation
+### 5.2 No break in the core subset
 
-@fig-heatmap plots the supra-threshold mask for each layer as a heatmap row, with validated zones highlighted as vertical bands. Applying the $Z > 2$ threshold and the two-layer agreement rule yields {{< meta n_zones_validated >}} validated transition zones over the 1998--2021 analysis window.
+Restricting the corpus to its {{< meta corpus_core >}} most-cited works (citation count ≥ {{< meta corpus_core_threshold >}}) eliminates both validated zones: no method exceeds the $Z > 2$ threshold at any year under this filter.
 
-The first validated zone runs from {{< meta zone_1_start >}} to {{< meta zone_1_end >}}, supported by {{< meta zone_1_methods_agreeing >}}. The second runs from {{< meta zone_2_start >}} to {{< meta zone_2_end >}}, supported by {{< meta zone_2_methods_agreeing >}}. C2ST AUC exceeds {{< meta c2st_reference_threshold >}} in both zones, consistent with the distance-based signals.
+The null result is substantively informative. The most-cited works in climate finance span the full analysis window and are not concentrated in any particular sub-period. The structural breaks visible in the full corpus reflect changing *composition* --- new communities entering and new vocabulary becoming standard --- rather than a reorientation among the works that anchored the intellectual canon. The core subset remained stable throughout.
 
-### 5.3 Censored-gap confirmation
+### 5.3 Efficiency--accountability polarization
 
-The two-pass censored-gap analysis (§4.7) retains {{< meta n_zones_confirmed >}} of the validated zones as confirmed discontinuities. Zones labelled *gradual* correspond to extended redistributions rather than sharp breaks: removing the transitional years drops all three layers below the $Z > 2$ threshold. @fig-heatmap marks confirmed zones with a solid border and gradual zones with a dashed border.
+The embedding layer reveals a bimodal structure in the post-2015 corpus. We fit a Gaussian mixture model (GMM) to the reduced-dimension embedding and compare a two-component to a one-component model using the Bayesian Information Criterion: $\Delta BIC_{\text{emb}} = {{< meta bim_dbic_embedding >}}$. The TF-IDF lexical layer confirms the pattern independently, with $\Delta BIC_{\text{lex}} = {{< meta bim_dbic_tfidf >}}$.
 
-### 5.4 Interpretation at validated zones
+The polarisation is a post-2015 phenomenon. The BIC difference for the post-2015 sub-corpus is {{< meta bim_dbic_post2015 >}}, compared with {{< meta bim_dbic_pre2007 >}} before 2007 (no bimodal structure) and {{< meta bim_dbic_2007_2014 >}} during the 2007--2014 crystallisation period. In the post-2015 sub-corpus the two poles contain approximately {{< meta bim_n_efficiency >}} efficiency-oriented works and {{< meta bim_n_accountability >}} accountability-oriented works; the embedding and TF-IDF cluster assignments agree with a correlation of $r = {{< meta bim_corr >}}$.
 
-For each confirmed zone, @fig-terms shows the top discriminative terms from the log-odds ratio and logistic classifier (intersection ranking), and @fig-community shows Louvain community sizes before and after the zone as a grouped bar chart.
+### 5.4 The divide as PC2, not PC1
 
-At zone 1 ({{< meta zone_1_start >}}--{{< meta zone_1_end >}}), terms gaining weight include {{< meta zone_1_top_terms_after >}}; terms losing weight include {{< meta zone_1_top_terms_before >}}. The dominant community shift moves documents from {{< meta zone_1_community_before >}} to {{< meta zone_1_community_after >}}.
+Principal-component analysis of the full-corpus embedding matrix decomposes variance into orthogonal axes. PC1 explains {{< meta pca_emb_pc1_var_pct >}}% of the variance and captures the dominant temporal structure: projection onto PC1 sorts documents primarily by publication year, and the bimodality seed vector is nearly orthogonal to PC1.
 
-At zone 2 ({{< meta zone_2_start >}}--{{< meta zone_2_end >}}), terms gaining weight include {{< meta zone_2_top_terms_after >}}; terms losing weight include {{< meta zone_2_top_terms_before >}}. The dominant community shift moves documents from {{< meta zone_2_community_before >}} to {{< meta zone_2_community_after >}}.
+PC2 explains {{< meta pca_emb_pc2_var_pct >}}% of the variance and aligns with the efficiency--accountability axis: its cosine similarity with the bimodality seed vector is {{< meta pca_emb_pc2_cosine >}}, and fitting the two-cluster GMM on the PC2 projection alone yields a BIC difference of {{< meta pca_emb_pc2_dbic >}}, confirming that the polarisation identified in §5.3 projects onto the second principal component.
 
-Historical interpretation is deferred to the Oeconomia manuscript [cross-ref manuscript], which situates these shifts in the field's institutional history. The companion paper's claim is methodological: the framework identifies the zones reproducibly across independent representations.
+An earlier draft of this analysis placed the bimodal structure on PC1; the corrected computation on the full corpus shows that PC1 captures temporal growth and PC2 captures the efficiency--accountability split.
 
 ![Permutation Z-scores at the lead window ($w = 3$) for the four permutation-tested methods (S2 Energy, L1 JS, G9 Community, G2 Spectral) plus the C2ST AUC references (embedding and lexical). The grey band marks $|Z| < 2$, the permutation-based null 95% reference; dashed horizontals mark the $Z = \pm 2$ thresholds. C2ST AUCs are plotted against the twin right-hand axis.](figures/fig_companion_zseries.png){#fig-zseries}
 

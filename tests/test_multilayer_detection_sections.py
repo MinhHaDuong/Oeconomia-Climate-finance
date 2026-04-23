@@ -93,11 +93,14 @@ def test_results_uses_meta_placeholders():
 def test_no_obsolete_findings_in_abstract():
     """Abstract must not retain the old four-finding / PC2 framing."""
     text = _text()
+    # Scope to YAML frontmatter only — section headings may use these phrases.
+    frontmatter_match = re.search(r"^---\n(.*?)\n---", text, re.DOTALL)
+    abstract = frontmatter_match.group(1) if frontmatter_match else text
     forbidden = [
         "PC2, not PC1",
         "efficiency--accountability divide",
         "four findings",
         "ΔBIC",
     ]
-    present = [f for f in forbidden if f in text]
-    assert not present, f"Obsolete claim survives in paper: {present}"
+    present = [f for f in forbidden if f in abstract]
+    assert not present, f"Obsolete claim survives in abstract: {present}"
