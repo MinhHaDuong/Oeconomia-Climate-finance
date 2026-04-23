@@ -1,0 +1,58 @@
+---
+title: "Multi-layer Detection: Technical Supplement"
+subtitle: "Methods for the six detectors used in the companion paper"
+author: "Minh Ha-Duong"
+date: "2026-04-17"
+metadata-files: [technical-report-vars.yml]
+bibliography: bibliography/main.bib
+format:
+  pdf:
+    pdf-engine: xelatex
+    number-sections: true
+---
+
+This supplement documents the six detection methods used in the companion paper
+(Ha-Duong, "Multi-layer Detection and Validation of Structural Change in Text Corpora").
+Three methods vote on transition zones (S2, L1, G9); two serve as reference layers
+(G2, C2ST). All share the same corpus of {{< meta corpus_total >}} works (1990--2024)
+and the same sliding-window protocol described in §4 of the companion paper.
+
+For the full 18-method comparative survey see the technical report.
+
+{{< include _includes/techrep/overview.md >}}
+
+{{< include _includes/techrep/zscore.md >}}
+
+{{< include _includes/techrep/null-model.md >}}
+
+\newpage
+
+---
+
+# Voting detectors
+
+{{< include _includes/zoo/S2_energy.md >}}
+
+---
+
+{{< include _includes/zoo/L1_js.md >}}
+
+---
+
+{{< include _includes/zoo/G9_community.md >}}
+
+\newpage
+
+---
+
+# Reference layers
+
+{{< include _includes/zoo/G2_spectral.md >}}
+
+---
+
+{{< include _includes/zoo/C2ST_embedding.md >}}
+
+---
+
+{{< include _includes/zoo/C2ST_lexical.md >}}
