@@ -1,11 +1,12 @@
 %erg v1
 Title: Report equal-n subsampling variance as a ribbon on Z-score plots
-Status: open
+Status: closed
 Created: 2026-04-18
 Author: user
 
 --- log ---
 2026-04-18T09:30Z claude created from author's statistical-correctness idea
+2026-04-23T06:20Z claude closed — merged PR #755 (5 commits, 10 files, 952 insertions)
 
 --- body ---
 ## Context
