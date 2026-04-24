@@ -4,7 +4,12 @@ Last updated: 2026-04-24
 
 ## Current goal
 
-**A solid narrative backed by robust key results and clear figures** for the companion method paper (epic 0026, QSS target).
+**Null model ribbons on all 18 zoo figures** — every animal shows a time-varying permutation null CI band (w=3) instead of the flat ±2 box.
+
+### Roadmap
+1. **NOW — Null model ribbons** (this goal): implement missing permutation drivers; run all null CSVs on padme.
+2. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
+3. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
 ## Status: TWO PAPERS SUBMITTED + WAVE C MERGED (COMPANION PAPER ASSEMBLED)
 
@@ -61,13 +66,39 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 None.
 
+## Null model ribbon status
+
+| Method | Status |
+|--------|--------|
+| S2_energy | ✅ ribbon live |
+| L1 | ✅ ribbon live |
+| G2_spectral | ✅ ribbon live |
+| G9_community | ✅ ribbon live |
+| S1_MMD | ✅ done 2026-04-24 |
+| S3_sliced_wasserstein | 🔄 computing (padme GPU) |
+| S4_frechet | 🔄 computing (padme GPU) |
+| C2ST_embedding | ❌ needs driver (ticket 0107) |
+| C2ST_lexical | ❌ needs driver (ticket 0107) |
+| L2 | ❌ needs driver (ticket 0108) |
+| L3 | ❌ needs driver (ticket 0108) |
+| G1_pagerank | ❌ needs driver (ticket 0109) |
+| G3_coupling_age | ❌ needs driver (ticket 0109) |
+| G4_cross_tradition | ❌ needs driver (ticket 0109) |
+| G5_pref_attachment | ❌ needs driver (ticket 0109) |
+| G6_entropy | ❌ needs driver (ticket 0109) |
+| G7_disruption | ❌ needs driver (ticket 0109) |
+| G8_betweenness | ❌ needs driver (ticket 0109) |
+
+When S3/S4 finish: `make zoo-figures` picks up the new CSVs automatically via `$(wildcard)`.
+
 ## Next actions
 
-In direct service of the current goal (narrative + results + figures):
+- **0107** — C2ST null model drivers (companion paper panel: highest priority)
+- **0108** — L2/L3 null model drivers
+- **0109** — G1/G3–G8 null model drivers (7 graph methods, largest effort)
+- After S3/S4 complete: commit the two new null CSVs and rebuild zoo figures
 
-- **0071-0078** bias audit — narrative backing for §4.8 Robustness and §6.4 Limitations. 0070 closed; 0071–0078 open.
-- Waiting for corpus **1.1.2** to finish building — enables a rerun if the enriched corpus meaningfully changes G9's sub-zone structure.
+Background (not on critical path):
 
-Background work (not on the critical path for the current goal):
-
-- Re-land arch rule 9 (corpus access through loaders only) — tickets 0043/0044 already on main
+- **0071-0078** bias audit — narrative backing for §4.8 Robustness / §6.4 Limitations
+- Re-land arch rule 9 (tickets 0043/0044)
