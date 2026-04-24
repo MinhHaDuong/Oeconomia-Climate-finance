@@ -81,3 +81,26 @@ $(COMP_FIGS)/fig_companion_sensitivity.png: \
 companion-sensitivity: \
     $(COMP_TABLES)/tab_sensitivity_grid.csv \
     $(COMP_FIGS)/fig_companion_sensitivity.png
+
+# ── Technical supplement (ticket 0096) ───────────────────────────────────
+
+MULTILAYER_TECHREP_INCLUDES := \
+    content/_includes/techrep/overview.md \
+    content/_includes/techrep/zscore.md \
+    content/_includes/techrep/null-model.md \
+    content/_includes/zoo/S2_energy.md \
+    content/_includes/zoo/L1_js.md \
+    content/_includes/zoo/G9_community.md \
+    content/_includes/zoo/G2_spectral.md \
+    content/_includes/zoo/C2ST_embedding.md \
+    content/_includes/zoo/C2ST_lexical.md
+
+output/content/multilayer-detection-techrep.pdf: \
+    content/multilayer-detection-techrep.qmd \
+    $(MULTILAYER_TECHREP_INCLUDES) \
+    $(BIB) \
+    content/technical-report-vars.yml
+	quarto render $< --to pdf
+
+.PHONY: multilayer-techrep
+multilayer-techrep: output/content/multilayer-detection-techrep.pdf
