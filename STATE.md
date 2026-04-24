@@ -70,5 +70,4 @@ In direct service of the current goal (narrative + results + figures):
 
 Background work (not on the critical path for the current goal):
 
-- **0025** connective prose for corpus report
 - Re-land arch rule 9 (corpus access through loaders only) — tickets 0043/0044 already on main
