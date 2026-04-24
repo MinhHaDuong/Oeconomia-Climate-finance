@@ -101,3 +101,6 @@ output/content/multilayer-detection-techrep.pdf: \
     $(BIB) \
     content/technical-report-vars.yml
 	quarto render $< --to pdf
+
+.PHONY: multilayer-techrep
+multilayer-techrep: output/content/multilayer-detection-techrep.pdf
