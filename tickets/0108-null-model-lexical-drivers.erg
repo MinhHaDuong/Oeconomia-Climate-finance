@@ -1,0 +1,97 @@
+%erg v1
+Title: Null model permutation drivers for L2 (NTR) and L3 (term bursts)
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T12:00Z claude created
+
+--- body ---
+## Context
+
+`_run_lexical_permutations` in `compute_null_model.py` handles only L1 (JS
+divergence). L2 and L3 use different statistics and window structures:
+
+- **L2 (NTR)**: per-document KL divergence (novelty/transience). Uses windows
+  `[3, 5]` (not `[2, 3, 4]`). Statistic: `mean_novelty − mean_transience` for
+  a before/after pair. This is a sliding-window before/after method — the same
+  permutation structure as L1 applies (shuffle document-to-window labels).
+
+- **L3 (term bursts)**: counts terms whose TF-IDF z-score exceeds a threshold
+  per year. This is a **cumulative** method (one value per year, no before/after
+  pairs). Standard permutation_test does not apply directly. The null model
+  should be derived by block-bootstrap or phase-randomisation of the burst-count
+  time series, or by permuting year labels on the count vector.
+
+## Design notes
+
+**L2 driver**
+
+`compute_l2_novelty` computes mean KL(doc || past_LM) and KL(doc || future_LM)
+per window. The statistic for permutation is `novelty − transience = mean_KL_fwd
+− mean_KL_bwd` computed on a pooled before+after set with shuffled labels.
+
+Implement `_run_l2_permutations(div_df, cfg)`:
+- For each (year, window) pair: collect before-docs and after-docs via
+  `iter_lexical_windows` (reusing the existing iterator, adapting window list
+  from config `L2_novelty.windows`).
+- statistic_fn: fit a shared language model on the combined pool; for each
+  permutation compute mean KL(shuffled-before || shared_LM) − KL(shuffled-after
+  || shared_LM). Use add-eps smoothing consistent with `_divergence_lexical.py`.
+- n_perm from config as usual.
+
+**L3 driver**
+
+L3 emits one `value = n_burst_terms` per year (cumulative, no sliding window).
+The cross-year Z-score is computed from the time series `n_burst(t)`. The null
+model question is: what Z-scores arise when there is no systematic trend?
+
+Approach: **year-label permutation** of the burst-count series.
+- Load `tab_div_L3.csv` (one row per year, window = "cumulative").
+- For each permutation: shuffle the year labels on the count vector.
+- Standardise each permuted series the same way `compute_crossyear_zscore.py`
+  does (subtract global mean, divide by std).
+- Record the resulting Z-score vector; compute null_mean(t) and null_std(t)
+  as mean and std across permutations at each year t.
+
+This gives a time-varying ribbon reflecting how much the burst-count Z-score
+could fluctuate by chance alone.
+
+## Actions
+
+1. `_run_l2_permutations(div_df, cfg)` in `compute_null_model.py` — before/after
+   document-shuffle following the L1 pattern but with KL statistic and L2 windows.
+
+2. `_run_l3_permutations(div_df, cfg)` — year-label permutation on the cumulative
+   count series; output has the same `tab_null_*` schema but window = "cumulative".
+
+3. Wire into `main()` dispatch (`elif method_name in {"L2", "L3"}`).
+
+4. Add zoo.mk targets for `tab_null_L2.csv` and `tab_null_L3.csv`.
+
+5. Run on padme and commit.
+
+## Test
+
+```python
+def test_l2_null_smoke(tmp_path):
+    # Smoke fixture run — assert output file has correct columns and finite values.
+    df = pd.read_csv("/tmp/tab_null_L2.csv")
+    assert {"year", "window", "null_mean", "null_std"}.issubset(df.columns)
+    assert df["null_std"].gt(0).all()
+
+def test_l3_null_year_label_permutation(tmp_path):
+    # year-label permutation preserves the value set (same counts, different order).
+    df = pd.read_csv("/tmp/tab_null_L3.csv")
+    assert df["window"].eq("cumulative").all()
+    assert df["null_mean"].notna().all()
+```
+
+## Exit criteria
+
+1. `compute_null_model.py --method L2` completes on smoke fixture.
+2. `compute_null_model.py --method L3` completes on smoke fixture.
+3. Tests pass.
+4. `tab_null_L2.csv` and `tab_null_L3.csv` committed.
+5. `make zoo-figures` shows ribbons for L2 and L3 figures.

@@ -1,0 +1,89 @@
+%erg v1
+Title: Null model permutation drivers for C2ST_embedding and C2ST_lexical
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T12:00Z claude created
+
+--- body ---
+## Context
+
+`compute_null_model.py` supports semantic, lexical, and citation channels but
+has no dispatcher entry for C2ST methods. `C2ST_embedding` is routed as channel
+"semantic" and `C2ST_lexical` as "lexical", yet neither is handled by the
+existing `_make_semantic_statistic` or `_run_lexical_permutations` functions.
+
+Both C2ST variants use classifier AUC as their test statistic. The permutation
+null is well-defined: shuffle which papers are labelled "before" vs "after",
+re-run the cross-validated classifier, record the null AUC. These are the two
+remaining panel methods in the companion paper without a null model ribbon.
+
+## Design notes
+
+**C2ST_embedding (channel: semantic)**
+
+`_c2st_auc(X, Y, *, cv_folds, class_weight, seed)` already accepts two arrays
+and returns `{"mean": auc, ...}`. The driver should:
+
+1. Load embeddings via `iter_semantic_windows(div_df, cfg)` to get `X_before`,
+   `Y_after` as PCA-reduced arrays (pca_dim=32, fit once on combined pool).
+2. Wrap `_c2st_auc` as `statistic_fn(X, Y) -> float` with fixed seed.
+3. Call `permutation_test(X_before, Y_after, statistic_fn, n_perm, perm_rng)`.
+
+PCA must be fit **before** permutation (on the combined pool), then reused for
+every permuted split — do not re-fit per permutation, that would destroy signal.
+
+Register as `_run_c2st_embedding_permutations` and add to the semantic channel
+dispatch in `main()` (or as a new `elif` in `_run_semantic_permutations`).
+
+**C2ST_lexical (channel: lexical)**
+
+Analogous: use `fit_lexical_vectorizer` + PCA (pca_dim from config), then
+`permutation_test` on the resulting sparse→dense reduced arrays. Register as
+`_run_c2st_lexical_permutations` parallel to `_run_lexical_permutations`.
+
+## Actions
+
+1. Add `_run_c2st_embedding_permutations(div_df, cfg)` in `compute_null_model.py`:
+   - load embeddings via `iter_semantic_windows`
+   - PCA-reduce combined pool to `pca_dim`, then split X/Y
+   - call `permutation_test` with AUC wrapper
+
+2. Add `_run_c2st_lexical_permutations(div_df, cfg)` similarly:
+   - fit vectorizer on combined pool, PCA-reduce
+   - call `permutation_test`
+
+3. Wire both into `main()` dispatch (the `if channel == "semantic" / lexical`
+   block), gating on `method_name in {"C2ST_embedding", "C2ST_lexical"}`.
+
+4. Add Makefile targets in `zoo.mk` (or a new `null.mk`):
+   ```
+   content/tables/tab_null_C2ST_embedding.csv: ...
+   content/tables/tab_null_C2ST_lexical.csv: ...
+   ```
+
+5. Run both and commit the resulting CSVs.
+
+## Test
+
+```python
+# tests/test_null_model_c2st.py
+def test_c2st_embedding_null_smoke(tmp_path):
+    """C2ST_embedding null model runs on smoke fixture and produces valid output."""
+    # CLIMATE_FINANCE_DATA=tests/fixtures/smoke
+    # uv run python scripts/compute_null_model.py
+    #     --method C2ST_embedding --div-csv ... --output /tmp/tab_null_C2ST_embedding.csv
+    df = pd.read_csv("/tmp/tab_null_C2ST_embedding.csv")
+    assert {"year", "window", "null_mean", "null_std", "z_score"}.issubset(df.columns)
+    assert df["null_mean"].between(0.4, 0.7).all()  # AUC near 0.5 under null
+```
+
+## Exit criteria
+
+1. `compute_null_model.py --method C2ST_embedding` completes without error.
+2. `compute_null_model.py --method C2ST_lexical` completes without error.
+3. Smoke test passes.
+4. `tab_null_C2ST_embedding.csv` and `tab_null_C2ST_lexical.csv` committed.
+5. `make zoo-figures` produces ribbons for both C2ST figures.
