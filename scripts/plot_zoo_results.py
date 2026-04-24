@@ -24,7 +24,7 @@ import os
 import sys
 from pathlib import Path
 
-import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import pandas as pd
 from pipeline_io import save_figure
@@ -100,9 +100,9 @@ def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
 
 
 def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.DataFrame:
-    """Add z_threshold column to null_df.
+    """Add z_threshold_upper / z_threshold_lower columns to null_df.
 
-    Z_threshold = (null_mean + 1.96 * null_std - mu_w) / sigma_w
+    Bounds = (null_mean ± 1.96 * null_std - mu_w) / sigma_w
 
     where mu_w and sigma_w are the per-window mean and std of the crossyear
     Z-scores (from the observed data).
@@ -114,8 +114,11 @@ def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.Dat
     sigma_w = df.groupby("window")[col].std()
 
     null_df = null_df.copy()
-    null_df["z_threshold"] = (
+    null_df["z_threshold_upper"] = (
         null_df["null_mean"] + 1.96 * null_df["null_std"] - null_df["window"].map(mu_w)
+    ) / null_df["window"].map(sigma_w)
+    null_df["z_threshold_lower"] = (
+        null_df["null_mean"] - 1.96 * null_df["null_std"] - null_df["window"].map(mu_w)
     ) / null_df["window"].map(sigma_w)
     return null_df
 
@@ -130,25 +133,45 @@ def _plot(
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.axhline(0, color="0.75", linewidth=0.5, zorder=0)
 
-    # Null zone band.
-    ax.axhspan(
-        -_Z_THRESHOLD,
-        _Z_THRESHOLD,
-        color=FILL,
-        alpha=0.15,
-        zorder=0,
-        label=None,
+    # Null zone: ribbon for w=3 if null data available, else flat ±2 box.
+    w3_null = (
+        null_df[null_df["window"] == "3"].sort_values("year")
+        if null_df is not None
+        else None
     )
-
-    # Threshold lines.
-    for sign in (+1, -1):
-        ax.axhline(
-            sign * _Z_THRESHOLD,
-            color=MED,
-            linewidth=0.6,
-            linestyle="--",
-            zorder=1,
+    has_ribbon = (
+        w3_null is not None
+        and not w3_null.empty
+        and "z_threshold_upper" in w3_null.columns
+        and w3_null["z_threshold_upper"].notna().any()
+    )
+    if has_ribbon:
+        ax.fill_between(
+            w3_null["year"],
+            w3_null["z_threshold_lower"],
+            w3_null["z_threshold_upper"],
+            color=FILL,
+            alpha=0.40,
+            zorder=0,
+            label=None,
         )
+    else:
+        ax.axhspan(
+            -_Z_THRESHOLD,
+            _Z_THRESHOLD,
+            color=FILL,
+            alpha=0.15,
+            zorder=0,
+            label=None,
+        )
+        for sign in (+1, -1):
+            ax.axhline(
+                sign * _Z_THRESHOLD,
+                color=MED,
+                linewidth=0.6,
+                linestyle="--",
+                zorder=1,
+            )
 
     # Period boundary verticals — shorten by 1 ex so year labels clear the title.
     # 1 ex at fontsize 6 on a (6, 4) figure with default subplot params ≈ 0.012 axes units.
@@ -185,21 +208,6 @@ def _plot(
             zorder=3,
         )
 
-        # Null CI band: dashed line at 95th-percentile null threshold.
-        if null_df is not None:
-            ci_sub = null_df[null_df["window"] == w_str].sort_values("year")
-            if not ci_sub.empty:
-                ax.plot(
-                    ci_sub["year"],
-                    ci_sub["z_threshold"],
-                    linestyle="--",
-                    color=style["color"],
-                    linewidth=0.7,
-                    alpha=0.7,
-                    label=None,
-                    zorder=2,
-                )
-
         plotted.append(w_str)
 
     # Fallback: cumulative or single-window methods (G3, G4, G7, L3).
@@ -227,20 +235,15 @@ def _plot(
     if not df.empty:
         ax.set_xlim(df["year"].min() - 0.5, df["year"].max() + 0.5)
 
-    # Add a single legend entry for the null CI band if present.
+    # Add legend entry for null ribbon or flat band.
     handles, labels = ax.get_legend_handles_labels()
-    if null_df is not None and plotted:
-        handles.append(
-            mlines.Line2D(
-                [],
-                [],
-                color="0.5",
-                linestyle="--",
-                linewidth=0.7,
-                label="null 95% CI",
-            )
-        )
-        labels.append("null 95% CI")
+
+    if has_ribbon:
+        handles.append(mpatches.Patch(color=FILL, alpha=0.40, label="null 95% (w=3)"))
+        labels.append("null 95% (w=3)")
+    else:
+        handles.append(mpatches.Patch(color=FILL, alpha=0.15, label="null ±2σ"))
+        labels.append("null ±2σ")
 
     ax.legend(
         handles=handles, labels=labels, loc="upper left", frameon=False, fontsize=7

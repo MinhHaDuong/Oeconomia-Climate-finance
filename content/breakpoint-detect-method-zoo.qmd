@@ -9,6 +9,7 @@ format:
   pdf:
     pdf-engine: xelatex
     number-sections: true
+    papersize: a4
 ---
 
 {{< include _includes/techrep/overview.md >}}

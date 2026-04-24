@@ -9,6 +9,7 @@ format:
   pdf:
     pdf-engine: xelatex
     number-sections: true
+    papersize: a4
 ---
 
 All scripts are in `scripts/`, the corpus contract files at `$CLIMATE_FINANCE_DATA/catalogs/`, and generated outputs in `content/figures/` and `content/tables/`.

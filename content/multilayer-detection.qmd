@@ -26,6 +26,7 @@ abstract: |
 format:
   pdf:
     pdf-engine: xelatex
+    papersize: a4
 ---
 
 ## 1. Introduction
