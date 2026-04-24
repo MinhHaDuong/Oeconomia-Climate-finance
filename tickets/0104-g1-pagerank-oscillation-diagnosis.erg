@@ -1,0 +1,105 @@
+%erg v1
+Title: Investigate G1 PageRank alternating oscillation in w=3 Z-score curve
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T11:35Z claude created
+
+--- body ---
+## Context
+
+`tab_crossyear_G1_pagerank.csv` shows a striking alternating pattern for w=3:
+every even year (2010, 2012, 2014, ...) has D ≈ 0.009–0.026 (near-zero divergence),
+while every odd year (2011, 2013, ...) has D ≈ 0.44–0.68. The resulting Z-scores
+oscillate between ≈ −1.5 and +0.25, making the G1 panel uninterpretable for
+period detection.
+
+Window construction in `_divergence_citation.py::_iter_sliding_pairs` looks correct:
+- before: `[year−w, year−gap]` → `[year−3, year−1]`
+- after:  `[year+gap, year+w]` → `[year+1, year+3]`
+
+The JS divergence between PageRank shape distributions (histogrammed into bins)
+is computed in `_citation_methods.py::_compare_pagerank_distributions`. Near-zero
+D means the two histogram shapes are nearly identical — both windows produce
+near-uniform PageRank, or both produce identical hub concentration.
+
+Root cause is unknown. Hypotheses:
+1. **Off-by-one in source_year assignment**: `internal_edges["source_year"]` may
+   be mis-assigned for citations published in t±1, causing even-year windows to
+   collapse into odd-year windows or vice-versa.
+2. **Citation graph sparsity in even-year windows**: Papers published in
+   even years have fewer internal edges available, causing both before/after
+   graphs to be dominated by isolated nodes (uniform PageRank → D≈0).
+3. **Biennial data artifact in the corpus**: OpenAlex may have lower coverage
+   for even years in this field, producing systematically thinner graphs.
+4. **Histogram binning artifact**: `actual_bins = min(n_bins, min(len_b, len_a))`
+   — if even-year windows have fewer papers, actual_bins may be reduced to 2–3,
+   making the JS computation degenerate.
+
+This needs investigation on padme where the actual corpus lives.
+
+## Relevant files
+
+- `scripts/_citation_methods.py:37–85` — `_pagerank_vector`, `_compare_pagerank_distributions`
+- `scripts/_divergence_citation.py:124–181` — `_sliding_window_graph`, `_iter_sliding_pairs`
+- `content/tables/tab_crossyear_G1_pagerank.csv` — the oscillating output
+- `config/analysis.yaml` — `divergence.citation.G1_pagerank` config (damping, n_bins)
+
+## Actions
+
+1. On padme: add debug logging to `_compare_pagerank_distributions` to emit
+   `(year, w, len_before, len_after, actual_bins, D)` for w=3, years 2008–2018.
+2. Check whether `len_before` and `len_after` systematically alternate (even vs odd
+   year window sizes differ → hypothesis 2 or 3).
+3. Check `actual_bins` for each year — if it drops to 2–3 in even years, the
+   histogram is degenerate (hypothesis 4).
+4. Inspect `internal_edges["source_year"]` distribution: count edges by year,
+   look for even/odd asymmetry (hypothesis 1 or 3).
+5. If the cause is histogram binning: replace `actual_bins = min(n_bins, ...)` with
+   a fixed bin count using `np.linspace(0, bin_max, n_bins + 1)` regardless of
+   window size (small windows may need min_papers guard instead).
+6. If the cause is corpus coverage: document as a known limitation in the G1
+   technical-report include; consider filtering out years where either window has
+   fewer than `min_papers` nodes (already done in `_iter_sliding_pairs` — check
+   whether the threshold is too low).
+
+## Test
+
+```python
+# tests/test_g1_oscillation.py
+def test_g1_pagerank_no_alternating_oscillation():
+    """D values for consecutive years in w=3 should not alternate near-zero/normal."""
+    df = pd.read_csv("content/tables/tab_crossyear_G1_pagerank.csv")
+    w3 = df[df["window"] == "3"].sort_values("year")
+    values = w3["value"].dropna().values
+    # Flag if >50% of adjacent pairs differ by more than 0.3 (alternating pattern)
+    diffs = np.abs(np.diff(values))
+    alternating_fraction = (diffs > 0.3).mean()
+    assert alternating_fraction < 0.4, (
+        f"G1 w=3 shows alternating oscillation: {alternating_fraction:.0%} of "
+        f"adjacent pairs differ by >0.3 — likely a data or binning bug"
+    )
+```
+
+## Verification
+
+- [ ] Debug log shows which hypothesis explains the near-zero D values
+- [ ] Fix (if binning): recomputed `tab_crossyear_G1_pagerank.csv` no longer alternates
+- [ ] Fix (if corpus): G1 panel includes a note on even-year coverage gaps
+- [ ] Test above passes
+- [ ] Zoo PDF G1 panel shows a smooth w=3 curve
+
+## Invariants
+
+- Do not change `_iter_sliding_pairs` window formula (shared by G2, G5, G6, G8)
+- `min_papers` threshold must remain configurable via `config/analysis.yaml`
+- All other zoo method CSVs must be unaffected
+
+## Exit criteria
+
+Root cause identified and either:
+(a) fixed in code + recomputed CSV shows no alternating pattern, or
+(b) documented as corpus limitation in G1 technical-report include with
+    the affected year-windows suppressed or annotated.
