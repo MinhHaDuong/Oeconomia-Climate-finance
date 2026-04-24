@@ -194,8 +194,9 @@ NJOBS ?= -1
 NULL_DISPATCH := scripts/compute_null_model.py
 NULL_METHODS_SEM := S2_energy
 NULL_METHODS_LEX := L1
+NULL_METHODS_LEX_L2L3 := L2 L3
 NULL_METHODS_CIT := G9_community G2_spectral
-NULL_METHODS := $(NULL_METHODS_SEM) $(NULL_METHODS_LEX) $(NULL_METHODS_CIT)
+NULL_METHODS := $(NULL_METHODS_SEM) $(NULL_METHODS_LEX) $(NULL_METHODS_LEX_L2L3) $(NULL_METHODS_CIT)
 NULL_CSV := $(foreach m,$(NULL_METHODS),$(DIV_TABLES)/tab_null_$(m).csv)
 
 # Semantic null models (depend on embeddings + divergence CSV)
@@ -203,10 +204,15 @@ $(foreach m,$(NULL_METHODS_SEM),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_semantic.py scripts/_permutation_accel.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
 	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
-# Lexical null models (depend on REFINED + divergence CSV)
+# Lexical null models — L1: JS divergence (depend on REFINED + divergence CSV)
 $(foreach m,$(NULL_METHODS_LEX),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py scripts/_permutation_accel.py $(REFINED) $(DIV_CFG) ; \
 	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
+
+# Lexical null models — L2/L3: use _permutation_lexical.py instead of _permutation_accel.py
+$(foreach m,$(NULL_METHODS_LEX_L2L3),$(eval \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py scripts/_permutation_lexical.py $(REFINED) $(DIV_CFG) ; \
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 # Citation null models (depend on REFINED + REFINED_CIT + divergence CSV)
 $(foreach m,$(NULL_METHODS_CIT),$(eval \
