@@ -490,14 +490,14 @@ class TestNodePermutationHelper:
 
     def test_helper_importable(self):
         """_node_permutation_null_distribution must be importable."""
-        from compute_null_model import _node_permutation_null_distribution
+        from _permutation_citation import _node_permutation_null_distribution
 
         assert callable(_node_permutation_null_distribution)
 
     def test_helper_returns_array_of_abs_diffs(self):
         """Helper must return n_perm abs-diff values (NaN rows dropped)."""
         import networkx as nx
-        from compute_null_model import _node_permutation_null_distribution
+        from _permutation_citation import _node_permutation_null_distribution
 
         # Build a simple graph for testing
         G = nx.DiGraph()
