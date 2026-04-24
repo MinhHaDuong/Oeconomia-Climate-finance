@@ -1,0 +1,107 @@
+%erg v1
+Title: Refactor compute_null_model.py into a pure dispatcher — mirror compute_divergence.py
+Status: done
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T16:30Z claude created — god-module symptom triggered by /verify-gate REROLL on PR #759
+2026-04-24T16:45Z reimagine: not a one-file extraction; the dispatcher/module split that works for compute_divergence.py was never fully applied here
+2026-04-24T20:00Z claude claimed — starting dispatcher/module split
+2026-04-24T21:00Z GREEN — dispatcher 193L; 4 new modules + 2 migrated; 47/49 tests pass (2 C2ST smoke timeouts are pre-existing on main)
+
+--- body ---
+## Diagnosis
+
+`compute_null_model.py` is 818 lines. The god-module ratchet (`test_no_god_modules`,
+limit 800) is a symptom. The structural issue: the file is both dispatcher *and*
+method implementations, unlike `compute_divergence.py` (192 lines, pure dispatcher
+backed by 7 `_divergence_*.py` private modules).
+
+Current state of inline implementations in `compute_null_model.py`:
+- `permutation_test` (~61L) — core algorithm, should be shared
+- `_result_row`, `_nan_row`, `_finalize_row`, `_collect_permutation_rows` — helpers
+  duplicated across `compute_null_model.py`, `_permutation_citation.py`,
+  `_permutation_lexical.py` (3 copies)
+- `_make_semantic_statistic`, `_run_semantic_gpu`, `_run_semantic_permutations` — S1–S4
+- `_run_lexical_permutations` — L1 (L2/L3 already delegated via thin stubs)
+- `_community_node_comm_map`, `_community_null_distribution`, `_g9_one_window`,
+  `_run_g9_community_permutations` — G9, ~140L fully inline
+- `_spectral_null_distribution`, `_g2_spectral_one_window`,
+  `_run_g2_spectral_permutations` — G2, ~92L fully inline
+- `_run_c2st_embedding_permutations`, `_run_c2st_lexical_permutations` — ~122L inline
+
+`_permutation_citation.py` and `_permutation_lexical.py` already show the right
+pattern. They need to be completed and joined by peers.
+
+## Target architecture
+
+```
+compute_null_model.py  (~200L)   — dispatch only, like compute_divergence.py
+_permutation_io.py               — permutation_test, _result_row, _nan_row,
+                                   _finalize_row, _collect_permutation_rows
+_permutation_semantic.py         — S1_MMD, S2_energy, S3_sliced_wasserstein,
+                                   S4_frechet; _make_semantic_statistic, _run_semantic_gpu
+_permutation_lexical.py (exists) — L1, L2, L3; migrate to use _permutation_io helpers
+_permutation_graph.py            — G2_spectral, G9_community (undirected graph methods)
+_permutation_citation.py (exists)— G1, G5, G6, G8; migrate to use _permutation_io helpers
+_permutation_c2st.py             — C2ST_embedding, C2ST_lexical
+```
+
+`compute_divergence.py` (192L) is the model to follow exactly.
+
+## Actions
+
+1. Create `scripts/_permutation_io.py`:
+   - Move `permutation_test`, `_result_row`, `_nan_row`, `_finalize_row`,
+     `_collect_permutation_rows` from `compute_null_model.py`.
+   - No imports from other `_permutation_*` modules (no circular deps).
+
+2. Create `scripts/_permutation_semantic.py`:
+   - Move `_make_semantic_statistic`, `_run_semantic_gpu`,
+     `_run_semantic_permutations` from `compute_null_model.py`.
+   - Import row helpers from `_permutation_io`.
+
+3. Create `scripts/_permutation_graph.py`:
+   - Move G9 drivers (`_community_*`, `_g9_one_window`, `_run_g9_community_permutations`)
+     and G2 drivers (`_spectral_*`, `_g2_spectral_one_window`,
+     `_run_g2_spectral_permutations`) from `compute_null_model.py`.
+   - Import row helpers from `_permutation_io`.
+
+4. Create `scripts/_permutation_c2st.py`:
+   - Move `_run_c2st_embedding_permutations`, `_run_c2st_lexical_permutations`.
+   - Import row helpers from `_permutation_io`.
+
+5. Migrate `_permutation_citation.py` and `_permutation_lexical.py`:
+   - Replace local copies of `_result_row`, `_nan_row`, `_finalize_row` with
+     imports from `_permutation_io`.
+
+6. Slim `compute_null_model.py` to dispatcher only (~200L):
+   - Imports from the 5 private modules.
+   - Thin wrapper stubs where needed (like `_run_l2_permutations` already is).
+   - `main()` dispatch block.
+
+7. Update `test_script_hygiene.py` god-module ratchet if needed:
+   - `compute_null_model.py` should now be well under 300L.
+   - New private modules should each be under 400L.
+
+## Test
+
+First test (Red): `test_no_god_modules` currently fails (818L). Should pass after.
+
+```bash
+uv run python -m pytest tests/test_script_hygiene.py::TestModuleLength -v
+```
+
+All existing null-model tests must continue to pass:
+```bash
+uv run python -m pytest tests/test_null_model*.py tests/test_zoo_null_ci.py -v
+```
+
+## Exit criteria
+
+1. `compute_null_model.py` ≤ 250 lines (dispatcher only).
+2. `_permutation_io.py` exists; no duplicate helper functions across `_permutation_*.py`.
+3. `test_no_god_modules` passes for all scripts.
+4. All `test_null_model*.py` and `test_zoo_null_ci.py` tests pass.
+5. `make check-fast` clean (2 pre-existing failures allowed).

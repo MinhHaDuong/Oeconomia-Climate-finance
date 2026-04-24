@@ -1,7 +1,8 @@
-"""Permutation null model drivers for L2 (NTR) and L3 (term bursts).
+"""Permutation null model drivers for lexical methods (L1, L2, L3).
 
 Private module — no main, no argparse.  Called by compute_null_model.py.
 
+L1 — Jensen-Shannon divergence on TF-IDF (precomputed sparse permutation)
 L2 — Novelty / Transience / Resonance (Barron et al. 2018)
     Past/future pool-shuffle: pool past and future texts; for each permutation
     randomly assign pool docs into buckets of size |past| and |future| and
@@ -14,27 +15,10 @@ L3 — Burst detection (z-score term frequency, Kleinberg-style)
 
 import numpy as np
 import pandas as pd
+from _permutation_io import _nan_row, _result_row
 from utils import get_logger
 
 log = get_logger("_permutation_lexical")
-
-
-def _result_row(year, window, observed, null_mean, null_std, z, p):
-    """Return a null-model result row dict."""
-    return {
-        "year": year,
-        "window": str(window),
-        "observed": observed,
-        "null_mean": null_mean,
-        "null_std": null_std,
-        "z_score": z,
-        "p_value": p,
-    }
-
-
-def _nan_row(year, window):
-    """Return a null-model result row with NaN entries."""
-    return _result_row(year, window, np.nan, np.nan, np.nan, np.nan, np.nan)
 
 
 def run_l3_permutations(div_df, cfg):
@@ -237,5 +221,55 @@ def run_l2_permutations(div_df, cfg):
 
         rows.append(_result_row(y, str(w), observed, nm, ns, z, p))
         log.info("  year=%d window=%d z=%.2f p=%.3f [L2]", y, w, z, p)
+
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# L1: Jensen-Shannon on TF-IDF
+# ---------------------------------------------------------------------------
+
+
+def _make_lexical_statistic(vectorizer):
+    """Return a statistic_fn(texts_before, texts_after) -> float for L1 JS."""
+    from _divergence_lexical import _smooth_distribution
+    from scipy.spatial.distance import jensenshannon
+
+    def js_fn(texts_before, texts_after):
+        X_before = vectorizer.transform(texts_before)
+        X_after = vectorizer.transform(texts_after)
+        agg_before = np.asarray(X_before.mean(axis=0)).flatten()
+        agg_after = np.asarray(X_after.mean(axis=0)).flatten()
+        p = _smooth_distribution(agg_before)
+        q = _smooth_distribution(agg_after)
+        return float(jensenshannon(p, q))
+
+    return js_fn
+
+
+def _run_lexical_permutations(method_name, div_df, cfg):
+    """Permutation test for lexical methods (L1).
+
+    Precomputes TF-IDF for each (year, window) pool once, then permutes
+    row indices into the sparse matrix — avoids 2 x n_perm redundant
+    vectorizer.transform() calls per window.
+    """
+    from _divergence_io import fit_lexical_vectorizer, iter_lexical_windows
+    from _permutation_accel import precomputed_lexical_permutation
+
+    vectorizer = fit_lexical_vectorizer(cfg)
+    n_perm = cfg["divergence"]["permutation"]["n_perm"]
+
+    rows = []
+    for y, w, texts_before, texts_after, perm_rng in iter_lexical_windows(div_df, cfg):
+        all_texts = texts_before + texts_after
+        X_all = vectorizer.transform(all_texts)
+        n_before = len(texts_before)
+
+        obs, nm, ns, z, p = precomputed_lexical_permutation(
+            X_all, n_before, n_perm, perm_rng
+        )
+        rows.append(_result_row(y, w, obs, nm, ns, z, p))
+        log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p)
 
     return pd.DataFrame(rows)
