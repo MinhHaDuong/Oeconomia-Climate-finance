@@ -1,0 +1,174 @@
+%erg v1
+Title: Add S0_centroid cosine-centroid distance as zoo method
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T11:45Z claude created
+
+--- body ---
+## Context
+
+`compute_breakpoints.py` already computes cosine distance between embedding
+centroids (lines 109–114) as part of the Oeconomia manuscript's breakpoint
+detection. The Oeconomia parametric approach performed well. This ticket wraps
+the same statistic as a proper zoo method (S0_centroid) so it appears in the
+18-panel figure alongside S1–S4.
+
+### Why this method is worth adding
+
+Cosine centroid distance has three distinct advantages:
+
+1. **Speed**: O(n·d) per (year, window) — compare embeddings of n papers in d=768
+   dimensions just by computing two means and one dot product. No pairwise distances,
+   no sorting, no kernel matrices. For n≈500, S2_energy is ~250,000 distance
+   evaluations; S0 is 1,000.
+
+2. **Analytical null (optional)**: Under the approximation that embeddings are drawn
+   from an isotropic Gaussian with variance σ² per dimension, the mean vectors satisfy:
+   `μ̂_b ~ N(μ, σ²I/n_b)` and `μ̂_a ~ N(μ, σ²I/n_a)`. The expected cosine between
+   the two unit-normalized means under the null is 1 (same population), and the
+   variance of `1 - cos(μ̂_b, μ̂_a)` is approximately:
+   `Var ≈ (1/n_b + 1/n_a) · σ²/(d · ||μ||²)`
+   In practice, sentence embeddings are NOT isotropic Gaussian (they concentrate on
+   a manifold), so the analytical null is a first-order approximation only. The zoo
+   cross-year Z-score normalization makes the analytical null unnecessary for the
+   main zoo plot — the empirical normalization handles it. The analytical null
+   becomes useful only if S0 is added to the permutation null model framework later.
+
+3. **Interpretability**: cos(μ_b, μ_a) directly measures whether the "average topic"
+   shifted direction in embedding space — complementary to S2_energy (distribution
+   shape) and S3 (distributional transport), none of which capture the mean vector
+   shift as cleanly.
+
+### No equal-n subsampling needed
+
+Cosine centroid distance is a function of the means, which are computed from all
+papers in each window. No stochastic element — the ribbon (ticket 0105) is trivially
+flat for S0. This means S0 belongs to the same deterministic tier as G3/G4/G7.
+
+### Window convention
+
+Use the standard zoo sliding-window convention from `_iter_window_pairs`:
+- before: `[year − w, year − gap]` where gap = `div_cfg.get("gap", 1)`
+- after: `[year + gap, year + w]`
+
+This differs from `compute_breakpoints.py`'s asymmetric window
+`[y−w−censor_gap, y−censor_gap]` / `[y+1, y+1+w]`. Use the zoo convention
+for consistency with other sliding methods, not the breakpoints convention.
+
+**Do not normalize embeddings before computing centroids.** Normalizing individual
+vectors before averaging changes the centroid direction (it's no longer the true
+mean of the distribution). Compute the raw mean vectors; then use
+`scipy.spatial.distance.cosine` which handles normalization internally.
+
+## Relevant files
+
+- `scripts/_divergence_semantic.py` — add `compute_s0_centroid()` here
+- `scripts/compute_divergence.py` — register `S0_centroid` in dispatcher
+- `scripts/compute_breakpoints.py:109–114` — existing cosine centroid code to adapt
+- `scripts/plot_schematic_S0_centroid.py` — new schematic figure (see below)
+- `divergence.mk` — add Makefile target
+- `config/analysis.yaml` — add `S0_centroid` to `zoo.method_titles`
+- `content/breakpoint-detect-method-zoo.qmd` — add panel row for S0
+
+## Actions
+
+1. **`_divergence_semantic.py`**: add `compute_s0_centroid(df, emb, cfg)` that:
+   - Calls `_get_years_and_params` for the standard sliding window setup.
+   - Iterates `_iter_window_pairs` with `equal_n=False, rng=None` (deterministic).
+   - For each pair: `D = cosine_dist(X.mean(axis=0), Y.mean(axis=0))`.
+   - Returns DataFrame with columns: year, window, hyperparams, value.
+
+2. **`compute_divergence.py`**: add `"S0_centroid": compute_s0_centroid` to the
+   dispatcher dict. S0 does not require embeddings loading differently — it uses
+   `load_analysis_corpus(with_embeddings=True)` like S1–S4.
+
+3. **`plot_schematic_S0_centroid.py`**: minimal schematic (consistent with other
+   `plot_schematic_*.py` files). Show two point clouds in 2D with marked centroids
+   and the cosine angle between them.
+
+4. **`divergence.mk`**: add target:
+   ```makefile
+   content/tables/tab_divergence_S0_centroid.csv: \
+       $(REFINED_WORKS) $(REFINED_EMBEDDINGS) scripts/compute_divergence.py \
+       scripts/_divergence_semantic.py
+       uv run python scripts/compute_divergence.py \
+           --method S0_centroid --output $@
+   ```
+   Add to `zoo-tables` phony target.
+
+5. **`config/analysis.yaml`**: add `S0_centroid: "S0 Cosine Centroid"` under
+   `zoo.method_titles`.
+
+6. **`content/breakpoint-detect-method-zoo.qmd`**: add S0_centroid panel row
+   in the same format as S1–S4 entries.
+
+7. Run `compute_divergence.py --method S0_centroid` and
+   `compute_crossyear_zscore.py --method S0_centroid` to generate the data.
+   Then regenerate the zoo PDF.
+
+## Test
+
+```python
+# tests/test_divergence_semantic.py (or test_zoo_methods.py)
+def test_s0_centroid_returns_correct_schema():
+    """S0_centroid returns DataFrame with year, window, hyperparams, value."""
+    import numpy as np
+    import pandas as pd
+    from _divergence_semantic import compute_s0_centroid
+
+    rng = np.random.default_rng(42)
+    n = 100
+    df = pd.DataFrame({
+        "doi": [f"doi_{i}" for i in range(n)],
+        "year": [2005 + i % 10 for i in range(n)],
+        "cited_by_count": rng.integers(0, 100, n),
+    })
+    emb = rng.standard_normal((n, 16)).astype(np.float32)
+    cfg = {
+        "divergence": {
+            "windows": [2, 3],
+            "gap": 1,
+            "min_papers": 5,
+            "min_papers_fraction": 0.0,
+            "equal_n": False,
+            "max_subsample": 1000,
+        }
+    }
+    result = compute_s0_centroid(df, emb, cfg)
+    assert set(result.columns) >= {"year", "window", "hyperparams", "value"}
+    assert result["value"].between(0, 2).all(skipna=True), \
+        "cosine distance must be in [0, 2]"
+
+def test_s0_centroid_deterministic():
+    """S0_centroid produces identical results on two calls (no stochasticity)."""
+    # ... same setup as above ...
+    r1 = compute_s0_centroid(df, emb, cfg)
+    r2 = compute_s0_centroid(df, emb, cfg)
+    pd.testing.assert_frame_equal(r1, r2)
+```
+
+## Verification
+
+- [ ] `tab_divergence_S0_centroid.csv` exists and has no NaN for well-populated years
+- [ ] `tab_crossyear_S0_centroid.csv` has `z_lo = z_hi = NaN` (deterministic, no ribbon)
+- [ ] `fig_zoo_S0_centroid.png` renders without error
+- [ ] S0 panel appears in zoo PDF
+- [ ] Both tests above pass
+- [ ] `make check` passes
+
+## Invariants
+
+- Do not modify `compute_breakpoints.py` — S0 in the zoo uses a different window
+  convention and must not interfere with the manuscript's breakpoint detection.
+- The 18-method zoo figure becomes a 19-method figure. Verify PDF layout still fits.
+- `_get_years_and_params` and `_iter_window_pairs` must not be modified — shared
+  by S1–S4.
+
+## Exit criteria
+
+S0_centroid appears as a 19th panel in the zoo PDF, with a smooth Z-score curve
+for w=3 that peaks around 2007–2013 consistent with the field crystallization story.
+Tests pass. No changes to existing zoo outputs.
