@@ -270,7 +270,7 @@ def _run_semantic_gpu(method_name, div_df, cfg):
         elif method_name == "S1_MMD":
             from _divergence_semantic import _median_heuristic
 
-            med = _median_heuristic(X, Y)
+            med = _median_heuristic(X, Y, rng=np.random.RandomState(perm_seed))
             obs, nm, ns, z, p = gpu_mmd_permutations(X, Y, med, n_perm, perm_seed)
         else:
             raise ValueError(f"No GPU path for {method_name}")
