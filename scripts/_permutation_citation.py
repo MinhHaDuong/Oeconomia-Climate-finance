@@ -11,39 +11,10 @@ All drivers follow the _build_union_digraph / node-permutation pattern:
 import numpy as np
 import pandas as pd
 from _divergence_io import _make_window_rngs
+from _permutation_io import _finalize_row, _nan_row
 from utils import get_logger
 
 log = get_logger("_permutation_citation")
-
-
-# ---------------------------------------------------------------------------
-# Tiny row helpers (mirrored from compute_null_model._result_row etc.)
-# ---------------------------------------------------------------------------
-
-
-def _result_row(year, window, observed, null_mean, null_std, z, p):
-    return {
-        "year": year,
-        "window": str(window),
-        "observed": observed,
-        "null_mean": null_mean,
-        "null_std": null_std,
-        "z_score": z,
-        "p_value": p,
-    }
-
-
-def _nan_row(year, window):
-    return _result_row(year, window, np.nan, np.nan, np.nan, np.nan, np.nan)
-
-
-def _finalize_row(y, w, observed, null_stats):
-    null_mean = float(np.mean(null_stats))
-    null_std = float(np.std(null_stats))
-    z = (observed - null_mean) / null_std if null_std > 0 else 0.0
-    p_value = float(np.mean(null_stats >= observed))
-    log.info("  year=%d window=%d z=%.2f p=%.3f", y, w, z, p_value)
-    return _result_row(y, w, observed, null_mean, null_std, z, p_value)
 
 
 # ---------------------------------------------------------------------------
