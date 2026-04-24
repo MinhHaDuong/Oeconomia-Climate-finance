@@ -26,6 +26,7 @@ from pathlib import Path
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import pandas as pd
 from pipeline_io import save_figure
 from pipeline_loaders import load_analysis_config
@@ -234,6 +235,7 @@ def _plot(
 
     if not df.empty:
         ax.set_xlim(df["year"].min() - 0.5, df["year"].max() + 0.5)
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
     # Add legend entry for null ribbon or flat band.
     handles, labels = ax.get_legend_handles_labels()
