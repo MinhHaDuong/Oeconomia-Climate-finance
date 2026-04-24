@@ -493,7 +493,17 @@ class TestSmokeNullModel:
     """Smoke tests for compute_null_model.py on fixture data."""
 
     @pytest.mark.parametrize(
-        "method", ["S2_energy", "L1", "G9_community", "G2_spectral"]
+        "method",
+        [
+            "S2_energy",
+            "L1",
+            "G9_community",
+            "G2_spectral",
+            "G1_pagerank",
+            "G5_pref_attachment",
+            "G6_entropy",
+            "G8_betweenness",
+        ],
     )
     def test_compute_produces_output(self, method, tmp_path):
         """Script runs and produces a valid CSV."""
@@ -530,7 +540,17 @@ class TestSmokeNullModel:
         assert len(df) > 0
 
     @pytest.mark.parametrize(
-        "method", ["S2_energy", "L1", "G9_community", "G2_spectral"]
+        "method",
+        [
+            "S2_energy",
+            "L1",
+            "G9_community",
+            "G2_spectral",
+            "G1_pagerank",
+            "G5_pref_attachment",
+            "G6_entropy",
+            "G8_betweenness",
+        ],
     )
     def test_output_passes_schema(self, method, tmp_path):
         """Output validates against NullModelSchema."""

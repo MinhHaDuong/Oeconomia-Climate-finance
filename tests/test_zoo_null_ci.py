@@ -61,7 +61,7 @@ def test_load_null_df_returns_none_for_missing_file():
 
 
 def test_compute_null_z_threshold_adds_column():
-    """_compute_null_z_threshold adds z_threshold column using vectorized map."""
+    """_compute_null_z_threshold adds z_threshold_upper and z_threshold_lower columns."""
     import plot_zoo_results
 
     df = pd.DataFrame(
@@ -81,10 +81,18 @@ def test_compute_null_z_threshold_adds_column():
         }
     )
     result = plot_zoo_results._compute_null_z_threshold(df, null_df)
-    assert "z_threshold" in result.columns
-    assert not result["z_threshold"].isna().any()
-    # z_threshold = (null_mean + 1.96*null_std - mu_w) / sigma_w
+    assert "z_threshold_upper" in result.columns
+    assert "z_threshold_lower" in result.columns
+    assert not result["z_threshold_upper"].isna().any()
+    assert not result["z_threshold_lower"].isna().any()
+    # z_threshold_upper = (null_mean + 1.96*null_std - mu_w) / sigma_w
     mu_w = df["value"].mean()  # window "3" only
     sigma_w = df["value"].std()
-    expected = (1.5 + 1.96 * 0.5 - mu_w) / sigma_w
-    assert pytest.approx(result["z_threshold"].iloc[0], rel=1e-6) == expected
+    expected_upper = (1.5 + 1.96 * 0.5 - mu_w) / sigma_w
+    expected_lower = (1.5 - 1.96 * 0.5 - mu_w) / sigma_w
+    assert (
+        pytest.approx(result["z_threshold_upper"].iloc[0], rel=1e-6) == expected_upper
+    )
+    assert (
+        pytest.approx(result["z_threshold_lower"].iloc[0], rel=1e-6) == expected_lower
+    )

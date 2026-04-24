@@ -195,8 +195,15 @@ NULL_DISPATCH := scripts/compute_null_model.py
 NULL_METHODS_SEM := S2_energy
 NULL_METHODS_LEX := L1
 NULL_METHODS_LEX_L2L3 := L2 L3
-NULL_METHODS_CIT := G9_community G2_spectral
-NULL_METHODS := $(NULL_METHODS_SEM) $(NULL_METHODS_LEX) $(NULL_METHODS_LEX_L2L3) $(NULL_METHODS_CIT)
+NULL_METHODS_CIT := G9_community G2_spectral G1_pagerank G5_pref_attachment \
+                    G6_entropy G8_betweenness
+# C2ST null models use the embedding / lexical loaders but run a classifier
+# statistic — they must not receive --n-jobs (main() gates before channel
+# branches, so the flag would be ignored, but exclude for clarity).
+NULL_METHODS_C2ST_SEM := C2ST_embedding
+NULL_METHODS_C2ST_LEX := C2ST_lexical
+NULL_METHODS := $(NULL_METHODS_SEM) $(NULL_METHODS_LEX) $(NULL_METHODS_LEX_L2L3) \
+                $(NULL_METHODS_CIT) $(NULL_METHODS_C2ST_SEM) $(NULL_METHODS_C2ST_LEX)
 NULL_CSV := $(foreach m,$(NULL_METHODS),$(DIV_TABLES)/tab_null_$(m).csv)
 
 # Semantic null models (depend on embeddings + divergence CSV)
@@ -215,9 +222,20 @@ $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv
 	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 # Citation null models (depend on REFINED + REFINED_CIT + divergence CSV)
+# _permutation_citation.py is the extracted G1/G5/G6/G8 helper module.
 $(foreach m,$(NULL_METHODS_CIT),$(eval \
-$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py scripts/_permutation_citation.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
 	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
+
+# C2ST null models — embedding variant (depends on embeddings; no --n-jobs)
+$(foreach m,$(NULL_METHODS_C2ST_SEM),$(eval \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_c2st.py scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+# C2ST null models — lexical variant (depends on REFINED + divergence CSV; no --n-jobs)
+$(foreach m,$(NULL_METHODS_C2ST_LEX),$(eval \
+$(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_c2st.py scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG) ; \
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 .PHONY: null-model
 null-model: $(NULL_CSV)
