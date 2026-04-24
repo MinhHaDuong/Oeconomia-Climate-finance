@@ -330,6 +330,20 @@ def _run_lexical_permutations(method_name, div_df, cfg):
     return pd.DataFrame(rows)
 
 
+def _run_l3_permutations(div_df, cfg):
+    """Year-label permutation null model for L3.  See _permutation_lexical."""
+    from _permutation_lexical import run_l3_permutations
+
+    return run_l3_permutations(div_df, cfg)
+
+
+def _run_l2_permutations(div_df, cfg):
+    """Past/future pool-shuffle null model for L2.  See _permutation_lexical."""
+    from _permutation_lexical import run_l2_permutations
+
+    return run_l2_permutations(div_df, cfg)
+
+
 def _community_node_comm_map(partition):
     """Build sorted community list and node->community-index lookup.
 
@@ -643,7 +657,12 @@ def main():
             method_name, div_df, cfg, n_jobs=args.n_jobs
         )
     elif channel == "lexical":
-        result = _run_lexical_permutations(method_name, div_df, cfg)
+        if method_name == "L3":
+            result = _run_l3_permutations(div_df, cfg)
+        elif method_name == "L2":
+            result = _run_l2_permutations(div_df, cfg)
+        else:
+            result = _run_lexical_permutations(method_name, div_df, cfg)
     elif channel == "citation":
         result = _run_citation_permutations(
             method_name, div_df, cfg, n_jobs=args.n_jobs
