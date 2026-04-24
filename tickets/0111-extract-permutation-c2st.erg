@@ -1,6 +1,6 @@
 %erg v1
 Title: Refactor compute_null_model.py into a pure dispatcher — mirror compute_divergence.py
-Status: doing
+Status: done
 Created: 2026-04-24
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-24T16:30Z claude created — god-module symptom triggered by /verify-gate REROLL on PR #759
 2026-04-24T16:45Z reimagine: not a one-file extraction; the dispatcher/module split that works for compute_divergence.py was never fully applied here
 2026-04-24T20:00Z claude claimed — starting dispatcher/module split
+2026-04-24T21:00Z GREEN — dispatcher 193L; 4 new modules + 2 migrated; 47/49 tests pass (2 C2ST smoke timeouts are pre-existing on main)
 
 --- body ---
 ## Diagnosis
