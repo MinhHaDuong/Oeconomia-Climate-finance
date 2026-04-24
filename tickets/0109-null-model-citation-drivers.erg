@@ -1,11 +1,12 @@
 %erg v1
-Title: Null model permutation drivers for citation methods G1, G3–G8
+Title: Null model permutation drivers for citation methods G1, G5, G6, G8 (sliding-window)
 Status: open
 Created: 2026-04-24
 Author: claude
 
 --- log ---
 2026-04-24T12:00Z claude created
+2026-04-24T12:30Z orchestrator reimagine: G3/G4/G7 are cumulative per-year methods — split to ticket 0110. Scope narrowed to G1/G5/G6/G8 (sliding-window, G2 template applies).
 
 --- body ---
 ## Context
@@ -22,16 +23,11 @@ statistic on each permutation.
 | Method | Observed statistic | Permutation target |
 |--------|-------------------|-------------------|
 | G1 PageRank | `_compare_pagerank_distributions(pr_before, pr_after, n_bins)` — histogram divergence of PageRank vectors | Permute node-to-window assignment in union graph; recompute PageRank on each subgraph |
-| G3 Age shift | Median ref_year difference between before/after windows | Permute paper-to-year labels within the pooled window; recompute median ref_year per side |
-| G4 Cross-tradition | Fraction of new internal citations crossing a 2-community boundary | Permute which papers are "before"/"after"; recompute cross-community citation rate |
 | G5 Pref attachment | Absolute difference in power-law exponent of in-degree distribution | Permute node-to-window in union graph; recompute exponent on each subgraph |
 | G6 Entropy | `abs(_citation_entropy(G_after) − _citation_entropy(G_before))` | Permute node-to-window; recompute entropy on each subgraph |
-| G7 Disruption | Disruption index (CD5 or simplified) difference | Permute paper-to-window; recompute mean disruption per side |
 | G8 Betweenness | `abs(_mean_betweenness(G_after) − _mean_betweenness(G_before))` | Permute node-to-window in union graph; recompute betweenness on each subgraph |
 
-G3, G4, G7 are not pure sliding-window graph methods — they work on per-paper
-metadata (ref_year, community membership, citation counts). Their permutation
-shuffles paper-to-window assignment rather than node-to-graph.
+G3, G4, G7 are cumulative per-year methods — split to ticket 0110.
 
 ## Actions
 
@@ -44,11 +40,8 @@ shuffles paper-to-window assignment rather than node-to-graph.
    _CITATION_PERMUTATION_DRIVERS = {
        "G1_pagerank":       _run_g1_permutations,
        "G2_spectral":       _run_g2_spectral_permutations,
-       "G3_coupling_age":   _run_g3_permutations,
-       "G4_cross_tradition":_run_g4_permutations,
        "G5_pref_attachment":_run_g5_permutations,
        "G6_entropy":        _run_g6_permutations,
-       "G7_disruption":     _run_g7_permutations,
        "G8_betweenness":    _run_g8_permutations,
        "G9_community":      _run_g9_community_permutations,
    }
@@ -57,13 +50,11 @@ shuffles paper-to-window assignment rather than node-to-graph.
 3. Add zoo.mk dependency-only lines for the seven new null CSVs (pattern rule
    already handles the `--null-ci` argument via `$(wildcard ...)`).
 
-4. Run all seven on padme and commit the resulting CSVs.
+4. Run all four on padme and commit the resulting CSVs.
 
 ## Implementation order
 
-Start with graph-node permutation methods (G1, G6, G8) — they are structurally
-identical to G2. Then G5 (power-law fit, same node shuffle). Then G3, G4, G7
-(paper-metadata methods, slightly different shuffle logic).
+Order: G6, G8 (pure abs-diff of a graph scalar — trivial G2 clone). Then G5 (power-law fit). Then G1 (PageRank takes two subgraphs, like G9). G8 betweenness: flag that betweenness inside a permutation loop is slow — use k-approximation or a smaller n_perm.
 
 ## Test
 
@@ -82,12 +73,12 @@ def test_g1_null_smoke(tmp_path):
     assert df["null_std"].gt(0).any()
 ```
 
-Write analogous smoke tests for G3–G8.
+Write analogous smoke tests for G5, G6, G8.
 
 ## Exit criteria
 
-1. All seven methods run to completion on the smoke fixture.
-2. All seven run to completion on the full corpus (padme).
-3. Seven `tab_null_G*.csv` files committed.
-4. `make zoo-figures` shows ribbons for G1, G3–G8.
+1. G1, G5, G6, G8 run to completion on the smoke fixture.
+2. All four run to completion on the full corpus (padme).
+3. Four `tab_null_G*.csv` files committed.
+4. `make zoo-figures` shows ribbons for G1, G5, G6, G8.
 5. Smoke tests pass under `make check-fast`.

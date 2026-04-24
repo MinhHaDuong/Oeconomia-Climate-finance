@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-24T12:00Z claude created
+2026-04-24T12:30Z orchestrator reimagine: (1) Gate on method_name.startswith("C2ST_") before channel branches in main() — existing _make_semantic_statistic and _run_lexical_permutations raise on C2ST. (2) PCA must be done inside the driver per window, not by iter_semantic_windows. (3) C2ST_lexical: permutation_test breaks on sparse arrays — use direct index-shuffle on sparse row slices calling _c2st_auc directly.
 
 --- body ---
 ## Context

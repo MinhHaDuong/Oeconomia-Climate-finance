@@ -1,0 +1,65 @@
+%erg v1
+Title: Null model drivers for cumulative citation methods G3, G4, G7 (null-hypothesis design needed)
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T12:30Z claude created — split from 0109 by orchestrator reimagine. G3/G4/G7 are cumulative per-year methods; the G2 node-permutation template does not apply.
+
+--- body ---
+## Context
+
+G3 (age shift), G4 (cross-tradition), and G7 (disruption) emit one value per
+year (window="cumulative"), not a before/after sliding-window pair. They cannot
+use the G2/G9 union-graph node-permutation pattern.
+
+Their crossyear Z-scores are derived from a univariate time series, and the null
+question is: "what Z-scores arise when there is no trend?" This requires a
+different null model design.
+
+## Design decision required (before implementation)
+
+Choose one of:
+
+**Option A — Year-label permutation** (analogous to the L3 approach in ticket
+0108): shuffle year labels on the time series; standardise each permuted series
+the same way compute_crossyear_zscore.py does; record null_mean(t) / null_std(t)
+across permutations. Clean interpretation: null = "any permutation of the annual
+sequence is equally likely."
+
+**Option B — Block bootstrap**: resample years in contiguous blocks to preserve
+autocorrelation. More principled for time series with trend, harder to implement.
+
+**Recommended**: Option A for consistency with L3 and simplicity. The ticket
+author should confirm before implementation.
+
+## Per-method notes
+
+- **G3** (age shift): median ref_year per year — monotone trend is expected
+  (references get newer over time). Under Option A the null ribbon would be wide,
+  correctly reflecting that a random shuffle has high variance.
+- **G4** (cross-tradition): fraction of cross-community citations per year. Less
+  obviously trended. Option A is reasonable.
+- **G7** (disruption index): mean CD5 per year. Known to decline over time in
+  most fields. Under Option A the ribbon reflects "could this decline be random?"
+
+## Actions
+
+1. Confirm null hypothesis design with author (Option A or B).
+2. Implement `_run_g3_permutations`, `_run_g4_permutations`, `_run_g7_permutations`
+   using the agreed design, mirroring the L3 approach from ticket 0108.
+3. Register in `_CITATION_PERMUTATION_DRIVERS`.
+4. Add zoo.mk dependency lines for `tab_null_G3_coupling_age.csv`,
+   `tab_null_G4_cross_tradition.csv`, `tab_null_G7_disruption.csv`.
+5. Run on padme and commit CSVs.
+
+## Exit criteria
+
+1. Design confirmed (log entry in this ticket).
+2. Smoke tests pass for all three methods.
+3. Three CSVs committed; ribbons appear in zoo figures.
+
+## Blocked-by
+
+Design decision above — needs author confirmation before Execute.
