@@ -141,6 +141,11 @@ DOC_VARS = {
         "pca_emb_pc4_cosine",
         "pca_emb_pc4_dbic",
         "pca_emb_pc4_var_pct",
+        "g9_peak_year_w3",
+        "l1_peak_year_w3",
+        "s2_peak_year_w3",
+        "zone_1_end",
+        "zone_1_start",
     ],
 }
 
@@ -474,6 +479,16 @@ def main(output_dir):
     pca_stats(v)
     citation_stats(v)
     filter_stats(v)
+
+    # Companion Z-series vars — require tab_summary_*.csv (not yet generated)
+    for _k in (
+        "s2_peak_year_w3",
+        "l1_peak_year_w3",
+        "g9_peak_year_w3",
+        "zone_1_start",
+        "zone_1_end",
+    ):
+        v.setdefault(_k, MISSING)
 
     # Write per-document vars files
     all_missing = []

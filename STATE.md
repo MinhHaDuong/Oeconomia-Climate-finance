@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-04-23
+Last updated: 2026-04-24
 
 ## Current goal
 
@@ -54,8 +54,8 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 
 ## Known test failures (pre-existing RED)
 
-- `test_multilayer_detection_prose.py` (5 tests) + `test_multilayer_detection_pca.py` (9 tests): §5.1–5.4 prose stubs in `multilayer-detection.qmd` not yet written. Ticket 0064 was closed after Wave C; a new ticket is needed for §5 rewrite post-rename.
-- `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4` parallel execution; passes alone. Needs stabilisation (ticket 0081 scope).
+- `test_doc_vars_no_extras[technical-report]` and `test_doc_vars_no_extras[multilayer-detection]`: dead entries in `DOC_VARS` (vars declared but not referenced in prose). Pre-existing; not blocking.
+- `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4` parallel execution; passes alone. Needs stabilisation.
 
 ## Blockers
 
@@ -65,13 +65,10 @@ None.
 
 In direct service of the current goal (narrative + results + figures):
 
-- **Write §5** (`multilayer-detection.qmd` §5.1–5.4) — 14 prose tests still failing; new ticket needed (0064 closed after Wave C without writing the results narrative).
 - **0071-0078** bias audit — narrative backing for §4.8 Robustness and §6.4 Limitations. 0070 closed; 0071–0078 open.
 - Waiting for corpus **1.1.2** to finish building — enables a rerun if the enriched corpus meaningfully changes G9's sub-zone structure.
 
 Background work (not on the critical path for the current goal):
 
-- **0092** wire zoo figure recipes — `zoo.mk` exists and included, but has 12 of 35 required recipes (17 schematics + 18 result panels); not yet complete.
 - **0025** connective prose for corpus report
 - Re-land arch rule 9 (corpus access through loaders only) — tickets 0043/0044 already on main
-- **0081** bootstrap CI (pytest on PR/push) — prerequisite for 0079 and for /verify to have mechanical evidence; cross-repo batch with IDH 0015, git-erg 0003, AEDIST 0111. Stabilise flakes first; then branch protection.
