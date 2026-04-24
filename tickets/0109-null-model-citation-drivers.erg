@@ -1,12 +1,16 @@
 %erg v1
 Title: Null model permutation drivers for citation methods G1, G5, G6, G8 (sliding-window)
-Status: open
+Status: doing
 Created: 2026-04-24
 Author: claude
 
 --- log ---
 2026-04-24T12:00Z claude created
 2026-04-24T12:30Z orchestrator reimagine: G3/G4/G7 are cumulative per-year methods — split to ticket 0110. Scope narrowed to G1/G5/G6/G8 (sliding-window, G2 template applies).
+2026-04-24T13:00Z HDMX-coding-agent claimed
+2026-04-24T13:00Z HDMX-coding-agent status doing
+2026-04-24T14:00Z HDMX-coding-agent RED: tests/test_null_model_citation.py — 24 tests, all failing
+2026-04-24T14:30Z HDMX-coding-agent GREEN: _permutation_citation.py + compute_null_model.py refactored; 24 tests pass; make check-fast clean (2 pre-existing failures)
 
 --- body ---
 ## Context
