@@ -1,10 +1,11 @@
 %erg v1
 Title: Zoo deepening D — 1-year gap, drop w=5, rerun on padme
-Status: open
+Status: closed
 Created: 2026-04-22
 Author: user
 
 --- log ---
+2026-04-24T00:00Z agent closed — merged PR #750
 2026-04-22T12:00Z user created
 2026-04-22T12:30Z orchestrator reimagine: On padme — full rerun feasible. Gap change: before=[t-w, t-1] requires changing _get_window_embeddings side='before' mask from year<=year to year<=(year-1). 4 scripts to touch. Add gap: 1 to config. Rerun divergence-tables + null-model + zoo-figures + render PDF. Current w=5 in CSVs came from old run; new run with windows=[2,3,4] will not produce w=5 rows.
 

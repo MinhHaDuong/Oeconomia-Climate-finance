@@ -1,10 +1,11 @@
 %erg v1
 Title: Migrate companion.mk bare `uv run` calls to $(UV_RUN)
-Status: open
+Status: closed
 Created: 2026-04-21
 Author: claude
 
 --- log ---
+2026-04-24T00:00Z agent closed — all exit criteria met (Makefile fix for uv run)
 2026-04-21Z claude created from /verify ESCALATE on PR #733 (ticket 0092)
 
 --- body ---

@@ -1,10 +1,11 @@
 %erg v1
 Title: Zoo deepening B — growing-corpus bias: theory, equal_n debiasing, dual figures
-Status: open
+Status: closed
 Created: 2026-04-22
 Author: user
 
 --- log ---
+2026-04-24T00:00Z agent closed — merged PRs #747 (theory) + #753 (figures)
 2026-04-22T12:00Z user created
 2026-04-22T12:30Z orchestrator reimagine: --no-equal-n is a 1-line config override in compute_divergence.py — add CLI flag, set cfg["divergence"]["equal_n"]=False before dispatch, zero changes to private modules. Theory prose (Action 1 in overview.md) is fully independent of figure work — can be written and merged first. On padme: can generate biased tab_div tables and bias-comparison figures. Split allowed: land theory prose PR first, figure PR second.
 

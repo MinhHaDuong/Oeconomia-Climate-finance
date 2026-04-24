@@ -1,10 +1,11 @@
 %erg v1
 Title: Zoo deepening E — minimum corpus size: theory and empirical null-model coverage
-Status: open
+Status: closed
 Created: 2026-04-22
 Author: user
 
 --- log ---
+2026-04-24T00:00Z agent closed — merged PR #748
 2026-04-22T12:00Z user created
 2026-04-22T12:30Z orchestrator reimagine: Per-method min_papers overrides NOT auto-supported — 3 code touch points needed: (1) get_min_papers() in _divergence_io.py needs method-name param, (2) _get_years_and_params() in _divergence_semantic.py passes method ID, (3) C2ST dispatcher passes method ID. ~150 lines total. overview.md has no min_papers content — all prose is net-new. Config overrides must be explicitly read by code. On padme so S4_frechet PCA covariance issue is real and testable.
 

@@ -1,10 +1,11 @@
 %erg v1
 Title: Add framing preambles to zoo-only.qmd (overview, Z-score, null model)
-Status: open
+Status: closed
 Created: 2026-04-21
 Author: claude
 
 --- log ---
+2026-04-24T00:00Z agent closed — preambles in breakpoint-detect-method-zoo.qmd (overview, zscore, null-model)
 2026-04-21T00:00Z claude created
 
 --- body ---
