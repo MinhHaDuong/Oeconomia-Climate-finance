@@ -150,12 +150,17 @@ def _plot(
             zorder=1,
         )
 
-    # Period boundary verticals.
+    # Period boundary verticals — shorten by 1 ex so year labels clear the title.
+    # 1 ex at fontsize 6 on a (6, 4) figure with default subplot params ≈ 0.012 axes units.
+    _one_ex = (6 * 0.45) / (fig.get_figheight() * 72 * ax.get_position().height)
+    _vline_ymax = 1.0 - _one_ex
     for year in _PERIOD_BREAKS:
-        ax.axvline(year, color=LIGHT, linewidth=0.6, linestyle="--", zorder=1)
+        ax.axvline(
+            year, color=LIGHT, linewidth=0.6, linestyle="--", zorder=1, ymax=_vline_ymax
+        )
         ax.text(
             year,
-            1.01,
+            _vline_ymax,
             str(year),
             transform=ax.get_xaxis_transform(),
             ha="center",
