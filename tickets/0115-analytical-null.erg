@@ -1,5 +1,5 @@
 %erg v1
-Title: Analytical null as validation control for Monte Carlo permutation tests
+Title: Analytical null as visual overlay on zoo figures
 Status: open
 Created: 2026-04-25
 Author: claude
@@ -7,129 +7,124 @@ Author: claude
 --- log ---
 2026-04-25T17:45Z claude created
 2026-04-25T17:55Z revised: analytics are a validation control, not a replacement
+2026-04-25T18:30Z revised: render as overlay on zoo figures, not standalone script;
+  both MC and analytical ribbons drawn as semi-transparent fills; coincidence
+  confirms agreement visually
 
 --- body ---
 ## Context
 
-All sliding-window null models (S1–S4, L1–L2, C2ST, G1–G9) use Monte
-Carlo permutation (n_perm=500 full Fisher-Yates shuffles of the
-before+after pool).  Monte Carlo remains the production path for all
-methods.
+All sliding-window null models use Monte Carlo permutation (n_perm=500 full
+Fisher-Yates shuffles of the before+after pool).  For methods where E[T | H₀]
+and Var[T | H₀] have closed-form expressions (S1, S2, L1, C2ST), the
+analytical values provide a ground truth to confirm that MC estimates are
+unbiased and well-converged.
 
-The analytical null is implemented as a **validation control**: for
-methods where E[T | H₀] and Var[T | H₀] have closed-form expressions
-(S1, S2, L1, C2ST), the analytical values provide a ground truth to check
-that the Monte Carlo estimates are unbiased and well-converged.
+Rather than a standalone validation script, the analytical null is rendered
+directly on the zoo figure as a second semi-transparent ribbon overlaid on
+the MC ribbon.  Where MC and analytical agree, the overlapping fills merge
+visually — this makes convergence immediately legible without any separate
+report.
 
-Use cases:
-- Catch bugs in permutation drivers (a driver that returns wrong null_mean
-  will diverge from the analytical value).
-- Quantify the Monte Carlo error (|analytical − MC| / SE) as a diagnostic.
-- Optionally run in CI as a regression test: if MC drifts >2 SE from
-  analytical, the test fails.
-
-G methods (G1, G5, G6, G8) lack simple closed forms; they remain
-Monte Carlo only.  The analytical control is not applicable to them.
+G methods (G1, G5, G6, G8) lack simple closed forms; they remain MC only.
 
 ## Permutation structure
 
-Each (year, window) test pools n_before + n_after documents and shuffles
-ALL of them (full Fisher-Yates permutation), reassigning the first n_before
-to "before" and the rest to "after".  Only documents within the window
-participate — the full corpus is never touched outside the window.
+Each (year, window) test pools n_before + n_after documents and shuffles ALL
+of them (full Fisher-Yates permutation), reassigning the first n_before to
+"before" and the rest to "after".
 
 ## Analytical nulls by method
 
-### S2 — energy distance
-E(D_energy | H₀) = 2 * E[||X−Y||] − E[||X−X'||] − E[||Y−Y'||]
-where X, Y drawn iid from the pooled empirical distribution.
-These expectations are means of entries in the pairwise distance matrix,
-computable in O(N²) from the pooled embeddings.
-Var can be derived from 4th-moment U-statistics (see Székely & Rizzo 2013).
-
 ### S1 — MMD²
-E(MMD² | H₀) = 0 (biased estimator) or
 E(MMD²_unbiased | H₀) = 0 by construction.
-Var(MMD²_unbiased | H₀) from Gretton et al. (2012) Lemma 6:
-  Var ≈ (4/n²) × (Var of h(X,X') under H₀)
-where h is the kernel function.  Exact in O(N²).
+Var(MMD²_unbiased | H₀) ≈ (4/n²) × Var of h(X,X') under H₀ (Gretton 2012 Lemma 6).
+null_mean = 0, null_std from pairwise kernel matrix O(N²).
+
+### S2 — energy distance
+null_mean from mean off-diagonal entries of pairwise distance matrix.
+null_std from 4th-moment U-statistics (Székely & Rizzo 2013).  O(N²).
 
 ### L1 — JS divergence
-Under H₀ (shared vocabulary distribution), JS divergence between two
-multinomial samples of sizes n_before, n_after from shared distribution p
-satisfies:
-  E[JS] ≈ (V−1)/(4) × (1/n_before + 1/n_after)   (leading term)
-  Var[JS] = O(1/n²)
-where V = vocabulary size.  This is the first-order analytic correction
-(Archer et al. 2014).  Requires only the pooled TF-IDF mean and vocabulary
-size — O(V) to compute.
-
-### G methods (G1, G5, G6, G8) — citation scalar metrics
-These compute |Δ metric(before) − Δ metric(after)| where the metric is
-a summary of a citation graph.  Under node-label permutation, the analytic
-null requires the variance of the metric under uniform random node splits.
-This is harder; leave for a follow-up unless easy closed forms exist.
+E[JS | H₀] ≈ (V−1)/4 × (1/n_before + 1/n_after)   (Archer et al. 2014)
+null_std = O(1/n).  Only requires pooled vocabulary and counts.
 
 ### C2ST — AUC
-Under H₀ (no separability), AUC → 0.5 with variance O(1/(n_before*n_after))
-from the Mann-Whitney U-statistic identity.  Exact analytic null available
-via Hanley & McNeil (1982).
+E[AUC | H₀] = 0.5 by definition of Mann-Whitney U.
+Var[AUC | H₀] = (n_before + n_after + 1) / (12 × n_before × n_after)
+  (Hanley & McNeil 1982).  O(1).
+
+### G methods (G1, G5, G6, G8)
+No simple closed form.  Leave analytical null undefined; overlay not shown.
 
 ## Relevant files
 
-- `scripts/compute_null_model.py` — dispatcher; add `--analytical` flag
-- `scripts/_permutation_accel.py` — GPU/CPU permutation backends; add
-  analytical implementations alongside Monte Carlo
-- `scripts/_permutation_lexical.py` — L1/L2 backends
-- `scripts/_permutation_citation.py` — G method backends
-- `config/analysis.yaml` — add `analytical: true` toggle per method
+- `scripts/_permutation_accel.py` — add `analytical_null(method, X_before,
+  X_after)` for S1 and S2
+- `scripts/_permutation_lexical.py` — add analytical null for L1
+- `scripts/_divergence_c2st.py` or helper — add analytical null for C2ST
+- `scripts/compute_analytical_null.py` — NEW: driver; accepts --method,
+  --crossyear-csv, --output; writes same CSV schema as tab_null_*.csv
+  (columns: year, window, null_mean, null_std, observed)
+- `scripts/plot_zoo_results.py` — add `--analytical-null <path>` flag;
+  draw second semi-transparent fill_between for analytical CI band
+- `divergence.mk` — add `analytical-null-*` targets; pass
+  `--analytical-null` to plot_zoo_results.py when available
 
 ## Actions
 
-1. Add `analytical_null(method, X_before, X_after) → (null_mean, null_std)`
-   in `_permutation_accel.py` for S1 and S2.  Does NOT replace the MC
-   path; called separately.
+1. Implement `analytical_null(method, before, after) → (null_mean, null_std)`:
+   - S1, S2: in `_permutation_accel.py`
+   - L1: in `_permutation_lexical.py`
+   - C2ST: closed-form O(1) in `_divergence_c2st.py`
 
-2. Add analytical null for L1 (JS divergence) in `_permutation_lexical.py`.
+2. Write `scripts/compute_analytical_null.py`:
+   - Accepts `--method`, `--crossyear-csv`, `--output`
+   - Reads the crossyear CSV for (year, window) pairs + n_before/n_after
+   - Calls the appropriate `analytical_null` function per row
+   - Outputs CSV with same schema: year, window, null_mean, null_std, observed
 
-3. Add analytical null for C2ST (AUC / Mann-Whitney) in
-   `_divergence_c2st.py` or a helper.
+3. In `plot_zoo_results.py`:
+   - Add `--analytical-null <path>` (optional)
+   - Load analytical null CSV if provided
+   - Draw `fill_between(year, lower_analytical, upper_analytical)` with
+     `alpha=0.25, color="orange"` (or similar warm colour)
+   - MC ribbon keeps its existing colour at `alpha=0.25`
+   - Where they overlap the combined alpha makes the coincidence visually
+     distinct from regions with only one band
 
-4. Add `scripts/validate_null_model.py` — for each (year, window) pair
-   in a method's null CSV, compute the analytical null_mean and null_std
-   and report |MC − analytical| / SE(MC).  Output a summary table and
-   WARN if any row exceeds 3 SE.
-
-5. Add a `make validate-null` target in `divergence.mk` that runs the
-   validator for S1, S2, L1, C2ST.
-
-6. Optionally wire `validate-null` into `make check` as a soft check
-   (non-blocking; only warns).
+4. In `divergence.mk` (or `zoo.mk`):
+   - Add pattern rule for `tab_analytical_null_%.csv` (methods: S1_MMD,
+     S2_energy, L1, C2ST_embedding, C2ST_lexical)
+   - Extend the zoo figure recipe: pass `--analytical-null` when the
+     analytical null CSV is present (like the existing `--null-ci` wildcard)
 
 ## Test
 
-Red: in `tests/test_analytical_null.py`, assert that for a synthetic
-fixture (n_before=n_after=200, Gaussian embeddings), the analytical
-null_mean and null_std for S2 agree with Monte Carlo (n_perm=5000)
-within 2 SE.  Same for L1 (multinomial fixture) and C2ST (iid labels).
+Red: in `tests/test_analytical_null.py`:
+- For C2ST (n_before=n_after=200, iid labels): assert analytical null_mean
+  ≈ 0.5 ± 0.01 and analytical null_std matches Hanley & McNeil formula.
+- For L1 (multinomial fixture, n=200, V=100): assert analytical null_mean
+  ≈ (V-1)/4*(1/n₁+1/n₂) within 1%.
+- For S1 (Gaussian embeddings, n=200): assert analytical null_mean ≈ 0.
 
 ## Verification
 
 - [ ] Analytical values agree with MC (n_perm=5000) within 2 SE on fixture
-- [ ] `make validate-null` runs and produces a summary with no >3 SE rows
-  on the real corpus null CSVs
-- [ ] Monte Carlo null CSVs are unchanged
+- [ ] Zoo figures for S1, S2, L1, C2ST show two overlapping ribbons;
+  ribbons overlap in the expected years
+- [ ] MC null CSVs unchanged; analytical CSVs are separate files
 - [ ] `make check-fast` passes
 
 ## Invariants
 
-- Production null CSVs (tab_null_*.csv) are generated by Monte Carlo
-  only; analytical values are never written to those files.
-- Output CSV schema unchanged.
-- G methods untouched.
+- `tab_null_*.csv` files are generated by Monte Carlo only; analytical
+  values live in separate `tab_analytical_null_*.csv` files.
+- G methods have no analytical null CSV; their zoo figures show only MC ribbon.
+- Output CSV schema: year, window, null_mean, null_std, observed (same as MC).
 
 ## Exit criteria
 
 - Analytical null implemented for S1, S2, L1, C2ST
-- `make validate-null` passes on real corpus
+- Zoo figures for those methods show overlapping MC + analytical ribbons
 - Tests pass; PR merged

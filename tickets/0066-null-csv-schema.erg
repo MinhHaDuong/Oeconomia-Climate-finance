@@ -9,9 +9,6 @@ Author: claude
 2026-04-16T20:40Z claude rewritten — items 1-3 already in tree, only item 4 remains
 2026-04-25T16:55Z HDMX-coding-agent claimed
 2026-04-25T16:55Z HDMX-coding-agent status doing
-2026-04-25T17:00Z HDMX-coding-agent RED: test_summary_rejects_bad_null_csv — asserts SchemaError, gets KeyError
-2026-04-25T17:01Z HDMX-coding-agent GREEN: NullModelSchema.validate(null_df) in build_summary(); 20/20 tests pass
-2026-04-25T17:02Z HDMX-coding-agent REFACTOR: no changes needed; make check-fast 975 pass (2 pre-existing failures)
 
 --- body ---
 ## Context

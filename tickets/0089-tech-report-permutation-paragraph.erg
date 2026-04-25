@@ -1,6 +1,6 @@
 %erg v1
 Title: Add permutation-test methods paragraph to technical report
-Status: open
+Status: closed
 Created: 2026-04-21
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-21T14:00Z claude created
 2026-04-21T14:00Z claude note rehomes the deferral from 0086; former tracker 0034 closed without covering this
 2026-04-21Z orchestrator reimagine: home = new `content/_includes/techrep/null-model.md`, wired after `zscore.md`. Fix test glob: use `content/_includes/**/*.md` not `content/_includes/*.md`.
+2026-04-25Z orchestrator closed — work already completed. null-model.md (68 lines) exists, wired in technical-report.qmd, 12 grep hits for permutation/null model. All 3 exit criteria met.
 
 --- body ---
 ## Context
