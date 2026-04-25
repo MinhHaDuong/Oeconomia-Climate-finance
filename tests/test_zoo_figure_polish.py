@@ -56,38 +56,27 @@ def test_method_titles_dict_has_all_18_methods():
     )
 
 
-def test_zoo_plots_raw_values_not_zscores(tmp_path, monkeypatch):
-    """_plot must plot the 'value' column, not 'z_score'."""
-    import matplotlib
-
-    matplotlib.use("Agg")
+def test_z0_axhline_present(tmp_path, monkeypatch):
+    """_plot adds a Z=0 reference line."""
     import matplotlib.pyplot as plt
     import plot_zoo_results
 
-    plotted_y = []
-    original_plot = plt.Axes.plot
+    hlines = []
+    original = plt.Axes.axhline
 
-    def capture(self, *args, **kw):
-        if len(args) >= 2:
-            plotted_y.extend(list(args[1]))
-        return original_plot(self, *args, **kw)
+    def capture(self, y=0, **kw):
+        hlines.append(y)
+        return original(self, y, **kw)
 
-    monkeypatch.setattr(plt.Axes, "plot", capture)
-
+    monkeypatch.setattr(plt.Axes, "axhline", capture)
     df = pd.DataFrame(
         {
             "year": [2005, 2006],
             "window": ["3", "3"],
-            "z_score": [10.0, 20.0],  # high sentinel — must NOT appear
-            "value": [0.11, 0.22],  # low sentinel — must appear
+            "z_score": [0.5, 1.0],
+            "value": [0.1, 0.2],
         }
     )
-    output_stem = str(tmp_path / "test_raw")
+    output_stem = str(tmp_path / "test_fig")
     plot_zoo_results._plot(df, "S2_energy", output_stem)
-
-    assert any(abs(v - 0.11) < 1e-5 for v in plotted_y), (
-        f"raw value 0.11 not found in plotted Y values: {plotted_y}"
-    )
-    assert not any(abs(v - 10.0) < 1e-5 for v in plotted_y), (
-        "z_score sentinel 10.0 was plotted — still using z_score column"
-    )
+    assert 0 in hlines or 0.0 in hlines, "Z=0 reference line not added"
