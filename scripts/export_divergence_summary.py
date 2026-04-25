@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from pipeline_loaders import load_analysis_config
-from schemas import DivergenceSummarySchema
+from schemas import DivergenceSummarySchema, NullModelSchema
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
 
@@ -51,6 +51,8 @@ def build_summary(div_df, null_df, boot_df, method, subsample_df=None):
         Summary with columns matching DivergenceSummarySchema.
 
     """
+    NullModelSchema.validate(null_df)
+
     # Aggregate divergence: take mean value per (year, window) if duplicates
     div_agg = (
         div_df.groupby(["year", "window"], as_index=False)

@@ -564,3 +564,23 @@ class TestSummaryTable:
             f"Quantiles out of order: q025={row['boot_q025']}, "
             f"median={row['boot_median']}, q975={row['boot_q975']}"
         )
+
+    def test_summary_rejects_bad_null_csv(self):
+        """Missing column in null CSV must raise SchemaError, not KeyError."""
+        import pandera as pa
+        from export_divergence_summary import build_summary
+
+        div_df = pd.DataFrame(
+            {
+                "year": [2005],
+                "channel": ["semantic"],
+                "window": ["3"],
+                "hyperparams": [""],
+                "value": [0.55],
+            }
+        )
+        bad_null_df = pd.DataFrame({"year": [2005], "window": ["3"]})
+        boot_df = _make_synthetic_boot_df(k=10)
+
+        with pytest.raises(pa.errors.SchemaError):
+            build_summary(div_df, bad_null_df, boot_df, method="S2_energy")
