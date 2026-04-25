@@ -112,8 +112,8 @@ def get_min_papers(method=None, *, cfg=None, n_works=None):
     """Return appropriate min_papers for a given method and corpus size.
 
     Lookup order:
-    1. Per-method override from config (S4_frechet=300, c2st/C2ST_*=50).
-    2. Smoke mode: if n_works < 200, use min_papers_smoke (default 5).
+    1. Smoke mode: if n_works < 200, use min_papers_smoke (default 5) — overrides all.
+    2. Per-method override from config (S4_frechet=300, c2st/C2ST_*=50).
     3. Global min_papers (default 30).
 
     When cfg is None, loads config/analysis.yaml automatically.
