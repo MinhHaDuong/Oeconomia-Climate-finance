@@ -56,27 +56,29 @@ def test_method_titles_dict_has_all_18_methods():
     )
 
 
-def test_z0_axhline_present(tmp_path, monkeypatch):
-    """_plot adds a Z=0 reference line."""
+def test_zoo_plots_raw_values_not_zscores(tmp_path, monkeypatch):
+    """_plot draws the 'value' column, not 'z_score'."""
     import matplotlib.pyplot as plt
     import plot_zoo_results
 
-    hlines = []
-    original = plt.Axes.axhline
+    plotted_y = []
+    original = plt.Axes.plot
 
-    def capture(self, y=0, **kw):
-        hlines.append(y)
-        return original(self, y, **kw)
+    def capture(self, x, y, **kw):
+        plotted_y.extend(list(y))
+        return original(self, x, y, **kw)
 
-    monkeypatch.setattr(plt.Axes, "axhline", capture)
+    monkeypatch.setattr(plt.Axes, "plot", capture)
+    # value=0.11 is the sentinel; z_score=10.0 should never appear
     df = pd.DataFrame(
         {
             "year": [2005, 2006],
             "window": ["3", "3"],
-            "z_score": [0.5, 1.0],
-            "value": [0.1, 0.2],
+            "z_score": [10.0, 10.0],
+            "value": [0.11, 0.11],
         }
     )
     output_stem = str(tmp_path / "test_fig")
     plot_zoo_results._plot(df, "S2_energy", output_stem)
-    assert 0 in hlines or 0.0 in hlines, "Z=0 reference line not added"
+    assert 0.11 in plotted_y, f"Expected value=0.11 in plotted data, got: {plotted_y}"
+    assert 10.0 not in plotted_y, "z_score sentinel 10.0 must not appear in plot"
