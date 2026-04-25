@@ -83,6 +83,8 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
 
 
 def main() -> None:
+    import re
+
     io_args, extra = parse_io_args()
 
     parser = argparse.ArgumentParser(add_help=True)
@@ -91,10 +93,21 @@ def main() -> None:
         required=True,
         help="Method name, e.g. S2_energy",
     )
+    parser.add_argument(
+        "--metric",
+        default=None,
+        help=(
+            "Filter to rows where hyperparams ends with metric=<value>. "
+            "Used for L2 (resonance) to align observed statistic with null model."
+        ),
+    )
     args = parser.parse_args(extra)
 
     method = args.method
-    input_path = f"content/tables/tab_div_{method}.csv"
+    # Use --input if provided (first path), else fall back to default location.
+    input_path = (
+        io_args.input[0] if io_args.input else f"content/tables/tab_div_{method}.csv"
+    )
 
     validate_io(output=io_args.output)
 
@@ -115,6 +128,19 @@ def main() -> None:
     raw["value"] = pd.to_numeric(raw["value"], errors="coerce")
     raw = raw.dropna(subset=["year"])
     raw["year"] = raw["year"].astype(int)
+
+    # Apply metric filter before aggregation (e.g. L2: resonance-only).
+    if args.metric:
+        if "hyperparams" not in raw.columns:
+            log.error("--metric requires a 'hyperparams' column in %s", input_path)
+            sys.exit(1)
+        pattern = r"(?:^|,)metric=" + re.escape(args.metric) + r"(?:,|$)"
+        mask = raw["hyperparams"].str.contains(pattern, regex=True, na=False)
+        raw = raw[mask]
+        if raw.empty:
+            log.error("No rows match --metric %s in %s", args.metric, input_path)
+            sys.exit(1)
+        log.info("Filtered to metric=%s: %d rows remain", args.metric, len(raw))
 
     log.info("Loaded %d rows, %d unique windows", len(raw), raw["window"].nunique())
 
