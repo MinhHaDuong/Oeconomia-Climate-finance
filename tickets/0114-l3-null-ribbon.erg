@@ -8,6 +8,7 @@ Author: claude
 2026-04-25T17:45Z claude created
 2026-04-25T18:10Z revised: (1) null model changed to full corpus shuffle;
   (2) plot to use raw burst counts, not Z-scores; (3) ribbon for window="0"
+2026-04-25T18:45Z imagine: 6 existing TestL3Permutations tests need rewriting (not just 1 new Red test); must wait for 0113 (both touch plot_zoo_results.py); raw ribbon uses null_mean+/-1.96*null_std directly
 
 --- body ---
 ## Context

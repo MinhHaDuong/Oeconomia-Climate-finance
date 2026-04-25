@@ -10,6 +10,7 @@ Author: claude
 2026-04-25T18:30Z revised: render as overlay on zoo figures, not standalone script;
   both MC and analytical ribbons drawn as semi-transparent fills; coincidence
   confirms agreement visually
+2026-04-25T18:45Z imagine: implement order C2ST→L1→S1→S2 (increasing complexity); S1/S2 reuse already-computed pairwise matrix from MC path; blocks on 0113, independent of 0114; first Red test is pure C2ST arithmetic
 
 --- body ---
 ## Context

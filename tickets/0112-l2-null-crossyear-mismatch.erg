@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-25T17:45Z claude created
+2026-04-25T18:45Z imagine: add --metric CLI flag to compute_crossyear_zscore.py (generic); Makefile passes --metric resonance for L2 only. Z-units verification downgraded; load-bearing test is value==observed within 1e-4. Independent of 0113.
 
 --- body ---
 ## Context
