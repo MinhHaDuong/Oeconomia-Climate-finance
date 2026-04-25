@@ -53,7 +53,6 @@ Being re-generated on padme with GROBID reference extraction and DOI matching.
 
 ## Known test failures (pre-existing RED)
 
-- `test_doc_vars_no_extras[technical-report|multilayer-detection]`: unused DOC_VARS entries. Pre-existing.
 - `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4`. Pre-existing.
 
 ## Blockers
@@ -96,7 +95,6 @@ None.
 
 - Land 0113 first (raw values — unblocks all downstream ribbon work)
 - Then 0112 (L2 scale fix), 0114 (L3 document shuffle), 0115 (analytical overlay)
-- Close tickets 0107 and 0109 (work merged; beat closed 0107 this session)
 
 Background (not on critical path):
 

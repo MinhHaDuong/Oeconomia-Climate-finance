@@ -1,6 +1,6 @@
 %erg v1
 Title: Refactor compute_null_model.py into a pure dispatcher — mirror compute_divergence.py
-Status: done
+Status: closed
 Created: 2026-04-24
 Author: claude
 
