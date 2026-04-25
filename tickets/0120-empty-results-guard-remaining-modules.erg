@@ -28,9 +28,10 @@ corpus or a configuration change.
 
 ## Relevant files
 
-- `scripts/_divergence_c2st.py` — grep for `return pd.DataFrame(results)`
-- `scripts/compute_temporal_communities.py` — grep for `return pd.DataFrame`
-- `scripts/_citation_methods.py` — grep for `return pd.DataFrame(results)`
+- `scripts/_divergence_c2st.py:189,242` — `compute_c2st_embedding`, `compute_c2st_lexical`
+- `scripts/_divergence_community.py:50` — `compute_g9_community`
+- `scripts/_citation_methods.py:225,254` — citation compute functions
+- `scripts/_divergence_lexical.py:183,281,354` — `compute_l1_js`, `compute_l2_novelty`, `compute_l3_bursts`
 - `scripts/_divergence_io.py:159` — `empty_divergence_df()` returns typed empty DF
 
 ## Actions
