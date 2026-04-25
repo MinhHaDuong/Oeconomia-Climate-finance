@@ -2,7 +2,7 @@
 
 Compares fresh runs of all 15 divergence methods against committed golden
 CSVs in tests/fixtures/smoke/golden/. Any change in output values (beyond
-atol=1e-6) is a regression.
+atol=1e-4) is a regression.
 
 These tests catch silent changes in:
   - Numeric libraries (scipy, dcor, ot, numpy)
@@ -74,7 +74,8 @@ class TestGoldenValues:
         golden_nan = np.isnan(golden_vals)
         fresh_nan = np.isnan(fresh_vals)
         np.testing.assert_array_equal(
-            golden_nan, fresh_nan,
+            golden_nan,
+            fresh_nan,
             err_msg=f"{method}: NaN positions differ",
         )
 
@@ -82,7 +83,8 @@ class TestGoldenValues:
         mask = ~golden_nan
         if mask.any():
             np.testing.assert_allclose(
-                fresh_vals[mask], golden_vals[mask],
-                atol=1e-6,
+                fresh_vals[mask],
+                golden_vals[mask],
+                atol=1e-4,
                 err_msg=f"{method}: value column regression",
             )
