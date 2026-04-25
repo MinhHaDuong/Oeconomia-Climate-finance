@@ -1,17 +1,17 @@
 # State
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25
 
 ## Current goal
 
-**Null model ribbons on all 18 zoo figures** — every animal shows a time-varying permutation null CI band (w=3) instead of the flat ±2 box.
+**Null ribbon quality** — all 18 zoo figures have ribbons (drivers done); fix scaling, axis, and L3 methodology.
 
 ### Roadmap
-1. **NOW — Null model ribbons** (this goal): implement missing permutation drivers; run all null CSVs on padme.
+1. **NOW — Ribbon quality** (tickets 0112–0115): fix Z-score rescaling, L2 mismatch, L3 document shuffle, analytical overlay.
 2. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
 3. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
-## Status: TWO PAPERS SUBMITTED + WAVE C MERGED (COMPANION PAPER ASSEMBLED)
+## Status: TWO PAPERS SUBMITTED + ALL NULL DRIVERS WIRED
 
 ### Oeconomia (Varia) — submitted 2026-03-18
 Under double-blind review. ~8,860 words, 61 bib entries, 2 figures, 2 tables.
@@ -21,7 +21,6 @@ Under double-blind review. ~8,860 words, 61 bib entries, 2 figures, 2 tables.
 - Branch: `submission/oeconomia-varia`
 - Decoupled from live corpus: frozen archive data in `config/v1_*`, pinned vars in `manuscript-vars.yml`
 - Errata 1 ready in `release/2026-03-23 Oeconomia errata/` (Figure 2 label fix)
-- Errata addressee corrected: Lenfant (Editor-in-Chief), not Sergi
 
 ### RDJ4HSS (data paper) — submitted 2026-03-26
 Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 tables, 10 bib entries.
@@ -30,37 +29,30 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - Branch: `submission/rdj-data-paper`
 
 ### Technical reports — modularized 2026-04-21 (PRs #718 / #725 / #727)
-- `corpus-report.qmd`: corpus construction, data quality, corpus contents, software environment
-- `technical-report.qmd`: pure composer. Four includes: `_includes/techrep/overview.md`, `_includes/techrep/zscore.md`, `_includes/techrep/summary-of-findings.md`, `_includes/techrep-zoo.md`
-- `_includes/techrep-zoo.md`: composer for the 18-method zoo. One file per method under `_includes/zoo/` (S1–S4, S5=C2ST_embedding, L1–L3, L4=C2ST_lexical, G1–G9). Cherry-pickable by other documents.
-- `breakpoint-detect-method-zoo.qmd`: thin wrapper that renders just the zoo (companion to the TR, or standalone reference)
-- `multilayer-detection.qmd`: method paper for QSS (renamed from companion-paper, #737); lean 6-method panel
-- NCC epic (0012): closed as won't-do — "Paris didn't matter" oversold the data
+- `corpus-report.qmd`, `technical-report.qmd`, `multilayer-detection.qmd` (QSS target)
+- Zoo includes: `_includes/zoo/` one file per method, cherry-pickable
 
 ### Zoo deepening — merged 2026-04-22 (PRs #744–#754)
-- #744 (0099 part 1): L1_js theory — smoothing, vocabulary, low-n warning (LOW_N_LEXICAL_THRESHOLD=50)
-- #745 (0097): null model CI bands in zoo result figures
-- #746 (0099 part 2): L2 null expectation + C2ST_lexical D/n guard
-- #747 (0098 partial): growing-corpus bias theory + --no-equal-n flag
-- #748 (0101): minimum corpus size theory + per-method config overrides
-- #749 (0103): figure polish — config-driven method titles, Z=0 reference line
-- #750 (0100): gap=1 window semantics across all four channels
-- #751/#752: hotfixes — L2 w=5 test exemption, crossyear Z-score all-NaN crash
-- #753 (0098 figures): bias comparison figures — plot_zoo_bias_comparison.py + Make recipes
-- #754 (0083): companion paper sensitivity annex — compute_sensitivity_grid.py + plot_companion_sensitivity.py
+- Null model CI bands, figure polish, bias comparison, sensitivity annex, window semantics
+
+### Null model drivers — all wired 2026-04-25 (PRs #757–#760)
+- #757 (0096): multilayer-detection techrep
+- #758 (0109): G1/G5/G6/G8 citation null drivers
+- #759 (0107+0109): C2ST null model drivers + smoke tests
+- #760 (0111): dispatcher split — compute_null_model.py → 193L; 6 new driver modules
 
 ## Corpus (v1.1.1)
 
-- 6 sources: OpenAlex, ISTEX, bibCNRS (news/discourse), SciSpace, grey literature, teaching canon
+- 6 sources: OpenAlex, ISTEX, bibCNRS, SciSpace, grey literature, teaching canon
 - 42,922 raw → 31,713 refined works, 38,479 embeddings, 968,871 citations
 
 ## Corpus (upcoming 1.1.2)
-- Being re-generated on padme with: explode Unstructured reference in citation targets (with GROBID), search citation targets DOI, matching parsed refs to corpus works, cleanup string encodings.
+Being re-generated on padme with GROBID reference extraction and DOI matching.
 
 ## Known test failures (pre-existing RED)
 
-- `test_doc_vars_no_extras[technical-report]` and `test_doc_vars_no_extras[multilayer-detection]`: dead entries in `DOC_VARS` (vars declared but not referenced in prose). Pre-existing; not blocking.
-- `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4` parallel execution; passes alone. Needs stabilisation.
+- `test_doc_vars_no_extras[technical-report|multilayer-detection]`: unused DOC_VARS entries. Pre-existing.
+- `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4`. Pre-existing.
 
 ## Blockers
 
@@ -70,33 +62,40 @@ None.
 
 | Method | Status |
 |--------|--------|
+| S1_MMD | ✅ ribbon live |
 | S2_energy | ✅ ribbon live |
+| S3_sliced_wasserstein | ✅ CSV computed; ribbon live |
+| S4_frechet | ✅ CSV computed; ribbon live |
 | L1 | ✅ ribbon live |
+| L2 | ✅ CSV computed; ribbon live (scale bug → ticket 0112) |
+| L3 | ✅ CSV computed; ribbon missing (window filter bug → ticket 0114) |
+| G1_pagerank | ✅ CSV computed; ribbon live |
 | G2_spectral | ✅ ribbon live |
+| G3_coupling_age | ❌ no null model (G3/G4/G7 not in null pipeline) |
+| G4_cross_tradition | ❌ no null model |
+| G5_pref_attachment | ✅ CSV computed; ribbon live |
+| G6_entropy | ✅ CSV computed; ribbon live |
+| G7_disruption | ❌ no null model |
+| G8_betweenness | ✅ CSV computed; ribbon live |
 | G9_community | ✅ ribbon live |
-| S1_MMD | ✅ done 2026-04-24 |
-| S3_sliced_wasserstein | 🔄 computing (padme GPU) |
-| S4_frechet | 🔄 computing (padme GPU) |
-| C2ST_embedding | ❌ needs driver (ticket 0107) |
-| C2ST_lexical | ❌ needs driver (ticket 0107) |
-| L2 | ❌ needs driver (ticket 0108) |
-| L3 | ❌ needs driver (ticket 0108) |
-| G1_pagerank | ❌ needs driver (ticket 0109) |
-| G3_coupling_age | ❌ needs driver (ticket 0109) |
-| G4_cross_tradition | ❌ needs driver (ticket 0109) |
-| G5_pref_attachment | ❌ needs driver (ticket 0109) |
-| G6_entropy | ❌ needs driver (ticket 0109) |
-| G7_disruption | ❌ needs driver (ticket 0109) |
-| G8_betweenness | ❌ needs driver (ticket 0109) |
+| C2ST_embedding | ✅ CSV computed; ribbon live (scale offset → ticket 0113) |
+| C2ST_lexical | ✅ CSV computed; ribbon live (scale offset → ticket 0113) |
 
-When S3/S4 finish: `make zoo-figures` picks up the new CSVs automatically via `$(wildcard)`.
+## Open ribbon-quality tickets
+
+| Ticket | Title | Priority |
+|--------|-------|----------|
+| 0112 | Fix L2 null: filter crossyear to resonance-only | High |
+| 0113 | Drop Z-score rescaling; plot raw statistic values | High |
+| 0114 | L3 null: full document shuffle + window="0" ribbon | High |
+| 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium |
 
 ## Next actions
 
-- **0107** — C2ST null model drivers (companion paper panel: highest priority)
-- **0108** — L2/L3 null model drivers
-- **0109** — G1/G3–G8 null model drivers (7 graph methods, largest effort)
-- After S3/S4 complete: commit the two new null CSVs and rebuild zoo figures
+- Land 0113 first (raw values — unblocks all downstream ribbon work)
+- Then 0112 (L2 scale fix), 0114 (L3 document shuffle), 0115 (analytical overlay)
+- Branch `t0107-null-model-c2st-drivers` needs PR opened and rebase onto main (picks up 0111 split)
+- Beat in progress on 0066 (null CSV schema validation)
 
 Background (not on critical path):
 
