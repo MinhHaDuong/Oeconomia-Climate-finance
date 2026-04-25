@@ -1,84 +1,90 @@
 %erg v1
-Title: Fix null ribbon: center at Z=0 when null_mean departs from observed mean
+Title: Zoo figures: plot raw statistic values, drop crossyear Z-score rescaling
 Status: open
 Created: 2026-04-25
 Author: claude
 
 --- log ---
-2026-04-25T17:45Z claude created
+2026-04-25T17:45Z claude created — original plan: centre ribbon at Z=0
+2026-04-25T18:00Z revised: drop Z-score rescaling entirely; plot raw values
 
 --- body ---
 ## Context
 
-The ribbon formula in `plot_zoo_results.py::_compute_null_z_threshold`:
+`plot_zoo_results.py` currently plots crossyear Z-scores:
+  Z(year, w) = (D(year,w) − μ_w) / σ_w
 
-    z_threshold = (null_mean ± 1.96 * null_std − mu_w) / sigma_w
+The null ribbon is then converted to Z-space via `_compute_null_z_threshold`,
+which requires knowing μ_w and σ_w from the observed data.  For C2ST,
+where null_mean ≈ 0.5 (chance AUC) while μ_w ≈ 0.65 (observed mean), the
+ribbon lands at Z ≈ −8 — off-screen and uninformative.
 
-places the ribbon at the Z-score that corresponds to the null distribution
-mean.  For methods where null_mean ≠ mu_w (mean observed), the ribbon is
-offset from Z=0:
+Root cause: the rescaling is unnecessary for zoo figures, which are
+diagnostic panels (one per method).  There is no cross-method
+comparability benefit from standardisation when each method lives in its
+own subplot.
 
-| Method          | ribbon center |
-|-----------------|--------------|
-| C2ST_embedding  | −8.3         |
-| C2ST_lexical    | −3.9         |
-| S1_MMD          | −1.8         |
-| L1, S2–S4       | −0.3 to +0.4 |
+Fix: plot the raw statistic D(year, w) directly.  The null ribbon is then
+trivially `null_mean ± 1.96 × null_std` — already in the same units, no
+conversion needed.  Axes auto-scale per method.
 
-For C2ST, the null distribution (chance-level AUC ≈ 0.5) maps to Z ≈ −8
-in the crossyear space because the observed mean AUC is ~0.65.  This is
-mathematically correct but falls outside the visible plot area and is
-uninformative as a significance threshold.
-
-The original intent (ticket 0097) was to replace the flat ±2 box with a
-time-varying equivalent — a band showing where "random noise" lands in
-Z-score space.  For that purpose the ribbon should be centred at Z=0 with
-time-varying half-width 1.96 × null_std / sigma_w.
+For C2ST this immediately becomes legible: observed AUC ~0.65 plotted
+against a chance-level ribbon at ~0.50 ± 0.04.
 
 ## Relevant files
 
+- `scripts/plot_zoo_results.py` — main plotting logic; uses `z_score`
+  column from `tab_crossyear_*.csv`; replace with `value` column
 - `scripts/plot_zoo_results.py:102` — `_compute_null_z_threshold` —
-  formula to change
-- `scripts/plot_zoo_results.py:149` — `fill_between` call that uses
-  `z_threshold_upper` / `z_threshold_lower`
+  delete entirely
+- `scripts/plot_zoo_results.py:137` — `w3_null` ribbon computation —
+  simplify to `null_mean ± 1.96 * null_std`
+- `scripts/plot_zoo_results.py:205` — line plot uses `sub["z_score"]` —
+  change to `sub["value"]`
+- Y-axis label: change from "Z-score" to the method's unit (or just
+  remove the label and let auto-scale speak)
 
 ## Actions
 
-1. Change `_compute_null_z_threshold` to centre the ribbon at Z=0:
+1. In `_plot`, switch all curve plots from `z_score` to `value` column.
 
+2. Delete `_compute_null_z_threshold`.  Replace ribbon computation with:
    ```python
-   hw = 1.96 * null_df["null_std"] / null_df["window"].map(sigma_w)
-   null_df["z_threshold_upper"] = +hw
-   null_df["z_threshold_lower"] = -hw
+   w3_null["upper"] = w3_null["null_mean"] + 1.96 * w3_null["null_std"]
+   w3_null["lower"] = w3_null["null_mean"] - 1.96 * w3_null["null_std"]
    ```
 
-   Drop the `null_mean − mu_w` term.  The ribbon now reads:
-   "the null permutation distribution has this ±1.96σ width in
-   standardised units, centred at the observed mean."
+3. Remove `ax.axhline(0, ...)` Z=0 reference line and `ax.axhspan(±2, ...)`
+   flat fallback band — both are Z-score artefacts.
 
-2. Update the legend label if needed to reflect the new semantics.
+4. Remove `_Z_THRESHOLD` constant and all uses.
 
-3. Rebuild zoo figures and verify C2ST ribbon is visible and near Z=0.
+5. Update Y-axis label.
+
+6. Rebuild all 18 zoo figures; commit new PNGs.
 
 ## Test
 
-Red: add a test checking that for a synthetic null_df with large
-`null_mean` offset, `_compute_null_z_threshold` returns thresholds
-symmetric around 0.
+Red: update existing plot tests to assert that the Y values in the
+rendered figure match the `value` column (not `z_score`) from the fixture
+crossyear CSV.
 
 ## Verification
 
-- [ ] C2ST_embedding ribbon centre is at Z=0 ± 0.1 (not at −8)
-- [ ] G-method ribbons are approximately unchanged (null_mean ≈ mu_w for G)
-- [ ] All 18 zoo figures rebuild without error
+- [ ] C2ST figure: observed line at ~0.65 with ribbon at ~0.50 ± 0.04
+- [ ] G methods: ribbon still overlays the curve in the correct value range
+- [ ] `_compute_null_z_threshold` no longer exists in the codebase
+- [ ] All 18 figures rebuild without error
+- [ ] `make check-fast` passes
 
 ## Invariants
 
-- For G methods where null_mean ≈ mu_w the ribbon shape should be nearly
-  identical to before (since the offset term was near zero anyway).
-- Time-varying width (null_std varies by year) must be preserved.
+- `tab_crossyear_*.csv` files unchanged (both `value` and `z_score`
+  columns still present; we just stop using `z_score` in the zoo plot).
+- `tab_null_*.csv` files unchanged.
 
 ## Exit criteria
 
-- Ribbon visible and near Z=0 for C2ST, S1, and all methods
+- All 18 zoo figures plot raw values with null ribbon in native units
+- No Z-score rescaling code remains in `plot_zoo_results.py`
 - PR merged
