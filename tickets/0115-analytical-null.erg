@@ -11,6 +11,7 @@ Author: claude
   both MC and analytical ribbons drawn as semi-transparent fills; coincidence
   confirms agreement visually
 2026-04-25T18:45Z imagine: implement order C2ST→L1→S1→S2 (increasing complexity); S1/S2 reuse already-computed pairwise matrix from MC path; blocks on 0113, independent of 0114; first Red test is pure C2ST arithmetic
+2026-04-25T18:55Z plan: CRITICAL — n_before/n_after NOT in any CSV; driver must use iter_semantic/lexical_windows from corpus. Plan referenced _compute_null_z_threshold (deleted by 0113) — must NOT use it; analytical ribbon = null_mean±1.96*null_std directly in raw units. Corrected Hanley-McNeil: Var=(n_b+n_a+1)/(12*n_b*n_a), numerator=401 not 201 for n=200.
 
 --- body ---
 ## Context

@@ -8,6 +8,7 @@ Author: claude
 2026-04-25T17:45Z claude created — original plan: centre ribbon at Z=0
 2026-04-25T18:00Z revised: drop Z-score rescaling entirely; plot raw values
 2026-04-25T18:45Z imagine: no other scripts import plot_zoo_results.py; two tests must be DELETED not updated (test_z0_axhline_present, test_compute_null_z_threshold_adds_column); 5 targeted edits in plot_zoo_results.py
+2026-04-25T18:55Z plan: 12 precise actions with exact lines; delete axhspan fallback entirely (no replacement); delete _compute_null_z_threshold call in main() at line ~294; 3 z_score→value swaps in _plot; Red test monkeypatches ax.plot to assert value column plotted.
 
 --- body ---
 ## Context
