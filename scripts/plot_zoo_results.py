@@ -1,7 +1,7 @@
-"""Plot cross-year Z-score time series for one zoo method.
+"""Plot raw statistic D(t,w) time series for one zoo method.
 
 Reads tab_crossyear_{method}.csv (produced by compute_crossyear_zscore.py)
-and renders one panel showing Z(t,w) for windows w=2,3,4.
+and renders one panel showing D(t,w) for windows w=2,3,4.
 
 Degrades gracefully: if the input CSV does not exist, writes an empty figure
 with a "Data not yet computed" annotation so Make does not fail.
@@ -44,7 +44,6 @@ _WINDOW_STYLES = {
     "4": {"color": MED, "linewidth": 0.9, "label": "w=4"},
 }
 
-_Z_THRESHOLD = 2.0
 _PERIOD_BREAKS = [2007, 2013]
 
 _METHOD_TITLES: dict[str, str] = (
@@ -100,41 +99,16 @@ def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
     return null_df
 
 
-def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.DataFrame:
-    """Add z_threshold_upper / z_threshold_lower columns to null_df.
-
-    Bounds = (null_mean ± 1.96 * null_std - mu_w) / sigma_w
-
-    where mu_w and sigma_w are the per-window mean and std of the crossyear
-    Z-scores (from the observed data).
-    """
-    # tab_crossyear_*.csv always has both 'value' (raw D) and 'z_score'; use 'value'
-    # to match the original Z-score normalization: Z = (D - mu_w) / sigma_w.
-    col = "value" if "value" in df.columns else "z_score"
-    mu_w = df.groupby("window")[col].mean()
-    sigma_w = df.groupby("window")[col].std()
-
-    null_df = null_df.copy()
-    null_df["z_threshold_upper"] = (
-        null_df["null_mean"] + 1.96 * null_df["null_std"] - null_df["window"].map(mu_w)
-    ) / null_df["window"].map(sigma_w)
-    null_df["z_threshold_lower"] = (
-        null_df["null_mean"] - 1.96 * null_df["null_std"] - null_df["window"].map(mu_w)
-    ) / null_df["window"].map(sigma_w)
-    return null_df
-
-
 def _plot(
     df: pd.DataFrame,
     method: str,
     output_stem: str,
     null_df: pd.DataFrame | None = None,
 ) -> None:
-    """Render the Z-score panel and save to output_stem.png."""
+    """Render the D(t,w) panel and save to output_stem.png."""
     fig, ax = plt.subplots(figsize=(6, 4))
-    ax.axhline(0, color="0.75", linewidth=0.5, zorder=0)
 
-    # Null zone: ribbon for w=3 if null data available, else flat ±2 box.
+    # Null ribbon for w=3: raw null_mean ± 1.96 * null_std (native units).
     w3_null = (
         null_df[null_df["window"] == "3"].sort_values("year")
         if null_df is not None
@@ -143,36 +117,20 @@ def _plot(
     has_ribbon = (
         w3_null is not None
         and not w3_null.empty
-        and "z_threshold_upper" in w3_null.columns
-        and w3_null["z_threshold_upper"].notna().any()
+        and "null_mean" in w3_null.columns
+        and w3_null["null_mean"].notna().any()
     )
     if has_ribbon:
         ax.fill_between(
             w3_null["year"],
-            w3_null["z_threshold_lower"],
-            w3_null["z_threshold_upper"],
+            w3_null["null_mean"] - 1.96 * w3_null["null_std"],
+            w3_null["null_mean"] + 1.96 * w3_null["null_std"],
             color=FILL,
             alpha=0.40,
             zorder=0,
             label=None,
         )
-    else:
-        ax.axhspan(
-            -_Z_THRESHOLD,
-            _Z_THRESHOLD,
-            color=FILL,
-            alpha=0.15,
-            zorder=0,
-            label=None,
-        )
-        for sign in (+1, -1):
-            ax.axhline(
-                sign * _Z_THRESHOLD,
-                color=MED,
-                linewidth=0.6,
-                linestyle="--",
-                zorder=1,
-            )
+    # else: no ribbon drawn when null data absent (no ±2 fallback in raw-value space)
 
     # Period boundary verticals — shorten by 1 ex so year labels clear the title.
     # 1 ex at fontsize 6 on a (6, 4) figure with default subplot params ≈ 0.012 axes units.
@@ -202,7 +160,7 @@ def _plot(
         style = _WINDOW_STYLES[w_str]
         ax.plot(
             sub["year"],
-            sub["z_score"],
+            sub["value"],
             color=style["color"],
             linewidth=style["linewidth"],
             label=style["label"],
@@ -214,12 +172,12 @@ def _plot(
     # Fallback: cumulative or single-window methods (G3, G4, G7, L3).
     if not plotted:
         non_sliding = df[~df["window"].isin(("2", "3", "4"))].sort_values("year")
-        non_sliding = non_sliding.dropna(subset=["z_score"])
+        non_sliding = non_sliding.dropna(subset=["value"])
         if not non_sliding.empty:
             wlabel = non_sliding["window"].iloc[0]
             ax.plot(
                 non_sliding["year"],
-                non_sliding["z_score"],
+                non_sliding["value"],
                 color=DARK,
                 linewidth=1.6,
                 label=wlabel,
@@ -230,22 +188,19 @@ def _plot(
             log.warning("No plottable rows found for method %s", method)
 
     ax.set_xlabel("Year")
-    ax.set_ylabel("Cross-year Z-score Z(t,w)")
+    ax.set_ylabel("Statistic D(t,w)")
     ax.set_title(_METHOD_TITLES.get(method, method))
 
     if not df.empty:
         ax.set_xlim(df["year"].min() - 0.5, df["year"].max() + 0.5)
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
-    # Add legend entry for null ribbon or flat band.
+    # Add legend entry for null ribbon if present.
     handles, labels = ax.get_legend_handles_labels()
 
     if has_ribbon:
         handles.append(mpatches.Patch(color=FILL, alpha=0.40, label="null 95% (w=3)"))
         labels.append("null 95% (w=3)")
-    else:
-        handles.append(mpatches.Patch(color=FILL, alpha=0.15, label="null ±2σ"))
-        labels.append("null ±2σ")
 
     ax.legend(
         handles=handles, labels=labels, loc="upper left", frameon=False, fontsize=7
@@ -274,7 +229,7 @@ def main() -> None:
         return
 
     df = pd.read_csv(input_path)
-    for col in ("year", "window", "z_score"):
+    for col in ("year", "window", "value"):
         if col not in df.columns:
             log.warning(
                 "Missing column '%s' in %s — producing empty figure", col, input_path
@@ -283,15 +238,12 @@ def main() -> None:
             return
 
     df["year"] = pd.to_numeric(df["year"], errors="coerce")
-    df["z_score"] = pd.to_numeric(df["z_score"], errors="coerce")
     df = df.dropna(subset=["year"])
     df["year"] = df["year"].astype(int)
     # window is written as str but pd.read_csv may infer int; normalise.
     df["window"] = df["window"].astype(str)
 
     null_df = _load_null_df(args.null_ci)
-    if null_df is not None:
-        null_df = _compute_null_z_threshold(df, null_df)
 
     _plot(df, method, output_stem, null_df=null_df)
 
