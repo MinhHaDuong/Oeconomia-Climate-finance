@@ -35,11 +35,13 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 ### Zoo deepening — merged 2026-04-22 (PRs #744–#754)
 - Null model CI bands, figure polish, bias comparison, sensitivity annex, window semantics
 
-### Null model drivers — all wired 2026-04-25 (PRs #757–#760)
+### Null model drivers — all wired 2026-04-25 (PRs #757–#762)
 - #757 (0096): multilayer-detection techrep
 - #758 (0109): G1/G5/G6/G8 citation null drivers
 - #759 (0107+0109): C2ST null model drivers + smoke tests
 - #760 (0111): dispatcher split — compute_null_model.py → 193L; 6 new driver modules
+- #761 (0066): null CSV schema validation on read in export_divergence_summary
+- #762: fix zoo.mk null deps (NULL_METHODS_ALL loop); ribbon quality tickets 0112–0116
 
 ## Corpus (v1.1.1)
 
@@ -94,8 +96,7 @@ None.
 
 - Land 0113 first (raw values — unblocks all downstream ribbon work)
 - Then 0112 (L2 scale fix), 0114 (L3 document shuffle), 0115 (analytical overlay)
-- Branch `t0107-null-model-c2st-drivers` needs PR opened and rebase onto main (picks up 0111 split)
-- Beat in progress on 0066 (null CSV schema validation)
+- Close tickets 0107 and 0109 (work merged; beat closed 0107 this session)
 
 Background (not on critical path):
 
