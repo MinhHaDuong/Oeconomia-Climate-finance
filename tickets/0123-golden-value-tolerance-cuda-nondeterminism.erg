@@ -5,6 +5,7 @@ Created: 2026-04-25
 Author: claude
 
 --- log ---
+2026-04-26T01:00Z claude execute — tolerance changed (eb0fc93); make check-fast green (1 pre-existing flaky). S3/S4 golden tests fail upstream: compute_divergence SchemaError (missing 'year' column) — separate issue, not tolerance-related. 13/16 golden tests pass. Branch t0123-golden-tolerance ready for push.
 2026-04-25T23:50Z claude created — observed S3/S4 golden failures in make check on padme
 
 --- body ---
@@ -58,6 +59,6 @@ done
 
 ## Exit criteria
 
-- [ ] `atol` changed to `1e-4` in `test_golden_values.py`
-- [ ] Three consecutive `pytest tests/test_golden_values.py -m slow` runs pass on padme
-- [ ] `make check-fast` green (golden tests are `@pytest.mark.slow`, excluded from check-fast)
+- [x] `atol` changed to `1e-4` in `test_golden_values.py` (eb0fc93)
+- [ ] Three consecutive `pytest tests/test_golden_values.py -m slow` runs pass on padme — BLOCKED: S3/S4 compute_divergence SchemaError (separate upstream bug)
+- [x] `make check-fast` green (976 passed, 1 pre-existing flaky)
