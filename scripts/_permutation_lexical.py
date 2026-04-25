@@ -46,7 +46,6 @@ def _count_bursts(year_labels, X_all, top_indices, years, z_threshold):
 
     """
     n_years = len(years)
-    year_to_idx = {y: i for i, y in enumerate(years)}
 
     # Per-year mean term frequency for top terms
     tf_matrix = np.zeros((n_years, len(top_indices)))
@@ -130,10 +129,8 @@ def run_l3_permutations(div_df, cfg):
         [div_df.loc[div_df["year"] == y, "value"].iloc[0] for y in years]
     )
 
-    # Per-year document counts (preserved during shuffle)
-    year_counts = {y: int((doc_years == y).sum()) for y in years}
-
     # Permutation loop: shuffle document-year assignments within the corpus
+    # rng.permutation preserves per-year document counts by construction.
     perm_matrix = np.empty((n_perm, len(years)))
     for i in range(n_perm):
         shuffled_years = rng.permutation(doc_years)
