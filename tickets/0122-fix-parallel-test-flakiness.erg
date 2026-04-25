@@ -1,0 +1,75 @@
+%erg v1
+Title: Fix test flakiness under pytest-xdist -n 4
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T23:50Z claude created — identified from make check-fast runs showing different failures each time
+
+--- body ---
+## Context
+
+Two test classes fail non-deterministically under `pytest -n 4`. Both pass reliably in
+isolation (`pytest -n 0`). These are not real failures — they're test isolation bugs that
+add noise to CI.
+
+## Root cause 1: `TestRefMatchCorpus` — shared production cache file
+
+`match_refs_to_corpus` has `cache_path: str = CACHE_PATH` as a default argument, where
+`CACHE_PATH = os.path.join(CATALOGS_DIR, "enrich_cache", "ref_match_cache.jsonl")`.
+
+Tests `test_exact_title_year_match`, `test_fuzzy_title_match_grobid_artifact`, and
+`test_year_off_by_one_matches` (plus others) call `match_refs_to_corpus` without specifying
+`cache_path`. Multiple xdist workers simultaneously read/write the same production file,
+causing race conditions on cache load/save.
+
+## Root cause 2: `TestStepCounters::test_step1_counter_attempted` — global mutation
+
+The test monkeypatches `utils_mod.CATALOGS_DIR` with try/finally. If `enrich_abstracts`
+caches the CATALOGS_DIR value at import time (e.g., into a module-level variable), the
+monkeypatch doesn't reach the cached copy. Test ordering within a worker can then leave
+the module in a bad state for subsequent tests.
+
+## Relevant files
+
+- `tests/test_ref_match_corpus.py` lines 34–86 — missing `cache_path=tmp_path/...` arg
+- `scripts/corpus_ref_match.py` line 157 — `cache_path: str = CACHE_PATH` default
+- `tests/test_robustness_observability.py` lines 414–432 — global monkeypatch via try/finally
+
+## Actions
+
+### Fix 1: pass `cache_path` in all `match_refs_to_corpus` test calls
+
+In `tests/test_ref_match_corpus.py`, every call to `match_refs_to_corpus` that omits
+`cache_path` must add `cache_path=str(tmp_path / "cache.jsonl")`. Affected tests:
+- `test_exact_title_year_match` (line ~50)
+- `test_fuzzy_title_match_grobid_artifact` (line ~78)
+- `test_year_off_by_one_matches` (line ~101)
+- `test_skips_refs_that_already_have_doi`
+- `test_no_match_below_threshold`
+- `test_output_has_refs_columns_schema`
+- `test_empty_ref_parsed_produces_empty_output`
+- `test_progress_logging`
+
+### Fix 2: use pytest `monkeypatch` fixture in `test_step1_counter_attempted`
+
+Replace the manual try/finally with `monkeypatch.setattr(utils_mod, "CATALOGS_DIR", str(tmp_path))`.
+pytest's `monkeypatch` guarantees restoration even on failure, and its `setattr` mechanism
+works with module-level references that are accessed via `utils_mod.CATALOGS_DIR`. If
+`enrich_abstracts` caches the value at import time into its own namespace, also patch it there.
+
+## Test
+
+```bash
+# Must pass 10 consecutive runs without any flaky failures:
+uv run pytest tests/test_ref_match_corpus.py tests/test_robustness_observability.py -n 4 --count=3 -v
+```
+
+(If `pytest-repeat` is not installed, run the make check-fast command 3× and verify no failures.)
+
+## Exit criteria
+
+- [ ] `uv run pytest tests/test_ref_match_corpus.py -n 4` passes 3 consecutive runs
+- [ ] `uv run pytest tests/test_robustness_observability.py::TestStepCounters -n 4` passes 3 runs
+- [ ] `make check-fast` green
