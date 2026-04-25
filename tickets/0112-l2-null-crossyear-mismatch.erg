@@ -1,0 +1,76 @@
+%erg v1
+Title: Fix L2 null model: align observed statistic with crossyear CSV
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T17:45Z claude created
+
+--- body ---
+## Context
+
+The L2 null ribbon is misplaced because the null model and the crossyear
+CSV compute different quantities:
+
+- `compute_crossyear_zscore.py` receives `tab_div_L2.csv` which has three
+  rows per (year, window): novelty, transience, resonance.  It aggregates
+  by averaging the three `value` columns, so crossyear `value` =
+  mean(novelty, transience, resonance).  For year=1999, w=3 this is ~5.35.
+- `run_l2_permutations` computes only resonance and stores that as
+  `observed`.  For year=1999, w=3 this is ~3.38.
+
+The mismatch ratio varies from 1.6× to 5.1× across years.  The ribbon
+formula `(null_mean ± 1.96*null_std - mu_w) / sigma_w` uses `mu_w` /
+`sigma_w` from the crossyear CSV (mean-of-3 space) but `null_mean` from
+resonance-only space → ribbon is completely misplaced.
+
+## Relevant files
+
+- `scripts/compute_crossyear_zscore.py:78` — `.agg(value=("value","mean"),
+  ...)` averages all three hyperparams; this is likely wrong for L2
+- `scripts/_divergence_lexical.py:189` — `compute_l2_novelty` emits three
+  rows per (year, window) with hyperparams=metric={novelty,transience,
+  resonance}
+- `scripts/_permutation_lexical.py:111` — `run_l2_permutations` outputs
+  only resonance in `observed`
+
+## Actions
+
+1. In `compute_crossyear_zscore.py`: for L2, filter to `metric=resonance`
+   before Z-score standardisation instead of averaging all three metrics.
+   Resonance is the structural-break signal; novelty and transience are
+   intermediate quantities.
+
+2. Verify that `run_l2_permutations` `observed` now matches the crossyear
+   `value` within floating-point tolerance.
+
+3. Re-run `make content/tables/tab_crossyear_L2.csv
+   content/tables/tab_null_L2.csv` to regenerate both tables, then
+   `make zoo-figures` to rebuild the L2 figure.
+
+## Test
+
+Red: add a test asserting that
+`tab_crossyear_L2.csv["value"]` matches `tab_null_L2.csv["observed"]`
+within 1e-4 absolute tolerance for the full corpus run (or a fixture with
+known values).
+
+## Verification
+
+- [ ] For year=1999, w=3: crossyear value ≈ null observed (both ≈ 3.38)
+- [ ] `_compute_null_z_threshold` ribbon center is within ±0.5 Z-units
+  of Z=0 for all (year, window) pairs
+- [ ] `make check-fast` passes
+
+## Invariants
+
+- `tab_div_L2.csv` must not change — it still emits three rows per
+  (year, window), unchanged.
+- Other methods' crossyear computation must not be affected.
+
+## Exit criteria
+
+- Test passes
+- Ribbon center for L2 ≤ ±0.5 Z-units from zero across all windows
+- PR merged

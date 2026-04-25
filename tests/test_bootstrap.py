@@ -14,6 +14,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import pandera as pa
 import pytest
 
 SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
@@ -567,7 +568,6 @@ class TestSummaryTable:
 
     def test_summary_rejects_bad_null_csv(self):
         """Missing column in null CSV must raise SchemaError, not KeyError."""
-        import pandera as pa
         from export_divergence_summary import build_summary
 
         div_df = pd.DataFrame(

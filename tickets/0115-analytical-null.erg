@@ -1,0 +1,130 @@
+%erg v1
+Title: Analytical null as visual overlay on zoo figures
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T17:45Z claude created
+2026-04-25T17:55Z revised: analytics are a validation control, not a replacement
+2026-04-25T18:30Z revised: render as overlay on zoo figures, not standalone script;
+  both MC and analytical ribbons drawn as semi-transparent fills; coincidence
+  confirms agreement visually
+
+--- body ---
+## Context
+
+All sliding-window null models use Monte Carlo permutation (n_perm=500 full
+Fisher-Yates shuffles of the before+after pool).  For methods where E[T | H₀]
+and Var[T | H₀] have closed-form expressions (S1, S2, L1, C2ST), the
+analytical values provide a ground truth to confirm that MC estimates are
+unbiased and well-converged.
+
+Rather than a standalone validation script, the analytical null is rendered
+directly on the zoo figure as a second semi-transparent ribbon overlaid on
+the MC ribbon.  Where MC and analytical agree, the overlapping fills merge
+visually — this makes convergence immediately legible without any separate
+report.
+
+G methods (G1, G5, G6, G8) lack simple closed forms; they remain MC only.
+
+## Permutation structure
+
+Each (year, window) test pools n_before + n_after documents and shuffles ALL
+of them (full Fisher-Yates permutation), reassigning the first n_before to
+"before" and the rest to "after".
+
+## Analytical nulls by method
+
+### S1 — MMD²
+E(MMD²_unbiased | H₀) = 0 by construction.
+Var(MMD²_unbiased | H₀) ≈ (4/n²) × Var of h(X,X') under H₀ (Gretton 2012 Lemma 6).
+null_mean = 0, null_std from pairwise kernel matrix O(N²).
+
+### S2 — energy distance
+null_mean from mean off-diagonal entries of pairwise distance matrix.
+null_std from 4th-moment U-statistics (Székely & Rizzo 2013).  O(N²).
+
+### L1 — JS divergence
+E[JS | H₀] ≈ (V−1)/4 × (1/n_before + 1/n_after)   (Archer et al. 2014)
+null_std = O(1/n).  Only requires pooled vocabulary and counts.
+
+### C2ST — AUC
+E[AUC | H₀] = 0.5 by definition of Mann-Whitney U.
+Var[AUC | H₀] = (n_before + n_after + 1) / (12 × n_before × n_after)
+  (Hanley & McNeil 1982).  O(1).
+
+### G methods (G1, G5, G6, G8)
+No simple closed form.  Leave analytical null undefined; overlay not shown.
+
+## Relevant files
+
+- `scripts/_permutation_accel.py` — add `analytical_null(method, X_before,
+  X_after)` for S1 and S2
+- `scripts/_permutation_lexical.py` — add analytical null for L1
+- `scripts/_divergence_c2st.py` or helper — add analytical null for C2ST
+- `scripts/compute_analytical_null.py` — NEW: driver; accepts --method,
+  --crossyear-csv, --output; writes same CSV schema as tab_null_*.csv
+  (columns: year, window, null_mean, null_std, observed)
+- `scripts/plot_zoo_results.py` — add `--analytical-null <path>` flag;
+  draw second semi-transparent fill_between for analytical CI band
+- `divergence.mk` — add `analytical-null-*` targets; pass
+  `--analytical-null` to plot_zoo_results.py when available
+
+## Actions
+
+1. Implement `analytical_null(method, before, after) → (null_mean, null_std)`:
+   - S1, S2: in `_permutation_accel.py`
+   - L1: in `_permutation_lexical.py`
+   - C2ST: closed-form O(1) in `_divergence_c2st.py`
+
+2. Write `scripts/compute_analytical_null.py`:
+   - Accepts `--method`, `--crossyear-csv`, `--output`
+   - Reads the crossyear CSV for (year, window) pairs + n_before/n_after
+   - Calls the appropriate `analytical_null` function per row
+   - Outputs CSV with same schema: year, window, null_mean, null_std, observed
+
+3. In `plot_zoo_results.py`:
+   - Add `--analytical-null <path>` (optional)
+   - Load analytical null CSV if provided
+   - Draw `fill_between(year, lower_analytical, upper_analytical)` with
+     `alpha=0.25, color="orange"` (or similar warm colour)
+   - MC ribbon keeps its existing colour at `alpha=0.25`
+   - Where they overlap the combined alpha makes the coincidence visually
+     distinct from regions with only one band
+
+4. In `divergence.mk` (or `zoo.mk`):
+   - Add pattern rule for `tab_analytical_null_%.csv` (methods: S1_MMD,
+     S2_energy, L1, C2ST_embedding, C2ST_lexical)
+   - Extend the zoo figure recipe: pass `--analytical-null` when the
+     analytical null CSV is present (like the existing `--null-ci` wildcard)
+
+## Test
+
+Red: in `tests/test_analytical_null.py`:
+- For C2ST (n_before=n_after=200, iid labels): assert analytical null_mean
+  ≈ 0.5 ± 0.01 and analytical null_std matches Hanley & McNeil formula.
+- For L1 (multinomial fixture, n=200, V=100): assert analytical null_mean
+  ≈ (V-1)/4*(1/n₁+1/n₂) within 1%.
+- For S1 (Gaussian embeddings, n=200): assert analytical null_mean ≈ 0.
+
+## Verification
+
+- [ ] Analytical values agree with MC (n_perm=5000) within 2 SE on fixture
+- [ ] Zoo figures for S1, S2, L1, C2ST show two overlapping ribbons;
+  ribbons overlap in the expected years
+- [ ] MC null CSVs unchanged; analytical CSVs are separate files
+- [ ] `make check-fast` passes
+
+## Invariants
+
+- `tab_null_*.csv` files are generated by Monte Carlo only; analytical
+  values live in separate `tab_analytical_null_*.csv` files.
+- G methods have no analytical null CSV; their zoo figures show only MC ribbon.
+- Output CSV schema: year, window, null_mean, null_std, observed (same as MC).
+
+## Exit criteria
+
+- Analytical null implemented for S1, S2, L1, C2ST
+- Zoo figures for those methods show overlapping MC + analytical ribbons
+- Tests pass; PR merged
