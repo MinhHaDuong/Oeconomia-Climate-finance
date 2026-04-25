@@ -108,7 +108,7 @@ def main() -> None:
         io_args.input[0] if io_args.input else f"content/tables/tab_div_{method}.csv"
     )
 
-    validate_io(output=io_args.output)
+    validate_io(output=io_args.output, inputs=io_args.input)
 
     log.info("Reading %s", input_path)
     try:

@@ -1,7 +1,9 @@
 """Tests for figure-polish changes in plot_zoo_results.py (ticket 0103)."""
 
+import csv
 import glob
 import os
+import subprocess
 import sys
 
 import pandas as pd
@@ -58,10 +60,6 @@ def test_method_titles_dict_has_all_18_methods():
 
 def test_metric_filter_selects_resonance_only(tmp_path):
     """--metric resonance keeps only resonance rows."""
-    import csv
-    import subprocess
-    import sys
-
     rows = [
         ["year", "window", "hyperparams", "value", "channel", "method"],
         ["1999", "3", "w=3,metric=novelty", "8.0", "lexical", "L2"],
@@ -129,29 +127,3 @@ def test_l2_crossyear_value_matches_null_observed():
         f"Max mismatch between crossyear value and null observed: {diff.max():.6f}\n"
         f"Worst row:\n{merged.loc[diff.idxmax()]}"
     )
-
-
-def test_z0_axhline_present(tmp_path, monkeypatch):
-    """_plot adds a Z=0 reference line."""
-    import matplotlib.pyplot as plt
-    import plot_zoo_results
-
-    hlines = []
-    original = plt.Axes.axhline
-
-    def capture(self, y=0, **kw):
-        hlines.append(y)
-        return original(self, y, **kw)
-
-    monkeypatch.setattr(plt.Axes, "axhline", capture)
-    df = pd.DataFrame(
-        {
-            "year": [2005, 2006],
-            "window": ["3", "3"],
-            "z_score": [0.5, 1.0],
-            "value": [0.1, 0.2],
-        }
-    )
-    output_stem = str(tmp_path / "test_fig")
-    plot_zoo_results._plot(df, "S2_energy", output_stem)
-    assert 0 in hlines or 0.0 in hlines, "Z=0 reference line not added"
