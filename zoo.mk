@@ -72,10 +72,13 @@ $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_c
 # so the CI band overlay is rendered.  The pattern rule handles all others.
 
 # Methods with null model tables: extra dep so figures rebuild when null data changes.
-$(ZOO_FIGS)/fig_zoo_S2_energy.png: $(ZOO_TABLES)/tab_null_S2_energy.csv
-$(ZOO_FIGS)/fig_zoo_L1.png: $(ZOO_TABLES)/tab_null_L1.csv
-$(ZOO_FIGS)/fig_zoo_G9_community.png: $(ZOO_TABLES)/tab_null_G9_community.csv
-$(ZOO_FIGS)/fig_zoo_G2_spectral.png: $(ZOO_TABLES)/tab_null_G2_spectral.csv
+NULL_METHODS_ALL := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
+                    L1 L2 L3 \
+                    G1_pagerank G2_spectral G5_pref_attachment G6_entropy \
+                    G8_betweenness G9_community \
+                    C2ST_embedding C2ST_lexical
+$(foreach m,$(NULL_METHODS_ALL),$(eval \
+  $(ZOO_FIGS)/fig_zoo_$(m).png: $(ZOO_TABLES)/tab_null_$(m).csv))
 
 # Pattern rule for all methods: passes --null-ci when tab_null_*.csv exists.
 $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_results.py

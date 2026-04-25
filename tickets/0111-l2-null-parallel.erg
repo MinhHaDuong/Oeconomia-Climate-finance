@@ -1,0 +1,84 @@
+%erg v1
+Title: Add n_jobs parallelism to L2 null model permutation driver
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T16:00Z claude created
+
+--- body ---
+## Context
+
+`run_l2_permutations` in `scripts/_permutation_lexical.py` iterates over
+`(year, window)` pairs in a single-threaded loop.  On the full corpus
+(~30k works, w=3 and w=5, ~50 pairs) this takes ~90 minutes.  Every other
+null model driver uses `n_jobs` to saturate available cores.  Three places
+need updating: the function itself, the dispatcher shim, and the Makefile
+recipe.
+
+L3 is already fast (it permutes a length-25 array n_perm times using
+numpy — no per-window loop) and does not need this fix.
+
+## Relevant files
+
+- `scripts/_permutation_lexical.py:111` — `run_l2_permutations` — outer
+  loop over `(year, window)` pairs; per-window logic is a closure
+  `_resonance_from_split` that captures `X_all` and `year_vecs`
+- `scripts/compute_null_model.py:346` — `_run_l2_permutations` — thin
+  shim; does not accept `n_jobs`; compare the semantic/citation shims
+  which do
+- `scripts/compute_null_model.py:796` — dispatcher call site — passes no
+  `n_jobs`; compare L769 (citation) and L791 (semantic)
+- `divergence.mk:220` — L2/L3 Makefile recipe — missing `--n-jobs
+  $(NJOBS)`; compare semantic/citation recipes which include it
+
+## Actions
+
+1. In `_permutation_lexical.py`, add `n_jobs=1` parameter to
+   `run_l2_permutations`.  Extract the per-window body into a
+   module-level (picklable) helper — e.g.
+   `_compute_l2_window(y, w, X_all, doc_years, n_past, pool_indices, year_vecs, n_perm, seed)`.
+   Replace the `for` loop with `joblib.Parallel(n_jobs=n_jobs)(delayed(...)
+   for ...)` when `n_jobs != 1`, keeping the sequential path for `n_jobs=1`.
+
+2. In `compute_null_model.py`, update `_run_l2_permutations(div_df, cfg)`
+   to `_run_l2_permutations(div_df, cfg, n_jobs=1)` and forward to
+   `run_l2_permutations(..., n_jobs=n_jobs)`.
+
+3. In `compute_null_model.py`, update the dispatcher call at line ~797:
+   ```python
+   result = _run_l2_permutations(div_df, cfg, n_jobs=args.n_jobs)
+   ```
+
+4. In `divergence.mk`, add `--n-jobs $(NJOBS)` to the L2L3 recipe (the
+   `NULL_METHODS_LEX_L2L3` block).
+
+## Test
+
+Red: add a test to `tests/test_null_model_lexical.py` (or the nearest
+equivalent) that calls `run_l2_permutations(..., n_jobs=2)` on a tiny
+synthetic corpus (3 years, 10 docs each) and asserts the result has the
+same columns and row count as `n_jobs=1`.
+
+## Verification
+
+- [ ] `run_l2_permutations(div_df, cfg, n_jobs=2)` returns identical
+  schema to `n_jobs=1` on the test fixture
+- [ ] `make -j4 NJOBS=6 null-model` re-runs L2 and completes in < 15 min
+  on padme (vs ~90 min single-threaded)
+- [ ] `make check-fast` passes (no pre-existing failures introduced)
+
+## Invariants
+
+- L3 must not be touched (already fast; different algorithm)
+- Sequential path (`n_jobs=1`) must produce bit-identical output to the
+  current implementation
+- The L2L3 Makefile recipe change must not break L3 (L3 ignores
+  `--n-jobs` — verify the dispatcher silently passes it through or guards)
+
+## Exit criteria
+
+- New test is green
+- `make check-fast` clean
+- PR merged to main
