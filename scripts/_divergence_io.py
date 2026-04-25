@@ -124,19 +124,19 @@ def get_min_papers(method=None, *, cfg=None, n_works=None):
         cfg = load_analysis_config()
     div_cfg = cfg["divergence"]
 
-    # Per-method overrides take precedence over smoke mode
+    # Smoke mode (small corpus) — overrides ALL per-method thresholds
+    if n_works is not None and n_works < 200:
+        mp = div_cfg.get("min_papers_smoke", 5)
+        log.info("Smoke mode: n_works=%d < 200, min_papers=%d", n_works, mp)
+        return mp
+
+    # Per-method overrides (production only)
     if method == "S4_frechet":
         return div_cfg["semantic"]["S4_frechet"].get(
             "min_papers", div_cfg["min_papers"]
         )
     if method in ("c2st", "C2ST_embedding", "C2ST_lexical"):
         return div_cfg["c2st"].get("min_papers", div_cfg["min_papers"])
-
-    # Smoke mode (small corpus)
-    if n_works is not None and n_works < 200:
-        mp = div_cfg.get("min_papers_smoke", 5)
-        log.info("Smoke mode: n_works=%d < 200, min_papers=%d", n_works, mp)
-        return mp
 
     return div_cfg.get("min_papers", 30)
 
