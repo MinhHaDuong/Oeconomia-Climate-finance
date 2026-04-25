@@ -72,3 +72,4 @@ content/*.tex
 _variables.yml
 benchmarks/
 
+beat-log.jsonl
