@@ -1,0 +1,68 @@
+%erg v1
+Title: Fix S4_frechet empty-results guard in compute_s4_frechet
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T22:00Z claude created
+
+--- body ---
+## Context
+
+`test_divergence.py::TestSmokeSemantic::test_compute_method[S4_frechet]` fails with:
+
+```
+pandera.errors.SchemaError: column 'year' not in dataframe. Columns in dataframe: ['channel']
+```
+
+Root cause: `compute_s4_frechet` in `scripts/_divergence_semantic.py` (line ~545) ends with
+`return pd.DataFrame(results)`. When `results = []` (because `_iter_window_pairs` yields nothing
+— smoke fixture has too few works per window to pass the `min_papers` cut), `pd.DataFrame([])`
+returns a DataFrame with **0 columns**. Then `compute_divergence.py:173` adds `result["channel"] = channel`
+producing a 1-column DataFrame `['channel']`, which fails `DivergenceSchema.validate`.
+
+The early-return guard at line 501-502 (`if not any(years_by_window.values()): return empty_divergence_df()`)
+catches the case where no windows have any years at all, but not the case where windows have years
+but all pairs are skipped inside `_iter_window_pairs` due to `min_papers`.
+
+The same pattern is present in S1, S2, S3 (lines 226, 307, 365) — all end with `return pd.DataFrame(results)`
+without a guard. S4 exposes it first because its PCA step requires `n_components ≥ 2`, so it's
+more likely to skip pairs on the smoke fixture (90 works).
+
+## Relevant files
+
+- `scripts/_divergence_semantic.py` — `compute_s4_frechet` (~line 545); also `compute_s1_mmd`,
+  `compute_s2_energy`, `compute_s3_sliced_wasserstein` have the same pattern
+- `scripts/_divergence_io.py` — `empty_divergence_df()` (line 159) — correct return for empty case
+- `tests/test_divergence.py` — `TestSmokeSemantic::test_compute_method` parametrized over all methods
+
+## Actions
+
+1. In `compute_s4_frechet` (~line 543), add before the final return:
+   ```python
+   if not results:
+       return empty_divergence_df()
+   return pd.DataFrame(results)
+   ```
+2. Apply the same guard to `compute_s1_mmd`, `compute_s2_energy`, `compute_s3_sliced_wasserstein`
+   (same pattern, same risk).
+3. Confirm `empty_divergence_df()` has the right columns: `["year", "window", "hyperparams", "value"]`
+   — it does (line 165).
+
+## Test
+
+```python
+# Already exists — just needs to pass:
+# tests/test_divergence.py::TestSmokeSemantic::test_compute_method[S4_frechet]
+```
+
+RED: currently fails with SchemaError.
+GREEN: `pytest tests/test_divergence.py -k S4_frechet` passes.
+
+Also confirm S1/S2/S3 still pass (they currently do — but confirm the guard doesn't break them).
+
+## Exit criteria
+
+- [ ] `pytest tests/test_divergence.py::TestSmokeSemantic` passes for all 4 semantic methods
+- [ ] `make check-fast` clean

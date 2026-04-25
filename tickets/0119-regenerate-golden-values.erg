@@ -1,0 +1,64 @@
+%erg v1
+Title: Regenerate golden values for current smoke fixture (108→96 row drift)
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T22:00Z claude created
+
+--- body ---
+## Context
+
+`test_golden_values.py::TestGoldenValues::test_method_matches_golden` fails for all 10 methods with:
+
+```
+AssertionError: S1_MMD: shape mismatch — golden (108, 5), fresh (96, 5)
+```
+
+The golden CSVs in `tests/fixtures/golden/` were generated when the smoke fixture corpus had 108 works.
+The current smoke fixture has 96 works. The shape mismatch causes all golden-value tests to fail.
+
+This is data drift, not a code regression. The golden values need to be regenerated on any machine
+where `CLIMATE_FINANCE_DATA` points to the current smoke fixture.
+
+## Relevant files
+
+- `tests/fixtures/golden/tab_div_*.csv` — stale golden CSV files (108 rows)
+- `tests/test_golden_values.py` — compares fresh output to golden; marks `@pytest.mark.slow`
+- `scripts/compute_divergence.py` — the script that generates divergence CSVs
+
+## Actions
+
+1. Identify where the golden files are generated (grep for `update-golden` or similar in Makefile/scripts).
+2. Run the regeneration command on padme with the current smoke fixture:
+   ```bash
+   make regression-update   # or equivalent
+   ```
+   Or manually:
+   ```bash
+   for method in S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
+                 L1 G1_pagerank G2_spectral G5_pref_attachment G6_entropy G8_betweenness; do
+     CLIMATE_FINANCE_DATA=tests/fixtures/smoke \
+     uv run python scripts/compute_divergence.py \
+       --method $method --output tests/fixtures/golden/tab_div_${method}.csv
+   done
+   ```
+3. Commit the updated golden CSVs.
+
+## Test
+
+```bash
+pytest tests/test_golden_values.py -v  # should pass for all 10 methods
+```
+
+## Exit criteria
+
+- [ ] `pytest tests/test_golden_values.py` passes (all 10 methods, shape and value match)
+- [ ] Golden CSVs committed with message "chore: regenerate golden values (96-work smoke fixture)"
+
+## Notes
+
+- C2ST golden values may also need regeneration — check `test_golden_values.py` for full method list.
+- `test_null_model_c2st.py::TestC2STNullModelSmoke` timeouts (>30s) can be addressed in the same
+  session: increase `--timeout` on those integration tests (currently 30s; 120s would be sufficient).
