@@ -1,0 +1,66 @@
+%erg v1
+Title: Fix L3 null ribbon: handle window="0" cumulative methods
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T17:45Z claude created
+
+--- body ---
+## Context
+
+L3 (term burst counts) is a cumulative method: it emits one value per
+year with window="0" (no before/after sliding window).  `tab_null_L3.csv`
+exists and has correct data, but `plot_zoo_results.py` never shows the
+ribbon because it filters for `window=="3"`:
+
+    w3_null = null_df[null_df["window"] == "3"]
+    has_ribbon = w3_null is not None and not w3_null.empty ...
+
+For L3, `w3_null` is always empty → falls back to the flat ±2 box.
+
+## Relevant files
+
+- `scripts/plot_zoo_results.py:137` — `w3_null` filter
+- `scripts/plot_zoo_results.py:143` — `has_ribbon` check
+- `scripts/plot_zoo_results.py:196` — non-sliding path that plots
+  `non_sliding["z_score"]` for window="0" methods
+
+## Actions
+
+1. In `_plot`, after computing `w3_null`, also check for a `window=="0"`
+   null slice:
+   ```python
+   w0_null = null_df[null_df["window"] == "0"] if null_df is not None else None
+   ```
+
+2. For the non-sliding (window="0") axis, draw a ribbon using `w0_null`
+   if available, applying the same `hw = 1.96 * null_std / sigma_w`
+   formula (after ticket 0113 lands).
+
+3. `has_ribbon` for the sliding axis stays tied to `w3_null`; add a
+   separate `has_ribbon_w0` flag for the non-sliding axis.
+
+## Test
+
+Red: add a test that calls `plot_zoo_results.plot(method="L3", ...)` with
+a synthetic `tab_null_L3.csv` (window="0" only) and asserts the figure
+contains a `fill_between` patch on the non-sliding axis.
+
+## Verification
+
+- [ ] L3 zoo figure shows a time-varying ribbon band (not the flat ±2 box)
+- [ ] `make check-fast` passes
+
+## Invariants
+
+- L3's non-sliding axis (window="0") must be unaffected by ticket 0113's
+  w=3 ribbon changes.
+- Methods with both sliding (w=3) and non-sliding (w=0) variants must
+  render both ribbons correctly if both null CSVs exist.
+
+## Exit criteria
+
+- L3 zoo figure shows ribbon
+- PR merged

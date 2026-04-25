@@ -1,0 +1,84 @@
+%erg v1
+Title: Fix null ribbon: center at Z=0 when null_mean departs from observed mean
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T17:45Z claude created
+
+--- body ---
+## Context
+
+The ribbon formula in `plot_zoo_results.py::_compute_null_z_threshold`:
+
+    z_threshold = (null_mean ± 1.96 * null_std − mu_w) / sigma_w
+
+places the ribbon at the Z-score that corresponds to the null distribution
+mean.  For methods where null_mean ≠ mu_w (mean observed), the ribbon is
+offset from Z=0:
+
+| Method          | ribbon center |
+|-----------------|--------------|
+| C2ST_embedding  | −8.3         |
+| C2ST_lexical    | −3.9         |
+| S1_MMD          | −1.8         |
+| L1, S2–S4       | −0.3 to +0.4 |
+
+For C2ST, the null distribution (chance-level AUC ≈ 0.5) maps to Z ≈ −8
+in the crossyear space because the observed mean AUC is ~0.65.  This is
+mathematically correct but falls outside the visible plot area and is
+uninformative as a significance threshold.
+
+The original intent (ticket 0097) was to replace the flat ±2 box with a
+time-varying equivalent — a band showing where "random noise" lands in
+Z-score space.  For that purpose the ribbon should be centred at Z=0 with
+time-varying half-width 1.96 × null_std / sigma_w.
+
+## Relevant files
+
+- `scripts/plot_zoo_results.py:102` — `_compute_null_z_threshold` —
+  formula to change
+- `scripts/plot_zoo_results.py:149` — `fill_between` call that uses
+  `z_threshold_upper` / `z_threshold_lower`
+
+## Actions
+
+1. Change `_compute_null_z_threshold` to centre the ribbon at Z=0:
+
+   ```python
+   hw = 1.96 * null_df["null_std"] / null_df["window"].map(sigma_w)
+   null_df["z_threshold_upper"] = +hw
+   null_df["z_threshold_lower"] = -hw
+   ```
+
+   Drop the `null_mean − mu_w` term.  The ribbon now reads:
+   "the null permutation distribution has this ±1.96σ width in
+   standardised units, centred at the observed mean."
+
+2. Update the legend label if needed to reflect the new semantics.
+
+3. Rebuild zoo figures and verify C2ST ribbon is visible and near Z=0.
+
+## Test
+
+Red: add a test checking that for a synthetic null_df with large
+`null_mean` offset, `_compute_null_z_threshold` returns thresholds
+symmetric around 0.
+
+## Verification
+
+- [ ] C2ST_embedding ribbon centre is at Z=0 ± 0.1 (not at −8)
+- [ ] G-method ribbons are approximately unchanged (null_mean ≈ mu_w for G)
+- [ ] All 18 zoo figures rebuild without error
+
+## Invariants
+
+- For G methods where null_mean ≈ mu_w the ribbon shape should be nearly
+  identical to before (since the offset term was near zero anyway).
+- Time-varying width (null_std varies by year) must be preserved.
+
+## Exit criteria
+
+- Ribbon visible and near Z=0 for C2ST, S1, and all methods
+- PR merged

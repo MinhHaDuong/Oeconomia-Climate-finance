@@ -1,0 +1,126 @@
+%erg v1
+Title: Analytical null distribution for pairwise two-sample tests
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T17:45Z claude created
+
+--- body ---
+## Context
+
+All sliding-window null models (S1–S4, L1–L2, C2ST, G1–G9) use Monte
+Carlo permutation: draw n_perm=500 random full shuffles of the before+after
+pool, recompute the test statistic each time, report mean and std of the
+null distribution.
+
+Two problems:
+1. SE(null_mean) ≈ σ_null / √500 ≈ 4.5% error on the ribbon position.
+   For large-n windows this dominates the signal.
+2. p-value resolution is 1/n_perm = 0.002; values reported as "p=0.000"
+   are actually "p < 0.002".
+
+The fix: derive E[T | H₀] and Var[T | H₀] analytically for each
+two-sample statistic.  These are exact (up to asymptotic approximation)
+and require zero Monte Carlo draws.  For large-n windows (CLT regime),
+the analytical values are strictly better than 500 permutations.
+
+## Permutation structure
+
+Each (year, window) test pools n_before + n_after documents and shuffles
+ALL of them (full Fisher-Yates permutation), reassigning the first n_before
+to "before" and the rest to "after".  Only documents within the window
+participate — the full corpus is never touched outside the window.
+
+## Analytical nulls by method
+
+### S2 — energy distance
+E(D_energy | H₀) = 2 * E[||X−Y||] − E[||X−X'||] − E[||Y−Y'||]
+where X, Y drawn iid from the pooled empirical distribution.
+These expectations are means of entries in the pairwise distance matrix,
+computable in O(N²) from the pooled embeddings.
+Var can be derived from 4th-moment U-statistics (see Székely & Rizzo 2013).
+
+### S1 — MMD²
+E(MMD² | H₀) = 0 (biased estimator) or
+E(MMD²_unbiased | H₀) = 0 by construction.
+Var(MMD²_unbiased | H₀) from Gretton et al. (2012) Lemma 6:
+  Var ≈ (4/n²) × (Var of h(X,X') under H₀)
+where h is the kernel function.  Exact in O(N²).
+
+### L1 — JS divergence
+Under H₀ (shared vocabulary distribution), JS divergence between two
+multinomial samples of sizes n_before, n_after from shared distribution p
+satisfies:
+  E[JS] ≈ (V−1)/(4) × (1/n_before + 1/n_after)   (leading term)
+  Var[JS] = O(1/n²)
+where V = vocabulary size.  This is the first-order analytic correction
+(Archer et al. 2014).  Requires only the pooled TF-IDF mean and vocabulary
+size — O(V) to compute.
+
+### G methods (G1, G5, G6, G8) — citation scalar metrics
+These compute |Δ metric(before) − Δ metric(after)| where the metric is
+a summary of a citation graph.  Under node-label permutation, the analytic
+null requires the variance of the metric under uniform random node splits.
+This is harder; leave for a follow-up unless easy closed forms exist.
+
+### C2ST — AUC
+Under H₀ (no separability), AUC → 0.5 with variance O(1/(n_before*n_after))
+from the Mann-Whitney U-statistic identity.  Exact analytic null available
+via Hanley & McNeil (1982).
+
+## Relevant files
+
+- `scripts/compute_null_model.py` — dispatcher; add `--analytical` flag
+- `scripts/_permutation_accel.py` — GPU/CPU permutation backends; add
+  analytical implementations alongside Monte Carlo
+- `scripts/_permutation_lexical.py` — L1/L2 backends
+- `scripts/_permutation_citation.py` — G method backends
+- `config/analysis.yaml` — add `analytical: true` toggle per method
+
+## Actions
+
+1. Add `compute_analytical_null(method, X_before, X_after, cfg) →
+   (null_mean, null_std)` in `_permutation_accel.py` for S1 (MMD) and
+   S2 (energy distance).
+
+2. Add analytical null for L1 (JS divergence) in `_permutation_lexical.py`.
+
+3. Add analytical null for C2ST (AUC via Mann-Whitney) in a new
+   `_permutation_c2st.py` or in `_divergence_c2st.py`.
+
+4. Add `--analytical` flag to `compute_null_model.py`; when set, skip
+   Monte Carlo loops and call the analytical functions instead.
+
+5. Update `divergence.mk` null model recipes to pass `--analytical` for
+   S1, S2, L1, C2ST methods.
+
+6. Leave G methods on Monte Carlo for now; add a `# TODO: analytical`
+   comment.
+
+## Test
+
+Red: for each analytical method, assert that the analytical null_mean and
+null_std are within 2× SE of the Monte Carlo estimates computed with
+n_perm=5000 on a fixture with n_before=n_after=200.
+
+## Verification
+
+- [ ] Analytical null_mean matches Monte Carlo (n_perm=5000) within 2 SE
+  for S1, S2, L1, C2ST on the fixture
+- [ ] Null CSV files are regenerated; ribbon shape is smoother
+  (no Monte Carlo noise across years)
+- [ ] `make check-fast` passes
+
+## Invariants
+
+- Monte Carlo path must remain as fallback (keep n_perm flag, add
+  `--analytical` as opt-in)
+- Output CSV schema (null_mean, null_std, z_score, p_value) unchanged
+
+## Exit criteria
+
+- Analytical null implemented for S1, S2, L1, C2ST
+- Tests pass
+- PR merged
