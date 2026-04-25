@@ -17,49 +17,57 @@ Author: claude
 AssertionError: S1_MMD: shape mismatch — golden (108, 5), fresh (96, 5)
 ```
 
-The golden CSVs in `tests/fixtures/golden/` were generated when the smoke fixture corpus had 108 works.
-The current smoke fixture has 96 works. The shape mismatch causes all golden-value tests to fail.
-
-This is data drift, not a code regression. The golden values need to be regenerated on any machine
-where `CLIMATE_FINANCE_DATA` points to the current smoke fixture.
+The golden CSVs in `tests/fixtures/smoke/golden/` were generated when the smoke fixture output had
+108 rows (year×window combinations). The current corpus produces 96 rows. This is data drift, not a
+code regression. 15 golden files exist; G9/C2ST have no golden files (test auto-skips them).
 
 ## Relevant files
 
-- `tests/fixtures/golden/tab_div_*.csv` — stale golden CSV files (108 rows)
-- `tests/test_golden_values.py` — compares fresh output to golden; marks `@pytest.mark.slow`
-- `scripts/compute_divergence.py` — the script that generates divergence CSVs
+- `tests/fixtures/smoke/golden/tab_div_*.csv` — 15 stale golden CSV files
+- `tests/test_golden_values.py` — compares fresh output shape AND values (atol=1e-6); `@pytest.mark.slow`
+- `scripts/compute_divergence.py` — the regeneration script
 
 ## Actions
 
-1. Identify where the golden files are generated (grep for `update-golden` or similar in Makefile/scripts).
-2. Run the regeneration command on padme with the current smoke fixture:
-   ```bash
-   make regression-update   # or equivalent
-   ```
-   Or manually:
-   ```bash
-   for method in S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
-                 L1 G1_pagerank G2_spectral G5_pref_attachment G6_entropy G8_betweenness; do
-     CLIMATE_FINANCE_DATA=tests/fixtures/smoke \
-     uv run python scripts/compute_divergence.py \
-       --method $method --output tests/fixtures/golden/tab_div_${method}.csv
-   done
-   ```
-3. Commit the updated golden CSVs.
+`make regression-update` regenerates `golden_hashes.json` (figure hashes), NOT the divergence golden
+CSVs — do not use it. Run manually:
+
+```bash
+SMOKE="$(pwd)/tests/fixtures/smoke"
+GOLDEN="${SMOKE}/golden"
+for method in \
+  S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
+  L1 L2 L3 \
+  G1_pagerank G2_spectral G3_coupling_age G4_cross_tradition \
+  G5_pref_attachment G6_entropy G7_disruption G8_betweenness; do
+  PYTHONHASHSEED=0 SOURCE_DATE_EPOCH=0 CLIMATE_FINANCE_DATA="${SMOKE}" \
+    uv run python scripts/compute_divergence.py \
+      --method "${method}" \
+      --output "${GOLDEN}/tab_div_${method}.csv"
+done
+git add tests/fixtures/smoke/golden/tab_div_*.csv
+git commit -m "chore: regenerate golden values (102-work smoke fixture)"
+```
+
+**Machine caveat:** S1–S4 auto-detect CUDA. Golden files must be regenerated on the same
+backend (CPU or GPU) where tests will run. On padme (GPU), torch is used — regenerate there.
+
+**G9/C2ST**: no golden files exist for these — tests auto-skip. Do not create them.
+
+**S4_frechet**: after 0118 lands (get_min_papers smoke-mode fix), smoke mode returns min_papers=5
+so results will be non-empty. The regenerated S4 golden will have actual rows.
 
 ## Test
 
 ```bash
-pytest tests/test_golden_values.py -v  # should pass for all 10 methods
+uv run pytest tests/test_golden_values.py -v
 ```
 
 ## Exit criteria
 
-- [ ] `pytest tests/test_golden_values.py` passes (all 10 methods, shape and value match)
-- [ ] Golden CSVs committed with message "chore: regenerate golden values (96-work smoke fixture)"
+- [ ] `pytest tests/test_golden_values.py` passes for all methods (10 with golden files pass, 5 skip)
+- [ ] Golden CSVs committed with message "chore: regenerate golden values (102-work smoke fixture)"
 
-## Notes
+## Blocker
 
-- C2ST golden values may also need regeneration — check `test_golden_values.py` for full method list.
-- `test_null_model_c2st.py::TestC2STNullModelSmoke` timeouts (>30s) can be addressed in the same
-  session: increase `--timeout` on those integration tests (currently 30s; 120s would be sufficient).
+0118 must be merged before executing this ticket.

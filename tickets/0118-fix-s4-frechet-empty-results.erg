@@ -40,16 +40,45 @@ more likely to skip pairs on the smoke fixture (90 works).
 
 ## Actions
 
-1. In `compute_s4_frechet` (~line 543), add before the final return:
-   ```python
-   if not results:
-       return empty_divergence_df()
-   return pd.DataFrame(results)
-   ```
-2. Apply the same guard to `compute_s1_mmd`, `compute_s2_energy`, `compute_s3_sliced_wasserstein`
-   (same pattern, same risk).
-3. Confirm `empty_divergence_df()` has the right columns: `["year", "window", "hyperparams", "value"]`
-   — it does (line 165).
+### Change 1: `scripts/_divergence_io.py` lines 127–141 — smoke mode must precede per-method override
+
+`get_min_papers` currently checks `method == "S4_frechet"` before checking `n_works < 200`, so
+the smoke guard never fires for S4_frechet. Reorder to check smoke mode first:
+
+```python
+# Smoke mode (small corpus) — overrides ALL per-method thresholds
+if n_works is not None and n_works < 200:
+    mp = div_cfg.get("min_papers_smoke", 5)
+    log.info("Smoke mode: n_works=%d < 200, min_papers=%d", n_works, mp)
+    return mp
+
+# Per-method overrides (production only)
+if method == "S4_frechet":
+    return div_cfg["semantic"]["S4_frechet"].get("min_papers", div_cfg["min_papers"])
+if method in ("c2st", "C2ST_embedding", "C2ST_lexical"):
+    return div_cfg["c2st"].get("min_papers", div_cfg["min_papers"])
+
+return div_cfg.get("min_papers", 30)
+```
+
+### Change 2: `scripts/_divergence_semantic.py` — add empty-results guard at 4 locations
+
+Before each `return pd.DataFrame(results)` in S1/S2/S3/S4:
+
+- Line ~261 (end of `compute_s1_mmd`)
+- Line ~338 (end of `compute_s2_energy`)
+- Line ~409 (end of `compute_s3_sliced_wasserstein`)
+- Line ~543 (end of `compute_s4_frechet`)
+
+Pattern:
+```python
+    if not results:
+        return empty_divergence_df()
+    return pd.DataFrame(results)
+```
+
+PCA gotcha: with smoke min_papers=5, windows have ~5 rows. `max_d = min(256, min(5,5)-1, 1024) = 4`.
+`n_components = max(2, 4) = 4`. PCA(n_components=4) on a 5-row matrix is valid (n_samples-1=4 max). No fix needed.
 
 ## Test
 
@@ -58,10 +87,8 @@ more likely to skip pairs on the smoke fixture (90 works).
 # tests/test_divergence.py::TestSmokeSemantic::test_compute_method[S4_frechet]
 ```
 
-RED: currently fails with SchemaError.
+RED: currently fails with SchemaError (column 'year' not in dataframe).
 GREEN: `pytest tests/test_divergence.py -k S4_frechet` passes.
-
-Also confirm S1/S2/S3 still pass (they currently do — but confirm the guard doesn't break them).
 
 ## Exit criteria
 
