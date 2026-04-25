@@ -1,0 +1,56 @@
+%erg v1
+Title: Add empty-results guard to remaining compute modules (_c2st, _community, _citation)
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T23:50Z claude created — follow-up from 0118 verify finding
+
+--- body ---
+## Context
+
+Ticket 0118 (PR #764) added `if not results: return empty_divergence_df()` guards to the four
+semantic compute functions (`compute_s*` in `_divergence_semantic.py`). The same unguarded
+`return pd.DataFrame(results/rows)` pattern exists in at least three other modules:
+
+- `scripts/_divergence_c2st.py` — C2ST compute functions
+- `scripts/compute_temporal_communities.py` — G9 community divergence
+- `scripts/_citation_methods.py` — G1/G5/G6/G8 citation compute functions
+
+If `_iter_window_pairs` (or equivalent) yields nothing in any of these, `pd.DataFrame([])`
+returns a 0-column DataFrame. The dispatcher's `result["channel"] = channel` then produces
+a 1-column `['channel']` DataFrame that fails `DivergenceSchema.validate` — same bug as S4_frechet.
+
+Currently low-risk: these modules' min_papers thresholds are low enough that smoke fixtures
+always yield results. But the same failure mode can be triggered by a sufficiently small
+corpus or a configuration change.
+
+## Relevant files
+
+- `scripts/_divergence_c2st.py` — grep for `return pd.DataFrame(results)`
+- `scripts/compute_temporal_communities.py` — grep for `return pd.DataFrame`
+- `scripts/_citation_methods.py` — grep for `return pd.DataFrame(results)`
+- `scripts/_divergence_io.py:159` — `empty_divergence_df()` returns typed empty DF
+
+## Actions
+
+1. Grep each file for `return pd.DataFrame(results)` or `return pd.DataFrame(rows)`.
+2. At each site, add the guard:
+   ```python
+   if not results:
+       return empty_divergence_df()
+   return pd.DataFrame(results)
+   ```
+   (import `empty_divergence_df` from `_divergence_io` if not already imported)
+3. Confirm `make check-fast` still clean.
+
+## Test
+
+No new test needed — `make check-fast` passing is sufficient. The guard is defensive; triggering
+it requires a corpus smaller than the smoke fixture, which isn't tested.
+
+## Exit criteria
+
+- [ ] All `return pd.DataFrame(results/rows)` in the three modules are guarded
+- [ ] `make check-fast` clean
