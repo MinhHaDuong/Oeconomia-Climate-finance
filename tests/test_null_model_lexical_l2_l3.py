@@ -423,6 +423,7 @@ class TestLexicalDispatch:
 
     def test_l3_dispatch_via_run_lexical_permutations(self):
         """_run_lexical_permutations with method='L3' calls _run_l3_permutations."""
+        from unittest.mock import patch
 
         from compute_null_model import _run_l3_permutations
 
@@ -436,9 +437,10 @@ class TestLexicalDispatch:
             }
         )
         cfg = _base_cfg_lexical()
+        abstract_df = _make_abstract_df()
 
-        # Call _run_l3_permutations directly (routing tested elsewhere)
-        result = _run_l3_permutations(div_df, cfg)
+        with patch("_divergence_lexical.load_lexical_data", return_value=abstract_df):
+            result = _run_l3_permutations(div_df, cfg)
         assert len(result) == len(years)
         assert "null_mean" in result.columns
         assert "null_std" in result.columns
