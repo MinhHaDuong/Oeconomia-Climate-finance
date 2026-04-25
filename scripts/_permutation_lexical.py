@@ -9,8 +9,10 @@ L2 — Novelty / Transience / Resonance (Barron et al. 2018)
     recompute resonance of the fixed year-y docs against the shuffled LMs.
 
 L3 — Burst detection (z-score term frequency, Kleinberg-style)
-    Year-label permutation: shuffle the burst-count time series and standardise
-    each permuted series to produce a null ribbon for the cross-year Z-score.
+    Document-shuffle permutation: shuffle document-year assignments while
+    preserving per-year document counts.  Recompute burst counts from scratch
+    in each permutation.  The null ribbon is in raw burst-count units,
+    matching the observed statistic.
 """
 
 import numpy as np
@@ -21,73 +23,141 @@ from utils import get_logger
 log = get_logger("_permutation_lexical")
 
 
+def _count_bursts(year_labels, X_all, top_indices, years, z_threshold):
+    """Count burst terms per year given a (possibly permuted) year-label array.
+
+    Parameters
+    ----------
+    year_labels : np.ndarray of int, shape (n_docs,)
+        Year assigned to each document (may be permuted).
+    X_all : scipy sparse matrix, shape (n_docs, n_features)
+        Raw TF matrix for the entire corpus.
+    top_indices : np.ndarray of int
+        Column indices of the top-N terms by corpus frequency.
+    years : list[int]
+        Sorted list of years to compute counts for.
+    z_threshold : float
+        Z-score threshold for declaring a term as bursting.
+
+    Returns
+    -------
+    np.ndarray of int, shape (n_years,)
+        Number of bursting terms for each year.
+
+    """
+    n_years = len(years)
+    year_to_idx = {y: i for i, y in enumerate(years)}
+
+    # Per-year mean term frequency for top terms
+    tf_matrix = np.zeros((n_years, len(top_indices)))
+    for i, y in enumerate(years):
+        mask = year_labels == y
+        n_docs = mask.sum()
+        if n_docs == 0:
+            continue
+        tf = np.asarray(X_all[mask][:, top_indices].sum(axis=0)).flatten()
+        tf_matrix[i] = tf / n_docs
+
+    # Z-score each term across years
+    means = tf_matrix.mean(axis=0)
+    stds = tf_matrix.std(axis=0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z_matrix = np.where(stds > 0, (tf_matrix - means) / stds, 0.0)
+
+    return (z_matrix > z_threshold).sum(axis=1).astype(int)
+
+
 def run_l3_permutations(div_df, cfg):
-    """Year-label permutation null model for L3 (term burst counts).
+    """Document-shuffle permutation null model for L3 (term burst counts).
 
     L3 emits one value per year (window="0"): the count of terms whose
-    TF-IDF z-score exceeds a threshold. This is a cumulative method with
-    no before/after pairs, so the standard permutation_test does not apply.
+    per-year TF z-score exceeds a threshold.  The null model shuffles
+    document-year assignments (preserving per-year document counts) and
+    recomputes burst counts from scratch in each permutation.
 
-    Instead we permute year labels on the burst-count vector and standardise
-    each permuted series the same way compute_crossyear_zscore.py does
-    (subtract global mean, divide by global std). The null ribbon describes
-    how much the cross-year Z-score can fluctuate by chance alone.
+    The observed value is read directly from div_df["value"] (raw burst
+    counts as produced by compute_l3_bursts).  The null ribbon is in the
+    same raw-count units.
 
     Parameters
     ----------
     div_df : pd.DataFrame
         Rows from tab_div_L3.csv with columns year, window, value.
     cfg : dict
-        Analysis config (reads divergence.random_seed and
-        divergence.permutation.n_perm).
+        Analysis config (reads divergence.random_seed,
+        divergence.permutation.n_perm, and divergence.lexical.L3_bursts).
 
     Returns
     -------
     pd.DataFrame matching NullModelSchema with window="0".
 
     """
+    from _divergence_lexical import load_lexical_data
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
     div_cfg = cfg["divergence"]
+    lex_cfg = div_cfg["lexical"]
     n_perm = div_cfg["permutation"]["n_perm"]
     seed = div_cfg["random_seed"]
     rng = np.random.RandomState(seed)
 
+    n_top_terms = lex_cfg["L3_bursts"]["top_n_terms"]
+    z_threshold = lex_cfg["L3_bursts"]["z_threshold"]
+    tfidf_max_features = lex_cfg["tfidf_max_features"]
+    tfidf_min_df = lex_cfg["tfidf_min_df"]
+
+    df = load_lexical_data(None)
+    doc_years = df["year"].values
+    all_texts = df["abstract"].tolist()
+
+    # Fit TF-IDF (raw TF, no IDF) — same settings as compute_l3_bursts
+    vec = TfidfVectorizer(
+        stop_words="english",
+        max_features=tfidf_max_features,
+        min_df=min(tfidf_min_df, max(1, len(all_texts) - 1)),
+        sublinear_tf=False,
+        use_idf=False,
+        norm=None,
+    )
+    X_all = vec.fit_transform(all_texts)
+
+    # Corpus-wide frequency → top N terms (invariant under permutation)
+    corpus_freq = np.asarray(X_all.sum(axis=0)).flatten()
+    top_indices = np.argsort(corpus_freq)[-n_top_terms:]
+
     years = sorted(div_df["year"].unique())
-    values = np.array([div_df.loc[div_df["year"] == y, "value"].iloc[0] for y in years])
+    observed_values = np.array(
+        [div_df.loc[div_df["year"] == y, "value"].iloc[0] for y in years]
+    )
 
-    mu = float(np.mean(values))
-    sigma = float(np.std(values))
+    # Per-year document counts (preserved during shuffle)
+    year_counts = {y: int((doc_years == y).sum()) for y in years}
 
-    # Observed Z-scores (same standardisation as compute_crossyear_zscore.py)
-    if sigma > 0:
-        observed_z = (values - mu) / sigma
-    else:
-        observed_z = np.full_like(values, np.nan, dtype=float)
-
-    n_years = len(years)
-    # Collect permuted Z-score vectors
-    perm_z_matrix = np.empty((n_perm, n_years))
+    # Permutation loop: shuffle document-year assignments within the corpus
+    perm_matrix = np.empty((n_perm, len(years)))
     for i in range(n_perm):
-        permuted = rng.permutation(values)
-        if sigma > 0:
-            perm_z_matrix[i] = (permuted - mu) / sigma
-        else:
-            perm_z_matrix[i] = np.nan
+        shuffled_years = rng.permutation(doc_years)
+        perm_matrix[i] = _count_bursts(
+            shuffled_years, X_all, top_indices, years, z_threshold
+        )
 
-    null_mean = np.mean(perm_z_matrix, axis=0)
-    null_std = np.std(perm_z_matrix, axis=0)
+    null_mean = np.mean(perm_matrix, axis=0)
+    null_std = np.std(perm_matrix, axis=0)
 
     rows = []
     for j, y in enumerate(years):
-        obs = float(observed_z[j])
+        obs = float(observed_values[j])
         nm = float(null_mean[j])
         ns = float(null_std[j])
         if ns > 0:
             z = (obs - nm) / ns
         else:
             z = 0.0
-        p = float(np.mean(perm_z_matrix[:, j] >= obs))
+        p = float(np.mean(perm_matrix[:, j] >= obs))
         rows.append(_result_row(y, "0", obs, nm, ns, z, p))
-        log.info("  year=%d z=%.2f p=%.3f [L3]", y, z, p)
+        log.info(
+            "  year=%d obs=%.1f null_mean=%.2f z=%.2f p=%.3f [L3]", y, obs, nm, z, p
+        )
 
     return pd.DataFrame(rows)
 

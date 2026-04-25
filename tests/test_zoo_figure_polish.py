@@ -98,6 +98,57 @@ def test_metric_filter_selects_resonance_only(tmp_path):
     assert abs(row_1999["value"].iloc[0] - 3.38) < 1e-6
 
 
+def test_non_sliding_plots_value_not_z_score(tmp_path):
+    """Non-sliding fallback (L3, G3, G4, G7) must plot 'value' not 'z_score'.
+
+    Uses a dual-sentinel: value=0.11 and z_score=99.0.
+    The plot must contain y-data matching 0.11, not 99.0.
+    """
+    import numpy as np
+    import plot_zoo_results
+
+    # Build a minimal crossyear CSV for a non-sliding method (L3)
+    years = [2000, 2001, 2002]
+    df = pd.DataFrame(
+        {
+            "year": years,
+            "window": ["0"] * 3,
+            "value": [0.11, 0.12, 0.13],  # sentinel: small values
+            "z_score": [99.0, 98.0, 97.0],  # sentinel: large values
+        }
+    )
+
+    output_png = tmp_path / "fig_L3.png"
+    output_stem = str(output_png.with_suffix(""))
+
+    # Capture y-data plotted by calling _plot with our sentinel df
+    plotted_y = []
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    orig_plot = plt.Axes.plot
+
+    def capture_plot(self, *args, **kwargs):
+        if len(args) >= 2:
+            y = np.asarray(args[1])
+            plotted_y.extend(y.tolist())
+        return orig_plot(self, *args, **kwargs)
+
+    import unittest.mock as mock
+
+    with mock.patch.object(plt.Axes, "plot", capture_plot):
+        plot_zoo_results._plot(df, "L3", output_stem)
+
+    assert any(abs(y - 0.11) < 1e-6 for y in plotted_y), (
+        f"Expected 0.11 (value column) in plotted y-data; got {plotted_y}"
+    )
+    assert not any(abs(y - 99.0) < 0.1 for y in plotted_y), (
+        f"z_score sentinel (99.0) should NOT appear in plotted y-data; got {plotted_y}"
+    )
+
+
 def test_l2_crossyear_value_matches_null_observed():
     """tab_crossyear_L2.csv value must match tab_null_L2.csv observed within 1e-4.
 
