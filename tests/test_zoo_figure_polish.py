@@ -1,7 +1,9 @@
 """Tests for figure-polish changes in plot_zoo_results.py (ticket 0103)."""
 
+import csv
 import glob
 import os
+import subprocess
 import sys
 
 import pandas as pd
@@ -58,10 +60,6 @@ def test_method_titles_dict_has_all_18_methods():
 
 def test_metric_filter_selects_resonance_only(tmp_path):
     """--metric resonance keeps only resonance rows."""
-    import csv
-    import subprocess
-    import sys
-
     rows = [
         ["year", "window", "hyperparams", "value", "channel", "method"],
         ["1999", "3", "w=3,metric=novelty", "8.0", "lexical", "L2"],
