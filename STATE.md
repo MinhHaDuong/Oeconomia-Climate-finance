@@ -43,9 +43,10 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - #761 (0066): null CSV schema validation on read in export_divergence_summary
 - #762: fix zoo.mk null deps (NULL_METHODS_ALL loop); ribbon quality tickets 0112–0116
 
-### Ribbon raw values + smoke test fixes — merged 2026-04-25 (PRs #763–#764, #766–#767)
+### Ribbon raw values + smoke test fixes — merged 2026-04-25 (PRs #763–#767)
 - #763: prune dead DOC_VARS entries (test_doc_vars_no_extras green)
 - #764 (0118): S4_frechet empty-results guard + smoke-mode min_papers precedence
+- #765 (0112): fix L2 null: filter crossyear to resonance-only
 - #766 (0113): zoo figures: plot raw D(t,w) values, drop Z-score rescaling
 - #767 (0119): regenerate golden values (102-work smoke fixture, 96 rows)
 
@@ -93,7 +94,6 @@ None.
 
 | Ticket | Title | Priority |
 |--------|-------|----------|
-| 0112 | Fix L2 null: filter crossyear to resonance-only | High |
 | 0114 | L3 null: full document shuffle + window="0" ribbon | High |
 | 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium |
 
@@ -107,8 +107,8 @@ None.
 
 ## Next actions
 
-- Land 0112 (L2 scale fix, PR #765 open)
-- Then 0114 (L3 document shuffle), 0115 (analytical overlay)
+- 0114 (L3 document shuffle + raw burst ribbon)
+- 0115 (analytical null overlay for S1/S2/L1/C2ST)
 
 Background (not on critical path):
 
