@@ -1,6 +1,6 @@
 %erg v1
 Title: Fix S4_frechet empty-results guard in compute_s4_frechet
-Status: open
+Status: closed
 Created: 2026-04-25
 Author: claude
 
