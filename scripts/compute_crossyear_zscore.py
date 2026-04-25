@@ -19,6 +19,7 @@ Usage::
 """
 
 import argparse
+import re
 import sys
 
 import pandas as pd
@@ -83,7 +84,6 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
 
 
 def main() -> None:
-    import re
 
     io_args, extra = parse_io_args()
 
@@ -97,14 +97,13 @@ def main() -> None:
         "--metric",
         default=None,
         help=(
-            "Filter to rows where hyperparams ends with metric=<value>. "
+            "Filter to rows where hyperparams contains metric=<value>. "
             "Used for L2 (resonance) to align observed statistic with null model."
         ),
     )
     args = parser.parse_args(extra)
 
     method = args.method
-    # Use --input if provided (first path), else fall back to default location.
     input_path = (
         io_args.input[0] if io_args.input else f"content/tables/tab_div_{method}.csv"
     )
