@@ -84,6 +84,7 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
 
 
 def main() -> None:
+
     io_args, extra = parse_io_args()
 
     parser = argparse.ArgumentParser(add_help=True)
