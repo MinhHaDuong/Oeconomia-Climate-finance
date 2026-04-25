@@ -1,0 +1,73 @@
+%erg v1
+Title: Regenerate golden values for current smoke fixture (108→96 row drift)
+Status: closed
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T22:00Z claude created
+2026-04-25T22:30Z orchestrator reimagine: make regression-update regenerates golden_hashes.json (breakpoints/plots) not tab_div golden CSVs — wrong tool. Correct path: manual loop `compute_divergence.py` per method with CLIMATE_FINANCE_DATA=tests/fixtures/smoke. C2ST golden files don't exist (test skips them) — out of scope, drop. C2ST timeout claim wrong: already 300s in test, not 30s — drop. 108/96 are output rows (year×window), not corpus size (102 works). Hard blocker: 0118 must land before running loop (S4_frechet guard needed first).
+
+--- body ---
+## Context
+
+`test_golden_values.py::TestGoldenValues::test_method_matches_golden` fails for all 10 methods with:
+
+```
+AssertionError: S1_MMD: shape mismatch — golden (108, 5), fresh (96, 5)
+```
+
+The golden CSVs in `tests/fixtures/smoke/golden/` were generated when the smoke fixture output had
+108 rows (year×window combinations). The current corpus produces 96 rows. This is data drift, not a
+code regression. 15 golden files exist; G9/C2ST have no golden files (test auto-skips them).
+
+## Relevant files
+
+- `tests/fixtures/smoke/golden/tab_div_*.csv` — 15 stale golden CSV files
+- `tests/test_golden_values.py` — compares fresh output shape AND values (atol=1e-6); `@pytest.mark.slow`
+- `scripts/compute_divergence.py` — the regeneration script
+
+## Actions
+
+`make regression-update` regenerates `golden_hashes.json` (figure hashes), NOT the divergence golden
+CSVs — do not use it. Run manually:
+
+```bash
+SMOKE="$(pwd)/tests/fixtures/smoke"
+GOLDEN="${SMOKE}/golden"
+for method in \
+  S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
+  L1 L2 L3 \
+  G1_pagerank G2_spectral G3_coupling_age G4_cross_tradition \
+  G5_pref_attachment G6_entropy G7_disruption G8_betweenness; do
+  PYTHONHASHSEED=0 SOURCE_DATE_EPOCH=0 CLIMATE_FINANCE_DATA="${SMOKE}" \
+    uv run python scripts/compute_divergence.py \
+      --method "${method}" \
+      --output "${GOLDEN}/tab_div_${method}.csv"
+done
+git add tests/fixtures/smoke/golden/tab_div_*.csv
+git commit -m "chore: regenerate golden values (102-work smoke fixture)"
+```
+
+**Machine caveat:** S1–S4 auto-detect CUDA. Golden files must be regenerated on the same
+backend (CPU or GPU) where tests will run. On padme (GPU), torch is used — regenerate there.
+
+**G9/C2ST**: no golden files exist for these — tests auto-skip. Do not create them.
+
+**S4_frechet**: after 0118 lands (get_min_papers smoke-mode fix), smoke mode returns min_papers=5
+so results will be non-empty. The regenerated S4 golden will have actual rows.
+
+## Test
+
+```bash
+uv run pytest tests/test_golden_values.py -v
+```
+
+## Exit criteria
+
+- [ ] `pytest tests/test_golden_values.py` passes for all methods (10 with golden files pass, 5 skip)
+- [ ] Golden CSVs committed with message "chore: regenerate golden values (102-work smoke fixture)"
+
+## Blocker
+
+0118 must be merged before executing this ticket.

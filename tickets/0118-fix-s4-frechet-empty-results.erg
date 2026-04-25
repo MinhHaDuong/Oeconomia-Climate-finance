@@ -1,0 +1,96 @@
+%erg v1
+Title: Fix S4_frechet empty-results guard in compute_s4_frechet
+Status: closed
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T22:00Z claude created
+2026-04-25T22:30Z orchestrator reimagine: fix is necessary but not sufficient — S4_frechet.min_papers=300 bypasses smoke mode, so _iter_window_pairs never yields on the 102-row fixture. Must also fix get_min_papers to respect smoke mode for per-method overrides (return smoke min_papers when n_works < 200), otherwise test stays red at assert len(df) > 0. Widen scope to apply empty-results guard to L1/L2/L3/G9/C2ST for defense in depth.
+
+--- body ---
+## Context
+
+`test_divergence.py::TestSmokeSemantic::test_compute_method[S4_frechet]` fails with:
+
+```
+pandera.errors.SchemaError: column 'year' not in dataframe. Columns in dataframe: ['channel']
+```
+
+Root cause: `compute_s4_frechet` in `scripts/_divergence_semantic.py` (line ~545) ends with
+`return pd.DataFrame(results)`. When `results = []` (because `_iter_window_pairs` yields nothing
+— smoke fixture has too few works per window to pass the `min_papers` cut), `pd.DataFrame([])`
+returns a DataFrame with **0 columns**. Then `compute_divergence.py:173` adds `result["channel"] = channel`
+producing a 1-column DataFrame `['channel']`, which fails `DivergenceSchema.validate`.
+
+The early-return guard at line 501-502 (`if not any(years_by_window.values()): return empty_divergence_df()`)
+catches the case where no windows have any years at all, but not the case where windows have years
+but all pairs are skipped inside `_iter_window_pairs` due to `min_papers`.
+
+The same pattern is present in S1, S2, S3 (lines 226, 307, 365) — all end with `return pd.DataFrame(results)`
+without a guard. S4 exposes it first because its PCA step requires `n_components ≥ 2`, so it's
+more likely to skip pairs on the smoke fixture (90 works).
+
+## Relevant files
+
+- `scripts/_divergence_semantic.py` — `compute_s4_frechet` (~line 545); also `compute_s1_mmd`,
+  `compute_s2_energy`, `compute_s3_sliced_wasserstein` have the same pattern
+- `scripts/_divergence_io.py` — `empty_divergence_df()` (line 159) — correct return for empty case
+- `tests/test_divergence.py` — `TestSmokeSemantic::test_compute_method` parametrized over all methods
+
+## Actions
+
+### Change 1: `scripts/_divergence_io.py` lines 127–141 — smoke mode must precede per-method override
+
+`get_min_papers` currently checks `method == "S4_frechet"` before checking `n_works < 200`, so
+the smoke guard never fires for S4_frechet. Reorder to check smoke mode first:
+
+```python
+# Smoke mode (small corpus) — overrides ALL per-method thresholds
+if n_works is not None and n_works < 200:
+    mp = div_cfg.get("min_papers_smoke", 5)
+    log.info("Smoke mode: n_works=%d < 200, min_papers=%d", n_works, mp)
+    return mp
+
+# Per-method overrides (production only)
+if method == "S4_frechet":
+    return div_cfg["semantic"]["S4_frechet"].get("min_papers", div_cfg["min_papers"])
+if method in ("c2st", "C2ST_embedding", "C2ST_lexical"):
+    return div_cfg["c2st"].get("min_papers", div_cfg["min_papers"])
+
+return div_cfg.get("min_papers", 30)
+```
+
+### Change 2: `scripts/_divergence_semantic.py` — add empty-results guard at 4 locations
+
+Before each `return pd.DataFrame(results)` in S1/S2/S3/S4:
+
+- Line ~261 (end of `compute_s1_mmd`)
+- Line ~338 (end of `compute_s2_energy`)
+- Line ~409 (end of `compute_s3_sliced_wasserstein`)
+- Line ~543 (end of `compute_s4_frechet`)
+
+Pattern:
+```python
+    if not results:
+        return empty_divergence_df()
+    return pd.DataFrame(results)
+```
+
+PCA gotcha: with smoke min_papers=5, windows have ~5 rows. `max_d = min(256, min(5,5)-1, 1024) = 4`.
+`n_components = max(2, 4) = 4`. PCA(n_components=4) on a 5-row matrix is valid (n_samples-1=4 max). No fix needed.
+
+## Test
+
+```python
+# Already exists — just needs to pass:
+# tests/test_divergence.py::TestSmokeSemantic::test_compute_method[S4_frechet]
+```
+
+RED: currently fails with SchemaError (column 'year' not in dataframe).
+GREEN: `pytest tests/test_divergence.py -k S4_frechet` passes.
+
+## Exit criteria
+
+- [ ] `pytest tests/test_divergence.py::TestSmokeSemantic` passes for all 4 semantic methods
+- [ ] `make check-fast` clean

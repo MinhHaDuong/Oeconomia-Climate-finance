@@ -1,7 +1,9 @@
 """Tests for figure-polish changes in plot_zoo_results.py (ticket 0103)."""
 
+import csv
 import glob
 import os
+import subprocess
 import sys
 
 import pandas as pd
@@ -56,27 +58,72 @@ def test_method_titles_dict_has_all_18_methods():
     )
 
 
-def test_z0_axhline_present(tmp_path, monkeypatch):
-    """_plot adds a Z=0 reference line."""
-    import matplotlib.pyplot as plt
-    import plot_zoo_results
+def test_metric_filter_selects_resonance_only(tmp_path):
+    """--metric resonance keeps only resonance rows."""
+    rows = [
+        ["year", "window", "hyperparams", "value", "channel", "method"],
+        ["1999", "3", "w=3,metric=novelty", "8.0", "lexical", "L2"],
+        ["1999", "3", "w=3,metric=transience", "4.6", "lexical", "L2"],
+        ["1999", "3", "w=3,metric=resonance", "3.38", "lexical", "L2"],
+        ["2000", "3", "w=3,metric=novelty", "6.9", "lexical", "L2"],
+        ["2000", "3", "w=3,metric=transience", "4.7", "lexical", "L2"],
+        ["2000", "3", "w=3,metric=resonance", "2.19", "lexical", "L2"],
+    ]
+    input_csv = tmp_path / "tab_div_L2.csv"
+    output_csv = tmp_path / "out.csv"
+    with open(input_csv, "w", newline="") as f:
+        csv.writer(f).writerows(rows)
 
-    hlines = []
-    original = plt.Axes.axhline
-
-    def capture(self, y=0, **kw):
-        hlines.append(y)
-        return original(self, y, **kw)
-
-    monkeypatch.setattr(plt.Axes, "axhline", capture)
-    df = pd.DataFrame(
-        {
-            "year": [2005, 2006],
-            "window": ["3", "3"],
-            "z_score": [0.5, 1.0],
-            "value": [0.1, 0.2],
-        }
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/compute_crossyear_zscore.py",
+            "--method",
+            "L2",
+            "--metric",
+            "resonance",
+            "--output",
+            str(output_csv),
+            "--input",
+            str(input_csv),
+        ],
+        capture_output=True,
+        text=True,
     )
-    output_stem = str(tmp_path / "test_fig")
-    plot_zoo_results._plot(df, "S2_energy", output_stem)
-    assert 0 in hlines or 0.0 in hlines, "Z=0 reference line not added"
+    assert result.returncode == 0, result.stderr
+    df = pd.read_csv(output_csv)
+    assert len(df) == 2  # one row per year
+    row_1999 = df[df["year"] == 1999]
+    assert len(row_1999) == 1
+    assert abs(row_1999["value"].iloc[0] - 3.38) < 1e-6
+
+
+def test_l2_crossyear_value_matches_null_observed():
+    """tab_crossyear_L2.csv value must match tab_null_L2.csv observed within 1e-4.
+
+    RED before fix: crossyear value ≈ 5.35 (mean of 3 metrics) vs observed ≈ 3.38 (resonance only).
+    Skips if artifacts absent OR stale (pre-fix mean-of-3 values still present).
+    """
+    crossyear = "content/tables/tab_crossyear_L2.csv"
+    null_csv = "content/tables/tab_null_L2.csv"
+    if not (os.path.exists(crossyear) and os.path.exists(null_csv)):
+        pytest.skip(
+            "Padme artifacts absent — run make content/tables/tab_crossyear_L2.csv first"
+        )
+    cy = pd.read_csv(crossyear)
+    # Detect stale artifact: pre-fix year=1999 value was ~5.35 (mean of 3 metrics);
+    # post-fix it is ~3.38 (resonance-only). Skip if stale rather than fail.
+    sentinel_rows = cy[cy["year"] == 1999]
+    if not sentinel_rows.empty and sentinel_rows["value"].iloc[0] > 4.5:
+        pytest.skip(
+            f"tab_crossyear_L2.csv is stale (year=1999 value={sentinel_rows['value'].iloc[0]:.2f}); "
+            "regenerate with: make content/tables/tab_crossyear_L2.csv"
+        )
+    nm = pd.read_csv(null_csv)
+    merged = cy.merge(nm, on=["year", "window"])
+    assert len(merged) > 0, "No overlapping (year, window) rows"
+    diff = (merged["value"] - merged["observed"]).abs()
+    assert diff.max() < 1e-4, (
+        f"Max mismatch between crossyear value and null observed: {diff.max():.6f}\n"
+        f"Worst row:\n{merged.loc[diff.idxmax()]}"
+    )

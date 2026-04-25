@@ -1,0 +1,57 @@
+%erg v1
+Title: Standing regression test — dispatcher must never emit 1-column DataFrame on empty corpus
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T23:55Z claude created — follow-up from 0118/0120 sweep; guards the class, not just instances
+
+--- body ---
+## Context
+
+Ticket 0118 (PR #764) fixed `compute_s4_frechet` returning a 0-column DataFrame when
+`_iter_window_pairs` yields no pairs (empty `results` list). The root cause was:
+
+```python
+return pd.DataFrame(results)   # pd.DataFrame([]) has 0 columns, not the schema columns
+```
+
+followed by the dispatcher's `result["channel"] = channel` producing a 1-column `['channel']`
+DataFrame that fails `DivergenceSchema.validate`.
+
+Tickets 0120 adds the guard to 7 more functions. But without a standing regression test, the same
+anti-pattern can silently re-enter any compute module in a future PR.
+
+## The class to cover
+
+Any function registered in `compute_divergence.METHODS` must return a DataFrame whose columns
+are either:
+  - the full DivergenceSchema columns (`year`, `window`, `hyperparams`, `value`, `channel`), or
+  - `empty_divergence_df()` columns (`year`, `window`, `hyperparams`, `value`) — empty is ok
+
+A DataFrame with only `['channel']` (or no columns at all) is a contract violation.
+
+## Actions
+
+Write a parametrized test in `tests/test_divergence.py` or a new `tests/test_dispatcher_contract.py`:
+
+```python
+@pytest.mark.parametrize("method", list(METHODS.keys()))
+def test_dispatcher_result_columns_on_tiny_corpus(method, tmp_path):
+    """compute_divergence.py must emit valid-schema CSV even on a 1-row corpus."""
+    # Build a tiny fixture: 1-row works CSV with required columns, no embeddings needed
+    # Run compute_divergence.py --method M --output tmp/out.csv with that corpus
+    # Assert: output CSV has columns matching DivergenceSchema (year, window, hyperparams, value, channel)
+    # OR has 0 rows (empty is fine; malformed is not)
+```
+
+The test should be `@pytest.mark.slow` (runs the script as subprocess). It validates the dispatcher
+contract, not the statistical output — so a 1-row corpus that produces 0 divergence rows is a
+PASS; a SchemaError or a 1-column `['channel']` CSV is a FAIL.
+
+## Exit criteria
+
+- [ ] Test exists and passes for all methods in `METHODS.keys()`
+- [ ] Test is marked `@pytest.mark.slow` (excluded from check-fast)
+- [ ] `make check-fast` clean

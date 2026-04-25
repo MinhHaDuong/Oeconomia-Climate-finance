@@ -4,10 +4,10 @@ Last updated: 2026-04-25
 
 ## Current goal
 
-**Null ribbon quality** — all 18 zoo figures have ribbons (drivers done); fix scaling, axis, and L3 methodology.
+**Null ribbon quality** — all 18 zoo figures have ribbons (drivers done); fix L2 crossyear mismatch, L3 methodology, analytical overlay.
 
 ### Roadmap
-1. **NOW — Ribbon quality** (tickets 0112–0115): fix Z-score rescaling, L2 mismatch, L3 document shuffle, analytical overlay.
+1. **NOW — Ribbon quality** (tickets 0112, 0114, 0115): fix L2 mismatch, L3 document shuffle, analytical overlay.
 2. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
 3. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
@@ -43,6 +43,13 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - #761 (0066): null CSV schema validation on read in export_divergence_summary
 - #762: fix zoo.mk null deps (NULL_METHODS_ALL loop); ribbon quality tickets 0112–0116
 
+### Ribbon raw values + smoke test fixes — merged 2026-04-25 (PRs #763–#767)
+- #763: prune dead DOC_VARS entries (test_doc_vars_no_extras green)
+- #764 (0118): S4_frechet empty-results guard + smoke-mode min_papers precedence
+- #765 (0112): fix L2 null: filter crossyear to resonance-only
+- #766 (0113): zoo figures: plot raw D(t,w) values, drop Z-score rescaling
+- #767 (0119): regenerate golden values (102-work smoke fixture, 96 rows)
+
 ## Corpus (v1.1.1)
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS, SciSpace, grey literature, teaching canon
@@ -54,6 +61,7 @@ Being re-generated on padme with GROBID reference extraction and DOI matching.
 ## Known test failures (pre-existing RED)
 
 - `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4`. Pre-existing.
+- `test_ref_match_corpus.py::TestRefMatchCorpus::*`: flaky under `-n 4` parallel execution; all pass in isolation. Pre-existing.
 
 ## Blockers
 
@@ -63,38 +71,44 @@ None.
 
 | Method | Status |
 |--------|--------|
-| S1_MMD | ✅ ribbon live |
-| S2_energy | ✅ ribbon live |
-| S3_sliced_wasserstein | ✅ CSV computed; ribbon live |
-| S4_frechet | ✅ CSV computed; ribbon live |
-| L1 | ✅ ribbon live |
-| L2 | ✅ CSV computed; ribbon live (scale bug → ticket 0112) |
+| S1_MMD | ✅ ribbon live (raw values) |
+| S2_energy | ✅ ribbon live (raw values) |
+| S3_sliced_wasserstein | ✅ ribbon live (raw values) |
+| S4_frechet | ✅ ribbon live (raw values) |
+| L1 | ✅ ribbon live (raw values) |
+| L2 | ✅ ribbon live — scale bug → ticket 0112 |
 | L3 | ✅ CSV computed; ribbon missing (window filter bug → ticket 0114) |
-| G1_pagerank | ✅ CSV computed; ribbon live |
+| G1_pagerank | ✅ ribbon live (raw values) |
 | G2_spectral | ✅ ribbon live |
 | G3_coupling_age | ❌ no null model (G3/G4/G7 not in null pipeline) |
 | G4_cross_tradition | ❌ no null model |
-| G5_pref_attachment | ✅ CSV computed; ribbon live |
-| G6_entropy | ✅ CSV computed; ribbon live |
+| G5_pref_attachment | ✅ ribbon live (raw values) |
+| G6_entropy | ✅ ribbon live (raw values) |
 | G7_disruption | ❌ no null model |
-| G8_betweenness | ✅ CSV computed; ribbon live |
+| G8_betweenness | ✅ ribbon live (raw values) |
 | G9_community | ✅ ribbon live |
-| C2ST_embedding | ✅ CSV computed; ribbon live (scale offset → ticket 0113) |
-| C2ST_lexical | ✅ CSV computed; ribbon live (scale offset → ticket 0113) |
+| C2ST_embedding | ✅ ribbon live (raw values) |
+| C2ST_lexical | ✅ ribbon live (raw values) |
 
 ## Open ribbon-quality tickets
 
 | Ticket | Title | Priority |
 |--------|-------|----------|
-| 0112 | Fix L2 null: filter crossyear to resonance-only | High |
-| 0113 | Drop Z-score rescaling; plot raw statistic values | High |
 | 0114 | L3 null: full document shuffle + window="0" ribbon | High |
 | 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium |
 
+## Open infrastructure tickets
+
+| Ticket | Title | Priority |
+|--------|-------|----------|
+| 0116 | Add n_jobs parallelism to L2/L3 null model permutation drivers | Low |
+| 0120 | Empty-results guard for remaining dispatcher modules (_c2st, _community, _citation, _lexical) | Low |
+| 0121 | Standing regression test: all dispatcher methods return valid schema on empty corpus | Low |
+
 ## Next actions
 
-- Land 0113 first (raw values — unblocks all downstream ribbon work)
-- Then 0112 (L2 scale fix), 0114 (L3 document shuffle), 0115 (analytical overlay)
+- 0114 (L3 document shuffle + raw burst ribbon)
+- 0115 (analytical null overlay for S1/S2/L1/C2ST)
 
 Background (not on critical path):
 
