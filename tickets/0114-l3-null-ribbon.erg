@@ -1,66 +1,102 @@
 %erg v1
-Title: Fix L3 null ribbon: handle window="0" cumulative methods
+Title: Fix L3 null model and ribbon: full document shuffle + raw-value axis
 Status: open
 Created: 2026-04-25
 Author: claude
 
 --- log ---
 2026-04-25T17:45Z claude created
+2026-04-25T18:10Z revised: (1) null model changed to full corpus shuffle;
+  (2) plot to use raw burst counts, not Z-scores; (3) ribbon for window="0"
 
 --- body ---
 ## Context
 
-L3 (term burst counts) is a cumulative method: it emits one value per
-year with window="0" (no before/after sliding window).  `tab_null_L3.csv`
-exists and has correct data, but `plot_zoo_results.py` never shows the
-ribbon because it filters for `window=="3"`:
+Two problems:
 
-    w3_null = null_df[null_df["window"] == "3"]
-    has_ribbon = w3_null is not None and not w3_null.empty ...
+### 1. Null model is too weak
 
-For L3, `w3_null` is always empty → falls back to the flat ±2 box.
+`run_l3_permutations` shuffles the 25-year time series of burst counts —
+it only asks "is this series of summary statistics non-uniform?"  The
+correct null is: "could these burst counts arise from random document-to-
+year assignment?"
+
+Every other method shuffles the underlying pool documents and recomputes
+the statistic.  L3 should do the same: randomly reassign all corpus
+documents to years (preserving year sizes), recompute TF-IDF burst counts
+per permuted year, repeat n_perm times.
+
+This is tractable: precompute the full term-document TF-IDF matrix once,
+then for each permutation shuffle the document-to-year assignment vector
+and recount bursts.  O(V × n_perm) with no re-fitting of the vectorizer.
+
+### 2. Plot uses Z-scores; should use raw burst counts
+
+Consistent with ticket 0113 (drop Z-score rescaling, plot raw values),
+the L3 axis should show raw burst counts per year, not crossyear Z-scores.
+Currently `run_l3_permutations` stores Z-scores in the `observed` column
+— it should store raw burst counts instead.
+
+### 3. Ribbon not drawn
+
+`plot_zoo_results.py` filters for `window=="3"` when looking for null data.
+L3 only has `window="0"` → ribbon never shown.
 
 ## Relevant files
 
-- `scripts/plot_zoo_results.py:137` — `w3_null` filter
-- `scripts/plot_zoo_results.py:143` — `has_ribbon` check
-- `scripts/plot_zoo_results.py:196` — non-sliding path that plots
-  `non_sliding["z_score"]` for window="0" methods
+- `scripts/_permutation_lexical.py:40` — `run_l3_permutations` — rewrite
+  to shuffle documents rather than summary statistics; output raw counts
+- `scripts/plot_zoo_results.py:137` — `w3_null` filter — extend to also
+  handle `window=="0"` for the non-sliding axis
+- `scripts/plot_zoo_results.py:196` — non-sliding axis plot — switch from
+  `z_score` to `value` column (per ticket 0113)
 
 ## Actions
 
-1. In `_plot`, after computing `w3_null`, also check for a `window=="0"`
-   null slice:
+1. Rewrite `run_l3_permutations` in `_permutation_lexical.py`:
+   - Load full corpus texts and fit global TF-IDF vectorizer (as now).
+   - For each permutation: shuffle the document-year assignment (preserve
+     per-year counts), recompute burst count per year using the shuffled
+     assignment, store as null statistic.
+   - Store raw burst count (not Z-score) in the `observed` column.
+   - Output `null_mean`, `null_std` as mean/std of raw burst counts across
+     permutations.
+
+2. In `plot_zoo_results.py`, extend ribbon logic to check `window=="0"`:
    ```python
    w0_null = null_df[null_df["window"] == "0"] if null_df is not None else None
    ```
+   Draw `fill_between(year, null_mean − 1.96*null_std, null_mean + 1.96*null_std)`
+   on the non-sliding axis when `w0_null` is available.
 
-2. For the non-sliding (window="0") axis, draw a ribbon using `w0_null`
-   if available, applying the same `hw = 1.96 * null_std / sigma_w`
-   formula (after ticket 0113 lands).
+3. Non-sliding axis already plots `value` after ticket 0113 lands; ensure
+   L3's `tab_crossyear_L3.csv` `value` column is raw burst counts (it
+   already is — the Z-score column is separate).
 
-3. `has_ribbon` for the sliding axis stays tied to `w3_null`; add a
-   separate `has_ribbon_w0` flag for the non-sliding axis.
+4. Re-run `make content/tables/tab_null_L3.csv` and rebuild zoo figure.
 
 ## Test
 
-Red: add a test that calls `plot_zoo_results.plot(method="L3", ...)` with
-a synthetic `tab_null_L3.csv` (window="0" only) and asserts the figure
-contains a `fill_between` patch on the non-sliding axis.
+Red: add a test that (a) calls the new `run_l3_permutations` on a tiny
+fixture (5 years, 20 docs each, random texts) and asserts `observed`
+values are integers (raw burst counts), and (b) asserts null_mean and
+null_std are in the same scale as observed (not Z-score scale).
 
 ## Verification
 
-- [ ] L3 zoo figure shows a time-varying ribbon band (not the flat ±2 box)
+- [ ] `tab_null_L3.csv` `observed` column contains raw burst counts
+  matching `tab_div_L3.csv` `value` for the same years
+- [ ] L3 zoo figure shows raw burst-count axis with time-varying ribbon
 - [ ] `make check-fast` passes
 
 ## Invariants
 
-- L3's non-sliding axis (window="0") must be unaffected by ticket 0113's
-  w=3 ribbon changes.
-- Methods with both sliding (w=3) and non-sliding (w=0) variants must
-  render both ribbons correctly if both null CSVs exist.
+- The full TF-IDF vectorizer is fitted once per permutation run (not
+  per permutation) — same as the divergence computation.
+- Year sizes (documents per year) are preserved in the shuffle.
 
 ## Exit criteria
 
-- L3 zoo figure shows ribbon
+- `run_l3_permutations` shuffles documents, outputs raw counts
+- L3 figure shows ribbon in raw units
 - PR merged
