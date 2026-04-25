@@ -15,7 +15,6 @@ import os
 import numpy as np
 import pandas as pd
 from _divergence_io import (
-    empty_divergence_df,
     get_min_papers,
     per_window_year_ranges,
     subsample_equal_n,
@@ -260,8 +259,6 @@ def compute_s1_mmd(df, emb, cfg):
             )
     if last_w is not None:
         log.info("S1 MMD window=%d done", last_w)
-    if not results:
-        return empty_divergence_df()
     return pd.DataFrame(results)
 
 
@@ -340,8 +337,6 @@ def compute_s2_energy(df, emb, cfg):
         )
     if last_w is not None:
         log.info("S2 energy window=%d done", last_w)
-    if not results:
-        return empty_divergence_df()
     return pd.DataFrame(results)
 
 
@@ -413,8 +408,6 @@ def compute_s3_wasserstein(df, emb, cfg):
             )
     if last_w is not None:
         log.info("S3 sliced Wasserstein window=%d done", last_w)
-    if not results:
-        return empty_divergence_df()
     return pd.DataFrame(results)
 
 
@@ -549,6 +542,4 @@ def compute_s4_frechet(df, emb, cfg):
         )
     if last_w is not None:
         log.info("S4 Frechet window=%d done", last_w)
-    if not results:
-        return empty_divergence_df()
     return pd.DataFrame(results)

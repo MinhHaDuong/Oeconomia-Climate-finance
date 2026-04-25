@@ -60,6 +60,10 @@ $(ZOO_FIGS)/schematic_%.png: scripts/plot_schematic_%.py scripts/script_io_args.
 .PHONY: crossyear-tables
 crossyear-tables: $(addprefix $(ZOO_TABLES)/tab_crossyear_,$(addsuffix .csv,$(CROSSYEAR_METHODS)))
 
+# L2: filter to resonance-only before Z-scoring to align with run_l2_permutations (ticket 0112).
+$(ZOO_TABLES)/tab_crossyear_L2.csv: $(ZOO_TABLES)/tab_div_L2.csv scripts/compute_crossyear_zscore.py
+	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method L2 --metric resonance --output $@
+
 $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_crossyear_zscore.py
 	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $* --output $@
 
