@@ -1,6 +1,6 @@
 %erg v1
 Title: export_divergence_summary should validate tab_null_*.csv on read
-Status: doing
+Status: closed
 Created: 2026-04-16
 Author: claude
 
@@ -9,6 +9,7 @@ Author: claude
 2026-04-16T20:40Z claude rewritten — items 1-3 already in tree, only item 4 remains
 2026-04-25T16:55Z HDMX-coding-agent claimed
 2026-04-25T16:55Z HDMX-coding-agent status doing
+2026-04-25T18:33Z closed — PR #761 merged
 
 --- body ---
 ## Context
