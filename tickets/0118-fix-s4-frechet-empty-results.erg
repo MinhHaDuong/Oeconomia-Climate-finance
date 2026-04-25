@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-25T22:00Z claude created
+2026-04-25T22:30Z orchestrator reimagine: fix is necessary but not sufficient — S4_frechet.min_papers=300 bypasses smoke mode, so _iter_window_pairs never yields on the 102-row fixture. Must also fix get_min_papers to respect smoke mode for per-method overrides (return smoke min_papers when n_works < 200), otherwise test stays red at assert len(df) > 0. Widen scope to apply empty-results guard to L1/L2/L3/G9/C2ST for defense in depth.
 
 --- body ---
 ## Context
