@@ -2,7 +2,7 @@
 
 Compares fresh runs of all 15 divergence methods against committed golden
 CSVs in tests/fixtures/smoke/golden/. Any change in output values (beyond
-atol=1e-4) is a regression.
+ATOL=1e-4) is a regression.
 
 These tests catch silent changes in:
   - Numeric libraries (scipy, dcor, ot, numpy)
@@ -26,6 +26,11 @@ from compute_divergence import METHODS
 
 ALL_METHODS = sorted(METHODS.keys())
 
+# Tolerance for value regression check. 1e-4 accommodates environmental drift
+# (golden files regenerated on padme may differ from other environments by ~1e-3).
+# Catches real regressions (algorithm change, wrong seed) while ignoring
+# cross-environment float32 noise. See test_gpu_backend.py for per-backend tolerances.
+ATOL = 1e-4
 
 from conftest import run_compute as _run_compute
 
@@ -85,6 +90,6 @@ class TestGoldenValues:
             np.testing.assert_allclose(
                 fresh_vals[mask],
                 golden_vals[mask],
-                atol=1e-4,
+                atol=ATOL,
                 err_msg=f"{method}: value column regression",
             )
