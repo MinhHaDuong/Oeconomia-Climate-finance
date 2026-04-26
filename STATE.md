@@ -1,13 +1,13 @@
 # State
 
-Last updated: 2026-04-25
+Last updated: 2026-04-26
 
 ## Current goal
 
-**Null ribbon quality** — all 18 zoo figures have ribbons (drivers done); fix L2 crossyear mismatch, L3 methodology, analytical overlay.
+**Analytical null overlays** — C2ST done; L1 (0124) and S1/S2 (0125) remain. Then replication ribbon.
 
 ### Roadmap
-1. **NOW — Ribbon quality** (tickets 0112, 0114, 0115): fix L2 mismatch, L3 document shuffle, analytical overlay.
+1. **NOW — Analytical null** (tickets 0124, 0125): L1 JS formula, S1 MMD²/S2 energy formulas.
 2. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
 3. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
@@ -50,6 +50,10 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - #766 (0113): zoo figures: plot raw D(t,w) values, drop Z-score rescaling
 - #767 (0119): regenerate golden values (102-work smoke fixture, 96 rows)
 
+### Null ribbon quality + analytical null — merged 2026-04-26 (PRs #768–#769)
+- #768 (0114): L3 null model: document-shuffle permutations + window="0" ribbon
+- #769 (0115): C2ST analytical null overlay (Hanley-McNeil); `--analytical-null` plot flag; zoo.mk targets
+
 ## Corpus (v1.1.1)
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS, SciSpace, grey literature, teaching canon
@@ -77,7 +81,7 @@ None.
 | S4_frechet | ✅ ribbon live (raw values) |
 | L1 | ✅ ribbon live (raw values) |
 | L2 | ✅ ribbon live — scale bug → ticket 0112 |
-| L3 | ✅ CSV computed; ribbon missing (window filter bug → ticket 0114) |
+| L3 | ✅ ribbon live (document-shuffle permutations + raw burst counts, PR #768) |
 | G1_pagerank | ✅ ribbon live (raw values) |
 | G2_spectral | ✅ ribbon live |
 | G3_coupling_age | ❌ no null model (G3/G4/G7 not in null pipeline) |
@@ -87,15 +91,15 @@ None.
 | G7_disruption | ❌ no null model |
 | G8_betweenness | ✅ ribbon live (raw values) |
 | G9_community | ✅ ribbon live |
-| C2ST_embedding | ✅ ribbon live (raw values) |
-| C2ST_lexical | ✅ ribbon live (raw values) |
+| C2ST_embedding | ✅ ribbon live (raw values) + analytical overlay (0115) |
+| C2ST_lexical | ✅ ribbon live (raw values) + analytical overlay (0115) |
 
 ## Open ribbon-quality tickets
 
 | Ticket | Title | Priority |
 |--------|-------|----------|
-| 0114 | L3 null: full document shuffle + window="0" ribbon | High |
-| 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium |
+| 0124 | L1 analytical null overlay (JS divergence, Archer 2014) | Medium |
+| 0125 | S1/S2 analytical null overlay (Gretton 2012, Székely-Rizzo 2013) | Medium |
 
 ## Open infrastructure tickets
 
@@ -107,8 +111,9 @@ None.
 
 ## Next actions
 
-- 0114 (L3 document shuffle + raw burst ribbon)
-- 0115 (analytical null overlay for S1/S2/L1/C2ST)
+- 0124 (L1 analytical null, Archer formula)
+- 0125 (S1/S2 analytical nulls, kernel/U-stat formulas)
+- 0105 (replication ribbon: R=20 equal-n subsamples)
 
 Background (not on critical path):
 
