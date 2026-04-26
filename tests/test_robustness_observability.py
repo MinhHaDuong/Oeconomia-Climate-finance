@@ -15,8 +15,6 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
-import time
 
 import pandas as pd
 import pytest
@@ -29,25 +27,28 @@ sys.path.insert(0, SCRIPTS_DIR)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_mini_works(tmp_path):
     """Create a minimal unified_works.csv for CLI smoke-tests."""
-    df = pd.DataFrame({
-        "doi": ["10.1/A", "10.1/B", "10.1/C"],
-        "title": ["Title A", "Title B", "Title C"],
-        "abstract": ["Abstract A", "", None],
-        "source": ["openalex", "openalex", "istex"],
-        "source_id": ["W1", "W2", "I1"],
-        "year": [2010, 2015, 2020],
-        "cited_by_count": [100, 5, 0],
-        "source_count": [2, 1, 1],
-        "from_openalex": [1, 1, 0],
-        "from_semanticscholar": [1, 0, 0],
-        "from_istex": [0, 0, 1],
-        "from_bibcnrs": [0, 0, 0],
-        "from_scispace": [0, 0, 0],
-        "from_grey": [0, 0, 0],
-        "from_teaching": [0, 0, 0],
-    })
+    df = pd.DataFrame(
+        {
+            "doi": ["10.1/A", "10.1/B", "10.1/C"],
+            "title": ["Title A", "Title B", "Title C"],
+            "abstract": ["Abstract A", "", None],
+            "source": ["openalex", "openalex", "istex"],
+            "source_id": ["W1", "W2", "I1"],
+            "year": [2010, 2015, 2020],
+            "cited_by_count": [100, 5, 0],
+            "source_count": [2, 1, 1],
+            "from_openalex": [1, 1, 0],
+            "from_semanticscholar": [1, 0, 0],
+            "from_istex": [0, 0, 1],
+            "from_bibcnrs": [0, 0, 0],
+            "from_scispace": [0, 0, 0],
+            "from_grey": [0, 0, 0],
+            "from_teaching": [0, 0, 0],
+        }
+    )
     path = tmp_path / "unified_works.csv"
     df.to_csv(path, index=False)
     return str(path)
@@ -56,6 +57,7 @@ def make_mini_works(tmp_path):
 def make_mini_citations(tmp_path):
     """Create an empty citations.csv."""
     from utils import REFS_COLUMNS
+
     path = tmp_path / "citations.csv"
     pd.DataFrame(columns=REFS_COLUMNS).to_csv(path, index=False)
     return str(path)
@@ -77,9 +79,11 @@ def _has_flag(source, flag):
 # Unit tests: utils helpers
 # ---------------------------------------------------------------------------
 
+
 class TestUtilsHelpers:
     def test_make_run_id_format(self):
         from utils import make_run_id
+
         run_id = make_run_id()
         # Should look like 20260312T123456Z
         assert len(run_id) == 16
@@ -88,14 +92,16 @@ class TestUtilsHelpers:
 
     def test_make_run_id_different_across_calls(self):
         from utils import make_run_id
+
         ids = {make_run_id() for _ in range(3)}
         # Allow duplicates in fast test envs but at least one call succeeds
         assert len(ids) >= 1
 
     def test_save_run_report_creates_file(self, tmp_path):
-        from utils import save_run_report, CATALOGS_DIR
         # Patch CATALOGS_DIR to tmp_path for isolation
         import utils
+        from utils import save_run_report
+
         orig = utils.CATALOGS_DIR
         utils.CATALOGS_DIR = str(tmp_path)
         try:
@@ -106,8 +112,9 @@ class TestUtilsHelpers:
             utils.CATALOGS_DIR = orig
 
     def test_save_run_report_json_schema(self, tmp_path):
-        from utils import save_run_report
         import utils
+        from utils import save_run_report
+
         orig = utils.CATALOGS_DIR
         utils.CATALOGS_DIR = str(tmp_path)
         try:
@@ -123,8 +130,9 @@ class TestUtilsHelpers:
             utils.CATALOGS_DIR = orig
 
     def test_save_run_report_sanitizes_run_id(self, tmp_path):
-        from utils import save_run_report
         import utils
+        from utils import save_run_report
+
         orig = utils.CATALOGS_DIR
         utils.CATALOGS_DIR = str(tmp_path)
         try:
@@ -139,10 +147,12 @@ class TestUtilsHelpers:
 
     def test_retry_get_importable(self):
         from utils import retry_get
+
         assert callable(retry_get)
 
     def test_retry_get_updates_counters_on_success(self, requests_mock):
         from utils import retry_get
+
         requests_mock.get("https://example.com/ok", json={"ok": True})
         counters = {}
         resp = retry_get("https://example.com/ok", delay=0, counters=counters)
@@ -154,6 +164,7 @@ class TestUtilsHelpers:
     @pytest.mark.integration
     def test_retry_get_records_rate_limit(self, requests_mock):
         from utils import retry_get
+
         requests_mock.get(
             "https://example.com/rl",
             [
@@ -170,6 +181,7 @@ class TestUtilsHelpers:
     @pytest.mark.integration
     def test_retry_get_records_server_error_then_success(self, requests_mock):
         from utils import retry_get
+
         requests_mock.get(
             "https://example.com/srv",
             [
@@ -186,16 +198,23 @@ class TestUtilsHelpers:
     def test_retry_get_accepts_backoff_base_and_jitter_max(self, requests_mock):
         """retry_get accepts backoff_base and jitter_max parameters."""
         from utils import retry_get
+
         requests_mock.get("https://example.com/bp", json={"ok": True})
         counters = {}
-        resp = retry_get("https://example.com/bp", delay=0, counters=counters,
-                         backoff_base=1.5, jitter_max=0.5)
+        resp = retry_get(
+            "https://example.com/bp",
+            delay=0,
+            counters=counters,
+            backoff_base=1.5,
+            jitter_max=0.5,
+        )
         assert resp.status_code == 200
 
 
 # ---------------------------------------------------------------------------
 # JSONL log file: created on real run and contains expected events
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.integration
 class TestJsonlLogging:
@@ -205,10 +224,18 @@ class TestJsonlLogging:
         log_path = tmp_path / "run.jsonl"
         env = {**os.environ, "CLIMATE_FINANCE_DATA": str(tmp_path)}
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
-             "--dry-run", "--works-input", works_path,
-             "--log-jsonl", str(log_path)],
-            capture_output=True, text=True, env=env,
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
+                "--dry-run",
+                "--works-input",
+                works_path,
+                "--log-jsonl",
+                str(log_path),
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
         )
         # dry-run should not write any events (exits before they are emitted)
         if log_path.exists():
@@ -220,19 +247,25 @@ class TestJsonlLogging:
     def test_log_jsonl_path_accepted_without_error(self, tmp_path):
         """--log-jsonl flag is accepted by all three scripts without parse error."""
         log_path = tmp_path / "run.jsonl"
-        for script in ["enrich_abstracts.py", "enrich_citations_batch.py",
-                       "enrich_citations_openalex.py"]:
+        for script in [
+            "enrich_abstracts.py",
+            "enrich_citations_batch.py",
+            "enrich_citations_openalex.py",
+        ]:
             result = subprocess.run(
                 [sys.executable, os.path.join(SCRIPTS_DIR, script), "--help"],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
-            assert "--log-jsonl" in result.stdout + result.stderr, \
+            assert "--log-jsonl" in result.stdout + result.stderr, (
                 f"--log-jsonl not found in {script} --help"
+            )
 
 
 # ---------------------------------------------------------------------------
 # CLI flag tests: verify add_argument calls via source inspection (no subprocess)
 # ---------------------------------------------------------------------------
+
 
 class TestCliFlags:
     """Verify CLI flags are defined in argparse (source inspection, no subprocess)."""
@@ -242,7 +275,9 @@ class TestCliFlags:
         request.cls._sources = {
             "enrich_abstracts.py": _read_script("enrich_abstracts.py"),
             "enrich_citations_batch.py": _read_script("enrich_citations_batch.py"),
-            "enrich_citations_openalex.py": _read_script("enrich_citations_openalex.py"),
+            "enrich_citations_openalex.py": _read_script(
+                "enrich_citations_openalex.py"
+            ),
         }
 
     def test_enrich_abstracts_has_run_id_flag(self):
@@ -276,7 +311,9 @@ class TestCliFlags:
     # always resumable, append directly to cache — no checkpoint needed)
 
     def test_enrich_citations_batch_has_request_timeout_flag(self):
-        assert _has_flag(self._sources["enrich_citations_batch.py"], "--request-timeout")
+        assert _has_flag(
+            self._sources["enrich_citations_batch.py"], "--request-timeout"
+        )
 
     def test_enrich_citations_batch_has_max_retries_flag(self):
         assert _has_flag(self._sources["enrich_citations_batch.py"], "--max-retries")
@@ -296,16 +333,22 @@ class TestCliFlags:
     # --checkpoint-every and --resume removed in #441 (same as batch above)
 
     def test_enrich_citations_openalex_has_request_timeout_flag(self):
-        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--request-timeout")
+        assert _has_flag(
+            self._sources["enrich_citations_openalex.py"], "--request-timeout"
+        )
 
     def test_enrich_citations_openalex_has_max_retries_flag(self):
         assert _has_flag(self._sources["enrich_citations_openalex.py"], "--max-retries")
 
     def test_enrich_citations_openalex_has_retry_backoff_flag(self):
-        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--retry-backoff")
+        assert _has_flag(
+            self._sources["enrich_citations_openalex.py"], "--retry-backoff"
+        )
 
     def test_enrich_citations_openalex_has_retry_jitter_flag(self):
-        assert _has_flag(self._sources["enrich_citations_openalex.py"], "--retry-jitter")
+        assert _has_flag(
+            self._sources["enrich_citations_openalex.py"], "--retry-jitter"
+        )
 
     def test_enrich_citations_openalex_has_log_jsonl_flag(self):
         assert _has_flag(self._sources["enrich_citations_openalex.py"], "--log-jsonl")
@@ -315,15 +358,23 @@ class TestCliFlags:
 # Resume preview: startup output contains expected labels
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.integration
 class TestResumePreview:
     def test_enrich_abstracts_dry_run_shows_preview(self, tmp_path):
         works_path = make_mini_works(tmp_path)
         env = {**os.environ, "CLIMATE_FINANCE_DATA": str(tmp_path)}
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
-             "--dry-run", "--works-input", works_path],
-            capture_output=True, text=True, env=env,
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
+                "--dry-run",
+                "--works-input",
+                works_path,
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
         )
         output = result.stdout + result.stderr
         assert "Resume preview" in output or "Missing abstracts" in output
@@ -339,10 +390,18 @@ class TestResumePreview:
             "CLIMATE_FINANCE_DATA": str(tmp_path),
         }
         result = subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_citations_batch.py"),
-             "--works-input", works_path,
-             "--run-id", "test-preview"],
-            capture_output=True, text=True, env=env, timeout=10,
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "enrich_citations_batch.py"),
+                "--works-input",
+                works_path,
+                "--run-id",
+                "test-preview",
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=10,
         )
         output = result.stdout + result.stderr
         # Should show resume info (even if no actual fetch happens)
@@ -353,6 +412,7 @@ class TestResumePreview:
 # Run report JSON: file is created and internally consistent
 # ---------------------------------------------------------------------------
 
+
 class TestRunReport:
     @pytest.mark.integration
     def test_enrich_abstracts_dry_run_no_report(self, tmp_path):
@@ -360,9 +420,18 @@ class TestRunReport:
         works_path = make_mini_works(tmp_path)
         env = {**os.environ, "CLIMATE_FINANCE_DATA": str(tmp_path)}
         subprocess.run(
-            [sys.executable, os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
-             "--dry-run", "--works-input", works_path, "--run-id", "dryrun-001"],
-            capture_output=True, text=True, env=env,
+            [
+                sys.executable,
+                os.path.join(SCRIPTS_DIR, "enrich_abstracts.py"),
+                "--dry-run",
+                "--works-input",
+                works_path,
+                "--run-id",
+                "dryrun-001",
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
         )
         reports_dir = os.path.join(str(tmp_path), "run_reports")
         # Dry-run exits before saving report
@@ -372,8 +441,9 @@ class TestRunReport:
 
     def test_save_run_report_counter_consistency(self, tmp_path):
         """Manually verify that the report structure is consistent."""
-        from utils import save_run_report
         import utils
+        from utils import save_run_report
+
         orig = utils.CATALOGS_DIR
         utils.CATALOGS_DIR = str(tmp_path)
         try:
@@ -389,7 +459,10 @@ class TestRunReport:
             path = save_run_report(data, "consistency-test", "enrich_abstracts")
             with open(path) as f:
                 payload = json.load(f)
-            assert payload["missing_before"] - payload["missing_after"] == payload["total_filled"]
+            assert (
+                payload["missing_before"] - payload["missing_after"]
+                == payload["total_filled"]
+            )
             assert payload["elapsed_seconds"] > 0
         finally:
             utils.CATALOGS_DIR = orig
@@ -399,41 +472,43 @@ class TestRunReport:
 # Step counter tests (unit, no API)
 # ---------------------------------------------------------------------------
 
+
 class TestStepCounters:
     @pytest.fixture
     def mini_df(self):
-        return pd.DataFrame({
-            "doi": ["10.1/A", "10.1/B", "10.1/C"],
-            "abstract": ["Has abstract", "", None],
-            "source": ["openalex", "openalex", "istex"],
-            "source_id": ["W1", "W2", "I1"],
-            "from_openalex": [1, 1, 0],
-            "from_istex": [0, 0, 1],
-        })
+        return pd.DataFrame(
+            {
+                "doi": ["10.1/A", "10.1/B", "10.1/C"],
+                "abstract": ["Has abstract", "", None],
+                "source": ["openalex", "openalex", "istex"],
+                "source_id": ["W1", "W2", "I1"],
+                "from_openalex": [1, 1, 0],
+                "from_istex": [0, 0, 1],
+            }
+        )
 
-    def test_step1_counter_attempted(self, mini_df, tmp_path):
+    def test_step1_counter_attempted(self, mini_df, tmp_path, monkeypatch):
         """step1_cross_source sets step1_attempted in counters."""
         # Redirect CATALOGS_DIR so it doesn't look for real unified_works.csv
         import utils as utils_mod
-        orig = utils_mod.CATALOGS_DIR
-        utils_mod.CATALOGS_DIR = str(tmp_path)
-        try:
-            from enrich_abstracts import is_missing, step1_cross_source
-            df = mini_df.copy()
-            df["_missing"] = df["abstract"].apply(is_missing)
-            # Create a dummy unified_works.csv
-            unified = df[["doi", "abstract"]].copy()
-            unified.to_csv(os.path.join(str(tmp_path), "unified_works.csv"), index=False)
-            counters = {}
-            step1_cross_source(df, counters)
-            assert "step1_attempted" in counters
-            assert counters["step1_attempted"] >= 0
-        finally:
-            utils_mod.CATALOGS_DIR = orig
+
+        monkeypatch.setattr(utils_mod, "CATALOGS_DIR", str(tmp_path))
+        from enrich_abstracts import is_missing, step1_cross_source
+
+        df = mini_df.copy()
+        df["_missing"] = df["abstract"].apply(is_missing)
+        # Create a dummy unified_works.csv
+        unified = df[["doi", "abstract"]].copy()
+        unified.to_csv(os.path.join(str(tmp_path), "unified_works.csv"), index=False)
+        counters = {}
+        step1_cross_source(df, counters)
+        assert "step1_attempted" in counters
+        assert counters["step1_attempted"] >= 0
 
     def test_step3_counter_attempted(self, mini_df, tmp_path):
         """step3_istex sets step3_attempted in counters."""
         import enrich_abstracts as ea
+
         df = mini_df.copy()
         df["_missing"] = df["abstract"].apply(ea.is_missing)
         counters = {}
@@ -445,6 +520,7 @@ class TestStepCounters:
 # ---------------------------------------------------------------------------
 # Retry parameter plumbing tests
 # ---------------------------------------------------------------------------
+
 
 class TestRetryParameterPlumbing:
     def test_crossref_fetch_batch_forwards_retry_knobs(self, monkeypatch):
@@ -536,14 +612,16 @@ class TestRetryParameterPlumbing:
         monkeypatch.setattr(ea, "load_cache", lambda _name: {})
         monkeypatch.setattr(ea, "save_cache", lambda _name, _data: None)
 
-        df = pd.DataFrame({
-            "doi": ["10.1/a"],
-            "abstract": [""],
-            "source": ["openalex"],
-            "source_id": ["W1"],
-            "_missing": [True],
-            "from_openalex": [1],
-        })
+        df = pd.DataFrame(
+            {
+                "doi": ["10.1/a"],
+                "abstract": [""],
+                "source": ["openalex"],
+                "source_id": ["W1"],
+                "_missing": [True],
+                "from_openalex": [1],
+            }
+        )
         counters = {}
         ea.step2_openalex(
             df,
