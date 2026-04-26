@@ -31,6 +31,8 @@ import math
 import sys
 
 import pandas as pd
+from _divergence_io import get_min_papers
+from _divergence_lexical import load_lexical_data
 from pipeline_loaders import load_analysis_config, load_analysis_corpus
 from schemas import NullModelSchema
 from script_io_args import parse_io_args, validate_io
@@ -73,15 +75,33 @@ def c2st_analytical_null(n_before: int, n_after: int) -> tuple[float, float]:
 # ---------------------------------------------------------------------------
 
 
-def _iter_window_counts(cfg):
+def _load_corpus_for_method(method: str) -> pd.DataFrame:
+    """Load the appropriate corpus DataFrame for the given C2ST method.
+
+    C2ST_lexical uses load_lexical_data() (dropna on abstract + year) to match
+    the actual rows seen by iter_lexical_windows.  C2ST_embedding uses
+    load_analysis_corpus() (no abstract filter) to match iter_semantic_windows.
+    """
+    if method == "C2ST_lexical":
+        return load_lexical_data(None)
+    # C2ST_embedding
+    df, _ = load_analysis_corpus(with_embeddings=False)
+    return df
+
+
+def _iter_window_counts(method: str, cfg: dict):
     """Yield (year, window, n_before, n_after) for each valid (year, window) pair.
 
-    Loads the corpus metadata (no embeddings), applies the same year-range and
-    gap logic as iter_semantic_windows / iter_lexical_windows, counts papers in
-    each before/after window, and skips pairs that fall below min_papers.
+    Loads the corpus for the given method (no embeddings), applies the same
+    year-range and gap logic as iter_semantic_windows / iter_lexical_windows,
+    counts papers in each before/after window, and skips pairs that fall below
+    min_papers.
 
     Parameters
     ----------
+    method : str
+        One of SUPPORTED_METHODS.  Determines which corpus loader is used so
+        that n_before / n_after match the counts seen during MC null computation.
     cfg : dict
         Analysis config from load_analysis_config().
 
@@ -94,11 +114,9 @@ def _iter_window_counts(cfg):
     windows = div_cfg["windows"]
     gap = div_cfg.get("gap", 1)
     equal_n = div_cfg.get("equal_n", False)
-    # C2ST-specific min_papers
-    min_papers = div_cfg["c2st"].get("min_papers", div_cfg["min_papers"])
+    min_papers = get_min_papers(method=method, cfg=cfg)
 
-    # Load metadata only — no embeddings needed for counting
-    df, _ = load_analysis_corpus(with_embeddings=False)
+    df = _load_corpus_for_method(method)
     year_min = int(df["year"].min())
     year_max = int(df["year"].max())
 
@@ -113,11 +131,9 @@ def _iter_window_counts(cfg):
                 continue
 
             if equal_n:
-                n_eq = min(n_b, n_a)
-                if n_eq < min_papers:
+                n_b = n_a = min(n_b, n_a)
+                if n_b < min_papers:
                     continue
-                n_b = n_eq
-                n_a = n_eq
 
             yield y, w, n_b, n_a
 
@@ -147,7 +163,7 @@ def main() -> None:
     log.info("Computing analytical null for method=%s", method)
 
     rows = []
-    for y, w, n_before, n_after in _iter_window_counts(cfg):
+    for y, w, n_before, n_after in _iter_window_counts(method, cfg):
         null_mean, null_std = c2st_analytical_null(n_before, n_after)
         rows.append(
             {

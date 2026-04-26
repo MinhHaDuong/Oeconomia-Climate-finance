@@ -323,15 +323,13 @@ def _plot(
         handles.append(mpatches.Patch(color=FILL, alpha=0.15, label="null ±2σ"))
         labels.append("null ±2σ")
 
-    if analytical_null_df is not None:
-        w3_an_check = analytical_null_df[analytical_null_df["window"] == "3"]
-        if not w3_an_check.empty and w3_an_check["null_mean"].notna().any():
-            handles.append(
-                mpatches.Patch(
-                    color="tab:orange", alpha=0.20, label="analytical null 95% (w=3)"
-                )
+    if has_an_ribbon:
+        handles.append(
+            mpatches.Patch(
+                color="tab:orange", alpha=0.20, label="analytical null 95% (w=3)"
             )
-            labels.append("analytical null 95% (w=3)")
+        )
+        labels.append("analytical null 95% (w=3)")
 
     ax.legend(
         handles=handles, labels=labels, loc="upper left", frameon=False, fontsize=7
