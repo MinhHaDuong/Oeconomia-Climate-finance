@@ -1,0 +1,52 @@
+%erg v1
+Title: S4_frechet compute_divergence returns DataFrame missing 'year' column
+Status: open
+Created: 2026-04-26
+Author: claude
+
+--- log ---
+2026-04-26T04:25Z claude created — discovered during 0123 golden test investigation
+
+--- body ---
+## Context
+
+`compute_divergence.py --method S4_frechet` produces a DataFrame with only a
+`channel` column, missing the required `year` column. The `DivergenceSchema`
+validation catches this at write time:
+
+```
+pandera.errors.SchemaError: column 'year' not in dataframe.
+Columns in dataframe: ['channel']
+```
+
+This causes `test_golden_values.py::test_method_matches_golden[S4_frechet]` to
+fail with a script error (returncode=1), not a tolerance mismatch. The golden
+CSV exists and is valid — the computation itself is broken.
+
+The bug is in the S4 Fréchet implementation or its window/year aggregation logic,
+not in the test or schema.
+
+## Relevant files
+
+- `scripts/_divergence_semantic.py` — `compute_s4_frechet` implementation
+- `scripts/compute_divergence.py` — dispatcher, schema validation at line ~180
+- `scripts/schemas.py` — `DivergenceSchema` definition
+- `tests/fixtures/smoke/golden/tab_div_S4_frechet.csv` — existing golden
+
+## Actions
+
+1. Reproduce: `CLIMATE_FINANCE_DATA=tests/fixtures/smoke uv run python scripts/compute_divergence.py --method S4_frechet --output /tmp/s4.csv`
+2. Inspect what `compute_s4_frechet` returns — likely missing year in the output DataFrame construction
+3. Fix the DataFrame construction to include year column
+4. Verify golden test passes
+
+## Test
+
+```bash
+uv run python -m pytest tests/test_golden_values.py -v --tb=short -m slow -k S4_frechet
+```
+
+## Exit criteria
+
+- [ ] `compute_divergence.py --method S4_frechet` produces valid schema output
+- [ ] `test_golden_values.py[S4_frechet]` passes (may need golden regeneration)
