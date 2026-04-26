@@ -17,6 +17,12 @@ Usage::
         --method S2_energy \\
         --output content/figures/fig_zoo_S2_energy.png \\
         --null-ci content/tables/tab_null_S2_energy.csv
+
+    # With analytical null overlay (C2ST only, ticket 0115):
+    uv run python scripts/plot_zoo_results.py \\
+        --method C2ST_embedding \\
+        --output content/figures/fig_zoo_C2ST_embedding.png \\
+        --analytical-null content/tables/tab_analytical_null_C2ST_embedding.csv
 """
 
 import argparse
@@ -66,6 +72,12 @@ def _build_method_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional: tab_null_{method}.csv for CI band overlay",
     )
+    parser.add_argument(
+        "--analytical-null",
+        metavar="PATH",
+        default=None,
+        help="Optional: tab_analytical_null_{method}.csv for analytical null overlay",
+    )
     return parser
 
 
@@ -88,16 +100,35 @@ def _empty_figure(output_stem: str, method: str) -> None:
     plt.close(fig)
 
 
+def _load_null_csv(path: str | None, label: str = "null") -> pd.DataFrame | None:
+    """Load a null model CSV if path is given and file exists; return None otherwise.
+
+    Parameters
+    ----------
+    path : str | None
+        File path, or None to skip.
+    label : str
+        Short label for the warning message (e.g. "CI band", "analytical null").
+
+    """
+    if path is None:
+        return None
+    if not Path(path).exists():
+        log.warning("%s file not found: %s — skipping", label, path)
+        return None
+    df = pd.read_csv(path)
+    df["window"] = df["window"].astype(str)
+    return df
+
+
 def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
-    """Load null model CSV if path provided and file exists. Returns None otherwise."""
-    if null_ci_path is None:
-        return None
-    if not Path(null_ci_path).exists():
-        log.warning("Null CI file not found: %s — skipping CI band", null_ci_path)
-        return None
-    null_df = pd.read_csv(null_ci_path)
-    null_df["window"] = null_df["window"].astype(str)
-    return null_df
+    """Load MC null model CSV. Thin wrapper around _load_null_csv."""
+    return _load_null_csv(null_ci_path, label="Null CI")
+
+
+def _load_analytical_null(path: str | None) -> pd.DataFrame | None:
+    """Load analytical null CSV. Thin wrapper around _load_null_csv."""
+    return _load_null_csv(path, label="Analytical null")
 
 
 def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.DataFrame:
@@ -129,6 +160,7 @@ def _plot(
     method: str,
     output_stem: str,
     null_df: pd.DataFrame | None = None,
+    analytical_null_df: pd.DataFrame | None = None,
 ) -> None:
     """Render the Z-score panel and save to output_stem.png."""
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -172,6 +204,26 @@ def _plot(
                 linewidth=0.6,
                 linestyle="--",
                 zorder=1,
+            )
+
+    # Analytical null ribbon (w=3): null_mean ± 1.96 * null_std in native units.
+    # Orange fill so it remains visually distinct from the MC ribbon (blue/FILL).
+    # Where the two ribbons overlap, combined alpha makes coincidence visible.
+    has_an_ribbon = False
+    if analytical_null_df is not None:
+        w3_an = analytical_null_df[analytical_null_df["window"] == "3"].sort_values(
+            "year"
+        )
+        if not w3_an.empty and w3_an["null_mean"].notna().any():
+            has_an_ribbon = True
+            ax.fill_between(
+                w3_an["year"],
+                w3_an["null_mean"] - 1.96 * w3_an["null_std"],
+                w3_an["null_mean"] + 1.96 * w3_an["null_std"],
+                color="tab:orange",
+                alpha=0.20,
+                zorder=0,
+                label=None,
             )
 
     # Period boundary verticals — shorten by 1 ex so year labels clear the title.
@@ -271,6 +323,14 @@ def _plot(
         handles.append(mpatches.Patch(color=FILL, alpha=0.15, label="null ±2σ"))
         labels.append("null ±2σ")
 
+    if has_an_ribbon:
+        handles.append(
+            mpatches.Patch(
+                color="tab:orange", alpha=0.20, label="analytical null 95% (w=3)"
+            )
+        )
+        labels.append("analytical null 95% (w=3)")
+
     ax.legend(
         handles=handles, labels=labels, loc="upper left", frameon=False, fontsize=7
     )
@@ -317,7 +377,11 @@ def main() -> None:
     if null_df is not None:
         null_df = _compute_null_z_threshold(df, null_df)
 
-    _plot(df, method, output_stem, null_df=null_df)
+    analytical_null_df = _load_analytical_null(args.analytical_null)
+
+    _plot(
+        df, method, output_stem, null_df=null_df, analytical_null_df=analytical_null_df
+    )
 
 
 if __name__ == "__main__":

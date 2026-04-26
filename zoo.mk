@@ -84,10 +84,30 @@ NULL_METHODS_ALL := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet \
 $(foreach m,$(NULL_METHODS_ALL),$(eval \
   $(ZOO_FIGS)/fig_zoo_$(m).png: $(ZOO_TABLES)/tab_null_$(m).csv))
 
-# Pattern rule for all methods: passes --null-ci when tab_null_*.csv exists.
+# ── Analytical null tables (C2ST only, ticket 0115) ──────────────────────────
+#
+# Closed-form Hanley-McNeil null for C2ST AUC. O(1) per (year, window) —
+# no corpus embeddings or permutations needed, just year-grouped counts.
+
+ANALYTICAL_NULL_METHODS := C2ST_embedding C2ST_lexical
+
+$(ZOO_TABLES)/tab_analytical_null_C2ST_%.csv: scripts/compute_analytical_null.py $(REFINED) $(DIV_CFG)
+	$(UV_RUN) python scripts/compute_analytical_null.py \
+		--method C2ST_$* --output $@
+
+.PHONY: analytical-null-tables
+analytical-null-tables: $(foreach m,$(ANALYTICAL_NULL_METHODS),$(ZOO_TABLES)/tab_analytical_null_$(m).csv)
+
+# Extra dep: C2ST figures rebuild when analytical null CSV changes.
+$(foreach m,$(ANALYTICAL_NULL_METHODS),$(eval \
+  $(ZOO_FIGS)/fig_zoo_$(m).png: $(ZOO_TABLES)/tab_analytical_null_$(m).csv))
+
+# Pattern rule for all methods: passes --null-ci when tab_null_*.csv exists,
+# and --analytical-null when tab_analytical_null_*.csv exists.
 $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_results.py
 	$(UV_RUN) python scripts/plot_zoo_results.py --method $* --output $@ \
-		$(if $(wildcard $(ZOO_TABLES)/tab_null_$*.csv),--null-ci $(ZOO_TABLES)/tab_null_$*.csv,)
+		$(if $(wildcard $(ZOO_TABLES)/tab_null_$*.csv),--null-ci $(ZOO_TABLES)/tab_null_$*.csv,) \
+		$(if $(wildcard $(ZOO_TABLES)/tab_analytical_null_$*.csv),--analytical-null $(ZOO_TABLES)/tab_analytical_null_$*.csv,)
 
 # ── Bias comparison tables (equal_n=false) ───────────────────────────────────
 #
