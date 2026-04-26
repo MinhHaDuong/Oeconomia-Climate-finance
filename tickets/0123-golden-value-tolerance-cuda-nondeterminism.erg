@@ -5,6 +5,19 @@ Created: 2026-04-25
 Author: claude
 
 --- log ---
+2026-04-26T09:10Z claude post-merge investigation (review consider: points):
+  Hypothesis A: padme S3 is deterministic → atol=1e-6 sufficient after regen.
+  Hypothesis B: atol=1e-4 is forward insurance for S1/S2 CUDA drift.
+  Hypothesis C (user): CPU vs GPU numeric libs — float32 non-associativity in GPU parallel
+    reductions (different summation order, CUDA FMA) produces per-element rounding differences
+    that compound across projections/years. Mechanistic explanation for the 1.80e-3 CPU↔GPU
+    gap: not a code-path difference but unavoidable float32 non-associativity in parallel ops.
+    Implication: cross-env tolerance would need ~1e-2 to be reliable; golden tests should
+    always run on padme (same GPU + same driver).
+  Test: CPU compute vs GPU-regenerated golden — max diff=1.80e-3, mean=3.52e-4; 74/96 > 1e-4.
+  Conclusion: atol=1e-4 is neither necessary (padme diff=0 → 1e-6 exact) nor sufficient for
+  cross-env (Hypothesis C). Golden tests are padme-only by design (@slow).
+  Action: reverted atol 1e-4 → 1e-6; comment updated to document padme-only intent. PR #771.
 2026-04-26T04:20Z claude diagnostic — S3 run-to-run diff = 0.0 (deterministic). Golden mismatch is environmental drift (golden generated elsewhere). Fix: regenerate S3 golden on padme. S4 SchemaError (missing 'year' column) is separate upstream bug → new ticket.
 2026-04-26T04:15Z claude tolerance 1e-6→1e-4 landed (eb0fc93). S3 drift up to 1.8e-3 vs golden — not CUDA noise, stale golden file.
 2026-04-26T01:00Z claude execute — tolerance changed (eb0fc93); make check-fast green (1 pre-existing flaky).
