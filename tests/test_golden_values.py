@@ -2,7 +2,7 @@
 
 Compares fresh runs of all 15 divergence methods against committed golden
 CSVs in tests/fixtures/smoke/golden/. Any change in output values (beyond
-ATOL=1e-4) is a regression.
+ATOL=1e-6) is a regression.
 
 These tests catch silent changes in:
   - Numeric libraries (scipy, dcor, ot, numpy)
@@ -26,11 +26,11 @@ from compute_divergence import METHODS
 
 ALL_METHODS = sorted(METHODS.keys())
 
-# Tolerance for value regression check. 1e-4 accommodates environmental drift
-# (golden files regenerated on padme may differ from other environments by ~1e-3).
-# Catches real regressions (algorithm change, wrong seed) while ignoring
-# cross-environment float32 noise. See test_gpu_backend.py for per-backend tolerances.
-ATOL = 1e-4
+# Tolerance for value regression check. Golden files are padme (GPU) outputs.
+# Padme S3 is deterministic run-to-run (diff = 0.0); 1e-6 is sufficient.
+# CPU environments deviate by ~1e-3 from GPU goldens — these tests are
+# intentionally padme-only (@pytest.mark.slow). See ticket 0123 for investigation.
+ATOL = 1e-6
 
 from conftest import run_compute as _run_compute
 
