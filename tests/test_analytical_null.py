@@ -100,3 +100,35 @@ def test_load_analytical_null_returns_none_when_path_is_none():
     import plot_zoo_results
 
     assert plot_zoo_results._load_analytical_null(None) is None
+
+
+def test_c2st_analytical_agrees_with_mc():
+    """Analytical null_std matches permutation-based MC std within 3 SE.
+
+    Fixture: n_b=n_a=150, n_perm=300.  Random uniform scores under H0.
+    Validates the Hanley-McNeil formula against an empirical permutation
+    distribution (the core of the overlay's visual agreement claim).
+    """
+    import numpy as np
+    from compute_analytical_null import c2st_analytical_null
+    from sklearn.metrics import roc_auc_score
+
+    rng = np.random.RandomState(42)
+    n_b, n_a = 150, 150
+    n_perm = 300
+
+    scores = rng.uniform(0, 1, n_b + n_a)
+    labels = np.array([1] * n_b + [0] * n_a)
+
+    auc_vals = [roc_auc_score(rng.permutation(labels), scores) for _ in range(n_perm)]
+    mc_mean = float(np.mean(auc_vals))
+    mc_std = float(np.std(auc_vals))
+
+    _, an_std = c2st_analytical_null(n_b, n_a)
+
+    assert abs(mc_mean - 0.5) < 0.03, f"MC mean {mc_mean:.4f} not near 0.5"
+    se = an_std / (2 * n_perm) ** 0.5
+    assert abs(mc_std - an_std) < 3 * se, (
+        f"MC std {mc_std:.5f} differs from analytical {an_std:.5f} by "
+        f"{abs(mc_std - an_std):.5f} > 3 SE ({3 * se:.5f})"
+    )
