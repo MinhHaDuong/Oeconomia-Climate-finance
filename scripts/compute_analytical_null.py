@@ -26,6 +26,7 @@ observed, z_score, p_value are NaN (analytical null only supplies the
 null distribution parameters, not the observed statistic).
 """
 
+import argparse
 import math
 import sys
 
@@ -128,8 +129,6 @@ def _iter_window_counts(cfg):
 
 def main() -> None:
     io_args, extra = parse_io_args()
-
-    import argparse
 
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument(

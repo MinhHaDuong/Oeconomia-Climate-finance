@@ -100,28 +100,35 @@ def _empty_figure(output_stem: str, method: str) -> None:
     plt.close(fig)
 
 
-def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
-    """Load null model CSV if path provided and file exists. Returns None otherwise."""
-    if null_ci_path is None:
-        return None
-    if not Path(null_ci_path).exists():
-        log.warning("Null CI file not found: %s — skipping CI band", null_ci_path)
-        return None
-    null_df = pd.read_csv(null_ci_path)
-    null_df["window"] = null_df["window"].astype(str)
-    return null_df
+def _load_null_csv(path: str | None, label: str = "null") -> pd.DataFrame | None:
+    """Load a null model CSV if path is given and file exists; return None otherwise.
 
+    Parameters
+    ----------
+    path : str | None
+        File path, or None to skip.
+    label : str
+        Short label for the warning message (e.g. "CI band", "analytical null").
 
-def _load_analytical_null(path: str | None) -> pd.DataFrame | None:
-    """Load analytical null CSV if path provided and file exists. Returns None otherwise."""
+    """
     if path is None:
         return None
     if not Path(path).exists():
-        log.warning("Analytical null file not found: %s — skipping overlay", path)
+        log.warning("%s file not found: %s — skipping", label, path)
         return None
-    an_df = pd.read_csv(path)
-    an_df["window"] = an_df["window"].astype(str)
-    return an_df
+    df = pd.read_csv(path)
+    df["window"] = df["window"].astype(str)
+    return df
+
+
+def _load_null_df(null_ci_path: str | None) -> pd.DataFrame | None:
+    """Load MC null model CSV. Thin wrapper around _load_null_csv."""
+    return _load_null_csv(null_ci_path, label="Null CI")
+
+
+def _load_analytical_null(path: str | None) -> pd.DataFrame | None:
+    """Load analytical null CSV. Thin wrapper around _load_null_csv."""
+    return _load_null_csv(path, label="Analytical null")
 
 
 def _compute_null_z_threshold(df: pd.DataFrame, null_df: pd.DataFrame) -> pd.DataFrame:
@@ -202,11 +209,13 @@ def _plot(
     # Analytical null ribbon (w=3): null_mean ± 1.96 * null_std in native units.
     # Orange fill so it remains visually distinct from the MC ribbon (blue/FILL).
     # Where the two ribbons overlap, combined alpha makes coincidence visible.
+    has_an_ribbon = False
     if analytical_null_df is not None:
         w3_an = analytical_null_df[analytical_null_df["window"] == "3"].sort_values(
             "year"
         )
         if not w3_an.empty and w3_an["null_mean"].notna().any():
+            has_an_ribbon = True
             ax.fill_between(
                 w3_an["year"],
                 w3_an["null_mean"] - 1.96 * w3_an["null_std"],
