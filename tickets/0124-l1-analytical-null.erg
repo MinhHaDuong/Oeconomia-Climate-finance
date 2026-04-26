@@ -1,0 +1,46 @@
+%erg v1
+Title: Analytical null overlay for L1 (JS divergence)
+Status: open
+Created: 2026-04-26
+Author: claude
+
+--- log ---
+2026-04-26T08:20Z claude created (split from ticket 0115)
+
+--- body ---
+## Context
+
+Ticket 0115 delivered C2ST analytical null overlay (PR #769).  This ticket
+covers the L1 JS-divergence analytical null, which requires vocabulary size
+and document counts (no embeddings).
+
+## Formula
+
+E[JS | H₀] ≈ (V − 1) / 4 × (1/n_before + 1/n_after)   (Archer et al. 2014)
+null_std = O(1/n) — see Archer et al. for the full variance expression.
+
+V = vocabulary size (number of features after TF-IDF vectorisation),
+n_before/n_after = document counts in each window.
+
+## Actions
+
+1. Extend `compute_analytical_null.py` to accept `--method L1`.
+2. Add L1 branch to `_iter_window_counts` using `load_lexical_data(None)`
+   and the L1 TF-IDF vocabulary size.
+3. Add `tab_analytical_null_L1.csv` Make target in `zoo.mk`.
+4. Pass `--analytical-null` to zoo figure recipe for L1.
+
+## Test
+
+Red: assert `l1_analytical_null(V=100, n_b=200, n_a=200)` returns
+null_mean ≈ (99/4)*(1/200 + 1/200) within 1%.
+
+## Depends on
+
+- PR #769 (ticket 0115, C2ST analytical null infrastructure) — merged
+
+## Exit criteria
+
+- L1 analytical null implemented and schema-validated
+- Zoo figure for L1 shows overlapping MC + analytical ribbons
+- Tests pass; PR merged

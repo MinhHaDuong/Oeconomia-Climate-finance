@@ -1,0 +1,59 @@
+%erg v1
+Title: Analytical null overlay for S1 (MMD²) and S2 (energy distance)
+Status: open
+Created: 2026-04-26
+Author: claude
+
+--- log ---
+2026-04-26T08:20Z claude created (split from ticket 0115)
+
+--- body ---
+## Context
+
+Ticket 0115 delivered C2ST analytical null (PR #769).  Ticket 0124 covers L1.
+This ticket covers S1 and S2, which require pairwise kernel/distance matrices
+and are therefore O(N²) — the most complex of the four methods.
+
+## Formulas
+
+### S1 — MMD² (unbiased)
+E(MMD²_unbiased | H₀) = 0 by construction.
+Var(MMD²_unbiased | H₀) ≈ (4/n²) × Var[h(X,X')] under H₀
+(Gretton 2012, Lemma 6).  Requires computing h(Xi,Xj) off-diagonal.
+
+### S2 — energy distance
+null_mean from mean of off-diagonal entries of pairwise Euclidean distance
+matrix.
+null_std from 4th-moment U-statistics (Székely & Rizzo 2013).  O(N²).
+
+## Actions
+
+1. Add `s1_analytical_null(K_pool)` and `s2_analytical_null(D_pool)` in
+   `_permutation_accel.py` (where pairwise matrices are already computed for
+   the MC path — reuse them).
+2. Extend `compute_analytical_null.py` for `--method S1_MMD` and
+   `--method S2_energy`.
+3. Add Make targets in `zoo.mk`.
+4. Pass `--analytical-null` to zoo figure recipes for S1 and S2.
+
+## Constraint
+
+The pairwise matrix for S1/S2 is O(N²) in memory.  For typical (year,window)
+windows (~400 docs) this is ~1.3 MB per window — acceptable.  Use
+`load_analysis_corpus(with_embeddings=True)` → `load_refined_embeddings()`.
+
+## Test
+
+Red: for Gaussian N(0,I_d) with n=200 iid samples, assert
+s1_analytical_null returns null_mean ≈ 0 (within 1e-6).
+
+## Depends on
+
+- PR #769 (ticket 0115, C2ST analytical null infrastructure) — merged
+- Ticket 0124 (L1 analytical null) — independent, can be parallelised
+
+## Exit criteria
+
+- S1 and S2 analytical nulls implemented and schema-validated
+- Zoo figures for S1_MMD and S2_energy show overlapping MC + analytical ribbons
+- Tests pass; PR merged
