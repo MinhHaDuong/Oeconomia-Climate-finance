@@ -214,18 +214,42 @@ def _plot(
     # Fallback: cumulative or single-window methods (G3, G4, G7, L3).
     if not plotted:
         non_sliding = df[~df["window"].isin(("2", "3", "4"))].sort_values("year")
-        non_sliding = non_sliding.dropna(subset=["z_score"])
+        value_col = "value" if "value" in non_sliding.columns else "z_score"
+        non_sliding = non_sliding.dropna(subset=[value_col])
         if not non_sliding.empty:
             wlabel = non_sliding["window"].iloc[0]
             ax.plot(
                 non_sliding["year"],
-                non_sliding["z_score"],
+                non_sliding[value_col],
                 color=DARK,
                 linewidth=1.6,
                 label=wlabel,
                 zorder=3,
             )
             plotted.append(wlabel)
+
+            # Null ribbon for window="0" (L3): null_mean ± 1.96 * null_std
+            # in the same raw-value units as the curve above.
+            w0_null = (
+                null_df[null_df["window"] == "0"].sort_values("year")
+                if null_df is not None
+                else None
+            )
+            has_w0_ribbon = (
+                w0_null is not None
+                and not w0_null.empty
+                and w0_null["null_mean"].notna().any()
+            )
+            if has_w0_ribbon:
+                ax.fill_between(
+                    w0_null["year"],
+                    w0_null["null_mean"] - 1.96 * w0_null["null_std"],
+                    w0_null["null_mean"] + 1.96 * w0_null["null_std"],
+                    color=FILL,
+                    alpha=0.40,
+                    zorder=0,
+                    label=None,
+                )
         else:
             log.warning("No plottable rows found for method %s", method)
 

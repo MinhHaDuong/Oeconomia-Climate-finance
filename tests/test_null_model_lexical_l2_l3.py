@@ -74,25 +74,34 @@ def _base_cfg_lexical():
 
 
 class TestL3Permutations:
-    """Tests for _run_l3_permutations."""
+    """Tests for _run_l3_permutations.
+
+    All tests mock load_lexical_data so they run without corpus data.
+    The new implementation does document-shuffle permutations (not time-series
+    shuffle), so observed = raw burst counts from div_df and null in count scale.
+    """
 
     def test_l3_output_schema(self):
         """_run_l3_permutations returns DataFrame matching NullModelSchema."""
+        from unittest.mock import patch
+
         from compute_null_model import _run_l3_permutations
         from schemas import NullModelSchema
 
+        df = _make_abstract_df(n_years=10, papers_per_year=30, seed=42)
+        years = sorted(df["year"].unique())
         rng = np.random.RandomState(42)
-        years = np.arange(2000, 2020)
         div_df = pd.DataFrame(
             {
                 "year": years,
                 "window": "0",
-                "value": rng.randint(0, 30, size=len(years)).astype(float),
+                "value": rng.randint(0, 20, size=len(years)).astype(float),
             }
         )
 
         cfg = _base_cfg_lexical()
-        result = _run_l3_permutations(div_df, cfg)
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result = _run_l3_permutations(div_df, cfg)
 
         NullModelSchema.validate(result)
         assert set(result.columns) == {
@@ -107,86 +116,128 @@ class TestL3Permutations:
 
     def test_l3_window_label_is_zero(self):
         """L3 null model output must have window='0' (not 'cumulative')."""
+        from unittest.mock import patch
+
         from compute_null_model import _run_l3_permutations
 
-        rng = np.random.RandomState(42)
-        years = np.arange(2000, 2020)
+        df = _make_abstract_df(n_years=5, papers_per_year=20, seed=0)
+        years = sorted(df["year"].unique())
         div_df = pd.DataFrame(
             {
                 "year": years,
                 "window": "0",
-                "value": rng.randint(0, 30, size=len(years)).astype(float),
+                "value": np.arange(len(years), dtype=float),
             }
         )
 
-        result = _run_l3_permutations(div_df, _base_cfg_lexical())
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result = _run_l3_permutations(div_df, _base_cfg_lexical())
         assert result["window"].eq("0").all(), (
             f"Expected window='0', got: {result['window'].unique()}"
         )
 
-    def test_l3_null_mean_finite_std_positive(self):
-        """L3 null_mean should be finite and null_std > 0 for varied data."""
+    def test_l3_null_mean_finite(self):
+        """L3 null_mean should be finite for all years."""
+        from unittest.mock import patch
+
         from compute_null_model import _run_l3_permutations
 
-        rng = np.random.RandomState(7)
-        years = np.arange(1990, 2025)
-        # Use values with some variance (not all the same)
-        values = rng.randint(2, 50, size=len(years)).astype(float)
+        df = _make_abstract_df(n_years=8, papers_per_year=40, seed=7)
+        years = sorted(df["year"].unique())
+        values = np.arange(2, 2 + len(years), dtype=float)
         div_df = pd.DataFrame({"year": years, "window": "0", "value": values})
 
-        result = _run_l3_permutations(div_df, _base_cfg_lexical())
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result = _run_l3_permutations(div_df, _base_cfg_lexical())
 
         assert result["null_mean"].notna().all(), "null_mean contains NaN"
-        assert result["null_std"].gt(0).all(), (
-            f"null_std <= 0: {result['null_std'].min()}"
-        )
+        assert result["null_std"].notna().all(), "null_std contains NaN"
 
-    def test_l3_observed_matches_standardized_input(self):
-        """L3 observed should be the Z-standardized burst count."""
+    def test_l3_observed_matches_raw_input_value(self):
+        """L3 observed should be the raw burst count from div_df, not Z-standardized."""
+        from unittest.mock import patch
+
         from compute_null_model import _run_l3_permutations
 
-        rng = np.random.RandomState(99)
-        years = np.arange(2000, 2020)
-        values = rng.randint(5, 40, size=len(years)).astype(float)
+        df = _make_abstract_df(n_years=5, papers_per_year=20, seed=0)
+        cfg = _base_cfg_lexical()
+        years = sorted(df["year"].unique())
+        values = [3.0, 7.0, 5.0, 2.0, 8.0]
         div_df = pd.DataFrame({"year": years, "window": "0", "value": values})
 
-        result = _run_l3_permutations(div_df, _base_cfg_lexical())
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result = _run_l3_permutations(div_df, cfg)
 
-        mu = values.mean()
-        sigma = values.std()
-        expected_obs = (values - mu) / sigma
-
-        for i, y in enumerate(years):
-            row = result.loc[result["year"] == y].iloc[0]
-            assert abs(row["observed"] - expected_obs[i]) < 1e-9, (
-                f"year={y}: observed={row['observed']:.6f} vs expected={expected_obs[i]:.6f}"
+        for y, expected in zip(years, values):
+            row = result[result["year"] == y].iloc[0]
+            assert abs(row["observed"] - expected) < 1e-9, (
+                f"year={y}: observed={row['observed']} != {expected} (expected raw count)"
             )
+
+    def test_l3_permutations_raw_counts(self):
+        """observed column = raw burst counts (not Z-scores); null in same scale."""
+        from unittest.mock import patch
+
+        from compute_null_model import _run_l3_permutations
+
+        df = _make_abstract_df(n_years=5, papers_per_year=20, seed=0)
+        cfg = _base_cfg_lexical()
+        years = sorted(df["year"].unique())
+        div_df = pd.DataFrame(
+            {
+                "year": years,
+                "window": "0",
+                "value": [3.0, 7.0, 5.0, 2.0, 8.0],
+            }
+        )
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result = _run_l3_permutations(div_df, cfg)
+
+        # observed must equal the input raw counts from div_df
+        for y, expected in zip(years, [3.0, 7.0, 5.0, 2.0, 8.0]):
+            row = result[result["year"] == y].iloc[0]
+            assert abs(row["observed"] - expected) < 1e-9, (
+                f"year={y}: observed={row['observed']} != {expected}"
+            )
+
+        # null_mean and null_std must be in count scale, not Z-score scale
+        top_n = cfg["divergence"]["lexical"]["L3_bursts"]["top_n_terms"]
+        assert result["null_mean"].between(0, top_n).all(), (
+            f"null_mean out of [0, top_n={top_n}]: {result['null_mean'].values}"
+        )
+        assert result["null_std"].ge(0).all()
 
     def test_l3_row_count_matches_input(self):
         """One output row per year in div_df."""
+        from unittest.mock import patch
+
         from compute_null_model import _run_l3_permutations
 
-        years = np.arange(1995, 2025)
+        df = _make_abstract_df(n_years=10, papers_per_year=30, seed=5)
+        years = sorted(df["year"].unique())
         div_df = pd.DataFrame(
             {"year": years, "window": "0", "value": np.ones(len(years)) * 5}
         )
-        # All same values: sigma=0 so observed are NaN, null_std=0 — that's ok for
-        # constant series, but we just check count
-        result = _run_l3_permutations(div_df, _base_cfg_lexical())
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            result = _run_l3_permutations(div_df, _base_cfg_lexical())
         assert len(result) == len(years)
 
     def test_l3_reproducible_with_seed(self):
         """Same seed produces same null_mean and null_std."""
+        from unittest.mock import patch
+
         from compute_null_model import _run_l3_permutations
 
-        rng = np.random.RandomState(10)
-        years = np.arange(2000, 2020)
-        values = rng.randint(5, 40, size=len(years)).astype(float)
+        df = _make_abstract_df(n_years=5, papers_per_year=30, seed=10)
+        years = sorted(df["year"].unique())
+        values = [5.0, 10.0, 8.0, 3.0, 12.0]
         div_df = pd.DataFrame({"year": years, "window": "0", "value": values})
 
         cfg = _base_cfg_lexical()
-        r1 = _run_l3_permutations(div_df, cfg)
-        r2 = _run_l3_permutations(div_df, cfg)
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            r1 = _run_l3_permutations(div_df, cfg)
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            r2 = _run_l3_permutations(div_df, cfg)
 
         pd.testing.assert_frame_equal(r1, r2)
 
@@ -372,6 +423,7 @@ class TestLexicalDispatch:
 
     def test_l3_dispatch_via_run_lexical_permutations(self):
         """_run_lexical_permutations with method='L3' calls _run_l3_permutations."""
+        from unittest.mock import patch
 
         from compute_null_model import _run_l3_permutations
 
@@ -385,9 +437,10 @@ class TestLexicalDispatch:
             }
         )
         cfg = _base_cfg_lexical()
+        abstract_df = _make_abstract_df()
 
-        # Call _run_l3_permutations directly (routing tested elsewhere)
-        result = _run_l3_permutations(div_df, cfg)
+        with patch("_divergence_lexical.load_lexical_data", return_value=abstract_df):
+            result = _run_l3_permutations(div_df, cfg)
         assert len(result) == len(years)
         assert "null_mean" in result.columns
         assert "null_std" in result.columns
