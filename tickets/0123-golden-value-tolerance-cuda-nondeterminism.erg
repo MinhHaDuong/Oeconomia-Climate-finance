@@ -1,6 +1,6 @@
 %erg v1
 Title: Widen S3/S4 golden value tolerance from 1e-6 to 1e-4 for CUDA non-determinism
-Status: open
+Status: closed
 Created: 2026-04-25
 Author: claude
 
@@ -62,7 +62,7 @@ done
 ## Exit criteria
 
 - [x] `atol` changed to `1e-4` in `test_golden_values.py` (eb0fc93)
-- [ ] S3 golden regenerated on padme (stale golden from different env)
-- [ ] Three consecutive `pytest tests/test_golden_values.py -m slow` runs pass on padme
+- [x] S3 golden regenerated on padme — run-to-run diff=0, stale golden (feefd3c)
+- [x] Three consecutive golden runs pass: 14 passed, 3 skipped (S4 excluded — upstream bug)
 - [x] `make check-fast` green (976 passed, 1 pre-existing flaky)
 - Note: S4 SchemaError (missing 'year' column) is separate upstream bug → new ticket
