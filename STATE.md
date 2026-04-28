@@ -1,13 +1,13 @@
 # State
 
-Last updated: 2026-04-25
+Last updated: 2026-04-28 (housekeeping run)
 
 ## Current goal
 
-**Null ribbon quality** — all 18 zoo figures have ribbons (drivers done); fix L2 crossyear mismatch, L3 methodology, analytical overlay.
+**Analytical null overlay** — C2ST done (PR #769); S1, S2, L1 analytical nulls still needed (ticket 0115 scope question escalated). Fix t0122 parallel-test flakiness (PR #772) and t0124 S4-frechet schema (PR #773).
 
 ### Roadmap
-1. **NOW — Ribbon quality** (tickets 0112, 0114, 0115): fix L2 mismatch, L3 document shuffle, analytical overlay.
+1. **NOW — Ribbon quality** (ticket 0115): analytical null overlay S1/S2/L1 (scope question needs human judgment).
 2. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
 3. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
@@ -76,8 +76,8 @@ None.
 | S3_sliced_wasserstein | ✅ ribbon live (raw values) |
 | S4_frechet | ✅ ribbon live (raw values) |
 | L1 | ✅ ribbon live (raw values) |
-| L2 | ✅ ribbon live — scale bug → ticket 0112 |
-| L3 | ✅ CSV computed; ribbon missing (window filter bug → ticket 0114) |
+| L2 | ✅ ribbon live (raw values) |
+| L3 | ✅ ribbon live (raw values) |
 | G1_pagerank | ✅ ribbon live (raw values) |
 | G2_spectral | ✅ ribbon live |
 | G3_coupling_age | ❌ no null model (G3/G4/G7 not in null pipeline) |
@@ -94,8 +94,7 @@ None.
 
 | Ticket | Title | Priority |
 |--------|-------|----------|
-| 0114 | L3 null: full document shuffle + window="0" ribbon | High |
-| 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium |
+| 0115 | Analytical null overlay for S1/S2/L1 (C2ST done; scope escalated) | Medium |
 
 ## Open infrastructure tickets
 
@@ -107,8 +106,8 @@ None.
 
 ## Next actions
 
-- 0114 (L3 document shuffle + raw burst ribbon)
-- 0115 (analytical null overlay for S1/S2/L1/C2ST)
+- Merge open PRs: #772 (t0122 parallel-test flakiness), #773 (t0124 S4-frechet schema)
+- 0115 (analytical null S1/S2/L1 — scope question needs human judgment: extend beyond C2ST?)
 
 Background (not on critical path):
 
