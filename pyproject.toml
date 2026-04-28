@@ -65,6 +65,7 @@ dev = [
 markers = [
     "slow: marks tests that require network access or external data (deselect with '-m \"not slow\"')",
     "integration: marks tests that spawn subprocesses or use sleep-based timing (deselect with '-m \"not integration\"')",
+    "adherence: project rule enforcement (hygiene/discipline/contracts)",
 ]
 
 [tool.uv]
