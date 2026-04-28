@@ -1216,3 +1216,32 @@ class TestNoValuesCallOnSeries:
         assert "source_groups.values()" not in src, (
             f"{script} uses source_groups.values() — should be .values (property)"
         )
+
+
+class TestNoHalfFinishedWork:
+    """Ratchet: stubs (NotImplementedError), skip-marked tests
+    (pytest.skip, @pytest.mark.skip), and TODO comments are signals
+    of deferred work that someone "will come back to." Use a
+    follow-up ticket instead.
+
+    Escape hatch: `# noqa: hygiene` on the line if the marker is
+    genuinely load-bearing or documents a known roadmap item with
+    no immediate fix.
+    """
+
+    PATTERNS = [
+        (r"raise\s+NotImplementedError", "NotImplementedError"),
+        (r"@pytest\.mark\.skip\b|pytest\.skip\(", "pytest.skip"),
+        (r"#\s*TODO\b", "TODO"),
+    ]
+
+    @pytest.mark.parametrize("pattern,name", PATTERNS, ids=[n for _, n in PATTERNS])
+    def test_no_stubs_skips_or_todos(self, pattern, name):
+        rx = re.compile(pattern)
+        offenders = []
+        for script in _all_scripts():
+            src = _read_script(script)
+            for i, line in enumerate(src.splitlines(), 1):
+                if rx.search(line) and "noqa: hygiene" not in line:
+                    offenders.append(f"{script}:{i}: {line.strip()}")
+        assert not offenders, f"{name} found:\n  " + "\n  ".join(offenders)
