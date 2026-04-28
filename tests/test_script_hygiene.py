@@ -1218,6 +1218,7 @@ class TestNoValuesCallOnSeries:
         )
 
 
+@pytest.mark.adherence
 class TestNoHalfFinishedWork:
     """Ratchet: stubs (NotImplementedError), skip-marked tests
     (pytest.skip, @pytest.mark.skip), and TODO comments are signals
