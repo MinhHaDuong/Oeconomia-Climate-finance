@@ -1,6 +1,6 @@
 %erg v1
 Title: Document snapshot date in §3.1 and data-availability statement
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-17T07:40Z claude created as child of 0070 for bias B12
 
 2026-04-29T00:09Z claude note sweep-pick: picked hash:8cdca0669c07 scope:~20 min, 2 QMD files + 1 test risk:low
+2026-04-29T09:00Z claude status closed — work already merged to main; all 3 tests green (3c5e942, 0dd6666, 5860878)
 --- body ---
 ## Context
 
