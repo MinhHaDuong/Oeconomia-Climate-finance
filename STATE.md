@@ -1,15 +1,16 @@
 # State
 
-Last updated: 2026-04-25
+Last updated: 2026-04-29
 
 ## Current goal
 
-**Null ribbon quality** — all 18 zoo figures have ribbons (drivers done); fix L2 crossyear mismatch, L3 methodology, analytical overlay.
+**Replication ribbon** — null ribbons complete for 15/18 methods (G3/G4/G7 excluded); analytical null overlay done (0115 open PR); 0124 S4 schema fix in review.
 
 ### Roadmap
-1. **NOW — Ribbon quality** (tickets 0112, 0114, 0115): fix L2 mismatch, L3 document shuffle, analytical overlay.
-2. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
-3. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
+1. ~~**DONE — Ribbon quality** (tickets 0112, 0114, 0115): L2 crossyear fixed, L3 document shuffle done, C2ST analytical null overlay done.~~ PRs merged.
+2. **NOW — S4 schema fix** (ticket 0124): restore `year` column in S4_frechet smoke mode.
+3. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
+4. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
 ## Status: TWO PAPERS SUBMITTED + ALL NULL DRIVERS WIRED
 
@@ -76,8 +77,8 @@ None.
 | S3_sliced_wasserstein | ✅ ribbon live (raw values) |
 | S4_frechet | ✅ ribbon live (raw values) |
 | L1 | ✅ ribbon live (raw values) |
-| L2 | ✅ ribbon live — scale bug → ticket 0112 |
-| L3 | ✅ CSV computed; ribbon missing (window filter bug → ticket 0114) |
+| L2 | ✅ ribbon live (raw values, crossyear resonance-only fixed — PR #765) |
+| L3 | ✅ ribbon live (document-shuffle permutations — PR merged 0114) |
 | G1_pagerank | ✅ ribbon live (raw values) |
 | G2_spectral | ✅ ribbon live |
 | G3_coupling_age | ❌ no null model (G3/G4/G7 not in null pipeline) |
@@ -94,8 +95,7 @@ None.
 
 | Ticket | Title | Priority |
 |--------|-------|----------|
-| 0114 | L3 null: full document shuffle + window="0" ribbon | High |
-| 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium |
+| 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium (PR open) |
 
 ## Open infrastructure tickets
 
@@ -107,8 +107,9 @@ None.
 
 ## Next actions
 
-- 0114 (L3 document shuffle + raw burst ribbon)
-- 0115 (analytical null overlay for S1/S2/L1/C2ST)
+- 0124 (S4_frechet schema: restore `year` column in smoke mode — PR #773 in review)
+- 0115 (C2ST analytical null overlay — PR open)
+- 0122 (fix parallel test flakiness — PR #772 in review)
 
 Background (not on critical path):
 

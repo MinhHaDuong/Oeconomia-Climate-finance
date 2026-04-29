@@ -1,0 +1,41 @@
+%erg v1
+Title: Clean up stale worktrees and merged branches
+Status: open
+Created: 2026-04-29
+Author: HDMX-coding-agent
+
+--- log ---
+2026-04-29T00:00Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Housekeeping run 2026-04-29 found 3 stale worktrees and several merged branches that should be removed:
+
+- `t0117-fix-doc-vars-extras` worktree: NOT locked, no ticket 0117 exists — likely orphaned
+- `t0123-golden-tolerance` worktree: NOT locked, ticket 0123 is closed (merged) — can be removed
+- `agent-ab773b59c56dddc9e` worktree on `t0112-l2-crossyear-resonance-filter`: LOCKED, ticket 0112 is closed (merged PR #765) — check for active sessions before removal
+- Local branch `t0112-l2-crossyear-resonance-filter`: checked out in a locked worktree; can delete after worktree removal
+- Remote stale branches: `origin/t0114-l3-null-ribbon`, `origin/t0123-revert-atol`, `origin/worktree-orchestrator-112-115`
+
+Per project memory: never force-delete locked worktrees without checking for other active sessions.
+
+## Actions
+1. Verify no active sessions are using the locked `agent-ab773b59c56dddc9e` worktree (check `.git/worktrees/*/locked` reason)
+2. Remove unlocked stale worktrees: `git worktree remove .claude/worktrees/t0117-fix-doc-vars-extras` and `git worktree remove .claude/worktrees/t0123-golden-tolerance`
+3. After confirming no active sessions: `git worktree remove --force .claude/worktrees/agent-ab773b59c56dddc9e`
+4. Delete local branches: `git branch -d t0112-l2-crossyear-resonance-filter`
+5. Delete remote stale branches: `git push origin --delete t0114-l3-null-ribbon t0123-revert-atol worktree-orchestrator-112-115`
+6. Verify `git worktree list` and `git branch -a` are clean
+
+## Test
+```bash
+# After cleanup, no unlocked worktrees should reference closed-ticket branches
+git worktree list | grep -v "locked" | grep -v "^\[main\]"
+# Should return only main worktree line
+```
+
+## Exit criteria
+- `git worktree list` shows only main worktree + any actively-locked worktrees for open tickets
+- No local branches for closed tickets remain
+- Remote stale branches deleted
+- `git branch -a` has no orphaned feature branches without open tickets
