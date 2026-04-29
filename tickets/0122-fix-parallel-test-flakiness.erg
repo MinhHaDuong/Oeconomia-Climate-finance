@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-25T23:50Z claude created — identified from make check-fast runs showing different failures each time
 
+2026-04-29T00:09Z claude note sweep-assess: not-picked hash:4b9f9558b5d8 scope:~30 min, 2 test files risk:low
 --- body ---
 ## Context
 
@@ -73,3 +74,8 @@ uv run pytest tests/test_ref_match_corpus.py tests/test_robustness_observability
 - [ ] `uv run pytest tests/test_ref_match_corpus.py -n 4` passes 3 consecutive runs
 - [ ] `uv run pytest tests/test_robustness_observability.py::TestStepCounters -n 4` passes 3 runs
 - [ ] `make check-fast` green
+## Picker assessment 2026-04-29T00:09Z
+**Decision:** not-picked
+**Scope:** ~30 min, 2 test files
+**Risk:** low
+**Reason:** 0078 simpler — doc-only; 0122 requires test isolation fixes across 2 files but no blocker

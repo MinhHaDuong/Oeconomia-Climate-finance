@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-17T07:40Z claude created as child of 0070 for bias B12
 
+2026-04-29T00:09Z claude note sweep-pick: picked hash:8cdca0669c07 scope:~20 min, 2 QMD files + 1 test risk:low
 --- body ---
 ## Context
 
@@ -44,3 +45,8 @@ added.
 - Snapshot date present in §3.1 and the data statement.
 - Same date cited in the other Quarto outputs.
 - Child of 0070 closed.
+## Picker assessment 2026-04-29T00:09Z
+**Decision:** picked
+**Scope:** ~20 min, 2 QMD files + 1 test
+**Risk:** low
+**Reason:** trivial doc edit — add snapshot date sentence to companion-paper.qmd; lowest risk of all candidates

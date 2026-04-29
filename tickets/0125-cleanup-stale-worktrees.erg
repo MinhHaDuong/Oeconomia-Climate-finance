@@ -7,6 +7,7 @@ Author: HDMX-coding-agent
 --- log ---
 2026-04-29T00:00Z HDMX-coding-agent created
 
+2026-04-29T00:09Z claude note sweep-assess: not-picked hash:06adae38d899 scope:~20 min, git ops only risk:medium
 --- body ---
 ## Context
 Housekeeping run 2026-04-29 found 3 stale worktrees and several merged branches that should be removed:
@@ -39,3 +40,8 @@ git worktree list | grep -v "locked" | grep -v "^\[main\]"
 - No local branches for closed tickets remain
 - Remote stale branches deleted
 - `git branch -a` has no orphaned feature branches without open tickets
+## Picker assessment 2026-04-29T00:09Z
+**Decision:** not-picked
+**Scope:** ~20 min, git ops only
+**Risk:** medium
+**Reason:** locked worktree requires session check — higher risk than 0078 doc edit; defer

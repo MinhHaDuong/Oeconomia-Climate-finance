@@ -1,16 +1,18 @@
 %erg v1
 Title: Standing regression test — dispatcher must never emit 1-column DataFrame on empty corpus
-Status: open
+Status: needs-human
 Created: 2026-04-25
 Author: claude
 
 --- log ---
 2026-04-25T23:55Z claude created — follow-up from 0118/0120 sweep; guards the class, not just instances
-
+2026-04-26T22:06Z claude note sweep-assess: not picked
+2026-04-27T02:07Z claude note sweep-assess: not picked
+2026-04-29T00:09Z claude note sweep-skip: three-strikes hash:6fee5392f4bc
 --- body ---
-## Context
-
-Ticket 0118 (PR #764) fixed `compute_s4_frechet` returning a 0-column DataFrame when
+:09Z claude note sweep-skip: three-strikes hash:6fee5392f4bc
+--- body ---
+-column DataFrame when
 `_iter_window_pairs` yields no pairs (empty `results` list). The root cause was:
 
 ```python
@@ -55,3 +57,15 @@ PASS; a SchemaError or a 1-column `['channel']` CSV is a FAIL.
 - [ ] Test exists and passes for all methods in `METHODS.keys()`
 - [ ] Test is marked `@pytest.mark.slow` (excluded from check-fast)
 - [ ] `make check-fast` clean
+
+## Picker assessment 2026-04-26T22:06Z
+**Decision:** not picked
+**Scope:** ~30 min, 1 new test file
+**Risk:** low
+**Reason:** 0120 was riper — more mechanical, ~10 min shorter, no fixture design uncertainty
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~30 min, 1 test file
+**Risk:** low
+**Reason:** exit criterion blocked: S4_frechet currently broken (PR #773 open); 0078 is unblocked
