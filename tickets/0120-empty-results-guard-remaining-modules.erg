@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-25T23:50Z claude created — follow-up from 0118 verify finding
+2026-04-26T22:06Z claude note sweep-pick: selected
 
 --- body ---
 ## Context
@@ -55,3 +56,9 @@ it requires a corpus smaller than the smoke fixture, which isn't tested.
 
 - [ ] All `return pd.DataFrame(results/rows)` in the three modules are guarded
 - [ ] `make check-fast` clean
+
+## Picker assessment 2026-04-26T22:06Z
+**Decision:** picked
+**Scope:** ~20 min, 3 files (_divergence_c2st.py, _divergence_community.py, _citation_methods.py)
+**Risk:** low
+**Reason:** most mechanical of the candidates — guard pattern established by PR #764, no new test needed, make check-fast sufficient

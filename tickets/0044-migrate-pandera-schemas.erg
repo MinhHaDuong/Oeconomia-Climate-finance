@@ -6,7 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-15T12:05Z claude created
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 
@@ -69,3 +69,9 @@ def test_csv_writes_have_schema():
 - Each CSV output has a schema in `scripts/schemas.py`
 - Validation happens at write time (not just at read time downstream)
 - Hygiene test enforces the rule for new scripts
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~45 min, ~4 files
+**Risk:** medium
+**Reason:** 0078 is lower risk; schema migration touches multiple CSV writers

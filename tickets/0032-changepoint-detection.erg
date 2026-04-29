@@ -8,7 +8,7 @@ Blocked-by: 0031
 --- log ---
 2026-04-14T16:30Z claude created
 2026-04-14T16:30Z claude note wave 2, blocked by all three divergence tickets
-
+2026-04-27T02:07Z claude note sweep-skip: scope-too-large expires:2026-04-28T02:07Z hash:3f560f854ff8
 --- body ---
 ## Context
 Tickets 0029-0031 each produce a CSV of divergence time series. This

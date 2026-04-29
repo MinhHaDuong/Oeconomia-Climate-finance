@@ -694,7 +694,7 @@ check:
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 10s).
 check-fast:
-	$(UV_RUN) pytest tests/ -v --tb=short -m "not slow and not integration" -n 4
+	$(UV_RUN) python -m pytest tests/ -v --tb=short -m "not slow and not integration" -n 4
 
 # Smoke pipeline: run Phase 2 on a 100-row fixture (no DVC pull needed, <30s).
 # Exercises: compute_breakpoints, compute_clusters, plot_fig1_bars.

@@ -7,7 +7,7 @@ Author: claude
 --- log ---
 2026-04-24T12:00Z claude created
 2026-04-24T12:30Z orchestrator reimagine: (1) L2 is three-way (past, year-y, future) — not before/after. iter_lexical_windows cannot be reused. Null: pool past+future, shuffle into same-size buckets, recompute resonance against unchanged year-y docs. (2) L3 window label is "0" not "cumulative" in both tab_div_L3.csv and tab_crossyear_L3.csv. Fix test assertion accordingly.
-
+2026-04-27T02:07Z claude note sweep-skip: scope-too-large expires:2026-04-28T02:07Z hash:3294c8bdfde3
 --- body ---
 ## Context
 

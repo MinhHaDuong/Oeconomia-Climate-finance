@@ -9,7 +9,7 @@ Author: user
 2026-04-22T12:30Z orchestrator reimagine: (1) Two distinct Z-scores exist — cross-year Z (zscore.md) and permutation Z (null-model.md); proof targets cross-year Z only, clarify this. (2) zscore.md line 11 says "approximately a 95% tail under normality" — exactly the claim to disprove. (3) Empirical scatter (Z vs -log10(p)) IS feasible on padme — tab_null_S2_energy.csv can be built with make null-model. (4) NumPy theory test is self-contained and feasible now. Scope: keep empirical scatter, add clear distinction between two Z-scores throughout.
 2026-04-22T14:30Z agent execute: PR #743 opened. Commits: RED test (e8ac2b4), GREEN prose (893b216), script (2d5ad72), hygiene fix (a652362). check-fast: 18 failures (all pre-existing).
 2026-04-22T14:40Z orchestrator verify: ESCALATE — prose error (trend direction inverted) + criterion 3 missing (null table needed). Fixed trend direction (commit 05a5f46). Built tab_null_S2_energy.csv on padme. Spearman rho(|Z|, -log10(p)) = -0.247 (p=0.018, n=90) — NEGATIVE correlation confirms proposition: cross-year Z inflated at trend extremes while permutation test is trend-agnostic.
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 
@@ -130,3 +130,9 @@ not code behavior — purpose is documentation and regression guard).
 3. Empirical scatter Z vs −log10(p) produced for S2_energy; Spearman ρ reported.
 4. Theory test passes.
 5. PDF renders without LaTeX errors.
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~45 min, math + docs
+**Risk:** medium
+**Reason:** 0078 is lower risk and more atomic

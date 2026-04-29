@@ -1,12 +1,13 @@
 %erg v1
 Title: Reconcile window set and state lead-window rationale
-Status: open
+Status: done
 Created: 2026-04-17
 Author: claude
 
 --- log ---
 2026-04-17T07:40Z claude created as child of 0070 for bias B7
 2026-04-21Z orchestrator reimagine: no w=5 results anywhere; drop from config (option 1b). Test should reference §4.8 not §6.4.
+2026-04-28Z orchestrator close: all exit criteria met — config=[2,3,4], paper §4.8 matches, lead-window rationale present, test_windows_match PASSED.
 
 --- body ---
 ## Context

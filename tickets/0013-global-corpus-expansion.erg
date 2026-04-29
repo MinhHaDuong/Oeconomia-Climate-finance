@@ -8,6 +8,8 @@ Author: user
 2026-04-13T19:30Z claude created
 2026-04-13T19:30Z claude note epic — corpus v2.0 for the book on $300 billion
 
+2026-04-26T06:00Z claude note sweep-skip: scope-too-large expires:2026-04-27T06:00Z hash:74eceb157efd
+2026-04-26T22:06Z claude note sweep-skip: scope-too-large expires:2026-04-27T22:06Z hash:23b5edfaf8b8
 --- body ---
 ## Context
 The current corpus (v1.1.1) is 93% English because its sources (OpenAlex,
@@ -55,3 +57,4 @@ Non-English share of refined corpus > 15%.
 
 ## Exit criteria
 Corpus v2.0 released on Zenodo. Data paper submitted.
+

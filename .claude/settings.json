@@ -5,7 +5,8 @@
       "Bash(*quarto *)",
       "Edit(/.claude/**)",
       "WebSearch",
-      "Bash(ls \"/home/haduong/CNRS/papiers/actif/Oeconomia - Climate finance/tickets/\"*.erg)"
+      "Bash(ls \"/home/haduong/CNRS/papiers/actif/Oeconomia - Climate finance/tickets/\"*.erg)",
+      "Edit(*/.git/hooks/*)"
     ],
     "deny": [
       "Bash(rm -rf *)",

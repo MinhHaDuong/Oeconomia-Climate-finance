@@ -1,12 +1,13 @@
 %erg v1
 Title: Fix L3 null model and ribbon: full document shuffle + raw-value axis
-Status: open
+Status: closed
 Created: 2026-04-25
 Author: claude
 
 --- log ---
 2026-04-25T17:45Z claude created
 2026-04-25T18:10Z revised: (1) null model changed to full corpus shuffle;
+2026-04-27T00:00Z claude closed — PR #768 merged (feat: L3 null model: document-shuffle + window='0' ribbon)
   (2) plot to use raw burst counts, not Z-scores; (3) ribbon for window="0"
 
 --- body ---

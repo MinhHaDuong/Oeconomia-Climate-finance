@@ -6,7 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-24T11:45Z claude created
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 
@@ -153,3 +153,9 @@ def test_ribbon_normalization_consistent():
 ## Exit criteria
 
 All 6 stochastic-method zoo figures show visible ribbon. Tests pass. STATE.md updated.
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~45 min, figure pipeline + test
+**Risk:** medium
+**Reason:** 0078 is lower risk and more contained

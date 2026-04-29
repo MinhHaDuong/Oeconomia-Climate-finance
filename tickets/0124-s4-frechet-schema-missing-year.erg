@@ -5,6 +5,7 @@ Created: 2026-04-26
 Author: claude
 
 --- log ---
+2026-04-26T20:15Z claude fix — PR #773 (t0124-s4-frechet-schema-fix); root cause: 70f31f6 reverted PR #764
 2026-04-26T04:25Z claude created — discovered during 0123 golden test investigation
 
 --- body ---

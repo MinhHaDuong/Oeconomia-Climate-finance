@@ -7,7 +7,7 @@ Author: user
 --- log ---
 2026-04-15T20:00Z claude created
 2026-04-15T20:00Z claude note from simplify review; 52 tests take 128s
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 The test suite works but has gaps in strategy: no regression guards
@@ -51,3 +51,9 @@ any test coverage.
 ## Exit criteria
 Golden values committed. Fast/slow split working. All scripts have
 at least one test. Property tests for metric axioms.
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~60 min, multiple test files
+**Risk:** medium
+**Reason:** 0078 is lower risk — docs+test only, no code changes, no multi-file coordination

@@ -6,7 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-15T12:00Z claude created
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 
@@ -64,3 +64,9 @@ def test_no_direct_corpus_reads():
 - All high/medium scripts use pipeline_loaders
 - Test enforces the rule (add to test_script_hygiene.py)
 - Archive scripts: fix or document as exempt
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~45 min, ~4 files
+**Risk:** medium
+**Reason:** 0078 is lower risk; corpus loader migration touches core pipeline

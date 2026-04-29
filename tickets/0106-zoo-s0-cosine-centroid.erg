@@ -6,7 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-24T11:45Z claude created
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 
@@ -172,3 +172,9 @@ def test_s0_centroid_deterministic():
 S0_centroid appears as a 19th panel in the zoo PDF, with a smooth Z-score curve
 for w=3 that peaks around 2007–2013 consistent with the field crystallization story.
 Tests pass. No changes to existing zoo outputs.
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~40 min, new method + zoo integration
+**Risk:** medium
+**Reason:** 0078 is lower risk; new method touches zoo dispatcher + tests

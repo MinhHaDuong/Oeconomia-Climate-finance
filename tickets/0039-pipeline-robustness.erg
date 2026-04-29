@@ -7,7 +7,7 @@ Author: user
 --- log ---
 2026-04-15T20:00Z claude created
 2026-04-15T20:00Z claude note from simplify review
-
+2026-04-27T02:07Z claude note sweep-assess: not picked
 --- body ---
 ## Context
 Several robustness gaps identified during code review.
@@ -45,3 +45,9 @@ def test_seed_reproducibility():
 ## Exit criteria
 All random operations seeded from config. G7 proxy is visible in output.
 Year-range warnings logged. Energy distance benchmarked.
+
+## Picker assessment 2026-04-27T02:07Z
+**Decision:** not picked
+**Scope:** ~60 min, ~5 files
+**Risk:** medium
+**Reason:** 0078 is lower risk and fully contained

@@ -10,7 +10,10 @@ Author: claude
 2026-04-25T18:30Z revised: render as overlay on zoo figures, not standalone script;
   both MC and analytical ribbons drawn as semi-transparent fills; coincidence
   confirms agreement visually
+2026-04-26T00:00Z claude bump verify-reroll — round 1: exit criteria require S1/S2/L1 analytical nulls; PR delivers C2ST only with no follow-up ticket IDs
+2026-04-26T00:00Z claude bump verify-escalate — round 2: fix paths not actioned; round budget exhausted; human judgment required on scope (C2ST-only vs. four-method exit criteria)
 
+2026-04-26T06:00Z claude note sweep-skip: verify-escalated hash:46ba1ebd078d
 --- body ---
 ## Context
 
