@@ -1,0 +1,67 @@
+%erg v1
+Title: Refactor uv invocations to use --env-file (CLAUDE_ENV_FILE leak fix)
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T16:31Z claude created — see AEDIST commit 4000c21 for the model fix
+
+--- body ---
+## Context
+
+Discovery 2026-04-30: Claude Code's `~/.claude/scripts/on-start.sh` was
+appending all `~/.claude/.env` keys into `$CLAUDE_ENV_FILE`. Claude Code
+inlines that file's contents as `KEY=value` prefix in every spawned
+`bash -c` command line — making secrets visible to anyone running
+`ps -ef` on the host (and to auditd / container telemetry / shared-host
+neighbours). An accidental `ps -ef` during AEDIST work leaked the entire
+key set into a chat transcript; the keys had to be rotated.
+
+User-side fix (committed in `~/.claude/scripts/on-start.sh`): the hook
+no longer persists `.env` into `CLAUDE_ENV_FILE`. Tools that need keys
+must source `.env` explicitly.
+
+## Project-specific work
+
+This repo uses uv (`pyproject.toml` + `uv.lock`) but the top-level
+`Makefile` has no `uv run` invocations today — uv may be invoked from
+shell scripts, dvc stages, quarto pre-render hooks, or CI. **Audit
+needed before code changes.**
+
+1. Locate every uv invocation in the repo:
+   - `grep -rn "uv run" .`
+   - Check `dvc.yaml` stages, `_quarto.yml` pre/post hooks, any shell
+     scripts under `scripts/`, `.github/workflows/`.
+2. For each invocation that needs an API key (OpenRouter, Anthropic,
+   etc.), wrap with `uv run --env-file <path>/.env ...` so uv loads the
+   project `.env` at child-process spawn time.
+3. Drop any `export KEY := $(shell grep ...)` patterns from Makefiles —
+   those put values onto Make's command line and on into spawned process
+   args, the same leak path we just closed.
+4. Document the chosen env source in a Makefile / dvc.yaml header
+   comment. Recommended: project `.env` for project-specific keys;
+   `~/.claude/.env` stays only for cross-project personal accounts
+   (Anthropic API outside this project, Zotero, etc.).
+
+## Reference
+
+AEDIST `experiments/Makefile` (commit `4000c21`) shows the model
+pattern: a single `UV_RUN := uv run --project .. --env-file ../.env`
+macro, with a header block documenting the env policy.
+
+## Test
+
+After refactor, sanity check with:
+```bash
+ps -ef | grep '<some running uv child>' | grep -E '[A-Z_]+=[^[:space:]]+'
+```
+No `KEY=value` pairs should appear in the command-line column.
+
+## Exit criteria
+
+- All uv invocations use `--env-file` (or the project's wrapper macro).
+- No `export KEY := $(shell ...)` patterns referencing secrets in any
+  Makefile, dvc.yaml, or build script.
+- Project .env declared as canonical source in a header comment.
+- One spot-check confirms no leakage via `ps -ef`.
