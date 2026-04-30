@@ -69,6 +69,26 @@ def _load_divergence_for_heatmap(breaks_path):
     return breaks_df, div_df
 
 
+def _method_zseries(mdf):
+    """Return z-scored series for one method, or None if insufficient data."""
+    if mdf.empty:
+        return None
+    windows = mdf["window"].unique()
+    if "3" in windows or 3 in windows:
+        sub = mdf[mdf["window"].astype(str) == "3"]
+    elif "cumulative" in windows:
+        sub = mdf[mdf["window"] == "cumulative"]
+    else:
+        sub = mdf[mdf["window"] == mdf["window"].iloc[0]]
+    hps = sub["hyperparams"].unique()
+    sub = sub[sub["hyperparams"] == hps[0]]
+    series = sub.set_index("year")["value"].sort_index()
+    if len(series) < 3:
+        return None
+    mean, std = series.mean(), series.std()
+    return (series - mean) / std if std > 0 else series * 0.0
+
+
 def _build_heatmap_matrix(div_df):
     """Build a method x year z-scored matrix for the heatmap.
 
@@ -78,46 +98,17 @@ def _build_heatmap_matrix(div_df):
     if div_df.empty:
         return None, [], [], {}
 
-    # Pick one representative series per method
-    # Prefer window=3, then smallest available
     methods_present = div_df["method"].unique()
-
-    # Filter to methods that exist in our ordering
     all_ordered = METHOD_ORDER_SEM + METHOD_ORDER_LEX + METHOD_ORDER_CIT
     ordered_methods = [m for m in all_ordered if m in methods_present]
-    # Add any remaining methods not in our ordering
     extra = [m for m in methods_present if m not in ordered_methods]
     ordered_methods.extend(sorted(extra))
 
     rows = {}
     for method in ordered_methods:
-        mdf = div_df[div_df["method"] == method].dropna(subset=["value"])
-        if mdf.empty:
-            continue
-        # Pick preferred window
-        windows = mdf["window"].unique()
-        if "3" in windows or 3 in windows:
-            sub = mdf[mdf["window"].astype(str) == "3"]
-        elif "cumulative" in windows:
-            sub = mdf[mdf["window"] == "cumulative"]
-        else:
-            sub = mdf[mdf["window"] == mdf["window"].iloc[0]]
-
-        # Pick first hyperparams variant
-        hps = sub["hyperparams"].unique()
-        sub = sub[sub["hyperparams"] == hps[0]]
-
-        series = sub.set_index("year")["value"].sort_index()
-        if len(series) < 3:
-            continue
-
-        # Z-score
-        mean, std = series.mean(), series.std()
-        if std > 0:
-            z = (series - mean) / std
-        else:
-            z = series * 0.0
-        rows[method] = z
+        z = _method_zseries(div_df[div_df["method"] == method].dropna(subset=["value"]))
+        if z is not None:
+            rows[method] = z
 
     if not rows:
         return None, [], [], {}
