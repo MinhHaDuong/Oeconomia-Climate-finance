@@ -73,7 +73,9 @@ from _divergence_io import (
     per_window_year_ranges,
     subsample_equal_n,
 )
-from _divergence_io import get_min_papers as _get_min_papers
+from _divergence_io import (
+    get_min_papers as _get_min_papers,
+)
 
 
 def _iter_lexical_window_pairs(df, cfg):

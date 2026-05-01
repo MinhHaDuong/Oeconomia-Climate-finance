@@ -22,6 +22,18 @@ from utils import get_logger
 
 log = get_logger("_divergence_c2st")
 
+_C2ST_COLUMNS = [
+    "year",
+    "window",
+    "hyperparams",
+    "value",
+    "auc_std",
+    "auc_q025",
+    "auc_q975",
+    "n_folds",
+    "p_value_vs_chance",
+]
+
 
 # ── Core classifier ──────────────────────────────────────────────────────
 
@@ -130,19 +142,7 @@ def compute_c2st_embedding(df, emb, cfg):
         df, emb, cfg, method="c2st"
     )
     if not any(years_by_window.values()):
-        return pd.DataFrame(
-            columns=[
-                "year",
-                "window",
-                "hyperparams",
-                "value",
-                "auc_std",
-                "auc_q025",
-                "auc_q975",
-                "n_folds",
-                "p_value_vs_chance",
-            ]
-        )
+        return pd.DataFrame(columns=_C2ST_COLUMNS)
 
     gap = div_cfg.get("gap", 1)
     results = []
@@ -186,6 +186,8 @@ def compute_c2st_embedding(df, emb, cfg):
 
     if last_w is not None:
         log.info("C2ST_embedding window=%d done", last_w)
+    if not results:
+        return pd.DataFrame(columns=_C2ST_COLUMNS)
     return pd.DataFrame(results)
 
 
@@ -240,17 +242,5 @@ def compute_c2st_lexical(df, cfg):
 
     log.info("  C2ST_lexical: %d data points", len(results))
     if not results:
-        return pd.DataFrame(
-            columns=[
-                "year",
-                "window",
-                "hyperparams",
-                "value",
-                "auc_std",
-                "auc_q025",
-                "auc_q975",
-                "n_folds",
-                "p_value_vs_chance",
-            ]
-        )
+        return pd.DataFrame(columns=_C2ST_COLUMNS)
     return pd.DataFrame(results)
