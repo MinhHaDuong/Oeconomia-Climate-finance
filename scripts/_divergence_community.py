@@ -17,6 +17,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from _divergence_citation import _iter_sliding_pairs
+from _divergence_io import empty_divergence_df
 from scipy.spatial.distance import jensenshannon
 from utils import get_logger
 
@@ -47,6 +48,8 @@ def compute_community_divergence(works, citations, internal_edges, cfg):
             }
         )
 
+    if not results:
+        return empty_divergence_df()
     return pd.DataFrame(results)
 
 
