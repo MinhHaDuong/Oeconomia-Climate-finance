@@ -54,7 +54,7 @@ export SOURCE_DATE_EPOCH := 0
 # PATH export covers non-interactive shells (ssh, cron, systemd) where
 # ~/.bashrc isn't sourced — uv lives in ~/.local/bin by default.
 UV      ?= uv
-UV_RUN  ?= $(UV) run
+UV_RUN  ?= $(UV) run $(if $(wildcard .env),--env-file .env,)
 export PATH := $(HOME)/.local/bin:$(PATH)
 
 # ── Modular Makefile includes ────────────────────────────
