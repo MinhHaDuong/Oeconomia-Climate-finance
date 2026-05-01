@@ -36,14 +36,24 @@ log = get_logger("compute_crossyear_zscore")
 def _subsample_percentiles(
     subsample_df: pd.DataFrame, trim: int = 2
 ) -> dict[tuple[int, str], tuple[float, float]]:
-    """Compute trimmed Q10/Q90 per (year, window) from subsample replicates.
+    """Compute trimmed-range bounds per (year, window) from subsample replicates.
+
+    Drops `trim` extreme replicates from each tail and returns the remaining
+    min/max — an order-statistic range, not a fixed-percentile interval. The
+    resulting percentile coverage depends on R: with R=20 trim=2 it spans
+    roughly Q10/Q90; with R=10 trim=2, ≈ Q20/Q80.
+
+    Returns (NaN, NaN) when a (year, window) group has no usable replicates,
+    and the un-trimmed min/max when R ≤ 2*trim.
 
     Returns {(year, window): (value_lo, value_hi)}.
     """
     result: dict[tuple[int, str], tuple[float, float]] = {}
     for (y, w), grp in subsample_df.groupby(["year", "window"]):
         vals = grp["value"].dropna().sort_values().values
-        if len(vals) <= 2 * trim:
+        if len(vals) == 0:
+            result[(int(y), str(w))] = (float("nan"), float("nan"))
+        elif len(vals) <= 2 * trim:
             result[(int(y), str(w))] = (float(vals[0]), float(vals[-1]))
         else:
             trimmed = vals[trim : len(vals) - trim]
@@ -81,8 +91,13 @@ def compute_crossyear_zscores(
         try:
             cfg = load_analysis_config()
             trim = cfg["divergence"].get("subsample_trim", 2)
-        except Exception:
-            trim = 2
+        except (FileNotFoundError, KeyError) as exc:
+            log.warning(
+                "Falling back to default subsample trim=%s; could not read "
+                "divergence.subsample_trim from analysis config: %s",
+                trim,
+                exc,
+            )
 
     pctiles = (
         _subsample_percentiles(subsample_df, trim=trim)

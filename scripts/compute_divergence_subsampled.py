@@ -175,8 +175,11 @@ def _run_c2st_embedding_subsampled(method_name, div_df, cfg, R):
     c2st_cfg = cfg["divergence"].get("c2st", {})
     pca_dim = c2st_cfg.get("pca_dim", 32)
     cv_folds = c2st_cfg.get("cv_folds", 5)
+    class_weight = c2st_cfg.get("class_weight", "balanced")
     seed = cfg["divergence"]["random_seed"]
 
+    # Disable equal_n so the iterator yields the full unequal-sized arrays.
+    # subsample_one_window applies equal-n R times independently.
     cfg_raw = copy.deepcopy(cfg)
     cfg_raw["divergence"]["equal_n"] = False
 
@@ -192,7 +195,7 @@ def _run_c2st_embedding_subsampled(method_name, div_df, cfg, R):
             combined_r[: len(X)],
             combined_r[len(X) :],
             cv_folds=cv_folds,
-            class_weight="balanced",
+            class_weight=class_weight,
             seed=seed,
         )["mean"]
 
@@ -209,19 +212,25 @@ def _run_c2st_embedding_subsampled(method_name, div_df, cfg, R):
 def _run_c2st_lexical_subsampled(method_name, div_df, cfg, R):
     """R subsampling replicates for C2ST_lexical."""
     from _divergence_c2st import _c2st_auc
-    from _divergence_io import iter_lexical_windows
+    from _divergence_io import fit_lexical_vectorizer, iter_lexical_windows
 
     c2st_cfg = cfg["divergence"].get("c2st", {})
     cv_folds = c2st_cfg.get("cv_folds", 5)
+    class_weight = c2st_cfg.get("class_weight", "balanced")
     seed = cfg["divergence"]["random_seed"]
+    vectorizer = fit_lexical_vectorizer(cfg)
 
+    # Disable equal_n so the iterator yields the full unequal-sized text lists.
+    # subsample_one_window applies equal-n R times independently.
     cfg_raw = copy.deepcopy(cfg)
     cfg_raw["divergence"]["equal_n"] = False
 
-    def statistic_fn(X, Y):
-        return _c2st_auc(X, Y, cv_folds=cv_folds, class_weight="balanced", seed=seed)[
-            "mean"
-        ]
+    def statistic_fn(texts_before, texts_after):
+        X = vectorizer.transform(texts_before)
+        Y = vectorizer.transform(texts_after)
+        return _c2st_auc(
+            X, Y, cv_folds=cv_folds, class_weight=class_weight, seed=seed
+        )["mean"]
 
     return _collect_subsample_rows(
         iter_lexical_windows(div_df, cfg_raw),
