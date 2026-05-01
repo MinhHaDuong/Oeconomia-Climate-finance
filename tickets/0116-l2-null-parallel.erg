@@ -6,7 +6,9 @@ Author: claude
 
 --- log ---
 2026-04-25T16:00Z claude created
-2026-05-01T06:45Z claude note feat implemented on branch t0116-l2-null-parallel — n_jobs parallelism + test green; pending merge to main
+2026-05-01T06:35Z claude sweep-pick: picked scope:"medium" risk:"low" reason:"L2 parallelism — module-level helper, established joblib pattern"
+2026-05-01T06:45Z claude note feat implemented on branch t0116-l2-null-parallel — PR #779 open; n_jobs parallelism + test green; awaiting merge
+2026-05-01T06:51Z claude note double-pick warning: raid completed, PR #779 open, ticket stays open until PR merges — re-implementation not needed
 2026-05-01T12:00Z claude executed — PR branch t0116-l2-null-parallel
 
 --- body ---
