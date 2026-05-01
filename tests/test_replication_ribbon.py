@@ -102,3 +102,18 @@ class TestRibbonZscores:
         nonnull = result.dropna(subset=["z_lo", "z_hi"])
         widths = nonnull["z_hi"] - nonnull["z_lo"]
         assert widths.mean() > 0.01, f"ribbon too narrow: mean width = {widths.mean()}"
+
+    def test_ribbon_handles_all_nan_subsample_group(self, synthetic_div_df):
+        """All-NaN subsample groups must return (NaN, NaN), not IndexError."""
+        from compute_crossyear_zscore import _subsample_percentiles
+
+        all_nan = pd.DataFrame(
+            [
+                {"year": 2005, "window": "2", "value": float("nan")},
+                {"year": 2005, "window": "2", "value": float("nan")},
+            ]
+        )
+        result = _subsample_percentiles(all_nan, trim=2)
+        assert (2005, "2") in result
+        vlo, vhi = result[(2005, "2")]
+        assert pd.isna(vlo) and pd.isna(vhi)

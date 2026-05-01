@@ -14,6 +14,12 @@ with a shared vocabulary and shared concerns.
 The fifth entry, C2ST (embedding), recasts the same two-sample question as a supervised learning task
 and serves as a reference-layer sanity check rather than a convergence detector.
 
+For the six stochastic methods (S1–S4, C2ST_embedding, C2ST_lexical), each panel
+also shows a faint **replication ribbon** around the line: the trimmed range of
+$R$ subsampling replicates expressed in the same Z-score units (μ, σ shared with
+the point estimate). The band brackets variability under resampling — a visual
+proxy for sampling uncertainty rather than a formal confidence interval.
+
 ---
 
 {{< include _includes/zoo/S1_mmd.md >}}
