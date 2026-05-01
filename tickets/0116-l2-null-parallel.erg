@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-25T16:00Z claude created
 2026-05-01T06:45Z claude note feat implemented on branch t0116-l2-null-parallel — n_jobs parallelism + test green; pending merge to main
+2026-05-01T12:00Z claude executed — PR branch t0116-l2-null-parallel
 
 --- body ---
 ## Context

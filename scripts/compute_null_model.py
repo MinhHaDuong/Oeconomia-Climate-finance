@@ -101,9 +101,9 @@ def _run_l3_permutations(div_df, cfg):
     return run_l3_permutations(div_df, cfg)
 
 
-def _run_l2_permutations(div_df, cfg):
+def _run_l2_permutations(div_df, cfg, n_jobs=1):
     """Past/future pool-shuffle null model for L2.  See _permutation_lexical."""
-    return run_l2_permutations(div_df, cfg)
+    return run_l2_permutations(div_df, cfg, n_jobs=n_jobs)
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +169,7 @@ def main():
         if method_name == "L3":
             result = _run_l3_permutations(div_df, cfg)
         elif method_name == "L2":
-            result = _run_l2_permutations(div_df, cfg)
+            result = _run_l2_permutations(div_df, cfg, n_jobs=args.n_jobs)
         else:
             result = _run_lexical_permutations(method_name, div_df, cfg)
     elif channel == "citation":
