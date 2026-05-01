@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-24T11:45Z claude created
 2026-04-27T02:07Z claude note sweep-assess: not picked
+2026-05-01T09:00Z claude note raid-reimagine: Path B — reuse compute_divergence_subsampled.py (existing RNG namespacing, tested seed isolation, 1-invocation-1-output). Point estimate unchanged; ribbon is visual overlay. Extend SUBSAMP_METHODS to all 6 stochastic methods; add C2ST statistic fns; wire subsample CSV into crossyear zscore via --subsample-csv; derive z_lo/z_hi with shared mu/sigma.
 --- body ---
 ## Context
 
