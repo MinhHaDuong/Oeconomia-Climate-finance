@@ -997,3 +997,77 @@ class TestCommunityDivergence:
         assert channel == "citation"
         assert needs_emb is False
         assert needs_cit is True
+
+
+# ---------------------------------------------------------------------------
+# Empty-results guard for semantic S1-S4 (ticket 0127)
+# ---------------------------------------------------------------------------
+
+
+def _tiny_semantic_data():
+    """Minimal semantic data: 2 works over 2 years.
+
+    With window=5, per_window_year_ranges returns empty ranges, so the
+    empty-results guard fires at the top of each compute_s* function.
+    """
+    df = pd.DataFrame({"year": [2010, 2011], "cited_by_count": [0, 0]})
+    emb = np.random.RandomState(42).randn(2, 16).astype(np.float32)
+    return df, emb
+
+
+def _empty_guard_cfg():
+    """Config that forces the empty-results guard to fire.
+
+    window=5 with only 2 years (2010-2011) means per_window_year_ranges
+    returns an empty list → not any(years_by_window.values()) is True.
+    min_papers=100 and min_papers_smoke=100 are belt-and-suspenders.
+    """
+    cfg = _smoke_cfg(seed=42)
+    cfg["divergence"]["windows"] = [5]
+    cfg["divergence"]["min_papers"] = 100
+    cfg["divergence"]["min_papers_smoke"] = 100
+    return cfg
+
+
+class TestEmptyResultsGuard:
+    """Semantic compute_* functions return empty DataFrame on sparse corpus."""
+
+    def test_semantic_s1_empty_results_guard(self):
+        from _divergence_semantic import compute_s1_mmd
+
+        df, emb = _tiny_semantic_data()
+        cfg = _empty_guard_cfg()
+        result = compute_s1_mmd(df, emb, cfg)
+        assert isinstance(result, pd.DataFrame)
+        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
+        assert len(result) == 0
+
+    def test_semantic_s2_empty_results_guard(self):
+        from _divergence_semantic import compute_s2_energy
+
+        df, emb = _tiny_semantic_data()
+        cfg = _empty_guard_cfg()
+        result = compute_s2_energy(df, emb, cfg)
+        assert isinstance(result, pd.DataFrame)
+        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
+        assert len(result) == 0
+
+    def test_semantic_s3_empty_results_guard(self):
+        from _divergence_semantic import compute_s3_wasserstein
+
+        df, emb = _tiny_semantic_data()
+        cfg = _empty_guard_cfg()
+        result = compute_s3_wasserstein(df, emb, cfg)
+        assert isinstance(result, pd.DataFrame)
+        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
+        assert len(result) == 0
+
+    def test_semantic_s4_empty_results_guard(self):
+        from _divergence_semantic import compute_s4_frechet
+
+        df, emb = _tiny_semantic_data()
+        cfg = _empty_guard_cfg()
+        result = compute_s4_frechet(df, emb, cfg)
+        assert isinstance(result, pd.DataFrame)
+        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
+        assert len(result) == 0
