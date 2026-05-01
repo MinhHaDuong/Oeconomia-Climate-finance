@@ -281,10 +281,12 @@ bootstrap-tables: $(BOOT_CSV)
 # Output: tab_subsample_{method}.csv
 
 SUBSAMP_DISPATCH := scripts/compute_divergence_subsampled.py
-SUBSAMP_METHODS_SEM := S2_energy
+SUBSAMP_METHODS_SEM := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet
 SUBSAMP_METHODS_LEX := L1
 SUBSAMP_METHODS_CIT := G9_community G2_spectral
-SUBSAMP_METHODS := $(SUBSAMP_METHODS_SEM) $(SUBSAMP_METHODS_LEX) $(SUBSAMP_METHODS_CIT)
+SUBSAMP_METHODS_C2ST_SEM := C2ST_embedding
+SUBSAMP_METHODS_C2ST_LEX := C2ST_lexical
+SUBSAMP_METHODS := $(SUBSAMP_METHODS_SEM) $(SUBSAMP_METHODS_LEX) $(SUBSAMP_METHODS_CIT) $(SUBSAMP_METHODS_C2ST_SEM) $(SUBSAMP_METHODS_C2ST_LEX)
 SUBSAMP_CSV := $(foreach m,$(SUBSAMP_METHODS),$(DIV_TABLES)/tab_subsample_$(m).csv)
 
 $(foreach m,$(SUBSAMP_METHODS_SEM),$(eval \
@@ -297,6 +299,14 @@ $(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_
 
 $(foreach m,$(SUBSAMP_METHODS_CIT),$(eval \
 $(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_citation.py scripts/_divergence_community.py scripts/_citation_methods.py $(REFINED) $(REFINED_CIT) $(DIV_CFG) ; \
+	$(UV_RUN) python $(SUBSAMP_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+$(foreach m,$(SUBSAMP_METHODS_C2ST_SEM),$(eval \
+$(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_c2st.py $(REFINED) $(REFINED_EMB) $(DIV_CFG) ; \
+	$(UV_RUN) python $(SUBSAMP_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+
+$(foreach m,$(SUBSAMP_METHODS_C2ST_LEX),$(eval \
+$(DIV_TABLES)/tab_subsample_$(m).csv: $(SUBSAMP_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_c2st.py $(REFINED) $(DIV_CFG) ; \
 	$(UV_RUN) python $(SUBSAMP_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
 
 .PHONY: subsample-tables

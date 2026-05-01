@@ -167,6 +167,72 @@ def _run_lexical_subsampled(method_name, div_df, cfg, R):
     )
 
 
+def _run_c2st_embedding_subsampled(method_name, div_df, cfg, R):
+    """R subsampling replicates for C2ST_embedding."""
+    from _divergence_c2st import _c2st_auc
+    from _divergence_io import iter_semantic_windows
+
+    c2st_cfg = cfg["divergence"].get("c2st", {})
+    pca_dim = c2st_cfg.get("pca_dim", 32)
+    cv_folds = c2st_cfg.get("cv_folds", 5)
+    seed = cfg["divergence"]["random_seed"]
+
+    cfg_raw = copy.deepcopy(cfg)
+    cfg_raw["divergence"]["equal_n"] = False
+
+    def statistic_fn(X, Y):
+        from sklearn.decomposition import PCA
+
+        n_components = min(pca_dim, min(len(X), len(Y)) - 1, X.shape[1])
+        n_components = max(2, n_components)
+        pca = PCA(n_components=n_components, random_state=seed)
+        combined = np.vstack([X, Y])
+        combined_r = pca.fit_transform(combined)
+        return _c2st_auc(
+            combined_r[: len(X)],
+            combined_r[len(X) :],
+            cv_folds=cv_folds,
+            class_weight="balanced",
+            seed=seed,
+        )["mean"]
+
+    return _collect_subsample_rows(
+        iter_semantic_windows(div_df, cfg_raw),
+        method_name,
+        statistic_fn,
+        R,
+        seed,
+        log,
+    )
+
+
+def _run_c2st_lexical_subsampled(method_name, div_df, cfg, R):
+    """R subsampling replicates for C2ST_lexical."""
+    from _divergence_c2st import _c2st_auc
+    from _divergence_io import iter_lexical_windows
+
+    c2st_cfg = cfg["divergence"].get("c2st", {})
+    cv_folds = c2st_cfg.get("cv_folds", 5)
+    seed = cfg["divergence"]["random_seed"]
+
+    cfg_raw = copy.deepcopy(cfg)
+    cfg_raw["divergence"]["equal_n"] = False
+
+    def statistic_fn(X, Y):
+        return _c2st_auc(X, Y, cv_folds=cv_folds, class_weight="balanced", seed=seed)[
+            "mean"
+        ]
+
+    return _collect_subsample_rows(
+        iter_lexical_windows(div_df, cfg_raw),
+        method_name,
+        statistic_fn,
+        R,
+        seed,
+        log,
+    )
+
+
 def _run_citation_subsampled(method_name, div_df, cfg, R):
     """R equal-n subsampling replicates for citation methods (G2, G9).
 
@@ -266,7 +332,11 @@ def main():
     div_df = pd.read_csv(args.div_csv)
     log.info("Loaded %d rows from %s", len(div_df), args.div_csv)
 
-    if channel == "semantic":
+    if method_name == "C2ST_embedding":
+        result = _run_c2st_embedding_subsampled(method_name, div_df, cfg, R)
+    elif method_name == "C2ST_lexical":
+        result = _run_c2st_lexical_subsampled(method_name, div_df, cfg, R)
+    elif channel == "semantic":
         result = _run_semantic_subsampled(method_name, div_df, cfg, R)
     elif channel == "lexical":
         result = _run_lexical_subsampled(method_name, div_df, cfg, R)
