@@ -68,8 +68,12 @@ def _smooth_distribution(v, eps=1e-10):
     return v
 
 
+from _divergence_io import (
+    empty_divergence_df,
+    per_window_year_ranges,
+    subsample_equal_n,
+)
 from _divergence_io import get_min_papers as _get_min_papers
-from _divergence_io import per_window_year_ranges, subsample_equal_n
 
 
 def _iter_lexical_window_pairs(df, cfg):
@@ -180,6 +184,8 @@ def compute_l1_js(df, cfg):
         )
 
     log.info("  L1: %d data points", len(rows))
+    if not rows:
+        return empty_divergence_df()
     return pd.DataFrame(rows)
 
 
@@ -278,6 +284,8 @@ def compute_l2_novelty(df, cfg):
                 )
 
     log.info("  L2: %d data points", len(rows))
+    if not rows:
+        return empty_divergence_df()
     return pd.DataFrame(rows)
 
 
@@ -351,4 +359,6 @@ def compute_l3_bursts(df, cfg):
         )
 
     log.info("  L3: %d data points", len(rows))
+    if not rows:
+        return empty_divergence_df()
     return pd.DataFrame(rows)

@@ -22,6 +22,7 @@ from _divergence_citation import (
     _get_years,
     _iter_sliding_pairs,
 )
+from _divergence_io import empty_divergence_df
 from scipy.optimize import curve_fit
 from scipy.sparse.linalg import eigsh
 from scipy.spatial.distance import jensenshannon
@@ -222,6 +223,8 @@ def compute_g1_pagerank(works, citations, internal_edges, cfg):
             }
         )
 
+    if not results:
+        return empty_divergence_df()
     return pd.DataFrame(results)
 
 
@@ -251,6 +254,8 @@ def _sliding_abs_diff(works, internal_edges, cfg, metric_fn, label):
         results.append(
             {"year": year, "window": str(w), "hyperparams": "", "value": value}
         )
+    if not results:
+        return empty_divergence_df()
     return pd.DataFrame(results)
 
 

@@ -239,4 +239,18 @@ def compute_c2st_lexical(df, cfg):
         )
 
     log.info("  C2ST_lexical: %d data points", len(results))
+    if not results:
+        return pd.DataFrame(
+            columns=[
+                "year",
+                "window",
+                "hyperparams",
+                "value",
+                "auc_std",
+                "auc_q025",
+                "auc_q975",
+                "n_folds",
+                "p_value_vs_chance",
+            ]
+        )
     return pd.DataFrame(results)
