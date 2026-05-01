@@ -414,6 +414,43 @@ class TestL2Permutations:
                 f"Expected window='5', got: {result['window'].unique()}"
             )
 
+    def test_l2_parallel_matches_sequential(self):
+        """n_jobs=2 produces bit-identical results to n_jobs=1."""
+        from unittest.mock import patch
+
+        from _permutation_lexical import run_l2_permutations
+
+        df = _make_abstract_df(n_years=20, papers_per_year=60)
+        cfg = _base_cfg_lexical()
+        div_df = pd.DataFrame(
+            {
+                "year": [2005, 2005, 2005, 2007, 2007, 2007],
+                "window": ["3", "3", "3", "3", "3", "3"],
+                "hyperparams": [
+                    "w=3,metric=novelty",
+                    "w=3,metric=transience",
+                    "w=3,metric=resonance",
+                ]
+                * 2,
+                "value": [0.5, 0.4, 0.1, 0.6, 0.45, 0.15],
+            }
+        )
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            r_seq = run_l2_permutations(div_df, cfg, n_jobs=1)
+        with patch("_divergence_lexical.load_lexical_data", return_value=df):
+            r_par = run_l2_permutations(div_df, cfg, n_jobs=2)
+        np.testing.assert_array_equal(
+            r_seq["observed"].values, r_par["observed"].values
+        )
+        np.testing.assert_array_equal(
+            r_seq["null_mean"].values, r_par["null_mean"].values
+        )
+        np.testing.assert_array_equal(
+            r_seq["null_std"].values, r_par["null_std"].values
+        )
+        np.testing.assert_array_equal(r_seq["z_score"].values, r_par["z_score"].values)
+        np.testing.assert_array_equal(r_seq["p_value"].values, r_par["p_value"].values)
+
 
 # ── Dispatch integration tests ────────────────────────────────────────────────
 
