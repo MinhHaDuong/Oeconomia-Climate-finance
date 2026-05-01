@@ -1,0 +1,79 @@
+%erg v1
+Title: Fix NameError — empty_divergence_df not imported in _divergence_semantic.py
+Status: open
+Created: 2026-05-01
+Author: claude
+
+--- log ---
+2026-05-01T06:45Z claude created — discovered during nightbeat raid review of PR#778
+
+--- body ---
+## Context
+
+`scripts/_divergence_semantic.py` imports a subset of helpers from
+`_divergence_io`:
+
+```python
+from _divergence_io import (
+    get_min_papers,
+    per_window_year_ranges,
+    subsample_equal_n,
+)
+```
+
+But the module also calls `empty_divergence_df()` at four sites in the
+empty-results guard paths:
+
+- L226 (S1 MMD)
+- L307 (S2 energy distance)
+- L365 (S3 sliced Wasserstein)
+- L502 (S4 Frechet)
+
+`empty_divergence_df` is not in the import block, so any guard that fires
+will raise `NameError: name 'empty_divergence_df' is not defined` instead
+of returning the empty schema-correct DataFrame the dispatcher expects.
+
+This is latent — none of the smoke fixtures currently exercise these
+guards, so tests pass. It will fire on real corpora with windows where
+`_iter_window_pairs` yields nothing (gap config, min_papers filter, or
+subsample failures eliminate all pairs).
+
+The bug is pre-existing — it was introduced in PR#764 alongside the
+guards, but the import was not updated. PR#778 (ticket 0120) fixed the
+analogous gap in `_divergence_citation`, `_divergence_community`,
+`_divergence_lexical`, and `_divergence_c2st` but explicitly scoped
+`_divergence_semantic` out (PR#778 review thread, 2026-05-01).
+
+## Fix
+
+Single-line change to the import block in `scripts/_divergence_semantic.py`:
+
+```python
+from _divergence_io import (
+    empty_divergence_df,
+    get_min_papers,
+    per_window_year_ranges,
+    subsample_equal_n,
+)
+```
+
+## Test
+
+Add a unit test (or extend an existing one) that constructs a fixture
+where `_iter_window_pairs` yields nothing, calls one of S1-S4, and
+asserts the returned DataFrame has the schema columns and zero rows.
+The pattern is already in place for the other 4 modules — copy from
+`tests/test_*_empty_corpus_dispatcher_guard*.py` or wherever ticket
+0121 landed.
+
+## Exit criteria
+
+- `empty_divergence_df` imported in `_divergence_semantic.py`.
+- Unit test exercises at least one of the four guard sites
+  (L226, L307, L365, L502) with an empty windows fixture.
+- `make check-fast` green.
+
+## Risk
+
+Trivial. One import line + one test. No behaviour change in any
+non-empty path.
