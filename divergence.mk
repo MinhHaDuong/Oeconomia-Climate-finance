@@ -219,7 +219,7 @@ $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv
 # Lexical null models — L2/L3: use _permutation_lexical.py instead of _permutation_accel.py
 $(foreach m,$(NULL_METHODS_LEX_L2L3),$(eval \
 $(DIV_TABLES)/tab_null_$(m).csv: $(NULL_DISPATCH) $(DIV_TABLES)/tab_div_$(m).csv scripts/_divergence_lexical.py scripts/_permutation_lexical.py $(REFINED) $(DIV_CFG) ; \
-	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --output $$@))
+	$(UV_RUN) python $(NULL_DISPATCH) --method $(m) --div-csv $(DIV_TABLES)/tab_div_$(m).csv --n-jobs $(NJOBS) --output $$@))
 
 # Citation null models (depend on REFINED + REFINED_CIT + divergence CSV)
 # _permutation_citation.py is the extracted G1/G5/G6/G8 helper module.

@@ -159,7 +159,83 @@ def run_l3_permutations(div_df, cfg):
     return pd.DataFrame(rows)
 
 
-def run_l2_permutations(div_df, cfg):
+def _compute_l2_window(y, w, X_all, doc_years, min_papers, n_perm, seed, gap):
+    """Compute L2 permutation null model for a single (year, window) pair.
+
+    Module-level function (picklable for joblib).  Each call creates its own
+    RNG via ``_make_window_rngs(seed, y, w)`` so results are bit-identical
+    regardless of execution order.
+    """
+    from _divergence_io import _make_window_rngs
+    from _divergence_lexical import _smooth_distribution
+    from scipy.stats import entropy
+
+    _, perm_rng = _make_window_rngs(seed, y, w)
+
+    past_mask = (doc_years >= y - w) & (doc_years <= y - gap)
+    future_mask = (doc_years >= y + gap) & (doc_years <= y + w)
+    year_mask = doc_years == y
+
+    if (
+        past_mask.sum() < min_papers
+        or future_mask.sum() < min_papers
+        or year_mask.sum() == 0
+    ):
+        return _nan_row(y, str(w))
+
+    # Pre-transform year-y docs (fixed across permutations)
+    year_indices = np.where(year_mask)[0]
+    year_vecs = [
+        _smooth_distribution(np.asarray(X_all[i].todense()).flatten())
+        for i in year_indices
+    ]
+
+    # Pool past + future
+    past_indices = np.where(past_mask)[0]
+    future_indices = np.where(future_mask)[0]
+    pool_indices = np.concatenate([past_indices, future_indices])
+    n_past = len(past_indices)
+
+    def _resonance_from_split(perm_past_idx, perm_future_idx):
+        """Compute mean resonance = mean_novelty - mean_transience."""
+        past_agg = _smooth_distribution(
+            np.asarray(X_all[perm_past_idx].mean(axis=0)).flatten()
+        )
+        future_agg = _smooth_distribution(
+            np.asarray(X_all[perm_future_idx].mean(axis=0)).flatten()
+        )
+        novelties = []
+        transiences = []
+        for dv in year_vecs:
+            nov = min(float(entropy(dv, past_agg)), 50.0)
+            trans = min(float(entropy(dv, future_agg)), 50.0)
+            novelties.append(nov)
+            transiences.append(trans)
+        return float(np.mean(novelties)) - float(np.mean(transiences))
+
+    # Observed resonance
+    observed = _resonance_from_split(past_indices, future_indices)
+
+    # Null distribution: shuffle pool assignment
+    null_stats = np.empty(n_perm)
+    for i in range(n_perm):
+        shuffled = perm_rng.permutation(pool_indices)
+        perm_past = shuffled[:n_past]
+        perm_future = shuffled[n_past:]
+        null_stats[i] = _resonance_from_split(perm_past, perm_future)
+
+    nm = float(np.mean(null_stats))
+    ns = float(np.std(null_stats))
+    if ns > 0:
+        z = (observed - nm) / ns
+    else:
+        z = 0.0
+    p = float(np.mean(null_stats >= observed))
+
+    return _result_row(y, str(w), observed, nm, ns, z, p)
+
+
+def run_l2_permutations(div_df, cfg, n_jobs=1):
     """Past/future pool-shuffle null model for L2 (Novelty-Transience Resonance).
 
     L2 computes per-document KL divergence against a past language model
@@ -178,15 +254,17 @@ def run_l2_permutations(div_df, cfg):
         novelty/transience/resonance; unique (year, window) pairs are used.
     cfg : dict
         Analysis config.
+    n_jobs : int
+        Number of parallel workers (1 = sequential, -1 = all cores).
 
     Returns
     -------
     pd.DataFrame matching NullModelSchema, one row per (year, window).
 
     """
-    from _divergence_io import _make_window_rngs, get_min_papers
-    from _divergence_lexical import _smooth_distribution, load_lexical_data
-    from scipy.stats import entropy
+    from _divergence_io import get_min_papers
+    from _divergence_lexical import load_lexical_data
+    from joblib import Parallel, delayed
     from sklearn.feature_extraction.text import TfidfVectorizer
 
     div_cfg = cfg["divergence"]
@@ -218,76 +296,32 @@ def run_l2_permutations(div_df, cfg):
         .assign(window=lambda d: d["window"].astype(int))
     )
 
-    rows = []
-    for _, row in year_windows.iterrows():
-        y = int(row["year"])
-        w = int(row["window"])
+    pairs = [
+        (int(row["year"]), int(row["window"])) for _, row in year_windows.iterrows()
+    ]
 
-        _, perm_rng = _make_window_rngs(seed, y, w)
-
-        past_mask = (doc_years >= y - w) & (doc_years <= y - gap)
-        future_mask = (doc_years >= y + gap) & (doc_years <= y + w)
-        year_mask = doc_years == y
-
-        if (
-            past_mask.sum() < min_papers
-            or future_mask.sum() < min_papers
-            or year_mask.sum() == 0
-        ):
-            rows.append(_nan_row(y, str(w)))
-            continue
-
-        # Pre-transform year-y docs (fixed across permutations)
-        year_indices = np.where(year_mask)[0]
-        year_vecs = [
-            _smooth_distribution(np.asarray(X_all[i].todense()).flatten())
-            for i in year_indices
+    log.info("L2 parallel: %d (year, window) pairs, n_jobs=%d", len(pairs), n_jobs)
+    if n_jobs == 1:
+        rows = [
+            _compute_l2_window(y, w, X_all, doc_years, min_papers, n_perm, seed, gap)
+            for y, w in pairs
         ]
-
-        # Pool past + future
-        past_indices = np.where(past_mask)[0]
-        future_indices = np.where(future_mask)[0]
-        pool_indices = np.concatenate([past_indices, future_indices])
-        n_past = len(past_indices)
-
-        def _resonance_from_split(perm_past_idx, perm_future_idx):
-            """Compute mean resonance = mean_novelty - mean_transience."""
-            past_agg = _smooth_distribution(
-                np.asarray(X_all[perm_past_idx].mean(axis=0)).flatten()
+    else:
+        rows = Parallel(n_jobs=n_jobs)(
+            delayed(_compute_l2_window)(
+                y, w, X_all, doc_years, min_papers, n_perm, seed, gap
             )
-            future_agg = _smooth_distribution(
-                np.asarray(X_all[perm_future_idx].mean(axis=0)).flatten()
-            )
-            novelties = []
-            transiences = []
-            for dv in year_vecs:
-                nov = min(float(entropy(dv, past_agg)), 50.0)
-                trans = min(float(entropy(dv, future_agg)), 50.0)
-                novelties.append(nov)
-                transiences.append(trans)
-            return float(np.mean(novelties)) - float(np.mean(transiences))
+            for y, w in pairs
+        )
 
-        # Observed resonance
-        observed = _resonance_from_split(past_indices, future_indices)
-
-        # Null distribution: shuffle pool assignment
-        null_stats = np.empty(n_perm)
-        for i in range(n_perm):
-            shuffled = perm_rng.permutation(pool_indices)
-            perm_past = shuffled[:n_past]
-            perm_future = shuffled[n_past:]
-            null_stats[i] = _resonance_from_split(perm_past, perm_future)
-
-        nm = float(np.mean(null_stats))
-        ns = float(np.std(null_stats))
-        if ns > 0:
-            z = (observed - nm) / ns
-        else:
-            z = 0.0
-        p = float(np.mean(null_stats >= observed))
-
-        rows.append(_result_row(y, str(w), observed, nm, ns, z, p))
-        log.info("  year=%d window=%d z=%.2f p=%.3f [L2]", y, w, z, p)
+    for row in rows:
+        log.info(
+            "  year=%d window=%s z=%.2f p=%.3f [L2]",
+            row["year"],
+            row["window"],
+            row["z_score"],
+            row["p_value"],
+        )
 
     return pd.DataFrame(rows)
 
