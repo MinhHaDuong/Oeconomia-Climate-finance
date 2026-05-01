@@ -1032,42 +1032,23 @@ def _empty_guard_cfg():
 class TestEmptyResultsGuard:
     """Semantic compute_* functions return empty DataFrame on sparse corpus."""
 
-    def test_semantic_s1_empty_results_guard(self):
-        from _divergence_semantic import compute_s1_mmd
+    @pytest.mark.parametrize(
+        "fn_name",
+        [
+            "compute_s1_mmd",
+            "compute_s2_energy",
+            "compute_s3_wasserstein",
+            "compute_s4_frechet",
+        ],
+    )
+    def test_empty_results_guard(self, fn_name):
+        import importlib
 
+        mod = importlib.import_module("_divergence_semantic")
+        fn = getattr(mod, fn_name)
         df, emb = _tiny_semantic_data()
         cfg = _empty_guard_cfg()
-        result = compute_s1_mmd(df, emb, cfg)
-        assert isinstance(result, pd.DataFrame)
-        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
-        assert len(result) == 0
-
-    def test_semantic_s2_empty_results_guard(self):
-        from _divergence_semantic import compute_s2_energy
-
-        df, emb = _tiny_semantic_data()
-        cfg = _empty_guard_cfg()
-        result = compute_s2_energy(df, emb, cfg)
-        assert isinstance(result, pd.DataFrame)
-        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
-        assert len(result) == 0
-
-    def test_semantic_s3_empty_results_guard(self):
-        from _divergence_semantic import compute_s3_wasserstein
-
-        df, emb = _tiny_semantic_data()
-        cfg = _empty_guard_cfg()
-        result = compute_s3_wasserstein(df, emb, cfg)
-        assert isinstance(result, pd.DataFrame)
-        assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
-        assert len(result) == 0
-
-    def test_semantic_s4_empty_results_guard(self):
-        from _divergence_semantic import compute_s4_frechet
-
-        df, emb = _tiny_semantic_data()
-        cfg = _empty_guard_cfg()
-        result = compute_s4_frechet(df, emb, cfg)
+        result = fn(df, emb, cfg)
         assert isinstance(result, pd.DataFrame)
         assert {"year", "window", "hyperparams", "value"}.issubset(result.columns)
         assert len(result) == 0
