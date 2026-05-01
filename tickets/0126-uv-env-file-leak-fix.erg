@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-30T16:31Z claude created — see AEDIST commit 4000c21 for the model fix
+2026-05-01T00:00Z claude note Makefile UV_RUN fixed (commit 4cef9bc) — DVC pipeline and shell scripts still need audit before closing
 
 --- body ---
 ## Context
