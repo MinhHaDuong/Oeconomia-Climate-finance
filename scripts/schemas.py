@@ -229,6 +229,8 @@ CrossyearZscoreSchema = DataFrameSchema(
         "window": Column(str),
         "value": Column(float, nullable=True),
         "z_score": Column(float, nullable=True),
+        "z_lo": Column(float, nullable=True),
+        "z_hi": Column(float, nullable=True),
     },
     strict=True,
     coerce=True,

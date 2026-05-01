@@ -21,9 +21,11 @@ Usage::
 import argparse
 import re
 import sys
+from typing import Optional
 
 import pandas as pd
 from pipeline_io import save_csv
+from pipeline_loaders import load_analysis_config
 from schemas import CrossyearZscoreSchema
 from script_io_args import parse_io_args, validate_io
 from utils import get_logger
@@ -31,7 +33,29 @@ from utils import get_logger
 log = get_logger("compute_crossyear_zscore")
 
 
-def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
+def _subsample_percentiles(
+    subsample_df: pd.DataFrame, trim: int = 2
+) -> dict[tuple[int, str], tuple[float, float]]:
+    """Compute trimmed Q10/Q90 per (year, window) from subsample replicates.
+
+    Returns {(year, window): (value_lo, value_hi)}.
+    """
+    result: dict[tuple[int, str], tuple[float, float]] = {}
+    for (y, w), grp in subsample_df.groupby(["year", "window"]):
+        vals = grp["value"].dropna().sort_values().values
+        if len(vals) <= 2 * trim:
+            result[(int(y), str(w))] = (float(vals[0]), float(vals[-1]))
+        else:
+            trimmed = vals[trim : len(vals) - trim]
+            result[(int(y), str(w))] = (float(trimmed[0]), float(trimmed[-1]))
+    return result
+
+
+def compute_crossyear_zscores(
+    df: pd.DataFrame,
+    method: str,
+    subsample_df: Optional[pd.DataFrame] = None,
+) -> pd.DataFrame:
     """Compute cross-year Z-scores for all windows in df.
 
     Parameters
@@ -40,17 +64,32 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
         Raw divergence data with columns year, window, value (plus any others).
     method : str
         Method name, written into the output 'method' column.
+    subsample_df : pd.DataFrame, optional
+        Subsampling replicates (from compute_divergence_subsampled.py) with
+        columns year, window, replicate, value.  When provided, derives
+        z_lo/z_hi ribbon bounds using the same μ/σ as z_score.
 
     Returns
     -------
     pd.DataFrame
-        Schema: method (str), year (int), window (str), value (float),
-        z_score (float).  z_score is NaN when std == 0 or value is NaN.
+        Schema: method, year, window, value, z_score, z_lo, z_hi.
+        z_lo/z_hi are NaN when subsample_df is absent or has no data for a cell.
 
     """
-    # Group by (window, hyperparams) so each hyperparameter setting gets its own
-    # Z-score series. Then aggregate across hyperparams per (year, window) by
-    # taking the mean, so the output has exactly one row per (year, window).
+    trim = 2
+    if subsample_df is not None:
+        try:
+            cfg = load_analysis_config()
+            trim = cfg["divergence"].get("subsample_trim", 2)
+        except Exception:
+            trim = 2
+
+    pctiles = (
+        _subsample_percentiles(subsample_df, trim=trim)
+        if subsample_df is not None
+        else {}
+    )
+
     group_keys = ["window"]
     if "hyperparams" in df.columns:
         group_keys.append("hyperparams")
@@ -63,24 +102,47 @@ def compute_crossyear_zscores(df: pd.DataFrame, method: str) -> pd.DataFrame:
         std_d = vals.std()
         if std_d == 0 or pd.isna(std_d):
             z = pd.Series([float("nan")] * len(grp), index=grp.index)
+            z_lo_series = pd.Series([float("nan")] * len(grp), index=grp.index)
+            z_hi_series = pd.Series([float("nan")] * len(grp), index=grp.index)
         else:
             z = (vals - mean_d) / std_d
+            z_lo_vals = []
+            z_hi_vals = []
+            window = keys[0] if isinstance(keys, tuple) else keys
+            for _, row in grp.iterrows():
+                key = (int(row["year"]), str(window))
+                if key in pctiles:
+                    vlo, vhi = pctiles[key]
+                    z_lo_vals.append((vlo - mean_d) / std_d)
+                    z_hi_vals.append((vhi - mean_d) / std_d)
+                else:
+                    z_lo_vals.append(float("nan"))
+                    z_hi_vals.append(float("nan"))
+            z_lo_series = pd.Series(z_lo_vals, index=grp.index)
+            z_hi_series = pd.Series(z_hi_vals, index=grp.index)
+
         window = keys[0] if isinstance(keys, tuple) else keys
         grp = grp.copy()
         grp["z_score"] = z
+        grp["z_lo"] = z_lo_series
+        grp["z_hi"] = z_hi_series
         grp["window"] = str(window)
-        per_hp.append(grp[["year", "window", "value", "z_score"]])
+        per_hp.append(grp[["year", "window", "value", "z_score", "z_lo", "z_hi"]])
 
     combined = pd.concat(per_hp, ignore_index=True)
 
-    # Average across hyperparameter settings for each (year, window).
     agg = (
         combined.groupby(["year", "window"], sort=True)
-        .agg(value=("value", "mean"), z_score=("z_score", "mean"))
+        .agg(
+            value=("value", "mean"),
+            z_score=("z_score", "mean"),
+            z_lo=("z_lo", "mean"),
+            z_hi=("z_hi", "mean"),
+        )
         .reset_index()
     )
     agg.insert(0, "method", method)
-    return agg[["method", "year", "window", "value", "z_score"]]
+    return agg[["method", "year", "window", "value", "z_score", "z_lo", "z_hi"]]
 
 
 def main() -> None:
@@ -100,6 +162,11 @@ def main() -> None:
             "Filter to rows where hyperparams contains metric=<value>. "
             "Used for L2 (resonance) to align observed statistic with null model."
         ),
+    )
+    parser.add_argument(
+        "--subsample-csv",
+        default=None,
+        help="Path to tab_subsample_{method}.csv for replication ribbon (ticket 0105).",
     )
     args = parser.parse_args(extra)
 
@@ -143,7 +210,21 @@ def main() -> None:
 
     log.info("Loaded %d rows, %d unique windows", len(raw), raw["window"].nunique())
 
-    result = compute_crossyear_zscores(raw, method)
+    subsample_df = None
+    if args.subsample_csv:
+        try:
+            subsample_df = pd.read_csv(args.subsample_csv)
+            log.info(
+                "Loaded %d subsample rows from %s",
+                len(subsample_df),
+                args.subsample_csv,
+            )
+        except FileNotFoundError:
+            log.warning(
+                "Subsample file not found: %s — ribbon will be NaN", args.subsample_csv
+            )
+
+    result = compute_crossyear_zscores(raw, method, subsample_df=subsample_df)
 
     # Validate against schema before writing.
     CrossyearZscoreSchema.validate(result)
