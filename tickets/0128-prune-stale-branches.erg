@@ -1,0 +1,62 @@
+%erg v1
+Title: Prune stale local branches from merged PRs
+Status: open
+Created: 2026-05-02
+Author: claude
+
+--- log ---
+2026-05-02T00:00Z claude created — housekeeping sweep found ~15 stale local branches
+
+--- body ---
+## Context
+
+After a wave of PR merges (PRs #769–#783), ~15 local branches remain that were
+merged into main. These create noise in `git branch` output and risk confusion
+when worktrees are cleaned up. Six of the stale branches are held by locked
+worktrees (agent-*) for closed tickets; those cannot be deleted while the sessions
+are active.
+
+Stale local branches (merged PRs, safe to delete once worktree lock cleared):
+- `t0105-replication-ribbon` (PR #781)
+- `worktree-t0105-replication-ribbon` (PR #781, locked worktree: agent-ab5f2bc86adcf0c40)
+- `t0122-close` (PR #783)
+- `housekeeping-2026-05-02` (no PR, old housekeeping run)
+- `housekeeping-state-2026-04-28` (PR #777)
+- `t0112-l2-crossyear-resonance-filter` (PR #765, locked worktree: agent-ab773b59c56dddc9e)
+- `t0116-l2-null-parallel` (PR #779, locked worktree: agent-acbf76b0e7dc3b4e7)
+- `t0115-c2st-analytical-null` (PR #769, locked worktree: agent-a50f7e6e9e3072475)
+- `t0127-fix-empty-divergence-df-import-semantic` (PR #780, locked worktree: agent-a70f60a03b83b92c4)
+- `worktree-t0120-empty-results-guard` (PR #778, locked worktree: agent-a1862584949b787e0)
+- `t0124-s4-frechet-schema-fix` (PR #773)
+- `sweep/pick-2026-05-01` (stale sweep branch)
+- `t0122-fix-parallel-test-flakiness` (PR #772, locked worktree: agent-ad414f9b1bcfbb35e)
+- `chore/close-0102-skip-0124` (merged)
+- `fix/uv-env-file-0126` (check if merged)
+- `fix/plot-convergence-branch-count` (check if merged)
+- `worktree-agent-acbf76b0e7dc3b4e7` (stale anon branch on remote)
+
+Constraint: branches held by locked worktrees cannot be `git branch -d` until the
+worktree sessions end. Verify with `git worktree list` before each delete.
+
+## Actions
+
+1. Run `git worktree list` to confirm which worktrees are still active/locked.
+2. For branches NOT referenced by active locked worktrees, run `git branch -d <branch>`
+   (refuse-if-not-merged safety net) and `git push origin --delete <branch>` for remotes.
+3. For branches held by locked worktrees: note which sessions are holding them; skip
+   for now (they will be cleaned when those sessions end).
+4. Re-run `git worktree list` to confirm no orphaned worktrees remain after unlocked cleanup.
+5. Verify `git branch | wc -l` drops from ~26 to ≤12.
+
+## Test
+
+```bash
+# After cleanup, no merged-PR branches should remain locally
+git branch --merged main | grep -vE '^\* |main|worktree-housekeeping|submission/' | wc -l
+# Expected: 0
+```
+
+## Exit criteria
+
+All non-locked stale branches deleted locally and on origin. `git branch | wc -l` ≤ 12.
+Active locked worktree branches documented as deferred until session cleanup.

@@ -6,31 +6,47 @@ Author: claude
 
 --- log ---
 2026-04-17T07:40Z claude created as child of 0070 for bias B4
+2026-05-02T00:00Z claude reimagine — filter to venue_type==journal only; reuse canonical_venue/venue_type from summarize_core_venues.py; use tab_breakpoints.csv for transition zones; exclude null-journal rows
 
 --- body ---
 ## Context
 
 Audit 0070 identified bias **B4** (editorial cartel / venue concentration)
-as a ❌ gap. A small number of journals publish a large share of
+as a gap. A small number of journals publish a large share of
 climate-finance papers. Structural breaks in L1/G2/G9 may reflect
 editorial taste shifts or special-issue pulses, not field-level change.
 No per-year concentration index exists today.
 `scripts/summarize_core_venues.py` is a post-hoc report only, not part
 of the analysis pipeline.
 
+## Design decisions (reimagined 2026-05-02)
+
+- **Journal-only HHI**: the `journal` column mixes journals, repositories
+  (SSRN, Zenodo), and working-paper series. B4 is editorial-cartel bias,
+  so compute HHI/Shannon on `venue_type == 'journal'` rows only. Reuse
+  `venue_type()` from `summarize_core_venues.py`.
+- **Canonical venue names**: reuse `canonical_venue()` from the same module.
+  Conservative (variant spellings understate HHI).
+- **Null-journal rows excluded** from denominator: `n_papers` counts only
+  rows with a non-null, classifiable journal venue.
+- **Transition zones from data**: overlay comes from `tab_breakpoints.csv`
+  (empirical break years), not hardcoded config values.
+- **No config additions**: no stochastic ops, no tunable parameters.
+
 ## Actions
 
 1. Add `scripts/compute_venue_concentration.py` (Phase 2 rules: one
-   script, one output, schema-validated). Read `refined_works`, group by
-   `publication_year`, compute Herfindahl-Hirschman index and Shannon
-   entropy over `venue` share.
-2. Output: `content/tables/tab_venue_concentration.csv`, schema in
-   `scripts/schemas.py`.
+   script, one output, schema-validated). Read `refined_works` via
+   `load_refined_works()`, filter to `venue_type == 'journal'`, group by
+   `year`, compute HHI and Shannon entropy over canonical venue shares.
+2. Output: `content/tables/tab_venue_concentration.csv`, schema
+   `VenueConcentrationSchema` in `scripts/schemas.py`.
 3. Add plot: `scripts/plot_venue_concentration.py` producing
-   `content/figures/fig_venue_concentration.png` with the detected
-   transition zones overlaid.
-4. Paragraph for §4.8: whether 2007 and 2013 coincide with concentration
-   shocks. If they do, qualify L1/G9 claims in §6.4.
+   `content/figures/fig_venue_concentration.png` — dual-axis HHI + entropy,
+   with transition zones from `tab_breakpoints.csv` overlaid as shaded bands.
+4. Add Makefile targets in `venues.mk`, included from main Makefile.
+5. Paragraph for §4.8: whether detected transition zones coincide with
+   concentration shocks. If they do, qualify L1/G9 claims in §6.4.
 
 ## Test
 
@@ -41,6 +57,6 @@ and that `hhi ∈ [0, 1]`. Red until the compute script exists.
 ## Exit criteria
 
 - Compute script + plot script follow Phase 2 rules (one output, schema,
-  Makefile target in `divergence.mk` or a new `venues.mk`).
+  Makefile target in `venues.mk`).
 - Supplementary figure + §4.8 paragraph.
 - Child of 0070 closed.

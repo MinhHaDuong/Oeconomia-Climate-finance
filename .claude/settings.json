@@ -16,8 +16,7 @@
       "Bash(*git push --force*)",
       "Bash(*git push -f *)",
       "Bash(*git reset --hard*)",
-      "Bash(*git clean*)",
-      "Bash(*git rebase*)"
+      "Bash(*git clean*)"
     ],
     "additionalDirectories": [
       "/home/haduong/CNRS/html/src",
