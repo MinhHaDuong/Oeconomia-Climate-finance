@@ -1,6 +1,6 @@
 %erg v1
 Title: Venue concentration (Herfindahl/entropy) per year
-Status: doing
+Status: closed
 Created: 2026-04-17
 Author: claude
 
@@ -9,6 +9,7 @@ Author: claude
 2026-05-02T00:00Z claude reimagine — filter to venue_type==journal only; reuse canonical_venue/venue_type from summarize_core_venues.py; use tab_breakpoints.csv for transition zones; exclude null-journal rows
 2026-05-02T12:00Z HDMX-coding-agent claimed
 2026-05-02T12:00Z HDMX-coding-agent status doing
+2026-05-02T21:00Z HDMX-coding-agent closed — PR #788 merged; §4.8 paragraph descoped to 0129
 
 --- body ---
 ## Context
