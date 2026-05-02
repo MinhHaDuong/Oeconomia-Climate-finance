@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-05-01
+Last updated: 2026-05-02
 
 ## Current goal
 
@@ -61,8 +61,7 @@ Being re-generated on padme with GROBID reference extraction and DOI matching.
 
 ## Known test failures (pre-existing RED)
 
-- `test_robustness_observability.py::test_step1_counter_attempted`: flaky under `-n 4`. Pre-existing.
-- `test_ref_match_corpus.py::TestRefMatchCorpus::*`: flaky under `-n 4` parallel execution; all pass in isolation. Pre-existing.
+None — parallel flakiness fixed in PR #772 (ticket 0122).
 
 ## Blockers
 
@@ -109,7 +108,7 @@ None.
 
 - 0124 (S4_frechet schema: restore `year` column in smoke mode — PR #773 in review)
 - 0115 (C2ST analytical null overlay — PR open)
-- 0122 (fix parallel test flakiness — PR #772 in review)
+- ~~0122 (fix parallel test flakiness — PR #772 merged 2026-05-01)~~
 
 Background (not on critical path):
 

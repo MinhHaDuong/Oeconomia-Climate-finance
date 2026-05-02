@@ -1,6 +1,6 @@
 %erg v1
 Title: Fix test flakiness under pytest-xdist -n 4
-Status: open
+Status: done
 Created: 2026-04-25
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-25T23:50Z claude created — identified from make check-fast runs showing different failures each time
 
 2026-04-29T00:09Z claude note sweep-assess: not-picked hash:4b9f9558b5d8 scope:~30 min, 2 test files risk:low
+2026-05-02T10:00Z claude closed — PR #772 merged 2026-05-01; exit criteria verified (3×-n4 clean, make check-fast 998 passed)
 --- body ---
 ## Context
 
