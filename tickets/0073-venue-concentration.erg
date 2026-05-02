@@ -1,12 +1,14 @@
 %erg v1
 Title: Venue concentration (Herfindahl/entropy) per year
-Status: open
+Status: doing
 Created: 2026-04-17
 Author: claude
 
 --- log ---
 2026-04-17T07:40Z claude created as child of 0070 for bias B4
 2026-05-02T00:00Z claude reimagine — filter to venue_type==journal only; reuse canonical_venue/venue_type from summarize_core_venues.py; use tab_breakpoints.csv for transition zones; exclude null-journal rows
+2026-05-02T12:00Z HDMX-coding-agent claimed
+2026-05-02T12:00Z HDMX-coding-agent status doing
 
 --- body ---
 ## Context
@@ -58,5 +60,6 @@ and that `hhi ∈ [0, 1]`. Red until the compute script exists.
 
 - Compute script + plot script follow Phase 2 rules (one output, schema,
   Makefile target in `venues.mk`).
-- Supplementary figure + §4.8 paragraph.
+- Supplementary figure pipeline (compute + plot + Makefile target).
+- §4.8 paragraph descoped to ticket 0129.
 - Child of 0070 closed.

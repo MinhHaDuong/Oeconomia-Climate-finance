@@ -61,6 +61,7 @@ export PATH := $(HOME)/.local/bin:$(PATH)
 -include divergence.mk
 -include multilayer-detection.mk
 -include zoo.mk
+-include venues.mk
 
 # ── Quarto ───────────────────────────────────────────────
 # ── Per-document include sets ────────────────────────────

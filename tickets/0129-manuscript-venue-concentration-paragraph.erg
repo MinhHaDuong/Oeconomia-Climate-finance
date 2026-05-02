@@ -1,0 +1,47 @@
+%erg v1
+Title: Write §4.8 paragraph on venue concentration bias
+Status: open
+Created: 2026-05-02
+Author: claude
+
+--- log ---
+2026-05-02T00:00Z claude created — descoped from 0073; figure pipeline merged, prose deferred
+
+--- body ---
+## Context
+
+Ticket 0073 (PR #788) delivered `compute_venue_concentration.py`,
+`plot_venue_concentration.py`, and `venues.mk`. The exit criteria also
+required a §4.8 paragraph interpreting the concentration results in the
+manuscript. That prose was descoped to keep the PR focused on the
+pipeline deliverable.
+
+The figure now exists at `content/figures/fig_venue_concentration.png`
+and the data at `content/tables/tab_venue_concentration.csv`.
+
+## Actions
+
+1. Run `make fig_venue_concentration` on padme to generate the figure.
+2. Read the output CSV and identify whether HHI peaks coincide with the
+   2007 and 2013 structural breaks detected by L1/G2/G9.
+3. Add one paragraph to `content/manuscript.qmd` §4.8 (Robustness):
+   - State whether venue concentration spiked at the structural break years.
+   - If yes: qualify the L1/G9 claims in §6.4 (Limitations).
+   - If no: note that editorial concentration does not explain the breaks.
+4. If the figure is informative, add it as a supplementary figure with
+   a caption referencing the breakpoint years.
+
+## Test
+
+```python
+# content/manuscript.qmd must mention venue concentration
+def test_venue_concentration_paragraph():
+    text = Path("content/manuscript.qmd").read_text()
+    assert "venue concentration" in text.lower() or "HHI" in text
+```
+
+## Exit criteria
+
+- §4.8 paragraph present in `content/manuscript.qmd`.
+- Paragraph addresses whether 2007/2013 breaks coincide with HHI shocks.
+- `make check` passes.
