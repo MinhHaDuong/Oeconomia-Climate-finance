@@ -136,7 +136,7 @@ class TestComputeConcentration:
         VenueConcentrationSchema.validate(result)
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 class TestVenueConcentrationSubprocess:
     """Integration test: run the compute script via subprocess."""
 
