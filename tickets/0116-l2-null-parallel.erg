@@ -1,6 +1,6 @@
 %erg v1
 Title: Add n_jobs parallelism to L2 null model permutation driver
-Status: open
+Status: closed
 Created: 2026-04-25
 Author: claude
 
