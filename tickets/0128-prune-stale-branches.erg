@@ -1,11 +1,12 @@
 %erg v1
 Title: Prune stale local branches from merged PRs
-Status: open
+Status: closed
 Created: 2026-05-02
 Author: claude
 
 --- log ---
 2026-05-02T00:00Z claude created — housekeeping sweep found ~15 stale local branches
+2026-05-02T00:10Z claude closed — 16 local + 12 remote branches deleted; 10 local remain (all active)
 
 --- body ---
 ## Context
