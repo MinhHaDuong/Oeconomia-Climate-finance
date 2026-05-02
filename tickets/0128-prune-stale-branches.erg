@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-05-02T00:00Z claude created — housekeeping sweep found ~15 stale local branches
 2026-05-02T00:10Z claude closed — 16 local + 12 remote branches deleted; 10 local remain (all active)
+2026-05-02T22:10Z claude raid — tail cleanup: deleted chore/close-* branch (PR #785), pruned remote tracking, removed stale 0066.wip claim. 10 branches remain (1 main, 1 active t0073, 8 locked worktrees from dead sessions). Deferred: 7 locked worktrees (t0112/t0115/t0116/t0120/t0122/t0127/worktree-agent-ab5f2bc86adcf0c40) + 1 unlocked (worktree-housekeeping) — will clean when sessions are confirmed dead.
 
 --- body ---
 ## Context
