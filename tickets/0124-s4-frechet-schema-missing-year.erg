@@ -1,6 +1,6 @@
 %erg v1
 Title: S4_frechet compute_divergence returns DataFrame missing 'year' column
-Status: open
+Status: closed
 Created: 2026-04-26
 Author: claude
 

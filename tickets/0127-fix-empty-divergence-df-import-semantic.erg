@@ -1,6 +1,6 @@
 %erg v1
 Title: Fix NameError — empty_divergence_df not imported in _divergence_semantic.py
-Status: open
+Status: closed
 Created: 2026-05-01
 Author: claude
 

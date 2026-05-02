@@ -1,6 +1,6 @@
 %erg v1
 Title: Fix test flakiness under pytest-xdist -n 4
-Status: done
+Status: closed
 Created: 2026-04-25
 Author: claude
 
