@@ -252,6 +252,21 @@ def _plot(
         if sub.empty:
             continue
         style = _WINDOW_STYLES[w_str]
+
+        if (
+            "z_lo" in sub.columns
+            and "z_hi" in sub.columns
+            and sub["z_lo"].notna().any()
+        ):
+            ax.fill_between(
+                sub["year"],
+                sub["z_lo"],
+                sub["z_hi"],
+                alpha=0.08,
+                color=style["color"],
+                zorder=2,
+            )
+
         ax.plot(
             sub["year"],
             sub["z_score"],

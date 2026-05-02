@@ -64,6 +64,12 @@ crossyear-tables: $(addprefix $(ZOO_TABLES)/tab_crossyear_,$(addsuffix .csv,$(CR
 $(ZOO_TABLES)/tab_crossyear_L2.csv: $(ZOO_TABLES)/tab_div_L2.csv scripts/compute_crossyear_zscore.py
 	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method L2 --metric resonance --output $@
 
+# Stochastic methods: pass --subsample-csv for replication ribbon (ticket 0105).
+RIBBON_METHODS := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet C2ST_embedding C2ST_lexical
+$(foreach m,$(RIBBON_METHODS),$(eval \
+$(ZOO_TABLES)/tab_crossyear_$(m).csv: $(ZOO_TABLES)/tab_div_$(m).csv $(ZOO_TABLES)/tab_subsample_$(m).csv scripts/compute_crossyear_zscore.py ; \
+	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $(m) --subsample-csv $(ZOO_TABLES)/tab_subsample_$(m).csv --output $$@))
+
 $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_crossyear_zscore.py
 	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $* --output $@
 
