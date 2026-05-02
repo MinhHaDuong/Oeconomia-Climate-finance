@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-05-02
+Last updated: 2026-05-02 21:00 UTC
 
 ## Current goal
 
@@ -50,6 +50,10 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - #765 (0112): fix L2 null: filter crossyear to resonance-only
 - #766 (0113): zoo figures: plot raw D(t,w) values, drop Z-score rescaling
 - #767 (0119): regenerate golden values (102-work smoke fixture, 96 rows)
+
+### Venue concentration (B4 bias) — merged 2026-05-02 (PR #788, ticket 0073)
+- `compute_venue_concentration.py`, `plot_venue_concentration.py`, `venues.mk` added
+- §4.8 paragraph descoped to ticket 0129
 
 ### Ribbon completion + infra fixes — merged 2026-04-29–2026-05-02 (PRs #773–#783)
 - #773 (0124): fix S4_frechet smoke-mode min_papers precedence + empty-results guards
@@ -103,6 +107,8 @@ None.
 | Ticket | Title | Priority |
 |--------|-------|----------|
 | 0121 | Standing regression test: all dispatcher methods return valid schema on empty corpus | Low (needs-human) |
+| 0126 | Refactor uv invocations to use --env-file (CLAUDE_ENV_FILE leak fix) | Low |
+| 0129 | Write §4.8 paragraph on venue concentration bias | Low |
 
 ## Next actions
 
@@ -110,6 +116,5 @@ None.
 
 Background (not on critical path):
 
-- **0071-0078** bias audit — narrative backing for §4.8 Robustness / §6.4 Limitations
-- **0073** venue concentration (Herfindahl/entropy per year)
+- **0071-0078** bias audit — narrative backing for §4.8 Robustness / §6.4 Limitations (0073 done → PR #788)
 - Re-land arch rule 9 (tickets 0043/0044)
