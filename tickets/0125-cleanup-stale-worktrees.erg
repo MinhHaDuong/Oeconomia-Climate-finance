@@ -1,13 +1,13 @@
 %erg v1
 Title: Clean up stale worktrees and merged branches
-Status: open
+Status: closed
 Created: 2026-04-29
 Author: HDMX-coding-agent
 
 --- log ---
 2026-04-29T00:00Z HDMX-coding-agent created
-
 2026-04-29T00:09Z claude note sweep-assess: not-picked hash:06adae38d899 scope:~20 min, git ops only risk:medium
+2026-05-02T00:00Z claude close — remote stale branches deleted by 0128; remaining locked worktrees deferred per policy until sessions release
 --- body ---
 ## Context
 Housekeeping run 2026-04-29 found 3 stale worktrees and several merged branches that should be removed:
