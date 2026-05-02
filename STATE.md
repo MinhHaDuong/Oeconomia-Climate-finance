@@ -4,13 +4,13 @@ Last updated: 2026-05-02
 
 ## Current goal
 
-**Replication ribbon** — null ribbons complete for 15/18 methods (G3/G4/G7 excluded); analytical null overlay done (0115 open PR); 0124 S4 schema fix in review.
+**Paper method section** — replication ribbon complete (PR #781); null ribbons live for 15/18 methods. Now: write narrative, figures, and prose for `multilayer-detection.qmd`.
 
 ### Roadmap
 1. ~~**DONE — Ribbon quality** (tickets 0112, 0114, 0115): L2 crossyear fixed, L3 document shuffle done, C2ST analytical null overlay done.~~ PRs merged.
-2. **NOW — S4 schema fix** (ticket 0124): restore `year` column in S4_frechet smoke mode.
-3. **NEXT — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.
-4. **AFTER — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
+2. ~~**DONE — S4 schema fix** (ticket 0124): restore `year` column in S4_frechet smoke mode.~~ PR #773 merged.
+3. ~~**DONE — Replication ribbon** (ticket 0105): R=20 equal-n subsamples → [Q10,Q90] band on S1–S4 and C2ST×2.~~ PR #781 merged.
+4. **NOW — Paper method section**: narrative, figures, and prose for `multilayer-detection.qmd`.
 
 ## Status: TWO PAPERS SUBMITTED + ALL NULL DRIVERS WIRED
 
@@ -51,6 +51,14 @@ Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 table
 - #766 (0113): zoo figures: plot raw D(t,w) values, drop Z-score rescaling
 - #767 (0119): regenerate golden values (102-work smoke fixture, 96 rows)
 
+### Ribbon completion + infra fixes — merged 2026-04-29–2026-05-02 (PRs #773–#783)
+- #773 (0124): fix S4_frechet smoke-mode min_papers precedence + empty-results guards
+- #778 (0120): empty-results guard for _c2st, _community, _citation, _lexical modules
+- #779 (0116): add n_jobs parallelism to L2 null model driver
+- #780 (0127): fix NameError — import empty_divergence_df in _divergence_semantic
+- #781 (0105): replication ribbon for zoo figures (R=20 equal-n subsamples)
+- #783 (0122): close ticket — fix parallel test flakiness under pytest-xdist -n 4
+
 ## Corpus (v1.1.1)
 
 - 6 sources: OpenAlex, ISTEX, bibCNRS, SciSpace, grey literature, teaching canon
@@ -90,27 +98,18 @@ None.
 | C2ST_embedding | ✅ ribbon live (raw values) |
 | C2ST_lexical | ✅ ribbon live (raw values) |
 
-## Open ribbon-quality tickets
-
-| Ticket | Title | Priority |
-|--------|-------|----------|
-| 0115 | Analytical null overlay for S1/S2/L1/C2ST | Medium (PR open) |
-
 ## Open infrastructure tickets
 
 | Ticket | Title | Priority |
 |--------|-------|----------|
-| 0116 | Add n_jobs parallelism to L2/L3 null model permutation drivers | Low |
-| 0120 | Empty-results guard for remaining dispatcher modules (_c2st, _community, _citation, _lexical) | Low |
-| 0121 | Standing regression test: all dispatcher methods return valid schema on empty corpus | Low |
+| 0121 | Standing regression test: all dispatcher methods return valid schema on empty corpus | Low (needs-human) |
 
 ## Next actions
 
-- 0124 (S4_frechet schema: restore `year` column in smoke mode — PR #773 in review)
-- 0115 (C2ST analytical null overlay — PR open)
-- ~~0122 (fix parallel test flakiness — PR #772 merged 2026-05-01)~~
+- **0026** / **multilayer-detection.qmd** — paper method section: narrative, figures, prose
 
 Background (not on critical path):
 
 - **0071-0078** bias audit — narrative backing for §4.8 Robustness / §6.4 Limitations
+- **0073** venue concentration (Herfindahl/entropy per year)
 - Re-land arch rule 9 (tickets 0043/0044)
