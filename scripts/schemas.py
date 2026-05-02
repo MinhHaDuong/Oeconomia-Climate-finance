@@ -283,3 +283,20 @@ def validate_refined_embeddings(vectors, n_works):
         raise ValueError(
             f"Embedding row mismatch: {vectors.shape[0]} vectors vs {n_works} works"
         )
+
+
+# ---------------------------------------------------------------------------
+# Venue concentration CSV (ticket 0073)
+# ---------------------------------------------------------------------------
+
+VenueConcentrationSchema = DataFrameSchema(
+    columns={
+        "year": Column(int),
+        "hhi": Column(float, checks=pa.Check.in_range(0, 1)),
+        "shannon_entropy": Column(float),
+        "n_venues": Column(int),
+        "n_papers": Column(int),
+    },
+    strict=True,
+    coerce=True,
+)
