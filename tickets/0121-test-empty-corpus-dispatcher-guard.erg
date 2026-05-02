@@ -1,6 +1,6 @@
 %erg v1
 Title: Standing regression test — dispatcher must never emit 1-column DataFrame on empty corpus
-Status: needs-human
+Status: open
 Created: 2026-04-25
 Author: claude
 
@@ -9,10 +9,11 @@ Author: claude
 2026-04-26T22:06Z claude note sweep-assess: not picked
 2026-04-27T02:07Z claude note sweep-assess: not picked
 2026-04-29T00:09Z claude note sweep-skip: three-strikes hash:6fee5392f4bc
+
 --- body ---
-:09Z claude note sweep-skip: three-strikes hash:6fee5392f4bc
---- body ---
--column DataFrame when
+## Context
+
+Ticket 0118 (PR #764) fixed `compute_s4_frechet` returning a 0-column DataFrame when
 `_iter_window_pairs` yields no pairs (empty `results` list). The root cause was:
 
 ```python
