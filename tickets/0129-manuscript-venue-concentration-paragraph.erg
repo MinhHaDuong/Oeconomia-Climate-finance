@@ -1,6 +1,6 @@
 %erg v1
 Title: Write §4.8 paragraph on venue concentration bias
-Status: doing
+Status: closed
 Created: 2026-05-02
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-05-02T00:00Z claude created — descoped from 0073; figure pipeline merged, prose deferred
 2026-05-03T12:00Z claude status doing — raid 0129; §4.8 does not exist, placing in §3.4 instead
 2026-05-03T12:00Z claude note HHI declines monotonically (0.07→0.003), no spike at 2007/2013; null finding strengthens break claim
+2026-05-03T08:24Z claude status closed — PR #790 merged; review caught 'monotonically' (YoY reversals exist); fixed to 'clear downward trend'
 
 --- body ---
 ## Context
