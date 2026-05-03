@@ -107,8 +107,6 @@ None.
 | Ticket | Title | Priority |
 |--------|-------|----------|
 | 0121 | Standing regression test: all dispatcher methods return valid schema on empty corpus | Low (needs-human) |
-| 0126 | Refactor uv invocations to use --env-file (CLAUDE_ENV_FILE leak fix) | Low |
-| 0129 | Write §4.8 paragraph on venue concentration bias | Low |
 
 ## Next actions
 
