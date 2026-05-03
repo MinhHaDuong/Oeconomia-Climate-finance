@@ -1,6 +1,6 @@
 ---
 name: ticket-close
-description: Close a local ticket and release its claim.
+description: Close a local ticket.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: <ticket-id>
@@ -16,9 +16,4 @@ argument-hint: <ticket-id>
    - Change `Status:` line to `Status: closed` (works from any prior status)
    - Append log line: `{timestamp} {agent} status closed — {reason}`
 
-3. Release the claim:
-   ```bash
-   rm -f "$(git rev-parse --git-common-dir)/ticket-wip/$ARGUMENTS.wip"
-   ```
-
-4. Commit the ticket status change.
+3. Commit the ticket status change.

@@ -1,6 +1,6 @@
 ---
 name: ticket-ready
-description: List local tickets that are ready for work (unblocked, unclaimed).
+description: List local tickets that are ready for work (unblocked).
 disable-model-invocation: false
 user-invocable: true
 argument-hint:
@@ -17,13 +17,8 @@ argument-hint:
      - Local ID (4 digits): look up the referenced ticket's status. Ready only if `closed`.
      - `gh#N`: treat as satisfied (no network call).
      - Missing reference: warn, treat as satisfied.
-   - Check for `.wip` claim:
-     ```bash
-     wip_dir="$(git rev-parse --git-common-dir)/ticket-wip"
-     ls "$wip_dir"/*.wip 2>/dev/null
-     ```
 
-3. Display ready tickets (unblocked + unclaimed).
+3. Display ready tickets (unblocked).
 
 ## Alternative: use the CLI
 
