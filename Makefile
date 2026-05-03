@@ -50,6 +50,9 @@ export PYTHONHASHSEED := 0
 export SOURCE_DATE_EPOCH := 0
 
 # ── Toolchain ─────────────────────────────────────────────
+# Env policy: secrets sourced from project .env via uv --env-file;
+# never via export KEY := $(shell ...) or command-line KEY=value.
+#
 # Named tool variables so invocations stay overridable and self-documenting.
 # PATH export covers non-interactive shells (ssh, cron, systemd) where
 # ~/.bashrc isn't sourced — uv lives in ~/.local/bin by default.
