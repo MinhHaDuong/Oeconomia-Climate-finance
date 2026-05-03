@@ -32,32 +32,44 @@ def manuscript_body():
 
 class TestVenueTableInManuscript:
     def test_tbl_venues_in_body(self):
-        assert "tbl-venues" in manuscript_body(), \
+        assert "tbl-venues" in manuscript_body(), (
             "@tbl-venues must appear in manuscript body"
+        )
+
+    def test_venue_concentration_mentioned(self):
+        body = manuscript_body()
+        assert "venue concentration" in body.lower() or "HHI" in body, (
+            "manuscript body must mention venue concentration or HHI (ticket 0129)"
+        )
 
     def test_fig_seed_image_not_in_body(self):
         body = manuscript_body()
         # Strip HTML comments before checking
         body_no_comments = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
-        assert "fig_seed_axis_core.png" not in body_no_comments, \
+        assert "fig_seed_axis_core.png" not in body_no_comments, (
             "fig_seed_axis_core.png image must not appear in manuscript body (moved to supplement)"
-
+        )
 
 
 @pytest.mark.slow
 class TestVenueTableFile:
     def test_tab_venues_exists(self):
-        assert os.path.isfile(TAB_VENUES), \
-            "content/tables/tab_venues.md must exist"
+        assert os.path.isfile(TAB_VENUES), "content/tables/tab_venues.md must exist"
 
     def test_tab_venues_has_rows(self):
         text = read(TAB_VENUES)
         # Count pipe-delimited table rows (excluding header and separator)
-        rows = [l for l in text.strip().split("\n")
-                if "|" in l and not l.strip().startswith("|--") and not l.strip().startswith("|-")]
+        rows = [
+            l
+            for l in text.strip().split("\n")
+            if "|" in l
+            and not l.strip().startswith("|--")
+            and not l.strip().startswith("|-")
+        ]
         # Header + at least 8 data rows
-        assert len(rows) >= 9, \
+        assert len(rows) >= 9, (
             f"tab_venues.md should have at least 8 data rows, found {len(rows) - 1}"
+        )
 
     def test_tab_venues_mentions_efficiency(self):
         text = read(TAB_VENUES)
@@ -70,5 +82,4 @@ class TestVenueTableFile:
 
 class TestScriptExists:
     def test_script_exists(self):
-        assert os.path.isfile(SCRIPT), \
-            "scripts/export_tab_venues.py must exist"
+        assert os.path.isfile(SCRIPT), "scripts/export_tab_venues.py must exist"
