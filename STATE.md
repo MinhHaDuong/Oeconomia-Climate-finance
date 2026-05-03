@@ -73,7 +73,7 @@ Being re-generated on padme with GROBID reference extraction and DOI matching.
 
 ## Known test failures (pre-existing RED)
 
-None — parallel flakiness fixed in PR #772 (ticket 0122).
+None — context budget test fixed 2026-05-03 (tickets.md moved to scoped rule).
 
 ## Blockers
 
