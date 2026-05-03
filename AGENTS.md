@@ -14,7 +14,7 @@
 | `.claude/hooks/` | Project-specific hooks (merge gate review check) |
 | `.claude/settings.json` | Project permissions and hooks |
 | `hooks/` | Git hooks (pre-commit, pre-push, post-checkout) |
-| `tickets/FORMAT.md` | %erg v1 ticket format spec and validator rules |
+| `.claude/rules/tickets.md` | %erg v1 ticket format spec and validator rules (scoped to tickets/) |
 
 ## Imperial Dragon workflow
 
