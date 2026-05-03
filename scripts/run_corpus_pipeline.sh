@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # run_corpus_pipeline.sh — Run the full DVC corpus pipeline on padme.
 #
+# Env policy: secrets sourced from project .env via uv --env-file;
+# never via command-line KEY=value.
+#
 # Guards: hostname must be padme, dvc must be installed, branch must be main.
 # After dvc repro + push, auto-commits dvc.lock if it's the only changed file.
 # Otherwise warns the user to commit manually.
@@ -20,7 +23,7 @@ if [ "$(hostname)" != "padme" ]; then
 fi
 
 # --- Guard: dvc installed ---
-if ! uv run dvc version >/dev/null 2>&1; then
+if ! uv run --env-file .env dvc version >/dev/null 2>&1; then
     echo "error: dvc not found. Install with: uv tool install 'dvc[ssh]'"
     exit 1
 fi
@@ -34,8 +37,8 @@ fi
 
 # --- Run pipeline ---
 ret=0
-uv run dvc repro || ret=$?
-uv run dvc push
+uv run --env-file .env dvc repro || ret=$?
+uv run --env-file .env dvc push
 
 if [ "$ret" -ne 0 ]; then
     exit "$ret"

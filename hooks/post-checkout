@@ -12,5 +12,6 @@ if [ -f dvc.lock ]; then
         padme) extra=cu130 ;;
         *)     extra=cpu ;;
     esac
-    uv run --group corpus --extra "$extra" dvc checkout 2>/dev/null || true
+    envflag=""; [ -f .env ] && envflag="--env-file .env"
+    uv run $envflag --group corpus --extra "$extra" dvc checkout 2>/dev/null || true
 fi

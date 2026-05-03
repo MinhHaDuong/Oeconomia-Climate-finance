@@ -35,14 +35,14 @@ COMP_DEPS_CORE := \
 $(COMP_FIGS)/fig_companion_zseries.png: \
     scripts/plot_companion_zseries.py $(COMP_UTILS) $(COMP_STYLE) \
     $(COMP_CFG) $(COMP_DEPS_CORE)
-	uv run python scripts/plot_companion_zseries.py --output $@
+	$(UV_RUN) python scripts/plot_companion_zseries.py --output $@
 
 # ── Figure 2: Transition zone heatmap ────────────────────────────────────
 
 $(COMP_FIGS)/fig_companion_heatmap.png: \
     scripts/plot_companion_heatmap.py $(COMP_UTILS) $(COMP_STYLE) \
     $(COMP_CFG) $(COMP_DEPS_CORE)
-	uv run python scripts/plot_companion_heatmap.py --output $@
+	$(UV_RUN) python scripts/plot_companion_heatmap.py --output $@
 
 # ── Figure 3: Discriminative terms ───────────────────────────────────────
 # No hard dependency on tab_discrim_terms*.csv: the script degrades to a
@@ -50,14 +50,14 @@ $(COMP_FIGS)/fig_companion_heatmap.png: \
 
 $(COMP_FIGS)/fig_companion_terms.png: \
     scripts/plot_companion_terms.py $(COMP_UTILS) $(COMP_STYLE) $(COMP_CFG)
-	uv run python scripts/plot_companion_terms.py --output $@
+	$(UV_RUN) python scripts/plot_companion_terms.py --output $@
 
 # ── Figure 4: Community shifts ───────────────────────────────────────────
 # Same stub-fallback rationale as Figure 3.
 
 $(COMP_FIGS)/fig_companion_community.png: \
     scripts/plot_companion_community.py $(COMP_UTILS) $(COMP_STYLE) $(COMP_CFG)
-	uv run python scripts/plot_companion_community.py --output $@
+	$(UV_RUN) python scripts/plot_companion_community.py --output $@
 
 .PHONY: companion-figures
 companion-figures: \
