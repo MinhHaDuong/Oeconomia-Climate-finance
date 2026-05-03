@@ -1,6 +1,6 @@
 %erg v1
 Title: Refactor uv invocations to use --env-file (CLAUDE_ENV_FILE leak fix)
-Status: doing
+Status: closed
 Created: 2026-04-30
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-30T16:31Z claude created — see AEDIST commit 4000c21 for the model fix
 2026-05-01T00:00Z claude note Makefile UV_RUN fixed (commit 4cef9bc) — DVC pipeline and shell scripts still need audit before closing
 2026-05-03T12:00Z claude status doing — raid 0126: migrating all remaining bare uv run invocations
+2026-05-03T08:12Z claude status closed — PR #791 merged; all uv invocations use --env-file or UV_RUN macro
 
 --- body ---
 ## Context
