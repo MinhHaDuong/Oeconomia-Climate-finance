@@ -73,3 +73,6 @@ _variables.yml
 benchmarks/
 
 beat-log.jsonl
+
+# git-erg compiled binary
+tickets/tools/go/erg

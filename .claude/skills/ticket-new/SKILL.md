@@ -54,4 +54,4 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
 - **Closed header set**: Title, Status, Created, Author, Blocked-by. No other headers.
 - **Blocked-by**: one line per dependency. Use 4-digit ticket IDs or `gh#N` for GitHub issues.
 - **Log**: append-only. Format: `{ISO-timestamp} {actor} {verb} [{detail}]`
-- Verbs: `created`, `status`, `claimed`, `released`, `note`
+- Verbs: `created`, `status`, `note`
