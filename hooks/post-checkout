@@ -4,10 +4,12 @@
 # .env and .dvc/config.local are handled by .worktreeinclude (auto-copied
 # into worktrees created by EnterWorktree / `claude --worktree`).
 #
-# This hook (a) points the worktree's uv environment at a shared env that lives
-# on the same filesystem as the uv cache, then (b) populates DVC-managed data.
+# This hook only co-locates the worktree's uv environment with the uv cache so
+# worktree creation stays fast. It does NOT populate DVC data: doing that eagerly
+# copied ~1.7 GB into every worktree and timed out creation. Data is now fetched
+# on demand with `make data` (see the Makefile).
 
-# (a) Co-locate the uv project environment with the uv cache on /data.
+# Co-locate the uv project environment with the uv cache on /data.
 # uv hardlinks wheels from its cache into the environment, but only when both
 # share a filesystem; across filesystems it falls back to copying the whole
 # torch closure (~1.8 GB) into every worktree, which is slow enough to exceed
@@ -32,15 +34,4 @@ if [ -d /data/envs ]; then
     if [ -d "$SHARED_ENV" ] && { [ ! -e .venv ] || [ -L .venv ]; }; then
         ln -sfn "$SHARED_ENV" .venv 2>/dev/null || true
     fi
-fi
-
-# (b) Populate DVC-managed data from local cache.
-# DVC is in the "corpus" dependency group and needs a torch extra.
-if [ -f dvc.lock ]; then
-    case "$(hostname)" in
-        padme) extra=cu130 ;;
-        *)     extra=cpu ;;
-    esac
-    envflag=""; [ -f .env ] && envflag="--env-file .env"
-    uv run $envflag --group corpus --extra "$extra" dvc checkout 2>/dev/null || true
 fi

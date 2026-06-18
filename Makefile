@@ -207,7 +207,7 @@ ZOO_FIGS := $(ZOO_SCHEMATICS) $(ZOO_RESULT_FIGS)
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(MULTILAYER_FIGS) $(TECHREP_FIGS) $(NCC_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep figures-ncc stats check check-fast smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep figures-ncc stats check check-fast smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -255,6 +255,13 @@ corpus-sync:
 	@[ "$$(hostname)" != "padme" ] || { echo "error: use 'make corpus' on padme, not corpus-sync."; exit 1; }
 	git pull
 	$(UV_RUN) dvc pull --force
+
+# Populate this worktree's DVC data from the local cache (no network).
+# Worktree creation no longer does this eagerly (it timed out copying ~1.7 GB);
+# run this on demand when a worktree actually needs the corpus data. Use
+# corpus-sync instead to also fetch from the padme remote.
+data:
+	$(UV_RUN) dvc checkout
 
 # Individual stage aliases.
 corpus-discover:
