@@ -21,7 +21,6 @@ Usage::
 import argparse
 import re
 import sys
-from typing import Optional
 
 import pandas as pd
 from pipeline_io import save_csv
@@ -64,7 +63,7 @@ def _subsample_percentiles(
 def compute_crossyear_zscores(
     df: pd.DataFrame,
     method: str,
-    subsample_df: Optional[pd.DataFrame] = None,
+    subsample_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Compute cross-year Z-scores for all windows in df.
 
