@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Pin shared-venv console-script shebangs to canonical /data interpreter
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T12:18Z HDMX-coding-agent created
+
+--- body ---
+## Context
+PR #807 fixed `make check` failing with `pytest: error: unrecognized
+arguments: -n`. Root cause: the project uses **one shared uv env** at
+`/data/envs/venv/oeconomia` (torch-hardlink constraint, ticket 0145/0157),
+and every worktree's `.venv` is a symlink to it. When `uv sync` runs from a
+worktree, uv stamps **all ~52 generated console scripts** (`bin/pytest`,
+`bin/ruff`, `bin/mypy`, `bin/dvc`, …) with a shebang pointing at *that
+worktree's* local `.venv/bin/python3`. When the worktree is removed the
+shebang interpreter vanishes; the console script then silently falls through
+to the system tool (which lacks the venv's plugins, e.g. pytest-xdist).
+
+PR #807 routed the **test path** around this by calling `python -m pytest`
+(immune to console-script drift). But `python -m` only fixes invocations that
+have a module entry point. `dvc` has **no** `python -m` entry point, and
+interactive use of `ruff`/`mypy`/`dvc` (outside Make, where a user types
+`uv run dvc …` or activates the venv) still hits the stale shebang. The bug
+has a class shape: ~52 scripts, one fixed path.
+
+## Relevant files
+- `Makefile`, `divergence.mk`, `multilayer-detection.mk`, `venues.mk`, `zoo.mk` — now use `$(PYTHON)` / `python -m` for python tools; 11 `$(UV_RUN) dvc` sites remain console-script-dependent.
+- `/data/envs/venv/oeconomia/bin/*` — the shared env's generated console scripts (the things that carry stale shebangs).
+- See memory `project_worktree_env_data.md` for the shared-env-on-/data layout.
+
+## Actions
+1. Decide the mechanism. Options (pick in the ticket, draft for the author):
+   a. A `make` hook / post-sync step that rewrites every `/data/envs/venv/oeconomia/bin/*` shebang to the canonical `/data/envs/venv/oeconomia/bin/python3` (stable, never removed). One sed pass, idempotent.
+   b. A guard target that detects a stale shebang and re-runs `uv sync` against the shared env from a stable cwd.
+   c. Configure uv to emit absolute canonical shebangs (investigate `UV_*` env / `--python` pinning) so sync never writes a worktree-local path.
+2. Implement the chosen mechanism so a fresh `uv sync` from any worktree leaves the shared `bin/` interpreter-stable.
+
+## Test
+- Red: a test that reads each `bin/<tool>` shebang in the shared env and asserts it points at an **existing** interpreter under `/data/envs/venv/oeconomia` (not a `.claude/worktrees/...` or `jobs/...` path). Mark `@pytest.mark.integration` if it shells out.
+
+## Verification
+- [ ] After `uv sync` from a worktree, `head -1 /data/envs/venv/oeconomia/bin/dvc` shows the canonical `/data` interpreter, not a worktree path.
+- [ ] `uv run dvc --version` works from a worktree whose sibling worktree last synced.
+- [ ] The test from § Test passes; it fails if a shebang is reverted to a worktree-local path.
+
+## Invariants
+- Don't break the `python -m` test path PR #807 established.
+- Don't pin into history anything machine-local (`.venv` stays gitignored, per 0f34b5f).
+
+## Exit criteria
+- Console-script shebangs in the shared env survive worktree removal; `dvc`/`ruff`/`mypy` work interactively from any worktree; regression test guards it.
