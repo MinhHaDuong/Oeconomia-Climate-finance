@@ -17,9 +17,21 @@
 # symlink makes `uv run` error, so the shared env is created first. Skipped
 # where /data is absent (the default local .venv is then used).
 SHARED_ENV=/data/envs/venv/oeconomia
-if [ -d /data/envs ] && [ ! -e .venv ]; then
-    [ -d "$SHARED_ENV" ] || uv venv "$SHARED_ENV" >/dev/null 2>&1 || true
-    [ -d "$SHARED_ENV" ] && ln -s "$SHARED_ENV" .venv
+if [ -d /data/envs ]; then
+    # Create the shared env once. flock serializes the first-ever creation so
+    # concurrent worktree checkouts (parallel raids) don't race to build the
+    # same path; it is best-effort — without flock the env is still created.
+    {
+        flock 9 2>/dev/null || true
+        [ -d "$SHARED_ENV" ] || uv venv "$SHARED_ENV" >/dev/null 2>&1 || true
+    } 9>/data/envs/.oeconomia-env.lock
+    # Point .venv at the shared env when it is absent or a (possibly stale)
+    # symlink; leave a real local .venv directory untouched. ln -sfn is
+    # idempotent and replaces a dangling link, and may lose the race with a
+    # concurrent checkout harmlessly — the link ends up present either way.
+    if [ -d "$SHARED_ENV" ] && { [ ! -e .venv ] || [ -L .venv ]; }; then
+        ln -sfn "$SHARED_ENV" .venv 2>/dev/null || true
+    fi
 fi
 
 # (b) Populate DVC-managed data from local cache.

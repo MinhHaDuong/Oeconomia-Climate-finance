@@ -57,3 +57,19 @@ def test_hook_skips_shared_env_without_data_filesystem():
     where /data is absent (portability to machines without the data disk)."""
     source = HOOK.read_text()
     assert "[ -d /data/envs ]" in source
+
+
+def test_hook_replaces_stale_venv_symlink():
+    """A dangling .venv symlink (target deleted) must not wedge the hook: use
+    ln -sfn so the link is replaced idempotently rather than erroring on a
+    pre-existing symlink, and only when .venv is absent or itself a symlink."""
+    source = HOOK.read_text()
+    assert "ln -sfn" in source
+    assert "[ -L .venv ]" in source
+
+
+def test_hook_serializes_concurrent_env_creation():
+    """Concurrent worktree checkouts (parallel raids) must not race to build the
+    shared env; the first-ever creation is serialized with flock."""
+    source = HOOK.read_text()
+    assert "flock" in source
