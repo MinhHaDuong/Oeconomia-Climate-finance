@@ -1,0 +1,172 @@
+%erg 0.1
+Title: Reorg — relocate engine to projets/actifs/climate-finance-het, split submission records to papiers/<track>
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T13:08Z HDMX-coding-agent created
+2026-06-18T13:08Z HDMX-coding-agent note Plan ratified interactively 2026-06-18 (monorepo + rename climate-finance-het; engine->projets, records->papiers). Blast radius VERIFIED against live filesystem (see body). Author executes from ~2026-06-19, by hand. Every step is reversible.
+
+--- body ---
+## Context
+
+This repo is a corpus-driven research *programme* that emits several papers
+(Oeconomia history manuscript, RDJ4HSS data paper, deferred methods paper, the
+Gide/RHPE HET paper) from one ~28k-work corpus and one pipeline. Two problems,
+ratified for fixing in the 2026-06-18 planning session:
+
+1. **Mislocated.** It lives under `papiers/actif/`, which is one-dir-per-*paper*.
+   A programme is a *projet*. Natural home: `projets/actifs/`.
+2. **Misnamed.** The dir + GitHub repo are named "Oeconomia…", after the first
+   venue it shipped to — a vestige. The package already self-identifies as
+   `climate-finance-het` (pyproject `name`). "Oeconomia" survives only as the
+   legitimate label of *one submission track*, not the engine.
+
+**Cut line = engine vs. record.** Today's `release/` is mostly submission record
+(cover letters, decision letters, frozen PDFs, deposit archives, DMP) — that is
+`papiers/` material, not engine. The build *tooling* that generates it stays in
+the repo. Result: no duplication — the engine regenerates PDFs from a git tag;
+the record lives once, in `papiers/`, where it travels actif -> sent -> published.
+
+**Constraint:** the manuscript is under active light revision for the Gide
+colloque (Vannes, 2026-07-02); author executes this reorg from ~2026-06-19.
+The physical move is an *atomic same-filesystem rename* (both paths under the
+`/home/haduong` mount) — instant, not a copy — so it is safe even mid-revision
+*provided* all branches are pushed and no other session is mid-edit (Phase 0).
+
+## Ratified decisions
+
+- Engine name everywhere: **`climate-finance-het`** (matches pyproject package).
+- New location: `/home/haduong/CNRS/projets/actifs/climate-finance-het/`.
+- GitHub repo rename: `MinhHaDuong/Oeconomia-Climate-finance` -> `…/climate-finance-het`.
+- Tracks & lifecycle state:
+  - **Oeconomia** (R&R, in revision) -> `papiers/actif/Oeconomia…/`
+  - **RDJ4HSS** (under review) -> `papiers/sent/RDJ4HSS…/`
+- **Leave** the DVC cache dir name (`…/Oeconomia-Climate-finance/dvc-cache`) and
+  the uv env name (`/data/envs/venv/oeconomia`): regenerable, invisible, harmless.
+
+## Blast radius — VERIFIED against the live filesystem 2026-06-18
+
+| Item | Current | After move | Action |
+|------|---------|-----------|--------|
+| repo tree | `…/papiers/actif/Oeconomia - Climate finance` | `…/projets/actifs/climate-finance-het` | atomic `mv` (same `/home` fs) |
+| git `core.hooksPath` | `hooks` (relative) | valid | none — relative ✅ |
+| `.venv` symlink | -> `/data/envs/venv/oeconomia` (abs) | valid | none ✅ |
+| `.dvc/config.local` cache | -> `/home/haduong/data/projets/Oeconomia-Climate-finance/dvc-cache` (abs) | valid | none ✅ |
+| GitHub remote | `…/Oeconomia-Climate-finance.git` | stale | rename on forge + `git remote set-url` |
+| `.claude/settings.json` | 2 abs refs: **L9** (ls allowlist), **L23** (hooks path) | broken | edit both to new path |
+| **Claude cache dir** | `~/.claude/projects/-home-haduong-CNRS-papiers-actif-Oeconomia---Climate-finance/` (**22 MB**: transcripts `.jsonl` + `memory/`) | harness reads new mangled path -> empty | `mv` dir to new mangled name |
+| `.env` `CLAUDE_MEMORY_DIR` | `…/-…-Oeconomia---Climate-finance/memory` | stale | edit to new mangled `…/memory` |
+| git worktrees | registered abs paths | broken | `git worktree repair` |
+| per-worktree cache dirs | `…--claude-worktrees-{t132,t145,t158,…}` | orphaned | optional cleanup (throwaway) |
+| `papiers/`, `CNRS/` | **not** git repos (verified) | — | record moves are plain `mv`, no git |
+
+New mangled cache path (cwd `/`->`-`, space->`-`):
+`~/.claude/projects/-home-haduong-CNRS-projets-actifs-climate-finance-het/`
+New `CLAUDE_MEMORY_DIR`:
+`/home/haduong/.claude/projects/-home-haduong-CNRS-projets-actifs-climate-finance-het/memory`
+
+> Do **not** touch `…-Oeconomia---Joint-production…` — that is a different project.
+
+## release/ classification (record -> papiers ; engine -> stays)
+
+| `release/` item | Class | Destination |
+|-----------------|-------|-------------|
+| `2026-01-14 Special Issue on Climate Economics/` | record | **author-decision**: own track vs Oeconomia prehistory |
+| `2026-03-18 Oeconomia/` | record | `papiers/actif/Oeconomia…/` |
+| `2026-03-23 Oeconomia errata/` | record | `papiers/actif/Oeconomia…/` |
+| `2026-03-18 HAL/` | record (deposit) | `papiers/actif/Oeconomia…/` |
+| `2026-03-18 Zenodo/` (manuscript+analysis `.tar.gz`) | record (deposit) | `papiers/actif/Oeconomia…/` |
+| `2026-03-26 RDJ4HSS/` | record | `papiers/sent/RDJ4HSS…/` |
+| `2026-03-26 Zenodo/` (datapaper `.tar.gz`) | record (deposit) | `papiers/sent/RDJ4HSS…/` |
+| `2026-03-27 OPIDoR/` (DMP) | record | `papiers/sent/RDJ4HSS…/` |
+| `scripts/build_*_archive.sh` | engine | `build/` (or `scripts/release/`) |
+| `templates/` (Dockerfiles, Makefiles, READMEs) | engine | `build/templates/` |
+| `release-journal.md`, `revision-runbook.md`, `rdj-submission-checklist.md` | engine/process | `docs/` |
+
+**Author micro-decisions (2):** (a) the "Special Issue" track assignment;
+(b) the regenerable deposit `.tar.gz` — keep the frozen tarball in `papiers/`
+(self-contained record, recommended) vs. keep only README + Zenodo DOI pointer.
+
+## Actions — ordered, each reversible
+
+Recommended order isolates the reviewable repo change (Phase 1, a PR) before the
+fast irreversible-feeling ops (Phase 2/3, all actually reversible). Phases 1 and
+2 are independent — either order works.
+
+### Phase 0 — Pre-flight (no mutation)
+1. `git push` every branch: `main`, `submission/oeconomia-varia`,
+   `submission/rdj-data-paper`, `t158-pin-shared-venv-shebangs`.
+2. `git status` clean in the main checkout and every worktree.
+3. Close any other Claude/VSCode session editing this repo (the move relocates
+   the whole tree — concurrent edits would land in the old path).
+- Verify: all branches `== origin`; `git worktree list` shows only intended worktrees.
+
+### Phase 1 — In-repo extraction (a PR on the still-named repo)
+1. Copy record dirs OUT to `papiers/{actif,sent}/<track>/` (plain `cp -a`).
+2. Verify byte-identical: `diff -r "<src>" "<dest>"` (or `sha256sum`); only then
+   `git rm -r` the record dirs from the repo.
+3. `git mv` engine tooling: `release/scripts` -> `build/`, `release/templates`
+   -> `build/templates/`, process docs -> `docs/`. Remove the now-empty `release/`.
+4. Update references to old `release/…` paths in `Makefile*`, `.mk`,
+   `.claude/rules/architecture.md` (Phase 4 section names `release/scripts`,
+   `release/templates`), and any `build_*` invocation.
+5. `make check`. Open PR, `**Ticket:** tickets/0159-…`.
+- Rollback: branch unmerged -> `git restore` / delete branch. `papiers/` copies
+  are additive; remove if abandoning.
+
+### Phase 2 — Physical move + immediate repair (local, ~1 min)
+1. `mv "/home/haduong/CNRS/papiers/actif/Oeconomia - Climate finance" \
+      /home/haduong/CNRS/projets/actifs/climate-finance-het`
+2. `cd` into the new path. `git worktree repair`.
+3. `mv` the Claude cache dir to the new mangled name (see paths above).
+4. Edit `.env`: `CLAUDE_MEMORY_DIR=` -> new `…/memory` path.
+5. Edit `.claude/settings.json` L9 + L23 -> new repo path.
+- Verify: `git status` clean; `git rev-parse --show-toplevel` = new path;
+  `make check-fast` green; a fresh `claude` session in the new dir shows project
+  memory + recent transcripts intact.
+- Rollback: `mv` back; rename cache dir back; revert `.env`/`settings.json`.
+
+### Phase 3 — GitHub rename (forge)
+1. Rename repo on GitHub to `climate-finance-het` (Settings -> rename; GH keeps
+   redirects from the old name automatically).
+2. In every worktree: `git remote set-url origin <new-url>`; `git fetch`.
+- Verify: `git fetch && git push --dry-run` succeed.
+- Rollback: rename back on GitHub; reset remote URLs.
+
+### Phase 4 — Identity scrub + lifecycle placement
+1. `README.md`: replace project-identity "Oeconomia" framing with
+   `climate-finance-het` (the *track* keeps its venue name in `papiers/`).
+2. Confirm `papiers/actif/Oeconomia…/` and `papiers/sent/RDJ4HSS…/` hold the
+   relocated records. Future state transitions are a plain `mv` between
+   `papiers/{actif,sent,published}/` (papiers is not git-tracked).
+
+## Test (first, before mutating)
+
+Per single-use-op discipline: a **verification checklist**, not a built tool.
+Write the Phase-2/3 "Verify" assertions as a throwaway `/tmp` shell snippet and
+run it after each phase; do not commit a permanent reorg test.
+
+## Verification
+- [ ] Phase 0: every branch pushed; clean trees; no concurrent session.
+- [ ] Phase 1: records byte-identical in `papiers/`; `release/` gone from repo;
+      tooling in `build/`+`docs/`; no dangling `release/` refs; `make check` green; PR merged.
+- [ ] Phase 2: repo at new path; `make check-fast` green; new `claude` session
+      has memory + transcript history (22 MB cache dir moved; `CLAUDE_MEMORY_DIR` updated).
+- [ ] Phase 3: GitHub repo renamed; remote URLs updated; fetch/push work.
+- [ ] Phase 4: README de-Oeconomia'd; `papiers/<state>/<track>/` populated.
+
+## Invariants (must not break)
+- `make check` green after Phase 1.
+- `submission/oeconomia-varia` + `submission/rdj-data-paper` intact (protected:
+  no deletion/force-push; they relocate inside the same repo, untouched).
+- Frozen submission records byte-identical after relocation to `papiers/`.
+- Project **memory + transcript history preserved** (the cache-dir rename + `.env`).
+- DVC pipeline still resolves (cache + data on `/data`, absolute, unaffected).
+- No secrets printed or committed (`.env` stays gitignored/local-only).
+
+## Exit criteria
+- Engine at `projets/actifs/climate-finance-het`, renamed on GitHub, identity
+  scrubbed; submission records relocated to `papiers/<state>/<track>/`
+  byte-identical; build tooling rehomed; project memory/history intact;
+  `make check` green. Every blast-radius row above resolved.
