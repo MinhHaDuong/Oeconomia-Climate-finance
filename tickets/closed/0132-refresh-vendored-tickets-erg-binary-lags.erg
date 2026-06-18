@@ -2,10 +2,12 @@
 Title: Refresh vendored tickets/erg binary (lags installed)
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: done
 
 --- log ---
 2026-06-18T06:02Z HDMX-coding-agent created
 
+2026-06-18T09:52Z HDMX-coding-agent closed — done
 --- body ---
 ## Context
 The committed `tickets/erg` (rev 9c23c37, built 2026-06-03) lags the installed

@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "file=$(cat | jq -r '.tool_input.file_path // empty'); case \"$file\" in *.erg) erg validate tickets/ 2>&1 ;; esac",
+            "command": "file=$(cat | jq -r '.tool_input.file_path // empty'); case \"$file\" in *.erg) erg check tickets/ 2>&1 ;; esac",
             "timeout": 10
           }
         ]

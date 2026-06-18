@@ -33,10 +33,12 @@ if [ -n "$secrets" ]; then
 fi
 
 # 4. No large files (>500KB), except uv.lock (grows with CUDA wheel metadata)
+#    and the vendored git-erg bootstrap binaries (Go static binaries, ~2.5MB).
 #    diff-filter=AM: only check Added/Modified, skip Renamed (already in history)
 large=$(git diff --cached --name-only --diff-filter=AM | while IFS= read -r file; do
     case "$file" in uv.lock) continue ;; esac
     case "$file" in content/tables/*.csv) continue ;; esac
+    case "$file" in tickets/erg|tickets/erg-github) continue ;; esac
     size=$(wc -c < "$file" 2>/dev/null || echo 0)
     if [ "$size" -gt 512000 ]; then
         printf '  %s (%dKB)\n' "$file" "$(( size / 1024 ))"
