@@ -2,10 +2,12 @@
 Title: Pin shared-venv console-script shebangs to canonical /data interpreter
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: done
 
 --- log ---
 2026-06-18T12:18Z HDMX-coding-agent created
 
+2026-06-18T12:37Z HDMX-coding-agent closed — done
 --- body ---
 ## Context
 PR #807 fixed `make check` failing with `pytest: error: unrecognized

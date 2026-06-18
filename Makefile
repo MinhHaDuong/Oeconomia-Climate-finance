@@ -63,6 +63,17 @@ UV_RUN  ?= $(UV) run $(if $(wildcard .env),--env-file .env,)
 PYTHON  ?= $(UV_RUN) python
 export PATH := $(HOME)/.local/bin:$(PATH)
 
+# Pin the uv project environment to the symlink-resolved canonical path so a
+# `uv sync` writes console-script shebangs (bin/pytest, bin/dvc, ...) naming the
+# stable shared interpreter, not the throwaway worktree whose sync last ran
+# (ticket 0158). realpath turns this worktree's `.venv` symlink into its /data
+# target; on a machine with a real local .venv it is a harmless no-op. Empty
+# (no .venv yet) → unexported, so uv falls back to its default discovery.
+UV_PROJECT_ENVIRONMENT := $(realpath .venv)
+ifneq ($(UV_PROJECT_ENVIRONMENT),)
+export UV_PROJECT_ENVIRONMENT
+endif
+
 # ── Modular Makefile includes ────────────────────────────
 -include divergence.mk
 -include multilayer-detection.mk
@@ -210,7 +221,7 @@ ZOO_FIGS := $(ZOO_SCHEMATICS) $(ZOO_RESULT_FIGS)
 ALL_FIGS := $(MANUSCRIPT_FIGS) $(DATAPAPER_FIGS) $(MULTILAYER_FIGS) $(TECHREP_FIGS) $(NCC_FIGS)
 
 # ── Default target ────────────────────────────────────────
-.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep figures-ncc stats check check-fast smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
+.PHONY: all setup manuscript papers figures figures-manuscript figures-datapaper figures-companion figures-techrep figures-ncc stats check check-fast venv-canonicalize smoke benchmark determinism-check regression regression-update check-corpus check-manuscript-data data corpus corpus-sync corpus-discover corpus-enrich corpus-extend corpus-filter corpus-align corpus-filter-all corpus-tables corpus-validate deploy-corpus clean rebuild archive-analysis archive-manuscript archive-datapaper analysis-figures analysis-tables analysis-stats manuscript-render manuscript-figures datapaper-render datapaper-figures corpus-handoff
 
 .DEFAULT_GOAL := manuscript
 
@@ -702,12 +713,28 @@ archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript
 archive-datapaper: check-corpus corpus-tables figures-datapaper
 	bash release/scripts/build_datapaper_archive.sh
 
+# Repair shared-env console-script shebangs (ticket 0158). uv only rewrites them
+# on an actual sync, so scripts that a removed worktree left behind keep its
+# dangling interpreter (e.g. `dvc`, which has no `python -m` entry point). This
+# rewrites every bin/ python shebang to the canonical resolved interpreter.
+# Idempotent; a no-op where .venv is absent or already canonical.
+venv-canonicalize:
+	@v=$(realpath .venv); \
+	if [ -n "$$v" ] && [ -x "$$v/bin/python3" ]; then \
+	  for f in "$$v"/bin/*; do \
+	    [ -f "$$f" ] || continue; \
+	    head -1 "$$f" | grep -Eq '^#!.*/python[0-9.]*$$' || continue; \
+	    head -1 "$$f" | grep -qxF "#!$$v/bin/python3" && continue; \
+	    sed -i "1s|^#!.*|#!$$v/bin/python3|" "$$f"; \
+	  done; \
+	fi
+
 # ── All checks (tests) ───────────────────────────────────
-check:
+check: | venv-canonicalize
 	$(PYTHON) -m pytest tests/ -v --tb=short -n 4
 
 # Fast subset: unit tests only (no Python subprocess spawning, no sleeps, < 10s).
-check-fast:
+check-fast: | venv-canonicalize
 	$(PYTHON) -m pytest tests/ -v --tb=short -m "not slow and not integration" -n 4
 
 # Smoke pipeline: run Phase 2 on a 100-row fixture (no DVC pull needed, <30s).
