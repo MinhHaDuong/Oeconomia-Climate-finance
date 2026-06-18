@@ -49,7 +49,7 @@ zoo-figures: $(ZOO_SCHEMATICS) $(ZOO_RESULT_FIGS)
 # real embeddings when available and fall back to synthetic data otherwise.
 
 $(ZOO_FIGS)/schematic_%.png: scripts/plot_schematic_%.py scripts/script_io_args.py
-	$(UV_RUN) python $< --output $@
+	$(PYTHON) $< --output $@
 
 # ── Cross-year Z-score tables ─────────────────────────────────────────────
 #
@@ -62,16 +62,16 @@ crossyear-tables: $(addprefix $(ZOO_TABLES)/tab_crossyear_,$(addsuffix .csv,$(CR
 
 # L2: filter to resonance-only before Z-scoring to align with run_l2_permutations (ticket 0112).
 $(ZOO_TABLES)/tab_crossyear_L2.csv: $(ZOO_TABLES)/tab_div_L2.csv scripts/compute_crossyear_zscore.py
-	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method L2 --metric resonance --output $@
+	$(PYTHON) scripts/compute_crossyear_zscore.py --method L2 --metric resonance --output $@
 
 # Stochastic methods: pass --subsample-csv for replication ribbon (ticket 0105).
 RIBBON_METHODS := S1_MMD S2_energy S3_sliced_wasserstein S4_frechet C2ST_embedding C2ST_lexical
 $(foreach m,$(RIBBON_METHODS),$(eval \
 $(ZOO_TABLES)/tab_crossyear_$(m).csv: $(ZOO_TABLES)/tab_div_$(m).csv $(ZOO_TABLES)/tab_subsample_$(m).csv scripts/compute_crossyear_zscore.py ; \
-	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $(m) --subsample-csv $(ZOO_TABLES)/tab_subsample_$(m).csv --output $$@))
+	$(PYTHON) scripts/compute_crossyear_zscore.py --method $(m) --subsample-csv $(ZOO_TABLES)/tab_subsample_$(m).csv --output $$@))
 
 $(ZOO_TABLES)/tab_crossyear_%.csv: $(ZOO_TABLES)/tab_div_%.csv scripts/compute_crossyear_zscore.py
-	$(UV_RUN) python scripts/compute_crossyear_zscore.py --method $* --output $@
+	$(PYTHON) scripts/compute_crossyear_zscore.py --method $* --output $@
 
 # ── Zoo result panel recipes (pattern rule) ───────────────────────────────
 #
@@ -98,7 +98,7 @@ $(foreach m,$(NULL_METHODS_ALL),$(eval \
 ANALYTICAL_NULL_METHODS := C2ST_embedding C2ST_lexical
 
 $(ZOO_TABLES)/tab_analytical_null_C2ST_%.csv: scripts/compute_analytical_null.py $(REFINED) $(DIV_CFG)
-	$(UV_RUN) python scripts/compute_analytical_null.py \
+	$(PYTHON) scripts/compute_analytical_null.py \
 		--method C2ST_$* --output $@
 
 .PHONY: analytical-null-tables
@@ -111,7 +111,7 @@ $(foreach m,$(ANALYTICAL_NULL_METHODS),$(eval \
 # Pattern rule for all methods: passes --null-ci when tab_null_*.csv exists,
 # and --analytical-null when tab_analytical_null_*.csv exists.
 $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_results.py
-	$(UV_RUN) python scripts/plot_zoo_results.py --method $* --output $@ \
+	$(PYTHON) scripts/plot_zoo_results.py --method $* --output $@ \
 		$(if $(wildcard $(ZOO_TABLES)/tab_null_$*.csv),--null-ci $(ZOO_TABLES)/tab_null_$*.csv,) \
 		$(if $(wildcard $(ZOO_TABLES)/tab_analytical_null_$*.csv),--analytical-null $(ZOO_TABLES)/tab_analytical_null_$*.csv,)
 
@@ -123,22 +123,22 @@ $(ZOO_FIGS)/fig_zoo_%.png: $(ZOO_TABLES)/tab_crossyear_%.csv scripts/plot_zoo_re
 BIAS_METHODS := S1_MMD S2_energy L1 C2ST_embedding
 
 $(ZOO_TABLES)/tab_div_biased_S1_MMD.csv: $(DIV_DISPATCH) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG)
-	$(UV_RUN) python $(DIV_DISPATCH) --method S1_MMD --no-equal-n --output $@
+	$(PYTHON) $(DIV_DISPATCH) --method S1_MMD --no-equal-n --output $@
 
 $(ZOO_TABLES)/tab_div_biased_S2_energy.csv: $(DIV_DISPATCH) scripts/_divergence_semantic.py $(REFINED) $(REFINED_EMB) $(DIV_CFG)
-	$(UV_RUN) python $(DIV_DISPATCH) --method S2_energy --no-equal-n --output $@
+	$(PYTHON) $(DIV_DISPATCH) --method S2_energy --no-equal-n --output $@
 
 $(ZOO_TABLES)/tab_div_biased_L1.csv: $(DIV_DISPATCH) scripts/_divergence_lexical.py $(REFINED) $(DIV_CFG)
-	$(UV_RUN) python $(DIV_DISPATCH) --method L1 --no-equal-n --output $@
+	$(PYTHON) $(DIV_DISPATCH) --method L1 --no-equal-n --output $@
 
 $(ZOO_TABLES)/tab_div_biased_C2ST_embedding.csv: $(DIV_DISPATCH) scripts/_divergence_c2st.py $(REFINED) $(REFINED_EMB) $(DIV_CFG)
-	$(UV_RUN) python $(DIV_DISPATCH) --method C2ST_embedding --no-equal-n --output $@
+	$(PYTHON) $(DIV_DISPATCH) --method C2ST_embedding --no-equal-n --output $@
 
 BIAS_FIGS := $(foreach m,$(BIAS_METHODS),$(ZOO_FIGS)/fig_zoo_bias_$(m).png)
 
 $(ZOO_FIGS)/fig_zoo_bias_%.png: scripts/plot_zoo_bias_comparison.py \
     $(ZOO_TABLES)/tab_div_%.csv $(ZOO_TABLES)/tab_div_biased_%.csv
-	$(UV_RUN) python scripts/plot_zoo_bias_comparison.py --method $* \
+	$(PYTHON) scripts/plot_zoo_bias_comparison.py --method $* \
 	    --input $(ZOO_TABLES)/tab_div_$*.csv \
 	    --biased-csv $(ZOO_TABLES)/tab_div_biased_$*.csv \
 	    --output $@

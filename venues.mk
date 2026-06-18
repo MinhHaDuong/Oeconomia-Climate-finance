@@ -24,10 +24,10 @@ venue-concentration-figure: $(VENUE_FIG)
 
 $(VENUE_TABLE): scripts/compute_venue_concentration.py scripts/summarize_core_venues.py \
 		scripts/schemas.py scripts/utils.py $(REFINED)
-	$(UV_RUN) python $< --output $@
+	$(PYTHON) $< --output $@
 
 # ── Figure ────────────────────────────────────────────────────────────────
 
 $(VENUE_FIG): scripts/plot_venue_concentration.py scripts/plot_style.py scripts/utils.py \
 		$(VENUE_TABLE) content/tables/tab_breakpoints.csv
-	$(UV_RUN) python $< --output $@ --input $(VENUE_TABLE) content/tables/tab_breakpoints.csv
+	$(PYTHON) $< --output $@ --input $(VENUE_TABLE) content/tables/tab_breakpoints.csv
