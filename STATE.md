@@ -15,7 +15,7 @@ Last updated: 2026-06-19 (housekeeping sweep)
 ## Status: TWO PAPERS SUBMITTED + ALL NULL DRIVERS WIRED
 
 ### Oeconomia (Varia) — submitted 2026-03-18
-Under double-blind review. ~8,860 words, 61 bib entries, 2 figures, 2 tables.
+Round-1 decision 2026-05-24: revise & resubmit (major). Reports: `release/2026-03-18 Oeconomia/referee-reports.md`. R&R in progress (tickets 0133–0143). ~8,860 words, 61 bib entries, 2 figures, 2 tables.
 - Zenodo: https://doi.org/10.5281/zenodo.19097045
 - HAL: hal-05558422v1
 - Git tag: v1.0-submission
