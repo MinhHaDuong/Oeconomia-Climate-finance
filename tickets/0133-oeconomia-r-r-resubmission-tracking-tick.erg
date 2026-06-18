@@ -10,6 +10,7 @@ Blocked-by: 0156
 2026-06-18T06:33Z HDMX-coding-agent created
 2026-06-18T07:05Z HDMX-coding-agent note skeptical completeness audit (sonnet agent) vs decision PDF found 7 gaps where remarks sat only in this inventory, not in a child action step. Closed: R2a→0136 action 0 (indeterminacy thesis as analytic spine); R2p, R2w-substantive, R2x, R2y, R2z, R2ad→added as explicit 0141 action bullets. R2p was missing from this inventory entirely — now added below.
 2026-06-18T12:30Z HDMX-coding-agent note v2.0.1 (vannes) merged into main; single working branch from here, the "separate branch / not destined for main" framing was stale. Main now un-blinded — re-anonymize before resubmission (0153 action 0).
+2026-06-18T15:40Z HDMX-coding-agent note author-set closing discipline: no remark closed as non-actionable, every close HITL (sign-off per row). Removed the stale "declined-with-reason" disposition from context + exit criteria to match 0152 and the traceability table.
 
 --- body ---
 ## Context
@@ -21,7 +22,9 @@ Recommendations: R1 "Resubmit for Review", R2 "Revisions Required".
 
 This is a **tracking ticket** — stays open until every child below is closed,
 then a final integration pass verifies the resubmission cover letter answers
-every referee point (addressed or declined-with-reason).
+every referee point. Closing discipline (author-set): no remark is closed as
+non-actionable, and every close is human-in-the-loop (author sign-off per row in
+`release/2026-03-18 Oeconomia/response-traceability.md`). See 0152.
 
 ## Version ladder (gating)
 Execution is sequenced as shippable version increments, each gated by a version
@@ -84,5 +87,5 @@ trackers group them by version.
 
 ## Exit criteria
 - [ ] All child tickets 0134–0143 closed
-- [ ] Cover letter drafted answering every referee point (addressed / declined-with-reason)
+- [ ] Cover letter drafted; every remark in the traceability table has a response AND author sign-off (no remark closed as non-actionable)
 - [ ] `make manuscript` renders clean; `make check` passes
