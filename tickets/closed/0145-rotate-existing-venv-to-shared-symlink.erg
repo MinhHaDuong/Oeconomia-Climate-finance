@@ -2,10 +2,12 @@
 Title: Rotate existing real .venv directories into symlinks to the shared /data env
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: Main checkout .venv rotated to a symlink to the shared /data env (~2 GB reclaimed); script approach scrapped as single-use per user
 
 --- log ---
 2026-06-18T00:00Z HDMX-coding-agent created
 
+2026-06-18T10:11Z HDMX-coding-agent closed — Main checkout .venv rotated to a symlink to the shared /data env (~2 GB reclaimed); script approach scrapped as single-use per user
 --- body ---
 ## Context
 PR #797 made the post-checkout hook symlink each new worktree's `.venv` to a
