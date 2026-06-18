@@ -1,0 +1,69 @@
+%erg 0.1
+Title: Co-locate uv env with cache on /data so worktree creation stops copying 1.8 GB
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T00:00Z HDMX-coding-agent created
+2026-06-18T00:00Z HDMX-coding-agent note root cause + fix validated empirically on doudou
+
+--- body ---
+## Context
+Creating a worktree was painfully slow and now fails outright (EnterWorktree
+times out, leaving an orphan branch). Root cause: the uv cache lives on `/data`
+(`/data/cache/uv`, a separate filesystem) while the repos live on
+`/home/haduong`. uv hardlinks wheels from its cache into each project env, but
+only when cache and env share a filesystem. Across filesystems it falls back to
+**copying** the full torch closure (~1.8 GB, ~39 000 files) into every
+worktree's `.venv`. That copy is the "temps fou", and it now exceeds the
+worktree tool's timeout — turning a slow operation into a hard failure.
+
+The separate-filesystem placement of the cache is deliberate hygiene ("big
+regenerable things go on a separate disk"). The bug is that the principle was
+applied to the cache but not the env: the `.venv` is equally big, automatic and
+regenerable, yet it landed on `/home`. Fix = apply the principle consistently —
+put the env on `/data` too, beside the cache, so hardlinks work again.
+
+Mechanism chosen: symlink `.venv -> /data/envs/venv/oeconomia` (the house
+`/data/envs` convention). Filesystem-determined, so it works for every `uv run`
+regardless of which `.env`/secrets file is loaded — important now that secrets
+are being unified under `~/.config/keys`. A shared single env per project (all
+worktrees symlink to it) is simplest; the only trade-off is concurrent dep
+changes during a raid, negligible for a stable-deps paper repo (uv serializes
+env access anyway).
+
+Validated on doudou: a package installed into an env on `/data` is hardlinked
+to `/data/cache` (nlink=2, same device); a second worktree only creates a
+25-byte symlink instead of a 1.8 GB copy.
+
+## Relevant files
+- `hooks/post-checkout` — pre-create the shared env, symlink `.venv` to it,
+  then run the existing dvc checkout.
+- `tests/test_post_checkout_hook.py` — source-inspection tests for the new logic.
+
+## Actions
+1. In `hooks/post-checkout`, before the dvc-checkout block: if `/data/envs`
+   exists and `.venv` is absent, `uv venv` the shared env if missing (a dangling
+   symlink makes `uv run` error), then `ln -s` it to `.venv`. Guard on
+   `/data/envs` so machines without the data disk fall back to a local `.venv`.
+2. Add tests asserting the shared-env path, the symlink, the pre-create order,
+   and the `/data/envs` guard.
+
+## Test
+- `tests/test_post_checkout_hook.py::test_hook_points_venv_at_shared_env_on_data`
+  (red before the hook edit, green after).
+
+## Verification
+- [ ] `.venv` in a fresh worktree is a symlink to `/data/envs/venv/oeconomia`,
+      not a 1.8 GB directory.
+- [ ] A second worktree creation does no copy (env already populated).
+- [ ] `make check-fast` passes.
+
+## Invariants
+- Behaviour on a machine without `/data` is unchanged (local `.venv`).
+- The dvc checkout step is unchanged.
+- No dependency on any `.env`/secrets file for env location.
+
+## Exit criteria
+- Worktree creation no longer copies the torch closure; `.venv` is a symlink to
+  the shared `/data` env. Tests cover the logic. `make check-fast` green.
