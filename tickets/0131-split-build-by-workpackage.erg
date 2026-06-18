@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-04-23T12:06Z claude created
+2026-06-18T15:30Z HDMX-coding-agent note Author reframe (during R&R §3.1 work, merged PR #815): model content/{figures,tables,_includes} explicitly as Phase 2 (analytics) deliverables / Phase 3 (writing) inputs, with proper Makefile dependency management. Concrete friction observed: rendering manuscript.qmd in a fresh worktree failed because content/{figures,tables} are gitignored (DVC-only) and absent until `make data`/`dvc pull`; worked around by hand-copying from the main checkout (a hack). Inconsistency to resolve: content/_includes IS git-tracked, but content/figures and content/tables are gitignored/DVC-only. Open design fork for actions 1/4: (a) git-commit the byte-reproducible figure/table deliverables (save_figure already makes PNGs byte-stable) so the clean-room writing build needs only TeX Live + Pandoc; or (b) keep DVC and have each writing .mk declare the artifacts as prerequisites restored via `make data`/`dvc pull`. Author leans toward first-class tracked deliverables with explicit deps; git-vs-DVC is the author call. See memory reference_trackchange_review_workflow for the worktree-render friction.
 
 --- body ---
 ## Context
