@@ -6,12 +6,23 @@ Blocked-by: 0155
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
+2026-06-18T12:30Z HDMX-coding-agent note v2.0.1 (vannes) de-anon merged to main per author request; main now carries author name + Gide header. MUST re-anonymize before the resubmission build (action 0 below).
 
 --- body ---
 ## Context
 v2.0.5 final step. Package and deposit the revised manuscript.
 
+**⚠️ Re-anonymize first.** The v2.0.1 Vannes variant (author name, Gide running
+header, real Zenodo/GitHub data-availability line, uncommented `author-footnote.tex`)
+was merged to main on 2026-06-18 at the author's request. Œconomia resubmission is
+double-blind, so `content/manuscript.qmd` on main is currently **un-blinded**. The
+inverse of the v2.0.1 diff must be applied before the build below. See ticket 0133
+(v2.0.1 entry) for the exact lines.
+
 ## Actions
+0. **Re-anonymize `content/manuscript.qmd`**: `author: "[Anonymous]"`, restore the
+   blind running header, re-comment `author-footnote.tex`, and restore the
+   `[repository URL removed for review]` data-availability placeholder.
 1. `make manuscript` + `make check`; `@adherence` prose ratchet green; `/review-pr-prose` clean.
 2. Version bump (manuscript-vars / config snapshot only if numbers changed — most edits are prose).
 3. Zenodo new-version (not new record) + HAL; update STATE.md links.

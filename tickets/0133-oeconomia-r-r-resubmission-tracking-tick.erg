@@ -9,6 +9,7 @@ Blocked-by: 0156
 --- log ---
 2026-06-18T06:33Z HDMX-coding-agent created
 2026-06-18T07:05Z HDMX-coding-agent note skeptical completeness audit (sonnet agent) vs decision PDF found 7 gaps where remarks sat only in this inventory, not in a child action step. Closed: R2a→0136 action 0 (indeterminacy thesis as analytic spine); R2p, R2w-substantive, R2x, R2y, R2z, R2ad→added as explicit 0141 action bullets. R2p was missing from this inventory entirely — now added below.
+2026-06-18T12:30Z HDMX-coding-agent note v2.0.1 (vannes) merged into main; single working branch from here, the "separate branch / not destined for main" framing was stale. Main now un-blinded — re-anonymize before resubmission (0153 action 0).
 
 --- body ---
 ## Context
@@ -25,7 +26,7 @@ every referee point (addressed or declined-with-reason).
 ## Version ladder (gating)
 Execution is sequenced as shippable version increments, each gated by a version
 tracker (closing a tracker unlocks the next version's work via Blocked-by):
-- **v2.0.1** ✅ Vannes communication (de-anon + render; uploaded). Separate branch.
+- **v2.0.1** ✅ Vannes communication (de-anon + render; uploaded). Merged to main 2026-06-18 (was a separate branch) at author request → **main is now un-blinded**; re-anonymization before the double-blind resubmission is tracked as action 0 of 0153.
 - **v2.0.2** light & easy fixes (0140 safe subset; DAC/GNI/GEF done, PR #796).
 - **v2.0.3** prose ratchet → tracker **0154** (0147 harness, 0148 brief+polarity, 0149 initialize+triage).
 - **v2.0.4** orientation & decisions → tracker **0155** (0142 structure, 0150 economists framing, 0151 indeterminacy thesis; all needs-human, I draft options).
