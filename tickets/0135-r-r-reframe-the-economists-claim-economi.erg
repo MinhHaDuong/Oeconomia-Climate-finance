@@ -1,0 +1,30 @@
+%erg 0.1
+Title: R&R reframe the economists claim — economic rationality vs individual economists
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Reviewer 1 §1 + editor E2. The paper attributes climate-finance construction to
+"economists," but named actors (Corfee-Morlot, Jachnik, Caruso, DAC
+statisticians) are policy professionals. Table 2 venues are climate/energy
+policy journals — no AER/QJE/JPE/JEEM. Either reframe as diffusion of economic
+*rationality* (cost-benefit, efficiency, market-failure) into institutional
+practice, or supply evidence of individual economists' intellectual role.
+
+## Actions
+1. Decide the framing (rationality-diffusion vs individual-economists) — author call; default to rationality-diffusion, which the corpus supports.
+2. Rewrite the intro claim (p17 "it was economists in international organisations who built the measurement instruments") accordingly.
+3. Add a paragraph addressing the economics-journal absence (Table 2) explicitly: real disciplinary composition vs source-selection effect (ties to 0136 corpus-boundary justification).
+4. Cite Golka (2024) on epistemic authority exercised through financial institutions, not solely economists (→ 0143).
+
+## Test
+- Manuscript asserts the chosen framing consistently; grep for "economists" attributions cross-checked against the framing.
+
+## Exit criteria
+- [ ] Central claim reframed and internally consistent
+- [ ] Econ-journal absence addressed in text
+- [ ] Golka (2024) cited

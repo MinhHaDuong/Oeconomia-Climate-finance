@@ -1,0 +1,29 @@
+%erg 0.1
+Title: R&R prose pass — eliminate define-by-negation, empty declaratives, formulaic closers
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Editor E1 + Reviewer 2, the most-emphasized issue: prose "defines concepts by
+what they are not, repeats high-level claims without advancing, closes
+paragraphs with broad declarative statements that remain analytically empty."
+Flagged as reading like AI-generated academic language. This undermines
+analytical rigour, not just style. Matches our own ghost-mode house rule
+(`.claude/rules/writing.md`) — now confirmed by a referee.
+
+## Actions
+1. Run `config/ai-tells.yml` auditor + the `/review-pr-prose` AI-tells panel over `content/manuscript.qmd`.
+2. Rewrite every define-by-negation ("X is not Y but Z" / "not natural categories but historical constructs") as a direct positive claim.
+3. Cut empty paragraph-closers ("The vocabulary was not descriptively neutral…"); end on a concrete point.
+4. Replace repeated high-level claims with one substantiated statement + concrete example.
+
+## Test
+- Grep ratchet: count of "not … but" constructions and listed formulaic closers must drop to near-zero; add to a prose-adherence check.
+
+## Exit criteria
+- [ ] AI-tells auditor reports no high-confidence hits in the revised manuscript
+- [ ] Each flagged sentence (R2 list) rewritten or removed; cover letter notes each

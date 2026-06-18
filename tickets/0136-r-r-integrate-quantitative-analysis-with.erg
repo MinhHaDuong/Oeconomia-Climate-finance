@@ -1,0 +1,33 @@
+%erg 0.1
+Title: R&R integrate quantitative analysis with the historical argument and justify methods
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Editor's personal emphasis (E3/E4) + Reviewer 1 §2: the history↔quant relation
+is thin and the quantitative analysis is transparent but unjustified. Also owns
+Reviewer 2's headline point (R2a): the central claim — that the categories which
+made climate finance measurable also made it politically contestable, because
+the translation from qualitative realities into quantitative indicators is
+inherently indeterminate — is "potentially innovative" but must be substantiated
+explicitly throughout, not merely asserted.
+
+## Actions
+0. (R2a) Make the indeterminacy thesis the explicit analytic spine: state it plainly early, then substantiate it at each act with concrete evidence that the qualitative→quantitative translation was underdetermined and that this underdetermination is what opened political contestation. Pairs with the commensuration/economisation thread (0137).
+1. Frame the quant role explicitly up front: confirmatory / exploratory / generative — and state which findings are which.
+2. Resolve directionality: are the three traditions derived from Table 1 or imposed on it? State it. Mobilise Figure 2 in the §1 argument (or cut it).
+3. Add a methods justification (appendix or expanded methods note) answering: corpus construction (sources/docs/reports + boundary criteria, grey-lit inclusion, institutional-doc exclusion, econ-journal underrepresentation); why three periods + how detected; why co-citation + the 250-doc limit in §2; Louvain vs Leiden + modularity 0.68; full-text cleaning; k-means + k + robustness checks.
+4. Address the burden-sharing divergence (R1.2): §1.3 anchors Negishi 1960 but co-citation shows North 1990, DiMaggio & Powell 1983, Finnemore & Sikkink 1998 — reflect on what this means for the tradition's weight.
+5. Cross-link to the technical-report / data-paper where methods are already justified; import the strongest justifications.
+
+## Test
+- Each editor method-question maps to a sentence/section in the revised manuscript (traceability table in the cover letter).
+
+## Exit criteria
+- [ ] Quant role framed; Table 1 / Figure 2 directionality stated
+- [ ] All six method questions answered with justification
+- [ ] Burden-sharing divergence addressed

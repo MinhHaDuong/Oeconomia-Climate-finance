@@ -1,0 +1,23 @@
+%erg 0.1
+Title: R&R restructure around institutional ruptures vs chronology
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Reviewer 2 general: not convinced by the chronological structure given the short
+period; the argument is often driven by institutional ruptures / key political
+decisions rather than temporal sequence. Suggests structuring around turning
+points. This is a structural design decision — author call; may be declined with
+reason in the cover letter if the three-act periodisation is defended.
+
+## Actions
+1. Decide: keep the data-driven three-act periodisation (defensible — it is endogenous, break-detected) vs reorganise around ruptures.
+2. If keeping: make the periodisation's endogeneity explicit early so it doesn't read as imposed chronology; foreground the ruptures (2007 Copenhagen trigger, 2013) as the act boundaries.
+3. If reorganising: restructure sections around ruptures.
+
+## Exit criteria
+- [ ] Decision made and either implemented or declined-with-reason in the cover letter

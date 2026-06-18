@@ -1,0 +1,26 @@
+%erg 0.1
+Title: R&R bibliography additions Golka Escobar Mitchell King-Levine Aghion-Bolton
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+--- body ---
+## Context
+New references requested by the referees. QUICK to add as verified bib entries;
+integration into prose lives in the content tickets (0135/0139/0141). Validate
+every entry (DOI/venue) before adding — do not fabricate metadata.
+
+## Actions — add to bibliography/main.bib (verified)
+1. Golka (2024), "Epistemic Gerrymandering: ESG, Impact Investing, and the Financial Governance of Sustainability," Review of International Political Economy, 31:6, 1894–1918. (R1 §1)
+2. Escobar — critical scholarship on development aid. (R2)
+3. Mitchell, Timothy — on development/economy as object. (R2)
+4. King & Levine (1993) — finance-development nexus. (R1 add'l)
+5. Aghion & Bolton — finance-development. (R1 add'l)
+
+## Test
+- `related-work-note-validate`-style DOI re-resolution on each new entry.
+
+## Exit criteria
+- [ ] Each entry added with a resolving DOI/URL and used by at least one content ticket

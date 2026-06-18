@@ -1,0 +1,82 @@
+%erg 0.1
+Title: Oeconomia R&R — resubmission tracking ticket
+Created: 2026-06-18
+Author: HDMX-coding-agent
+Blocked-by: 0134
+Blocked-by: 0135
+Blocked-by: 0136
+Blocked-by: 0137
+Blocked-by: 0138
+Blocked-by: 0139
+Blocked-by: 0140
+Blocked-by: 0141
+Blocked-by: 0142
+Blocked-by: 0143
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+2026-06-18T07:05Z HDMX-coding-agent note skeptical completeness audit (sonnet agent) vs decision PDF found 7 gaps where remarks sat only in this inventory, not in a child action step. Closed: R2a→0136 action 0 (indeterminacy thesis as analytic spine); R2p, R2w-substantive, R2x, R2y, R2z, R2ad→added as explicit 0141 action bullets. R2p was missing from this inventory entirely — now added below.
+
+--- body ---
+## Context
+Œconomia (Delcey, managing ed.) returned the manuscript "History of climate
+finance as an economic object" with a **Reject in current form / Revise &
+Resubmit (major)** decision on 2026-05-24. Two referee reports + editor letter.
+Source PDF: `rewrite for Economia/20260524135711_[Œconomia] Editor Decision on on your submission.pdf`.
+Recommendations: R1 "Resubmit for Review", R2 "Revisions Required".
+
+This is a **tracking ticket** — stays open until every child below is closed,
+then a final integration pass verifies the resubmission cover letter answers
+every referee point (addressed or declined-with-reason).
+
+## Child tickets (workstreams)
+- [ ] 0134 — prose pass: define-by-negation, empty declaratives, formulaic closers (editor E1 + R2 prose). **The single most-emphasized issue.**
+- [ ] 0135 — reframe the "economists" claim (R1 §1, editor E2)
+- [ ] 0136 — integrate quant with history + justify all methods (editor E4/E5, R1 §2)
+- [ ] 0137 — make commensuration/economisation the structuring thread (R1 §3)
+- [ ] 0138 — add loss-and-damage / insurance logic (R1 §4)
+- [ ] 0139 — situate in the finance-development nexus (R1 add'l question)
+- [ ] 0140 — define terms at first use, reduce jargon (R2 linear) — **quick**
+- [ ] 0141 — concretize actors/sites/mechanisms (R2 linear concreteness)
+- [ ] 0142 — restructure around ruptures vs chronology (R2 general) — design decision
+- [ ] 0143 — bibliography additions (Golka, Escobar, Mitchell, King-Levine, Aghion-Bolton) — **quick**
+
+## Complete remark inventory (nothing lost)
+
+### Editor (Delcey)
+- E1. Prose: "sentences define concepts by what they are not, repeat high-level claims without advancing, close paragraphs with empty declaratives." Substantive, not stylistic. → 0134
+- E2. Clarify "economic thought" in the intro (R1's refs help); Œconomia values grey-literature knowledge production. → 0135
+- E3. History↔quant relationship "particularly thin"; quant "falls well below field standards", transparent but unjustified. Method questions → 0136:
+  - corpus construction (why these sources/docs/reports)
+  - why three periods, how determined
+  - why co-citation, why 250 docs in §2
+  - Louvain vs Leiden, why modularity 0.68
+  - full-text cleaning procedure
+  - why k-means, why k clusters, robustness checks
+- E4. Logical role of quant never framed (confirmatory/exploratory/generative); are the 3 traditions derived from Table 1 or the reverse; Figure 2 never mobilised in §1. → 0136
+
+### Reviewer 1 (Resubmit for Review)
+- R1.1 "economists" under-specified: named figures (Corfee-Morlot, Jachnik, Caruso, DAC statisticians) are policy professionals, not academic economists. Table 2 venues are Climate Policy/Climatic Change/Energy Economics — no AER/QJE/JPE/JEEM. Reframe as diffusion of economic *rationality*, or add evidence on economists' intellectual role; address the econ-journal absence explicitly. Cite Golka (2024). → 0135, 0143
+- R1.2 Computational analysis weakly connected, large footprint / low returns; burden-sharing divergence (§1.3 anchors Negishi 1960, but co-citation shows North 1990, DiMaggio & Powell 1983, Finnemore & Sikkink 1998). → 0136
+- R1.3 Commensuration/economisation distinction (the paper's strength) used once then dropped; should structure the whole analysis. → 0137
+- R1.4 Loss & damage / insurance (actuarial) logic is genuinely outside crystallisation-era categories — challenges the "disputes within established categories" thesis; + game-theoretic coalition-formation opening. → 0138
+- R1.5 Finance-development nexus (King & Levine 1993 → Aghion & Bolton → financial deepening) explains "mobilisation/leverage/crowding-in"; situate "blended finance"/"de-risking"; analyse climate finance's disconnection from these debates. → 0139, 0143
+- R1.other: p3 models-vs-accounting-infrastructure opposition (really IAMs vs DAC measurement) needs clarifying → 0141; p3 "longer trajectory of climate economics" intention unclear → 0141; justify corpus boundaries (grey-lit inclusion, institutional-doc exclusion; econ-journal underrepresentation: real or selection effect?) → 0136; $100bn "not derived from any economic model" document more precisely → 0141.
+
+### Reviewer 2 (Revisions Required)
+- R2.general: substantiate the central claim (categories made it measurable AND contestable via indeterminate translation) throughout → 0134/0136; more analytical concreteness (sites, actors, instruments, markets/reporting) → 0141; not convinced by chronological structure — restructure around ruptures → 0142; prose (same as E1) → 0134.
+- R2.linear → 0140 (define) / 0141 (concretize):
+  - define Rio markers at first mention; reduce jargon p7 (concessional/non-concessional, grant element, face value vs subsidy content); define DAC at first occurrence (p7, defined p13); GNI target; GEF grants; "Barnesian form"; Bali Action Plan (+ what changed Article 4.3 → 1/CP.13). → 0140
+  - Development-economics section: how did economic reasoning translate into negotiations? which actors/institutions/mechanisms? name the OECD development economists. → 0141
+  - replace abstract formulations ("These were not natural categories but historical constructs"; "The vocabulary was not descriptively neutral…") with direct claims. → 0134
+  - connect Desrosières quote (p7) to the empirical case; Desrosières/Porter may not be the best refs — engage Escobar, Tim Mitchell. → 0141, 0143
+  - why is borrowing the aid reporting system problematic (consequences, who drove it)? → 0141
+  - Article 4.3 "transactional language" sentence unclear; describe "rigorous incremental-cost framework" concretely; date/explain when it was abandoned vs extended; explain the welfare-theoretic-transfers sentence (p8); p8 "the need for a broader category arose" needs evidence (R2p). → 0141
+  - CDM: how it functioned in practice; "concept later migrated" develop w/ examples; substantiate "carbon accounting not financial accounting"; who generated post-2012 demand. → 0141
+  - p12 "political legitimacy" introduced suddenly (why/for whom); UNFCCC-2007 + Stern → "new economic object" claim too strong; "required not just models but accounting infrastructure" too abstract; Copenhagen context + why $100bn (and the "$100bn anecdotal vs US defense $1.5T" provocation); how climate finance became politically binding (mechanisms); unpack measurement-apparatus/performativity concretely; performativity "declarative not explanatory". → 0136/0141
+  - p13 Rio markers role/functioning (reporting context, by whom, purpose); UNFCCC reporting (to whom/by whom/purpose); competing donor vs recipient measurement regimes explicit; §2.3 more examples/sources; p15 OECD expert groups "set terms of debate" (when/where/who/methods/debates); accountability-vocabulary crystallisation examples; p16 UN Advisory Group composition (finance ministers, economists, central bankers, no climate scientists) — does it matter? → 0141
+
+## Exit criteria
+- [ ] All child tickets 0134–0143 closed
+- [ ] Cover letter drafted answering every referee point (addressed / declined-with-reason)
+- [ ] `make manuscript` renders clean; `make check` passes

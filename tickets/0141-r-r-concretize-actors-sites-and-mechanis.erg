@@ -1,0 +1,34 @@
+%erg 0.1
+Title: R&R concretize actors sites and mechanisms across flagged passages
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Reviewer 2 (general + linear) + Reviewer 1 other comments: replace abstract /
+declarative passages with concrete actors, sites, instruments, dates, and
+consequences.
+
+## Actions (passage-level, R2 list)
+- Development-economics section: how economic reasoning entered negotiations; name actors/institutions/mechanisms; name the OECD development economists.
+- Clarify: models-vs-accounting-infrastructure opposition (really IAMs vs DAC measurement, p3); "longer trajectory of climate economics" intention (p3).
+- Why borrowing the aid reporting system is problematic (consequences + who drove it).
+- Article 4.3 "transactional language" sentence; "rigorous incremental-cost framework" (concrete); when/why it was abandoned vs extended; welfare-theoretic-transfers sentence (p8).
+- p8 "the need for a broader category arose" — provide evidence/examples (R2p).
+- Bali Action Plan: beyond the gloss in 0140, explain what changed institutionally/politically between Article 4.3 and Decision 1/CP.13, and what triggered the shift (R2w substantive).
+- CDM functioning; "concept later migrated" (examples); "carbon accounting not financial accounting" (substantiate); who generated post-2012 demand.
+- p12 "political legitimacy" introduced suddenly — say why it becomes a concern at this stage and for whom (R2x).
+- UNFCCC-2007 + Stern Review "created the conditions for a new kind of economic object" — claim too strong as stated; demonstrate carefully or soften (R2y).
+- "an economic object… that required not just models but accounting infrastructure" (p12) — too abstract; specify concretely (R2z; cf. R1j models-vs-infrastructure at p3).
+- How climate finance became politically binding — name the institutional/legal mechanisms (R2ad).
+- $100bn provenance ("not derived from any economic model") documented precisely; Copenhagen context; the "$100bn anecdotal vs US defense $1.5T" provocation — address scale.
+- Rio markers role/functioning (reporting context, by whom, purpose); UNFCCC reporting (to whom/by whom/purpose); donor vs recipient competing measurement regimes; OECD expert groups "set terms of debate" (when/where/who/methods/debates); accountability-vocabulary crystallisation examples; §2.3 more sources.
+- Performativity argument: make explanatory not declarative; unpack apparatus/methodologies/consequences (p12).
+- p16 UN Advisory Group composition (finance ministers, economists, central bankers, no climate scientists) — reflect on whether it matters.
+- Connect the Desrosières quote (p7) to the empirical case.
+
+## Exit criteria
+- [ ] Each flagged passage revised with concrete actors/dates/mechanisms; tracked in the cover-letter traceability table

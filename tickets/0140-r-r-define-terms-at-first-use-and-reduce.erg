@@ -1,0 +1,26 @@
+%erg 0.1
+Title: R&R define terms at first use and reduce jargon
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+2026-06-18T06:45Z HDMX-coding-agent note expanded acronyms at first use: DAC, GNI, GEF (safe factual edits). Substantive jargon defs (Rio markers function, concessional/grant-element/face-value, Barnesian form, CDM in practice) left for the author per editor's human-engagement mandate.
+
+--- body ---
+## Context
+Reviewer 2 linear comments: jargon and acronyms used before definition. QUICK,
+low-risk, mechanical — a good first deliverable. Write definitions concretely
+(avoid new AI-tells per 0134).
+
+## Actions — define at first occurrence
+1. Rio markers (currently partially defined p8; first use earlier) — define at first mention.
+2. DAC (Development Assistance Committee) — defined p13, used from p7; move definition to first use.
+3. Concessional vs non-concessional flows, "grant element" (>=25%), face value vs subsidy content (p7) — explain concretely.
+4. GNI target; GEF grants; CDM (how it works in practice, brief); Bali Action Plan; "Barnesian form" — define/gloss at first mention.
+
+## Test
+- Source-inspection check: each term's first textual occurrence is within N words of its definition (grep-based).
+
+## Exit criteria
+- [ ] Every term above defined at first use; no forward-reference definitions remain
