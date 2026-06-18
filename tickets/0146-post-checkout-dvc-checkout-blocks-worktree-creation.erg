@@ -2,11 +2,13 @@
 Title: post-checkout dvc checkout copies 1.7 GB into every worktree, timing out creation
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: Hook no longer eager-checkouts DVC; 'make data' on demand; cache.type=symlink on doudou
 
 --- log ---
 2026-06-18T00:00Z HDMX-coding-agent created
 2026-06-18T00:00Z HDMX-coding-agent note unmasked by #797 (venv copy fixed; dvc checkout now the bottleneck)
 
+2026-06-18T09:02Z HDMX-coding-agent closed — Hook no longer eager-checkouts DVC; 'make data' on demand; cache.type=symlink on doudou
 --- body ---
 ## Context
 After PR #797 fixed the per-worktree venv copy, EnterWorktree still fails

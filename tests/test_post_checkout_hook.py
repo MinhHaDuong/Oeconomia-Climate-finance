@@ -1,7 +1,9 @@
 """Tests for worktree setup: post-checkout hook and .worktreeinclude.
 
 .worktreeinclude auto-copies .env and .dvc/config.local into worktrees
-created by EnterWorktree. The post-checkout hook handles DVC data only.
+created by EnterWorktree. The post-checkout hook only co-locates the uv
+environment; DVC data is populated on demand via `make data`, never
+eagerly at checkout time.
 """
 
 from pathlib import Path
@@ -9,6 +11,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 HOOK = REPO / "hooks" / "post-checkout"
 WORKTREEINCLUDE = REPO / ".worktreeinclude"
+MAKEFILE = REPO / "Makefile"
 
 
 def test_worktreeinclude_copies_env():
@@ -23,10 +26,21 @@ def test_worktreeinclude_copies_dvc_config():
     assert ".dvc/config.local" in contents
 
 
-def test_hook_runs_dvc_checkout():
-    """post-checkout hook must run dvc checkout for data population."""
+def test_hook_does_not_eagerly_checkout_data():
+    """The hook must NOT run dvc checkout: that copied ~1.7 GB of DVC data into
+    every worktree, timing out creation. Data population moved to `make data`."""
     source = HOOK.read_text()
-    assert "dvc checkout" in source
+    assert "dvc checkout" not in source
+
+
+def test_makefile_data_target_checks_out_dvc():
+    """Data is populated on demand: `make data` runs dvc checkout from the local
+    cache (no network), so a worktree fetches data only when it actually needs it."""
+    source = MAKEFILE.read_text()
+    assert "\ndata:" in source
+    # the data target's recipe runs dvc checkout
+    recipe = source.split("\ndata:", 1)[1].split("\n\n", 1)[0]
+    assert "dvc checkout" in recipe
 
 
 def test_hook_is_executable():
