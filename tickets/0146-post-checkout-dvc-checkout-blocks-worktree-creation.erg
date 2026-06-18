@@ -1,0 +1,58 @@
+%erg 0.1
+Title: post-checkout dvc checkout copies 1.7 GB into every worktree, timing out creation
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T00:00Z HDMX-coding-agent created
+2026-06-18T00:00Z HDMX-coding-agent note unmasked by #797 (venv copy fixed; dvc checkout now the bottleneck)
+
+--- body ---
+## Context
+After PR #797 fixed the per-worktree venv copy, EnterWorktree still fails
+(times out). The remaining cost is the post-checkout hook's
+`uv run ... dvc checkout`, which populates ~1.7 GB of DVC-managed data into
+**every** worktree. Before #797 this step failed silently (`2>/dev/null || true`)
+because no working venv existed; now that the venv resolves, it actually runs.
+
+Two compounding issues:
+1. **Eager population.** Most worktrees (prose, tickets, code) never touch the
+   corpus data, yet the hook checks it out unconditionally on every creation.
+2. **Copy, not link.** The DVC cache is on the same filesystem as the repo
+   (`/home`, device 52), but DVC's default link type (`reflink,copy`) falls back
+   to copying on ext4 (no reflink). So checkout copies 1.7 GB instead of linking.
+
+This is the same anti-pattern #797 removed for the venv, now for data.
+
+## Relevant files
+- `hooks/post-checkout` — the unconditional `dvc checkout` block.
+- `.dvc/config`, `.dvc/config.local` — cache dir and (absent) `cache.type`.
+
+## Actions
+1. Make `dvc checkout` opt-in in the hook: skip by default, run only when the
+   worktree needs data (e.g. `WORKTREE_NEEDS_DATA=1`, or a marker file). New
+   worktrees then create instantly.
+2. Set DVC `cache.type = symlink` (or `hardlink` with `cache.protected = true`)
+   so that when checkout does run, it links from the same-filesystem cache
+   instead of copying. Verify read-only corpus access still works through the
+   loaders.
+
+## Test
+- Hook source-inspection: `dvc checkout` is guarded, not unconditional.
+- Integration: creating a worktree without the data flag performs no 1.7 GB
+  copy (data dir stays empty / linked, creation is fast).
+
+## Verification
+- [ ] EnterWorktree completes in seconds without the data flag.
+- [ ] With the flag (or on demand), data is populated via links, not copies.
+- [ ] `make` analysis targets still read the corpus correctly.
+
+## Invariants
+- Phase separation: a writing-side build must still work from handoff artifacts
+  alone; this change must not make analysis silently run on missing data —
+  fail loud if data is required but absent.
+- Per-machine: padme uses an ssh DVC remote; confirm link type there too.
+
+## Exit criteria
+- Worktree creation no longer blocks on a 1.7 GB dvc checkout; data is populated
+  on demand and via links rather than copies.

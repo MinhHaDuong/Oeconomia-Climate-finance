@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Rotate existing real .venv directories into symlinks to the shared /data env
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T00:00Z HDMX-coding-agent created
+
+--- body ---
+## Context
+PR #797 made the post-checkout hook symlink each new worktree's `.venv` to a
+shared env on `/data` (`/data/envs/venv/oeconomia`), so new worktrees no longer
+copy the ~1.8 GB torch closure. But pre-existing real `.venv` directories were
+not touched: the main checkout still carries a ~2 GB `.venv` on `/home`, and
+stale worktrees may too. They waste `/home` space and don't share the env.
+
+Rotate them into symlinks to the shared env — same end state the hook now
+produces for fresh worktrees.
+
+## Relevant files
+- `scripts/` — a small idempotent rotation script (new), e.g. `rotate-venv-to-shared.sh`.
+- The main checkout `.venv` (~2 GB) and any worktree `.venv` that is a real directory.
+
+## Actions
+1. Add an idempotent script that, for a given checkout (default: cwd) and when
+   `/data/envs/venv/oeconomia` exists: if `.venv` is a real directory (not a
+   symlink), remove it and `ln -sfn` the shared env in its place. Skip if `.venv`
+   is already a symlink or absent. Refuse if a process is using the venv (best
+   effort: check `lsof` / skip the running session's worktree).
+2. Run it once on doudou for the main checkout to reclaim the ~2 GB.
+
+## Test
+- `tests/` source-inspection or dry-run: running the script twice is a no-op the
+  second time (idempotent); a real `.venv` dir becomes a symlink; an existing
+  symlink is left intact.
+
+## Verification
+- [ ] Main checkout `.venv` is a symlink to `/data/envs/venv/oeconomia`.
+- [ ] `/home` space reclaimed (~2 GB).
+- [ ] Re-running the script changes nothing.
+
+## Invariants
+- Never delete a `.venv` that a running process holds open.
+- Per-machine: on padme, confirm `/data` disk speed first (it may be a slower
+  disk than the repo's; see PR #797 discussion).
+
+## Exit criteria
+- Existing real `.venv` directories on doudou are symlinks to the shared env;
+  the rotation script is idempotent and tested.
