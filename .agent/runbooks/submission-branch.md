@@ -10,6 +10,15 @@ freezes the submitted state and accumulates revision history. Main
 continues to evolve; the submission branch cherry-picks only what's
 relevant to the paper under review.
 
+**Source vs records.** The branch freezes the manuscript *source* (qmd, pinned
+vars, reference data) and its revision history — that is git's job. Submission
+*records* (cover/decision letters, frozen PDFs, deposit archives, reviewer
+reports, response letters) live **outside the repo**, untracked, in
+`papiers/<state>/<track>/` — `<state>` ∈ {actif, sent, published}, `<track>` the
+venue-named record dir (e.g. `papiers/actif/Oeconomia_Inventing_Climate_Finance/`).
+A lifecycle transition is a plain `mv` between `papiers/{actif,sent,published}/`.
+The release journal stays in the repo at `docs/release-journal.md`.
+
 ## Branch naming
 
 `submission/{journal}-{document}` — e.g., `submission/oeconomia-manuscript`,
@@ -35,18 +44,20 @@ Tag the submission point:
 git tag v{N}.0-{journal}-submitted
 ```
 
-Add submission artifacts to `release/`:
+Place submission records in `papiers/<state>/<track>/` (outside the repo — not git-tracked):
 
 - Cover letter
 - AI disclosure statement
 - Any journal-specific files (anonymized PDF, figures, metadata)
-- Record in `release/release-journal.md`
 
-Commit and push:
+Record the submission in `docs/release-journal.md` (tracked).
+
+Commit the source freeze on the branch and push (records are not committed —
+they live in untracked `papiers/`):
 
 ```bash
-git add release/
-git commit -m "release: submit {document} to {journal}"
+git add content/{document}-vars.yml config/ docs/release-journal.md
+git commit -m "submit {document} to {journal} (source freeze)"
 git push -u origin submission/{journal}-{document}
 ```
 
@@ -84,7 +95,7 @@ git checkout submission/{journal}-{document}
 git commit -m "errata: {description}"
 ```
 
-Add errata materials to `release/YYYY-MM-DD {journal} errata/`.
+Add errata materials to `papiers/<state>/<track>/YYYY-MM-DD {journal} errata/`.
 Contact the journal editor if needed.
 
 ### 4. Revision
@@ -95,8 +106,8 @@ When reviewer reports arrive:
 git checkout submission/{journal}-{document}
 ```
 
-1. Add reviewer reports to `release/YYYY-MM-DD {journal} revision/`
-2. Create a response document (`release/.../response-to-reviewers.md`)
+1. Add reviewer reports to `papiers/<state>/<track>/YYYY-MM-DD {journal} revision/`
+2. Create a response document (`papiers/<state>/<track>/.../response-to-reviewers.md`)
 3. Make changes on the submission branch, one commit per reviewer point
 4. Tag the revision: `git tag v{N}.1-{journal}-revised`
 5. If main has relevant improvements, cherry-pick them:
@@ -112,7 +123,7 @@ After addressing all reviewer points:
 
 1. Rebuild the paper (e.g., `make output/content/manuscript.pdf`)
 2. Prepare a diff/track-changes document if required
-3. Add resubmission artifacts to `release/`
+3. Add resubmission artifacts to `papiers/<state>/<track>/`
 4. Commit: `release: resubmit {document} to {journal} (revision 1)`
 5. Push the branch
 
@@ -121,7 +132,7 @@ After addressing all reviewer points:
 When the paper is accepted:
 
 1. Tag: `git tag v{N}.{final}-{journal}-accepted`
-2. Add acceptance letter to `release/`
+2. Add acceptance letter to `papiers/published/<track>/` (and `mv` the track dir from `papiers/sent/` → `papiers/published/`)
 3. Merge the submission branch back to main:
    ```bash
    git checkout main
@@ -129,14 +140,14 @@ When the paper is accepted:
        submission/{journal}-{document}
    ```
    This brings revision improvements back to main.
-4. Update `release/release-journal.md` with acceptance record
+4. Update `docs/release-journal.md` with acceptance record
 5. Update Zenodo deposit if needed (new version)
 
 ### 7. Rejection
 
 If rejected:
 
-1. Record the decision in `release/release-journal.md`
+1. Record the decision in `docs/release-journal.md`
 2. Decide: resubmit elsewhere (sprout a new submission branch from the
    current one) or abandon (leave the branch as historical record)
 3. Cherry-pick any improvements worth keeping back to main

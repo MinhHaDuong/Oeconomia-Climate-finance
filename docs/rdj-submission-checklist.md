@@ -18,9 +18,9 @@
 - [x] Pipeline source code on GitHub (MIT license)
 
 ## Cover letter
-- [x] Cover letter sent: `release/2026-03-26 RDJ4HSS/CoverLetter.txt`
+- [x] Cover letter sent: `papiers/sent/RDJ4HSS_Curated_Corpus_Climate_Finance/2026-03-26 RDJ4HSS/CoverLetter.txt`
 - [x] Citation count in as-sent letter: 929,014 (v1.0 number; actual v1.1 is 968,871)
-- [x] As-sent copy: `release/2026-03-26 RDJ4HSS/CoverLetter.txt`
+- [x] As-sent copy: `papiers/sent/RDJ4HSS_Curated_Corpus_Climate_Finance/2026-03-26 RDJ4HSS/CoverLetter.txt`
 
 ## Reproducibility
 - [x] Analysis archive builds: `make archive-analysis`
@@ -38,5 +38,5 @@
 
 ## Done
 - [x] DMP updated with v1.1 numbers (`docs/data-management-plan.md`)
-- [x] release/release-journal.md entry for RDJ4HSS
+- [x] docs/release-journal.md entry for RDJ4HSS
 - [x] ESHET-HES slides outline (`docs/eshet-hes-slides-outline.md`)

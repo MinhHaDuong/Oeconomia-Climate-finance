@@ -78,8 +78,8 @@ GROBID-parsed refs matched against refined_works.csv using rapidfuzz token_sort_
 
 **Status**: Under review (peer reviewers + data specialists).
 
-**Cover letter**: `release/2026-03-26 RDJ4HSS/CoverLetter.txt`
-**Checklist**: `release/rdj-submission-checklist.md`
+**Cover letter**: `papiers/sent/RDJ4HSS_Curated_Corpus_Climate_Finance/2026-03-26 RDJ4HSS/CoverLetter.txt`
+**Checklist**: `docs/rdj-submission-checklist.md`
 **Submission branch**: `submission/rdj-data-paper`
 **Git tag**: `v1.1-rdj-submitted`
 
@@ -100,8 +100,8 @@ GROBID-parsed refs matched against refined_works.csv using rapidfuzz token_sort_
 **Uploaded**:
 - Anonymized manuscript PDF (shows [Anonymous], [repository URL removed for review])
 - fig_bars.png and fig_composition.png (separate files, >=1500px, 300 dpi)
-- Cover letter (see `release/2026-03-18 Oeconomia/cover letter.txt`)
-- AI disclosure statement (see `release/2026-03-18 Oeconomia/Use of AI statement.txt`)
+- Cover letter (see `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/cover letter.txt`)
+- AI disclosure statement (see `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/Use of AI statement.txt`)
 - Metadata: English + French abstracts, English + French keywords, JEL codes B20/Q54/F35/Q56
 
 **Zenodo deposit**: https://doi.org/10.5281/zenodo.19097045
@@ -126,7 +126,7 @@ GROBID-parsed refs matched against refined_works.csv using rapidfuzz token_sort_
 
 Francesco Sergi (managing editor) replied: paper not selected for the special issue "History of Climate Economics" (~50 submissions received), but encouraged to submit as Varia contribution "at your earliest convenience."
 
-Full decision letter: `release/2026-01-14 Special Issue on Climate Economics/20260216 decision.txt`
+Full decision letter: `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-01-14 Special Issue on Climate Economics/20260216 decision.txt`
 
 Key quote: "considering the quality of your proposal [...] and its relevance with respect to the general scope of Oeconomia, we encourage you to consider submitting your paper to our journal, independently from the special issue, as a 'Varia' contribution."
 
@@ -136,7 +136,7 @@ Key quote: "considering the quality of your proposal [...] and its relevance wit
 
 Submitted extended abstract "History of climate finance as an economic object: accounting categories, controversies, and economists as policy experts" to Oeconomia's special issue "History of Climate Economics."
 
-Full text: `release/2026-01-14 Special Issue on Climate Economics/extended abstract.md`
+Full text: `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-01-14 Special Issue on Climate Economics/extended abstract.md`
 
 ---
 
@@ -144,7 +144,7 @@ Full text: `release/2026-01-14 Special Issue on Climate Economics/extended abstr
 
 Initial guidance from editor on special issue scope and requirements.
 
-See: `release/2026-01-14 Special Issue on Climate Economics/2025-11-26 email guidance editor.txt`
+See: `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-01-14 Special Issue on Climate Economics/2025-11-26 email guidance editor.txt`
 
 ---
 
@@ -153,7 +153,7 @@ See: `release/2026-01-14 Special Issue on Climate Economics/2025-11-26 email gui
 The special issue call "History of Climate Economics" was the initial target. After the abstract was not selected for the special issue but received encouragement from the managing editor, the strategy shifted to submitting the full manuscript as a Varia contribution. The ESHET-HES conference (Nice, May 2026) where the abstract was accepted provides a parallel venue.
 
 **Cover letter** (as sent):
-See `release/2026-03-18 Oeconomia/cover letter.txt`
+See `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/cover letter.txt`
 
 **AI disclosure** (as sent):
-See `release/2026-03-18 Oeconomia/Use of AI statement.txt`
+See `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/Use of AI statement.txt`

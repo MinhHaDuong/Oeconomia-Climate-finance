@@ -84,7 +84,7 @@ Quarto multi-document project (`_quarto.yml`). Four outputs share reusable fragm
 - Build with `make` (calls `quarto render` under the hood)
 - Shared fragments live in `content/_includes/` — edit there, all documents update
 - Bibliography: `content/bibliography/main.bib`, author-date style
-- Version control: old versions in `attic/`, submissions in `release/`
+- Version control: old versions in `attic/`; submission records in `papiers/<state>/<track>/` (outside the repo; engine build tooling in `build/`)
 
 ## Pipeline phases
 

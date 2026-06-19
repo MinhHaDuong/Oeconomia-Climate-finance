@@ -133,7 +133,7 @@ For the response letter, compare v1 and v2 figures:
 ```bash
 # Manual comparison (ImageMagick):
 montage v1_fig_bars.png v2_fig_bars.png -tile 2x1 -geometry +10+10 \
-    release/revision-diff/fig_bars_comparison.png
+    "papiers/<state>/<track>/revision-diff/fig_bars_comparison.png"
 
 # Or: open both in an image viewer
 ```

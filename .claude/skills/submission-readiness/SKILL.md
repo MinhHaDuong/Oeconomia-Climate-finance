@@ -32,10 +32,10 @@ Run before creating a submission branch (`/submission-branch`). Every item must 
 
 ## Submission artifacts
 
-- [ ] Cover letter in `release/`
-- [ ] AI disclosure statement in `release/`
+- [ ] Cover letter in `papiers/<state>/<track>/`
+- [ ] AI disclosure statement in `papiers/<state>/<track>/`
 - [ ] Journal-specific files prepared (anonymized PDF, figures at required resolution, metadata)
-- [ ] `release/release-journal.md` entry drafted
+- [ ] `docs/release-journal.md` entry drafted
 
 ## Prior art
 
@@ -43,4 +43,4 @@ The v1.0 Oeconomia submission established this pattern:
 - Frozen `config/v1_cluster_labels.json`, `config/v1_tab_alluvial.csv`, `config/v1_identifiers.txt.gz`
 - Pinned `content/manuscript-vars.yml`
 - Zenodo tarballs (analysis 56 MB + manuscript 683 KB), tested on two machines
-- `release/2026-03-18 Oeconomia/` with cover letter, AI disclosure, anonymized PDF
+- `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/` with cover letter, AI disclosure, anonymized PDF

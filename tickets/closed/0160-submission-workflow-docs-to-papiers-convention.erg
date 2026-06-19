@@ -2,12 +2,14 @@
 Title: Rewrite submission-workflow docs/skills for the papiers/<state>/<track> convention
 Created: 2026-06-19
 Author: HDMX-coding-agent
+Closed: implemented — submission-workflow docs rewritten to papiers/<state>/<track> convention; submission-branch kept for source freeze (records → papiers), release journal at docs/; grep-ratchet test added
 
 --- log ---
 2026-06-19T08:18Z HDMX-coding-agent created
 2026-06-19T08:18Z HDMX-coding-agent note Split out of 0159 Phase 1. The extraction PR moved engine tooling and submission records but left submission-PROCESS docs pointing at the now-gone release/ dir. Author ratified deferring these to a follow-up (they encode a workflow that the reorg changes, not just stale paths).
 
 2026-06-19T11:07Z HDMX-coding-agent note blocker 0159 closed — Blocked-by removed.
+2026-06-19T11:25Z HDMX-coding-agent closed — implemented — submission-workflow docs rewritten to papiers/<state>/<track> convention; submission-branch kept for source freeze (records → papiers), release journal at docs/; grep-ratchet test added
 --- body ---
 ## Context
 
