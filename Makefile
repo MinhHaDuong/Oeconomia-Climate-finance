@@ -143,7 +143,7 @@ PROJECT_INCLUDES := $(MANUSCRIPT_INCLUDES) $(TECHREP_INCLUDES) \
 		$(DATAPAPER_INCLUDES) $(MULTILAYER_INCLUDES) $(ZOO_INCLUDES)
 
 # ── Per-document figure sets ─────────────────────────────
-MANUSCRIPT_FIGS := content/figures/fig_bars_v1.png content/figures/fig_composition.png
+MANUSCRIPT_FIGS := content/figures/fig_bars_v1.png content/figures/fig_composition.png content/figures/fig_breaks.png
 
 DATAPAPER_FIGS  := content/figures/fig_bars.png content/figures/fig_dag.png
 
