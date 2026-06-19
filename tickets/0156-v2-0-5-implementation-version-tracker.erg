@@ -4,7 +4,6 @@ Created: 2026-06-18
 Author: HDMX-coding-agent
 Blocked-by: 0134
 Blocked-by: 0135
-Blocked-by: 0136
 Blocked-by: 0137
 Blocked-by: 0138
 Blocked-by: 0139
@@ -16,6 +15,7 @@ Blocked-by: 0153
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 
+2026-06-19T15:09Z HDMX-coding-agent note blocker 0136 closed — Blocked-by removed.
 --- body ---
 ## Context
 Version-milestone tracker for **v2.0.5 — implementation** (research → writing →
