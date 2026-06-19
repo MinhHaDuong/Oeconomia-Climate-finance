@@ -696,7 +696,7 @@ ANALYSIS_OUTPUTS := content/figures/fig_bars_v1.png \
                     content/tables/cluster_labels.json
 
 archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
-	bash release/scripts/build_analysis_archive.sh
+	bash build/build_analysis_archive.sh
 
 # ── Phase 4b — manuscript archive (packages Phase 3 outputs) ─
 # Pre-built figures + content: reviewers verify PDF renders.
@@ -704,14 +704,14 @@ archive-analysis: check-manuscript-data $(ANALYSIS_OUTPUTS)
 #   tar xzf archive.tar.gz && cd ... && make
 
 archive-manuscript: $(MANUSCRIPT_FIGS) $(MANUSCRIPT_INCLUDES) content/manuscript-vars.yml output/content/manuscript.pdf
-	bash release/scripts/build_manuscript_archive.sh
+	bash build/build_manuscript_archive.sh
 
 # ── Phase 4c — data paper archive (full pipeline) ─────────
 # Complete reproducibility package: all corpus-building scripts, DVC pipeline,
 # pool data, caches.  Reviewers can verify with:
 #   tar xzf archive.tar.gz && cd ... && uv sync && dvc repro
 archive-datapaper: check-corpus corpus-tables figures-datapaper
-	bash release/scripts/build_datapaper_archive.sh
+	bash build/build_datapaper_archive.sh
 
 # Repair shared-env console-script shebangs (ticket 0158). uv only rewrites them
 # on an actual sync, so scripts that a removed worktree left behind keep its

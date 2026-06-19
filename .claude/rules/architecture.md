@@ -58,9 +58,12 @@ The Makefile knob is `NJOBS` (in `divergence.mk`). Default `-1` uses all cores �
 - Reads Phase 2 outputs. Build artifacts go to `output/` (gitignored).
 
 **Phase 4 — Release & archives** (reproducibility packaging):
-- Scripts: `release/scripts/build_*_archive.sh`
-- Templates: `release/templates/` (Makefiles, READMEs, Dockerfiles shipped in archives)
+- Scripts: `build/build_*_archive.sh`
+- Templates: `build/templates/` (Makefiles, READMEs, Dockerfiles shipped in archives)
 - Reads Phase 2/3 outputs; produces `*.tar.gz` reproducibility archives
+
+Submission *records* (cover/decision letters, frozen PDFs, deposit archives) are
+not engine — they live outside the repo under `papiers/<state>/<track>/` (0159).
 
 ## Data location
 

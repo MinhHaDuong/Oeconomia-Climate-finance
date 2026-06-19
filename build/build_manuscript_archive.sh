@@ -8,11 +8,11 @@
 #
 # Prerequisites: figures, includes, manuscript-vars.yml, and PDF built
 # No Python needed — only Quarto + XeLaTeX.
-# Usage: bash release/scripts/build_manuscript_archive.sh
+# Usage: bash build/build_manuscript_archive.sh
 
 set -euo pipefail
 
-PROJ_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ARCHIVE=climate-finance-manuscript
 TMP="/tmp/$ARCHIVE"
 
@@ -41,11 +41,11 @@ cp content/bibliography/oeconomia.csl "$TMP/content/bibliography/"
 cp output/content/manuscript.pdf   "$TMP/expected-manuscript.pdf"
 
 # Build infrastructure (no Python needed)
-cp release/templates/Makefile.manuscript "$TMP/Makefile"
+cp build/templates/Makefile.manuscript "$TMP/Makefile"
 cp _quarto.yml                     "$TMP/"
 
 # README for reviewers
-cp release/templates/README-manuscript.md "$TMP/README.md"
+cp build/templates/README-manuscript.md "$TMP/README.md"
 
 # Record toolchain versions used to build the shipped PDF
 printf 'Quarto %s\n%s\n' "$(quarto --version)" "$(xdvipdfmx --version 2>&1 | head -1)" > "$TMP/TOOLCHAIN.txt"

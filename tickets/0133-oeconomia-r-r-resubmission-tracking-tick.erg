@@ -24,7 +24,8 @@ This is a **tracking ticket** — stays open until every child below is closed,
 then a final integration pass verifies the resubmission cover letter answers
 every referee point. Closing discipline (author-set): no remark is closed as
 non-actionable, and every close is human-in-the-loop (author sign-off per row in
-`release/2026-03-18 Oeconomia/response-traceability.md`). See 0152.
+the traceability table, now in ticket 0152's body — moved there from
+`release/` in the 0159 reorg). See 0152.
 
 ## Version ladder (gating)
 Execution is sequenced as shippable version increments, each gated by a version

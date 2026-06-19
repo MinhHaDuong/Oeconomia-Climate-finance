@@ -79,7 +79,7 @@ make archive-manuscript                 # manuscript archive (figures + Quarto)
 │   └── pool/                        #   Raw API responses (gzipped JSONL)
 ├── scripts/                          # Python analysis pipeline
 ├── docs/                             # Guidelines, journal info, book project notes
-├── release/                          # Reproducibility archives & submissions (append-only)
+├── build/                            # Reproducibility-archive build scripts + templates
 └── attic/                            # Old stuff to delete when paper is accepted
 ```
 
@@ -90,7 +90,7 @@ make archive-manuscript                 # manuscript archive (figures + Quarto)
 | Œconomia (Varia) | 2026-03-18 | [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045) | [hal-05558422v1](https://hal.science/hal-05558422v1) | `v1.0-submission` |
 | RDJ4HSS (data paper) | 2026-03-26 | [10.5281/zenodo.19236130](https://doi.org/10.5281/zenodo.19236130) | — | `v1.1-rdj-submitted` |
 
-Errata 1 (Figure 2 label fix) ready in `release/2026-03-23 Oeconomia errata/`.
+Errata 1 (Figure 2 label fix) archived in `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-23 Oeconomia errata/`.
 
 ## Project documentation
 

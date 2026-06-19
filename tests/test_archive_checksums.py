@@ -12,8 +12,8 @@ import re
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 MAKEFILE = os.path.join(PROJECT_ROOT, "Makefile")
-DOCKERFILE = os.path.join(PROJECT_ROOT, "release", "templates", "Dockerfile.analysis")
-MAKEFILE_ANALYSIS = os.path.join(PROJECT_ROOT, "release", "templates", "Makefile.analysis-manuscript")
+DOCKERFILE = os.path.join(PROJECT_ROOT, "build", "templates", "Dockerfile.analysis")
+MAKEFILE_ANALYSIS = os.path.join(PROJECT_ROOT, "build", "templates", "Makefile.analysis-manuscript")
 
 # The outputs that reviewers must be able to verify (from ticket #210).
 EXPECTED_OUTPUTS = [
@@ -67,7 +67,7 @@ class TestAnalysisOutputsVariable:
 
 
 def _read_analysis_build_script():
-    script = os.path.join(PROJECT_ROOT, "release", "scripts", "build_analysis_archive.sh")
+    script = os.path.join(PROJECT_ROOT, "build", "build_analysis_archive.sh")
     with open(script) as f:
         return f.read()
 
@@ -121,7 +121,7 @@ class TestDockerfileAnalysis:
 
     def test_archive_ships_dockerfile(self):
         """Analysis archive build script must copy Dockerfile.analysis into the archive."""
-        script = os.path.join(PROJECT_ROOT, "release", "scripts", "build_analysis_archive.sh")
+        script = os.path.join(PROJECT_ROOT, "build", "build_analysis_archive.sh")
         with open(script) as f:
             content = f.read()
         assert "Dockerfile.analysis" in content, (

@@ -7,15 +7,17 @@ Blocked-by: 0155
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 2026-06-18T15:10Z HDMX-coding-agent note scaffolded 60-row traceability skeleton at release/2026-03-18 Oeconomia/response-traceability.md (every atomic remark pre-mapped to its child ticket). Author rule: NO remark closed as non-actionable; every close is HITL (author sign-off per row). Dropped the old "decline-with-reason" action accordingly.
+2026-06-19T08:18Z HDMX-coding-agent note 0159 Phase 1: folded the 60-row traceability table into this ticket body (it is active R&R working state, not a frozen record). Deleted the standalone release/2026-03-18 Oeconomia/response-traceability.md; its home is now this ticket. referee-reports.md (frozen) archived under papiers/actif/Oeconomia_Inventing_Climate_Finance/.
 
 --- body ---
 ## Context
 v2.0.5. The binding deliverable of the resubmission: a letter answering every
-editor/R1/R2 point. Template: `release/revision-runbook.md` §4.
+editor/R1/R2 point. Template: `docs/revision-runbook.md` §4.
 
-The per-remark ledger is scaffolded at
-`release/2026-03-18 Oeconomia/response-traceability.md` — 60 atomic remarks,
-each pre-routed to its owning child ticket.
+The per-remark ledger — 60 atomic remarks, each pre-routed to its owning child
+ticket — lives inline in this ticket body (see "Traceability table" below). It
+was moved here from `release/2026-03-18 Oeconomia/response-traceability.md` in
+the 0159 reorg, since it is active R&R working state, not a frozen record.
 
 ## Closing discipline (author-set, binding)
 - **No remark is closed as non-actionable.** Every remark gets a substantive
@@ -29,4 +31,113 @@ each pre-routed to its owning child ticket.
 
 ## Exit criteria
 - [ ] Every remark in the traceability table has a response AND author Sign-off
-- [ ] Letter saved under `release/YYYY-MM-DD Oeconomia revision/`
+- [ ] Letter saved under `papiers/actif/Oeconomia_Inventing_Climate_Finance/YYYY-MM-DD Oeconomia revision/`
+
+## Traceability table
+
+Moved from `release/2026-03-18 Oeconomia/response-traceability.md` (0159 reorg).
+One row per atomic remark from the round-1 decision, pre-mapped to the child
+ticket that owns the manuscript work (per the 0133 inventory). Fill the
+right-hand columns during execution:
+
+- **Response** — the one-line gist of how the manuscript answers the remark.
+- **Where** — manuscript section / page where the change lands.
+- **Commit** — SHA (or PR #) of the diff that implements it.
+- **Sign-off** — author initials + date. A row is closed *only* when this is filled.
+
+Closing rules are the "Closing discipline" section above (binding, author-set).
+
+**Atomic remark count: 60** (the "~56" headline was an approximation; the
+precise count depends on splitting — the editor's history↔quant concern fans
+into a framing point, six method questions, and a logical-role point; Reviewer
+2's two general paragraphs carry four distinct asks). Granularity here favours
+*one row per thing the author must do*, so nothing hides inside a compound bullet.
+
+Source-of-truth for the remarks: `referee-reports.md` (verbatim transcription,
+token-complete against the decision PDF), now archived at
+`papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/referee-reports.md`.
+Routing source-of-truth: ticket 0133 inventory.
+
+| ID | Src | Remark (gist — see referee-reports.md for verbatim) | Ticket(s) | Response | Where | Commit | Sign-off |
+|----|-----|------|-----------|----------|-------|--------|----------|
+| E1  | Ed | Prose: define-by-negation, repeated high-level claims, empty declarative closers — substantive, not stylistic | 0134 | — | — | — | — |
+| E2  | Ed | Clarify "economic thought" in the intro; Œconomia values grey-literature knowledge production | 0135 | — | — | — | — |
+| E3  | Ed | History↔quant relationship "particularly thin"; quant "falls well below field standards", transparent but unjustified | 0136 | — | — | — | — |
+| E3a | Ed | Method Q: how was the corpus constructed — why these sources, documents, reports? | 0136 | — | — | — | — |
+| E3b | Ed | Method Q: why these three periods, how determined? | 0136 | — | — | — | — |
+| E3c | Ed | Method Q: why co-citation analysis, why limit to 250 documents in §2? | 0136 | — | — | — | — |
+| E3d | Ed | Method Q: why Louvain not Leiden, why modularity 0.68? | 0136 | — | — | — | — |
+| E3e | Ed | Method Q: what full-text cleaning procedure was applied? | 0136 | — | — | — | — |
+| E3f | Ed | Method Q: why k-means, why this k, are robustness checks provided? | 0136 | — | — | — | — |
+| E4  | Ed | Logical role of quant never framed (confirmatory/exploratory/generative); are the 3 traditions derived from Table 1 or the reverse; Figure 2 never mobilised in §1 | 0136 | — | — | — | — |
+| R1.1 | R1 | "Economists" claim under-specified: named figures are policy professionals, not academics; Table 2 venues are climate/energy-policy not econ journals; address the econ-journal absence; cite Golka (2024) | 0135, 0143 | — | — | — | — |
+| R1.2 | R1 | Computational analysis weakly connected, large footprint / low returns; burden-sharing divergence (paper anchors Negishi 1960, co-citation shows North 1990 / DiMaggio & Powell 1983 / Finnemore & Sikkink 1998) | 0136 | — | — | — | — |
+| R1.3 | R1 | Commensuration/economisation distinction (the paper's strength) deployed once then dropped — should structure the whole analysis | 0137 | — | — | — | — |
+| R1.4 | R1 | Loss & damage / insurance (actuarial) logic sits outside crystallisation-era categories — challenges the "disputes within established categories" thesis; + game-theoretic coalition-formation opening | 0138 | — | — | — | — |
+| R1.5 | R1 | Finance–development nexus (King & Levine 1993 → Aghion & Bolton → financial deepening) explains "mobilisation/leverage/crowding-in"; situate "blended finance"/"de-risking"; analyse the disconnection | 0139, 0143 | — | — | — | — |
+| R1.o1 | R1 | p3: "models vs accounting infrastructure" opposition is really IAMs vs DAC measurement — clarify | 0141 | — | — | — | — |
+| R1.o2 | R1 | p3: "longer trajectory of climate economics" — intention unclear, clarify | 0141 | — | — | — | — |
+| R1.o3 | R1 | Justify corpus boundaries (grey-lit inclusion, institutional-doc exclusion); is econ-journal underrepresentation real or a selection effect? | 0136 | — | — | — | — |
+| R1.o4 | R1 | $100bn "not derived from any economic model or needs assessment" — document more precisely | 0141 | — | — | — | — |
+| R2.g1 | R2 | Substantiate the central claim (categories made it measurable AND contestable via indeterminate translation) throughout | 0134, 0136 | — | — | — | — |
+| R2.g2 | R2 | More analytical concreteness: actual sites, actors, instruments, markets/reporting systems | 0141 | — | — | — | — |
+| R2.g3 | R2 | Not convinced by the chronological structure given the short period — restructure around institutional ruptures / turning points | 0142 | — | — | — | — |
+| R2.g4 | R2 | Prose is formulaic/abstract/repetitive, AI-like — revise in direct, concrete, substantively engaged prose | 0134 | — | — | — | — |
+| R2.01 | R2 | Define Rio markers at first mention (currently partial, p8) | 0140 | — | — | — | — |
+| R2.02 | R2 | Reduce jargon p7: concessional vs non-concessional flows, grant element, face value vs subsidy content | 0140 | — | — | — | — |
+| R2.03 | R2 | Development-economics section: how did economic reasoning translate into negotiations — which actors/institutions/mechanisms carried it? | 0141 | — | — | — | — |
+| R2.04 | R2 | Replace abstract "These were not natural categories but historical constructs" with a direct, concrete claim | 0134 | — | — | — | — |
+| R2.05 | R2 | Define DAC at first occurrence (used from p7, defined p13) | 0140 | — | — | — | — |
+| R2.06 | R2 | p7: connect the Desrosières quote to the empirical case concretely | 0141 | — | — | — | — |
+| R2.07 | R2 | Name the development economists involved in the OECD case | 0141 | — | — | — | — |
+| R2.08 | R2 | Define the GNI target | 0140 | — | — | — | — |
+| R2.09 | R2 | Why is borrowing the development-aid reporting system problematic? consequences, who drove it, how | 0141 | — | — | — | — |
+| R2.10 | R2 | Article 4.3 "transactional language" sentence is unclear — clarify the argument | 0141 | — | — | — | — |
+| R2.11 | R2 | Describe the "rigorous incremental-cost framework" concretely | 0141 | — | — | — | — |
+| R2.12 | R2 | p8: where evidence that "the need for a broader category arose"? | 0141 | — | — | — | — |
+| R2.13 | R2 | Date/explain when the incremental-cost framework was abandoned rather than extended, and why | 0141 | — | — | — | — |
+| R2.14 | R2 | p8: explain the welfare-theoretic-transfers-not-real-flows sentence (how/why/consequences) | 0141 | — | — | — | — |
+| R2.15 | R2 | Explain how the CDM functioned in practice | 0141 | — | — | — | — |
+| R2.16 | R2 | p9: develop "the concept later migrated…" with examples | 0141 | — | — | — | — |
+| R2.17 | R2 | Substantiate "the CDM produced a vocabulary of carbon accounting, not financial accounting" — the distinction in practice | 0141 | — | — | — | — |
+| R2.18 | R2 | p9: post-2012 CDM collapse — who generated the demand for budget-based accounting? | 0141 | — | — | — | — |
+| R2.19 | R2 | What is the Bali Action Plan? what changed institutionally/politically between Article 4.3 and Decision 1/CP.13, and what triggered it | 0140 | — | — | — | — |
+| R2.20 | R2 | p12: "political legitimacy" introduced suddenly — why at this stage, for whom? | 0141 | — | — | — | — |
+| R2.21 | R2 | UNFCCC-2007 + Stern Review "created conditions for a new economic object" claim is too strong — demonstrate more carefully | 0136 | — | — | — | — |
+| R2.22 | R2 | "an economic object that required not just models but accounting infrastructure" too abstract — specify concretely | 0141 | — | — | — | — |
+| R2.23 | R2 | Copenhagen: more context, why the $100bn commitment emerged; the amount seems anecdotal (cf. US defense $1.5T for 2027) | 0141 | — | — | — | — |
+| R2.24 | R2 | Explain what is meant by the "Barnesian form" | 0140 | — | — | — | — |
+| R2.25 | R2 | Define GEF grants | 0140 | — | — | — | — |
+| R2.26 | R2 | How did climate finance become politically binding — through which institutional/legal mechanisms? | 0141 | — | — | — | — |
+| R2.27 | R2 | p12: unpack measurement-apparatus/performativity concretely — what apparatus, methodologies, consequences | 0141 | — | — | — | — |
+| R2.28 | R2 | The performativity argument feels declarative not explanatory — clarify what analytical work it does | 0136 | — | — | — | — |
+| R2.29 | R2 | p13: Rio markers role/functioning — in what reporting context, by whom, for what purpose | 0141 | — | — | — | — |
+| R2.30 | R2 | Desrosières/Porter may not be the best refs for biased aid architectures — engage Escobar, Tim Mitchell | 0143 | — | — | — | — |
+| R2.31 | R2 | UNFCCC reporting practices: to whom are flows reported, by whom, for what institutional purpose? | 0141 | — | — | — | — |
+| R2.32 | R2 | Describe the competing donor vs recipient measurement regimes explicitly; how each side uses them | 0141 | — | — | — | — |
+| R2.33 | R2 | Concluding sentences formulaic ("The vocabulary was not descriptively neutral…") — state the point directly; what is the "particular vision"? | 0134 | — | — | — | — |
+| R2.34 | R2 | §2.3: substantially more examples and primary/secondary sources | 0141 | — | — | — | — |
+| R2.35 | R2 | p15: OECD expert groups "set the terms of debate" too vague — when/where/which experts/what methods/what debates | 0141 | — | — | — | — |
+| R2.36 | R2 | Provide concrete examples for the crystallisation of an accountability vocabulary | 0141 | — | — | — | — |
+| R2.37 | R2 | p16: UN Advisory Group composition (finance ministers, economists, central bankers, no climate scientists) — does it matter for the argument? | 0141 | — | — | — | — |
+
+### Per-ticket coverage tally
+
+How many remarks each child ticket owns (a remark routed to two tickets counts in both):
+
+| Ticket | Owns remarks | Count |
+|--------|--------------|-------|
+| 0134 (prose) | E1, R2.g1, R2.g4, R2.04, R2.33 | 5 |
+| 0135 (economists framing) | E2, R1.1 | 2 |
+| 0136 (quant integration + methods) | E3, E3a–f, E4, R1.2, R1.o3, R2.g1, R2.21, R2.28 | 13 |
+| 0137 (commensuration/economisation) | R1.3 | 1 |
+| 0138 (loss & damage) | R1.4 | 1 |
+| 0139 (finance–development nexus) | R1.5 | 1 |
+| 0140 (define terms / jargon) | R2.01, R2.02, R2.05, R2.08, R2.19, R2.24, R2.25 | 7 |
+| 0141 (concretize actors/sites) | R1.o1, R1.o2, R1.o4, R2.g2, R2.03, R2.06, R2.07, R2.09–R2.18, R2.20, R2.22, R2.23, R2.26, R2.27, R2.29, R2.31, R2.32, R2.34, R2.35, R2.36, R2.37 | 29 |
+| 0142 (restructure) | R2.g3 | 1 |
+| 0143 (bibliography) | R1.1, R1.5, R2.30 | 3 |
+
+Every child ticket 0134–0143 owns at least one remark, and every one of the 60
+atomic remarks routes to at least one ticket — the inventory is closed under
+both directions.

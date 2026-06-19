@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Rewrite submission-workflow docs/skills for the papiers/<state>/<track> convention
+Created: 2026-06-19
+Author: HDMX-coding-agent
+Blocked-by: 0159
+
+--- log ---
+2026-06-19T08:18Z HDMX-coding-agent created
+2026-06-19T08:18Z HDMX-coding-agent note Split out of 0159 Phase 1. The extraction PR moved engine tooling and submission records but left submission-PROCESS docs pointing at the now-gone release/ dir. Author ratified deferring these to a follow-up (they encode a workflow that the reorg changes, not just stale paths).
+
+--- body ---
+## Context
+
+The 0159 reorg removed `release/` from the repo: engine tooling moved to
+`build/` + `docs/`, and submission *records* moved out of the repo to
+`papiers/<state>/<track>/`. Several docs still instruct contributors to put new
+submission artifacts in `release/`, or point at record files by their old
+`release/...` path. These were deliberately left out of the extraction PR
+because rewriting them is a workflow redesign, not a mechanical path swap — the
+submission-branch *mechanism* itself is in question (see Open question below).
+
+## Relevant files
+
+Process instructions (tell contributors WHERE new submission artifacts go):
+- `.agent/runbooks/submission-branch.md` — many `release/...` instructions
+- `.agent/runbooks/submission-readiness.md` — checklist items naming `release/`
+- `.claude/skills/submission-branch/SKILL.md` — "Add to `release/`: ..."
+- `.claude/skills/submission-readiness/SKILL.md` — checklist items naming `release/`
+- `.agent/guidelines/coding-guidelines.md:87` — "submissions in `release/`"
+
+Stale record pointers in moved process logs (point at relocated record files):
+- `docs/release-journal.md` — cover-letter / decision-letter / AI-statement paths
+- `docs/rdj-submission-checklist.md` — CoverLetter / journal paths
+- `docs/revision-runbook.md:136` — `release/revision-diff/...` example path
+
+## Actions
+1. Decide the new submission convention (see Open question), then rewrite the
+   runbooks + submission skills to instruct `papiers/<state>/<track>/` instead
+   of `release/`.
+2. Update the stale record pointers in `docs/release-journal.md`,
+   `docs/rdj-submission-checklist.md`, and the `docs/revision-runbook.md`
+   example to the papiers track paths (or describe by track name if a relative
+   path would break after the Phase-2 engine move to projets/).
+3. Update `.agent/guidelines/coding-guidelines.md:87`.
+
+## Open question (resolve first)
+With records now outside the repo (untracked `papiers/`), does the
+`submission-branch` mechanism — protected branches carrying `release/` artifacts
+— still make sense? Options: (a) keep submission branches for the manuscript
+*source* freeze, records go to papiers; (b) retire submission branches entirely;
+(c) something else. This is the author's call and drives the doc rewrite.
+
+## Test
+- Grep ratchet: after the rewrite, `git grep -n "release/" -- '.agent' '.claude/skills' 'docs'`
+  returns 0 process-instruction hits (historical log entries excepted, if any
+  are intentionally preserved).
+
+## Verification
+- [ ] Runbooks + submission skills name `papiers/<state>/<track>/`, not `release/`
+- [ ] Stale record pointers in docs/ updated or described by track
+- [ ] Open question resolved and reflected in the submission-branch mechanism docs
+- [ ] `make check` green
+
+## Invariants
+- Do not rewrite dated historical log *events* into fiction — update pointers
+  only, preserve the record of what happened when.
+
+## Exit criteria
+- Submission workflow docs/skills consistent with the post-0159 layout; no
+  process instruction still points at `release/`.

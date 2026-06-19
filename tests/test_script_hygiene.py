@@ -561,7 +561,7 @@ class TestArchiveBitInvariance:
         """The analysis archive Makefile must include a 'verify' target
         that checks md5sums, so reviewers can confirm bit-invariance."""
         archive_mk = os.path.join(
-            REPO, "release", "templates", "Makefile.analysis-manuscript"
+            REPO, "build", "templates", "Makefile.analysis-manuscript"
         )
         with open(archive_mk) as f:
             content = f.read()
@@ -572,7 +572,7 @@ class TestArchiveBitInvariance:
 
     @staticmethod
     def _read_analysis_build_script():
-        script = os.path.join(REPO, "release", "scripts", "build_analysis_archive.sh")
+        script = os.path.join(REPO, "build", "build_analysis_archive.sh")
         with open(script) as f:
             return f.read()
 

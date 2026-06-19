@@ -8,11 +8,11 @@
 #   config/   — analysis parameters and frozen v1 data
 #
 # Prerequisites: make check-manuscript-data + all ANALYSIS_OUTPUTS built
-# Usage: bash release/scripts/build_analysis_archive.sh
+# Usage: bash build/build_analysis_archive.sh
 
 set -euo pipefail
 
-PROJ_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_DIR="$PROJ_ROOT/data/catalogs"
 ARCHIVE=climate-finance-analysis
 TMP="/tmp/$ARCHIVE"
@@ -60,13 +60,13 @@ cp config/analysis.yaml            "$TMP/config/"
 cp config/v1_tab_alluvial.csv      "$TMP/config/"
 cp config/v1_cluster_labels.json   "$TMP/config/"
 cp config/v1_cluster_centroids.npy "$TMP/config/"
-cp release/templates/Makefile.analysis-manuscript "$TMP/Makefile"
+cp build/templates/Makefile.analysis-manuscript "$TMP/Makefile"
 cp pyproject.toml uv.lock          "$TMP/"
 echo 'CLIMATE_FINANCE_DATA=data' > "$TMP/.env"
 
 # README + container file for reviewers
-cp release/templates/README-analysis.md  "$TMP/README.md"
-cp release/templates/Dockerfile.analysis "$TMP/Dockerfile"
+cp build/templates/README-analysis.md  "$TMP/README.md"
+cp build/templates/Dockerfile.analysis "$TMP/Dockerfile"
 
 # Expected output checksums — reviewers verify with: make && make verify
 cd "$PROJ_ROOT"

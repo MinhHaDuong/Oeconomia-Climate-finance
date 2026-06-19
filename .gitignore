@@ -5,7 +5,6 @@ attic/
 *.odt
 *.docx
 *.pdf
-!release/**/*.pdf
 
 # PDFs in bibliography (keep .bib only)
 content/bibliography/*.pdf

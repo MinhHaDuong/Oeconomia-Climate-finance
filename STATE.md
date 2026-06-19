@@ -15,13 +15,13 @@ Last updated: 2026-06-19 (housekeeping sweep)
 ## Status: TWO PAPERS SUBMITTED + ALL NULL DRIVERS WIRED
 
 ### Oeconomia (Varia) — submitted 2026-03-18
-Round-1 decision 2026-05-24: revise & resubmit (major). Reports: `release/2026-03-18 Oeconomia/referee-reports.md`. R&R in progress (tickets 0133–0143). ~8,860 words, 61 bib entries, 2 figures, 2 tables.
+Round-1 decision 2026-05-24: revise & resubmit (major). Reports: `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-18 Oeconomia/referee-reports.md`. R&R in progress (tickets 0133–0143). ~8,860 words, 61 bib entries, 2 figures, 2 tables.
 - Zenodo: https://doi.org/10.5281/zenodo.19097045
 - HAL: hal-05558422v1
 - Git tag: v1.0-submission
 - Branch: `submission/oeconomia-varia`
 - Decoupled from live corpus: frozen archive data in `config/v1_*`, pinned vars in `manuscript-vars.yml`
-- Errata 1 ready in `release/2026-03-23 Oeconomia errata/` (Figure 2 label fix)
+- Errata 1 archived in `papiers/actif/Oeconomia_Inventing_Climate_Finance/2026-03-23 Oeconomia errata/` (Figure 2 label fix)
 
 ### RDJ4HSS (data paper) — submitted 2026-03-26
 Under review (peer reviewers + data specialists). 2,495 words, 1 figure, 3 tables, 10 bib entries.

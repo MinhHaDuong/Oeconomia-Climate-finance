@@ -270,7 +270,7 @@ class TestManuscriptArchiveChecksums:
     @staticmethod
     def _read_manuscript_build_script():
         script = os.path.join(os.path.dirname(__file__), "..",
-                              "release", "scripts",
+                              "build",
                               "build_manuscript_archive.sh")
         with open(script) as f:
             return f.read()
