@@ -2,11 +2,13 @@
 Title: Reorg — relocate engine to projets/actifs/climate-finance-het, split submission records to papiers/<track>
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: reorg complete — Phases 1-4 landed (PRs #818/#819/#820 + GitHub rename to climate-finance-het); all exit criteria + blast-radius rows verified at e6cdbb4
 
 --- log ---
 2026-06-18T13:08Z HDMX-coding-agent created
 2026-06-18T13:08Z HDMX-coding-agent note Plan ratified interactively 2026-06-18 (monorepo + rename climate-finance-het; engine->projets, records->papiers). Blast radius VERIFIED against live filesystem (see body). Author executes from ~2026-06-19, by hand. Every step is reversible.
 
+2026-06-19T11:07Z HDMX-coding-agent closed — reorg complete — Phases 1-4 landed (PRs #818/#819/#820 + GitHub rename to climate-finance-het); all exit criteria + blast-radius rows verified at e6cdbb4
 --- body ---
 ## Context
 
