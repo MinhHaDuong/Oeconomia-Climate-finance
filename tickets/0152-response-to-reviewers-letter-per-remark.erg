@@ -62,22 +62,22 @@ Routing source-of-truth: ticket 0133 inventory.
 |----|-----|------|-----------|----------|-------|--------|----------|
 | E1  | Ed | Prose: define-by-negation, repeated high-level claims, empty declarative closers — substantive, not stylistic | 0134 | — | — | — | — |
 | E2  | Ed | Clarify "economic thought" in the intro; Œconomia values grey-literature knowledge production | 0135 | — | — | — | — |
-| E3  | Ed | History↔quant relationship "particularly thin"; quant "falls well below field standards", transparent but unjustified | 0136 | — | — | — | — |
-| E3a | Ed | Method Q: how was the corpus constructed — why these sources, documents, reports? | 0136 | — | — | — | — |
-| E3b | Ed | Method Q: why these three periods, how determined? | 0136 | — | — | — | — |
-| E3c | Ed | Method Q: why co-citation analysis, why limit to 250 documents in §2? | 0136 | — | — | — | — |
-| E3d | Ed | Method Q: why Louvain not Leiden, why modularity 0.68? | 0136 | — | — | — | — |
-| E3e | Ed | Method Q: what full-text cleaning procedure was applied? | 0136 | — | — | — | — |
-| E3f | Ed | Method Q: why k-means, why this k, are robustness checks provided? | 0136 | — | — | — | — |
-| E4  | Ed | Logical role of quant never framed (confirmatory/exploratory/generative); are the 3 traditions derived from Table 1 or the reverse; Figure 2 never mobilised in §1 | 0136 | — | — | — | — |
+| E3  | Ed | History↔quant relationship "particularly thin"; quant "falls well below field standards", transparent but unjustified | 0136 | Methods justification brought into the paper as a new Appendix (A.1–A.6); quant role named confirmatory | Appendix; §68 | 248c9f0 | MHD 2026-06-19 |
+| E3a | Ed | Method Q: how was the corpus constructed — why these sources, documents, reports? | 0136 | Corpus construction documented: six sources, four-tier keyword taxonomy, DOI + title/year dedup | Appendix A.2 | 248c9f0 | MHD 2026-06-19 |
+| E3b | Ed | Method Q: why these three periods, how determined? | 0136 | Endogenous JS+cosine break detection; 2007 break robust, Copenhagen 2009 dominant under censoring, no 2015 break; core shows none | Appendix A.3 | 248c9f0 | MHD 2026-06-19 |
+| E3c | Ed | Method Q: why co-citation analysis, why limit to 250 documents in §2? | 0136 | Co-citation rationale + 250-ref ceiling (load-bearing references, tractable) justified | Appendix A.4 | 248c9f0 | MHD 2026-06-19 |
+| E3d | Ed | Method Q: why Louvain not Leiden, why modularity 0.68? | 0136 | Louvain-vs-Leiden justified (negligible at ≤250 nodes); unverifiable "0.68 / 10 communities / three clusters" claim dropped from §118 + caption per author decision (state qualitative fragmentation; defer per-window modularity to companion report) | Appendix A.4; §1.5 (§118); tbl-traditions caption | b6eb935 | MHD 2026-06-19 |
+| E3e | Ed | Method Q: what full-text cleaning procedure was applied? | 0136 | Premise corrected: no full text used; embeds title+abstract+keywords after Unicode/mojibake/zero-width normalization | Appendix A.5 | 248c9f0 | MHD 2026-06-19 |
+| E3f | Ed | Method Q: why k-means, why this k, are robustness checks provided? | 0136 | k-means/k=6 justified (matched to co-citation communities; near-zero silhouette disclosed); robustness ARI 0.98; HDBSCAN/Spectral rejected with reasons | Appendix A.6 | 248c9f0 | MHD 2026-06-19 |
+| E4  | Ed | Logical role of quant never framed (confirmatory/exploratory/generative); are the 3 traditions derived from Table 1 or the reverse; Figure 2 never mobilised in §1 | 0136 | Role named confirmatory; directionality stated (history→data); Fig 2's role (§2.5/§3.5, not §1) made explicit | Appendix A.1; §68 | 248c9f0 | MHD 2026-06-19 |
 | R1.1 | R1 | "Economists" claim under-specified: named figures are policy professionals, not academics; Table 2 venues are climate/energy-policy not econ journals; address the econ-journal absence; cite Golka (2024) | 0135, 0143 | — | — | — | — |
-| R1.2 | R1 | Computational analysis weakly connected, large footprint / low returns; burden-sharing divergence (paper anchors Negishi 1960, co-citation shows North 1990 / DiMaggio & Powell 1983 / Finnemore & Sikkink 1998) | 0136 | — | — | — | — |
+| R1.2 | R1 | Computational analysis weakly connected, large footprint / low returns; burden-sharing divergence (paper anchors Negishi 1960, co-citation shows North 1990 / DiMaggio & Powell 1983 / Finnemore & Sikkink 1998) | 0136 | Divergence read as evidence about transmission, not against the tradition; footprint concern met by the Appendix justification | §1.5 (§120); Appendix | 248c9f0 | MHD 2026-06-19 |
 | R1.3 | R1 | Commensuration/economisation distinction (the paper's strength) deployed once then dropped — should structure the whole analysis | 0137 | — | — | — | — |
 | R1.4 | R1 | Loss & damage / insurance (actuarial) logic sits outside crystallisation-era categories — challenges the "disputes within established categories" thesis; + game-theoretic coalition-formation opening | 0138 | — | — | — | — |
 | R1.5 | R1 | Finance–development nexus (King & Levine 1993 → Aghion & Bolton → financial deepening) explains "mobilisation/leverage/crowding-in"; situate "blended finance"/"de-risking"; analyse the disconnection | 0139, 0143 | — | — | — | — |
 | R1.o1 | R1 | p3: "models vs accounting infrastructure" opposition is really IAMs vs DAC measurement — clarify | 0141 | — | — | — | — |
 | R1.o2 | R1 | p3: "longer trajectory of climate economics" — intention unclear, clarify | 0141 | — | — | — | — |
-| R1.o3 | R1 | Justify corpus boundaries (grey-lit inclusion, institutional-doc exclusion); is econ-journal underrepresentation real or a selection effect? | 0136 | — | — | — | — |
+| R1.o3 | R1 | Justify corpus boundaries (grey-lit inclusion, institutional-doc exclusion); is econ-journal underrepresentation real or a selection effect? | 0136 | Boundary criteria justified: grey-lit included by design; econ-journal under-representation framed as a finding, not a selection artifact | Appendix A.2 | 248c9f0 | MHD 2026-06-19 |
 | R1.o4 | R1 | $100bn "not derived from any economic model or needs assessment" — document more precisely | 0141 | — | — | — | — |
 | R2.g1 | R2 | Substantiate the central claim (categories made it measurable AND contestable via indeterminate translation) throughout | 0134, 0136 | — | — | — | — |
 | R2.g2 | R2 | More analytical concreteness: actual sites, actors, instruments, markets/reporting systems | 0141 | — | — | — | — |
@@ -103,14 +103,14 @@ Routing source-of-truth: ticket 0133 inventory.
 | R2.18 | R2 | p9: post-2012 CDM collapse — who generated the demand for budget-based accounting? | 0141 | — | — | — | — |
 | R2.19 | R2 | What is the Bali Action Plan? what changed institutionally/politically between Article 4.3 and Decision 1/CP.13, and what triggered it | 0140 | — | — | — | — |
 | R2.20 | R2 | p12: "political legitimacy" introduced suddenly — why at this stage, for whom? | 0141 | — | — | — | — |
-| R2.21 | R2 | UNFCCC-2007 + Stern Review "created conditions for a new economic object" claim is too strong — demonstrate more carefully | 0136 | — | — | — | — |
+| R2.21 | R2 | UNFCCC-2007 + Stern Review "created conditions for a new economic object" claim is too strong — demonstrate more carefully | 0136 | Overclaim dropped; narrower datable claim (Bali/Stern made countability a condition of legitimacy; object assembled later) | §2.1 (§142) | 248c9f0 | MHD 2026-06-19 |
 | R2.22 | R2 | "an economic object that required not just models but accounting infrastructure" too abstract — specify concretely | 0141 | — | — | — | — |
 | R2.23 | R2 | Copenhagen: more context, why the $100bn commitment emerged; the amount seems anecdotal (cf. US defense $1.5T for 2027) | 0141 | — | — | — | — |
 | R2.24 | R2 | Explain what is meant by the "Barnesian form" | 0140 | — | — | — | — |
 | R2.25 | R2 | Define GEF grants | 0140 | — | — | — | — |
 | R2.26 | R2 | How did climate finance become politically binding — through which institutional/legal mechanisms? | 0141 | — | — | — | — |
 | R2.27 | R2 | p12: unpack measurement-apparatus/performativity concretely — what apparatus, methodologies, consequences | 0141 | — | — | — | — |
-| R2.28 | R2 | The performativity argument feels declarative not explanatory — clarify what analytical work it does | 0136 | — | — | — | — |
+| R2.28 | R2 | The performativity argument feels declarative not explanatory — clarify what analytical work it does | 0136 | Institutional performativity made explanatory: predicts disputes land in the accounting rules; §3 confirms | §2.1 (§146) | 248c9f0 | MHD 2026-06-19 |
 | R2.29 | R2 | p13: Rio markers role/functioning — in what reporting context, by whom, for what purpose | 0141 | — | — | — | — |
 | R2.30 | R2 | Desrosières/Porter may not be the best refs for biased aid architectures — engage Escobar, Tim Mitchell | 0143 | — | — | — | — |
 | R2.31 | R2 | UNFCCC reporting practices: to whom are flows reported, by whom, for what institutional purpose? | 0141 | — | — | — | — |

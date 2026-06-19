@@ -8,13 +8,13 @@ globs: ["content/**"]
 
 Climate finance crystallized as an economic object by ~2009. Everything since has been fought within the categories established at that moment. This is intellectual history showing how economists create governable objects through quantification.
 
-## Three-act periodization (data-driven)
+## Three-act periodization (history, corpus-corroborated)
 
 - I. Before climate finance (1990–2006) — three disconnected traditions
 - II. Crystallization (2007–2014) — structural breaks at 2007 (cosine) and 2013 (JS)
 - III. The established field (2015–2025) — no further structural break
 
-The periodization is endogenous (embedding-based break detection), not imposed from COP milestones. The core subset (most-cited papers) shows no structural break at all.
+The periodization is historically grounded and *corroborated* by embedding-based break detection — not the reverse. The detection is blind to the COP calendar, so finding the act I→II break at 2007/2009 independently of the policy timeline is corroboration, not circularity. The act II→III boundary is institutional: Paris (2015) shows only a marginal Jensen–Shannon rise, not a rupture, which is what the thesis predicts (post-2015 disputes occur within crystallized categories). Don't claim the periodization is "endogenous / not imposed from COP milestones" — that overclaims and contradicts the confirmatory framing. The core subset (most-cited papers) shows no structural break at all.
 
 ## Corpus
 

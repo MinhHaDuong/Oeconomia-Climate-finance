@@ -3,12 +3,15 @@ Title: R&R integrate quantitative analysis with the historical argument and just
 Created: 2026-06-18
 Author: HDMX-coding-agent
 Blocked-by: 0155
+Closed: autoclosed — PR #823
 
 --- log ---
 2026-06-18T06:33Z HDMX-coding-agent created
 2026-06-18T08:25Z HDMX-coding-agent note Indeterminacy-thesis + quant-role decision (old action 0) extracted to 0151 (needs-human, v2.0.4). This ticket keeps methods-justification, Table1/Fig2 directionality, burden-sharing divergence. v2.0.5 (Blocked-by 0155).
 2026-06-18T14:55Z HDMX-coding-agent note New §3.1 "What climate finance is, concretely" (branch t140-define-terms) adds a worked transaction (Türkiye TPTS): grant-element arithmetic, MDB climate-finance methodology, additionality/specificity. Gives a non-corpus quantitative anchor answering the editor's "quant bolted-on / below field standards" concern, and concretely substantiates the indeterminacy thesis (the qualitative->quantitative translation — is the grid "climate"? is the loan "concessional"? — is underdetermined, which is what opens contestation). Relevant to 0151's spine. Arithmetic in footnotes.
+2026-06-19T08:40Z HDMX-coding-agent note Added Methods-justification Appendix (A.1–A.6) + body edits (commit 248c9f0). Closes exit criteria 1 (quant role confirmatory; Table1/Fig2 directionality) and 3 (burden-sharing). Exit 2 (six method Qs): E3a/E3b/E3c/E3e/E3f answered; E3d Louvain-vs-Leiden answered but the specific modularity value is OPEN — manuscript §118 + tab_traditions assert "0.68 / 10 communities / three clusters" pre-2007, which contradicts the current pipeline (cocitation-communities.md: 18 communities Q=0.18 pre-2007 → 6 at Q=0.45 full). Likely a v1-frozen-vs-current-corpus divergence; resolving it touches the frozen-v1 figure-pinning policy, so escalated to the author. Ledger 0152 rows E3,E3a-f,E4,R1.2,R1.o3,R2.21,R2.28 filled (sign-off pending).
 
+2026-06-19T15:09Z HDMX-coding-agent closed — autoclosed — PR #823
 --- body ---
 ## Context
 Editor's personal emphasis (E3/E4) + Reviewer 1 §2: the history↔quant relation
