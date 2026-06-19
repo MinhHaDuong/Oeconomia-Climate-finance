@@ -6,7 +6,7 @@
       "Bash(*quarto *)",
       "Edit(/.claude/**)",
       "WebSearch",
-      "Bash(ls \"/home/haduong/CNRS/papiers/actif/Oeconomia - Climate finance/tickets/\"*.erg)",
+      "Bash(ls \"/home/haduong/CNRS/projets/actifs/climate-finance-het/tickets/\"*.erg)",
       "Edit(*/.git/hooks/*)"
     ],
     "deny": [
@@ -20,7 +20,7 @@
     ],
     "additionalDirectories": [
       "/home/haduong/CNRS/html/src",
-      "/home/haduong/CNRS/papiers/actif/Oeconomia - Climate finance/.claude/hooks",
+      "/home/haduong/CNRS/projets/actifs/climate-finance-het/.claude/hooks",
       "/home/haduong/.claude/docs"
     ]
   },
