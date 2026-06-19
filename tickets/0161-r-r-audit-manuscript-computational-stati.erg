@@ -1,0 +1,60 @@
+%erg 0.1
+Title: R&R audit manuscript computational statistics for provenance and v1 consistency
+Created: 2026-06-19
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-19T15:23Z HDMX-coding-agent created
+
+--- body ---
+## Context
+R&R (v2.0.5). Closing 0136 (PR #823) exposed a class bug, not a one-off: the
+manuscript is pinned to v1 frozen data (`manuscript-vars.yml`, `config/v1_*`),
+but several computational statistics in the body and the new methods appendix
+were drawn from the technical-report includes, which are regenerated on the
+*current* corpus. The pre-2007 modularity "0.68" matched neither v1 (no archived
+record) nor the live pipeline (0.18→0.45) and had to be dropped. The editor's
+core E3 complaint is exactly this — quant "transparent but unjustified". Any
+cited number that a reader cannot reproduce is the worst case of that.
+
+This is a tracking-style audit, not a single edit. It is R&R implementation work
+(parent: 0156 / tracker 0133).
+
+## Relevant files
+- `content/manuscript.qmd` — §3.5 (~line 255) HHI series 0.07/0.01/0.006/0.003 and
+  venue counts 21/188/446/1600; Appendix A.4 (modularity, community counts),
+  A.5 (silhouette −0.01), A.6 (silhouette 0.025; ARI 0.59/0.98/0.06–0.22; "≈98%
+  noise"; k=6).
+- `content/_includes/clustering-comparison.md` — source of the A.6 numbers; marked
+  "AI-generated, not human-reviewed" and computed on the current corpus.
+- `content/_includes/cocitation-communities.md`, `structural-breaks.md` — A.4/A.3 sources.
+- `config/v1_*`, `manuscript-vars.yml` — the frozen v1 reference the body is pinned to.
+
+## Actions
+1. Enumerate every pipeline-derived statistic in the manuscript body + appendix
+   (one row per number: value, location, source include/script).
+2. For each, establish provenance: does it trace to an archived artifact for the
+   corpus version the manuscript ships (v1)? Or is it a current-corpus number?
+3. Resolve each mismatch by one of: (a) replace with the verifiable v1 value;
+   (b) regenerate on the pinned corpus and pin it; (c) state it qualitatively and
+   defer the exact value to the companion technical report (the A.4 pattern).
+4. Decide the standing policy: either pin every cited number to an archived v1
+   output, or re-baseline the manuscript onto the current corpus wholesale. This
+   is a HITL decision (frozen-data policy) — draft options for the author.
+
+## Test
+- An audit table (numbers × provenance × verdict) committed under `docs/` or the
+  ticket; red = any cited number with no reproducible source.
+
+## Verification
+- [ ] Every pipeline-derived number in manuscript.qmd has a documented, reproducible source
+- [ ] Mismatches resolved (replaced / regenerated / deferred)
+- [ ] `make manuscript` renders clean
+
+## Invariants
+- Don't silently change a v1-pinned number to a current-corpus value (the 0.68 trap in reverse).
+- Historical/secondary-source figures (e.g. SCF "$340–650bn", "7,500 CDM projects") are NOT in scope — only numbers our own pipeline produces.
+
+## Exit criteria
+- Audit complete; every cited computational statistic is reproducible or removed;
+  frozen-data policy decision recorded. See [[feedback_manuscript_number_provenance]] (memory).
