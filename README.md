@@ -1,4 +1,4 @@
-# Climate Finance History — Œconomia Article Project
+# Climate Finance History — a corpus-driven research programme (climate-finance-het)
 
 **Title:** Counting Climate Finance: How an Economic Object Was Made (1990–2024)
 
