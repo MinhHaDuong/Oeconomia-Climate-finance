@@ -60,6 +60,12 @@ Write in *The Economist* style: clear, direct, concrete, no filler. No AI tells.
 Internalize this — don't mechanically check a list while drafting.
 The `/review-pr-prose` panel includes a dedicated AI-tells auditor with full wordlists (`config/ai-tells.yml`).
 
+## CI test polarity rule
+
+Prose adherence tests (`tests/test_manuscript_prose.py`) pin only **negative guards** (forbidden phrasings) and **mechanical checks** (density ratchets, structural presence). They never assert that a specific *positive* phrasing appears — positive pins break on every legitimate rewrite. The asymmetry: defects are lexically stable (an overclaim reads the same in any draft), good prose is not.
+
+Positive editorial intent lives in `docs/editorial-brief.md` — one entry per standing decision (**Decision** / **Rationale** / **Ticket** / **Status**) — and is checked at review time by the `/review-pr-prose` brief auditor against each diff.
+
 ## Testing
 
 `make check-fast` before editing. `make clean` then `make all` (separate Bash calls) as integration test before PR.
