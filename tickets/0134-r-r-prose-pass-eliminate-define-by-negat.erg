@@ -2,13 +2,13 @@
 Title: R&R prose pass — eliminate define-by-negation, empty declaratives, formulaic closers
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0147
 Blocked-by: 0155
 
 --- log ---
 2026-06-18T06:33Z HDMX-coding-agent created
 2026-06-18T08:25Z HDMX-coding-agent note v2.0.5. Re-scoped: this is now the human-led prose rewrite that drives the ratchet ceilings (0147) down; the mechanical defect-guards live in the ratchet, not here. Run last in v2.0.5, after 0141 fills the concrete content. Blocked-by 0147 (guard) + 0155 (version gate).
 
+2026-06-23T07:45Z HDMX-coding-agent note blocker 0147 closed — Blocked-by removed.
 --- body ---
 ## Context
 Editor E1 + Reviewer 2, the most-emphasized issue: prose "defines concepts by

@@ -2,10 +2,12 @@
 Title: prose ratchet harness — manuscript_source substrate + negative-guard tests + ceiling files
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: harness landed: substrate + negative guards + ceiling files, all green
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 
+2026-06-23T07:45Z HDMX-coding-agent closed — harness landed: substrate + negative guards + ceiling files, all green
 --- body ---
 ## Context
 v2.0.3 infrastructure. Build the NEGATIVE half of the prose ratchet, ported from
@@ -30,6 +32,6 @@ mechanical checks; positive voice lives in the editorial brief.
 - Red first: a known-bad fixture string trips each guard. Green: the guards import the substrate and run under `pytest -m adherence`.
 
 ## Exit criteria
-- [ ] `pytest -m adherence tests/test_manuscript_prose.py` runs; every defect class has a guard
-- [ ] Ceiling files committed; lowering one is the only way to pass after a reduction
-- [ ] `adherence` marker registered
+- [x] `pytest -m adherence tests/test_manuscript_prose.py` runs; every defect class has a guard
+- [x] Ceiling files committed; lowering one is the only way to pass after a reduction
+- [x] `adherence` marker registered

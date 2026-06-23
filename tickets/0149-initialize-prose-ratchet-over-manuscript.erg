@@ -2,12 +2,12 @@
 Title: initialize prose ratchet over manuscript and triage findings
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0147
 Blocked-by: 0148
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 
+2026-06-23T07:45Z HDMX-coding-agent note blocker 0147 closed — Blocked-by removed.
 --- body ---
 ## Context
 v2.0.3. With the ratchet (0147) and brief (0148) in place, run it over the WHOLE
