@@ -2,13 +2,13 @@
 Title: v2.0.3 ratchet — version tracker
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0149
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 
 2026-06-23T07:45Z HDMX-coding-agent note blocker 0147 closed — Blocked-by removed.
 2026-06-23T08:23Z HDMX-coding-agent note blocker 0148 closed — Blocked-by removed.
+2026-06-23T08:49Z HDMX-coding-agent note blocker 0149 closed — Blocked-by removed.
 --- body ---
 ## Context
 Version-milestone tracker for **v2.0.3 — prose ratchet infrastructure**. Gate:

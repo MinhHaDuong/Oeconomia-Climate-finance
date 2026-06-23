@@ -11,11 +11,14 @@ Blocked-by: 0141
 Blocked-by: 0143
 Blocked-by: 0152
 Blocked-by: 0153
+Blocked-by: 0162
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 
 2026-06-19T15:09Z HDMX-coding-agent note blocker 0136 closed — Blocked-by removed.
+
+2026-06-23T08:50Z HDMX-coding-agent note added child 0162 (em-dash density) from 0149 inventory
 --- body ---
 ## Context
 Version-milestone tracker for **v2.0.5 — implementation** (research → writing →
@@ -26,6 +29,7 @@ verification → resubmission). Blocked by v2.0.4 (0155).
 - [ ] 0138 loss & damage · 0139 finance-development nexus · 0141 concretize actors
 - [ ] 0143 bibliography additions
 - [ ] 0134 human-led prose rewrite (ratchet-guarded; run last)
+- [ ] 0162 reduce em-dash density toward 2/paragraph (ratchet finding from 0149)
 - [ ] 0152 response-to-reviewers letter · 0153 resubmission + deposit
 
 ## Exit criteria

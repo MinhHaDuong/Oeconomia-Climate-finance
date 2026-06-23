@@ -1,0 +1,53 @@
+%erg 0.1
+Title: v2.0.5 prose finding — reduce em-dash density toward 2 per paragraph
+Created: 2026-06-23
+Author: HDMX-coding-agent
+Blocked-by: 0134
+
+--- log ---
+2026-06-23T08:50Z HDMX-coding-agent created from 0149 ratchet inventory
+
+--- body ---
+## Context
+Surfaced by the 0149 full-manuscript ratchet run (the defect inventory beyond
+the referee list). The prose ratchet (0147) is green at its seeded ceilings, but
+two density defects sit well above their AI-tells targets and need author-voice
+rewriting, not a mechanical fix:
+
+- **em dashes**: 132 total against a `max_per_paragraph: 2` target; 13 paragraphs
+  currently carry 3–4 em dashes (clustering is the AI tell, not the character).
+
+The hardcoded figure/table cross-refs (6) were the only trivial finding and were
+already fixed in 0149 (converted to `@fig-`/`@tbl-`, ceiling lowered to 0).
+Define-by-negation (`not X but Y`, 20 occurrences) is **out of scope here** — it
+is owned by 0134 (human-led prose rewrite).
+
+Run after 0134 so both passes share one ratchet-guarded edit of the manuscript.
+
+## Relevant files
+- `content/manuscript.qmd` — the prose to rewrite.
+- `tests/test_manuscript_prose.py` — `test_em_dash_global_ratchet`, `test_em_dash_paragraph_cap` (EM_DASH_PARAGRAPH_CAP currently 4).
+- `tests/data/emdash_ceiling.txt` — global ceiling (132); lower as the count drops.
+- `config/ai-tells.yml` — `density_limits.em_dashes.max_per_paragraph: 2` (the target).
+
+## Actions
+1. Diversify punctuation in the 13 over-cap paragraphs (commas, colons,
+   parentheses, sentence splits) until each carries ≤ 2 em dashes.
+2. Lower `EM_DASH_PARAGRAPH_CAP` from 4 toward 2 as the hot paragraphs clear.
+3. Lower `tests/data/emdash_ceiling.txt` to the new global count after each pass.
+
+## Test
+- `pytest -m adherence tests/test_manuscript_prose.py` stays green after every
+  ceiling reduction (the ratchet only ratchets down).
+
+## Verification
+- [ ] No paragraph exceeds 2 em dashes; `EM_DASH_PARAGRAPH_CAP == 2`.
+- [ ] `emdash_ceiling.txt` reflects the reduced global count.
+- [ ] `make manuscript` renders cleanly (cross-refs resolve).
+
+## Invariants
+- Author's voice and meaning preserved; no number or claim altered.
+- Hard-ban guards stay at zero.
+
+## Exit criteria
+- [ ] em-dash paragraph cap at 2, global ceiling reduced, ratchet suite green.
