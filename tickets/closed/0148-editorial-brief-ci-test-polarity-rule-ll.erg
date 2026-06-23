@@ -2,10 +2,12 @@
 Title: editorial brief + CI test-polarity rule + LLM-judge wiring
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: editorial brief + polarity rule + runnable LLM-judge guards landed
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 
+2026-06-23T08:23Z HDMX-coding-agent closed — editorial brief + polarity rule + runnable LLM-judge guards landed
 --- body ---
 ## Context
 v2.0.3 infrastructure. The POSITIVE half + governance. Ported from AEDIST
@@ -18,6 +20,6 @@ v2.0.3 infrastructure. The POSITIVE half + governance. Ported from AEDIST
 4. LLM-judge harness with AEDIST reduction guards: output words ≤ input, em-dash=0 in abstract, every number/claim preserved verbatim, no invented summary verdicts.
 
 ## Exit criteria
-- [ ] `docs/editorial-brief.md` exists and is consumed by `/review-pr-prose`
-- [ ] writing.md carries the polarity rule; context-budget test still green
-- [ ] LLM-judge guards documented and runnable
+- [x] `docs/editorial-brief.md` exists and is consumed by `/review-pr-prose`
+- [x] writing.md carries the polarity rule; context-budget test still green (no such test in this repo; rule kept terse)
+- [x] LLM-judge guards documented and runnable (`scripts/qa_llm_judge_guards.py`, tested)

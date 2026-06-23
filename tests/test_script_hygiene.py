@@ -1052,6 +1052,7 @@ class TestOutputFlag:
         "qa_embeddings.py",
         "qa_metadata.py",
         "qa_word_count.py",
+        "qa_llm_judge_guards.py",
         # Catalog harvesters (DVC-managed)
         "catalog_bibcnrs.py",
         "catalog_grey.py",
