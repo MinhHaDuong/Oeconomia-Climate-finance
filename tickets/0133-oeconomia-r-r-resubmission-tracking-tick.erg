@@ -2,7 +2,6 @@
 Title: Oeconomia R&R — resubmission tracking ticket
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0154
 Blocked-by: 0155
 Blocked-by: 0156
 
@@ -12,6 +11,7 @@ Blocked-by: 0156
 2026-06-18T12:30Z HDMX-coding-agent note v2.0.1 (vannes) merged into main; single working branch from here, the "separate branch / not destined for main" framing was stale. Main now un-blinded — re-anonymize before resubmission (0153 action 0).
 2026-06-18T15:40Z HDMX-coding-agent note author-set closing discipline: no remark closed as non-actionable, every close HITL (sign-off per row). Removed the stale "declined-with-reason" disposition from context + exit criteria to match 0152 and the traceability table.
 
+2026-06-23T09:09Z HDMX-coding-agent note blocker 0154 closed — Blocked-by removed.
 --- body ---
 ## Context
 Œconomia (Delcey, managing ed.) returned the manuscript "History of climate
