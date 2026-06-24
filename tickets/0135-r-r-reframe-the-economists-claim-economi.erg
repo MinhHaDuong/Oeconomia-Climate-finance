@@ -2,12 +2,12 @@
 Title: R&R reframe the economists claim — economic rationality vs individual economists
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0155
 
 --- log ---
 2026-06-18T06:33Z HDMX-coding-agent created
 2026-06-18T08:25Z HDMX-coding-agent note Framing decision (old action 1) extracted to 0150 (needs-human, v2.0.4). This ticket is execution only: propagate the chosen framing once 0150 lands. v2.0.5 (Blocked-by 0155).
 
+2026-06-24T17:44Z HDMX-coding-agent note blocker 0155 closed — Blocked-by removed.
 --- body ---
 ## Context
 Reviewer 1 §1 + editor E2. The paper attributes climate-finance construction to

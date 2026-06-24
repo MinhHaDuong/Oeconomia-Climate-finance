@@ -2,12 +2,12 @@
 Title: resubmission rebuild verify version-bump and Zenodo HAL deposit
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0155
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 2026-06-18T12:30Z HDMX-coding-agent note v2.0.1 (vannes) de-anon merged to main per author request; main now carries author name + Gide header. MUST re-anonymize before the resubmission build (action 0 below).
 
+2026-06-24T17:44Z HDMX-coding-agent note blocker 0155 closed — Blocked-by removed.
 --- body ---
 ## Context
 v2.0.5 final step. Package and deposit the revised manuscript.

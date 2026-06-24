@@ -1,0 +1,42 @@
+%erg 0.1
+Title: decision — economists vs diffusion of economic rationality framing
+Created: 2026-06-18
+Author: HDMX-coding-agent
+Label: needs-human
+Closed: author selected hybrid framing C; recorded + in editorial brief
+
+--- log ---
+2026-06-18T08:50Z HDMX-coding-agent created
+
+2026-06-23T09:09Z HDMX-coding-agent note blocker 0154 closed — Blocked-by removed.
+2026-06-24T09:00Z HDMX-coding-agent note author selected framing C (hybrid); recorded + propagated to editorial brief
+2026-06-24T17:44Z HDMX-coding-agent closed — author selected hybrid framing C; recorded + in editorial brief
+--- body ---
+## Context
+Author-only call (R1 §1, editor E2). The paper attributes climate-finance
+construction to "economists," but named actors are policy professionals and
+Table 2 shows no economics-journal venues. I draft the options; author decides.
+
+## Deliverable (I prepare)
+A one-page memo with 2-3 framings, tradeoffs, my recommendation, and the
+1-paragraph claim each implies:
+- A. Diffusion of economic *rationality* into institutional practice (recommended — corpus-supported).
+- B. Genuinely individual economists (requires new intellectual-resource evidence).
+- C. Hybrid: rationality-diffusion as spine, named economists as carriers.
+
+## Decision (2026-06-24) — C. Hybrid
+Economic *rationality* (commensuration, leverage, attribution) is the spine;
+named economist-trained officials are its carriers into institutional practice.
+The construction of climate finance is attributed to an economic mode of
+reasoning diffusing into accounting practice, not to economists as a
+journal-publishing guild. Named actors (Corfee-Morlot, OECD DAC staff) are how
+that rationality travelled — answering R1 §1 (institutional actors, no
+economics-journal venues) without surrendering the intellectual-history claim
+that the operations performed were economic work.
+
+Propagated to `docs/editorial-brief.md` →
+`economic-rationality-carried-by-economists`.
+
+## Exit criteria
+- [x] Author selects a framing; the 1-paragraph claim is recorded here
+- [x] Decision propagated to the editorial brief (0148) — gates 0135, 0139

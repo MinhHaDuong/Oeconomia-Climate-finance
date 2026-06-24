@@ -1,0 +1,25 @@
+%erg 0.1
+Title: v2.0.4 decisions — version tracker
+Created: 2026-06-18
+Author: HDMX-coding-agent
+Closed: v2.0.4 decisions milestone met; all three recorded + propagated
+
+--- log ---
+2026-06-18T08:50Z HDMX-coding-agent created
+2026-06-24T09:00Z HDMX-coding-agent note all three decisions made + propagated to brief; v2.0.4 milestone met
+2026-06-24T17:44Z HDMX-coding-agent note blocker 0150 closed — Blocked-by removed.
+2026-06-24T17:44Z HDMX-coding-agent note blocker 0151 closed — Blocked-by removed.
+2026-06-24T17:44Z HDMX-coding-agent note blocker 0142 closed — Blocked-by removed.
+2026-06-24T17:44Z HDMX-coding-agent closed — v2.0.4 decisions milestone met; all three recorded + propagated
+--- body ---
+## Context
+Version-milestone tracker for **v2.0.4 — orientation & decisions**. Blocked by
+v2.0.3 (0154). Gate: while open, v2.0.5 implementation work stays hidden.
+
+## Children
+- [x] 0142 structure decision (3-act vs ruptures) → A. keep, foreground ruptures
+- [x] 0150 economists-framing decision → C. hybrid
+- [x] 0151 indeterminacy-thesis decision → T1 + confirmatory
+
+## Exit criteria
+- [x] All three decisions recorded and propagated to `docs/editorial-brief.md`

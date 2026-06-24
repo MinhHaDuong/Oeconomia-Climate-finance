@@ -1,0 +1,40 @@
+%erg 0.1
+Title: decision — how to state the indeterminacy thesis and the quant role
+Created: 2026-06-18
+Author: HDMX-coding-agent
+Label: needs-human
+Closed: author selected T1 thesis + confirmatory role; recorded + in brief
+
+--- log ---
+2026-06-18T08:50Z HDMX-coding-agent created
+
+2026-06-23T09:09Z HDMX-coding-agent note blocker 0154 closed — Blocked-by removed.
+2026-06-24T09:00Z HDMX-coding-agent note author selected T1 thesis + confirmatory quant role; recorded + propagated to editorial brief
+2026-06-24T17:44Z HDMX-coding-agent closed — author selected T1 thesis + confirmatory role; recorded + in brief
+--- body ---
+## Context
+Author-only call (R2's headline "potentially innovative" point + editor E4). The
+central claim — categories made climate finance measurable AND contestable
+because the qualitative→quantitative translation is indeterminate — must be
+stated explicitly, and the quant's role framed (confirmatory / exploratory /
+generative).
+
+## Deliverable (I prepare)
+A memo with 2-3 ways to phrase the thesis + the role-framing options, tradeoffs,
+recommendation, and the 1-paragraph statement each implies.
+
+## Decision (2026-06-24) — T1 thesis + confirmatory quant role
+Thesis (headline): the qualitative→quantitative translation is never fully
+determinate; that indeterminacy made climate finance simultaneously *measurable*
+(a number exists) and *contestable* (the number is always arguable) — a
+political resource every side exploited, not a deficiency to be repaired. The
+claim already lives in §2; promote it to thesis status up front.
+
+Quant role: *confirmatory* — the computation corroborates a history-first
+reading. Never framed as exploratory or generative (no-oversell norm).
+
+Propagated to `docs/editorial-brief.md` → `indeterminacy-as-political-resource`.
+
+## Exit criteria
+- [x] Author selects the thesis statement + quant role; recorded here
+- [x] Propagated to the editorial brief (0148) — gates 0136, 0137, 0134

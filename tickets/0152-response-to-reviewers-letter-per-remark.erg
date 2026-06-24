@@ -2,13 +2,13 @@
 Title: response to reviewers letter + per-remark traceability table
 Created: 2026-06-18
 Author: HDMX-coding-agent
-Blocked-by: 0155
 
 --- log ---
 2026-06-18T08:50Z HDMX-coding-agent created
 2026-06-18T15:10Z HDMX-coding-agent note scaffolded 60-row traceability skeleton at release/2026-03-18 Oeconomia/response-traceability.md (every atomic remark pre-mapped to its child ticket). Author rule: NO remark closed as non-actionable; every close is HITL (author sign-off per row). Dropped the old "decline-with-reason" action accordingly.
 2026-06-19T08:18Z HDMX-coding-agent note 0159 Phase 1: folded the 60-row traceability table into this ticket body (it is active R&R working state, not a frozen record). Deleted the standalone release/2026-03-18 Oeconomia/response-traceability.md; its home is now this ticket. referee-reports.md (frozen) archived under papiers/actif/Oeconomia_Inventing_Climate_Finance/.
 
+2026-06-24T17:44Z HDMX-coding-agent note blocker 0155 closed — Blocked-by removed.
 --- body ---
 ## Context
 v2.0.5. The binding deliverable of the resubmission: a letter answering every

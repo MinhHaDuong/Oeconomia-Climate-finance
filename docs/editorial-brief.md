@@ -109,3 +109,60 @@ contribution is to show which actors pushed which categories and why.
 **Ticket:** none — `.claude/rules/writing.md` (things to avoid).
 
 **Status:** active
+
+## economic-rationality-carried-by-economists
+
+**Decision:** Attribute climate finance's construction to the diffusion of an
+*economic mode of reasoning* — commensuration, leverage, attribution — carried
+into institutional practice by economist-trained officials. Named actors
+(Corfee-Morlot, OECD DAC staff) are the carriers of that rationality, not
+evidence of a journal-publishing disciplinary guild. The economic *operations*
+are the spine; the people are how they travelled.
+
+**Rationale:** R1 §1 / editor E2: the named actors are policy professionals and
+Table 2 shows no economics-journal venues, so an unqualified "economists built
+it" is empirically exposed. The hybrid framing keeps the intellectual-history
+claim (the operations performed were economic work — accounting, not modelling)
+while conceding the actors were institutional.
+
+**Ticket:** 0150 (v2.0.4 decision); gates 0135, 0139.
+
+**Status:** active
+
+## indeterminacy-as-political-resource
+
+**Decision:** State as the explicit headline thesis that the
+qualitative→quantitative translation is never fully determinate, and that this
+indeterminacy made climate finance simultaneously *measurable* (a number exists)
+and *contestable* (the number is always arguable) — a political resource every
+side exploited, not a deficiency to be repaired. Frame the computation's role as
+*confirmatory*: it corroborates a history-first reading. Never exploratory or
+generative.
+
+**Rationale:** R2's "potentially innovative" point + editor E4 require the thesis
+stated up front and the quant role named. The claim already lives in §2 (the
+categories that made climate finance countable also made it contestable); this
+promotes it to thesis status. Confirmatory framing is the project's no-oversell
+norm — cross-ref `periodization-corroborated-not-endogenous`.
+
+**Ticket:** 0151 (v2.0.4 decision); gates 0136, 0137, 0134.
+
+**Status:** active
+
+## three-act-structure-foregrounds-ruptures
+
+**Decision:** Keep the three-act periodization, but frame each act boundary
+around its triggering institutional rupture (2007 Copenhagen commitment, the
+2013/2015 turn) early, so the structure reads as rupture-driven rather than
+calendar-driven. Decline Reviewer 2's full reorganisation in the cover letter,
+justified by the corroborated rupture dates — never by calling the periodization
+"endogenous" or "not imposed from the COP calendar".
+
+**Rationale:** R2 general finds chronology unconvincing for so short a period.
+The acts are already rupture-anchored (Act II = the Copenhagen trigger); the move
+is to make that visible, not to rebuild. The "endogenous" guard cross-refs
+`periodization-corroborated-not-endogenous`.
+
+**Ticket:** 0142 (v2.0.4 decision); cover-letter response.
+
+**Status:** active

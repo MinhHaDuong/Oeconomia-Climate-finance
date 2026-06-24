@@ -1,0 +1,44 @@
+%erg 0.1
+Title: R&R restructure around institutional ruptures vs chronology
+Created: 2026-06-18
+Author: HDMX-coding-agent
+Label: needs-human
+Closed: author chose A: keep 3 acts, foreground ruptures; decline reorg in cover letter
+
+--- log ---
+2026-06-18T06:33Z HDMX-coding-agent created
+
+2026-06-23T09:09Z HDMX-coding-agent note blocker 0154 closed — Blocked-by removed.
+2026-06-24T09:00Z HDMX-coding-agent note author chose A (keep 3 acts, foreground ruptures); declines reorg in cover letter; recorded
+2026-06-24T17:44Z HDMX-coding-agent closed — author chose A: keep 3 acts, foreground ruptures; decline reorg in cover letter
+--- body ---
+## Context
+Reviewer 2 general: not convinced by the chronological structure given the short
+period; the argument is often driven by institutional ruptures / key political
+decisions rather than temporal sequence. Suggests structuring around turning
+points. This is a structural design decision — author call; may be declined with
+reason in the cover letter if the three-act periodisation is defended.
+
+## Actions
+1. Decide: keep the data-driven three-act periodisation (defensible — it is endogenous, break-detected) vs reorganise around ruptures.
+2. If keeping: make the periodisation's endogeneity explicit early so it doesn't read as imposed chronology; foreground the ruptures (2007 Copenhagen trigger, 2013) as the act boundaries.
+3. If reorganising: restructure sections around ruptures.
+
+## Decision (2026-06-24) — A. Keep three acts, foreground ruptures
+Keep the data-driven three-act periodization. Frame each act boundary around its
+triggering institutional rupture (2007 Copenhagen commitment, the 2013/2015 turn)
+early, so the structure reads as rupture-driven rather than calendar-driven.
+Decline Reviewer 2's full reorganisation in the cover letter, justified by the
+corroborated rupture dates.
+
+⚠️ Overrides Action 2 above: do **not** justify by calling the periodization
+"endogenous" or "not imposed from the COP calendar" — that overclaims and
+contradicts the confirmatory framing (project no-oversell norm). The defensible
+line is history-first, computation corroborates the rupture dates independently.
+
+Propagated to `docs/editorial-brief.md` →
+`three-act-structure-foregrounds-ruptures` (cross-refs
+`periodization-corroborated-not-endogenous`).
+
+## Exit criteria
+- [x] Decision made and either implemented or declined-with-reason in the cover letter
