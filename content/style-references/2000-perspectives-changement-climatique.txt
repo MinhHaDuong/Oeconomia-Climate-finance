@@ -1,0 +1,767 @@
+Perspectives sur le changement climatique.
+Minh Ha Duong
+10 décembre 2002
+Chargé de Recherche au CNRS, section Économie. CIRED, Campus du Jardin
+Tropical, 45bis avenue de la belle Gabrielle, 94736 Nogent sur Marne CEDEX.
+tel. 43 94 73 75, fax. 43 94 73 70, courriel haduong@centre-cired.fr.1
+Résumé :
+Des progrès importants ont été réalisés cette dernière décennie dans la compréhension
+du changement climatique et de ses remèdes. L’hypothèse centrale pour le futur
+est un réchauffement global de l’ordre de 2◦ C en 2100, avec une concentration
+de dioxide de carbone dépassant 550 ppmv. Une bifurcation catastrophiquement
+rapide dans la dynamique du climat reste possible. Les négociations internationales menées dans le cadre de la Convention Climat ont débuté sur le modèle des
+traités protégeant la couche d’ozone. Mais il s’agit d’un problème de précaution
+intergénérationnel bien plus vaste.
+Les pays industrialisés se sont donné à Kyoto en 1997 l’objectif de réduire
+leurs émissions dès l’horizon 2008-2012 à environ 5% en dessous du niveau de
+1990. Cet objectif est ambitieux devant l’inertie des systèmes énergétiques, mais
+ne suffit pas à créer une rentabilité stable à long terme pour des investissements
+industriels dans les technologies moins émettrices.
+
+1 Ces travaux trouvent leur origine dans la thèse de doctorat de l’auteur Ha-Duong (1998)
+
+soutenue publiquement le 3 avril 1998. Le texte a servi de document de cours au niveau DEA
+et grande école.
+
+1
+
+English title : Perspectives on climate change policy
+
+Summary :
+The past decade achieved significant progress in how humanity understand
+and cope with global climate change. It is increasingly known that the central
+hypothesis for the next century is that global average temperature will increase
+by about 2 degree celsius in 2100, with carbon dioxyde concentration raising over
+550 ppm. A catastrophic change of pattern in climate dynamics remains possible,
+which may be a risk more serious than gradual and anticipated warming. It’s
+more and more understood that burning the world reserves of oil, gas and coal
+is technically very feasible, but environmentally very catastrophic. International
+negociations are led within the framework of the Climate Convention. Initially,
+they followed the model of the ozone layer treaty negociations. But climate
+change is a much wider issue, comparable in scope to law-of-the-sea or to freetrade negociations, with the additional complexity of scientific ignorance and
+intergenerational aspects. Negociation must be expected to go on for several
+decades. Industrialized countries agreed in Kyoto, in 1997, to reduce the level
+of their greenhouse gases emissions as soon as 2008-2012, about 5% below their
+1990 level. This objective is ambitious considering the inertia of energy systems,
+since the current global trend is more like a 1% annual growth. But this is not
+enought to insure a stable long-term rentability for industrial investments in
+less emitting technologies.
+
+Key words : Climate Change, Global Change, economics, policy, integrated
+assessment.
+Mots clés : Changement climatique, changement global, economie, politique.
+2
+
+Introduction
+Peut-on considérer que les tempêtes de décembre 1999 sur l’Europe, et plus
+généralement l’occurrence d’évènements climatiques extrêmes sans précédents
+connus traduisent un dérèglement du climat généralisé ?
+D’un point de vue scientifique, ce serait un non-sens puisque le climat, par
+définition, renvoie à la période longue. Ses changements ne peuvent donc pas
+être reliés à un événement ponctuel mais à plusieurs décennies d’observations.
+Depuis la révolution industrielle par exemple, on observe que la composition
+chimique de l’atmosphère a connu des changements importants. La quantité
+de méthane dans l’air a augmenté de 145% et celle de dioxyde de carbone de
+30%. Il est connu depuis plusieurs siècles que ces gaz, comme la vapeur d’eau,
+contribuent à l’effet de serre en captant l’énergie rayonnée depuis la surface de
+la planète. La composition chimique de l’atmosphère évolue donc dans un sens
+susceptible de conduire à un réchauffement global.
+On observe aussi que depuis la fin du XIXe siècle, la température moyenne
+globale a augmenté de 0,3◦ C à 0,6◦ C environ. Toutefois, la plage de variabilité
+naturelle de cette moyenne pendant les derniers dix mille ans est de l’ordre de
+1◦ C. Les effets de la perturbation observée sur la température, les précipitations
+ou le niveau de la mer, s’inscrivent sur le fond d’une variabilité naturelle importante.
+C’est pourquoi les scientifiques sont prudents pour attribuer une responsabilité humaine aux changements observés. La convergence des indices climatiques
+globaux construits à cet effet vers une confirmation statistique du phénomène
+ne peut être que lente.
+Cette lenteur de l’arrivée d’information peut poser un problème par rapport à l’échelle de temps de la prise de décision politique, qui effectue plus
+souvent les changement de trajectoires à l’occasion de crises immédiatement
+compréhensibles par les gouvernés. C’est pourquoi certains militants ont pu
+déclarer que les aléas météorologiques constituaient un symptôme du changement climatique, alors que ces tempêtes sont seulement une opportunité pour
+agir. Mais faut-il agir ?
+
+Le changement climatique et ses risques : État des lieux
+Pour en comprendre la nécessité, examinons ce qui pourrait se passer au
+cours des deux prochains siècles concernant la température moyenne globale.
+La figure 1 montre, à droite, différentes hypothèses de réchauffement global
+correspondant, à gauche, à différents scénarios d’évolution de la concentration
+atmosphérique de CO2 . Il ne s’agit pas là de résultats calculés par des modèles.
+Bien au contraire, ils ont été construits en ajustant une courbe régulière entre les
+données actuelles et divers objectif de stabilisation à long terme arbitrairement
+choisis (Enting et al., 1994).
+Le profil S350, par exemple, suppose que la concentration va cesser d’augmenter avant le milieu de XXIe siècle, pour revenir vers 2150 à peu près au
+niveau de l’année 1988, soit 350 parties par million. La barre d’erreur horizontale correspondante, à droite, montre que le réchauffement à long terme dans
+ce cas est évalué environ entre +1◦ C et +2.5◦ C, avec une estimation centrale
+autour de +1.5◦ C. Toutefois, ce scénario serait économiquement très difficile à
+réaliser.
+3
+
+Fig. 1 – A gauche, scénarios de stabilisation de la concentration de CO2 dans
+l’atmosphère. A droite, réchauffement global correspondant, en valeur centrale
+(points) et plage d’incertitude (segments horizontaux). La ligne verticale pointillée a dénote la variabilité naturelle, la verticale pointillée b dénote le seuil
+reconnu comme dangereux par le Stockholm Environmental Institute. D’après
+Azar & Rodhe (1997).
+
+4
+
+En l’absence de régulation forte des marchés, on ne voit pas ce qui empêcherait
+la consommation d’énergie fossile de continuer à augmenter au siècle prochain,
+tirée par la croissance démographique et économique. Les réserves cumulées de
+pétrole, gaz et surtout de charbon semblent aujourd’hui largement suffisantes
+pour suivre ou dépasser le scénario S1000. Le réchauffement global peut atteindre 6.4◦ C à l’horizon 2100 et bien au-delà ensuite.
+Pour résumer, un réchauffement global d’une amplitude non négligeable devant la variabilité naturelle (environ 1◦ C pendant les derniers dix millénaires)
+est l’hypothèse la plus réaliste. Un réchauffement important est possible.
+Faut-il pour autant s’alarmer d’une telle situation ? Comme on peut le lire
+ça et là, après tout, la plupart d’entre nous préfèrent avoir chaud que froid !
+L’argument repose en partie sur une confusion de vocabulaire : le changement
+climatique doit être distingué de sa cause, le réchauffement global, et du principe
+physique impliqué, l’effet de serre. De plus, ce qui compte n’est pas le changement climatique en lui-même, mais ses conséquences sur les sociétés humaines.
+Se focaliser sur la température minimise l’ampleur du problème pour plusieurs
+raisons :
+– La moyenne annuelle de la température sur toute la surface du globe est
+un indicateur qui a le mérite d’être synthétique et clair. Mais ce chiffre
+moyen masque les variations locales et intra-annuelles plus importantes.
+– Les climats ne se limitent pas à la température : pour l’agriculture, la
+répartition des apports d’eau dans l’année, le nombre de jours de soleil ou
+la date de la dernière gelée sont tout aussi importants.
+– Enfin, il existe d’autres conséquences du réchauffement global, comme
+la hausse du niveau des mers consécutive à la dilatation thermique des
+océans. Le niveau a monté de 10 à 25 centimètres au siècle passé, et on
+peut s’attendre à quelques décimètres supplémentaires d’ici à 2100.
+Les modèles actuels ne permettent pas de quantifier le risque à l’échelle locale. Ce n’est qu’à l’échelle globale et continentale que les résultats prennent
+du sens. On sait par exemple que le courant marin dans l’Atlantique Nord qui
+assure la douceur hivernale en Europe occidentale, le Gulf Stream, peut être
+considérablement affaibli dans une configuration climatique plus chaude. C’est
+pourquoi Broecker (1997) qualifie la circulation thermohaline Nord-Atlantique
+de ‘talon d’Achille’ du climat. On ne sait pas prédire quand cet affaiblissement se
+produirait, mais les observations paléoclimatiques montrent qu’une telle bifurcation peut se produire sur une période de temps relativement courte, quelques
+dizaines d’années.
+Or le problème du rythme est fondamental. L’humanité s’est développée
+et adaptée à des conditions climatiques relativement stables. Cette adaptation
+s’est traduite, par exemple, par une répartition du peuplement mondial, par
+l’édification de villes, de ports et autres infrastructures, par la structuration de
+sociétés autour de techniques agricoles, et aussi par l’accoutumance aux insectes,
+parasites et pathologies diverses qui accompagnent les conditions climatiques.
+Dans la mesure où les structures sociales sont flexibles, un changement climatique graduel ne présente a priori pas un souci majeur. Mais il existe un risque
+réel que les conditions bifurquent rapidement. Si cela se produit, l’adaptation
+à une variabilité climatique augmentée ne sera pas nécessairement un exercice
+gratuit et facile. Celui-ci peut au contraire s’avérer coûteux et tragique, tant
+que ces conditions ne seront pas stabilisées.
+Pour résumer, ce n’est pas un réchauffement moyen de quelques degrés qui
+5
+
+inquiète. Le danger de la pollution d’origine humaine par les gaz à effet de
+serre, c’est d’avoir créé et d’accroı̂tre le risque d’une rupture brutale dans le
+système. En cela, les épisodes météorologiques extrêmes illustrent bien la nature du problème global, mal spécifié mais réel, reconnu explicitement par la
+communauté internationale. Pour tenter de parer à ce risque, les États mettent
+en oeuvre un programme à plusieurs volets.
+
+Le cadre de la Convention Climat
+Le processus a été mis en place à Rio de Janeiro en 1992 avec la signature de la Convention Cadre des Nations Unies sur le Changement Climatique, appelée aussi la Convention Climat2 . Celle-ci souligne la nécessité de
+mesures d’adaptation visant à atténuer les effets des perturbations d’ores et
+déjà inévitables, en plus des mesures de modération du changement climatique.
+L’objectif ultime est de stabiliser la concentration de gaz à effet de serre. Rien
+que pour cela, il est absolument nécessaire de réduire les niveaux d’émissions
+mondiales de gaz à effet de serre nettement en dessous des niveaux actuels, et
+ce dans un contexte de croissance démographique et économique.
+A ces fins, la Convention suit le modèle utilisé pour les négociations sur la
+protection de l’ozone stratosphérique. Elle met en place un réseau d’expertise
+scientifique international, parallèlement à la tenue de conférences annuelles destinées à ajouter des amendements renforçant et précisant les obligations des
+États.
+Les aspects scientifiques du dossier sont suivis par le Groupe d’experts Intergouvernemental sur l’Évolution du Climat. Le GIEC3 , acronyme IPCC en anglais, est une institution originale placée sous la double égide de l’Organisation
+Météorologique Mondiale et du Programme des Nations Unies pour l’Environnement. Sa fonction est de traiter de l’état général des connaissances scientifiques
+et techniques se rapportant au changement climatique.
+Ses travaux visent à représenter l’ensemble des opinions publiées dans des
+revues scientifiques. Pour cela, plus de deux mille experts de par le monde participent à la rédaction et à l’analyse de ces textes. Un effort particulier est fait pour
+inclure les pays en développement. Des gouvernements représentant l’ensemble
+de la planète approuvent et ratifient les documents du point de vue scientifique
+et technique. C’est pourquoi ses rapports bénéficient d’une autorité légitime et
+peuvent avoir un rôle de support objectif dans les débats internationaux.
+Les travaux les plus récents du GIEC reconnaissent qu’un faisceau d’indices
+convergents met en évidence la détection statistique de la responsabilité humaine
+dans la perturbation du climat. Ce point confirme la nécessité de réduire à long
+terme les émissions polluantes bien en dessous du niveau actuel. Toutefois, la
+question de l’action à court terme reste moins consensuelle. Même si l’argument
+scientifique ne saurait être totalement absent, les engagements pris reflètent
+d’abord l’aboutissement de rapports de forces politiques et diplomatiques entre
+les nombreuses parties prenantes aux négociations.
+Si l’action diplomatique s’inspire du déroulement des négociations sur la limitation des Substances Appauvrissant la Couche d’Ozone, avec le Protocole de
+Montréal, son envergure bien supérieure permet de la comparer aussi aux discussions sur le commerce international, commencées dès 1948 et n’ayant abouti
+2 http ://www.unfccc.de
+3 http ://www.ipcc.ch
+
+6
+
+Union Européenne
+OCDE moins UE
+Ex bloc communiste
+Reste du monde
+Total Monde
+Dont pays riches
+
+Année
+de base
+1990
+949
+2086
+1311
+1774
+6120
+4346
+
+Évolution
+récente
+1995
+936
+2254
+925
+2225
+6340
+4115
+
+Variation
+totale
+1990-95
+-1%
++8%
+-29%
++25%
++4%
+-5%
+
+Prospective
+2010
+873
+1961
+1298
+4007
+8139
+4132
+
+Variation
+totale
+1990-10
+-8%
+-6%
+-1%
++126%
++33%
+-5%
+
+Tab. 1 – Emissions de CO2 d’origine fossile par grande région du monde, en
+Mt de carbone par an, et variation calculée par rapport à l’année de base 1990.
+Données pour 1990 et 1995 d’après Bolin (1998). Pour les pays riches en 2010,
+on a utilisé l’objectif de réduction et de limitation d’émission quantifié à la
+conférence Kyoto. Pour pour les pays en développement en 2010, on a supposé
+un taux de croissance annuel des émissions de 4%.
+à l’OMC qu’en 1996. On peut s’attendre à une négociation de longue durée. Au
+stade actuel, relativement préliminaire, les pays les plus industrialisés ont reconnu le principe dit de responsabilité commune mais différenciée, qui implique
+qu’ils prennent des mesures les premiers. Pour cela, ils tentent d’élaborer une
+règle du jeu acceptable entre eux.
+L’avancée la plus concrète reste adoption à Kyoto en 1997 d’objectifs d’émission
+quantifiés et du principe d’un système de permis d’émissions échangeables. Cependant, des problèmes fondamentaux subsistent quand au fonctionnement de
+ce système. L’allocation initiale des permis, les règles d’échange, les sanctions,
+les limitations et la nature légale des acteurs pouvant intervenir sur le marché,
+ainsi que bien d’autres questions, restent ouverts à la discussion. De même, le
+Protocole de Kyoto reste muet sur ce qui se passera après 2012.
+Les conférences de Buenos Aires (1998) et de Bonn (1999) n’ont pas apporté
+de résultats significatifs. La simultanéité en novembre 2000 entre la conférence
+de La Haye (COP-6) et les élections américaines risque d’empêcher toute progression importante compte tenu du poids des USA dans le processus.
+Un des blocages actuels est que le congrès américain refuse de ratifier Kyoto
+tant que les pays en développement n’ont pas pris d’engagements, mais ceux-ci
+attendent des pays riches qu’ils agissent les premiers en application du principe
+de responsabilité commune différenciée.
+Pour l’avenir de la négociation, l’observation des tendances sur la période
+1990-1995 et des objectifs de Kyoto (tableau 1) suggère au moins deux difficultés
+majeures.
+Premièrement, même si l’on doit noter le caractère conjoncturel de la diminution des émissions de CO2 dans la Communauté Européenne entre 1990
+et 1995, il existe des différences de tendances économiques et démographiques
+importantes entre l’Europe et les États-Unis, amplifiées par des différences culturelles. A Kyoto, les observateurs ont pu apprécier la différence entre la proposition américaine de stabilisation des émissions, soit x = 0%, et la proposition
+européenne d’un ambitieux x = 15%. Ils ont aussi pu noter le remarquable
+sens arithmétique des négociateurs, puisque l’accord s’est conclut exactement
+au milieu du gué : x = 7% pour les américains et x = 8% pour l’Europe.
+
+7
+
+Deuxièmement, le système de permis échangeables peut apparaı̂tre comme
+un jeu comptable qui épargne aux pays de l’OCDE de faire des efforts réels.
+Concernant les pays riches dans leur ensemble, le tableau 1 montre que l’objectifs de Kyoto de -5% était à peu près réalisé en 1995. L’explication est bien
+entendu la récession économique des pays de l’est. Or, dans la mesure où la
+situation en Russie ne s’est pas redressée sur la période 1995-2000, cet état
+de fait peut miner la crédibilité du marché de permis d’émission spécifié dans
+le Protocole de Kyoto. Les négociateurs ont baptisé “air chaud” ces réductions
+d’émissions fictives découlant des changements structurels des pays en transition
+vers l’économie de marché .
+Même si ces deux points étaient résolus, Kyoto ne suffirait pas. Le monde
+resterait dans une logique de croissance des émissions de gaz à effet de serre,
+avec une projection de +33% sur deux décennies. Or c’est une décroissance
+durable qui serait nécessaire à la stabilisation des concentrations. Pour l’avenir,
+le point essentiel est que les pays riches parviennent à coopérer avec les autres
+dès la période 2010-2020. Sinon, l’objectif de stabilisation à 450 ppmv de la
+concentration atmosphérique de CO2 deviendrait irréaliste.
+Au total, la négociation climat progresse lentement au rythme de la mondialisation. Un regard rétrospectif sur la dernière décennie permet cependant
+de juger d’avancées sérieuses dans la socialisation du problème, mais aussi dans
+l’expérience des changements climatiques. Outre l’action internationale exposée
+ici, beaucoup d’acteurs gouvernementaux, industriels ou citoyens ont pris des
+initiatives qu’il n’est pas possible de résumer ici.
+L’objectif ultime de la Convention est de stabiliser la concentration atmosphérique de gaz à effet de serre à un niveau qui éviterait des interférences
+dangereuses avec le climat. Il s’agit d’un idéal, le niveau zéro du risque climatique. Malgré le dispositif mis en place, il est très probable que le risque
+continuera à augmenter durant le XXIe siècle.
+
+Fondements d’une action de précaution
+Le paragraphe précédent montre que l’augmentation du risque climatique est
+attendue, et que des efforts internationaux ont été lancés, suivant une procédure
+fortement marquée par les rapports de force et d’opportunité politiques. Certes
+la négociation reste le mode de décision le plus pratique pour ce genre de
+problème d’environnement global. Il n’en reste pas moins important de rechercher une approche scientifique du principe de précaution (Treich, 1997).
+Le changement climatique est symptomatique d’une classe de dossiers d’environnement où se pose le problème de la connaissance des bénéfices de l’action.
+Comment dans ces conditions définir un but collectif ? Comment calculer un
+optimum social ? La solidarité intergénérationelle et l’ignorance excessive sont
+ici deux difficultés majeures qu’il convient d’examiner.
+
+Perspective éthique intergénérationnelle
+La courbe de la population mondiale a récemment connu un point d’inflexion : sa croissance est appelée à se ralentir davantage dans le futur. De même,
+
+8
+
+il peut être possible de s’attendre à une baisse tendancielle du taux d’enrichissement par habitant au cours de siècle prochain. Malgré ces tendances, compte
+tenu du développement économique observé sur les deux derniers siècles, dans
+l’ensemble, les décideurs peuvent s’attendre à ce que nos descendants soient
+plusieurs fois plus riches que nous. Comment, dans ces conditions évaluer des
+mesures qui mettent en jeu simultanément les intérêts de générations existantes
+et futures ? L’actualisation (ou escompte) est le principal outil analytique dont
+se servent les économistes pour comparer les effets se produisant à des périodes
+différentes (Arrow, 1995).
+Son principe est celui des intérêts composés : au taux r, 1 unité de compte
+aujourd’hui équivaut à seulement 1/(1 + r) unités à la période suivante. Le
+choix du taux d’actualisation a une grande importance technique pour l’analyse
+de la politique en matière de changement climatique, car l’horizon temporel
+est extrêmement long et le coût de l’atténuation a tendance à être ressenti bien
+plus tôt que les bénéfices des dégâts évités. Plus ce taux est élevé, plus les futurs
+bénéfices sont négligeables et plus les coûts actuels prennent d’importance dans
+l’analyse.
+Il serait certes très problématique de reprendre pour l’environnement global une valeur aussi élevée que les 8 pour cent par an utilisés pour le calcul
+économique courant des investissements publics en France. A ce taux par exemple, une mesure qui coûte 1 aujourd’hui n’est jugée rentable que si ses bénéfices
+se montent à (1 + 8%)200 = 2 millions dans 200 ans.
+Or il est impossible de montrer que la rentabilité à long terme des mesures
+d’atténuation du changement climatique est de l’ordre de 2 million d’euros de
+dommages évités par euro investi aujourd’hui. Cet argument des intérêts composés peut être utilisé à l’emporte-pièce pour tenter de démontrer l’inutilité
+d’une action de précaution contre le changement climatique.
+A contrario, il peut être utilisé pour montrer le caractère inopérant de l’analyse économique. Cependant un usage raisonné de la théorie de l’actualisation
+moderne, discuté plus en détail encadré 1, suggère plutôt d’utiliser un taux situé
+dans la plage de 2% à 5% par an, ce qui diminue l’acuité du problème.
+[Encadré 1 about there]
+Ce problème ne peut pas être contourné en raisonnant selon une approche
+coût-efficacité, c’est à dire en examinant seulement comment atteindre à moindre
+coût un objectif climatique donné par ailleurs. Certes, cela dispense d’évaluer
+formellement les bénéfices de la modération du changement climatique. Mais
+l’analyse suggère toujours de reporter d’autant plus les efforts sur les générations
+futures que le taux d’actualisation utilisé est élevé.
+A ce stade, diverses réponses sont possibles. La plus pragmatique consisterait à regarder ce paramètre comme un instrument subjectif, les points de
+vues différents étant également valides dans la mesure où ils sont clairs et correctement argumentés. La plus radicale consiste à rejeter l’idée de la recherche
+d’un optimum économique, pour se concentrer sur l’analyse des trajectoire faisables ou possibles. Entre ces attitudes, s’élabore actuellement un volume de
+travaux important sur le choix collectif et le développement durable, dont on
+peut espérer un jour des outils formels et numériques plus satisfaisants.
+
+9
+
+Ignorance, décisions collectives et controverses
+A cause des incertitudes sur l’état futur de l’économie et du climat, on ignore
+comment évaluer les dommages économiques consécutifs au changement climatique en cours. Quantifier précisément aujourd’hui les avantages des politiques
+de précaution est impossible. Dans une telle situation, la théorie de la décision
+sous incertitude explicite trois points importants.
+L’aversion au risque. On admet généralement qu’un bon père de famille ne
+devrait pas jouer de fractions importantes de son patrimoine, même si l’espérance
+de gain nette est positive. De même, on peut penser assez légitimement que les
+sociétés devraient, par principe moral, accorder une attention particulière aux
+risques globaux majeurs, mêmes si ceux-ci sont de probabilité inconnue ou faible.
+L’apprentissage. Les mesures de prévention du changement climatique sont
+susceptibles d’avoir deux effets opposés sur le rythme de réduction des incertitudes. Le premier effet est théoriquement important, mais quelque peu paradoxal
+en pratique : si la pollution diminue, les conséquences de la pollution sont moins
+visibles. Par exemple, si l’usage des substances appauvrissant la couche d’ozone
+avait été banni dès 1974, alors on n’aurait jamais observé le trou au dessus de
+l’antarctique. On peut donc se demander si les réductions d’émissions de gaz à
+effet de serre pourraient tendre à atténuer l’émergence du signal d’alarme observé par rapport au bruit de fond que représente la variabilité naturelle. Cet
+effet nous semble négligeable. Par exemple réaliser le protocole de Kyoto ne
+ferait gagner que 1.5 ppmv de dioxyde de carbone dans l’atmosphère sur une
+concentration de l’ordre de 400 ppmv (Bolin, 1998) à l’horizon 2012.
+Le second effet nous semble beaucoup plus important et se situe du côté
+de l’apprentissage des coûts de réduction. La mise en place des marchés pour
+les technologies moins polluantes est susceptible de conduire à une meilleure
+connaissance de ces technologies, ce qui permettrait éventuellement de bénéficier
+d’une baisse significative de leurs coûts.
+L’irréversibilité. D’un côté, l’action peut entraı̂ner des coûts économiques
+importants et irrécupérables qui risquent de s’avérer inutiles a posteriori. Mais
+de l’autre, retarder davantage l’action et laisser poursuivre la tendance croissante
+des émissions polluantes conduit à une accumulation de gaz à effet de serre, qui
+risque d’impliquer des conséquences irréversibles et inattendues.
+L’analyse de l’incertitude suggère qu’une dimension essentielle des politiques
+de prévention du changement climatique est finalement de gagner du temps
+d’apprentissage pour que les certitudes scientifiques et le savoir-faire technique
+arrivent avant les bifurcations du système climatique.
+Un volume important de travaux sur le choix collectif et le développement
+durable vise à enrichir ou dépasser les notions exposées ci dessus. Mais il n’est
+pas possible de présenter davantage, par exemple, le courant de recherche récent
+suggérant que l’incertitude sur la croissance justifie l’utilisation d’un taux d’actualisation inférieur pour les activités à très long terme comme la modération
+du changement climatique (Portney & Weyant, 1999; Weitzman, 1998). Dans la
+suite, nous examinons plus spécifiquement les mesures adoptées à la Conférence
+de Kyoto.
+
+10
+
+Le Protocole de Kyoto
+L’objectif ultime de stabilisation
+Mettre en balance les coûts et des avantages des mesures de réduction du
+risque climatique est une tâche formidable. Relever ce défi est important non
+seulement pour la science, mais aussi pour aider les puissances publiques à
+négocier, à décider et à communiquer.
+Pour cette analyse coût-avantage, comparons en première approche les alternatives illustrées figure 1. S’il fallait traduire littéralement l’objectif ultime de
+la Convention Climat, quelle cible de concentration de CO2 dans l’atmosphère
+choisir ?
+Le niveau actuel est déjà au dessus de 360 ppmv. Il semble raisonnable
+de rejeter l’objectif de stabiliser à 350. Plus précisément un tel objectif demanderait des sacrifices très sensibles à court terme jugés disproportionnés par
+rapport à la réduction du risque obtenue. Il impliquerait en pratique une diminution immédiate et drastique de la consommation mondiale de combustibles
+fossiles, difficilement conciliable avec les tendances lourdes de la démographie
+et de l’économie.
+D’un autre côté, il ne semble pas raisonnable de courir le risque associé à
+S1000, avec un réchauffement potentiel supérieur à 9◦ C, alors que les possibilités techniques à long terme sont immenses et que la régulation du secteur
+énergétique est une action politique éprouvée de longue date.
+L’étendue des ignorances actuelles ne permet pas de choisir, dans l’intervalle
+restant entre 400 et 900 ppmv, une valeur plutôt qu’une autre. L’imprécision de
+l’analyse coûts-avantages concernant l’objectif ultime de la Convention impose
+de revenir à une certitude plus ferme : stabiliser la concentration atmosphérique
+de CO2 , à quel niveau que se soit, exige une réduction des émissions mondiales
+de carbone bien en dessous des niveaux actuels.
+
+L’objectif opérationnel justifiant Kyoto.
+Cette certitude permet de fixer un objectif opérationnel à moyen terme :
+stopper la croissance des émissions. Cet objectif de stabilisation pour les pays
+riches, explicitement mentionné dans la Convention Climat signée à Rio, n’est
+dans l’ensemble pas respecté à l’horizon 2000. Cette poursuite de la tendance
+polluante n’a surpris personne.
+On pouvait s’attendre à ce que l’inertie liée au capital en place interdise
+toute déviation rapide des trajectoires actuelles. L’aspect essentiel des politiques de prévention du changement climatique est le ré-aménagement majeur
+de l’utilisation des combustibles fossiles. Cette transition vers des sociétés moins
+émettrices de carbone exige le renouvellement de la base physique de l’économie :
+il faut changer des machines et des réseaux. C’est pourquoi, si il est certes
+matériellement possible de réformer rapidement le système énergétique mondial, le faire avant que le capital soit amorti entraı̂nerait des coûts, appelés
+coûts d’ajustement, trop élevés.
+L’importance des coûts d’ajustement introduit une nouvelle perspective dans
+l’analyse coût-avantage du problème. A la question de l’objectif ultime de concentration s’ajoute celle du rythme, de la répartition dans le temps de l’effort de
+réduction. La figure 2 illustre deux trajectoires, haute et basse, conduisant au
+
+11
+
+11.5
+
+11
+
+10.5
+
+Gigatonnes de Carbone
+
+12
+
+Tendance
+Trajectoire
+Haute
+
+10
+Trajectoire
+Adaptative
+
+9.5
+
+9
+
+Kyoto
+
+Trajectoire
+Basse
+
+8.5
+date
+2000
+
+2005
+
+2010
+
+2015
+
+2020
+
+2025
+
+Fig. 2 – Émissions mondiales de CO2 pour les prochaines décennies : comparaison des objectifs prescrits par le Protocole de Kyoto et diverses autres
+trajectoires.
+La courbe “Kyoto” montre qu’en supposant que les pays industrialisés remplissent leurs objectifs et que les pays en développement suivent leur tendance
+actuelle, les émissions mondiales seraient de l’ordre de 8,8 Gt de carbone en 2010
+(émissions fossiles plus celles provenant des changement dans l’usage des sols).
+La courbe “Tendance” montre que si le monde entier suit la tendance actuelle,
+ce chiffre serait de l’ordre de 9,8 Gt. Les deux courbes en pointillées illustrent
+l’étendue des trajectoires à court terme compatibles avec la stabilisation à long
+terme de la concentration atmosphérique au niveau 550ppmv. La “Trajectoire
+Adaptative” représente une politique de précaution optimale : c’est le résultat
+d’un calcul de minimisation des coûts en supposant qu’on choisira en 2020 un
+objectif à long terme de 450, 550 ou 650 ppmv avec équiprobabilité. D’après
+Ha-Duong et al. (1998).
+
+12
+
+même objectif de long terme : la stabilisation de la concentration de CO2 atmosphérique à 550ppmv. Les implications à court terme de ces deux trajectoires
+sont très différentes.
+L’effet d’actualisation discuté plus haut est ici important. Pour les décideurs
+d’aujourd’hui, la trajectoire haute, qui reporte les efforts de réduction dans plusieurs décennies, est comparativement moins coûteuse que la trajectoire basse.
+Or, comme on le voit sur la figure 2, les objectifs de Kyoto sont plus proches de
+la trajectoire basse.
+Ces objectifs peuvent se comprendre si l’on souhaite respecter le seuil des
+450 ppmv correspondant au seuil de danger de 2◦ C. Pour cela, il n’est plus
+temps de différer les efforts car la concentration de dioxyde de carbone dans
+l’atmosphère, qui était de l’ordre de 280 ppmv avant la révolution industrielle,
+atteint aujourd’hui environ 365 ppmv et augmente environ de 15 ppmv par
+décennie. En l’absence de mesures fortes, la concentration de CO2 atteindra
+450 ppmv avant le milieu du vingt et unième siècle.
+
+En décision séquentielle, c’est l’inertie qui compte.
+Mais compte tenu de l’ignorance quand au seuil ultime de concentration,
+il est nécessaire de pousser davantage l’explication et de raisonner en décision
+séquentielle. Il ne s’agit pas de décider une fois pour toutes de la politique
+climatique à suivre dans les 50 ans à venir, mais de choisir une stratégie prudente
+qui sera ajustée au fil du temps avec l’arrivée de nouvelles informations. La figure
+2 représente une telle trajectoire adaptative. La trajectoire représentée permet
+de bifurquer en 2020 vers l’un des trois objectifs 450, 550 ou 650 ppmv.
+Cette représentation très stylisée du processus de décision serait probablement inapplicable en pratique, mais elle permet de souligner la séquentialité
+du processus de décision. La négociation dure depuis une décennie et n’en est
+qu’à son début. Dans un contexte de révision des choix, ce qui importe est de
+comparer l’inertie du système énergétique et du système climatique (Ha-Duong
+et al., 1997).
+L’histoire énergétique des deux derniers siècles montre une succession de
+formes d’énergie primaire dominante : la biomasse, le charbon, le pétrole, et
+vraisemblablement demain le gaz. Chacun de ces combustibles est moins polluant que celui qui l’a précédé, au sens où sa combustion libère moins de carbone
+dans l’atmosphère pour un même service rendu.
+Chaque transition a pris environ un demi siècle. Ce chiffre pourrait sembler élevé devant la durée de vie d’une centrale thermique ou des équipements
+ménagers. Ce serait oublier que les systèmes énergétiques sont aussi déterminés
+par un ensemble de facteurs interdépendants plus large, tant pour l’offre que
+pour la demande. La production, le transport et la distribution font appel à
+des infrastructures lourdes, souvent à l’échelle nationale comme des ports, des
+réseaux, des oléoducs et gazoducs. La structure de l’habitat, la qualité du bâti
+et les schémas de transports dépendent de considérations sociales encore plus
+générales, tout ceci évoluant lentement à l’échelle de la génération.
+Il est préférable de respecter le rythme d’amortissement naturel des équipements
+afin d’éviter des coûts d’ajustement trop élevés. D’un autre côté, l’inertie a un effet opposé sur la nécessité d’un effort de réduction à court terme : il est d’autant
+plus urgent de débuter les réformes tôt que celles-ci seront longues à réaliser.
+
+13
+
+Or les modèles, comme les observations paléoclimatiques, montrent qu’à
+l’échelle du demi-siècle, le système climatique peut évoluer catastrophiquement
+avec une redistribution importante de la répartition de l’énergie thermique entre
+les deux hémisphères terrestres. Ne pas agir dès à présent sur le système social
+déterminant l’économie des combustibles fossiles, ce serait s’exposer à être pris
+de vitesse par le changement climatique.
+Hoffert et al. (1998) montrent bien l’ampleur de la tâche. L’énergie primaire
+produite actuellement provenant de combustibles fossiles est de l’ordre de 10
+térawatts (1 TW = 1012 W), pour 1.3 TW provenant de source sans carbone.
+Dans tous les scénarios étudiés, la croissance économique et la stabilisation de
+la concentration de dioxyde de carbone exigent une capacité supplémentaire de
+10 TW sans carbone avant 2050. Cette date est avancée à 2030 environ pour la
+cible de 550 ppmv de CO2 .
+Les auteurs remarquent que depuis la première pile atomique de Enrico
+Fermi développée en 1943 à Chicago, l’énergie nucléaire ne fournit aujourd’hui
+que quelques centièmes de la production actuelle. Une prolifération est à l’heure
+actuelle peu probable compte tenu des risques politiques, environnementaux
+et financiers. Mais comme la capacité unitaire d’une centrale nucléaire est de
+l’ordre du GW, même une croissance forte du nombre de centrales ne fournirait
+qu’une partie des 10 TW énoncés plus haut.
+Les autres énergies renouvelables seront donc nécessaires. Un potentiel hydroélectrique significatif reste à développer dans certains pays du Sud, comme
+par exemple le fameux barrage des Trois Gorges prévu pour 17 GW qui deviendra le plus grand barrage actuel, devant celui d’Itaipu au Brésil (12.6 GW). Dans
+les pays européens, les expériences de l’Allemagne et du Danemark montrent
+que l’énergie éolienne peut se développer lorsque le gouvernement garantit un
+prix minimal d’achat de l’électricité ainsi produite. Le solaire photo-voltaı̈que
+et thermique décentralisé connaı̂t un progrès technique important, et le retour
+d’un intérêt pour le solaire thermique centralisé pourrait être souhaitable. A
+partir de la situation actuelle, pour que la part de marché de ces énergies renouvelables deviennent importante il faudra qu’elle connaisse plusieurs décennies
+de croissance à deux chiffres.
+Cette analyse en terme d’inertie comparée justifie économiquement le Protocole de Kyoto, qui ne laisse pas de délai pour agir sur la production et de
+la consommation d’énergie mondiale. A court terme, les technologies aujourd’hui disponibles ouvrent de nombreuses potentialités de réduction d’émissions.
+Mieux même, on estime souvent que plus de 10% de réduction serait accessible
+à coût négatif ou nul, à l’aide d’options ‘sans regrets’ discutées encadré 2.
+[Encadré 2 about there]
+
+Conclusion.
+Sans aller au delà de la marge d’options sans regrets, le Protocole de Kyoto
+est remarquable car il pose des contraintes de réductions à court terme. Il marque
+donc un passage important du processus de négociation qui, parti de l’expression de principes généreux mais verbaux, est en chemin pour arriver à imposer
+des contraintes réelles fortes comparables à celles imposées par le Protocole de
+
+14
+
+Montréal sur la protection de la couche d’Ozone. Pour conclure, demandonsnous dans quelle mesure les obligations de Kyoto sont pertinentes pour garantir le développement des nouveaux moyens de production et de consommation
+d’énergie.
+La question centrale de savoir ce qui crée le progrès technique, moteur de la
+richesse actuelle, n’est toujours pas résolue. Toutefois, on peut identifier deux
+perspectives différentes concernant le lien entre réduction d’émissions et progrès
+technique, qui ont toutes deux des conséquences directes sur le contenu des
+actions à engager.
+Si on suppose que l’essentiel du progrès technique est produit par l’accumulation des connaissances et des dépenses publiques de Recherche-Développement,
+on pourrait en principe développer des technologies propres, dans le cadre de la
+nouvelle économie, sans pour cela diminuer simultanément les émissions.
+Dans une première phase, les États pourraient consacrer l’essentiel des ressources contre le changement climatique à la recherche et au développement des
+solutions énergétiques alternatives. Il s’agirait de développer des prototypes et
+des pilotes, en vue d’une deuxième phase de la résolution du problème, au cours
+de laquelle se ferait l’essentiel de la réduction des émissions. Une telle approche
+permettrait de gagner quelques décennies avant d’agir, puisqu’on pourrait polluer tant qu’on accumule une réserve de progrès technique suffisant.
+Toutefois, plusieurs arguments s’opposent à cette politique ‘Attendre et
+dépenser, puis courir’ : faire pénétrer rapidement une vague de nouvelles technologies moins polluantes dans le secteur de l’énergie semble difficile car les
+différentes composantes des systèmes techniques sont liées entre elles et ne
+peuvent pas être remplacées indépendamment les unes des autres. Développer
+des technologies sans base installée est difficile, car l’histoire montre que le
+progrès favorise nettement les technologies existantes. Ces deux rétroactions
+positives induisent des verrouillages technologiques qui font que le passage du
+temps ne correspond pas nécessairement à l’augmentation du nombre des options possibles.
+C’est pourquoi on peut penser que l’essentiel du progrès technique dans un
+domaine est induit par les changements dans les conditions du marché correspondant, et non par une accumulation de connaissances scientifiques globales
+ou par la dépense publique de R&D. Tenter d’accélérer le progrès technique
+sans vouloir restreindre les émissions polluantes pourrait être une politique peu
+cohérente et inefficace.
+Une bonne part de la R&D privée actuelle vise à l’amélioration des technologies liées aux combustibles fossiles. Des politiques contraignantes en matière
+d’émissions de CO2 tendraient à créer des incitations appropriées sur les marchés
+de l’énergie pour ré-allouer une part de cette R&D sur les technologies peu ou
+pas émettrices.
+A cet égard, le bilan des implications de l’accord de Kyoto sur le progrès
+technique nous semble plutôt mitigé. En effet, le dispositif mis en place n’offre
+pas encore le cadre stable à long terme nécessaire pour justifier des investissements industriels importants dans les nouvelles technologies.
+La souveraineté des États demeure quant à l’orientation effective des politiques énergétiques. Compte tenu des blocages politiques, au Sénat américain
+par exemple, on est loin d’être assuré que le Protocole de Kyoto sera un jour
+juridiquement valable. On peut s’attendre aujourd’hui à une concentration de
+550 ppmv de CO2 dans l’atmosphère.
+15
+
+Remerciements
+Je remercie Jean-Charles Hourcade pour avoir dirigé ces travaux, Michael
+Grubb, Alan Manne, Thierry Chapuis et Franck Lecocq pour nos collaboration,
+ainsi que G. Mégie et deux relecteurs anonymes pour leurs commentaires.
+
+Références
+Arrow, Kenneth J. 1995. Effet de serre et actualisation. Revue de l’énergie,
+471, 631–636.
+Azar, Christian, & Rodhe, Henning. 1997. Targets for stabilization of atmospheric CO2 . Science, 276, 1818–1819.
+Bolin, Bert. 1998. The Kyoto negociations on climate change : A science perspective. Science, 279(5349), 330–331.
+Broecker, Wallace. 1997. Thermohaline circulation, the Achille’s heel of our
+climate system : Will man-made CO2 upset the current balance. Science,
+278(5343), 1582–1588.
+Enting, I. G., Wigley, T. M. L., & Heimann, M. 1994. Future emissions
+and concentrations of carbon dioxide : Key Ocean/Atmosphere/Land analyses. Tech. rept. Technical Paper 31. CSIRO Division of Atmospheric Research, Australia. Also published on the internet, formatted as Postscript,
+on CDIAC electronic archives, http ://cdiac.esd.ornl.gov/ndps/db1009.html,
+accessed 9/7/98.
+Ha-Duong, Minh. 1998 (Apr.). Comment tenir compte de l’irréversibilité dans
+l’évaluation intégrée du changement climatique ? Thèse de doctorat, École
+des hautes Études en Sciences Sociales, Paris.
+Ha-Duong, Minh, Grubb, Michael J., & Hourcade, Jean-Charles. 1997. Influence
+of socioeconomic inertia and uncertainty on optimal CO2 -emission abatement.
+Nature, 390, 270–274.
+Ha-Duong, Minh, Hourcade, Jean-Charles, & Lecocq, Franck. 1998. Dynamic
+consistency problems behind the Kyoto protocol. International journal of
+environment and pollution, 11(4), 426–446.
+Hoffert, Martin I., Caldeira, Ken, Jain, Atul K., Haites, Erik F., Harvey, L.
+D. Danny, Potter, Seth D., Schlesinger, Michael E., Schneider, Stephen H.,
+Watts, Robert G., Wigley, Tom M. L., & Wuebbles, Donald J. 1998. Energy
+implications of future stabilization of atmospheric CO2 content. Nature, 395,
+881–884.
+Portney, Paul R., & Weyant, John P. (eds). 1999. Discounting and intergenerational equity. Washington, DC : Resources for the Future.
+Treich, Nicolas. 1997. Vers une théorie economique de la précaution ? Risques,
+32, 117–130. Repris dans Problèmes Economiques n◦ 2.572, 10 juin 1998, pp
+19-25.
+
+16
+
+Weitzman, M. 1998. Why the far-distant future should be discounted at its
+lowest possible rate ? Journal of environmental economics and management,
+36, 210–208.
+
+17
+
+Liste des encadrés
+1. Méthodes de détermination d’un taux d’actualisation
+
+19
+
+2. Notion de coût sans regrets
+
+20
+
+18
+
+Encadré 1 : Méthodes de détermination d’un taux d’actualisation
+La théorie moderne de l’actualisation pour les biens d’environnement est liée aux aspects
+fondamentaux de la pensée macro-économique, c’est à dire la croissance et l’accumulation
+du capital. Deux approches existent pour déterminer un taux d’actualisation des coûts et
+bénéfices :
+– La première approche met en parallèle les mesures de protection du climat et les autres
+investissements de la société. De même que l’éducation contribue à accumuler du capital
+humain, ou que l’industrie contribue à accumuler du capital économique, il s’agit de
+reproduire et de transmettre un capital naturel, un patrimoine. La théorie de l’efficacité
+économique suggère alors d’égaliser le taux d’actualisation avec le taux de rentabilité des
+autres investissements publics à long terme sans risque. Les études empiriques conduisent
+à suggérer un taux situé entre 3% et 6% à prix constant.
+– La seconde approche, qui suggère des taux inférieurs, considère l’actualisation comme
+un paramètre fondé sur l’éthique des choix collectifs. L’actualisation est alors la somme
+de deux effets :
+– La préférence pure pour le présent renvoie à l’idée d’impatience et mesure en quelque
+sorte la distance à laquelle nous situons les intérêts des générations futures par rapport
+à la nôtre.
+– L’effet richesse peut s’illustrer par l’exemple suivant : la satisfaction qu’un consommateur moderne tire d’un kilo de farine de blé est certainement inférieure à ce
+que son ancêtre du XIXe siècle en tirait. En général, nous pensons que la valeur
+supplémentaire d’une unité de biens est moindre dans une société plus riche. Compte
+tenu du développement économique observé sur les deux derniers siècles, dans l’ensemble, les décideurs peuvent s’attendre à ce que nos descendants dans un siècle soient
+plusieurs fois plus riches que nous.
+Il apparaı̂t dans les deux cas que le choix d’un taux d’actualisation est lié aux anticipations
+concernant le taux de croissance. Or il est légitime d’avoir des anticipations différentes pour
+le long et le très long terme, par exemple à cause des effets démographiques. En ce sens,
+le concept d’un taux unique pour tous les projets publics n’est pas défendable. La théorie
+propose plutôt un taux d’actualisation variable dans le temps et dépendant de l’horizon
+d’analyse.
+
+19
+
+Encadré 2 : Options sans regrets et coût négatifs.
+Le concept de coût négatifs présente un aspect paradoxal qu’il est possible d’éclaircir en
+distinguant l’approche technique de l’approche macro-économique.
+L’IPCC définit les mesures sans regrets comme celles dont les avantages tels que
+l’amélioration du rendement ou la réduction de la pollution au plan local ou régional (sans
+inclure les avantages apportés par l’atténuation des effets du changement climatique) sont
+supérieurs aux coûts qu’elles entraı̂nent.
+L’exemple classique est le remplacement des ampoules à incandescence par les ampoules
+fluo-compactes dans les bureaux. Le coût total des ampoules comprend au moins quatre
+composantes : a) l’achat, b) le travail nécessaire à la pose, c) la consommation directe
+d’électricité et d) les frais indirects comme l’évacuation de la chaleur produite par les
+lampes quand un système d’air conditionné est utilisé. Les lampes fluo-compactes sont
+économiquement avantageuses car leur coût d’achat supérieur est plus que compensé par
+la diminution des trois autres composantes (durée de vie accrue et consommation électrique
+moindre). Le bénéfice environnemental est une diminution de la consommation d’énergie.
+La notion de mesure sans regrets illustrée ci dessus se place au niveau technique. Il convient
+de distinguer au moins quatre niveaux sémantiques pour la notion de coût.
+Un coût Technique peut se calculer pour remplacer un type d’équipement par un autre,
+plus moderne ou plus performant, comme dans l’exemple donné ci dessus.
+Le coût Sectoriel correspond aux effets d’une politique donnée sur la rentabilité d’un
+secteur industriel donné comme l’industrie automobile ou la chimie.
+Un coût Macro-économique est le plus souvent le résultat d’un modèle d’équilibre des
+échanges de biens et services, exprimé en termes d’impact sur la production nationale
+brute.
+Le coût Social se réfère aux objectifs de bonheur d’une population, il est difficilement
+mesurable et modélisable car outre la richesse il faut considérer l’emploi, le loisir ou
+la qualité de vie.
+Diverses études montrent l’existence de tout un inventaire de mesures techniques permettant d’économiser l’énergie de manière économiquement rentable.
+La perspective macro-économique est différente. Le modèle standard suppose que les agents
+maximisent leur bien-être et donc il ne saurait exister de “coûts négatifs” à l’optimum. Dans
+un monde idéal infiniment efficace et parfaitement rationnel, s’il est possible d’économiser
+de l’argent, les agents l’ont déjà fait. D’où le caractère paradoxal du concept.
+Mais le monde réel n’est pas idéal. Dans ce cadre, les options sans regrets s’analysent
+comme des corrections par rapport à des inefficacités pré-existantes. Il s’agit par exemple de
+réduire des distorsions dans la concurrence ou de mieux informer des agents. La perspective
+technique et le point de vue macro-économique sont ainsi compatibles.
+
+20
+
+
