@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Systematic main.bib accuracy validation (authors, correct-paper, DOI)
+Created: 2026-06-28
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-28T22:31Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Three citation errors surfaced while preparing the Charles Gide paper, all in
+entries that *resolve fine* but are factually wrong:
+- `corfee-morlot2009` pointed to "Cities, Climate Change and Multilevel
+  Governance" (a paper on cities), while both manuscript.qmd and
+  manuscript-Gide.qmd cite it for Corfee-Morlot's role in the climate-finance
+  MRV infrastructure. Repointed to "Financing Climate Change Mitigation:
+  Towards a Framework for MRV" (Corfee-Morlot, Guay & Larsen 2009). PR #838.
+- `carty_lecomte2018` had wrong author names "Tracey Carty / Jan Le Comte" →
+  "Tracy Carty / Armelle Le Comte". PR #838.
+- `buchner2011` / `buchner2013` spelled "Büchner" (umlaut) for Barbara
+  Buchner (CPI). PR #840.
+
+main.bib has 148 entries; only ~15 were scrutinised for the Gide paper, and
+3 were wrong. The error rate warrants a systematic pass. None of these are
+caught by DOI resolution alone — they are wrong-paper / wrong-name with valid
+identifiers.
+
+## Relevant files
+- `content/bibliography/main.bib` — 148 entries, shared by all manuscripts
+- `~/.claude/skills/related-work-note-validate` — re-resolves DOIs/URLs/eprints
+
+## Actions
+1. Resolve every DOI/URL in main.bib; flag dead or mismatched identifiers.
+2. Spot-check author surnames and the bound paper against the resolved source
+   — the semantic sub-class (wrong-paper / wrong-name with a valid DOI) that
+   resolution alone misses.
+3. Fix flagged entries, one coherent commit per batch, with the source cited.
+
+## Test
+- A test that resolves every DOI in main.bib (network; mark `@slow` /
+  `@integration`) and asserts all resolve. Catches the dead/wrong-DOI
+  sub-class. The author-name sub-class cannot be fully automated.
+
+## Verification
+- [ ] Every DOI/URL in main.bib resolves
+- [ ] The three already-fixed entries remain correct
+- [ ] Any newly found errors fixed with a source cited in the commit message
+
+## Invariants
+- Do NOT change citation keys — that breaks both manuscripts. Fix fields only.
+- main.bib is shared: every change affects manuscript.qmd AND manuscript-Gide.qmd.
+
+## Exit criteria
+- main.bib validated end-to-end; flagged errors fixed; DOI-resolution test added
+  and passing in CI.
