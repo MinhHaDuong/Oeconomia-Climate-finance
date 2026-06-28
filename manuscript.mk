@@ -49,3 +49,29 @@ output/content/manuscript.pdf: $(MANUSCRIPT_INPUTS)
 
 output/content/manuscript.docx: $(MANUSCRIPT_INPUTS)
 	quarto render $(MANUSCRIPT_SRC) --to docx
+
+# ── Charles Gide conference variant ─────────────────────────────────────────
+# Short French paper (manuscript-Gide.qmd) presented at the 21e colloque Charles
+# Gide. Same writing workpackage: shares the manuscript's git-tracked figures +
+# tab_venues.md and manuscript-vars.yml. Its own Quarto profile excludes ALL
+# sibling docs (including manuscript.qmd) so a bare render builds only the Gide
+# paper. No data, no uv — Quarto + LaTeX only.
+#
+# NOTE: content/manuscript-Gide.qmd is the author's working draft and is
+# deliberately NOT git-tracked yet, so `make gide` builds only where that file
+# is present (the author's checkout), not in a clean-room checkout. Track it
+# later to make this workpackage fully reproducible (cf. the manuscript slice of
+# ticket 0131).
+GIDE_SRC     := content/manuscript-Gide.qmd
+GIDE_PROFILE := _quarto-manuscript-Gide.yml
+
+GIDE_INPUTS := $(GIDE_SRC) $(MANUSCRIPT_BIB) $(MANUSCRIPT_CSL) \
+               $(MANUSCRIPT_VARS) $(GIDE_PROFILE) $(MANUSCRIPT_DELIVERABLES)
+
+output/content/manuscript-Gide.pdf: export QUARTO_PROFILE := manuscript-Gide
+
+output/content/manuscript-Gide.pdf: $(GIDE_INPUTS)
+	quarto render $(GIDE_SRC) --to pdf
+
+.PHONY: gide
+gide: output/content/manuscript-Gide.pdf

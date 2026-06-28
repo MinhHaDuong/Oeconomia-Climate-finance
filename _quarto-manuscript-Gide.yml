@@ -1,0 +1,9 @@
+project:
+  render:
+    - content/manuscript-Gide.qmd
+    - "!content/manuscript.qmd"
+    - "!content/corpus-report.qmd"
+    - "!content/technical-report.qmd"
+    - "!content/breakpoint-detect-method-zoo.qmd"
+    - "!content/data-paper.qmd"
+    - "!content/multilayer-detection.qmd"
