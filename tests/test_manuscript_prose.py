@@ -271,7 +271,7 @@ def test_substrate_smoke():
     assert len(body()) > 1000
     assert len(paragraphs()) > 20
     assert abstract().startswith("**Abstract.**")
-    assert "Copenhagen" in section("2. Crystallization")
+    assert "Copenhagen" in section("Crystallization")
 
 
 # --------------------------------------------------------------------------- #
