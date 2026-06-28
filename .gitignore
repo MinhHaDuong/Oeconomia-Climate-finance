@@ -21,9 +21,17 @@ data/catalogs/.citations_batch_checkpoint.csv
 # Make sentinel files (dynamic-output targets)
 *.stamp
 
-# Generated figures, tables, and stats (regenerate with: make figures / make stats)
-content/figures/
-content/tables/
+# Generated figures, tables, and stats (regenerate with: make figures / make stats).
+# The manuscript's writing-facing deliverables (small, byte-stable PNGs + table)
+# are git-tracked like content/_includes/ so a clean-room writing build (manuscript.mk)
+# needs no Phase-1 data. Everything else under figures/ and tables/ stays ignored
+# (bulk analysis intermediates — ticket 0131).
+content/figures/*
+!content/figures/fig_bars_v1.png
+!content/figures/fig_composition.png
+!content/figures/fig_breaks.png
+content/tables/*
+!content/tables/tab_venues.md
 content/*-vars.yml
 !content/manuscript-vars.yml
 
