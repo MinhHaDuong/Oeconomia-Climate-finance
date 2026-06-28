@@ -57,16 +57,24 @@ output/content/manuscript.docx: $(MANUSCRIPT_INPUTS)
 # sibling docs (including manuscript.qmd) so a bare render builds only the Gide
 # paper. No data, no uv — Quarto + LaTeX only.
 #
-# NOTE: content/manuscript-Gide.qmd is the author's working draft and is
-# deliberately NOT git-tracked yet, so `make gide` builds only where that file
-# is present (the author's checkout), not in a clean-room checkout. Track it
-# later to make this workpackage fully reproducible (cf. the manuscript slice of
-# ticket 0131).
-GIDE_SRC     := content/manuscript-Gide.qmd
-GIDE_PROFILE := _quarto-manuscript-Gide.yml
+# content/manuscript-Gide.qmd is git-tracked. The figures and tables it consumes
+# are tracked handoff artifacts too; regenerating them from data is the analysis
+# workpackage's job, so render this paper with those artifacts already present
+# (a full data-less clean-room rebuild is tracked in ticket 0131).
+GIDE_SRC        := content/manuscript-Gide.qmd
+GIDE_PROFILE    := _quarto-manuscript-Gide.yml
+# French-caption variant of the shared venues table: identical English table body
+# (headers, journal names, counts) with a French caption. Derived from the
+# git-tracked tab_venues.md, so it stays in sync when that table is regenerated.
+# Writing-side only: a plain-text transform, no uv and no data.
+GIDE_VENUES_FR  := content/tables/tab_venues_fr.md
+
+$(GIDE_VENUES_FR): content/tables/tab_venues.md content/tables/tab_venues_fr_caption.md
+	{ grep -v '^: ' $< ; cat content/tables/tab_venues_fr_caption.md ; } > $@
 
 GIDE_INPUTS := $(GIDE_SRC) $(MANUSCRIPT_BIB) $(MANUSCRIPT_CSL) \
-               $(MANUSCRIPT_VARS) $(GIDE_PROFILE) $(MANUSCRIPT_DELIVERABLES)
+               $(MANUSCRIPT_VARS) $(GIDE_PROFILE) \
+               $(MANUSCRIPT_DELIVERABLES) $(GIDE_VENUES_FR)
 
 output/content/manuscript-Gide.pdf: export QUARTO_PROFILE := manuscript-Gide
 

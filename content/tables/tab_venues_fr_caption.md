@@ -1,0 +1,1 @@
+: Revues de publication des travaux les plus cités (cités $\geq$ 50 fois), par pôle d'affectation. Chaque travail est rattaché au pôle efficacité ou redevabilité selon sa position sur l'axe sémantique (cf. note méthodologique en annexe). La colonne « Lean » indique l'orientation dominante de la revue : le pôle où se range la majorité de ses articles. {#tbl-venues}

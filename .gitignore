@@ -32,6 +32,8 @@ content/figures/*
 !content/figures/fig_breaks.png
 content/tables/*
 !content/tables/tab_venues.md
+!content/tables/tab_venues_fr.md
+!content/tables/tab_venues_fr_caption.md
 content/*-vars.yml
 !content/manuscript-vars.yml
 

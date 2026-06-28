@@ -216,6 +216,6 @@ La troisième question demande si la polarisation d'après Paris se voit dans le
 
 La même tension se retrouve dans l'écologie des revues. Les travaux proches du pôle efficacité apparaissent davantage dans les revues de finance, d'énergie et de risque climatique. Les travaux proches du pôle redevabilité se concentrent plus souvent dans les revues de gouvernance environnementale, de politique climatique et d'économie politique. Quelques lieux, notamment *Climate Policy*, servent d'espace commun. Le tableau détaillé des lieux de publication est conservé comme élément de vérification, non comme cœur de l'argument.
 
-{{< include tables/tab_venues.md >}}
+{{< include tables/tab_venues_fr.md >}}
 
 **Reproductibilité, données et code.** Les opérations résumées ci-dessus reposent sur des méthodes standard, nommées ici pour le lecteur spécialiste. La détection des ruptures combine la divergence de Jensen--Shannon, sur les répartitions thématiques, et la distance cosinus, sur les représentations vectorielles -- les « embeddings » -- produites par le modèle multilingue `BAAI/bge-m3`. Le regroupement des textes par le sens utilise l'algorithme k-means à six groupes ; celui des co-citations, la méthode de Louvain. Le corpus, les scripts et la chaîne de reproduction complète sont archivés sur Zenodo (DOI : [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)) et développés à l'adresse <https://github.com/MinhHaDuong/climate-finance-het>.
