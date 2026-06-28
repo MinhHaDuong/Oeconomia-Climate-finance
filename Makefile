@@ -79,6 +79,7 @@ endif
 -include multilayer-detection.mk
 -include zoo.mk
 -include venues.mk
+-include manuscript.mk
 
 # ── Quarto ───────────────────────────────────────────────
 # ── Per-document include sets ────────────────────────────
@@ -663,11 +664,9 @@ manuscript-figures: figures-manuscript
 datapaper-render: output/content/data-paper.pdf
 datapaper-figures: figures-datapaper
 
-output/content/manuscript.pdf: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
-	quarto render $< --to pdf
-
-output/content/manuscript.docx: $(SRC) $(BIB) $(CSL) $(MANUSCRIPT_FIGS) $(PROJECT_INCLUDES) content/manuscript-vars.yml
-	quarto render $< --to docx
+# The output/content/manuscript.{pdf,docx} render rules live in manuscript.mk
+# (Phase 3 writing workpackage, -include'd above). They depend only on committed
+# handoff artifacts so the manuscript builds clean-room with no data — ticket 0131.
 
 output/content/corpus-report.pdf: content/corpus-report.qmd $(PROJECT_INCLUDES) $(BIB) content/technical-report-vars.yml
 	quarto render $< --to pdf
