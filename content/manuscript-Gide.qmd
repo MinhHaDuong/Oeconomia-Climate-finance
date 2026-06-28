@@ -19,6 +19,9 @@ bibliography: bibliography/main.bib
 csl: bibliography/oeconomia.csl
 reference-section-title: Bibliographie
 number-sections: true
+crossref:
+  fig-title: Figure
+  tbl-title: Tableau
 format:
   pdf:
     pdf-engine: xelatex
