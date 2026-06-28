@@ -1,6 +1,6 @@
 # State
 
-Last updated: 2026-06-24T20:17Z
+Last updated: 2026-06-28T22:52Z
 
 ## Current goal
 
@@ -11,15 +11,18 @@ implementation** (tracker 0156) — the prose pass applying the decisions, then 
 ### Roadmap
 - **v2.0.5** (0156): prose pass 0134 (define-by-negation) + 0135 (hybrid economists framing), em-dash 0162, content 0137/0138/0139/0141/0143, response letter 0152, resubmit 0153.
 - Parallel (not R&R): method paper **0026** — `multilayer-detection.qmd`.
+- Parallel (done): Charles Gide conference paper `manuscript-Gide.qmd` — fact-checked (Türkiye/WB case), French captions + crossref, voice-matched, on main. Follow-up: bib accuracy validation **0164**.
 
 ## Status
-<!-- generated 2026-06-24T20:17Z -->
+<!-- generated 2026-06-28T22:52Z -->
 
-**Tickets:** 40 ready · 9 blocked — `erg ready tickets/` for full list
+**Tickets:** 42 ready · 9 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  24c6646 Merge pull request #830 from MinhHaDuong/t0155-v204-decisions
-  e30ee64 ticket(0155): record v2.0.4 framing decisions, propagate to editorial brief
-  60bdac2 Merge pull request #829 from MinhHaDuong/housekeeping-state-2026-06-23
+  3b30844 Merge pull request #842 from MinhHaDuong/ticket-bib-validation
+  ce8cf6f ticket(0164): systematic main.bib accuracy validation
+  646f354 Merge pull request #841 from MinhHaDuong/gide-crossref-fr
+  998088a Merge pull request #840 from MinhHaDuong/fix-bib-buchner
+  9302145 manuscript(gide): French crossref prefixes (Tableau/Figure)
 
 ## Corpus (v1.1.1)
 
