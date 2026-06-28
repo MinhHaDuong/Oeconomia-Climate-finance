@@ -267,7 +267,7 @@ The tension between the two poles is constitutive: they sustain each other becau
 
 \newpage
 
-## Conclusion {.unnumbered}
+## Conclusion {#sec-conclusion}
 
 This paper has traced how climate finance was constituted as an economic object between 1990 and 2024---not through progressive discovery of a pre-existing reality, but through the construction of accounting categories (Rio markers, mobilised-private-finance methodologies, concessionality thresholds), the crystallization of these categories in a narrow window between 2007 and 2014, and the persistence of a constitutive tension between efficiency-oriented and accountability-oriented approaches that has structured the field ever since. The economists who shaped climate finance did not predict the future; they built the accounting infrastructure through which the present is assessed. Their contribution belongs less to the history of economic theory than to the history of economic governance---the production of commensuration devices through which states and international organisations render financial flows calculable and actionable.
 
