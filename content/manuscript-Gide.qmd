@@ -17,7 +17,6 @@ lang: fr
 metadata-files: [manuscript-vars.yml]
 bibliography: bibliography/main.bib
 csl: bibliography/oeconomia.csl
-reference-section-title: Bibliographie
 number-sections: true
 crossref:
   fig-title: Figure
@@ -223,3 +222,8 @@ La troisième question demande si la polarisation d'après Paris se voit dans le
 {{< include tables/tab_venues_fr.md >}}
 
 **Reproductibilité, données et code.** Les opérations résumées ci-dessus reposent sur des méthodes statistiques standard : les représentations vectorielles (« embeddings ») sont produites par le modèle multilingue `BAAI/bge-m3`. Le regroupement des textes par leur sens utilise l'algorithme k-means à six groupes sur les embeddings. La détection des ruptures combine la divergence de Jensen--Shannon et la distance cosinus, sur les répartitions thématiques. Les communautés de co-citations sont examinées par la méthode de Louvain. Les scripts et la chaîne de reproduction complète sont archivés sur Zenodo (DOI : [10.5281/zenodo.19097045](https://doi.org/10.5281/zenodo.19097045)) et développés en science ouverte à l'adresse <https://github.com/MinhHaDuong/climate-finance-het>.
+
+## Bibliographie {.unnumbered}
+
+::: {#refs}
+:::
