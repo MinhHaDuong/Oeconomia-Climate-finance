@@ -13,6 +13,8 @@ format:
     header-includes: |
       \setbeamertemplate{caption}{\raggedright\insertcaption\par}
       \setbeamerfont{footnote}{size=\tiny}
+      \usepackage{array}
+      \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
       \titlegraphic{%
         \begin{tikzpicture}[remember picture,overlay]
           \node[anchor=north west,font=\footnotesize] at ([xshift=0.8cm,yshift=-0.7cm]current page.north west)
@@ -45,13 +47,11 @@ format:
 {\footnotesize COP29 --- Bakou, 24 novembre 2024}
 \end{center}
 
-\small
+\medskip
 
-- ***Euronews*** --- « un accord à 300 milliards de dollars pour les pays en développement »
-- **ONU Info** --- « la COP29 s'achève sur une promesse de 300 milliards… l'accord qualifié d'*insulte* par les pays en développement »
-- **NPR** --- « negotiators struck a *controversial* \$300 billion deal »
-
-\normalsize
+- ***Euronews*** : « un accord à 300 milliards pour les pays en développement »
+- **ONU Info** : « l'accord qualifié d'*insulte* par les pays en développement »
+- **NPR** : « a *controversial* \$300 billion deal »
 
 . . .
 
@@ -65,9 +65,7 @@ Le chiffre est traité comme un fait solide par la presse ; le reste du propos m
 qu'il désigne un objet construit. Laisser le paradoxe s'installer avant la thèse.
 :::
 
-## Construit, pas découvert
-
-La finance climat n'a pas été **découverte** comme une réalité déjà là.
+## Les économistes l'ont construite, pas découverte
 
 Les flux existent : budgets, prêts, garanties, investissements privés.
 Ce qui est **construit**, c'est leur agrégation comme grandeur gouvernable.
@@ -85,12 +83,22 @@ les économistes ne sont ni souverains ni exécutants. Ils travaillent dans la c
 
 ## Un chapitre manquant de l'histoire de l'économie du climat
 
-| Ce que l'histoire a étudié | Ce que ce travail ajoute |
-|---|---|
-| Nordhaus, Stern, modèles intégrés | Les catégories comptables |
-| L'optimisation | La commensuration |
-| « Quel prix pour le carbone ? » | « Ce dollar compte-t-il ? » |
-| Construire des modèles | Fabriquer des catégories |
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}P{0.42\linewidth}P{0.42\linewidth}@{}}
+\toprule
+\textbf{Ce que l'histoire a étudié} & \textbf{Ce que ce travail ajoute} \\
+\midrule
+Nordhaus, Stern, modèles intégrés & Les catégories comptables \\
+\addlinespace
+L'optimisation & La commensuration \\
+\addlinespace
+« Quel prix pour le carbone ? » & « Ce dollar compte-t-il ? » \\
+\addlinespace
+Construire des modèles & Fabriquer des catégories \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 Une histoire de la pensée économique **hors de ses lieux canoniques** :
 rapports d'experts, comités statistiques, banques de développement.
@@ -127,15 +135,13 @@ Le corpus ne **remplace** pas l'interprétation : il la soumet à un test indép
 3. **Champ établi** (2015--2025) : controverses sur l'objet existant
 
 \medskip
-Paris diversifie les thèmes sans refonder les catégories de mesure.
+Tournants historiques à Bali (2007) et Paris (2015).
 
 ## La littérature sur la finance climat, 1990--2023
 
 \begin{center}
-\includegraphics[width=0.95\paperwidth,height=0.82\textheight,keepaspectratio]{figures/fig_bars_v1.png}
+\includegraphics[width=0.95\paperwidth,height=0.9\textheight,keepaspectratio]{figures/fig_bars_v1.png}
 \end{center}
-
-\begin{center}\footnotesize Tournants historiques à Bali (2007) et Paris (2015).\end{center}
 
 ## Vitesse de renouvellement des thèmes dans le corpus
 
@@ -148,7 +154,7 @@ Paris diversifie les thèmes sans refonder les catégories de mesure.
 ## Les pièces existent, l'objet n'est pas assemblé
 
 \begin{center}
-\begin{tabular}{@{}p{0.25\linewidth}p{0.27\linewidth}p{0.38\linewidth}@{}}
+\begin{tabular}{@{}P{0.27\linewidth}P{0.26\linewidth}P{0.38\linewidth}@{}}
 \toprule
 \textbf{Tradition} & \textbf{Question centrale} & \textbf{Limite avant 2007} \\
 \midrule
@@ -163,6 +169,26 @@ Partage de l'effort & Qui doit payer ? & Faible traduction en suivi financier \\
 
 Aucun des trois langages --- prix du carbone, aide, partage de l'effort ---
 ne suffit seul à produire une comptabilité de la finance climat.
+
+## Trois traditions, leurs auteurs
+
+\begin{center}
+\begin{tabular}{@{}P{0.30\linewidth}P{0.60\linewidth}@{}}
+\toprule
+\textbf{Tradition} & \textbf{Auteurs et institutions} \\
+\midrule
+Économie de l'environnement & Pigou ; Ayres \& Kneese ; Nordhaus ; Manne \& Richels ; Stern ; Weitzman \\
+\addlinespace
+Statistique de l'aide & OCDE/CAD ; Desrosières ; Porter ; marqueurs de Rio ; A. \& K. Michaelowa \\
+\addlinespace
+Partage de l'effort & CCNUCC ; Protocole de Kyoto ; Negishi ; Roberts \& Weikmans \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip
+
+Trois lignées faiblement reliées : avant 2007, elles ne se citent guère.
 
 # Cristallisation (2007--2014)
 
@@ -197,7 +223,7 @@ Portrait : photo de profil Google Scholar, illustration académique.
 ## Deux pôles durables
 
 \begin{center}
-\begin{tabular}{@{}p{0.14\linewidth}p{0.37\linewidth}p{0.37\linewidth}@{}}
+\begin{tabular}{@{}P{0.14\linewidth}P{0.37\linewidth}P{0.37\linewidth}@{}}
 \toprule
  & \textbf{Pôle efficacité} & \textbf{Pôle redevabilité} \\
 \midrule
@@ -215,15 +241,18 @@ Risque & Diluer le climat dans l'ingénierie & Contentieux distributif insoluble
 Les deux pôles partagent les mêmes catégories et les interprètent différemment.
 La controverse n'est pas un accident : c'est une **condition de fonctionnement**.
 
-## Recomposition thématique du corpus
+## {.plain}
 
-\begin{center}
-\includegraphics[width=0.98\paperwidth,height=0.8\textheight,keepaspectratio]{figures/fig_composition_wide.png}
-\end{center}
+\begin{tikzpicture}[remember picture,overlay]
+\node at (current page.center)
+  {\includegraphics[width=\paperwidth]{figures/fig_composition_wide.png}};
+\end{tikzpicture}
 
-\begin{center}\footnotesize Kyoto recule ; gouvernance de Paris, renouvelables, obligations vertes et ESG progressent.\end{center}
-
-# Champ établi (2015--2025)
+::: {.notes}
+Recomposition thématique du corpus : Kyoto recule ; gouvernance de Paris,
+renouvelables, obligations vertes et ESG progressent. Sans refonte des
+catégories de mesure.
+:::
 
 ## Compter, c'est gouverner
 
@@ -237,11 +266,13 @@ Après 2015, les thèmes se recomposent : les mécanismes de Kyoto reculent ; la
 gouvernance de Paris, les renouvelables, les obligations vertes et l'ESG progressent.
 Mais **les catégories de mesure**, elles, ne sont pas refondées.
 
-## Le cas Türkiye / Banque mondiale (2025)
+# Champ établi (2015--2025)
+
+## Un projet de finance climat de la Banque mondiale en Türkiye
 
 :::: {.columns}
 ::: {.column width="58%"}
-Projet *Transforming Power Transmission* (P508354) :
+*Transforming Power Transmission* (P508354) :
 1,7 GW de renouvelables intégrés au réseau.
 
 \bigskip
@@ -254,24 +285,27 @@ renouvelables --- mais il transporte aussi l'électricité de toutes les sources
 **Les électrons n'ont pas de couleur.**
 :::
 ::: {.column width="42%"}
-![Réseau de transport turc 380 kV (illustratif).](slides-assets/turkey-380kv-line.jpg){width="82%"}
+\begin{center}
+\includegraphics[width=0.82\linewidth]{slides-assets/turkey-380kv-line.jpg}\\[2pt]
+{\footnotesize Réseau de transport turc 380 kV (illustratif).}
+\end{center}
 :::
 ::::
 
 ## Une opération, plusieurs conventions de comptage
 
-La Turquie, sous la catégorie investissement, emprunte par ailleurs en dollars à ~7,5 %.
+La Turquie emprunte par ailleurs en dollars à ~7,5 %.
 
 \begin{center}
-\begin{tabular}{@{}p{0.22\linewidth}p{0.28\linewidth}p{0.39\linewidth}@{}}
+\begin{tabular}{@{}P{0.22\linewidth}P{0.28\linewidth}P{0.39\linewidth}@{}}
 \toprule
 \textbf{Instrument} & \textbf{Comptage possible} & \textbf{Controverse révélée} \\
 \midrule
-Prêt IBRD --- 625 M€ & Quasi-intégral & Concessionnalité du bilan AAA, pas une subvention \\
+Prêt IBRD\newline 625 M€, $\approx$ 3\,\% & Quasi-intégral & Concessionnalité du bilan AAA, pas une subvention \\
 \addlinespace
-Prêt CTF --- 32,8 M€ & Valeur faciale \emph{ou} équivalent-don (≈ ½) & Argent prêté $\neq$ transfert réel \\
+Prêt CTF\newline 32,8 M€, 0,25\,\% & Valeur faciale \emph{ou} équivalent-don ($\approx$ ½) & Argent prêté $\neq$ transfert réel \\
 \addlinespace
-Don CTF --- 2 M\$ & Intégral & Marginal dans le total \\
+Don CTF\newline 2 M\$ & Intégral & Marginal dans le total \\
 \bottomrule
 \end{tabular}
 \end{center}

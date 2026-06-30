@@ -97,7 +97,7 @@ def main():
     # Layout: tall 3×2 (default, manuscript) or wide 2×3 (--wide, slides)
     if args.wide:
         nrows, ncols = 2, 3
-        fig, axes = plt.subplots(nrows, ncols, figsize=(FIGWIDTH * 1.7, FIGWIDTH * 0.62))
+        fig, axes = plt.subplots(nrows, ncols, figsize=(FIGWIDTH * 1.7, FIGWIDTH * 0.92))
     else:
         nrows, ncols = 3, 2
         fig, axes = plt.subplots(nrows, ncols, figsize=(FIGWIDTH, FIGWIDTH * 1.15))
