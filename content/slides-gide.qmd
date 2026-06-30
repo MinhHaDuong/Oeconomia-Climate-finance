@@ -389,7 +389,7 @@ Revues & Energy Policy, Energy Economics, Renew. \& Sustain. Energy Rev. & Clima
 \end{tabular}
 \end{center}
 
-Chaque pôle prend le **même camp** dans les quatre controverses : non pas seize positions, mais deux.
+Chaque pôle prend le **même camp** dans les quatre controverses.
 
 ::: {.notes}
 Ligne « Revues » : écologie des revues du corpus (Tableau 4 / annexe A.5). Les travaux
