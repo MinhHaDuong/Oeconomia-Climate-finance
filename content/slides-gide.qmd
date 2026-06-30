@@ -57,8 +57,12 @@ format:
 
 Pourtant : **aucune caisse** ne contient cette somme, **aucun registre** ne
 l'enregistre, **aucune méthode** de comptage ne s'impose sans contestation.
-Le nombre résulte de **conventions comptables** appliquées à des flux hétérogènes
---- conventions elles-mêmes disputées.
+
+. . .
+
+\begin{center}
+\large\textbf{Est-ce un objet économique ?}
+\end{center}
 
 ::: {.notes}
 Le chiffre est traité comme un fait solide par la presse ; le reste du propos montre
@@ -66,6 +70,8 @@ qu'il désigne un objet construit. Laisser le paradoxe s'installer avant la thè
 :::
 
 ## Les économistes l'ont construite, pas découverte
+
+**Oui** --- un objet économique à part entière.
 
 Les flux existent : budgets, prêts, garanties, investissements privés.
 Ce qui est **construit**, c'est leur agrégation comme grandeur gouvernable.
