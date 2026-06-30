@@ -188,7 +188,7 @@ comparable — il réoriente les thèmes sans refonder les catégories de mesure
 \midrule
 Économie de l'environnement & Ayres \& Kneese 1969 ; Manne \& Richels 1992 ; Nordhaus 1992 ; Stern 2007 ; Weitzman 2007 \\
 \addlinespace
-Développement et coopération internationale & Porter 1995 ; Michaelowa \& Michaelowa 2007 \\
+Aide, développement, commerce & Porter 1995 ; Michaelowa \& Michaelowa 2007 \\
 \addlinespace
 Efficacité et équité & Negishi 1960 ; Roberts \& Weikmans 2017 \\
 \bottomrule
@@ -203,7 +203,7 @@ Externalities* (AER) : la matérialité des externalités. Nordhaus 1992 (Scienc
 DICE, prix optimal du carbone. Stern 2007 ; Weitzman 2007 : taux d'actualisation et
 risque extrême. → Apport : le prix du carbone, mais aucune comptabilité des flux Nord-Sud.
 
-Développement et coopération internationale. Desrosières 1998, *La politique des
+Aide, développement, commerce. Desrosières 1998, *La politique des
 grands nombres* : la statistique comme convention. Porter 1995, *Trust in Numbers* :
 l'objectivité quantitative comme technologie de confiance. Michaelowa \& Michaelowa
 2007 : surdéclaration des marqueurs de Rio. → Apport : les catégories de l'aide (APD).
@@ -222,7 +222,7 @@ finance climat. → Apport : la grammaire de la responsabilité.
 \midrule
 Économie de l'environnement & Quel prix pour le carbone ? & Pas de comptabilité des flux Nord-Sud \\
 \addlinespace
-Développement et coopération internationale & Comment compter l'aide ? & Catégories conçues pour l'aide, pas le climat \\
+Aide, développement, commerce & Comment compter l'aide ? & Catégories conçues pour l'aide, pas le climat \\
 \addlinespace
 Efficacité et équité & Qui doit payer ? & Faible traduction en suivi financier \\
 \bottomrule
