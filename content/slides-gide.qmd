@@ -216,15 +216,16 @@ finance climat. → Apport : la grammaire de la responsabilité.
 ## Les pièces existent, l'objet n'est pas assemblé
 
 \begin{center}
-\begin{tabular}{@{}P{0.40\linewidth}P{0.24\linewidth}P{0.30\linewidth}@{}}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}P{0.42\linewidth}P{0.50\linewidth}@{}}
 \toprule
-\textbf{Sous-champ} & \textbf{Question centrale} & \textbf{Limite avant 2007} \\
+\textbf{Sous-champ} & \textbf{Avant 2007} \\
 \midrule
-Économie de l'environnement & Quel prix pour le carbone ? & Pas de comptabilité des flux Nord-Sud \\
+Économie de l'environnement & Modèles intégrés mondiaux ou orientés au Nord \\
 \addlinespace
-Aide, développement, commerce & Comment compter l'aide ? & Catégories conçues pour l'aide, pas le climat \\
+Aide, développement, commerce & Vise la transparence de l'aide au développement \\
 \addlinespace
-Efficacité et équité & Qui doit payer ? & Faible traduction en suivi financier \\
+Efficacité et équité & Préconise des mécanismes de marché (permis d'émission) \\
 \bottomrule
 \end{tabular}
 \end{center}
