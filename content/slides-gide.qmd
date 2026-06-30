@@ -256,6 +256,18 @@ il oblige à construire l'agrégat qu'il promet de mesurer.
 Portrait : photo de profil Google Scholar, illustration académique.
 :::
 
+## Compter, c'est gouverner
+
+L'Accord de Paris (article 9) donne à la finance climat un statut juridique central.
+La catégorie est assez installée pour servir, assez indéterminée pour soutenir des
+lectures divergentes.
+
+\bigskip
+
+Après 2015, les thèmes se recomposent : les mécanismes de Kyoto reculent ; la
+gouvernance de Paris, les renouvelables, les obligations vertes et l'ESG progressent.
+Mais **les catégories de mesure**, elles, ne sont pas refondées.
+
 ## {.plain}
 
 \begin{tikzpicture}[remember picture,overlay]
@@ -269,25 +281,13 @@ renouvelables, obligations vertes et ESG progressent. Sans refonte des
 catégories de mesure.
 :::
 
-## Compter, c'est gouverner
-
-L'Accord de Paris (article 9) donne à la finance climat un statut juridique central.
-La catégorie est assez installée pour servir, assez indéterminée pour soutenir des
-lectures divergentes.
-
-\bigskip
-
-Après 2015, les thèmes se recomposent : les mécanismes de Kyoto reculent ; la
-gouvernance de Paris, les renouvelables, les obligations vertes et l'ESG progressent.
-Mais **les catégories de mesure**, elles, ne sont pas refondées.
-
 # Champ établi (2015--2025)
 
 ## Un projet de finance climat de la Banque mondiale en Türkiye
 
 :::: {.columns}
 ::: {.column width="58%"}
-*Transforming Power Transmission* (P508354) :
+*Transforming Power Transmission* (P508354) :\newline
 1,7 GW de renouvelables intégrés au réseau.
 
 \bigskip
@@ -302,7 +302,7 @@ renouvelables --- mais il transporte aussi l'électricité de toutes les sources
 ::: {.column width="42%"}
 \begin{center}
 \includegraphics[width=0.82\linewidth]{slides-assets/turkey-380kv-line.jpg}\\[2pt]
-{\footnotesize Réseau de transport turc 380 kV (illustratif).}
+{\footnotesize Le projet modernise le réseau de transport. Photo : ligne 380 kV (illustrative).}
 \end{center}
 :::
 ::::
@@ -324,6 +324,8 @@ Don CTF\newline 2 M\$ & Intégral & Marginal dans le total \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\footnotesize IBRD : International Bank for Reconstruction and Development ; CTF : Clean Technology Fund.
 
 ::: {.notes}
 Chaque étape --- prix du capital, équivalent-don, marqueur, attribution ---
