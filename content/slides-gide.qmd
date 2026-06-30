@@ -1,6 +1,6 @@
 ---
 title: "Économistes sous contrainte"
-subtitle: "Controverses et construction de la finance climat comme objet économique (1990--2025)"
+subtitle: "Construire et contester la finance climat, 1990--2025"
 author: "Minh Ha-Duong --- CNRS, CIRED"
 lang: fr
 format:
@@ -47,6 +47,8 @@ format:
 \end{center}
 
 \medskip
+
+Un même accord, trois lectures :
 
 - ***Euronews*** : « un accord à 300 milliards pour les pays en développement »
 - **ONU Info** : « l'accord qualifié d'*insulte* par les pays en développement »
@@ -106,7 +108,8 @@ Construire des modèles & Fabriquer des catégories \\
 \vfill
 
 \small Historiographie HET/STS : Aykut \& Dalmedico 2015 ; Pottier 2016. \quad
-Sociologie de la quantification : Desrosières 1998 ; Espeland \& Stevens 1998 ; Çalışkan \& Callon 2009.
+Sociologie de la quantification : Desrosières 1998 ; Espeland \& Stevens 1998. \quad
+Économisation : Çalışkan \& Callon 2009.
 
 # 2 — Méthode
 
@@ -380,7 +383,7 @@ Concepts & Levier, dérisquage, mobilisation & Additionnalité, équivalent-don 
 \addlinespace
 Lieux & Banques multilatérales, OCDE & ONG, économie politique \\
 \addlinespace
-Risque & Diluer le climat dans l'ingénierie & Contentieux distributif insoluble \\
+Risque & Climat dilué dans l'ingénierie financière & Climat réduit à un contentieux \\
 \addlinespace
 Revues & Energy Policy, Energy Economics, Renew. \& Sustain. Energy Rev. & Climate Policy, Global Env. Politics, Climatic Change \\
 \bottomrule
@@ -398,7 +401,7 @@ climatique. La polarisation se voit donc empiriquement, pas seulement conceptuel
 
 # 6 — Conclusion
 
-## L'ambiguïté comme ressource de gouvernement
+## L'ambiguïté : défaut ou ressource ?
 
 On croit la finance climat controversée parce que ses catégories sont mal définies.
 C'est l'inverse.
@@ -412,8 +415,8 @@ des intérêts contradictoires.
 . . .
 
 La quantification rend **administrable** des conflits pré-existants. Mise en visibilité, pas une résolution.
-Les économistes font un **travail de frontière** : entre aide et climat, entre prêt
-et transfert, entre efficacité financière et justice distributive.
+Les économistes font un **travail de frontière** *(Gieryn 1983)* : entre aide et climat,
+entre prêt et transfert, entre efficacité financière et justice distributive.
 
 ## Chantiers ouverts
 
@@ -425,5 +428,7 @@ et transfert, entre efficacité financière et justice distributive.
 
 \vfill
 \begin{center}
-\large Merci. \quad\footnotesize \textmd{minh.ha-duong@cnrs.fr} --- code et données : \texttt{doi.org/10.5281/zenodo.19097045}
+{\Large Merci.}\\[8pt]
+minh.ha-duong@cnrs.fr\\[3pt]
+{\footnotesize Code et données : \texttt{doi.org/10.5281/zenodo.19097045}}
 \end{center}
