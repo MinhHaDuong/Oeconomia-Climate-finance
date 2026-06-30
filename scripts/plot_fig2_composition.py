@@ -131,12 +131,14 @@ def main():
 
         # Panel title (bold) + TF-IDF subtitle (italic, smaller; omitted in --wide)
         short = SHORT_LABELS.get(col, f"Cluster {col}")
-        # Wide: center titles over the panel so long labels overflow symmetrically.
+        # Wide: center titles and break two-part labels at "&" onto two lines.
         title_x, title_ha = (0.5, "center") if args.wide else (0, "left")
+        title_y = 1.18 if args.wide else 1.24
+        title_disp = short.replace(" & ", "\n& ") if args.wide else short
         ax.text(
-            title_x, 1.24, short,
+            title_x, title_y, title_disp,
             transform=ax.transAxes, fontsize=title_fs, fontweight="bold",
-            color=DARK, ha=title_ha, va="bottom",
+            color=DARK, ha=title_ha, va="bottom", linespacing=1.1,
         )
         # Subtitle omitted in --wide (illegible at projection size).
         tfidf = "" if args.wide else _format_tfidf_line(raw_labels.get(int(col), ""))
@@ -171,7 +173,7 @@ def main():
         ax.tick_params(left=False)
 
     if args.wide:
-        fig.subplots_adjust(top=0.90, bottom=0.14, hspace=0.95, wspace=0.55)
+        fig.subplots_adjust(top=0.88, bottom=0.12, hspace=1.20, wspace=0.55)
     else:
         fig.subplots_adjust(top=0.97, bottom=0.07, hspace=0.75, wspace=0.18)
 
