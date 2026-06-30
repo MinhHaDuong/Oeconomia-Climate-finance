@@ -14,10 +14,27 @@ format:
     header-includes: |
       \setbeamertemplate{caption}{\raggedright\insertcaption\par}
       \setbeamerfont{footnote}{size=\tiny}
-      \titlegraphic{\hfill\includegraphics[height=2.1cm]{slides-assets/turkey-380kv-line.jpg}}
+      \titlegraphic{%
+        \begin{tikzpicture}[remember picture,overlay]
+          \node[anchor=north east] at ([xshift=-0.7cm,yshift=-0.55cm]current page.north east)
+            {\includegraphics[height=1.5cm]{slides-assets/logo-cired.png}};
+          \node[anchor=south] at ([yshift=0.25cm]current page.south)
+            {\includegraphics[width=0.78\paperwidth]{slides-assets/bandeau-tutelles.png}};
+        \end{tikzpicture}%
+      }
 ---
 
+## Plan
+
+\tableofcontents
+
 # Introduction
+
+## {.plain}
+
+\centering
+
+\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{slides-assets/cop29-baku-summit.jpg}
 
 ## Un chiffre net, un objet instable
 
@@ -39,25 +56,12 @@ hétérogènes --- conventions elles-mêmes disputées.
 Même ouverture que le papier. Laisser le paradoxe s'installer avant la thèse.
 :::
 
-## Bakou, COP29 --- 11--22 novembre 2024
-
-\begin{center}
-\includegraphics[width=\linewidth,height=0.8\textheight,keepaspectratio]{slides-assets/cop29-baku-summit.jpg}
-\end{center}
-
-::: {.notes}
-Photo de famille des chefs d'État. Ceux qui fixent le chiffre ne fixent pas l'objet.
-Crédit : Présidence d'Azerbaïdjan / Wikimedia Commons, CC BY 4.0.
-:::
-
 ## Construit, pas découvert
 
 La finance climat n'a pas été **découverte** comme une réalité déjà là.
 
 Les flux existent : budgets, prêts, garanties, investissements privés.
 Ce qui est **construit**, c'est leur agrégation comme grandeur gouvernable.
-
-. . .
 
 **« Économistes sous contrainte »** --- au pied de la lettre :
 
@@ -79,10 +83,10 @@ les économistes ne sont ni souverains ni exécutants. Ils travaillent dans la c
 | « Quel prix pour le carbone ? » | « Ce dollar compte-t-il ? » |
 | Construire des modèles | Fabriquer des catégories |
 
-. . .
-
 Une histoire de la pensée économique **hors de ses lieux canoniques** :
 rapports d'experts, comités statistiques, banques de développement.
+
+# Méthode
 
 ## Histoire institutionnelle + test computationnel
 
@@ -103,16 +107,16 @@ rapports d'experts, comités statistiques, banques de développement.
 :::
 ::::
 
-. . .
-
 Le corpus ne **remplace** pas l'interprétation : il la soumet à un test indépendant.
 
-![Croissance de la littérature : champ quasi inexistant avant 2007.](figures/fig_bars_v1.png){width="62%"}
+## La littérature sur la finance climat, 1990--2023
+
+\begin{center}
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{figures/fig_bars_v1.png}
+\end{center}
 
 ## Trois époques, deux ruptures
 
-:::: {.columns}
-::: {.column width="45%"}
 1. **Avant** (1990--2006) : trois traditions disjointes
 2. **Cristallisation** (2007--2014) : la fabrique comptable
 3. **Champ établi** (2015--2025) : controverses sur l'objet existant
@@ -120,11 +124,12 @@ Le corpus ne **remplace** pas l'interprétation : il la soumet à un test indép
 \medskip
 Les ruptures endogènes tombent en **2007** et **2013** --- pas en 2015.
 Paris diversifie les thèmes sans refonder les catégories de mesure.
-:::
-::: {.column width="55%"}
-![Vitesse de renouvellement des thèmes : deux sauts de langage.](figures/fig_breaks.png){width="100%"}
-:::
-::::
+
+## Deux ruptures endogènes : 2007 et 2013
+
+\begin{center}
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{figures/fig_breaks.png}
+\end{center}
 
 # Avant 2007 : trois traditions disjointes
 
@@ -135,8 +140,6 @@ Paris diversifie les thèmes sans refonder les catégories de mesure.
 | Économie de l'environnement | Quel prix pour le carbone ? | Pas de comptabilité des flux Nord-Sud |
 | Statistique de l'aide (OCDE/CAD) | Comment compter l'aide ? | Catégories conçues pour l'aide, pas le climat |
 | Partage de l'effort | Qui doit payer ? | Faible traduction en suivi financier |
-
-. . .
 
 Aucun des trois langages --- prix du carbone, aide, partage de l'effort ---
 ne suffit seul à produire une comptabilité de la finance climat.
@@ -180,8 +183,6 @@ Portrait : photo de profil Google Scholar, illustration académique.
 | Lieux | Banques multilatérales, OCDE | ONG, économie politique |
 | Risque | Diluer le climat dans l'ingénierie | Contentieux distributif insoluble |
 
-. . .
-
 Les deux pôles partagent les mêmes catégories et les interprètent différemment.
 La controverse n'est pas un accident : c'est une **condition de fonctionnement**.
 
@@ -206,8 +207,6 @@ La Turquie, sous la catégorie investissement, emprunte par ailleurs en dollars 
 | Prêt CTF --- 32,8 M€ | Valeur faciale *ou* équivalent-don (~½) | Argent prêté $\neq$ transfert réel |
 | Don CTF --- 2 M\$ | Intégral | Marginal dans le total |
 | Réseau (ensemble) | Marqueur « principal » ou co-bénéfice | Additionnalité, spécificité climatique |
-
-. . .
 
 Une seule opération, plusieurs conventions. **Les électrons n'ont pas de couleur.**
 
