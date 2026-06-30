@@ -175,26 +175,37 @@ Vitesse de renouvellement des thèmes dans le corpus : deux ruptures (2007, 2013
 ## Trois sous-champs de l'économie
 
 \begin{center}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}P{0.42\linewidth}P{0.50\linewidth}@{}}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}P{0.40\linewidth}P{0.52\linewidth}@{}}
 \toprule
-\textbf{Sous-champ} & \textbf{Auteurs clés} \\
+\textbf{Sous-champ} & \textbf{Références clés} \\
 \midrule
-Économie de l'environnement & Pigou ; Ayres \& Kneese ; Nordhaus ; Stern ; Weitzman \\
+Économie de l'environnement & Ayres \& Kneese 1969 ; Nordhaus 1992 ; Stern 2007 ; Weitzman 2007 \\
 \addlinespace
-Développement et coopération internationale & OCDE/CAD ; Desrosières ; Porter ; Michaelowa \\
+Développement et coopération internationale & Desrosières 1998 ; Porter 1995 ; Michaelowa \& Michaelowa 2007 \\
 \addlinespace
-Efficacité et équité & Negishi ; Roberts \& Weikmans \\
+Efficacité et équité & Negishi 1960 ; Roberts \& Weikmans 2017 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 Trois lignées faiblement reliées : avant 2007, elles ne se citent guère.
 
-\vfill
+::: {.notes}
+Économie de l'environnement. Ayres \& Kneese 1969, *Production, Consumption and
+Externalities* (AER) : la matérialité des externalités. Nordhaus 1992 (Science) :
+DICE, prix optimal du carbone. Stern 2007 ; Weitzman 2007 : taux d'actualisation et
+risque extrême. → Apport : le prix du carbone, mais aucune comptabilité des flux Nord-Sud.
 
-\footnotesize Ayres \& Kneese 1969 ; Nordhaus 1992 ; Stern 2007 ; Weitzman 2007 ;
-Desrosières 1998 ; Porter 1995 ; Michaelowa \& Michaelowa 2007 ; Negishi 1960 ; Roberts \& Weikmans 2017.
+Développement et coopération internationale. Desrosières 1998, *La politique des
+grands nombres* : la statistique comme convention. Porter 1995, *Trust in Numbers* :
+l'objectivité quantitative comme technologie de confiance. Michaelowa \& Michaelowa
+2007 : surdéclaration des marqueurs de Rio. → Apport : les catégories de l'aide (APD).
+
+Efficacité et équité. Negishi 1960 : pondérations de bien-être — qui compte, et combien ?
+Roberts \& Weikmans 2017 : fragmentation et conflits distributifs sur ce qui compte comme
+finance climat. → Apport : la grammaire de la responsabilité.
+:::
 
 ## Les pièces existent, l'objet n'est pas assemblé
 
