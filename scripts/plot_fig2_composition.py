@@ -59,6 +59,8 @@ def main():
                         help="Path to alluvial CSV (default: tab_alluvial.csv)")
     parser.add_argument("--labels", type=str, default=None,
                         help="Path to cluster labels JSON (default: cluster_labels.json)")
+    parser.add_argument("--wide", action="store_true",
+                        help="Landscape 2x3 layout for slides (default is tall 3x2 for the manuscript)")
     args = parser.parse_args(extra)
 
     # Load data — --input takes precedence, then --alluvial, then default
@@ -92,8 +94,13 @@ def main():
     # Uniform x-axis: round up to nearest 5
     x_max = int(np.ceil(pct.values.max() / 5) * 5)
 
-    # Layout: 3 rows × 2 columns
-    fig, axes = plt.subplots(3, 2, figsize=(FIGWIDTH, FIGWIDTH * 1.15))
+    # Layout: tall 3×2 (default, manuscript) or wide 2×3 (--wide, slides)
+    if args.wide:
+        nrows, ncols = 2, 3
+        fig, axes = plt.subplots(nrows, ncols, figsize=(FIGWIDTH * 1.7, FIGWIDTH * 0.92))
+    else:
+        nrows, ncols = 3, 2
+        fig, axes = plt.subplots(nrows, ncols, figsize=(FIGWIDTH, FIGWIDTH * 1.15))
     axes_flat = axes.flatten()
 
     y_positions = np.arange(n_periods)[::-1]  # top = Before, bottom = Disputes
@@ -137,13 +144,13 @@ def main():
 
         # Y-axis: period labels only in left column
         ax.set_yticks(y_positions)
-        if panel_idx % 2 == 0:
+        if panel_idx % ncols == 0:
             ax.set_yticklabels(period_short, fontsize=6.5)
         else:
             ax.set_yticklabels([])
 
         # X-axis: ticks on bottom row only
-        if panel_idx >= 4:
+        if panel_idx >= (nrows - 1) * ncols:
             ax.set_xlabel("%", fontsize=7)
         else:
             ax.set_xticklabels([])
@@ -154,7 +161,10 @@ def main():
         ax.spines["right"].set_visible(False)
         ax.tick_params(left=False)
 
-    fig.subplots_adjust(top=0.97, bottom=0.07, hspace=0.75, wspace=0.18)
+    if args.wide:
+        fig.subplots_adjust(top=0.90, bottom=0.14, hspace=0.95, wspace=0.22)
+    else:
+        fig.subplots_adjust(top=0.97, bottom=0.07, hspace=0.75, wspace=0.18)
 
     # Save
     out_path = os.path.splitext(io_args.output)[0]  # save_figure adds extension

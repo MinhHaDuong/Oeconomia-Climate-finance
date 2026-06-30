@@ -406,6 +406,11 @@ content/figures/fig_composition.png: scripts/plot_fig2_composition.py scripts/pl
 		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
 	$(PYTHON) $< --output $@ --input config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
 
+# Fig 2 wide variant (2x3 landscape) for slides — same frozen data, --wide layout
+content/figures/fig_composition_wide.png: scripts/plot_fig2_composition.py scripts/plot_style.py scripts/utils.py $(CONFIG) \
+		config/v1_tab_alluvial.csv config/v1_cluster_labels.json
+	$(PYTHON) $< --wide --output $@ --input config/v1_tab_alluvial.csv --labels config/v1_cluster_labels.json
+
 # -- Data paper --
 # Semantic clusters (computation only — no figures)
 SEMANTIC_CLUSTERS := $(DATA_DIR)/semantic_clusters.csv
