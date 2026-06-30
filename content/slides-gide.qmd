@@ -44,7 +44,7 @@ format:
 
 \begin{center}
 {\Large « 300 milliards de dollars par an »}\\[2pt]
-{\footnotesize COP29 --- Bakou, 24 novembre 2024}
+{\footnotesize COP29 --- Bakou, 23 novembre 2024}
 \end{center}
 
 \medskip
@@ -109,7 +109,7 @@ rapports d'experts, comités statistiques, banques de développement.
 
 \vfill
 
-\footnotesize Historiographie HET/STS : Aykut \& Dahan 2015 ; Pottier 2016. \quad
+\small Historiographie HET/STS : Aykut \& Dalmedico 2015 ; Pottier 2016. \quad
 Sociologie de la quantification : Desrosières 1998 ; Espeland \& Stevens 1998 ; Çalışkan \& Callon 2009.
 
 # Méthode
@@ -139,13 +139,17 @@ Le corpus ne **remplace** pas l'interprétation : il la soumet à un test indép
 
 ## Deux tournants, trois époques
 
-Deux tournants historiques découpent la période : **Bali (2007)** et **Paris (2015)**.
+Deux tournants **politiques** : **Bali (2007)** et **Paris (2015)**.
 
 \medskip
 
 1. **Avant** (1990--2006) : trois traditions disjointes
 2. **Cristallisation** (2007--2014) : la fabrique comptable
 3. **Champ établi** (2015--2025) : controverses sur l'objet existant
+
+\medskip
+
+Le **renouvellement** des thèmes culmine en **2007** (et 2013), pas en 2015 : Paris **réoriente** sans refonder les catégories.
 
 ## {.plain}
 
@@ -167,7 +171,9 @@ structuré après Bali et Copenhague.
 \end{tikzpicture}
 
 ::: {.notes}
-Vitesse de renouvellement des thèmes dans le corpus : deux ruptures (2007, 2013).
+Vitesse de renouvellement des thèmes : le churn culmine en 2007 (Bali) et 2013
+(IPCC AR5 2013--14, GCF opérationnel 2014). Paris 2015 ne produit pas de pic
+comparable — il réoriente les thèmes sans refonder les catégories de mesure.
 :::
 
 # Avant la finance climat (1990--2006)
@@ -180,9 +186,9 @@ Vitesse de renouvellement des thèmes dans le corpus : deux ruptures (2007, 2013
 \toprule
 \textbf{Sous-champ} & \textbf{Références clés} \\
 \midrule
-Économie de l'environnement & Ayres \& Kneese 1969 ; Nordhaus 1992 ; Stern 2007 ; Weitzman 2007 \\
+Économie de l'environnement & Ayres \& Kneese 1969 ; Manne \& Richels 1992 ; Nordhaus 1992 ; Stern 2007 ; Weitzman 2007 \\
 \addlinespace
-Développement et coopération internationale & Desrosières 1998 ; Porter 1995 ; Michaelowa \& Michaelowa 2007 \\
+Développement et coopération internationale & Porter 1995 ; Michaelowa \& Michaelowa 2007 \\
 \addlinespace
 Efficacité et équité & Negishi 1960 ; Roberts \& Weikmans 2017 \\
 \bottomrule
@@ -236,7 +242,7 @@ ne suffit seul à produire une comptabilité de la finance climat.
 
 - Bali 2007 : engagements *mesurables, notifiables, vérifiables*
 - Copenhague 2009 : promesse des 100 milliards
-- Le chiffre crée une **obligation de mesure** (engagement performatif)
+- Le chiffre crée une **obligation de mesure** : performatif par les formulaires, non par un modèle
 
 \medskip
 **L'OCDE/CAD construit l'infrastructure** : marqueurs de Rio, équivalent-don,
@@ -325,7 +331,7 @@ Don CTF\newline 2 M\$ & Intégral & Marginal dans le total \\
 \end{tabular}
 \end{center}
 
-\footnotesize IBRD : International Bank for Reconstruction and Development ; CTF : Clean Technology Fund.
+\small IBRD : International Bank for Reconstruction and Development ; CTF : Clean Technology Fund (taux 0,25 % indicatif).
 
 ::: {.notes}
 Mécanisme IBRD : les États actionnaires apportent leur garantie (capital appelable) ;
